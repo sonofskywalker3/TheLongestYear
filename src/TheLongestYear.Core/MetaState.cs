@@ -104,6 +104,13 @@ public sealed class MetaState
     /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
     public bool HoldChoiceMadeForReset { get; set; }
 
+    /// <summary>Randomizer "Random bundle rewards" as it stood when the CURRENT board was built.
+    /// Stamped from live config only where a new board is built (a reset that does not hold the
+    /// board, and the fresh-run Engine board); a held board keeps its stamp. Every reproduction
+    /// of the board (reload re-derivation, tly_genbundles) reads this, never live config, so a
+    /// GMCM change applies at the next new board. False on saves from before the option.</summary>
+    public bool RandomBundleRewardsBoard { get; set; }
+
     // Season pity (removed 2026-09-24) kept SeasonFailCounts, LastFailSeason, BoardTrimSeason,
     // BoardTrimSteps, ConsecutivePityUses, BoardEaseSeason and BoardEaseSteps here. Old saves
     // still carry those keys; SMAPI's JSON reader skips members the type no longer has, so they

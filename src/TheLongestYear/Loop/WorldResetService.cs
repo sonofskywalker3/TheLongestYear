@@ -659,6 +659,14 @@ namespace TheLongestYear.Loop
             // must behave like a reshuffle; BundleHold.ConsumeChoiceAtReset owns that rule.
             TheLongestYear.Core.BundleHold.ConsumeChoiceAtReset(_meta);
 
+            // Randomizer "Random bundle rewards" is board-level: stamp it only when this reset builds
+            // a NEW board. A held board (vanilla snapshot restored, or the Engine re-deriving off the
+            // pinned seed loop; ConsecutiveHolds > 0 only after a Kept choice) keeps the stamp it was
+            // built under, so toggling the option never changes a board the player paid to keep.
+            bool holdingBoard = vanillaBoard ? heldVanillaBoard != null : _meta.ConsecutiveHolds > 0;
+            if (!holdingBoard)
+                _meta.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
+
             if (vanillaBoard)
             {
                 // Vanilla mode: the board loadForNewGame just wrote IS the board. No engine write,
@@ -681,6 +689,7 @@ namespace TheLongestYear.Loop
                 {
                     _monitor.Log("Reset: vanilla board — keeping the game's own board (no engine write).", LogLevel.Info);
                     ApplyVanillaBoardDifficulty();
+                    ApplyVanillaBoardRewardShuffle();
                 }
             }
             else
@@ -697,7 +706,7 @@ namespace TheLongestYear.Loop
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
-                GeneratedBundleSet generatedSet = engine.Generate(seed);
+                GeneratedBundleSet generatedSet = engine.Generate(seed, _meta.RandomBundleRewardsBoard);
                 engine.WriteToWorld(generatedSet, _monitor);
                 // Persist exactly what was written (and the derived pins it was classified under)
                 // so later loads verify the live board against this instead of re-deriving from
@@ -1434,6 +1443,33 @@ namespace TheLongestYear.Loop
                 $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
                 "Item ids are unchanged.",
                 LogLevel.Info);
+        }
+
+        /// <summary>Randomizer "Random bundle rewards" on a freshly built Vanilla or Remixed board.
+        /// Runs after the difficulty pass and never on a held board (the held snapshot already
+        /// carries its rewards). Only field 1 of each bundle changes. Same seed basis as
+        /// <see cref="ApplyVanillaBoardDifficulty"/> and the same reward pool the Engine draws from.</summary>
+        private void ApplyVanillaBoardRewardShuffle()
+        {
+            if (!_meta.RandomBundleRewardsBoard)
+                return;
+
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+            {
+                _monitor.Log("Randomizer: bundle reward shuffle skipped, no bundle data on the board.", LogLevel.Warn);
+                return;
+            }
+
+            IReadOnlyList<string> pool = BundleEngine.RewardPool(new VanillaBundlePool(_monitor).BuildRoomPools());
+            int seed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
+            IDictionary<string, string> shuffled = TheLongestYear.Core.BundleRewardShuffle.ApplyToData(
+                new Dictionary<string, string>(live), seed, pool, BundleEngine.IsPassThroughRoom);
+            Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(shuffled));
+
+            int bundles = shuffled.Keys.Count(k => !BundleEngine.IsPassThroughRoom(k.Split('/')[0]));
+            _monitor.Log($"Randomizer: bundle rewards shuffled ({bundles} bundles, pool {pool.Count}).", LogLevel.Info);
         }
 
         /// <summary>The all-Normal half of <see cref="ApplyVanillaBoardDifficulty"/>: writes only
