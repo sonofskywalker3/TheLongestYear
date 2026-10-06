@@ -85,6 +85,10 @@ namespace TheLongestYear.Loop
         private List<BonusSlot> SlotsOf(int list)
             => list == SecondList ? (Run.SecondWeekBonusSlots ??= new List<BonusSlot>()) : Run.CurrentWeekBonusSlots;
 
+        /// <summary>The list's random shrine donation goals (Randomizer; empty when the option is off).</summary>
+        private IReadOnlyList<ShrineGoal> ShrineGoalsOf(int list)
+            => ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, list);
+
         private double MultiplierOf(int list) => list == SecondList ? Run.SecondGoalMultiplier : Run.CurrentGoalMultiplier;
 
         private (string BonusId, string LiabilityId) EffectsOf(int list, Theme theme)
@@ -106,7 +110,9 @@ namespace TheLongestYear.Loop
         {
             if (SelectionOf(list) is not Theme theme) return;
             List<BonusSlot> slots = SlotsOf(list);
-            if (slots.Count == 0) return;
+            IReadOnlyList<ShrineGoal> shrineGoals = ShrineGoalsOf(list);
+            // A list with only shrine goals (Randomizer) still gets its quest.
+            if (slots.Count == 0 && shrineGoals.Count == 0) return;
 
             var (bonusId, liabilityId) = EffectsOf(list, theme);
             double multiplier = MultiplierOf(list);
@@ -139,7 +145,8 @@ namespace TheLongestYear.Loop
 
             _monitor.Log(
                 $"WeeklyThemeQuestService: added quest '{q.questTitle}' ({q.id.Value}) for week {Run.WeekOfYear} " +
-                $"with {slots.Count} goal slots.",
+                $"with {slots.Count} goal slots" +
+                (shrineGoals.Count > 0 ? $" and {shrineGoals.Count} shrine goal(s)." : "."),
                 LogLevel.Info);
         }
 
@@ -186,7 +193,7 @@ namespace TheLongestYear.Loop
                 }
 
                 // No quest in log — back-fill it if a selection is already active.
-                if (SelectionOf(list).HasValue && SlotsOf(list).Count > 0)
+                if (SelectionOf(list).HasValue && (SlotsOf(list).Count > 0 || ShrineGoalsOf(list).Count > 0))
                     AddQuest(list);
             }
         }
@@ -209,12 +216,20 @@ namespace TheLongestYear.Loop
                 lines.Add(isDone ? $"  [X] {DescribeSlot(slot)}" : $"  [ ] {DescribeSlot(slot)}");
             }
 
+            // Random shrine donation goals (Randomizer) join this list's total, done count and
+            // paid shares; a shrine goal is done once deposited at the statue.
+            IReadOnlyList<ShrineGoal> shrineGoals = ShrineGoalsOf(list);
+            foreach (ShrineGoal goal in shrineGoals)
+                lines.Add(goal.Deposited ? $"  [X] {DescribeShrineGoal(goal)}" : $"  [ ] {DescribeShrineGoal(goal)}");
+            int ccDone = doneCount;
+            (doneCount, int total) = ShrineGoalRules.Tally(ccDone, slots.Count, shrineGoals);
+
             // Checklist first, tip LAST — the tip must never push the goals below the fold
             // (user feedback 2026-07-09).
             string progress = Strings.Get("quest.weekly.progress", new Dictionary<string, string>
             {
                 ["done"] = doneCount.ToString(),
-                ["total"] = slots.Count.ToString(),
+                ["total"] = total.ToString(),
             });
             q.currentObjective =
                 progress + "\n" + string.Join("\n", lines) +
@@ -222,16 +237,17 @@ namespace TheLongestYear.Loop
 
             // Rule D (activity-themes spec): each goal that lands pays its share of the weekly
             // bonus right away; BonusSlot.Paid guards against paying twice across a reload.
-            int newlyPaid = WeeklyGoalPayout.MarkPaid(slots, IsSlotComplete);
+            int newlyPaid = WeeklyGoalPayout.MarkPaid(slots, IsSlotComplete) + ShrineGoalRules.MarkPaid(shrineGoals);
             if (newlyPaid > 0)
-                PayGoalShares(newlyPaid, doneCount, slots.Count, MultiplierOf(list));
+                PayGoalShares(newlyPaid, doneCount, total, MultiplierOf(list));
 
             // Auto-complete when every goal slot has been donated this week: the week's liability
             // is lifted for the remaining days (bonus stays active). RunState.LiabilitySuppressedThisWeek
             // persists the lifted state so a reload doesn't snap the liability back on;
             // ActiveEffectsProvider.SuppressLiability drives the live patches (ForageOffPatch et al.).
             // On a double week each list lifts only its own drawback.
-            if (slots.Count > 0 && doneCount == slots.Count && !q.completed.Value)
+            // Shrine goals count: the drawback lifts only when every goal of both kinds is done.
+            if (total > 0 && doneCount == total && !q.completed.Value)
             {
                 q.questComplete();
                 if (list == SecondList) LiftSecondLiability();
@@ -378,6 +394,33 @@ namespace TheLongestYear.Loop
             return slot.RouteTag == null
                 ? tagged
                 : tagged + Strings.Get("goal.route-tag", new Dictionary<string, string> { ["tag"] = slot.RouteTag });
+        }
+
+        /// <summary>"DisplayName (Brown) x5 - Junimo Shrine": a random shrine donation goal, any quality.</summary>
+        private string DescribeShrineGoal(ShrineGoal goal)
+        {
+            string name = goal.ItemId;
+            try
+            {
+                Item item = ItemRegistry.Create(goal.ItemId, 1, 0, allowNull: true);
+                if (item != null) name = item.DisplayName;
+            }
+            catch (Exception ex)
+            {
+                // ItemRegistry may throw for malformed ids; fall back to the raw id.
+                _monitor.Log($"Shrine goal '{goal.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
+            }
+            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(goal.ItemId), out string colorKey)
+                ? Strings.Get(colorKey) : "";
+            string qty = goal.Stack > 1
+                ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = goal.Stack.ToString() })
+                : "";
+            return Strings.Get("quest.weekly.shrine-slot", new Dictionary<string, string>
+            {
+                ["item"] = name,
+                ["color"] = colorTag,
+                ["qty"] = qty,
+            });
         }
 
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used

@@ -66,6 +66,12 @@ twist. `tly_wildcard <twistId>` makes today the wildcard day with that twist (an
 in `WildcardSchedule`), so a twist patch can be checked without waiting for its day;
 `tly_wildcard clear` drops today's twist.
 
+Shrine donations: `tly_shrinegoals` logs this week's shrine goals (`[index] list L <id> xN
+deposited= paid=`; the roll itself logs `Shrine goals for <theme> (list L, week W)` at pick time).
+`tly_shrinedonate <index>` spawns the goal's stack if no inventory stack can fill it and donates
+through `ShrineDonationService.Donate`, the Donate tab's own path; logs
+`goal N donated (JP a -> b)` or `refused`.
+
 Advance a season without tripping the day-28 gate: `tly_setday 7` (bridge), then
 `send-smapi-command.ps1 "debug season summer"` and `send-smapi-command.ps1 "debug sleep"`; the
 hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).

@@ -316,6 +316,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
             helper.ConsoleCommands.Add("tly_hubcards", "Log each planning hub card: slot, theme (? if face down), drawback, goal multiplier (debug).", this.CmdHubCards);
+            helper.ConsoleCommands.Add("tly_shrinegoals", "List this week's random shrine donation goals: index, list, item, stack, deposited, paid (debug).", this.CmdShrineGoals);
+            helper.ConsoleCommands.Add("tly_shrinedonate", "Donate shrine goal N through the statue's donate path, spawning the stack into the inventory if missing (debug). Usage: tly_shrinedonate <index>", this.CmdShrineDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
             helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen|paid]", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
@@ -688,6 +690,10 @@ namespace TheLongestYear
             // Wire the post-donation callback so each CC deposit refreshes the quest's progress
             // text (and auto-completes when every goal slot this week is complete).
             DonationService.Active.AfterDonation = _questService.OnItemDonated;
+            ShrineDonationService.Active = new ShrineDonationService(this.Monitor, _meta, _config)
+            {
+                AfterDonation = _questService.OnItemDonated,
+            };
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             _runController.GoalCaps = new[]
@@ -697,6 +703,12 @@ namespace TheLongestYear
                 new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
+            // Random shrine donations: the theme item pools and seasons for off-board goals.
+            _runController.ShrineThemeIds = theme => _enginePools == null || _effortData == null
+                ? Array.Empty<string>()
+                : ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
+            _runController.ShrineExcludedIds = () => _enginePools?.ExcludedIds;
+            _runController.SeasonsOf = id => _seasonResolver?.SeasonsFor(id);
             // The theme week discount rewrites stacks on the board; that is our own write, not
             // another mod's, so the vanilla-mode fingerprint follows it.
             _runController.AfterBoardWrite = () =>
@@ -844,6 +856,7 @@ namespace TheLongestYear
                 this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
             }
             DonationService.Active = null;
+            ShrineDonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
             TheLongestYear.Loop.HerdBookService.ClearPending();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
@@ -2664,6 +2677,8 @@ namespace TheLongestYear
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
                 case "tly_hubcards": this.CmdHubCards(command, args); break;
+                case "tly_shrinegoals": this.CmdShrineGoals(command, args); break;
+                case "tly_shrinedonate": this.CmdShrineDonate(command, args); break;
                 case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
@@ -4905,6 +4920,20 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady || _wildcardDays == null) { this.Monitor.Log("Load a TLY save first.", LogLevel.Warn); return; }
             this.Monitor.Log("tly_wildcard: " + _wildcardDays.Debug(args), LogLevel.Info);
+        }
+
+        /// <summary>Random shrine donations debug: list this week's shrine goals.</summary>
+        private void CmdShrineGoals(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            ShrineDonationDebug.List(this.Monitor);
+        }
+
+        /// <summary>Random shrine donations debug: donate goal N through ShrineDonationService.</summary>
+        private void CmdShrineDonate(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            ShrineDonationDebug.Donate(args, this.Monitor);
         }
 
         private void CmdHubCards(string command, string[] args)

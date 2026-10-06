@@ -1209,6 +1209,8 @@ namespace TheLongestYear.Loop
                 Run.SecondWeekBonusSlots.AddRange(GoalLists.Dedupe(
                     Run.CurrentWeekBonusSlots, SampleSlotsForTheme(second, Run.Season, Run.WeekOfYear)));
             ApplyWeekDiscount();
+            // Random shrine donations: top each list up (only lists that have none, so a reload never re-rolls).
+            RollShrineGoals();
         }
 
         /// <summary>Empty goal pool (everything for this theme already donated): no quest this
@@ -1224,7 +1226,8 @@ namespace TheLongestYear.Loop
         private void LiftFirstListIfEmpty()
         {
             if (!Run.CurrentSelection.HasValue) return;
-            if (Run.CurrentWeekBonusSlots.Count > 0) return;
+            // Shrine goals (Randomizer) keep the list alive: the lift needs both kinds empty.
+            if (!ShrineGoalRules.ListIsEmpty(Run.CurrentWeekBonusSlots.Count, ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, FirstShrineList))) return;
             if (Run.LiabilitySuppressedThisWeek) return;
 
             Run.LiabilitySuppressedThisWeek = true;
@@ -1246,7 +1249,7 @@ namespace TheLongestYear.Loop
         private void LiftSecondListIfEmpty()
         {
             if (Run.SecondSelection is not Theme second) return;
-            if (Run.SecondWeekBonusSlots.Count > 0) return;
+            if (!ShrineGoalRules.ListIsEmpty(Run.SecondWeekBonusSlots.Count, ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, SecondShrineList))) return;
             if (Run.SecondLiabilitySuppressedThisWeek) return;
 
             Run.SecondLiabilitySuppressedThisWeek = true;
