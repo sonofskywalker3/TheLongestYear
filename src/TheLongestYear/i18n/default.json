@@ -705,7 +705,7 @@
     "gmcm.randomizer.wildcard-days.name": "Wildcard days",
     "gmcm.randomizer.wildcard-days.tooltip": "One random day each week gets a one-day twist, good, bad or odd. You see which day at the start of the week and the twist that morning. Takes effect from next week's offer.",
     "gmcm.randomizer.random-shrine-donations.name": "Random shrine donations",
-    "gmcm.randomizer.random-shrine-donations.tooltip": "Tops the week's goals up with items that have no Community Center slot. Donate them at the farm statue for JP. Missing them never fails you. Takes effect from next week's offer.",
+    "gmcm.randomizer.random-shrine-donations.tooltip": "Tops the week's goals up with items that have no Community Center slot. Donate them at the farm statue for JP. Missing them never fails you, but that theme keeps its drawback for the week. Takes effect from next week's offer.",
     "gmcm.difficulty.section": "Difficulty",
     "gmcm.difficulty.blurb": "Pick a level here to set every option below at once. You can still change any of them one at a time. Everything starts on Normal, the balance the mod ships with. Changes take effect on your next loop.",
     "gmcm.difficulty.overall.name": "Difficulty",
