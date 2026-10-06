@@ -165,6 +165,7 @@ namespace TheLongestYear
                 () => TheLongestYear.Core.Day28.VoluntaryRestart.IsRewind(
                     _runController?.PendingCutscene ?? TheLongestYear.Core.Day28.Day28Branch.None);
             FarmEventSuppressionPatch.Monitor = this.Monitor;
+            TheLongestYear.Loop.WildcardNightEventPatch.Monitor = this.Monitor;
             WeatherScheduleWriterPatch.Monitor = this.Monitor;
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
@@ -710,6 +711,7 @@ namespace TheLongestYear
             _runController.AttachQuestService(_questService);
             _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
             TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;
+            TheLongestYear.Loop.WildcardDayService.NightRun = () => _meta.Run;
             _runController.AttachWildcardService(_wildcardDays);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
@@ -814,6 +816,8 @@ namespace TheLongestYear
             ActiveEffectsProvider.Clear();
             DayEffects.Clear();
             TheLongestYear.Loop.WildcardDayService.GrowthNight = null;
+            TheLongestYear.Loop.WildcardDayService.NightRun = null;
+            TheLongestYear.Loop.RockslidePatch.Forget();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = null;

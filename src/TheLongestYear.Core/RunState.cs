@@ -131,6 +131,10 @@ public sealed class RunState
     /// tick (the overnight hooks already see tomorrow's date); cleared the next morning.</summary>
     public bool WildcardGrowthNight { get; set; }
 
+    /// <summary>Wildcard days: the snow day or night event whose overnight half runs tonight, set
+    /// at DayEnding of that day (<see cref="WildcardDays.NightTwistTonight"/>); cleared the next morning.</summary>
+    public string? WildcardNightTwist { get; set; }
+
     /// <summary>Random Cart Days: the week (of year) whose rolled days are in <see cref="CartDays"/>; -1 = none.</summary>
     public int CartDaysWeek { get; set; } = -1;
 
@@ -501,6 +505,7 @@ public sealed class RunState
         WildcardTwist = null;
         WildcardTwistDay = 0;
         WildcardGrowthNight = false;
+        WildcardNightTwist = null;
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back

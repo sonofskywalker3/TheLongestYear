@@ -34,6 +34,13 @@ namespace TheLongestYear.Loop
         /// <summary>The crop patch's read of tonight's extra-growth flag. Null while dormant.</summary>
         public static Func<bool> GrowthNight;
 
+        /// <summary>The run, for the overnight twist patches (snow night, night event). Null while dormant.</summary>
+        public static Func<RunState> NightRun;
+
+        /// <summary>Tonight's overnight twist (<see cref="RunState.WildcardNightTwist"/>); null while dormant.</summary>
+        internal static string NightTwist()
+            => RunActivation.IsActive ? NightRun?.Invoke()?.WildcardNightTwist : null;
+
         /// <summary>Minecarts repaired by either route: the rockslide twist needs them.</summary>
         private static bool MinecartsRepaired()
         {
@@ -49,6 +56,8 @@ namespace TheLongestYear.Loop
             RunState run = Run;
             // Last night's extra-growth pass is done.
             run.WildcardGrowthNight = false;
+            // So is last night's snow-night / night-event half.
+            run.WildcardNightTwist = null;
 
             bool mayPlan = Calendar.IsWeekStart(run.DayOfMonth) || run.RandomizerWeek == run.WeekOfYear;
             if (mayPlan && run.WildcardWeek != run.WeekOfYear)
@@ -62,11 +71,13 @@ namespace TheLongestYear.Loop
 
             string twist = WildcardDays.RevealToday(run, MinecartsRepaired, out bool revealedNow);
             DayEffects.Set(twist);
+            RockslidePatch.Sync(_monitor);
             if (twist != null)
             {
                 ApplyMorningEffects(twist);
                 if (revealedNow)
                 {
+                    ApplyRevealEffects(twist);
                     Game1.addHUDMessage(new HUDMessage(
                         Strings.Get("hud.wildcard.reveal", new Dictionary<string, string> { ["twist"] = WildcardText.Name(twist) }),
                         HUDMessage.newQuest_type));
@@ -81,6 +92,7 @@ namespace TheLongestYear.Loop
         {
             string twist = WildcardDays.StoredTwistToday(Run);
             DayEffects.Set(twist);
+            RockslidePatch.Sync(_monitor);
             if (twist != null)
             {
                 ApplyMorningEffects(twist);
@@ -97,12 +109,19 @@ namespace TheLongestYear.Loop
             run.WildcardGrowthNight = WildcardDays.GrowthTonight(run);
             if (run.WildcardGrowthNight)
                 _monitor.Log("Wildcard extra growth: watered crops grow an extra day tonight.", LogLevel.Info);
+            // Snow day / night event: tonight's half (no outdoor growth, the forced farm event).
+            run.WildcardNightTwist = WildcardDays.NightTwistTonight(run);
+            if (run.WildcardNightTwist != null)
+                _monitor.Log($"Wildcard night: {run.WildcardNightTwist} runs overnight.", LogLevel.Info);
+            // The rockslide lasts the day; clear it before the save so a save never holds the rubble.
+            RockslidePatch.Release(_monitor);
         }
 
         /// <summary>The rewind: the old loop's quest goes (the new loop plans its own week).</summary>
         public void OnReset()
         {
             DayEffects.Clear();
+            RockslidePatch.Forget();
             RemoveQuests();
         }
 
@@ -113,6 +132,17 @@ namespace TheLongestYear.Loop
         {
             if (twist == WildcardSchedule.MaxLuck && Game1.IsMasterGame && Game1.player?.team != null)
                 Game1.player.team.sharedDailyLuck.Value = WildcardEffects.Luck(Game1.player.team.sharedDailyLuck.Value, true);
+            // Snow is today's weather state (not a patch read); idempotent, so the load path repeats it.
+            if (twist == WildcardSchedule.SnowDay)
+                WildcardWeatherPatch.ApplySnow(_monitor);
+        }
+
+        /// <summary>One-shot effects that run on the reveal only, never on a reload (a reload must not
+        /// put back debris the player already cleared).</summary>
+        private void ApplyRevealEffects(string twist)
+        {
+            if (twist == WildcardSchedule.DebrisReturn)
+                DebrisReturn.Apply(_monitor);
         }
 
         /// <summary>Debug (tly_wildcard): set today's twist, clear it, or describe the week.</summary>
@@ -122,12 +152,13 @@ namespace TheLongestYear.Loop
             if (args.Length == 0)
                 return $"Wildcard week {run.WildcardWeek} (now {run.WeekOfYear}): day {run.WildcardDay}, " +
                        $"twist {run.WildcardTwist ?? "none"} (day {run.WildcardTwistDay}), today {DayEffects.Today ?? "none"}, " +
-                       $"growth night {run.WildcardGrowthNight}.";
+                       $"growth night {run.WildcardGrowthNight}, night twist {run.WildcardNightTwist ?? "none"}.";
             string arg = args[0].Trim().ToLowerInvariant();
             if (arg == "clear")
             {
                 WildcardDays.ClearTwist(run);
                 DayEffects.Clear();
+                RockslidePatch.Sync(_monitor);
                 EnsureQuest();
                 return "Wildcard twist cleared for today.";
             }
@@ -135,7 +166,9 @@ namespace TheLongestYear.Loop
                 return $"Unknown twist '{arg}'. One of: {string.Join(", ", WildcardSchedule.AllTwists)}, clear.";
             WildcardDays.ForceToday(run, arg);
             DayEffects.Set(arg);
+            RockslidePatch.Sync(_monitor);
             ApplyMorningEffects(arg);
+            ApplyRevealEffects(arg);
             EnsureQuest();
             return $"Wildcard twist for today set to {arg}.";
         }

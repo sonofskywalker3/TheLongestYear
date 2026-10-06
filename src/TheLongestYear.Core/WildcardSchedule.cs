@@ -55,10 +55,19 @@ public static class WildcardSchedule
         return open[rng.Next(open.Count)];
     }
 
-    /// <summary>The week's twist, uniform over the pool; the rockslide needs repaired minecarts.</summary>
-    public static string TwistFor(int seed, int weekOfYear, bool minecartsRepaired)
+    /// <summary>Out-of-season snow (spec section 8) is never drawn in Winter (it would not be out
+    /// of season) or on day 1 (vanilla forces Sun on a season's first day).</summary>
+    public static bool SnowAllowed(int seasonIndex, int dayOfMonth)
+        => seasonIndex != WinterIndex && dayOfMonth != FirstDay;
+
+    private const int WinterIndex = 3;
+    private const int FirstDay = 1;
+
+    /// <summary>The week's twist, uniform over the pool; the rockslide needs repaired minecarts,
+    /// the snow day needs <paramref name="snowAllowed"/> (<see cref="SnowAllowed"/>).</summary>
+    public static string TwistFor(int seed, int weekOfYear, bool minecartsRepaired, bool snowAllowed = true)
     {
-        var pool = minecartsRepaired ? AllTwists : AllTwists.Where(t => t != Rockslide).ToList();
+        var pool = AllTwists.Where(t => (minecartsRepaired || t != Rockslide) && (snowAllowed || t != SnowDay)).ToList();
         var rng = RollSeed.Rng(seed, weekOfYear, TwistSalt);
         return pool[rng.Next(pool.Count)];
     }
