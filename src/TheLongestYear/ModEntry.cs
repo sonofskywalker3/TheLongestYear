@@ -113,6 +113,7 @@ namespace TheLongestYear
             TheLongestYear.Core.Strings.InitItemNames(id => ItemRegistry.GetDataOrErrorItem(id).DisplayName);
 
             _config = helper.ReadConfig<GameplayConfig>();
+            _config.Randomizer ??= new RandomizerSettings();
             CartSlotLimitPatch.Enabled = _config.LimitTravelingCartStock;
             TheLongestYear.Loop.FestivalTimeFlow.Enabled = _config.FestivalTimeFlows;
             TheLongestYear.Loop.FestivalMainEventOncePatch.Enabled = _config.FestivalMainEventOncePerDay;
@@ -2404,7 +2405,7 @@ namespace TheLongestYear
 
             gmcm.AddTextOption(this.ModManifest,
                 getValue: () => _config.Randomizer.Rerolls.ToString(),
-                setValue: v => _config.Randomizer.Rerolls = Enum.TryParse(v, out RerollMode m) ? m : RerollMode.Off,
+                setValue: v => _config.Randomizer.Rerolls = Enum.TryParse(v, out RerollMode m) && Enum.IsDefined(typeof(RerollMode), m) ? m : RerollMode.Off,
                 name: () => Strings.Get("gmcm.randomizer.rerolls.name"),
                 tooltip: () => Strings.Get("gmcm.randomizer.rerolls.tooltip"),
                 allowedValues: new[] { "Off", "CostsJp", "Free" },
