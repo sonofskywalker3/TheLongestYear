@@ -563,6 +563,7 @@
     "quest.weekly.progress": "Donated {{done}}/{{total}}:",
     "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
     "quest.weekly.qty": " x{{count}}",
+    "quest.weekly.shrine-slot": "{{item}}{{color}}{{qty}} - Junimo Shrine",
     "goal.stretch-tag": " (stretch)",
     "goal.route-tag": " ({{tag}})",
     "quest.weekly.tip": "Tip: hold matching donations for their theme week - each goal pays 1.5x JP plus its share of the weekly bonus, and finishing every goal lifts the drawback.",
