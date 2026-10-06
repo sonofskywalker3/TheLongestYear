@@ -114,6 +114,11 @@ namespace TheLongestYear.UI
                && _offer.Count == DoubleWeekCards
                && DoubleWeek.Is(_run.Seed, OfferWeek, _rand.DoubleThemeWeek);
 
+        /// <summary>The card beside <paramref name="slot"/> on a double week (its drawback must not block
+        /// that card's goals, matching RunController.SelectBoth); null on a single week.</summary>
+        private Theme? OtherCard(int slot)
+            => _double ? _offer[slot == LeftSlot ? RightSlot : LeftSlot] : null;
+
         private IReadOnlyList<Theme> _offer;
 
         private ClickableComponent _leftCard;
@@ -666,7 +671,7 @@ namespace TheLongestYear.UI
             {
                 Theme theme = _offer[slot];
                 bool sealedCard = IsSealed(slot);
-                string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings);
+                string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings, OtherCard(slot));
                 double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double);
                 _monitor.Log(
                     $"Hub card slot {slot}: {(sealedCard ? CardMultiplier.SealedLabel : theme.ToString())}, " +
@@ -948,7 +953,7 @@ namespace TheLongestYear.UI
             }
 
             string bonusMod = ThemeModifiers.For(theme.Value).BonusId;
-            string liabilityMod = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme.Value, _rand.RandomPairings);
+            string liabilityMod = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme.Value, _rand.RandomPairings, OtherCard(slot));
             string bonusName = ThemeModifiers.DisplayNameFor(bonusMod);
             string liabilityName = ThemeModifiers.DisplayNameFor(liabilityMod);
 

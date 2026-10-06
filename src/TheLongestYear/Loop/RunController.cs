@@ -1137,10 +1137,10 @@ namespace TheLongestYear.Loop
             RevertWeekDiscount("re-pick");
             Run.Select(first);
             RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
-            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, first, rand.RandomPairings);
+            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, first, rand.RandomPairings, otherCard: second);
             Run.CurrentGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, first, FirstCardSlot, rand, doubleWeek: true);
             Run.SelectSecond(second);
-            Run.SecondLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, second, rand.RandomPairings);
+            Run.SecondLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, second, rand.RandomPairings, otherCard: first);
             Run.SecondGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, second, SecondCardSlot, rand, doubleWeek: true);
             CommitSelection();
         }
