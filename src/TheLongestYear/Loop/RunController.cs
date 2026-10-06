@@ -96,6 +96,11 @@ namespace TheLongestYear.Loop
 
         internal RandomizerSettings RandomizerForWeek(int week) => Run.RandomizerFor(week, _config.Randomizer);
 
+        /// <summary>Settings for a week without storing a snapshot for a week that has not
+        /// started (the pre-pick preview reads the live config).</summary>
+        internal RandomizerSettings RandomizerForWeekNoStore(int week)
+            => week == Run.WeekOfYear ? Randomizer : _config.Randomizer;
+
         /// <summary>The live settings, for the day-28 pre-pick hub (next month's week must not be snapshotted early).</summary>
         internal RandomizerSettings Live => _config.Randomizer;
 
@@ -1177,13 +1182,14 @@ namespace TheLongestYear.Loop
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
                 remainingNeedForBundle: idx => SeasonNeedForBundle(idx, season),
                 caps: GoalCaps,
-                rules: RulesFor(season));
+                rules: RulesFor(season, weekOfYear));
         }
 
         /// <summary>Rules A, B and E for a season: filler allowance from config, effort from the
         /// derived model (null for an id no rule placed, which then takes the price bucket).</summary>
-        private GoalSamplingRules RulesFor(CoreSeason season)
-            => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf);
+        private GoalSamplingRules RulesFor(CoreSeason season, int weekOfYear)
+            => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf,
+                Even: RandomizerForWeekNoStore(weekOfYear).RandomThemeItems);
 
         private int? EffortOf(string itemId)
             => Availability != null && Availability.HasDerivedEffort(itemId)
@@ -1225,7 +1231,7 @@ namespace TheLongestYear.Loop
             pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
                 theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf, RouteBasisOf);
-            return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season), RarityForItem);
+            return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season, weekOfYear), RarityForItem);
         }
 
         /// <summary>How many more ingredient lines a bundle can still take: its required count

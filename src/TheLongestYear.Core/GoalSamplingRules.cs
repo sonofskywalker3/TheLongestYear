@@ -10,7 +10,9 @@ namespace TheLongestYear.Core;
 /// <param name="Season">Season the goals are for.</param>
 /// <param name="FillerAllowance">Rule B: at most this many non-due goals this week.</param>
 /// <param name="EffortOf">Derived effort for an id, or null when no rule claims it.</param>
-public sealed record GoalSamplingRules(Season Season, int FillerAllowance, Func<string, int?> EffortOf)
+/// <param name="Even">Randomizer "random theme items": every open id weighs 1, with no due-first
+/// tier and no filler split.</param>
+public sealed record GoalSamplingRules(Season Season, int FillerAllowance, Func<string, int?> EffortOf, bool Even = false)
 {
     /// <summary>The Winter allowance in the default config: as many fillers as the cap permits.</summary>
     public const int UnlimitedFiller = 99;
@@ -23,6 +25,9 @@ public sealed record GoalWeight(string ItemId, int? Effort, EffortTier Tier, int
 /// an id no rule placed takes the price bucket.</summary>
 public static class GoalWeighting
 {
+    /// <summary>The weight every id carries in even (Randomizer) mode.</summary>
+    public const int EvenWeight = 1;
+
     public static IReadOnlyList<GoalWeight> For(
         IEnumerable<string> ids, GoalSamplingRules rules, Func<string, Rarity> rarityOf)
     {
@@ -39,7 +44,7 @@ public static class GoalWeighting
             EffortTier tier = effort.HasValue
                 ? EffortTiers.Tier(effort.Value)
                 : EffortTiers.FromRarity(rarityOf(id));
-            result.Add(new GoalWeight(id, effort, tier, EffortWeights.For(rules.Season, tier)));
+            result.Add(new GoalWeight(id, effort, tier, rules.Even ? EvenWeight : EffortWeights.For(rules.Season, tier)));
         }
         return result;
     }
