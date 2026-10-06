@@ -83,7 +83,7 @@ namespace TheLongestYear.Loop
             if (Run.CurrentWeekBonusSlots.Count == 0) return;
 
             Theme theme = Run.CurrentSelection.Value;
-            var (bonusId, liabilityId) = ThemeModifiers.For(theme);
+            var (bonusId, liabilityId) = RandomPairing.EffectsFor(Run, theme);
 
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
@@ -247,7 +247,7 @@ namespace TheLongestYear.Loop
             ActiveEffectsProvider.SuppressLiability();
 
             string liabilityName = Run.CurrentSelection.HasValue
-                ? ThemeModifiers.DisplayNameFor(ThemeModifiers.For(Run.CurrentSelection.Value).LiabilityId)
+                ? ThemeModifiers.DisplayNameFor(RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value).LiabilityId)
                 : "drawback";
 
             Game1.addHUDMessage(new HUDMessage(

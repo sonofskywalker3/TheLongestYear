@@ -227,7 +227,7 @@ namespace TheLongestYear.Loop
             // Restore active effects from persisted selection (if any).
             if (Run.CurrentSelection.HasValue)
             {
-                var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                 ActiveEffectsProvider.Set(bonus, liability);
                 _monitor.Log(
                     $"Restored active effects for week {Run.WeekOfYear}: theme={Run.CurrentSelection}, " +
@@ -888,7 +888,10 @@ namespace TheLongestYear.Loop
                 if (Run.CurrentSelection.HasValue)
                 {
                     PopulateBonusSlotsForCurrentSelection();
-                    var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                    // The card was shown with this week's settings; pick the drawback the same way.
+                    Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear,
+                        Run.CurrentSelection.Value, RandomizerForWeekNoStore(Run.WeekOfYear).RandomPairings);
+                    var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
                         $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
@@ -1069,6 +1072,8 @@ namespace TheLongestYear.Loop
             // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
             RevertWeekDiscount("re-pick");
             Run.Select(theme);
+            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme,
+                RandomizerForWeekNoStore(Run.WeekOfYear).RandomPairings);
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
             // card, console). Mark the week presented and drop any deferred re-present for it —
             // otherwise a stale deferred offer (stashed while a picker was already up) drains the
@@ -1079,7 +1084,7 @@ namespace TheLongestYear.Loop
             if (_deferredOffer is { } stale && stale.week == Run.WeekOfYear)
                 _deferredOffer = null;
             PopulateBonusSlotsForCurrentSelection();
-            var (bonus, liability) = ThemeModifiers.For(theme);
+            var (bonus, liability) = RandomPairing.EffectsFor(Run, theme);
             ActiveEffectsProvider.Set(bonus, liability);
             ApplyEmptyPoolLiftIfNeeded();
             _monitor.Log(
