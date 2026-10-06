@@ -135,6 +135,22 @@ public sealed class RunState
         return RandomizerSnapshot;
     }
 
+    /// <summary>On load: a save made mid-week before the Randomizer existed has no snapshot for a
+    /// week whose offer was already shown (or whose theme is already picked), so the first read
+    /// would take whatever the live config says now. That week ran with everything off, so store
+    /// an all-off snapshot for it. True when the snapshot was stored (final review M1).</summary>
+    public bool SnapshotOffIfWeekAlreadyOffered()
+    {
+        int week = WeekOfYear;
+        if (RandomizerWeek == week && RandomizerSnapshot != null) return false;
+        bool offered = OfferPresentedWeek == week;
+        bool pickedThisWeek = CurrentSelection.HasValue && DiscountWeek == week;
+        if (!offered && !pickedThisWeek) return false;
+        RandomizerWeek = week;
+        RandomizerSnapshot = new RandomizerSettings();
+        return true;
+    }
+
     /// <summary>Pair keys (<see cref="RerollCycle.PairKey"/>) shown on the hub during
     /// <see cref="RerollWeek"/>, the first offer included.</summary>
     public List<string> RerollSeenPairs { get; set; } = new();

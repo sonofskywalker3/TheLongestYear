@@ -171,6 +171,14 @@ namespace TheLongestYear.Loop
             if (Run.PendingDay28 == Day28Branch.None)
                 Run.DayOfMonth = Game1.dayOfMonth;
 
+            // A pre-Randomizer save loaded mid-week: that week ran with everything off, so a
+            // Randomizer option turned on since must wait for the next weekly offer (final review M1).
+            if (Run.SnapshotOffIfWeekAlreadyOffered())
+                _monitor.Log(
+                    $"No Randomizer snapshot for week {Run.WeekOfYear}, whose offer was already shown: " +
+                    "keeping the Randomizer off until next week's offer.",
+                    LogLevel.Info);
+
             // 2026-07-09 slot redesign migration: a mid-week save from an older version has the
             // legacy id-only bonus list but no slot goals. Re-sample once (the week's goals
             // re-roll — one-time, beta-acceptable) and rebuild the quest from slots.
