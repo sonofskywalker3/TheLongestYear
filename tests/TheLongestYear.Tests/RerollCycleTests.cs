@@ -103,4 +103,36 @@ public class RerollCycleTests
         var b = RerollCycle.Next(Four, new List<string> { "Farming|Foraging" }, new[] { Theme.Foraging, Theme.Farming }, new Random(42));
         Assert.Equal(a, b);
     }
+
+    // Final review T2: a Costs-JP reroll must not charge when it cannot change the offer.
+    [Fact]
+    public void Two_candidates_already_on_screen_cannot_change()
+        => Assert.False(RerollCycle.CanChange(new[] { Theme.Farming, Theme.Fishing }, new[] { Theme.Fishing, Theme.Farming }));
+
+    [Fact]
+    public void Fewer_than_two_candidates_cannot_change_the_offer_on_screen()
+        => Assert.False(RerollCycle.CanChange(new[] { Theme.Mining }, new[] { Theme.Mining }));
+
+    [Fact]
+    public void A_third_candidate_can_change_the_offer()
+        => Assert.True(RerollCycle.CanChange(new[] { Theme.Farming, Theme.Fishing, Theme.Mining }, new[] { Theme.Farming, Theme.Fishing }));
+
+    [Fact]
+    public void A_shrunk_pool_that_differs_from_the_screen_is_a_change()
+        => Assert.True(RerollCycle.CanChange(new[] { Theme.Mining }, new[] { Theme.Farming, Theme.Fishing }));
+
+    [Fact]
+    public void CanChange_agrees_with_Next_for_every_small_pool()
+    {
+        var all = Enum.GetValues<Theme>();
+        for (int n = 0; n <= 4; n++)
+        {
+            var pool = all.Take(n).ToArray();
+            var current = all.Take(Math.Min(2, n)).ToArray();
+            var seen = new List<string> { RerollCycle.PairKey(current) };
+            var next = RerollCycle.Next(pool, seen, current, new Random(n));
+            bool changed = RerollCycle.PairKey(next) != RerollCycle.PairKey(current);
+            Assert.Equal(changed, RerollCycle.CanChange(pool, current));
+        }
+    }
 }
