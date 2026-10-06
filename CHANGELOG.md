@@ -3,6 +3,30 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.0 - 2026-10-06 - The Randomizer
+
+### Added
+
+- **Randomizer section in the settings menu (GMCM).** Ten options that trade the shipped balance for variety. Every option is off by default, so a player who never opens the section plays the game exactly as balanced. The weekly options take effect from the next weekly offer, so whatever the current week rolled stays as rolled; Random bundle rewards take effect at the next loop. Everything a week rolls is saved with the run, so a reload gives the same week. Suggested by Nijah (Nexus posts, 2026-09-28), whose thread on reroll repeats, fixed items and fixed pairings started it.
+  - **Theme rerolls** (Off / Costs JP / Free). Adds the Re-roll Themes button to the planning hub. Costs JP: the first reroll each week is 50 JP and each one after costs double (50, 100, 200 and so on), back to 50 each week. The price is flat, not scaled by season. The button shows the price, and a reroll you can't afford is refused without charging you. Free: no cost. A rerolled offer and the pairs already shown are saved for the week, so closing the hub no longer throws away a pair you paid for.
+  - **Random theme items.** Weekly goals are drawn evenly from every line the theme can ask for, instead of favoring items the season gate needs and easier items early in the year. The rules that stop impossible goals still apply: the item must be obtainable that week, a bundle is never asked for more than it can take, the fruit-tree and crab-pot caps hold, and the week asks for the usual number of goals.
+  - **Random pairings.** Each card keeps its theme's buff and draws a random drawback, fixed once offered. A theme never draws a drawback that blocks its own goals: Foraging never gets foraging off, Farming never slower crops, Fishing never slower bites, Mining and Spelunking never closed mines, Artisan never slower machines.
+  - **Random multiplier.** Each card shows its own JP multiplier, 0.5x to 1.5x in steps of 0.05. It applies only to the JP from that theme's goals: the weekly bonus and donations into goal slots. Other JP is unchanged.
+  - **Mystery card.** About one week in four, one of the two cards is dealt face down. It shows only its multiplier, always 1.25x to 1.75x, and its theme, buff, drawback and goals are revealed when you pick it. A reroll on a mystery week keeps one card sealed. Never on a double week.
+  - **Double theme week.** Once a season, in week 2 or week 3, the hub says "Double week" and you take both cards: both buffs, both drawbacks and two goal lists in the quest log. Each list lifts its own drawback when done, and both themes count as used for the month.
+  - **Wildcard days.** One random day each week (never a festival, never the last day of the season) gets a one-day twist. The day shows in the quest log from the start of the week; the twist is revealed that morning with a HUD message and shown in the quest log and on the statue's Active tab. Good: every foraged item gives one extra, fish bite 30% sooner, watered crops grow an extra day, shops 25% off, or luck as good as it gets. Bad: the mines are closed, fish bite 30% slower, sell prices 25% lower, or energy drains 50% faster. Odd: snow out of season, one of the game's own night events on the farm, stumps, boulders and logs back on the farm, or a rockslide that blocks the path to the mines.
+  - **Random shrine donations.** Tops the week's goals up with items that have no Community Center slot. The total goal count follows the Required slots dial (Easy 3, Normal 4, Hard 5, Extreme 6). On Easy and Normal Item rarity the items are obtainable that week; on Hard and Extreme, that week or any earlier point this loop. Stacks follow the same rules a bundle slot would, and each pays what a Community Center donation of that item would, times the goal bonus and the card's multiplier. Donate them on the farm statue's new Donate tab. Missing them never fails a season, but that theme keeps its drawback for the week.
+  - **Random bundle rewards.** Each loop, every bundle's reward is drawn at random from any bundle's reward list, with no value matching. Applied when the board is built, on every bundle source.
+  - **Random cart days.** Each day of the week gets its own chance of a Traveling Cart visit, about two a week, and never none unless every day that week is a festival. Festival days are skipped, and the Night Market keeps its own boat cart.
+
+### Changed
+
+- **The "Allow re-rolling the weekly themes" switch moved into the Randomizer section** as Theme rerolls. A config that had it on becomes Free; off becomes Off.
+
+### Fixed
+
+- **Dried Fruit slots no longer ask for grapes.** The Dehydrator turns grapes into Raisins, not Dried Fruit, so a Dried Grapes ask could never be filled. Reported by Treedomy (Nexus posts, 2026-10-05). (0.18.145)
+
 ## 0.18.144 - 2026-10-05
 
 2856 tests. Rolls up 0.18.140 to 0.18.144.
@@ -50,9 +74,9 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **The Sticky bundle asks for sticky things, and more of them.** It picked one item from every resource plus the tapper extras, so it could ask for a single Acorn, some Stone or Fiber. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, Maple Syrup, Oak Resin, Pine Tar, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat, only what a year can reach. Amounts follow the season the bundle is due: Ice Cream asks 5 to 13 on Normal once the Summer stand sells it, and nothing appears before the season it can exist; Sugar asks less in Spring while money is short. Reported by elaineofshalott.
-- **Bundle amounts follow what a year can actually produce.** A Sticky bundle asking for one Acorn started a check of every ask the board had no amount rule for, and most of the gaps are filled. Tree seeds (Acorn, Maple Seed, Pine Cone) and Moss, tree fruit, forage (Cave Carrot, Tea Leaves, Spring Onion, Salmonberry), trash, pantry goods (Sugar, Rice, Vinegar and the like), Hay, Prize Tickets and the rare fish (Goby, Stonefish, Ice Pip, Lava Eel, Slimejack and the three Night Market fish) now ask for amounts a year can reach, and cooked dishes scale where your kitchen, recipes and shops allow more than one (some dishes still ask for one). The Treasure Chest and the Home Cook's egg and milk asks have no rule yet. Thanks to elaineofshalott for the Acorn report that started it.
+- **Bundle amounts follow what a year can actually produce.** A Sticky bundle asking for one Acorn started a check of every ask the board had no amount rule for, and most of the gaps are filled. Tree seeds (Acorn, Maple Seed, Pine Cone) and Moss, tree fruit, forage (Cave Carrot, Tea Leaves, Spring Onion, Salmonberry), trash, pantry goods (Sugar, Rice, Vinegar and the like), Hay, Prize Tickets and the rare fish (Goby, Stonefish, Ice Pip, Lava Eel, Slimejack and the three Night Market fish) now ask for amounts a year can reach, and cooked dishes scale where your kitchen, recipes and shops allow more than one (some dishes still ask for one). The Treasure Chest and the Home Cook's egg and milk asks have no rule yet. A dish is never asked for before you can cook it. Thanks to elaineofshalott for the Acorn report that started it.
 - **Mystic Syrup is no longer asked for.** It only comes from a late-game reward, so it could never be a fair year-1 ask.
-- **Prismatic Shard and Mystery Box are rare asks now.** On the boards The Longest Year builds, the bundles you need for the year hold a limited number of them, set by the Stack size setting: at most one on Normal, two on Hard and three on Extreme, none on Easy, and each is asked for one at a time. On the Normal and Remixed bundle sources (the game's own board) each is asked for one at a time, but the number of them is not limited. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard on every board. Prismatic Shard is also no longer counted as a Spring item; it comes from deep Skull Cavern nodes, so it is a Fall-or-later ask.
+- **Prismatic Shard and Mystery Box are rare asks now.** On the boards The Longest Year builds, the bundles you need for the year hold a limited number of them, set by the Stack size setting: at most one on Normal, two on Hard and three on Extreme, none on Easy, and each is asked for one at a time. On the Normal and Remixed bundle sources (the game's own board) each is asked for one at a time, but the number of them is not limited. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard on every board. Helper's asks for one Mystery Box instead of five. Prismatic Shard is also no longer counted as a Spring item; it comes from deep Skull Cavern nodes, so it is a Fall-or-later ask.
 - **The Night Market fish wait for Winter 15.** Midnight Squid, Spook Fish and Blobfish were asked for before the market opens. Moss is asked from Summer, when the trees have grown.
 
 ## 0.18.98 - 2026-09-29
@@ -93,7 +117,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **A Normal-bundles save switched to custom bundles at its rewind.** The new-game bundle pick was copied into config.json, and every reset read config.json, so starting a TLY Custom game changed the board of every older save at its next rewind. Each save now keeps its own choice; the settings menu changes the loaded save's choice (the title-screen value is only the new-game default). Saves from before this keep the board they run under. Reported by victoriatauanem (Nexus posts, 2026-09-28).
+- **A Normal-bundles save switched to custom bundles at its rewind.** The new-game bundle pick was copied into config.json, and every reset read config.json, so starting a TLY Custom game changed the board of every older save at its next rewind. Each save now keeps its own choice; the settings menu changes the loaded save's choice (the title-screen value is only the new-game default). Saves from before this keep the board they run under. If this already happened to your farm, set Bundle source back in the settings menu and your next rewind uses that board again. Reported by victoriatauanem (Nexus posts, 2026-09-28).
 - **Ostrich Mayo from Blue Eggs and Golden Mayo reached the board.** The reachability check only read shops, seeds and recipes, and an item with no route it could read stayed allowed. It now reads Data/Machines (a good made only from one out-of-reach input is out of reach) and Data/FarmAnimals (an animal nobody sells, hatched only from the egg it lays, makes that egg out of reach), for every mod's items. Artifact spots count as proof, so the Dinosaur Egg stays. Checked in game with the mod installed: Ostrich Egg and Ostrich Mayo are the only two new exclusions. Reported by Ninjamaid (Nexus posts, 2026-09-28).
 
 ## 0.18.79 - 2026-09-28
@@ -106,7 +130,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Keep Fish Pond** (Junimo Upgrades, Buildings, 750 JP; unlocked once a Fish Pond is built this loop). The rewind puts one Fish Pond back where the player had it, finished and empty: no fish, no output, no population gates, no request, no Golden Animal Cracker. With several ponds, the one with the most fish is the one remembered (the first one on a tie). If that spot is taken on the fresh farm, the pond goes to (46,18) or the nearest free 5x5 around it; it is placed after the other kept buildings, the greenhouse and the stable, and never duplicates a pond the fresh farm already has. Requested by elaineofshalott (Nexus, 2026-09-27).
+- **Keep Fish Pond** (Junimo Upgrades, Buildings, 750 JP; unlocked once a Fish Pond is built this loop). The rewind puts one Fish Pond back where the player had it, finished and empty: no fish, no output, no population gates, no request, no Golden Animal Cracker. You skip the rebuild and the seaweed; carry a fish in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one remembered (the first one on a tie). If that spot is taken on the fresh farm, the pond goes to (46,18) or the nearest free 5x5 around it; it is placed after the other kept buildings, the greenhouse and the stable, and never duplicates a pond the fresh farm already has. Requested by elaineofshalott (Nexus, 2026-09-27).
 
 - `tly_reroll [count|reopen]` presses the planning hub's re-roll button, or closes and reopens the hub, for headless checks. (debug)
 
@@ -116,7 +140,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **A finished season failed under Challenging CC Bundles.** CCCB swaps its board in on DayStarted and the base board back on DayEnding/Saving; it loads first, so the day-end ledger mirror read the smaller base board and the gate counted too few filled slots. OnDayEnding is now EventPriority.High and OnDayStarted Low. Separately, a "<Season> Crops/Foraging" bundle was classified Seasonal and demanded every slot; it now honors pick-X-of-Y (CCCB Spring Crops is 8 of 9). Reported by ozzy2540 (Nexus, 2026-09-25).
+- **A finished season failed under Challenging CC Bundles.** CCCB swaps its board in on DayStarted and the base board back on DayEnding/Saving; it loads first, so the day-end ledger mirror read the smaller base board and the gate counted too few filled slots. OnDayEnding is now EventPriority.High and OnDayStarted Low. Separately, a "<Season> Crops/Foraging" bundle was classified Seasonal and demanded every slot; it now honors pick-X-of-Y (CCCB Spring Crops is 8 of 9). The Bundle Log said "needs 9" for that bundle and now says 8. Reported by ozzy2540 (Nexus, 2026-09-25).
 - **Eggs in Foraging.** BuildForagePool took anything on any location's forage list, and Visit Mount Vapius spawns eggs on the ground. Categories -5, -6 and -18 (eggs, milk, animal products) are now skipped for Foraging; Animal and Chef's bundles still reach them. Reported by Thrippa (Nexus, 2026-09-25).
 - **Item-query shop and spawn lines are read.** Data/Shops and Data/Locations ItemIds that are fixed-set queries (ALL_ITEMS, FLAVORED_ITEM, and keys other mods register) are resolved through the game's ItemQueryResolver with the line's PerItemCondition. Top-level YEAR clauses are judged for year 1: a year-2 shop line is a known but closed route, a year-2 spawn row is not read. Pierre's three year-2 seeds stay exempt. Cornucopia's 13 rare flowers (Spring Rose included) are now kept off the board; vanilla newly kept off: Tea Set and Animal Catalogue. Reported by Thrippa.
 
@@ -137,7 +161,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Start with an animal keeps could never be bought.** Nothing recorded the species you owned, and three gate names (Chicken, VoidChicken, Cow) never matched vanilla's (White Chicken, Void Chicken, White Cow). Species are now recorded from the farm on every DayStarted and Saving, normalized on both sides of the gate, so saves that stored the vanilla names match too.
+- **Start with an animal keeps could never be bought.** Nothing recorded the species you owned, and three gate names (Chicken, VoidChicken, Cow) never matched vanilla's (White Chicken, Void Chicken, White Cow). Species are now recorded from the farm on every DayStarted and Saving, normalized on both sides of the gate, so saves that stored the vanilla names match too. Once you have had a chicken, Start with Chicken is for sale after Keep Coop.
 - **Start with Ostrich** needed Keep Deluxe Coop and put the ostrich in a coop; ostriches live in barns. It now needs Keep Barn.
 - **Start-with animals ignored building capacity.** A full coop or barn is now skipped.
 - **Gift of the Junimos room keeps could never be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts each check a different room's unlock flag, and the mod could not read any of them. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
@@ -581,6 +605,8 @@ their entries below are the detail. Reports: gazumbrado, nyxnyx2234, spenderg, B
   Coop or Barn of eight, raw resources, geode minerals at four. The Stack size dial is the band:
   Easy 10-30%, Normal 20-50%, Hard 50-65%, Extreme 65-80%, ceiling 80%. Gold asks keep three
   quarters (fish) or half (crops). Where an item has several sources the largest basis stands.
+  Hard and Extreme now mean it: an Extreme Spring Foraging bundle wants 40 to 60 of each item, an
+  Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
 - **Legendary fish**: once, plain, per-bundle cap 1/1/2/4 by step, never two from one season, and a
   board allowance of none on Easy, one on a quarter of Normal boards, two on Hard, three on Extreme.
 - **Jeweler's and Rockhound's** authored bundles in the Boiler Room; Mineral, Jeweler's and
