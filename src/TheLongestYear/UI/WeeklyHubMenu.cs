@@ -601,6 +601,12 @@ namespace TheLongestYear.UI
         /// is the outcome line (also used by the tly_reroll paid command).</summary>
         private bool TryRerollFromButton(out string message)
         {
+            // Off has no button; the tly_reroll paid route must not slip a free reroll past it.
+            if (_rand.Rerolls == RerollMode.Off)
+            {
+                message = "Reroll refused: rerolls are off.";
+                return false;
+            }
             long cost = CurrentRerollCost();
             long before = _getJp?.Invoke() ?? 0;
             if (cost > 0)
