@@ -208,24 +208,24 @@ namespace TheLongestYear.UI
         /// roll when random, a computed (not stored) roll for later weeks, vanilla when off.</summary>
         private IReadOnlyList<int> CartDaysForWeek(int weekStart)
         {
-            if (!CartDaysPatch.RandomOn)
-                return CartSchedule.VanillaDaysInWeek(weekStart);
-            if (weekStart == CartDaysPatch.WeekStart(Game1.dayOfMonth))
-                return CartDaysPatch.ThisWeekDays(Game1.dayOfMonth);
             int seasonIndex = Game1.seasonIndex;
+            if (!CartDaysPatch.RandomOn(seasonIndex, weekStart))
+                return CartSchedule.VanillaDaysInWeek(weekStart);
+            if (weekStart == CartSchedule.WeekStartOf(Game1.dayOfMonth))
+                return CartDaysPatch.DaysFor(seasonIndex, weekStart);
             int week = Calendar.WeekOfYear(seasonIndex, weekStart);
-            return CartSchedule.RandomDaysInWeek(_run?.Seed ?? 0, week, weekStart, CartSchedule.BlockedDays(seasonIndex));
+            return CartSchedule.RandomDaysInWeek(CartDaysPatch.RunProvider().Seed, week, weekStart, CartSchedule.BlockedDays(seasonIndex));
         }
 
         private bool TravelingCartVisitsToday(int dayOfMonth)
-            => CartDaysForWeek(CartDaysPatch.WeekStart(dayOfMonth)).Contains(dayOfMonth);
+            => CartDaysForWeek(CartSchedule.WeekStartOf(dayOfMonth)).Contains(dayOfMonth);
 
         private static string ShortDayName(int dayOfMonth) => Game1.shortDayDisplayNameFromDayOfSeason(dayOfMonth);
 
         /// <summary>The next day this season the cart is in town, or null when none are left.</summary>
         private int? NextCartVisitDay(int today)
         {
-            for (int weekStart = CartDaysPatch.WeekStart(today); weekStart <= WeatherScheduler.DaysPerMonth; weekStart += 7)
+            for (int weekStart = CartSchedule.WeekStartOf(today); weekStart <= WeatherScheduler.DaysPerMonth; weekStart += 7)
             {
                 foreach (int d in CartDaysForWeek(weekStart))
                     if (d > today) return d;

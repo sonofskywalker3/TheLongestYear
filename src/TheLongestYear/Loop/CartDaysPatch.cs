@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using StardewValley;
@@ -10,37 +11,33 @@ namespace TheLongestYear.Loop
     /// <summary>
     /// Random Cart Days: replaces the vanilla Fri/Sun rule in
     /// <c>Forest.ShouldTravelingMerchantVisitToday</c> with the week's rolled days. Dormant when no
-    /// TLY run is active or the week's Randomizer snapshot has the option off.
+    /// TLY run is active or the week's Randomizer snapshot has the option off. The week always comes
+    /// from the game date: vanilla calls this during the night transition, before TLY advances
+    /// Run.WeekOfYear.
     /// </summary>
     [HarmonyPatch(typeof(Forest), nameof(Forest.ShouldTravelingMerchantVisitToday))]
     internal static class CartDaysPatch
     {
-        private const int DaysPerWeek = 7;
-
         internal static Func<RunState> RunProvider;
 
-        /// <summary>The week's snapshot via <c>RunController.Randomizer</c>, so a mid-week toggle waits for next week.</summary>
-        internal static Func<RandomizerSettings> Settings;
+        /// <summary>Settings for a week of year (RunController.RandomizerForWeekNoStore).</summary>
+        internal static Func<int, RandomizerSettings> Settings;
 
-        /// <summary>True when this week's snapshot has random cart days on.</summary>
-        internal static bool RandomOn => RunActivation.IsActive && RunProvider != null && Settings != null
-            && (Settings()?.RandomCartDays ?? false);
+        /// <summary>True when the week containing this date has random cart days on.</summary>
+        internal static bool RandomOn(int seasonIndex, int dayOfMonth) => RunActivation.IsActive
+            && RunProvider != null && Settings != null && RunProvider() != null
+            && (Settings(Calendar.WeekOfYear(seasonIndex, dayOfMonth))?.RandomCartDays ?? false);
 
-        /// <summary>Cart days for the week containing <paramref name="dayOfMonth"/>, this week's roll.</summary>
-        internal static System.Collections.Generic.IReadOnlyList<int> ThisWeekDays(int dayOfMonth)
-        {
-            RunState run = RunProvider();
-            return CartSchedule.ForWeek(run, run.WeekOfYear, Game1.seasonIndex, WeekStart(dayOfMonth), random: true);
-        }
-
-        internal static int WeekStart(int dayOfMonth) => ((dayOfMonth - 1) / DaysPerWeek) * DaysPerWeek + 1;
+        /// <summary>Cart days for the week containing the date (stored roll).</summary>
+        internal static IReadOnlyList<int> DaysFor(int seasonIndex, int dayOfMonth)
+            => CartSchedule.ForWeek(RunProvider(), seasonIndex, dayOfMonth, random: true);
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static void Postfix(ref bool __result)
         {
-            if (!RandomOn) return;
-            __result = ThisWeekDays(Game1.dayOfMonth).Contains(Game1.dayOfMonth);
+            if (!RandomOn(Game1.seasonIndex, Game1.dayOfMonth)) return;
+            __result = DaysFor(Game1.seasonIndex, Game1.dayOfMonth).Contains(Game1.dayOfMonth);
         }
     }
 }
