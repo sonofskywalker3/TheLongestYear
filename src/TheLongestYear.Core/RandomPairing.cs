@@ -33,12 +33,16 @@ public static class RandomPairing
         _ => None,
     };
 
-    public static string LiabilityFor(int seed, int weekOfYear, Theme theme, bool random)
+    /// <param name="otherCard">Double theme week only: the week's other card. The drawback that blocks
+    /// its goals is excluded too, so neither card's drawback works against the other card's list.
+    /// Null on a single week, which keeps the draw exactly as before.</param>
+    public static string LiabilityFor(int seed, int weekOfYear, Theme theme, bool random, Theme? otherCard = null)
     {
         string own = ThemeModifiers.For(theme).LiabilityId;
         if (!random) return own;
         IReadOnlySet<string> excluded = ExcludedFor(theme);
-        var allowed = AllLiabilities.Where(id => !excluded.Contains(id)).ToList();
+        IReadOnlySet<string> excludedByOther = otherCard.HasValue ? ExcludedFor(otherCard.Value) : None;
+        var allowed = AllLiabilities.Where(id => !excluded.Contains(id) && !excludedByOther.Contains(id)).ToList();
         // RollSeed, not a xor of related seeds: two cards of one week must draw independently (final review I1).
         var rng = RollSeed.Rng(seed, weekOfYear, Salt, (int)theme);
         return allowed[rng.Next(allowed.Count)];
