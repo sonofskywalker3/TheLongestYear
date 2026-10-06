@@ -192,7 +192,7 @@ namespace TheLongestYear.Loop
                     continue;
                 }
 
-                // No quest in log — back-fill it if a selection is already active.
+                // No quest in log: back-fill it if a selection is already active.
                 if (SelectionOf(list).HasValue && (SlotsOf(list).Count > 0 || ShrineGoalsOf(list).Count > 0))
                     AddQuest(list);
             }
