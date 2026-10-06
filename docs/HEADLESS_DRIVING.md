@@ -50,6 +50,17 @@ n = count; bridge.ps1 -Action send -Lines "tly_select Farming"      # the card c
 bridge.ps1 -Action wait -Pattern "Selected Farming" -FromLine n
 ```
 
+With the hub open, three more commands check the Randomizer cards (all log to the SMAPI console):
+
+- `tly_select <theme> left|right` is the real card click for that side (goal multiplier and
+  mystery card included); it refuses a theme that is not on that side. Logs
+  `Selected <theme> (slot N, goal JP xM)`. Without a side it is the old forced 1x pick.
+- `tly_reroll paid` presses the reroll button's own code (price, JP spend, "cannot change"
+  gate); logs `Reroll paid <cost> JP (JP a -> b)` or `Reroll refused: <reason>`. `tly_reroll`
+  alone stays the free debug reroll.
+- `tly_hubcards` logs each card: slot, theme (`?` when face down, real theme at Trace), drawback
+  id and goal multiplier.
+
 Advance a season without tripping the day-28 gate: `tly_setday 7` (bridge), then
 `send-smapi-command.ps1 "debug season summer"` and `send-smapi-command.ps1 "debug sleep"`; the
 hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).

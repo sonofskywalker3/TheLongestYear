@@ -1493,12 +1493,16 @@ namespace TheLongestYear.Loop
             string seasonTag = seasonOverride.HasValue ? $" (for {seasonOverride.Value})" : "";
             // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
             RandomizerSettings offerRand = RandomizerForWeekPeek(week);
+            // A stored re-roll replaces the seeded pair when the hub opens, so log the pair that will show.
+            var restored = Run.RerolledOfferFor(week, selectionsForOffer);
+            var shown = restored ?? offer;
+            string restoredTag = restored != null ? " [restored re-roll]" : "";
             _monitor.Log(
                 $"Week {week}{seasonTag} selection offer: " +
-                $"{string.Join(" OR ", CardMultiplier.OfferLabels(offer, Run.Seed, week, offerRand))} (opening planning hub).",
+                $"{string.Join(" OR ", CardMultiplier.OfferLabels(shown, Run.Seed, week, offerRand))}{restoredTag} (opening planning hub).",
                 LogLevel.Info);
-            if (CardMultiplier.AnySealed(offer.Count, Run.Seed, week, offerRand))
-                _monitor.Log($"Week {week} offer with the face-down card: {string.Join(" OR ", offer)}.", LogLevel.Trace);
+            if (CardMultiplier.AnySealed(shown.Count, Run.Seed, week, offerRand))
+                _monitor.Log($"Week {week} offer with the face-down card: {string.Join(" OR ", shown)}.", LogLevel.Trace);
 
             bool opened = _launcher?.OpenWeeklyHub(seasonOverride) ?? false;
             if (opened)
