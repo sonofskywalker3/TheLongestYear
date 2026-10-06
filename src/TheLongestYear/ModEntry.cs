@@ -4450,7 +4450,7 @@ namespace TheLongestYear
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             firstEngine.Availability = _availability;
-            GeneratedBundleSet first = firstEngine.Generate(seed);
+            GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
                 LogLevel.Info);
@@ -4458,7 +4458,7 @@ namespace TheLongestYear
 
             var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
-            GeneratedBundleSet second = secondEngine.Generate(seed);
+            GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -5292,7 +5292,7 @@ namespace TheLongestYear
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
-                    GeneratedBundleSet set = engine.Generate(seed);
+                    GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))
                     {
@@ -5334,7 +5334,9 @@ namespace TheLongestYear
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty);
                 engine.Availability = _availability;
-                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
+                // Randomizer: the fresh-run board is a NEW board, so it stamps the option here.
+                state.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
+                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0), state.RandomBundleRewardsBoard);
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
                 state.WrittenBoard = new Dictionary<string, string>(set.ToBundleData());
