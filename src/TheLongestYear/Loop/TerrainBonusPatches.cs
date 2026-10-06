@@ -29,7 +29,7 @@ namespace TheLongestYear.Loop
         private const string Stone = "(O)390";
         private const string Wood  = "(O)388";
 
-        /// <summary>Shared roll + double helper. Routes by <see cref="ActiveEffectsProvider.BonusId"/>:
+        /// <summary>Shared roll + double helper. Routes by <see cref="ActiveEffectsProvider.ActiveBonus"/> (Mixed wins when both are active):
         /// <list type="bullet">
         ///   <item><c>all_drops_up</c> (Mixed): <see cref="BonusDropResolver.MixedAllDropsChance"/>
         ///     chance to clone one of the new drops, no filter.</item>
@@ -50,9 +50,9 @@ namespace TheLongestYear.Loop
         {
             if (loc?.debris == null || startDebrisCount < 0) return false;
 
-            string bonusId = ActiveEffectsProvider.BonusId;
-            bool mixedActive = bonusId == "all_drops_up";
-            bool forageActive = applyForageYieldUp && bonusId == "forage_yield_up";
+            // ActiveBonus counts either theme entry (a double week can hold both) and any boost bound to the id.
+            bool mixedActive = ActiveEffectsProvider.ActiveBonus("all_drops_up");
+            bool forageActive = applyForageYieldUp && ActiveEffectsProvider.ActiveBonus("forage_yield_up");
             if (!mixedActive && !forageActive) return false;
 
             // Round-13 spec: +1 from the rolled set, not full set doubled. See

@@ -13,6 +13,8 @@
     "hud.theme-complete": "Weekly theme complete! Drawback lifted.",
     "hud.goal-paid": "Goal done! +{{jp}} JP ({{done}}/{{total}})",
     "hud.nothing-to-donate": "Themed donations completed - drawback lifted.",
+    "hud.nothing-to-donate-named": "{{theme}} donations completed - drawback lifted.",
+    "hud.theme-complete-named": "{{theme}} theme complete! Drawback lifted.",
     "hud.checkpoint-award": "The Junimos cheer you onward! +{{jp}} JP",
     "hud.stash-full.one": "Junimo Stash is full! ({{cap}} slot maximum)",
     "hud.stash-full.other": "Junimo Stash is full! ({{cap}} slots maximum)",
@@ -427,6 +429,7 @@
     "shrine.active.this-loop": "this loop",
     "shrine.active.this-week": "This week",
     "shrine.active.theme": "Bonus: {{bonus}}. Liability: {{liability}}.",
+    "shrine.active.theme-named": "{{theme}}. Bonus: {{bonus}}. Liability: {{liability}}.",
     "shrine.active.lifted": "(lifted)",
     "shrine.active.no-theme": "No theme picked yet this week.",
     "shrine.boosts.group.instant": "Instant (tonight or tomorrow)",
@@ -506,6 +509,7 @@
 
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
+    "menu.hub.double-week": "Double week: take both",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
     "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
     "menu.hub.reroll": "Re-roll Themes",

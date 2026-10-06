@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using StardewModdingAPI;
 using TheLongestYear.Core;
@@ -55,15 +56,17 @@ namespace TheLongestYear.Donations
             Rarity rarity = ItemRarityResolver.Resolve(qualifiedItemId, _config.RarityThresholds);
             long baseJp = Jp.PerItem(rarity, Run.WeekOfYear) * count;
 
-            bool bonusApplies = IsSelectedBonusSlot(bundleIndex, ingredientIndex);
+            // The goal list that owns the slot (the second list on a double week has its own multiplier).
+            List<BonusSlot> owner = GoalListOwning(bundleIndex, ingredientIndex, out double cardMultiplier);
+            bool bonusApplies = owner != null;
             // A real deposit is the ONLY thing that credits a weekly goal. Vanilla blanket-sets
             // every ingredient flag when a bundle completes, so the live flag alone would tick
             // goals nobody filled (see WeeklyGoalCredit). This call site is the one place that
             // both sees genuine deposits and knows the slot identity.
             if (bonusApplies)
-                WeeklyGoalCredit.RecordDeposit(Run.CurrentWeekBonusSlots, bundleIndex, ingredientIndex);
+                WeeklyGoalCredit.RecordDeposit(owner, bundleIndex, ingredientIndex);
             long awarded = bonusApplies
-                ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier * Run.CurrentGoalMultiplier, MidpointRounding.AwayFromZero)
+                ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier * cardMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
             awarded = JpBoostHelper.Apply(_store.State, awarded);
 
@@ -73,7 +76,7 @@ namespace TheLongestYear.Donations
             else
                 _monitor.Log($"OnItemDonated('{qualifiedItemId}') without a slot identity: JP paid, ledger untouched (the board mirror settles it).", LogLevel.Trace);
 
-            string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier}, card x{Run.CurrentGoalMultiplier})" : "";
+            string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier}, card x{cardMultiplier})" : "";
             int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
             string boostTag = jpBoostTier > 0 ? $" (jp_boost tier {jpBoostTier})" : "";
             // Per-item donation line is Trace: a full CC restoration donates dozens-to-hundreds of
@@ -86,13 +89,29 @@ namespace TheLongestYear.Donations
             AfterDonation?.Invoke();
         }
 
-        /// <summary>True if the just-completed CC slot is one of this week's sampled goal slots
-        /// (see <see cref="BonusSlotSampler"/>; persisted in <see cref="RunState.CurrentWeekBonusSlots"/>).</summary>
-        private bool IsSelectedBonusSlot(int bundleIndex, int ingredientIndex)
+        /// <summary>The goal list holding the just-completed CC slot, or null when it is not one of
+        /// this week's sampled goal slots (see <see cref="BonusSlotSampler"/>; persisted in
+        /// <see cref="RunState.CurrentWeekBonusSlots"/>, and on a double week also
+        /// <see cref="RunState.SecondWeekBonusSlots"/>). <paramref name="cardMultiplier"/> is that
+        /// list's goal multiplier. The two lists never share a slot (GoalLists.Dedupe).</summary>
+        private List<BonusSlot> GoalListOwning(int bundleIndex, int ingredientIndex, out double cardMultiplier)
         {
-            if (bundleIndex < 0 || ingredientIndex < 0) return false;
-            if (!Run.CurrentSelection.HasValue) return false;
-            foreach (BonusSlot s in Run.CurrentWeekBonusSlots)
+            cardMultiplier = Run.CurrentGoalMultiplier;
+            if (bundleIndex < 0 || ingredientIndex < 0) return null;
+            if (Run.CurrentSelection.HasValue && Holds(Run.CurrentWeekBonusSlots, bundleIndex, ingredientIndex))
+                return Run.CurrentWeekBonusSlots;
+            if (Run.SecondSelection.HasValue && Holds(Run.SecondWeekBonusSlots, bundleIndex, ingredientIndex))
+            {
+                cardMultiplier = Run.SecondGoalMultiplier;
+                return Run.SecondWeekBonusSlots;
+            }
+            return null;
+        }
+
+        private static bool Holds(List<BonusSlot> slots, int bundleIndex, int ingredientIndex)
+        {
+            if (slots == null) return false;
+            foreach (BonusSlot s in slots)
                 if (s.BundleIndex == bundleIndex && s.IngredientIndex == ingredientIndex)
                     return true;
             return false;
