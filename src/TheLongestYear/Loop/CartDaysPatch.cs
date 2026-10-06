@@ -20,7 +20,7 @@ namespace TheLongestYear.Loop
     {
         internal static Func<RunState> RunProvider;
 
-        /// <summary>Settings for a week of year (RunController.RandomizerForWeekNoStore).</summary>
+        /// <summary>Settings for a week of year (RunController.RandomizerForWeekPeek).</summary>
         internal static Func<int, RandomizerSettings> Settings;
 
         /// <summary>True when the week containing this date has random cart days on.</summary>
