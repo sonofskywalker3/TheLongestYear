@@ -98,6 +98,22 @@ public sealed class RunState
     /// ignored (Nijah, Nexus 2026-09-28: a re-roll is kept for the week when the hub closes).</summary>
     public int RerollWeek { get; set; } = -1;
 
+    /// <summary>The week <see cref="RandomizerSnapshot"/> was taken for; -1 when none.</summary>
+    public int RandomizerWeek { get; set; } = -1;
+    /// <summary>The Randomizer settings as they stood when this week's offer was first shown.</summary>
+    public RandomizerSettings? RandomizerSnapshot { get; set; }
+
+    /// <summary>This week's Randomizer settings. The first call in a week stores a copy of
+    /// <paramref name="live"/>; later calls that week return the copy, so a setting changed mid-week
+    /// waits for the next weekly offer.</summary>
+    public RandomizerSettings RandomizerFor(int weekOfYear, RandomizerSettings live)
+    {
+        if (RandomizerWeek == weekOfYear && RandomizerSnapshot != null) return RandomizerSnapshot;
+        RandomizerWeek = weekOfYear;
+        RandomizerSnapshot = (live ?? new RandomizerSettings()).Clone();
+        return RandomizerSnapshot;
+    }
+
     /// <summary>Pair keys (<see cref="RerollCycle.PairKey"/>) shown on the hub during
     /// <see cref="RerollWeek"/>, the first offer included.</summary>
     public List<string> RerollSeenPairs { get; set; } = new();
@@ -369,6 +385,8 @@ public sealed class RunState
         RestartMenusDone = false;
         OfferPresentedWeek = -1;
         ClearReroll();
+        RandomizerWeek = -1;
+        RandomizerSnapshot = null;
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back
