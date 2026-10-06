@@ -99,6 +99,8 @@ namespace TheLongestYear.UI
         private ClickableComponent _rightCard;
         private ClickableComponent _rerollButton;
         private int _rerollCounter;
+        private readonly System.Func<long> _getJp;
+        private readonly System.Action<long> _spendJp;
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
 
@@ -127,9 +129,12 @@ namespace TheLongestYear.UI
         public WeeklyHubMenu(IMonitor monitor, RunController runController, GameplayConfig config,
             RunState run, IReadOnlyList<Theme> offer,
             CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false,
-            int weatherSageSlots = 0, int cartPreviewSlots = 0)
+            int weatherSageSlots = 0, int cartPreviewSlots = 0,
+            System.Func<long> getJp = null, System.Action<long> spendJp = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
+            _getJp = getJp;
+            _spendJp = spendJp;
             _monitor = monitor;
             _runController = runController;
             _config = config;
@@ -530,6 +535,16 @@ namespace TheLongestYear.UI
 
             if (_rerollButton != null && _rerollButton.containsPoint(x, y))
             {
+                long cost = CurrentRerollCost();
+                if (cost > 0)
+                {
+                    if (cost > (_getJp?.Invoke() ?? 0))
+                    {
+                        Game1.playSound("cancel");
+                        return;
+                    }
+                    _spendJp?.Invoke(cost);
+                }
                 RerollOffer();
                 Game1.playSound("smallSelect");
                 return;
@@ -542,6 +557,10 @@ namespace TheLongestYear.UI
 
         /// <summary>The week whose offer this hub shows: next month's week 1 on the day-28 pre-pick hub.</summary>
         private int OfferWeek => _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+
+        /// <summary>JP the next reroll charges: rerolls already made this week set the price.</summary>
+        private long CurrentRerollCost()
+            => RerollPricing.CostOf(_rand.Rerolls, _run.RerollWeek == OfferWeek ? _run.RerollCount : 0);
 
         /// <summary>The picks the offer excludes. The day-28 pre-pick is for next month, so none
         /// (the same rule <see cref="MenuLauncher.OpenWeeklyHub"/> uses for the first offer).</summary>
@@ -682,19 +701,23 @@ namespace TheLongestYear.UI
         {
             if (_rerollButton == null) return;
 
+            long cost = CurrentRerollCost();
+            float boxAlpha = cost > (_getJp?.Invoke() ?? 0) ? 0.5f : 1f;
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 _rerollButton.bounds.X, _rerollButton.bounds.Y,
                 _rerollButton.bounds.Width, _rerollButton.bounds.Height,
-                Color.White, 1f, false);
+                Color.White * boxAlpha, 1f, false);
 
-            string label = _rerollCounter == 0
+            string label = cost > 0
+                ? Strings.Get("menu.hub.reroll-cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
+                : _rerollCounter == 0
                 ? Strings.Get("menu.hub.reroll")
                 : Strings.Get("menu.hub.reroll-count", new Dictionary<string, string> { ["count"] = _rerollCounter.ToString() });
             Vector2 size = Game1.smallFont.MeasureString(label);
             float labelX = _rerollButton.bounds.X + (_rerollButton.bounds.Width - size.X) / 2f;
             float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                new Vector2(labelX, labelY), Game1.textColor);
+                new Vector2(labelX, labelY), Game1.textColor * boxAlpha);
         }
 
         /// <summary>Draw the weather foresight as a calendar strip (a "Weather" header, a row of
