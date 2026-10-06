@@ -41,11 +41,19 @@ public static class WildcardDays
         string? stored = StoredTwistToday(run);
         if (stored != null) return stored;
         run.WildcardTwist = WildcardSchedule.TwistFor(run.Seed, run.WeekOfYear, minecartsRepaired(),
-            WildcardSchedule.SnowAllowed((int)run.Season, run.DayOfMonth));
+            WildcardSchedule.SnowAllowed((int)run.Season, run.DayOfMonth) && !PaidWeatherToday(run));
         run.WildcardTwistDay = run.DayOfMonth;
         revealedNow = true;
         return run.WildcardTwist;
     }
+
+    /// <summary>True when a Rain Dance or Storm Call bought yesterday sets today's weather. A
+    /// snow day would overwrite the weather the player paid for, so it leaves the pool that day.
+    /// The reverse cannot happen: a weather boost always targets tomorrow, and a twist is only
+    /// revealed on its own morning.</summary>
+    public static bool PaidWeatherToday(RunState run)
+        => run.WeatherOverride != null
+           && run.WeatherOverrideDay == Calendar.DayOfYear((int)run.Season, run.DayOfMonth);
 
     /// <summary>The twist already stored for today, or null. Never rolls (the load path).</summary>
     public static string? StoredTwistToday(RunState run)
