@@ -49,4 +49,13 @@ public class TaintedItemsTests
         for (double t = 0; t < 10000; t += 37)
             Assert.InRange(TaintedItems.Pulse(t), 0.25f, 0.6501f);
     }
+
+    [Fact]
+    public void Falloff_is_solid_at_the_centre_and_gone_at_the_rim()
+    {
+        Assert.Equal(1f, TaintedItems.Falloff(0f));
+        Assert.Equal(0f, TaintedItems.Falloff(1f));
+        Assert.Equal(0f, TaintedItems.Falloff(2f));
+        Assert.True(TaintedItems.Falloff(0.25f) > TaintedItems.Falloff(0.75f));
+    }
 }

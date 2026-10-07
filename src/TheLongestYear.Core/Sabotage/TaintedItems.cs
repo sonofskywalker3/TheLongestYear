@@ -43,4 +43,13 @@ public sealed class TaintedItems
         const double PeriodDivisor = 450.0;
         return Base + Swing * (float)Math.Sin(totalMilliseconds / PeriodDivisor);
     }
+
+    /// <summary>Opacity of the aura's soft edge at a normalized distance from its centre
+    /// (0 = centre, 1 = rim): a smooth falloff to nothing at the rim, 0 beyond it.</summary>
+    public static float Falloff(float normalizedRadius)
+    {
+        if (normalizedRadius >= 1f) return 0f;
+        float r = Math.Max(0f, normalizedRadius);
+        return 1f - r * r;
+    }
 }

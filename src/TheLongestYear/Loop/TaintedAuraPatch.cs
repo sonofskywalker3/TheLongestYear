@@ -14,9 +14,10 @@ namespace TheLongestYear.Loop
     /// manually from ModEntry so a signature mismatch fails loudly at startup.</summary>
     internal static class TaintedAuraPatch
     {
-        private static readonly Color AuraColor = new(90, 0, 130);
-        private const float MenuAuraScale = 4.2f;
-        private const float HeldAuraScale = 3.2f;
+        private static readonly Color AuraColor = new(120, 20, 180);
+        private const int GlowTextureSize = 64;
+        private const float MenuAuraScale = 1.6f;
+        private const float HeldAuraScale = 1.5f;
         private const float CenterOffset = 32f;
         private const float DepthStep = 0.0001f;
         private const float HeldDepthDivisor = 10000f;
@@ -48,6 +49,27 @@ namespace TheLongestYear.Loop
                 prefix: new HarmonyMethod(typeof(TaintedAuraPatch), nameof(HeldPrefix)));
         }
 
+        private static Texture2D _glow;
+
+        /// <summary>A white soft-edged disc, built once on the first draw. Game1.shadowTexture
+        /// cannot carry the colour: its pixels are black, so tinting it only darkens.</summary>
+        private static Texture2D Glow(GraphicsDevice device)
+        {
+            if (_glow != null && !_glow.IsDisposed) return _glow;
+            var pixels = new Color[GlowTextureSize * GlowTextureSize];
+            float half = GlowTextureSize / 2f;
+            for (int y = 0; y < GlowTextureSize; y++)
+            for (int x = 0; x < GlowTextureSize; x++)
+            {
+                float dx = (x + 0.5f - half) / half, dy = (y + 0.5f - half) / half;
+                float a = TaintedItems.Falloff((float)Math.Sqrt(dx * dx + dy * dy));
+                pixels[y * GlowTextureSize + x] = Color.White * a; // premultiplied
+            }
+            _glow = new Texture2D(device, GlowTextureSize, GlowTextureSize);
+            _glow.SetData(pixels);
+            return _glow;
+        }
+
         private static bool IsTainted(Item item)
         {
             ISet<string> ids = Tainted?.Invoke();
@@ -56,11 +78,11 @@ namespace TheLongestYear.Loop
 
         private static void DrawAura(SpriteBatch b, Vector2 center, float scale, float depth)
         {
-            Texture2D tex = Game1.shadowTexture;
-            if (tex == null || Game1.currentGameTime == null) return;
+            if (Game1.currentGameTime == null || b.GraphicsDevice == null) return;
+            Texture2D tex = Glow(b.GraphicsDevice);
             float pulse = TaintedItems.Pulse(Game1.currentGameTime.TotalGameTime.TotalMilliseconds);
             b.Draw(tex, center, tex.Bounds, AuraColor * pulse, 0f,
-                new Vector2(tex.Bounds.Center.X, tex.Bounds.Center.Y), scale, SpriteEffects.None,
+                new Vector2(tex.Width / 2f, tex.Height / 2f), scale, SpriteEffects.None,
                 Math.Max(0f, depth - DepthStep));
         }
 
