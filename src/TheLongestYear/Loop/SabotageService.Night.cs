@@ -59,6 +59,7 @@ namespace TheLongestYear.Loop
             // scene had the slot, and is postponed otherwise.
             SettlePendingIfAny("a new night began");
             _guaranteedTamperTonight = false;
+            _queuedTonight = false;
             if (!RunActivation.IsActive || !HostCanAct()) return;
             CoreSeason season = Run.Season;
             int day = Run.DayOfMonth;
@@ -108,9 +109,26 @@ namespace TheLongestYear.Loop
             DarknessEvent? forced = TakeArmed(night);
             _monitor.Log($"Darkness: night roll {season} {day} at {chance:P0}: {(dice ? "strike" : "quiet")}{(forced != null ? $", armed {forced}" : "")}; level {level}.", LogLevel.Trace);
 
+            // A strike postponed on an earlier night fires on the next free night instead of the
+            // normal roll (designer, 2026-10-07), as tonight's one strike. A queued kind that cannot
+            // act tonight (capped, spaced, warded, nothing fair) stays queued and the night rolls
+            // normally. An arm takes precedence: that is Jeff asking for a front by hand.
+            if (forced == null)
+            {
+                DarknessEvent? queued = StrikeQueue.Tonight(Run, night.CanAct);
+                if (queued != null)
+                {
+                    forced = queued;
+                    _queuedTonight = true;
+                    _monitor.Log($"Darkness: the postponed {queued} fires tonight ({season} {day}) instead of the roll.", LogLevel.Info);
+                }
+                else if (Run.QueuedStrikes is { Count: > 0 })
+                    _monitor.Log($"Darkness: queued {string.Join(", ", Run.QueuedStrikes)} cannot act tonight, so it stays queued and the night rolls normally.", LogLevel.Trace);
+            }
+
             // The every-loop guarantee (spec 2026-09-21): a kind that has not struck this loop by
             // day 15 of its debut season is forced on the first night it can act, even on a quiet
-            // roll. An arm takes precedence: that is Jeff asking for a front by hand.
+            // roll. An arm or a queued strike takes precedence.
             if (forced == null)
             {
                 // Asked only when nothing was armed: CanAct can plan a reversion, which spends rng,

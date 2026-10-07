@@ -325,6 +325,10 @@ public sealed class RunState
     /// <summary>This Winter's guaranteed tamper was postponed by a collision (Jeff, 2026-10-07): it
     /// stays owed past week 1 until it lands.</summary>
     public bool GuaranteedTamperPostponed { get; set; }
+    /// <summary>DarknessEvent names of strikes postponed because their scene could not have the
+    /// night, waiting for the next free night (designer, 2026-10-07; see
+    /// <see cref="Sabotage.StrikeQueue"/>). Oldest first. Cleared at the loop reset.</summary>
+    public List<string> QueuedStrikes { get; set; } = new();
     /// <summary>Names of the DarknessEvent values that have struck this loop (spec 2026-09-21: the
     /// guarantee and the once-per-loop scenes both read it).</summary>
     public HashSet<string> StruckEvents { get; set; } = new();
@@ -601,6 +605,7 @@ public sealed class RunState
         UnmoderatedTamperSpent = false;
         GuaranteedTamperDone = false;
         GuaranteedTamperPostponed = false;
+        (QueuedStrikes ??= new()).Clear();
         (StruckEvents ??= new()).Clear();
         (StrikeScenesPlayed ??= new()).Clear();
         (WitnessLines ??= new()).Clear();

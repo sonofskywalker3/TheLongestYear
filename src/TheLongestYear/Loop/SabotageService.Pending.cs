@@ -39,7 +39,8 @@ namespace TheLongestYear.Loop
         /// <summary>Drop a waiting strike whose scene cannot have tonight's overnight slot (Jeff,
         /// 2026-10-07: "we don't delay scenes without delaying the effect of them"). Neither its
         /// effect nor its scene happens tonight, and since nothing was recorded the night is as if
-        /// no strike happened: the roll and the every-loop guarantee bring it back later.</summary>
+        /// no strike happened. It is queued for the next free night (<see cref="StrikeQueue"/>);
+        /// the guaranteed Winter tamper keeps its own carry instead.</summary>
         public bool PostponePendingIfAny(string why)
         {
             PendingStrike p = Pending;
@@ -53,9 +54,13 @@ namespace TheLongestYear.Loop
                 return false;
             }
             Pending = null;
+            // The guaranteed Winter tamper keeps its own carry; every other strike is queued for the
+            // next free night (designer, 2026-10-07).
             if (_guaranteedTamperTonight && p.Event == DarknessEvent.Tampering)
                 GuaranteedTamper.OnPostponed(Run);
-            _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, so the roll and the guarantee bring it back.", LogLevel.Info);
+            else
+                StrikeQueue.Enqueue(Run, p.Event);
+            _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, and it is queued for the next free night.", LogLevel.Info);
             return true;
         }
 
@@ -97,7 +102,13 @@ namespace TheLongestYear.Loop
                 GuaranteedTamper.OnCommitted(Run);
                 _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {Run.DayOfMonth}.", LogLevel.Info);
             }
+            else if (StrikeQueue.OnCommitted(Run, strike.Event))
+                _monitor.Log($"Darkness: the postponed {strike.Event} has struck{(_queuedTonight ? "" : " (picked tonight by an arm or the roll)")}, so it leaves the queue.", LogLevel.Info);
         }
+
+        /// <summary>Did tonight's strike come from the queue of postponed strikes? Cleared at the top
+        /// of every night pass, so it only ever describes tonight.</summary>
+        private bool _queuedTonight;
 
         /// <summary>Was the guaranteed Winter tamper the strike picked tonight? Cleared at the top of
         /// every night pass, so it only ever describes tonight.</summary>

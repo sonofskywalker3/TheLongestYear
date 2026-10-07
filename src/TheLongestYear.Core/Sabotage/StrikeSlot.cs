@@ -36,8 +36,8 @@ public enum StrikeSlotVerdict
 /// them, that's stupid"). A strike never lands without its scene: when the slot belongs to
 /// something else the strike is postponed, and the night is as if no strike happened (nothing is
 /// recorded, so the week's chance, the cap slot and the tamper spacing stay unspent and the
-/// every-loop guarantee still owes the kind). The normal roll and the guarantee bring it back on a
-/// later night. A strike with no scene by design (its kind's scene already played this loop) never
+/// every-loop guarantee still owes the kind). It is queued and fires on the next free night
+/// (<see cref="StrikeQueue"/>; the guaranteed Winter tamper keeps its own carry). A strike with no scene by design (its kind's scene already played this loop) never
 /// reaches this: it lands at the night pass.</summary>
 public static class StrikeSlot
 {
