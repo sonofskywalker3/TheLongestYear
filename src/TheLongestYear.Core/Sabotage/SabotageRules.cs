@@ -48,6 +48,13 @@ public static class BlightRule
         return everything && isBigCraftable && onFarm;
     }
 
+    /// <summary>Is a chest in the storage draw at all? A Mini-Shipping Bin is emptied (shipped)
+    /// overnight between the plan at day end and the strike, so a hit there would point at nothing.
+    /// A Junimo Chest shares one inventory with every other Junimo Chest, so it is not one chest's
+    /// stock. Both stay out; every other chest (plain, big, hopper) is in.</summary>
+    public static bool ChestInDraw(bool shipsOvernight, bool sharedInventory)
+        => !shipsOvernight && !sharedInventory;
+
     /// <summary>How many crops die on a strike: the level's share of the live crops, at least one,
     /// capped by season and level (spec 2026-09-15 Part B, section 2.4).</summary>
     public static int Count(int liveCrops, Season season, DifficultyStep level)

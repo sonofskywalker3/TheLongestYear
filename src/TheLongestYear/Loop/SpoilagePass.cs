@@ -11,8 +11,8 @@ namespace TheLongestYear.Loop
     /// night, one at a time off random stacks. A night raids ONE chest (Jeff, 2026-09-21): the first
     /// chest a roll lands in is the night's chest, and the rest are safe until tomorrow. Placed
     /// machines are not chests and stay in the draw throughout. Food spoils; anything else goes
-    /// missing. Every chest on every map is in the draw except the Junimo Stash and chests on a
-    /// Circle of Warding. Below Extreme only plain objects are taken (never tools, weapons or big
+    /// missing. Every chest on every map is in the draw except the Junimo Stash, Mini-Shipping Bins
+    /// (shipped overnight), Junimo Chests (one shared inventory) and chests on a Circle of Warding. Below Extreme only plain objects are taken (never tools, weapons or big
     /// craftables). On Extreme (<paramref name="everything"/>, spec 2026-09-15 Part B, 2.5) anything
     /// in an unwarded chest can go, and machines placed on the FARM map join the pool at three units
     /// each; a machine on a circle's tiles is protected like a chest there.</summary>
@@ -64,6 +64,12 @@ namespace TheLongestYear.Loop
                     if (obj is Chest chest)
                     {
                         if (chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) continue;
+                        // A Mini-Shipping Bin ships overnight before the strike lands, and a Junimo
+                        // Chest shares one inventory with every other one: neither is in the draw.
+                        Chest.SpecialChestTypes type = chest.SpecialChestType;
+                        if (!BlightRule.ChestInDraw(
+                                shipsOvernight: type == Chest.SpecialChestTypes.MiniShippingBin,
+                                sharedInventory: type == Chest.SpecialChestTypes.JunimoChest)) continue;
                         bool chestWarded = CircleOfWardingService.Covers(circles, loc, chest.TileLocation);
                         var items = chest.Items;
                         for (int i = 0; i < items.Count; i++)
