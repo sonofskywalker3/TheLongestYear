@@ -25,13 +25,13 @@ Things to judge: every scene's look and length, the aura's colour (it also tints
 hair when held), the cloud's darkness, "our war" over "our fight" in the Winter closer, and the gate
 scenes' lines.
 
-**Open designer questions (not decided):**
-- (a) Should a tamper's replacement also skip any item already asked for elsewhere on the board? Today
-  it only skips items in the same bundle and anything already tainted, so a live strike asked for
-  "2 Beer" while another bundle also wanted Beer. That slot then can never be tampered again.
-- (b) Mass-noun asks: the Junimos' ask now reads "3 Wild Honey", "3 Sea Jelly", "3 Blueberry Wine",
-  "3 Apple Juice", "3 Salmon Roe" (was "3 Wild Honeys", "3 Sea Jellies"). Single-word names are
-  unchanged ("3 Parsnips", "3 Beer"). Keep, or change any of them?
+**Designer questions: ANSWERED and BUILT (Jeff, 2026-10-07; commits bf7f4a4, 6908dda):**
+- (a) A tamper's replacement skips anything already asked for anywhere on the board ("it's
+  something new"), as well as anything already tainted.
+- (b) Counted asks name a container or a proper plural: "jars of wild honey", "sea jellies",
+  "bottles of blueberry wine", "mugs of beer", "glasses of Pale Ale", "cups of coffee". Count 1 and
+  "all the X" are unchanged. The full table is in
+  `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/asks-report.md`.
 
 ### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
 "My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty

@@ -159,3 +159,61 @@ dotnet test tests/TheLongestYear.Tests --no-build
   not tried, so I did not hand that one over.
 - Not checked live: the bus stop's repaired map after the collision night (inferred from the slot
   log and the night length).
+
+## Final-review fix wave
+
+Commits `c9bb44b..b549fe1` on `story` (code), then this docs commit; all pushed to `origin/story`.
+Manifest Version untouched (0.18.15). No live run.
+
+- **I1, strike scene vs Wildcard night_event** (c9bb44b). New pure rule
+  `StrikeScenes.WildcardTwistHasTheSlot(twist, suppressed)` (src/TheLongestYear.Core/Sabotage/StrikeScenes.cs:33).
+  `StrikeScenePatch.Postfix` asks it right after the fail-night check
+  (src/TheLongestYear/Loop/StrikeScenePatch.cs:141) and, on a night_event night, calls
+  `ApplyNow("the wildcard night event has the overnight slot")` and returns. It reads the run's
+  twist, not `__result`, so the outcome is the same whichever Priority.Last postfix runs first: if the
+  wildcard ran first, its forced fairy/witch/sound is no longer taken as a "random" event; if the
+  strike runs first, the slot stays null for the wildcard to fill. The scene is not marked played, so
+  it stays due. Tests: StrikeScenesTests (4 new cases).
+- **I2, Mini-Shipping Bin / Junimo Chest** (79ee1d9). `BlightRule.ChestInDraw(shipsOvernight, sharedInventory)`
+  (src/TheLongestYear.Core/Sabotage/SabotageRules.cs:55); `SpoilagePass.Entries` skips
+  `SpecialChestTypes.MiniShippingBin` and `JunimoChest` (src/TheLongestYear/Loop/SpoilagePass.cs:70).
+  Tests: DarknessLevelsTests `The_chest_draw_skips_shipping_bins_and_junimo_chests` (3 cases).
+- **M2, first-Winter flag** (d785f7a). `Meta.FirstWinterTamperSeen` is no longer set at the pick; it is
+  set in `OnStrikeApplied` when the guaranteed tamper has landed
+  (src/TheLongestYear/Loop/SabotageService.Night.cs:60). The day-7 "week 1 is spent" line (Night.cs:134)
+  is unchanged, so a first Winter with no fair target still counts as reached. A failed apply now
+  retries tomorrow on the first-Winter schedule. Not unit-tested (service state); covered by build.
+- **M1 + carried reports, M7** (f88e3ed). New pure `MorningReports.TakeShownNow(reports, tampersWait)`
+  (src/TheLongestYear.Core/Sabotage/MorningReports.cs). `ShowMorningReports` shows and removes every
+  non-tamper report and leaves tamper reports while the tamper scene is wired
+  (src/TheLongestYear/Loop/SabotageService.Morning.cs:75); `TryStartTamperScene` removes only the report
+  it told (Morning.cs:63). `ShowMorning()` is now `void` with no parameter and always shows the non-tamper
+  reports on waking (Morning.cs:25); callers RunController.cs:984 and ModEntry.cs:2641 updated, stale
+  "porch scene first" comment replaced. Tests: MorningReportsTests (3, written first, failed to compile).
+- **M3, aura robustness** (026c9ed). src/TheLongestYear/Loop/TaintedAuraPatch.cs: `RunActivation.IsActive`
+  guard in `IsTainted` (:106); both prefixes wrapped, first failure logged via PatchLog.Warn then the aura
+  stays off (:126); `Glow()` rebuilds when the graphics device changes (:97), disposing the old texture.
+- **M4** (5cb77d9). SceneCamera.cs:183, SceneGlow.cs:100 and :121 now log via PatchLog.Warn.
+- **M5** (25335f4). CloudScene.cs:337 indexed loop over `_cloud`.
+- **M6** (c9bb44b). StrikeScenePatch.cs:109 comment: `canGetPregnant` writes defaultMap, idempotently
+  (verified in decompile NPC.cs:6186).
+- **Docs** (this commit). TODO.md: both designer questions marked answered and built, pointing at
+  asks-report.md. STATUS.md: last public release 0.19.1 (tag v0.19.1), "Details are in" sentence fixed,
+  range `c1313a1..b549fe1`, test count 4007, fix-wave summary. CHANGELOG Unreleased: I1 (wildcard night
+  keeps the night, scene waits) and I2 (thief never takes from a Mini-Shipping Bin or Junimo Chest) in
+  player words; also corrected the stale ask examples ("3 jars of Honey", "3 bottles of Wine") and the
+  tamper line to say the replacement is new to the board.
+- **Split** (b549fe1). SabotageService.cs (state, ctor, Enabled, KindOf), .Night.cs (night pass,
+  OnStrikeApplied, Strike, RunNight, NightPlan, TamperPlan, CropsWarded), .Strikes.cs (Blight, Revert,
+  PrepareRevert, reversion picks; named Strikes since blight and reversion live there), .Tamper.cs
+  (Tamper, PrepareTamper, PlanTamper, BoardFlavor, CreateExact, ExactName, Candidates, HeldItemIds,
+  WriteTamper), .Morning.cs, .Debug.cs (Arm, TakeArmed, Explain, TargetLine, TargetSummary, Status).
+  Members moved verbatim by line range; largest file 344 lines. PrepareRevert/PrepareTamper stayed beside
+  their effects rather than in Debug.
+
+Tests:
+```
+dotnet build TheLongestYear.sln            -> Build succeeded, 0 Error(s) (10 pre-existing nullable warnings, none in touched files)
+dotnet test tests/TheLongestYear.Tests --no-build
+Passed!  - Failed:     0, Passed:  4007, Skipped:     0, Total:  4007
+```

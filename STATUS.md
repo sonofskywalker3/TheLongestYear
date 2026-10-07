@@ -1,16 +1,16 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13)
+**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13, final-review fix wave)
 **Branch:** `story`; every commit pushed to `origin/story`
-**Tests:** 3914 passing
+**Tests:** 4007 passing
 **Build:** clean, 0 errors; deployed to the local Mods folder for the live checks; game closed
-**Last public release:** 0.19.0 (tag v0.19.0; master is at 0.19.1). Nothing below is released: `story` merges to master once, as one release, when Jeff says so.
+**Last public release:** 0.19.1 (tag v0.19.1). Nothing below is released: `story` merges to master once, as one release, when Jeff says so.
 
 ## 2026-10-07: darkness agents and gate scenes built on story, Jeff's pass owed
 
 Spec: `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md` (amended through
 2026-10-07). Plan: `docs/superpowers/plans/2026-09-21-darkness-agents-and-gate-scenes.md`. Commits
-`c1313a1..` the Task 13 docs commit, all on `story`, all pushed. Manifest version left at 0.18.15.
+`c1313a1..b549fe1` (the final-review fix wave ends at b549fe1; its docs commit follows), all on `story`, all pushed. Manifest version left at 0.18.15.
 
 **Built:**
 - Gate scenes: new Summer, Fall and Winter porch lines (Summer closer changes once the save has
@@ -41,8 +41,14 @@ Spec: `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.
 **Live checks 2026-10-07 (automated, throwaway farms, deleted):** a crop blight armed on a bus
 repair night landed without its scene (`WorldChangeEvent has the overnight slot`) and the next armed
 blight played the crows; on Summer 14 with nothing struck, night 15 forced the crows and night 16
-the thief; with the Summer Ward of the Fields, the thief came on 15 and no crows. Details in
+the thief; with the Summer Ward of the Fields, the thief came on 15 and no crows. Details are in
 `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/task-13-report.md`.
+
+**Final-review fix wave (2026-10-07):** a Wildcard night event keeps the overnight slot (the strike
+lands without its scene, which stays due); the thief skips Mini-Shipping Bins and Junimo Chests; a
+tamper scene consumes only its own report and other reports show on waking; the first Winter counts
+as reached only once its tamper lands; the tainted aura needs an active run and never throws into a
+draw; `SabotageService` split into partial files.
 
 **Owed: Jeff's pass.** Three throwaway farms are saved for it (all named Rodger, farm "standard"):
 `standard_451080087` (Summer 14), `standard_451080418` (Fall 14), `standard_451080615` (Winter 1).
