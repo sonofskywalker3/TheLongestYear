@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 0.19.0 - 2026-10-06 - The Randomizer
+## 0.19.0 - 2026-10-07 - The Randomizer
 
 ### Added
 
@@ -26,6 +26,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Dried Fruit slots no longer ask for grapes.** The Dehydrator turns grapes into Raisins, not Dried Fruit, so a Dried Grapes ask could never be filled. Reported by Treedomy (Nexus posts, 2026-10-05). (0.18.145)
+- **A festival that ends while someone is talking no longer freezes the night.** When a festival closed itself at its end time with a dialogue box open, the game could think the dialogue was still up and the next night never finished.
 
 ## 0.18.144 - 2026-10-05
 

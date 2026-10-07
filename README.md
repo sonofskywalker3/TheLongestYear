@@ -46,6 +46,8 @@ The old **Allow re-rolling the weekly themes** switch has moved into the Randomi
 
 **Also fixed: Dried Fruit slots no longer ask for grapes.** The Dehydrator turns grapes into Raisins, not Dried Fruit, so a Dried Grapes slot could never be filled. Reported by Treedomy.
 
+**Also fixed: a festival that ends while someone is talking no longer freezes the night.**
+
 Thanks to Nijah, whose Nexus thread started this.
 
 ## 0.18 in brief
