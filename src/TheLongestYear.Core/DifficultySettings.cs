@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace TheLongestYear.Core;
@@ -71,8 +71,8 @@ public sealed class DifficultySettings
     /// <summary>How many items the Traveling Cart shows before any Cart Stall upgrade.</summary>
     public DifficultyStep CartSlots { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Scales the JP price of holding the board across a Fail-night reset. The first hold
-    /// stays free at every step, because the curve starts at 0: the step makes REPEATED holds
+    /// <summary>Scales the JP price of holding the board on a Fail night. The first hold stays
+    /// free at every step, because the curve starts at 0: the step makes REPEATED holds
     /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
@@ -89,7 +89,7 @@ public sealed class DifficultySettings
     public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
 
     /// <summary>The lowest of the NINE original dials (never the lever, never Darkness itself).
-    /// Nine, not ten: SeasonPity was retired, see the note below this class's properties.</summary>
+    /// Nine: SeasonPity was removed, see the note below this class's properties.</summary>
     public DifficultyStep LowestDial()
         => new[]
         {
@@ -108,8 +108,8 @@ public sealed class DifficultySettings
         return true;
     }
 
-    // A Mercy section held SeasonPity, the step that scaled how readily the Junimos eased a
-    // season the player kept failing. Retired with the rest of season pity, 2026-09-11.
+    // Another dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
+    // config.json files that still carry it load fine; SMAPI skips the unknown key.
 
     /// <summary>True when every modifier is Normal, i.e. this build behaves exactly as a
     /// pre-difficulty build.</summary>

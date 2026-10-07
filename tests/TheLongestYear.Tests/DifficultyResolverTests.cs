@@ -1,4 +1,4 @@
-﻿using TheLongestYear.Core;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Tests;
 

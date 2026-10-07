@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -686,11 +686,6 @@ namespace TheLongestYear.Loop
             // must behave like a reshuffle; BundleHold.ConsumeChoiceAtReset owns that rule.
             TheLongestYear.Core.BundleHold.ConsumeChoiceAtReset(_meta);
 
-            // Season pity was retired 2026-09-11. Jeff's migration rule: state already written to a
-            // save is left exactly as it is and cleared at the next loop, rather than dropped out
-            // from under the player on load. This is that next loop.
-            if (_meta.ClearRetiredSeasonPityState())
-                _monitor.Log("Reset: cleared the retired season-pity state carried by this save.", LogLevel.Info);
             // Randomizer "Random bundle rewards" is board-level: stamp it only when this reset builds
             // a NEW board. A held board (vanilla snapshot restored, or the Engine re-deriving off the
             // pinned seed loop; ConsecutiveHolds > 0 only after a Kept choice) keeps the stamp it was

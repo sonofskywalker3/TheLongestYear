@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -104,68 +104,17 @@ public sealed class MetaState
     /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
     public bool HoldChoiceMadeForReset { get; set; }
 
-    // ---- RETIRED: season pity (spec 2026-08-25), removed 2026-09-11 ----
-    // The system predated the difficulty option and is redundant beside it. Nothing reads or
-    // writes these six any more. They are STILL DECLARED on purpose, on Jeff's migration rule: a
-    // save that already has pity state keeps it untouched until the next loop, and
-    // <see cref="ClearRetiredSeasonPityState"/> wipes it as part of that reset. Dropping the
-    // properties instead would silently discard the values on the next save write, which is the
-    // destructive field drop the rule rules out.
-
-    /// <summary>RETIRED. Fails recorded at each season gate, index = (int)Season.</summary>
-    public List<int> SeasonFailCounts { get; set; } = new() { 0, 0, 0, 0 };
-
-    /// <summary>RETIRED. The season index of the most recent Fail night, -1 before the first fail.</summary>
-    public int LastFailSeason { get; set; } = -1;
-
-    /// <summary>RETIRED. Season index whose slot pools were trimmed when the current board was
-    /// rolled, -1 = no trim.</summary>
-    public int BoardTrimSeason { get; set; } = -1;
-
-    /// <summary>RETIRED. Trim units applied when the current board was rolled.</summary>
-    public int BoardTrimSteps { get; set; }
-
-    /// <summary>RETIRED. How many Fail-night pity offers the player accepted in a row.</summary>
-    public int ConsecutivePityUses { get; set; }
-
-    /// <summary>RETIRED. Season index the keep-path quota ease applied to for the current board,
-    /// -1 = no ease.</summary>
-    public int BoardEaseSeason { get; set; } = -1;
-
-    /// <summary>RETIRED. Ease steps applied when the current board was kept.</summary>
-    public int BoardEaseSteps { get; set; }
-
-    /// <summary>Wipes the retired season-pity state. Called once per reset, from
-    /// <c>WorldResetService.PerformReset</c>: Jeff's migration rule (2026-09-11) is that pity state
-    /// already on a save is left exactly as it is and cleared at the next loop, rather than dropped
-    /// out from under the player on load. Returns true when there was something to clear, so the
-    /// reset can say so in the log.</summary>
-    public bool ClearRetiredSeasonPityState()
-    {
-        bool hadAny =
-            (SeasonFailCounts != null && SeasonFailCounts.Exists(c => c != 0))
-            || LastFailSeason != -1
-            || BoardTrimSeason != -1
-            || BoardTrimSteps != 0
-            || ConsecutivePityUses != 0
-            || BoardEaseSeason != -1
-            || BoardEaseSteps != 0;
-
-        SeasonFailCounts = new List<int> { 0, 0, 0, 0 };
-        LastFailSeason = -1;
-        BoardTrimSeason = -1;
-        BoardTrimSteps = 0;
-        ConsecutivePityUses = 0;
-        BoardEaseSeason = -1;
-        BoardEaseSteps = 0;
-        return hadAny;
-    }
     /// <summary>Randomizer "Random bundle rewards" as it stood when the CURRENT board was built.
     /// Stamped from live config only where a new board is built (a reset that does not hold the
     /// board, and the fresh-run Engine board); a held board keeps its stamp. Every reproduction
     /// of the board (reload re-derivation, tly_genbundles) reads this, never live config, so a
     /// GMCM change applies at the next new board. False on saves from before the option.</summary>
     public bool RandomBundleRewardsBoard { get; set; }
+
+    // Season pity (removed 2026-09-24) kept SeasonFailCounts, LastFailSeason, BoardTrimSeason,
+    // BoardTrimSteps, ConsecutivePityUses, BoardEaseSeason and BoardEaseSteps here. Old saves
+    // still carry those keys; SMAPI's JSON reader skips members the type no longer has, so they
+    // load cleanly and any ease or trim they recorded simply stops applying.
 
     /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
     /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the

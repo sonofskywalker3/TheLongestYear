@@ -1,4 +1,4 @@
-﻿namespace TheLongestYear.Core;
+namespace TheLongestYear.Core;
 
 /// <summary>The resolved effective values for one loop: what the ten
 /// <see cref="DifficultySettings"/> steps actually mean in numbers.
