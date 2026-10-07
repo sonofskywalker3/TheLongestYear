@@ -120,6 +120,12 @@ namespace TheLongestYear.Loop
                 : $"{Strings.ItemName(itemId)} ({Strings.ItemName(BundleParsing.NormalizeItemId(flavor))})";
         }
 
+        /// <summary>An item's Object category (Fish is -4), or <see cref="AskPhrases.NoCategory"/> when the
+        /// registry does not know it. The ask and the tainted name keep a fish's word (designer,
+        /// 2026-10-07: "7 Pike").</summary>
+        internal static int CategoryOf(string itemId)
+            => string.IsNullOrEmpty(itemId) ? AskPhrases.NoCategory : ItemRegistry.GetData(itemId)?.Category ?? AskPhrases.NoCategory;
+
         /// <summary>The replacement pool: the board's own universe, which is the live generation
         /// pools, each under the room theme it feeds, with the existing model's effort for closeness
         /// and filtered by <paramref name="fair"/> when a rule applies. Not the curated
