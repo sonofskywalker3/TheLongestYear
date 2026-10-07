@@ -5,7 +5,7 @@ namespace TheLongestYear.Core.Sabotage
 {
     /// <summary>The pure arithmetic behind a lit window in an overnight strike scene (spec
     /// 2026-09-21, the hall): how bright the firelight is this instant, where a passing silhouette
-    /// has slid to, and how to cut that silhouette down to the pane it is crossing.
+    /// is, and how to cut that silhouette down to the pane it is crossing.
     ///
     /// It is here, and not beside the painter, because it is the only part of a lit window that can
     /// be checked without a graphics device. The painter itself is a handful of Draw calls.
@@ -28,53 +28,6 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>The flicker's period, in milliseconds of the scene's own clock.</summary>
         private const double FlickerPeriodMs = 180.0;
 
-        /// <summary>How fast each silhouette crosses the glass, in pixels a second. Three different
-        /// speeds, so they never read as one object moving.</summary>
-        private static readonly int[] ShapeSpeeds = { 58, 34, 81 };
-
-        /// <summary>Where each silhouette starts, as a share of its whole journey, so they are not
-        /// all at the left edge when the scene opens.</summary>
-        private static readonly double[] ShapePhases = { 0.0, 0.42, 0.77 };
-
-        /// <summary>How many silhouettes there are to ask about.</summary>
-        public static int ShapeCount => ShapeSpeeds.Length;
-
-        /// <summary>How long one step of a silhouette's walk is, in milliseconds, and how far apart
-        /// the three are in their stride so they do not bob together.</summary>
-        private const int StrideMs = 260;
-        private static readonly int[] StridePhasesMs = { 0, 110, 190 };
-
-        /// <summary>A man seen through the glass, one character per texel, <c>#</c> filled and
-        /// <c>.</c> clear (Jeff, 2026-09-23: the shapes were too big and read as blobs, and should
-        /// read as a man's silhouette). A head, a neck, shoulders and a body, drawn at the game's own
-        /// four pixels a texel so it sits on the same grid as the window art. The legs are left to
-        /// the sill, which hides them.</summary>
-        public static readonly IReadOnlyList<string> Silhouette = new[]
-        {
-            "..###..",
-            ".#####.",
-            ".#####.",
-            "..###..",
-            "...#...",
-            ".#####.",
-            "#######",
-            "#######",
-            "#######",
-            "#######",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-            ".#####.",
-        };
-
-        /// <summary>The silhouette's size in texels.</summary>
-        public static int SilhouetteWidth => Silhouette[0].Length;
-        public static int SilhouetteHeight => Silhouette.Count;
-
         /// <summary>A position pulled down onto the texel grid, so a shape moves a whole texel at a
         /// time like everything else in the game's art and its cut edge never lands mid-texel.</summary>
         public static int SnapToTexel(int pixels, int texel)
@@ -82,15 +35,6 @@ namespace TheLongestYear.Core.Sabotage
             if (texel <= 0) throw new ArgumentOutOfRangeException(nameof(texel));
             int remainder = pixels % texel;
             return remainder < 0 ? pixels - remainder - texel : pixels - remainder;
-        }
-
-        /// <summary>How many texels a walking silhouette is lifted this instant: nothing and one,
-        /// step by step, which is the rise and fall of a man walking.</summary>
-        public static int StrideBob(int elapsedMs, int shapeIndex)
-        {
-            if (shapeIndex < 0 || shapeIndex >= StridePhasesMs.Length) throw new ArgumentOutOfRangeException(nameof(shapeIndex));
-            int at = Math.Max(0, elapsedMs) + StridePhasesMs[shapeIndex];
-            return (at / StrideMs) % 2;
         }
 
         /// <summary>The firelight's alpha for one window this instant. Each window is given its own
@@ -101,22 +45,63 @@ namespace TheLongestYear.Core.Sabotage
             return GlowAlpha + GlowSwing * (float)Math.Sin(phase);
         }
 
-        /// <summary>The left edge of silhouette <paramref name="shapeIndex"/> this instant, in the
-        /// same pixel space as <paramref name="spanLeft"/>.
-        ///
-        /// It starts entirely off the left end of the span and finishes entirely off the right end,
-        /// then wraps, so a shape is never half born in the middle of a pane.</summary>
-        /// <param name="spanLeft">The left edge of the glass the shapes cross.</param>
-        /// <param name="spanWidth">How wide that glass is in all.</param>
-        /// <param name="shapeWidth">How wide one silhouette is.</param>
-        public static int SlideX(int elapsedMs, int shapeIndex, int spanLeft, int spanWidth, int shapeWidth)
+        /// <summary>Where the figure in the window is this instant (Jeff, 2026-10-07: one of the
+        /// mines' own shadow monsters, not a row of men). It stands out of sight at
+        /// <paramref name="fromX"/> until <paramref name="enterAtMs"/>, steps across to
+        /// <paramref name="toX"/> by <paramref name="arriveAtMs"/>, and stays there, at its work.
+        /// <paramref name="walking"/> says whether it is between the two.</summary>
+        public static int FigureX(int elapsedMs, int enterAtMs, int arriveAtMs, int fromX, int toX, out bool walking)
         {
-            if (shapeIndex < 0 || shapeIndex >= ShapeSpeeds.Length) throw new ArgumentOutOfRangeException(nameof(shapeIndex));
-            if (shapeWidth <= 0) throw new ArgumentOutOfRangeException(nameof(shapeWidth));
-            int travel = Math.Max(1, spanWidth + shapeWidth * 2);
-            double gone = Math.Max(0, elapsedMs) / 1000.0 * ShapeSpeeds[shapeIndex] + ShapePhases[shapeIndex] * travel;
-            double along = gone % travel;
-            return spanLeft - shapeWidth + (int)along;
+            if (arriveAtMs <= enterAtMs) throw new ArgumentOutOfRangeException(nameof(arriveAtMs));
+            walking = elapsedMs >= enterAtMs && elapsedMs < arriveAtMs;
+            if (elapsedMs <= enterAtMs) return fromX;
+            if (elapsedMs >= arriveAtMs) return toX;
+            double across = (elapsedMs - enterAtMs) / (double)(arriveAtMs - enterAtMs);
+            return fromX + (int)Math.Round((toX - fromX) * across);
+        }
+
+        /// <summary>Which of <paramref name="count"/> looping poses is showing this instant, each held
+        /// <paramref name="frameMs"/>, counting from <paramref name="sinceMs"/>. Before that, the
+        /// first.</summary>
+        public static int Cycle(int elapsedMs, int sinceMs, int count, int frameMs)
+        {
+            if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
+            if (frameMs <= 0) throw new ArgumentOutOfRangeException(nameof(frameMs));
+            if (elapsedMs <= sinceMs) return 0;
+            return (elapsedMs - sinceMs) / frameMs % count;
+        }
+
+        /// <summary>A sprite frame's opaque texels with every enclosed hole filled in, indexed
+        /// <c>[x, y]</c>. A monster's eyes and mouth are see-through pixels inside its outline,
+        /// and a silhouette in a window is solid black (Jeff, 2026-10-07: "completely blacked
+        /// out"), so anything the outside cannot reach without crossing the figure is figure.</summary>
+        public static bool[,] FillHoles(bool[,] opaque)
+        {
+            if (opaque is null) throw new ArgumentNullException(nameof(opaque));
+            int width = opaque.GetLength(0), height = opaque.GetLength(1);
+            var outside = new bool[width, height];
+            var queue = new Queue<(int X, int Y)>();
+            void Seed(int x, int y)
+            {
+                if (opaque[x, y] || outside[x, y]) return;
+                outside[x, y] = true;
+                queue.Enqueue((x, y));
+            }
+            for (int x = 0; x < width; x++) { Seed(x, 0); Seed(x, height - 1); }
+            for (int y = 0; y < height; y++) { Seed(0, y); Seed(width - 1, y); }
+            while (queue.Count > 0)
+            {
+                (int x, int y) = queue.Dequeue();
+                if (x > 0) Seed(x - 1, y);
+                if (x < width - 1) Seed(x + 1, y);
+                if (y > 0) Seed(x, y - 1);
+                if (y < height - 1) Seed(x, y + 1);
+            }
+            var solid = new bool[width, height];
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    solid[x, y] = !outside[x, y];
+            return solid;
         }
 
         /// <summary>One draw of a silhouette, already cut down to the pane it is crossing.</summary>

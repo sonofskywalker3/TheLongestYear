@@ -140,6 +140,16 @@ namespace TheLongestYear.Scenes
             Game1.viewport.Y = Math.Max(0, Math.Min(where.map.DisplayHeight - Game1.viewport.Height, (int)tile.Y * TileSize + TileSize / 2 - Game1.viewport.Height / 2));
         }
 
+        /// <summary>Put the viewport's middle on this world pixel, clamped the same way as
+        /// <see cref="CenterOn"/>. For a scene that moves its camera smoothly between two framings
+        /// rather than cutting (the hall tilts down from the facade to the road).</summary>
+        public static void CenterOnPixel(GameLocation where, Vector2 worldPixel)
+        {
+            if (where?.map == null) return;
+            Game1.viewport.X = Math.Max(0, Math.Min(where.map.DisplayWidth - Game1.viewport.Width, (int)Math.Round(worldPixel.X) - Game1.viewport.Width / 2));
+            Game1.viewport.Y = Math.Max(0, Math.Min(where.map.DisplayHeight - Game1.viewport.Height, (int)Math.Round(worldPixel.Y) - Game1.viewport.Height / 2));
+        }
+
         /// <summary>Give everything back. Safe to call when no scene ever took the camera, and safe
         /// to call twice.</summary>
         public static void Restore()

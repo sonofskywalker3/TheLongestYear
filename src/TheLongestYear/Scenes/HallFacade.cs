@@ -17,18 +17,11 @@ namespace TheLongestYear.Scenes
         /// and so covers twelve tiles by ten.</summary>
         public static readonly Rectangle Tiles = new Rectangle(47, 11, 12, 10);
 
-        /// <summary>The front door, which the camera and the walk are both hung on.</summary>
+        /// <summary>The front door. Shane never walks to it.</summary>
         public static readonly Vector2 DoorTile = new Vector2(52, 20);
-
-        /// <summary>How far above the bottom of the building the camera sits, so the whole front and
-        /// the path below it share the frame.</summary>
-        private const int CameraAboveFootTiles = 3;
 
         /// <summary>The top left tile the window rectangles are measured from.</summary>
         public static Vector2 OriginTile => new Vector2(Tiles.X, Tiles.Y);
-
-        /// <summary>The tile the camera centres on.</summary>
-        public static Vector2 CameraTile => new Vector2(DoorTile.X, Tiles.Bottom - CameraAboveFootTiles);
 
         /// <summary>The glass of the front windows, in PIXELS relative to <see cref="OriginTile"/>.
         ///
@@ -52,6 +45,10 @@ namespace TheLongestYear.Scenes
             new Rectangle(120, 416, 56, 88),
             new Rectangle(592, 416, 56, 88),
         };
+
+        /// <summary>Which of <see cref="FrontWindows"/> the shadow figure stands in: the right hand
+        /// one, which Shane stops below on the road.</summary>
+        public const int FigureWindow = 1;
 
         /// <summary>Has the building's front changed out from under the measurements? True once the
         /// Community Center is finished or the Joja warehouse has replaced it, which is exactly when
