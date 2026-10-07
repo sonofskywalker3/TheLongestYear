@@ -1,0 +1,6 @@
+0.19.1 - The Bundle Log matches the Community Center again
+
+Fixed
+- After a theme week's discount ended, the Bundle Log could keep showing the lower count while the Community Center asked for the full amount (or the other way round right after picking a theme). The Log now reads the counts from the Community Center each time you open it. Reported on Reddit.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

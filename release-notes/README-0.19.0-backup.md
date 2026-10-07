@@ -25,11 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.1
-
-**Fixed: the Bundle Log shows the same counts as the Community Center.** After a theme week's discount ended, the Bundle Log could keep showing the lower count while the Community Center asked for the full amount (or the other way round right after picking a theme). The Log now reads the counts from the Community Center each time you open it. Reported on Reddit.
-
-## 0.19.0: the Randomizer
+## What's New in 0.19.0: the Randomizer
 
 **A new Randomizer section in the mod's settings, for runs that play out differently each time.**
 
