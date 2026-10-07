@@ -87,15 +87,22 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
 - The morning popups stay exactly as they are.
 - The Junimo tamper scene keeps its staging and its popup, with two changes (Jeff, 2026-10-07):
   - It no longer plays on waking (that version blinked and warped the farmer to his doorstep). It
-    plays the first time the farmer steps out of the farmhouse door onto the Farm while the
-    tamper report waits (any other way onto the Farm, an edge or a totem, keeps it waiting), as an
-    event where he stands: black while the two Junimos are put on their marks round him, then a
-    fade in. No warp, no location change. A day he never leaves the house, it plays on his next Farm
-    entry. It plays once. The night's other reports still show after it.
+    plays the first time the farmer arrives on the Farm by any route while the tamper report waits
+    (Jeff, 2026-10-07: "however you get to the farm map, just show the scene, vanilla does this
+    too"): the farmhouse door, the Bus Stop, Forest or Backwoods edge, a building door, a totem. Like
+    vanilla's Community Center cutscene on entering Town, it is staged at the farmhouse porch (the
+    tile the house's own door warp puts him on), behind black while the two Junimos are put on their
+    marks, then a fade in; when it ends the farmer is back on the exact tile and facing he arrived
+    at (vanilla's event end restores the position recorded when the event started). An arrival
+    while another event, a menu, a farm event or a season turn is up keeps it for the next arrival.
+    It plays once. The night's other reports still show after it.
   - Its first line is "@, last night the darkness struck! It has tainted all the {{old}}."
   - {{old}} names the exact item the tamper took, flavour included: "all the Dried Apples", not
-    "all the Dried Fruit" (designer, 2026-10-07). The tamper only ever takes an item the board asks
-    for in exactly one slot (wiring spec 2026-09-15, Tampering), and a later tamper never picks a
+    "all the Dried Fruit" (designer, 2026-10-07). The tamper only ever takes an item one bundle
+    asks for (wiring spec 2026-09-15, Tampering; per bundle, Jeff 2026-10-07: Construction's double
+    Wood qualifies). When that bundle asks for it in several slots, every open one is rewritten to
+    the same new item and stack and filled ones stay; the line names the item and the per-slot
+    count. A later tamper never picks a
     tainted item, in any flavour, as its replacement, so the line stays true: nothing on the board
     wants the tainted thing. The replacement is always new to the board: no slot anywhere asks for
     it, in any flavour.
@@ -159,8 +166,22 @@ crops would already be gone when the crows land. `NightPlan.Execute` splits in t
 - **Apply**: do the damage and write the morning report.
 
 When a scene is due, the scene calls Apply at its beat (the crow pecks, the lid opens). When no
-scene is due, or the scene is skipped, cannot play, or throws, Apply runs at once, as today. Apply
-is idempotent per night so a skip mid-scene cannot double it. The morning report does not change.
+scene is due (its kind already played this loop) or its target is somewhere the scene cannot show,
+Apply runs at once, as today: that strike has no scene by design. Once the scene has taken the
+overnight slot, a skip, a staging failure or a throw also lands it. Apply is idempotent per night so
+a skip mid-scene cannot double it. The morning report does not change.
+
+**A strike never lands without its scene (Jeff, 2026-10-07: "we don't delay scenes without
+delaying the effect of them, that's stupid").** A strike whose scene is due but cannot have the
+overnight slot is postponed: neither its effect nor its scene happens that night. The run records
+a strike only when it commits (its scene takes the slot, or it lands with no scene by design), so a
+postponed night is a night with no strike: the week's chance does not drop, no cap slot or tamper
+spacing is spent, and the every-loop guarantee still owes the kind. The normal roll and the
+guarantee bring it back on a later night. A guaranteed Winter tamper that is postponed stays owed
+past week 1 until it lands. The nets under the save, the morning and the next night pass follow the
+same rule: a waiting strike lands there only if its scene had the slot; otherwise (for example the
+first night of a save, when vanilla runs no `pickFarmEvent`) it is postponed. Rules:
+`StrikeSlot.Decide`, `StrikeSlot.LandsAtNet`, `StrikeLedger.Record`.
 
 ### The overnight slot
 
@@ -169,9 +190,10 @@ our `FarmEvent` when a scene is due tonight:
 
 - A vanilla random event picked for the same night (fairy, witch, meteorite, owl, capsule) is
   dropped. They are random and come round again.
-- A wedding, a `WorldChangeEvent` (the Community Center's own repairs, the Joja ones) or any event
-  the patch does not recognise as random wins. Our scene is not played; the strike applies at once
-  and that kind's scene waits for its next strike this loop.
+- A wedding, a `WorldChangeEvent` (the Community Center's own repairs, the Joja ones), another
+  mod's farm event override, a personal farm event (a birth, a pregnancy question), a Wildcard
+  night_event twist, or any event the patch does not recognise as random wins. The strike is
+  postponed, effect and scene both (see above); it comes back on a later night with its scene.
 - Fail nights are already suppressed and stay so. The strike itself never runs on day 28.
 
 Each scene is a class implementing vanilla's `FarmEvent` (`setUp`, `tickUpdate`, `draw`,
@@ -199,6 +221,10 @@ sleeping farm.
   chest could be on (**mine**: a chest off the farm plays no scene; the strike applies at once and
   the scene waits for a chest on the farm. The thief walking into the mines or the desert is not
   worth staging).
+- **Junimo Chests are chests (Jeff, 2026-10-07).** Every Junimo Chest shows one shared inventory,
+  so they are ONE chest in the draw: the stock is weighted once, a unit taken is gone from all of
+  them, and the scene is staged at a Junimo Chest on the farm's maps when there is one. A ward on
+  any of them protects the shared stock. Mini-Shipping Bins stay out (they ship overnight).
 - **One chest per strike (Jeff, 2026-09-21; a rule change).** Chest blight used to take units one
   at a time across every unwarded chest and placed machine on every map. Now the first unit that
   lands on a chest makes it the night's chest, and no other chest loses anything that night.
@@ -331,7 +357,8 @@ save, and pending witness lines.
   switch, the Summer closer by rewound flag.
 - Live, my automated runs: each scene through `tly_sabotage scene` on a developed throwaway farm,
   screenshots at each beat; the thief in the farmhouse on a married save with a child; the overnight
-  slot collision with a forced vanilla event and with a Community Center repair night.
+  slot collision with a forced vanilla event and with a Community Center repair night (the strike
+  is postponed, then lands with its scene on a later night).
 - Jeff's pass: sleep into each of the four with `tly_sabotage arm`, talk to Linus and Shane the
   morning after and again three days later, and watch the three gate scenes with the new lines.
 

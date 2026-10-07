@@ -25,18 +25,75 @@ namespace TheLongestYear.Loop
         /// can play, so every strike lands at once exactly as it did before the split.</summary>
         public Func<PendingStrike, bool> SceneCanPlay { get; set; } = _ => false;
 
-        /// <summary>Land a waiting strike now. The net under every path that does not play the
-        /// scene: no scene due, another overnight event won the slot, the scene threw, the save
-        /// began.</summary>
-        public bool ApplyPendingIfAny(string why)
+        /// <summary>Land a waiting strike now. Only for a strike with no scene by design: its kind
+        /// already played this loop, or its target is somewhere the scene cannot show.</summary>
+        private bool ApplyPendingIfAny(string why)
         {
             PendingStrike p = Pending;
             if (p == null) return false;
             Pending = null;
             if (p.Applied) return false;
-            _monitor.Log($"Darkness: applying tonight's {p.Event} without its scene ({why}) at tick {Game1.ticks}.", LogLevel.Trace);
+            _monitor.Log($"Darkness: applying tonight's {p.Event} with no scene by design ({why}) at tick {Game1.ticks}.", LogLevel.Trace);
             p.Apply();
             return true;
+        }
+
+        /// <summary>Drop a waiting strike whose scene cannot have tonight's overnight slot (Jeff,
+        /// 2026-10-07: "we don't delay scenes without delaying the effect of them"). Neither its
+        /// effect nor its scene happens tonight, and since nothing was recorded the night is as if
+        /// no strike happened: the roll and the every-loop guarantee bring it back later.</summary>
+        public bool PostponePendingIfAny(string why)
+        {
+            PendingStrike p = Pending;
+            if (p == null) return false;
+            if (p.Committed)
+                return SettlePendingIfAny(why);
+            Pending = null;
+            if (_guaranteedTamperTonight && p.Event == DarknessEvent.Tampering)
+                Run.GuaranteedTamperPostponed = true;
+            _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, so the roll and the guarantee bring it back.", LogLevel.Info);
+            return true;
+        }
+
+        /// <summary>The net under the save, the morning and the next night pass: a strike still
+        /// waiting lands only if its scene had the slot (<see cref="StrikeSlot.LandsAtNet"/>), and is
+        /// postponed otherwise (a collision nobody caught, or the first night of a save, when
+        /// vanilla runs no <c>pickFarmEvent</c>). Never applies a strike whose scene never had the
+        /// slot.</summary>
+        public bool SettlePendingIfAny(string why)
+        {
+            PendingStrike p = Pending;
+            if (p == null) return false;
+            if (!StrikeSlot.LandsAtNet(p.Committed)) return PostponePendingIfAny(why);
+            Pending = null;
+            if (p.Applied) return false;
+            _monitor.Log($"Darkness: tonight's {p.Event} lands now ({why}): its scene had the overnight slot but did not reach its beat, at tick {Game1.ticks}.", LogLevel.Trace);
+            p.Apply();
+            return true;
+        }
+
+        /// <summary>Tonight's scene has taken the overnight slot: the strike is committed.</summary>
+        public void CommitPendingScene()
+        {
+            PendingStrike p = Pending;
+            if (p == null || p.Committed) return;
+            p.Commit();
+            _monitor.Log($"Darkness: tonight's {p.Event} is committed: its scene has the overnight slot.", LogLevel.Trace);
+        }
+
+        /// <summary>A strike is committed to tonight: its scene took the slot, or it is landing with no
+        /// scene by design. Only now does the run record it (the week's chance, the front's cap or
+        /// spacing, the every-loop guarantee), so a postponed strike spends nothing. The guaranteed
+        /// Winter tamper counts as done here too.</summary>
+        private void OnStrikeCommitted(PendingStrike strike, int week, CoreSeason season, int dayOfYear)
+        {
+            StrikeLedger.Record(Run, strike.Event, week, season, dayOfYear);
+            if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
+            {
+                Run.GuaranteedTamperDone = true;
+                Run.GuaranteedTamperPostponed = false;
+                _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {Run.DayOfMonth}.", LogLevel.Info);
+            }
         }
 
         /// <summary>Was the guaranteed Winter tamper the strike picked tonight? Cleared at the top of
@@ -47,7 +104,8 @@ namespace TheLongestYear.Loop
         /// immediate one, the nets, and a scene calling Apply itself. A strike that found nothing to
         /// do when it came to it does not count toward the every-loop guarantee, so its name comes
         /// back off the run's list and the kind is still owed. The week's chance drop and the cap
-        /// slot stay spent: the night is over either way.
+        /// slot stay spent: the night is over either way. (A postponed strike never gets here: it
+        /// was never committed, so nothing was recorded.)
         ///
         /// The guaranteed Winter tamper marks the save's first Winter as reached only here, once it
         /// has landed. Marking it at the pick would send a failed apply's retry to the seeded
@@ -69,17 +127,16 @@ namespace TheLongestYear.Loop
             }
         }
 
-        /// <summary>Pick tonight's strike, record it, and either leave it waiting for its scene or
-        /// land it now. The one path every strike goes through. Null when the event found nothing
-        /// to take.</summary>
+        /// <summary>Pick tonight's strike and either leave it waiting for its scene or, with no
+        /// scene by design, land it now. The one path every strike goes through. Nothing is recorded
+        /// here: the run records a strike when it commits (its scene takes the overnight slot, or it
+        /// lands), so a strike postponed by a collision leaves no trace. Null when the event found
+        /// nothing to take.</summary>
         private PendingStrike Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
         {
-            PendingStrike strike = night.Prepare(e, OnStrikeApplied);
+            PendingStrike strike = night.Prepare(e, OnStrikeApplied, p => OnStrikeCommitted(p, week, season, dayOfYear));
             if (strike == null) return null;
-            NightRoll.RecordStrike(Run, week, season);
-            SabotageSchedule.RecordStrike(KindOf(e), Run, week, dayOfYear);
-            (Run.StruckEvents ??= new()).Add(e.ToString());
-            ApplyPendingIfAny("replaced by a new strike");
+            SettlePendingIfAny("replaced by a new strike");
             Pending = strike;
             string reason = SceneReasonToSkip(e, strike);
             if (reason != null) ApplyPendingIfAny(reason);
@@ -105,8 +162,9 @@ namespace TheLongestYear.Loop
         /// <summary>One roll for tonight. Effects land before the save; reports queue for the morning.</summary>
         public void RunNight()
         {
-            // A strike left over from a night whose scene never played cannot be carried forward.
-            ApplyPendingIfAny("a new night began");
+            // A strike left over from an earlier night cannot be carried forward: it lands if its
+            // scene had the slot, and is postponed otherwise.
+            SettlePendingIfAny("a new night began");
             _guaranteedTamperTonight = false;
             if (!RunActivation.IsActive || !HostCanAct()) return;
             CoreSeason season = Run.Season;
@@ -142,9 +200,9 @@ namespace TheLongestYear.Loop
                 // failed the moment it ran leaves the flags alone and falls through to tomorrow.
                 if (tamper != null && (!tamper.Applied || tamper.Landed))
                 {
-                    // FirstWinterTamperSeen is set by OnStrikeApplied once the tamper lands.
-                    Run.GuaranteedTamperDone = true;
-                    _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {day}.", LogLevel.Info);
+                    // GuaranteedTamperDone is set when it commits (OnStrikeCommitted), so a tamper
+                    // postponed by a collision retries tomorrow; FirstWinterTamperSeen is set by
+                    // OnStrikeApplied once it lands.
                     _armed.Clear(); _armedBlightTarget = null;
                     return;
                 }
@@ -249,8 +307,8 @@ namespace TheLongestYear.Loop
             /// <summary>Pick what this event does tonight without doing it (spec 2026-09-21). Null
             /// means it found nothing to take, the old Execute's false. The returned strike carries
             /// the effect as a closure, so the damage lands when its scene reaches the beat, or at
-            /// once when no scene plays.</summary>
-            public PendingStrike Prepare(DarknessEvent e, Action<PendingStrike> onApplied)
+            /// once when no scene plays by design.</summary>
+            public PendingStrike Prepare(DarknessEvent e, Action<PendingStrike> onApplied, Action<PendingStrike> onCommitted)
             {
                 switch (e)
                 {
@@ -258,7 +316,7 @@ namespace TheLongestYear.Loop
                     {
                         List<Vector2> tiles = BlightPass.Pick(BlightRule.Count(_crops ?? BlightPass.LiveCropTiles().Count, _season, _level), _rng);
                         if (tiles.Count == 0) return null;
-                        return new PendingStrike(e, () => _s.ReportBlight(BlightPass.Kill(tiles), default) > 0, onApplied) { CropTiles = tiles };
+                        return new PendingStrike(e, () => _s.ReportBlight(BlightPass.Kill(tiles), default) > 0, onApplied, onCommitted) { CropTiles = tiles };
                     }
                     case DarknessEvent.ChestBlight:
                     {
@@ -266,7 +324,7 @@ namespace TheLongestYear.Loop
                         int units = _stored ?? SpoilagePass.StoredUnits(everything);
                         List<SpoilagePass.Hit> hits = SpoilagePass.Plan(BlightRule.SpoilCount(units, _season, _level), _rng, everything);
                         if (hits.Count == 0) return null;
-                        return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits)) > 0, onApplied) { Hits = hits };
+                        return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits)) > 0, onApplied, onCommitted) { Hits = hits };
                     }
                     case DarknessEvent.Reversion:
                     {
@@ -278,7 +336,7 @@ namespace TheLongestYear.Loop
                             if (!_s.RevertSlot(pick)) return false;
                             if (unmoderated) Run.UnmoderatedReversionSpent = true;
                             return true;
-                        }, onApplied);
+                        }, onApplied, onCommitted);
                     }
                     case DarknessEvent.Tampering:
                     {
@@ -293,7 +351,7 @@ namespace TheLongestYear.Loop
                             if (!_s.WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear)) return false;
                             if (unmoderated) Run.UnmoderatedTamperSpent = true;
                             return true;
-                        }, onApplied);
+                        }, onApplied, onCommitted);
                     }
                     default:
                         return null;
@@ -303,7 +361,8 @@ namespace TheLongestYear.Loop
             /// <summary>Is tonight's Tampering slot still owed to the guaranteed Winter tamper? True
             /// through week 1 of a Winter that has not had it yet.</summary>
             private bool GuaranteedTamperReserved()
-                => _season == CoreSeason.Winter && !Run.GuaranteedTamperDone && _day <= NightRoll.Week1Nights;
+                => _season == CoreSeason.Winter && !Run.GuaranteedTamperDone
+                   && (_day <= NightRoll.Week1Nights || Run.GuaranteedTamperPostponed);
 
             private DonatedSlot PlanReversion()
             {

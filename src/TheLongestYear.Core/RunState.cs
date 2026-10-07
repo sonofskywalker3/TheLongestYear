@@ -322,6 +322,9 @@ public sealed class RunState
     public bool UnmoderatedTamperSpent { get; set; }
     /// <summary>This Winter's guaranteed week-1 tamper has landed.</summary>
     public bool GuaranteedTamperDone { get; set; }
+    /// <summary>This Winter's guaranteed tamper was postponed by a collision (Jeff, 2026-10-07): it
+    /// stays owed past week 1 until it lands.</summary>
+    public bool GuaranteedTamperPostponed { get; set; }
     /// <summary>Names of the DarknessEvent values that have struck this loop (spec 2026-09-21: the
     /// guarantee and the once-per-loop scenes both read it).</summary>
     public HashSet<string> StruckEvents { get; set; } = new();
@@ -597,6 +600,7 @@ public sealed class RunState
         UnmoderatedReversionSpent = false;
         UnmoderatedTamperSpent = false;
         GuaranteedTamperDone = false;
+        GuaranteedTamperPostponed = false;
         (StruckEvents ??= new()).Clear();
         (StrikeScenesPlayed ??= new()).Clear();
         (WitnessLines ??= new()).Clear();

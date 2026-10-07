@@ -24,9 +24,9 @@ namespace TheLongestYear.Loop
         /// morning goes on at once either way.</summary>
         public void ShowMorning()
         {
-            // The morning cannot report what has not happened: a strike whose scene never played
-            // lands here at the latest.
-            ApplyPendingIfAny("morning");
+            // Nothing waiting crosses into the day: a strike whose scene had the slot lands here at
+            // the latest, and one whose scene never had it is postponed.
+            SettlePendingIfAny("morning");
             if (!RunActivation.IsActive) return;
             if (TamperSceneOwed)
                 _monitor.Log("Darkness: the board changed in the night; the Junimos wait for the farmer to step out onto the farm.", LogLevel.Info);

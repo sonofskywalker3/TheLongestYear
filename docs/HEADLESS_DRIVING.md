@@ -231,9 +231,11 @@ Commands:
 
 The overnight slot (see the night order above): our scene replaces a random vanilla night event
 (fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
-(the Community Center's repairs and Joja's), a farm event override from another mod or a personal
-farm event (birth, pregnancy question) keeps the night: the strike lands at once with no scene, and
-that kind's scene waits for its next strike this loop.
+(the Community Center's repairs and Joja's), a farm event override from another mod, a personal
+farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: the strike
+is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is recorded, so the roll
+and the every-loop guarantee bring it back on a later night with its scene. The same goes for the
+first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
 
 The Junimo "tainted" scene does not play on waking. It starts the first time the farmer goes out of
 the farmhouse door onto the Farm (log `(old -> new, skippable=...)`). Headless, `debug warp Farm 64
@@ -243,9 +245,11 @@ from anywhere else does not.
 **The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
 scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`
 (queues the bus repair, `WorldChangeEvent(7)`, for tonight) and `debug sleep`. The log reads
-`Darkness: applying tonight's CropBlight without its scene (WorldChangeEvent has the overnight slot)`,
-the live crop count drops, `Scenes played this loop` stays `none`, and the next armed crop blight
-plays the crows (`the CrowsScene scene takes tonight's overnight slot for CropBlight`).
+`Darkness: tonight's CropBlight is postponed (WorldChangeEvent has the overnight slot)`, the live
+crop count does NOT drop, `Scenes played this loop` and `Struck this loop` stay `none`, and the
+chance tonight is unchanged. The arm is spent, so arm again (or let the guarantee force it from day
+15) and sleep: the crows play (`the CrowsScene scene takes tonight's overnight slot for
+CropBlight`) and the crops die at their beat.
 
 **The guarantee recipe.** `Run.Season` only syncs at day start, so after `debug season summer` set
 `tly_setday 13` and sleep once (a real gate pass with `tly_playseason` works too). On Summer 14 with

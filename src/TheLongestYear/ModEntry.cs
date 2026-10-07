@@ -236,11 +236,14 @@ namespace TheLongestYear
                     _runController?.PendingCutscene ?? TheLongestYear.Core.Day28.Day28Branch.None);
             FarmEventSuppressionPatch.Monitor = this.Monitor;
             // The overnight slot (spec 2026-09-21): tonight's strike scene takes it from a random
-            // vanilla event, and anything scripted keeps it while the strike lands at once instead.
-            // _sabotage is built on save load, so resolve it lazily the way the driver above does.
+            // vanilla event, and anything scripted keeps it while the strike is postponed, effect
+            // and scene both (Jeff, 2026-10-07). _sabotage is built on save load, so resolve it
+            // lazily the way the driver above does.
             StrikeScenePatch.Monitor = this.Monitor;
             StrikeScenePatch.FailNight = () => FarmEventSuppressionPatch.SuppressTonight?.Invoke() == true;
-            StrikeScenePatch.ApplyNow = why => _sabotage?.ApplyPendingIfAny(why);
+            StrikeScenePatch.Postpone = why => _sabotage?.PostponePendingIfAny(why);
+            StrikeScenePatch.SceneTookSlot = () => _sabotage?.CommitPendingScene();
+            StrikeScenePatch.StrikeWaiting = () => _sabotage?.Pending is { Applied: false };
             StrikeScenePatch.SceneFor = () =>
             {
                 PendingStrike strike = _sabotage?.Pending;
@@ -1098,9 +1101,10 @@ namespace TheLongestYear
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
-            // A strike picked tonight must land before the night's save, whatever became of its
-            // scene: nothing pending ever crosses a save boundary.
-            _sabotage?.ApplyPendingIfAny("saving");
+            // Nothing pending ever crosses a save boundary: a strike whose scene had the overnight
+            // slot lands now, and one whose scene never had it (the first night of a save runs no
+            // pickFarmEvent) is postponed, never applied without its scene.
+            _sabotage?.SettlePendingIfAny("saving");
 
             // If this save opened without TLY setup (disabled in config),
             // _meta.Load() never ran and State/Run are empty defaults — persisting them would wipe

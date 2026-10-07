@@ -69,11 +69,14 @@ public static class NightRoll
         => firstWinterEver ? FirstWinterDay : FirstWinterDay + SabotageSchedule.Rng(runSeed, 0, SabotageKind.Tampering).Next(Week1Nights);
 
     /// <summary>True on the guaranteed night and on every later week-1 night until it lands (a night
-    /// with no fair replacement is skipped and retried, spec 2.6).</summary>
+    /// with no fair replacement is skipped and retried, spec 2.6). A guaranteed tamper postponed by
+    /// a collision stays owed past week 1, every night until it lands (Jeff, 2026-10-07: a
+    /// postponed strike leaves its guarantee owed).</summary>
     public static bool IsGuaranteedTamperNight(RunState run, bool firstWinterEver, Season season, int dayOfMonth)
     {
         if (run is null) throw new ArgumentNullException(nameof(run));
         if (season != Season.Winter || run.GuaranteedTamperDone) return false;
+        if (run.GuaranteedTamperPostponed) return true;
         if (dayOfMonth > Week1Nights) return false;
         return dayOfMonth >= GuaranteedTamperDay(run.Seed, firstWinterEver);
     }
