@@ -241,7 +241,10 @@ The overnight slot (see the night order above): our scene replaces a random vani
 farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: the strike
 is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is recorded. It is queued
 and fires with its scene on the next free night, instead of the roll (designer, 2026-10-07); a
-queued kind that cannot act that night stays queued and the night rolls normally. The same goes for
+queued kind that cannot act that night stays queued and the night rolls normally. A scene that
+fails to stage postpones without queuing (`... and it is not queued (its scene could not stage)`);
+while a scene is due its staging is checked at pick time (`<Kind>'s scene cannot stage tonight, so
+<Kind> cannot act`), and the thief skips chests he cannot stand beside. The same goes for
 the first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
 
 The Junimo "tainted" scene does not play on waking. It starts the first time the farmer arrives on
