@@ -202,6 +202,65 @@ The practical consequence: a pending strike is always applied before the night's
 scene played, another overnight event won the slot, or nothing happened at all. Nothing pending ever
 crosses a save boundary.
 
+## Darkness strike scenes (story, verified 2026-10-07)
+
+The first strike of each kind in a loop plays its overnight scene (crows for crop blight, the thief
+for chest blight, the hall for reversion, the cloud for tampering); later strikes of that kind that
+loop are popup only. A scene is not skippable the first time it ever plays on the save.
+
+Commands:
+
+- `tly_sabotage scene crows|thief|hall|cloud` plays a scene now against a fresh pick, without
+  sleeping (stand on the Farm with no event up). `tly_sabotage scene [old] [new]` plays the Junimos'
+  "tainted" scene where the farmer stands.
+- `tly_sabotage fixture [scarecrow] [rows=<1..5>]` plants ten in-season crops per row in front of the
+  house and drops a chest with 20 Parsnip and 10 Copper Ore beside them (refuses on a save this
+  session did not create unless you add `confirm`); `fixture here` drops only the chest beside the
+  farmer, for the thief in a shed, cellar or farmhouse.
+- `tly_sabotage arm blight crops|chest`, `arm revert`, `arm tamper` make tonight's roll strike with
+  that kind, and the real scene plays in the night. An arm beats the every-loop guarantee for that
+  night.
+- `tly_sabotage status` adds, under the usual lines: `Scenes played this loop`, `Scenes seen on save`,
+  `Struck this loop`, `Owed tonight` (the guarantee's kinds still owed from day 15 of their debut
+  season; a kind listed there is only forced if it can act, so a warded Summer still lists
+  CropBlight), `Witness lines pending` (npc, scene day of year, last day of the window), the tamper
+  target count and the multi-slot items that are never tampered.
+- `tly_sabotage aurachest` opens a loose chest with every tainted item (and an untainted flavour
+  beside a flavoured one) to look at the dark aura.
+- `tly_witness list | peek <npc> | talk <npc> | click` reads and plays the Linus / Shane line.
+
+The overnight slot (see the night order above): our scene replaces a random vanilla night event
+(fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
+(the Community Center's repairs and Joja's), a farm event override from another mod or a personal
+farm event (birth, pregnancy question) keeps the night: the strike lands at once with no scene, and
+that kind's scene waits for its next strike this loop.
+
+The Junimo "tainted" scene does not play on waking. It starts the first time the farmer goes out of
+the farmhouse door onto the Farm (log `(old -> new, skippable=...)`). Headless, `debug warp Farm 64
+16` from inside the house is the same FarmHouse-to-Farm warp onto the door tile and starts it; a warp
+from anywhere else does not.
+
+**The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
+scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`
+(queues the bus repair, `WorldChangeEvent(7)`, for tonight) and `debug sleep`. The log reads
+`Darkness: applying tonight's CropBlight without its scene (WorldChangeEvent has the overnight slot)`,
+the live crop count drops, `Scenes played this loop` stays `none`, and the next armed crop blight
+plays the crows (`the CrowsScene scene takes tonight's overnight slot for CropBlight`).
+
+**The guarantee recipe.** `Run.Season` only syncs at day start, so after `debug season summer` set
+`tly_setday 13` and sleep once (a real gate pass with `tly_playseason` works too). On Summer 14 with
+crops and a chest, three sleeps: night 14 is an ordinary roll, night 15 logs `CropBlight has not struck
+this loop by Summer 15, so it is forced tonight.`, night 16 the same for ChestBlight. With the Summer
+Ward of the Fields owned (`tly_addjp 2000`, `tly_buyupgrade ward_crops_summer`) the thief is forced on
+15 and no crows come. Reversion debuts in Fall from 15 and is quiet from day 25, so it is never forced
+on nights 25 to 28.
+
+**Predicting a night's roll.** The roll is `new Random(hash)` with `hash = seed*397 ^ doy*7919`, then
+`hash*397 ^ 15485863` (`SabotageSchedule.Rng`), and the first `NextDouble()` against the chance
+(Summer 25%, Fall and Winter 35%) decides strike or quiet. `seed` is the `Run N ready (seed X)` log
+line, `doy` is `season*28 + day` (Spring 0). A save is always written after a night roll, so to hand
+over a clean "nothing struck yet" save, pick a farm whose draw on that night is quiet.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),

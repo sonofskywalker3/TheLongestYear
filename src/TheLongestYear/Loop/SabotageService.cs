@@ -914,6 +914,9 @@ namespace TheLongestYear.Loop
                 $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; units in chests (stash excluded): {SpoilagePass.StoredUnits(DarknessLevels.StorageReachesEverything(Level))}",
                 $"  Scenes played this loop: {string.Join(", ", (Run.StrikeScenesPlayed ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
                 $"  Scenes seen on save: {string.Join(", ", (Meta.StrikeScenesSeen ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
+                $"  Struck this loop: {string.Join(", ", (Run.StruckEvents ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
+                $"  Owed tonight (every-loop guarantee, from day {StrikeGuarantee.ForceFromDay} of the debut season; forced only if it can act): {string.Join(", ", StrikeGuarantee.Owed(Run.Season, Run.DayOfMonth, Run.StruckEvents ?? new HashSet<string>()).Select(e => e.ToString()).DefaultIfEmpty("none"))}",
+                $"  Witness lines pending: {string.Join(", ", (Run.WitnessLines ?? new List<WitnessRecord>()).Where(r => !r.Said).Select(r => $"{r.Npc} (scene day {r.SceneDayOfYear}, until day {r.SceneDayOfYear + WitnessLines.WindowDays})").DefaultIfEmpty("none"))}",
             };
             lines.AddRange(TargetSummary());
             foreach (TamperRecord t in Run.Tampers)
