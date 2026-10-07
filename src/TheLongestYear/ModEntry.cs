@@ -514,6 +514,9 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.JojaDebugCommand.Name, TheLongestYear.DebugCommands.JojaDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, a, _jojaOffer));
+            helper.ConsoleCommands.Add("tly_hud",
+                "Log the HUD and fade state (displayHUD, eventUp, freezeControls, fade, menu, time, day). Read-only debug.",
+                this.CmdHud);
             helper.ConsoleCommands.Add("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
@@ -2327,6 +2330,16 @@ namespace TheLongestYear
             ? TheLongestYear.Core.Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth)
             : TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
 
+        private void CmdHud(string command, string[] args)
+        {
+            string menu = Game1.activeClickableMenu?.GetType().Name ?? "none";
+            this.Monitor.Log(
+                $"displayHUD={Game1.displayHUD} eventUp={Game1.eventUp} freezeControls={Game1.freezeControls} " +
+                $"fadeToBlack={Game1.fadeToBlack} fadeAlpha={Game1.fadeToBlackAlpha:0.00} " +
+                $"menu={menu} time={Game1.timeOfDay} day={Game1.dayOfMonth}",
+                LogLevel.Info);
+        }
+
         private void CmdActiveEffects(string command, string[] args)
         {
             string bonus = TheLongestYear.Core.ActiveEffectsProvider.BonusId ?? "(none)";
@@ -3650,6 +3663,7 @@ namespace TheLongestYear
                     TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,
                         () => _launcher?.OpenCookbook(), () => _launcher?.OpenCraftbook(), args);
                     break;
+                case "tly_hud": this.CmdHud(command, args); break;
                 case "tly_activeeffects": this.CmdActiveEffects(command, args); break;
                 case "tly_setstash":  this.CmdSetStash(command, args); break;
                 case "tly_openstash": this.CmdOpenStash(command, args); break;
