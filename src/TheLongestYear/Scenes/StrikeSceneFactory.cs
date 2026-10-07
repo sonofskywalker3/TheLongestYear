@@ -25,6 +25,18 @@ namespace TheLongestYear.Scenes
             };
         }
 
+        /// <summary>Can this kind's scene stage tonight at all (review I1)? Asked by the night's "can
+        /// act" test while the kind's scene is due: a kind whose scene cannot stage cannot act that
+        /// night. The thief's own check is per chest, inside the draw (SpoilagePass).</summary>
+        public static bool CanStage(DarknessEvent e) => e switch
+        {
+            DarknessEvent.CropBlight => CrowsScene.CanStage(),
+            DarknessEvent.ChestBlight => true,
+            DarknessEvent.Reversion => HallScene.CanStage(),
+            DarknessEvent.Tampering => CloudScene.CanStage(),
+            _ => false,
+        };
+
         /// <summary>Tonight's scene, or null when the kind has none.</summary>
         public static FarmEvent Create(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
         {

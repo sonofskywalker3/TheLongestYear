@@ -101,11 +101,14 @@ namespace TheLongestYear.Loop
                             // A Junimo Chest's own Items list is empty: its stock is the team's
                             // shared inventory, which GetItemsForPlayer returns (Chest.cs:990).
                             Inventory = chest.GetItemsForPlayer(),
-                            OnFarm = OnSceneMap(loc),
+                            OnFarm = Filmable(loc, pair.Key, thiefSceneDue),
                             Warded = CircleOfWardingService.Covers(circles, loc, chest.TileLocation),
                         });
                         continue;
                     }
+                    // A placed machine is only ever at stake on the Farm itself; while the thief scene
+                    // is due, only one he can stand beside (review I1).
+                    if (thiefSceneDue && loc == farm && !BlightRule.MachineInThiefDraw(TheLongestYear.Scenes.ThiefScene.HasWayIn(loc, pair.Key), thiefSceneDue)) continue;
                     seen.Add(new Seen { Location = loc, Tile = pair.Key, Object = obj, OnFarm = loc == farm, Warded = CircleOfWardingService.Covers(circles, loc, pair.Key) });
                 }
                 return true;
@@ -148,6 +151,12 @@ namespace TheLongestYear.Loop
             }
             return entries;
         }
+
+        /// <summary>Can the thief scene show a chest here? On a scene map, and, while the scene is due,
+        /// with a tile beside it he can stand on (review I1: the scene's own staging check at pick
+        /// time). When the scene is not due the walk is not asked: no scene will stage.</summary>
+        private static bool Filmable(GameLocation loc, Vector2 tile, bool thiefSceneDue)
+            => BlightRule.SeatFilmable(OnSceneMap(loc), !thiefSceneDue || TheLongestYear.Scenes.ThiefScene.HasWayIn(loc, tile));
 
         /// <summary>An index standing for <paramref name="inventory"/>: equal for every chest that
         /// shows the very same inventory object.</summary>

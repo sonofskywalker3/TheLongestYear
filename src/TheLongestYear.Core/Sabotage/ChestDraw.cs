@@ -60,4 +60,13 @@ public static partial class BlightRule
     /// whose filmable chests hold nothing to take is a night the thief cannot act.</summary>
     public static bool InThiefDraw(ChestHost host, bool thiefSceneDue)
         => host.Host && (!thiefSceneDue || host.Filmable);
+
+    /// <summary>Can the thief scene show this chest (<see cref="ChestSeat.OnFarm"/>)? It stands on a
+    /// scene map and has a tile beside it he can stand on (review I1: the scene's own staging check,
+    /// asked at pick time, so a boxed-in chest is never picked while the scene is due).</summary>
+    public static bool SeatFilmable(bool onSceneMap, bool hasWayIn) => onSceneMap && hasWayIn;
+
+    /// <summary>Is a placed machine (only ever at stake on the Farm itself) in tonight's draw? While
+    /// the thief scene is due, only one he can stand beside.</summary>
+    public static bool MachineInThiefDraw(bool hasWayIn, bool thiefSceneDue) => !thiefSceneDue || hasWayIn;
 }
