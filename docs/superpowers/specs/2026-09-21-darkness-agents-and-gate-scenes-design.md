@@ -253,17 +253,18 @@ override everything above where they differ.
 
 ### Scene 4: the cloud (tampering, Winter), about 12 seconds
 
-- The world map fills the screen, in its Winter art (the map tab's art, scaled to fill the
-  screen rather than at the map tab's own size, which is tiny on a large screen).
-- A dark cloud drifts in slowly from the north, every blob entering over the map's top edge
-  (none starts on the map), and settles sort of everywhere: evenly
-  over the whole map image, forest, mountains, water, the desert edge, empty land and the
+- The world map in its Winter art, at the size the in-game map tab draws it and inside the map
+  tab's own frame, centred on a very dark night backdrop (Jeff, 2026-10-07: the map blown up to
+  fill the screen "looks bad"; the filled version stays behind one switch).
+- A dark cloud drifts in slowly from the north, every blob entering from above the top of the
+  screen (none starts on screen), and settles sort of everywhere: evenly over the whole screen,
+  frame and backdrop included, forest, mountains, water, the desert edge, empty land and the
   margins alike, never clustered on the town or any settlement. It lies a little thicker on the
   farm, which is the darkest place on the map. The Community Center gets no special treatment:
   the strike is on the things the farmer was saving to donate, not on the hall. (Jeff,
   2026-10-07, after the first frames: less piled on the farm, more everywhere else, and a slow
   drift rather than a dart.)
-- The map dims under it. The low `shadowDie` from the Winter gate scene. Hold. Apply. Fade.
+- Everything dims under it. The low `shadowDie` from the Winter gate scene. Hold. Apply. Fade.
 - No witness.
 
 **The dark aura.** From that morning until the loop ends, every item of the tainted type (the

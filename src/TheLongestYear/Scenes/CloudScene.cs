@@ -12,20 +12,21 @@ using TheLongestYear.Loop;
 namespace TheLongestYear.Scenes
 {
     /// <summary>The tampering scene (spec 2026-09-21, Scene 4). About twelve seconds, no text, no
-    /// witness: the world map in its Winter art, and a dark cloud drifts in over it from the
-    /// north, over the map's top edge, and settles sort of everywhere, evenly over the whole map image and
-    /// never clustered on the town, a little thicker on the farm, which ends the darkest place on
-    /// the map (Jeff, 2026-10-07). The map dims under it, and as the farm settles the low
-    /// <c>shadowDie</c> sounds and the board is rewritten. The Community Center gets no special
-    /// treatment: the strike is on the things the farmer was saving to donate, not on the hall.
+    /// witness: the world map in its Winter art, framed the way the map tab frames it, and a dark
+    /// cloud that drifts in from above the top of the screen and settles sort of everywhere, evenly
+    /// over the whole screen and never clustered on the town, a little thicker on the farm, which
+    /// ends the darkest place on the map (Jeff, 2026-10-07). Everything dims under it, and as the
+    /// farm settles the low <c>shadowDie</c> sounds and the board is rewritten. The Community Center
+    /// gets no special treatment: the strike is on the things the farmer was saving to donate, not
+    /// on the hall.
     ///
     /// THE MAP IS THE MAP TAB'S ART, NOT A PICTURE OF IT. The texture and the area overlays (the
     /// farm type, the town's repairs and so on) come from the game's own <c>Data/WorldMap</c>
     /// through <see cref="WorldMapManager"/>, chosen the way <c>MapPage.drawMap</c> chooses them,
-    /// always in their Winter art. The real menu is never opened. The FIT is not the map tab's: the
-    /// map tab draws the art at four times its size times the UI scale, which left it tiny on a
-    /// large screen (Jeff, 2026-10-07), so the scene scales the map to fill the screen instead
-    /// (<see cref="SceneCloud.Fit"/>), black round it, and the cloud and the farm scale with it.
+    /// always in their Winter art. The real menu is never opened. It is drawn at the map tab's own
+    /// size inside the map tab's own frame (<see cref="SceneMapFit.MapTab"/>, Jeff 2026-10-07: the
+    /// map blown up to fill the screen "looks bad"), on a dark night backdrop. The filled version
+    /// comes back by setting <see cref="FillScreen"/>.
     ///
     /// The scene paints in the WORLD layer (<see cref="StrikeSceneBase.Paint"/>), so the base's fade
     /// lands over it, and fits the map to that layer's size (<c>Game1.viewport</c>, the screen over
@@ -59,6 +60,27 @@ namespace TheLongestYear.Scenes
 
         /// <summary>The cloud's colour: a near-black violet, the darkness's own.</summary>
         private static readonly Color CloudTint = new Color(20, 0, 30);
+
+        /// <summary>The backdrop round the frame: a very dark night blue rather than pure black, so
+        /// the cloud rolling over it, which covers the whole screen, can still be seen.</summary>
+        private static readonly Color NightBackdrop = new Color(14, 16, 32);
+
+        /// <summary>False (the default since 2026-10-07): the map at the map tab's size in the map
+        /// tab's frame. True: the earlier map scaled to fill the screen, no frame. One switch, so the
+        /// designer can have either.</summary>
+        private static readonly bool FillScreen = false;
+
+        /// <summary>The map tab's frame is <c>Game1.menuTexture</c>'s dialogue box: these source
+        /// rectangles, read off <c>Game1.drawDialogueBox</c> in the 1.6 decompile.</summary>
+        private static readonly Rectangle FrameFill = new Rectangle(64, 128, 64, 64);
+        private static readonly Rectangle FrameTopLeft = new Rectangle(0, 0, 64, 64);
+        private static readonly Rectangle FrameTopRight = new Rectangle(192, 0, 64, 64);
+        private static readonly Rectangle FrameBottomLeft = new Rectangle(0, 192, 64, 64);
+        private static readonly Rectangle FrameBottomRight = new Rectangle(192, 192, 64, 64);
+        private static readonly Rectangle FrameTop = new Rectangle(128, 0, 64, 64);
+        private static readonly Rectangle FrameBottom = new Rectangle(128, 192, 64, 64);
+        private static readonly Rectangle FrameLeft = new Rectangle(0, 128, 64, 64);
+        private static readonly Rectangle FrameRight = new Rectangle(192, 128, 64, 64);
 
         /// <summary>Map pixels per world map art pixel (<c>MapRegion</c> multiplies every rectangle
         /// by four). The cloud is planned in map pixels; the screen fit is applied when painting.</summary>
@@ -95,6 +117,10 @@ namespace TheLongestYear.Scenes
         private Rectangle _farm;
         private IReadOnlyList<SceneCloud.Blob> _cloud;
         private Texture2D _blob;
+        /// <summary>The fit the cloud was planned against: the screen size it was planned for, the
+        /// scale from map pixels to paint pixels, and where the map's corner sits.</summary>
+        private int _viewWidth, _viewHeight, _originX, _originY;
+        private double _scale;
 
         public CloudScene(PendingStrike strike, bool skippable, IMonitor monitor, Action<bool> onFinished)
             : base(strike, skippable, monitor, onFinished) { }
@@ -134,13 +160,19 @@ namespace TheLongestYear.Scenes
             if (_farm.Width <= 0 || _farm.Height <= 0)
                 _farm = farmOnMap.GetPixelArea();
 
-            _cloud = SceneCloud.Plan(SceneCloud.BlobCount, _mapWidth, _mapHeight, _farm.X, _farm.Y, _farm.Width, _farm.Height, new Random(CloudSeed));
+            FitToScreen();
+            (double sx, double sy, double sw, double sh) = SceneMapFit.ScreenInMap(_viewWidth, _viewHeight, _originX, _originY, _scale);
+            _cloud = SceneCloud.Plan(_mapWidth, _mapHeight, _farm.X, _farm.Y, _farm.Width, _farm.Height, sx, sy, sw, sh, new Random(CloudSeed));
             _blob = BuildBlob();
 
+            int onFarm = 0;
+            foreach (SceneCloud.Blob blob in _cloud)
+                if (blob.OnFarm) onFarm++;
             Monitor.Log(
                 $"Darkness: the cloud is staged on world map region '{region.Id}', {_mapWidth}x{_mapHeight} map pixels, "
                 + $"base {_baseTexture.Name} plus {_overlays.Count} overlay(s), the farm at ({_farm.X},{_farm.Y} {_farm.Width}x{_farm.Height}), "
-                + $"{_cloud.Count} blob(s), {SceneCloud.FarmCount(_cloud.Count)} of them over the farm, blob texture {(_blob == null ? "MISSING (no cloud will draw)" : "built")}.",
+                + $"{(FillScreen ? "filled to the screen" : "framed at the map tab's size")} on a {_viewWidth}x{_viewHeight} screen at {_scale:0.###} paint px per map px, map corner ({_originX},{_originY}), "
+                + $"{_cloud.Count} blob(s), {onFarm} of them over the farm, blob texture {(_blob == null ? "MISSING (no cloud will draw)" : "built")}.",
                 LogLevel.Trace);
             return true;
         }
@@ -203,7 +235,7 @@ namespace TheLongestYear.Scenes
 
         private static Rectangle ArtToMap(Rectangle art)
         {
-            (int x, int y, int w, int h) = SceneCloud.ArtToMap(art.X, art.Y, art.Width, art.Height, MapArtScale);
+            (int x, int y, int w, int h) = SceneMapFit.ArtToMap(art.X, art.Y, art.Width, art.Height, MapArtScale);
             return new Rectangle(x, y, w, h);
         }
 
@@ -260,28 +292,44 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- painting
 
+        /// <summary>Where the map goes on this screen. The world layer is the screen over the zoom,
+        /// which is the size of Game1.viewport; one UI pixel there is the UI scale over the zoom.</summary>
+        private void FitToScreen()
+        {
+            _viewWidth = Game1.viewport.Width;
+            _viewHeight = Game1.viewport.Height;
+            double uiToPaint = Game1.options.uiScale / Game1.options.zoomLevel;
+            (_scale, _originX, _originY) = FillScreen
+                ? SceneMapFit.Fill(_viewWidth, _viewHeight, _mapWidth, _mapHeight, MapArtScale)
+                : SceneMapFit.MapTab(_viewWidth, _viewHeight, _mapWidth, _mapHeight, MapArtScale, uiToPaint);
+        }
+
         /// <inheritdoc />
         protected override void Paint(SpriteBatch b)
         {
             if (Game1.fadeToBlackRect == null) return;
-            b.Draw(Game1.fadeToBlackRect, WholeScreen(), Color.Black);
+            Rectangle screen = WholeScreen();
+            b.Draw(Game1.fadeToBlackRect, screen, FillScreen ? Color.Black : NightBackdrop);
 
-            // The world layer is the screen over the zoom, which is the size of Game1.viewport.
-            (double scale, int ox, int oy) = SceneCloud.Fit(Game1.viewport.Width, Game1.viewport.Height, _mapWidth, _mapHeight, MapArtScale);
+            int ox = _originX, oy = _originY;
+            double scale = _scale;
             Rectangle ToPaint(Rectangle r)
             {
-                (int x, int y, int w, int h) = SceneCloud.MapToPaint(r.X, r.Y, r.Width, r.Height, ox, oy, scale);
+                (int x, int y, int w, int h) = SceneMapFit.MapToPaint(r.X, r.Y, r.Width, r.Height, ox, oy, scale);
                 return new Rectangle(x, y, w, h);
             }
 
+            Rectangle map = ToPaint(new Rectangle(0, 0, _mapWidth, _mapHeight));
+            if (!FillScreen) PaintFrame(b, map);
             b.Draw(_baseTexture, ToPaint(_baseArea), _baseSource, Color.White);
             foreach ((Texture2D texture, Rectangle source, Rectangle area) in _overlays)
                 b.Draw(texture, ToPaint(area), source, Color.White);
 
             int elapsed = ElapsedMs;
-            Rectangle map = ToPaint(new Rectangle(0, 0, _mapWidth, _mapHeight));
-            b.Draw(Game1.fadeToBlackRect, map, Color.Black * SceneCloud.Dim(elapsed));
+            b.Draw(Game1.fadeToBlackRect, screen, Color.Black * SceneCloud.Dim(elapsed));
 
+            // The cloud covers the whole screen, frame and backdrop included, and comes in from
+            // above its top edge, so nothing is clipped.
             if (_blob == null) return;
             foreach (SceneCloud.Blob blob in _cloud)
             {
@@ -292,22 +340,29 @@ namespace TheLongestYear.Scenes
                 Rectangle at = ToPaint(new Rectangle((int)x - half, (int)y - half, (int)blob.Diameter, (int)blob.Diameter));
                 b.Draw(_blob, at, CloudTint * alpha);
             }
-            MaskOutside(b, map);
         }
 
-        /// <summary>Black over everything outside the map image, painted after the cloud, so a blob
-        /// waiting above the map, or one hanging past its edge, is never seen on the black around
-        /// it: the cloud is clipped to the map and enters over its top edge (Jeff, 2026-10-07). Four
-        /// black bands rather than a scissor rectangle, for the reason SceneWindow gives: the scene
-        /// paints inside a batch the game opened.</summary>
-        private static void MaskOutside(SpriteBatch b, Rectangle map)
+        /// <summary>The map tab's frame round the map: the dialogue box <c>MapPage.drawMap</c> asks
+        /// <c>Game1.drawDialogueBox</c> for, drawn here piece by piece rather than through that
+        /// method, which reads the dialogue system's global state (question choices, the current
+        /// speaker) and only knows UI pixels. Same texture, same pieces, same place: 32 UI pixels
+        /// outside the map on every side, corners and edges 64 UI pixels thick.</summary>
+        private static void PaintFrame(SpriteBatch b, Rectangle map)
         {
-            Rectangle screen = WholeScreen();
-            Color black = Color.Black;
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, screen.Width, Math.Max(0, map.Top)), black);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, map.Bottom, screen.Width, Math.Max(0, screen.Height - map.Bottom)), black);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, map.Top, Math.Max(0, map.Left), map.Height), black);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(map.Right, map.Top, Math.Max(0, screen.Width - map.Right), map.Height), black);
+            Texture2D menu = Game1.menuTexture;
+            if (menu == null) return;
+            double uiToPaint = Game1.options.uiScale / Game1.options.zoomLevel;
+            (int fx, int fy, int fw, int fh, int piece) = SceneMapFit.Frame(map.X, map.Y, map.Width, map.Height, uiToPaint);
+            int inset = (int)Math.Round(SceneMapFit.FrameFillInset * uiToPaint);
+            b.Draw(menu, new Rectangle(fx + inset, fy + inset, fw - 2 * inset, fh - 2 * inset), FrameFill, Color.White);
+            b.Draw(menu, new Rectangle(fx + piece, fy, fw - 2 * piece, piece), FrameTop, Color.White);
+            b.Draw(menu, new Rectangle(fx + piece, fy + fh - piece, fw - 2 * piece, piece), FrameBottom, Color.White);
+            b.Draw(menu, new Rectangle(fx, fy + piece, piece, fh - 2 * piece), FrameLeft, Color.White);
+            b.Draw(menu, new Rectangle(fx + fw - piece, fy + piece, piece, fh - 2 * piece), FrameRight, Color.White);
+            b.Draw(menu, new Rectangle(fx, fy, piece, piece), FrameTopLeft, Color.White);
+            b.Draw(menu, new Rectangle(fx + fw - piece, fy, piece, piece), FrameTopRight, Color.White);
+            b.Draw(menu, new Rectangle(fx, fy + fh - piece, piece, piece), FrameBottomLeft, Color.White);
+            b.Draw(menu, new Rectangle(fx + fw - piece, fy + fh - piece, piece, piece), FrameBottomRight, Color.White);
         }
 
         // ---------------------------------------------------------------- putting it back

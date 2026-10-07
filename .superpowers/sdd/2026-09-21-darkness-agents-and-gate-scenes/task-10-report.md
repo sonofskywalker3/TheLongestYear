@@ -406,3 +406,155 @@ ramp, before the "already dark at the top edge" ruling. They are kept only as a 
   the blob profile in `CloudScene.BuildBlob`.
 - **The earlier report commit.** The previous report commit (`37108ac`) could not be pushed: GitHub
   answered 500 three times. It goes up with this round if GitHub accepts the push.
+
+## Follow-up: framed map
+
+This is Jeff's trial ("let me see what it looks like"): the map at the size the in-game map tab
+draws it, inside the map tab's own frame, with the cloud covering the whole screen.
+
+### What changed
+
+**The map is drawn at the map tab's size** (`SceneMapFit.MapTab`, Core).
+
+- From the 1.6 decompile: `MapRegion` draws 4 UI pixels per art pixel, and the map is centred with
+  `Utility.getTopLeftPositionForCenteringOnScreen`.
+- The scene paints in the zoomed world layer, so one UI pixel there is the UI scale divided by the
+  zoom.
+- So the draw size is 4 x (UI scale / zoom) screen pixels per art pixel, rounded to a whole number
+  and never below 1. The map is never scaled by a fraction.
+- At UI scale 1 and zoom 1 this is exactly the map tab: 1200x720 at (40,0) on 1280x720, and at
+  (1320,705) on 3840x2130.
+
+**The frame is the map tab's own.** `MapPage.drawMap` calls
+`Game1.drawDialogueBox(mapX - 32, mapY - 96, (300 + 16) * 4, (180 + 32) * 4, speaker: false,
+drawOnlyBox: true)`.
+
+- I did not call `drawDialogueBox` itself. It reads the dialogue system's global state (question
+  choices, the current speaker), and it only knows UI pixels.
+- Instead, `CloudScene.PaintFrame` draws the same `Game1.menuTexture` pieces in the same places:
+  the fill, the four edges and the four corners, 64 UI pixels thick, ending 32 UI pixels outside
+  the map on every side.
+- With no question choices up, drawDialogueBox draws its box one tile lower than the y it is
+  given. That puts the visible frame at (mapX - 32, mapY - 32), 1264x784 for the 1200x720 map.
+  `SceneMapFit.Frame` encodes this and is unit-tested.
+- At 1280x720 the frame's top and bottom run off the screen and only the side edges show. The map
+  tab does exactly the same at that size.
+
+**The backdrop is a very dark night blue**, `new Color(14, 16, 32)`, not black. I chose it because
+the cloud now covers the whole screen, and dark violet blobs over pure black would be invisible
+outside the frame. Over the night blue they read as faint drifting dark patches.
+
+**The cloud covers the whole screen.**
+
+- `MaskOutside` is removed, and nothing is clipped.
+- `SceneCloud.Plan` now takes the screen as a rectangle in map pixels (`SceneMapFit.ScreenInMap`).
+- Every blob starts with its whole disc above the screen's top edge, roughly above its own rest
+  (within 4% of the screen width), and drifts south with the same sine ease-out, at full 0.7 from
+  the moment it sets out.
+- The scattered rests sit on an even jittered grid over the whole screen, one blob per cell.
+- The farm share still packs over the farm rect on the map, so the farm ends the darkest place.
+- The full dim (`Black * 0.35`) now covers the whole screen.
+
+**Blob count.**
+
+- The scattered count follows the screen's area: about 30 on a map-sized screen, more in
+  proportion on a bigger screen, capped near 60 (`SceneCloud.ScatterGrid`). Past the cap the blobs
+  grow instead, so the cover matches. A test checks the cover at 4K is within 0.75 to 1.33 times
+  the cover at 720p.
+- Counts as built: 32 scattered at 1280x720, 60 at 3840x2130.
+- **The farm keeps 10 blobs on every screen** (`SceneCloud.FarmCount`), which is 25% of a
+  map-sized screen's cloud. The first native run scaled the farm's share with the screen and put
+  20 blobs on the same small farm, which turned it solid black. The extra blobs a big screen gets
+  fall on the extra screen round the map, so on the map itself the split stays about 75/25.
+- Total cloud: 42 blobs at 1280x720 and 70 at native.
+
+**Unchanged:** the timeline (pour from 1500, farm settles at 9000 with the strike, the sound and
+the full dim, fade at 11000, end at 12200), the slow sine ease-out, and full darkness from the
+start.
+
+**The filled map is one switch away:** `CloudScene.FillScreen` (`static readonly bool`, false).
+Set to true, it uses `SceneMapFit.Fill` (the previous fill-the-screen fit) on black, with no frame.
+The cloud still covers the whole screen either way.
+
+**Files:**
+
+- `SceneMapFit.cs` (new, Core) now holds the fits that used to live in `SceneCloud`: `ArtToMap`,
+  `Fill`, `MapToPaint`, plus the new `MapTab`, `Frame` and `ScreenInMap`.
+- `SceneCloud.cs` (Core): `Plan` now covers the whole screen, plus the new `ScatterGrid` and
+  `FarmCount`.
+- `CloudScene.cs`: the frame, the night backdrop, the `FillScreen` switch, and the mask removed.
+- `SceneCloudTests.cs`.
+- The spec and the plan.
+
+### Tests
+
+`SceneCloudTests` now has 50 tests. Over the earlier version they add or change:
+
+- **Start position:** every blob starts wholly above the top of the screen, at 720p and at native,
+  and the starts span the full screen width.
+- **Rest grid:** it covers the whole screen, one blob per cell, on four screen sizes.
+- **Farm:** every farm blob rests inside the farm rect; the farm gets 10 blobs on any screen; a
+  quarter of a map-sized screen's cloud is on the farm; the farm is the thickest place.
+- **Count and cover:** the scattered count is about 30 on a map-sized screen and bounded at 4K and
+  8K; the cover at 4K matches 720p.
+- **Map size:** the map is the map tab's 1200x720, centred at 1280x720 and at 4K, and the scale is
+  always a whole number of pixels per art pixel (UI/zoom ratios 1, 1.5, 2, 1.2, 0.75 and 0.1).
+- **Frame:** it sits where MapPage's dialogue box does, at 1x and 1.5x.
+- **Screen rectangle:** the screen-in-map rectangle is correct.
+- **Fill fit:** the old fit's tests are kept under `Filled_...`.
+
+```
+dotnet build TheLongestYear.sln       -> Build succeeded. 0 Error(s)
+dotnet test tests/TheLongestYear.Tests --no-build
+  -> Passed!  - Failed: 0, Passed: 3869, Skipped: 0, Total: 3869
+dotnet test ... --filter "FullyQualifiedName~SceneCloudTests"
+  -> Passed!  - Failed: 0, Passed: 50
+```
+
+### Live check (my launches, minimized, no input)
+
+- Four throwaway farms from `tly_newgame standard skipintro`, then `tly_select Farming` and
+  `tly_sabotage scene cloud`.
+- Captures at 1280x720 and at native 3840x2130 (UI scale 1, zoom 1). The window-size setting was
+  switched for the runs and restored to 1920x1080.
+- All four farms (`standard_451063931`, `_451064004`, `_451064121`, `_451064189`) are deleted. The
+  saves folder matches the original listing. The game is closed, and `git checkout --
+  test-output/` was run.
+- Staging log lines: "framed at the map tab's size on a 1280x720 screen at 1 paint px per map px,
+  map corner (40,0), 42 blob(s), 10 of them over the farm", and the same "on a 3840x2130 screen
+  ... map corner (1320,705), 70 blob(s), 10 of them over the farm".
+
+The frames are in `test-output/scenes/cloud/` and I looked at every one. The scene times are
+approximate, mapped from the capture clock.
+
+| File | What it shows |
+| --- | --- |
+| `framed-720-01-map-in-1000.png` | The map tab's 1200x720 map filling the height, with the map tab's orange frame edges at left and right and the night blue beyond them. |
+| `framed-720-02-entering-2300.png` | The first dark puffs coming over the top edge. |
+| `framed-720-03-rolling-3000.png`, `framed-720-04-rolling-4000.png` | Puffs at full darkness rolling south across the whole width. |
+| `framed-720-05-southward-5500.png`, `framed-720-06-farm-arriving-7000.png` | The veil over the whole screen; the farm mass arriving. |
+| `framed-720-07-settled-10000.png` | Settled: an even veil, the farm the darkest knot. |
+| `framed-720-08-fade-11600.png` | Fading. |
+| `framed-4k-01-map-in-1000.png` | Native: the map at the map tab's size, small in the middle of a 4K screen inside its orange frame, on night blue. |
+| `framed-4k-02-...` to `framed-4k-06-...` | Native: large soft dark patches drifting down over the night backdrop and the framed map alike; the map darkens under them. |
+| `framed-4k-07-settled-10000.png` and `framed-4k-07-crop.png` (the map region at full resolution) | Native, settled: the frame crisp, the map veiled, the farm the darkest place, a dark knot but not solid black. |
+| `framed-4k-04-crop.png` | Native, mid-drift, the map region at full resolution. |
+| `framed-4k-08-fade-11600.png` | Native, fading. |
+| `framed720-sheet.png`, `framed4k-sheet.png` | Contact sheets. |
+
+`framed4k/` holds the first native run, with 20 farm blobs and the farm piled black, which is why
+the farm is now fixed at 10. `framed720/` is the first 720p run, with 11 farm blobs. The named
+frames above come from the final runs (`framed4kb/`, `framed720b/`).
+
+### Open
+
+- **The map is small at native.** At Jeff's 3840x2160 with UI scale 1, the map tab's own size is a
+  1200x720 map in the middle of the screen, as he asked; most of the screen is the night backdrop
+  with the cloud drifting over it. Jeff should judge it. `FillScreen` brings back the filled
+  version.
+- **The cloud over the backdrop is faint.** That is intended, so the backdrop stays dark. A lighter
+  `NightBackdrop` would show the cloud more and the black less.
+- **Chat box in the frames.** In the final 1280x720 run the game's chat input box sat at the
+  bottom of every frame, from before the scene started. It is not drawn by the scene and I sent no
+  input. It is from the game's own UI on that launch.
+- **Not run live:** UI scale or zoom other than 1. The whole-number rounding is unit-tested.
