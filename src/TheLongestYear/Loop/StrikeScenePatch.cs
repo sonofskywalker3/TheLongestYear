@@ -6,6 +6,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Events;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Loop
 {
@@ -18,7 +19,9 @@ namespace TheLongestYear.Loop
     ///
     /// <see cref="FarmEventSuppressionPatch"/> postfixes the same method and nulls the event on a
     /// fail night. Either order is safe: this one asks the same fail-night question itself and
-    /// returns without touching anything.</summary>
+    /// returns without touching anything. <see cref="WildcardNightEventPatch"/> also postfixes it;
+    /// on a Wildcard night_event night the twist keeps the slot whichever runs first, because this
+    /// one reads the run's twist rather than the result.</summary>
     [HarmonyPatch(typeof(Utility), nameof(Utility.pickFarmEvent))]
     [HarmonyPriority(Priority.Last)]
     internal static class StrikeScenePatch
@@ -101,9 +104,10 @@ namespace TheLongestYear.Loop
         /// Vanilla only reaches <c>pickPersonalFarmEvent</c> when <c>pickFarmEvent</c> came back null
         /// (Game1.cs:8134), so a scene that takes an empty slot would eat a birth, a couple's birth or
         /// a pregnancy question outright. The probe is safe to call: <c>pickPersonalFarmEvent</c>
-        /// (Utility.cs:4496) seeds its own Random from the date and the save, reads friendship, the
-        /// spouse and a game state query, mutates nothing, and the four events it can build have
-        /// trivial constructors. It also never returns null outside a wedding, because it falls
+        /// (Utility.cs:4496) seeds its own Random from the date and the save and reads friendship,
+        /// the spouse and a game state query. Its one write is idempotent: the spouse's
+        /// <c>canGetPregnant</c> sets the NPC's defaultMap, the same value vanilla writes when it
+        /// asks again a moment later. The four events it can build have trivial constructors. It also never returns null outside a wedding, because it falls
         /// through to the barn birth or the dogs, which is why the answer is classified rather than
         /// null-checked.</summary>
         private static bool PersonalEventHasTheSlot()
@@ -130,6 +134,15 @@ namespace TheLongestYear.Loop
             // should be pending either (RunController only runs the night pass on ordinary nights),
             // but leave the slot exactly as it is either way.
             if (FailNight != null && FailNight()) return;
+            // A Wildcard night_event night belongs to the twist: the player was told that morning
+            // that something will happen on the farm. WildcardNightEventPatch postfixes the same
+            // method, so this is asked of the run state, not of __result: whichever postfix runs
+            // first, the strike lands without its scene and the scene stays due for a later night.
+            if (StrikeScenes.WildcardTwistHasTheSlot(WildcardDayService.NightTwist(), suppressed: false))
+            {
+                ApplyNow?.Invoke("the wildcard night event has the overnight slot");
+                return;
+            }
             if (__result != null && !IsRandom(__result))
             {
                 ApplyNow?.Invoke($"{__result.GetType().Name} has the overnight slot");
