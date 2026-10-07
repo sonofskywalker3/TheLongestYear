@@ -107,10 +107,19 @@ namespace TheLongestYear.Loop
         /// immediate one, the nets, and a scene calling Apply itself. A strike that found nothing to
         /// do when it came to it does not count toward the every-loop guarantee, so its name comes
         /// back off the run's list and the kind is still owed. The week's chance drop and the cap
-        /// slot stay spent: the night is over either way.</summary>
+        /// slot stay spent: the night is over either way.
+        ///
+        /// The guaranteed Winter tamper marks the save's first Winter as reached only here, once it
+        /// has landed. Marking it at the pick would send a failed apply's retry to the seeded
+        /// random week-1 night instead of tomorrow.</summary>
         private void OnStrikeApplied(PendingStrike strike)
         {
-            if (strike.Landed) return;
+            if (strike.Landed)
+            {
+                if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
+                    Meta.FirstWinterTamperSeen = true;
+                return;
+            }
             (Run.StruckEvents ??= new()).Remove(strike.Event.ToString());
             _monitor.Log($"Darkness: tonight's {strike.Event} found nothing to do when it came to it, so the kind is still owed this loop.", LogLevel.Info);
             if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
@@ -193,8 +202,8 @@ namespace TheLongestYear.Loop
                 // failed the moment it ran leaves the flags alone and falls through to tomorrow.
                 if (tamper != null && (!tamper.Applied || tamper.Landed))
                 {
+                    // FirstWinterTamperSeen is set by OnStrikeApplied once the tamper lands.
                     Run.GuaranteedTamperDone = true;
-                    Meta.FirstWinterTamperSeen = true;
                     _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {day}.", LogLevel.Info);
                     _armed.Clear(); _armedBlightTarget = null;
                     return;
