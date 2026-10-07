@@ -6,6 +6,33 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### Darkness agents and gate scenes: BUILT on story 2026-10-07, Jeff's pass owed
+Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
+13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
+when Jeff says. Summary in `STATUS.md` (2026-10-07).
+
+**Jeff's pass (his launch; ask first).** Three throwaway farms are saved, all "Rodger" on a standard
+farm. Load from the title screen's Load menu (the date on each row tells them apart) or headless
+with `tly_loadsave <folder>`:
+
+| Folder | Date | Sleep into |
+|---|---|---|
+| `standard_451080087` | Summer 14, nothing struck yet | Night 14 is quiet. Pick a theme on 15, sleep: the crows (Linus walks in). Talk to Linus on 16 ("last night") and again a few days later. Sleep on 16: the thief at a chest on the farm. |
+| `standard_451080418` | Fall 14, nothing struck yet in Fall | Night 14 is quiet. Pick a theme on 15, sleep: the hall (Shane passes, the figure in the window). Talk to Shane on 16 and again later ("the other night"). |
+| `standard_451080615` | Winter 1, guaranteed tamper due tonight | Sleep: the cloud. On Winter 2 step out of the farmhouse door: the Junimos name the tainted item. Look at the aura on that item (`tly_sabotage aurachest` puts it in a chest). The Winter gate scene already played on this farm; replay it with `tly_seasonturn winter` to watch the held glow. |
+
+Things to judge: every scene's look and length, the aura's colour (it also tints the top of the
+hair when held), the cloud's darkness, "our war" over "our fight" in the Winter closer, and the gate
+scenes' lines.
+
+**Open designer questions (not decided):**
+- (a) Should a tamper's replacement also skip any item already asked for elsewhere on the board? Today
+  it only skips items in the same bundle and anything already tainted, so a live strike asked for
+  "2 Beer" while another bundle also wanted Beer. That slot then can never be tampered again.
+- (b) Mass-noun asks: the Junimos' ask now reads "3 Wild Honey", "3 Sea Jelly", "3 Blueberry Wine",
+  "3 Apple Juice", "3 Salmon Roe" (was "3 Wild Honeys", "3 Sea Jellies"). Single-word names are
+  unchanged ("3 Parsnips", "3 Beer"). Keep, or change any of them?
+
 ### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
 "My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
 fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:

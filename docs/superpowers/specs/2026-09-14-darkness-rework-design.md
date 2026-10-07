@@ -1,5 +1,9 @@
 # Darkness Rework
 
+> **Changed (2026-10-07):** a per-loop guarantee was added by
+> `2026-09-21-darkness-agents-and-gate-scenes-design.md` (built on `story`): each kind that has not
+> struck by day 15 of its debut season is forced on the first night it can act.
+
 **Date:** 2026-09-14
 **Status:** built in Part B (commits `4613d36`..`93b29c4`, see `2026-09-15-darkness-obtainability-wiring-design.md`), live-checked 2026-09-15 on the throwaway save after the fix waves; Jeff's played run pending
 **Branch:** `story`

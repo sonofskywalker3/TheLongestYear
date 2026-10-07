@@ -1,10 +1,52 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-09-21, story: master 0.18.37 merged in
-**Branch:** `story`; merge committed and pushed
-**Tests:** 2683 passing
-**Build:** clean, 0 errors; not deployed for a live run; game not running
-**Last public release:** 0.18.37 (master)
+**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13)
+**Branch:** `story`; every commit pushed to `origin/story`
+**Tests:** 3914 passing
+**Build:** clean, 0 errors; deployed to the local Mods folder for the live checks; game closed
+**Last public release:** 0.19.0 (tag v0.19.0; master is at 0.19.1). Nothing below is released: `story` merges to master once, as one release, when Jeff says so.
+
+## 2026-10-07: darkness agents and gate scenes built on story, Jeff's pass owed
+
+Spec: `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md` (amended through
+2026-10-07). Plan: `docs/superpowers/plans/2026-09-21-darkness-agents-and-gate-scenes.md`. Commits
+`c1313a1..` the Task 13 docs commit, all on `story`, all pushed. Manifest version left at 0.18.15.
+
+**Built:**
+- Gate scenes: new Summer, Fall and Winter porch lines (Summer closer changes once the save has
+  rewound), Fall down to three lines, the Winter glow held to the end.
+- First-strike villager letters removed.
+- Pick at dusk, strike in the scene: the night's targets are picked at day end and the damage lands
+  at the scene's beat, or at once when no scene plays. Nothing pending crosses a save.
+- The overnight slot: our scene replaces a random vanilla night event; a wedding, a
+  `WorldChangeEvent`, another mod's override or a personal farm event keeps the night and the strike
+  lands with no scene.
+- Four scenes, first strike of each kind per loop, unskippable the first time on a save:
+  - crows (crop blight; Linus walks in),
+  - thief (chest blight; a Shadow Brute, one chest per night, farm maps only, family asleep in the
+    farmhouse),
+  - hall (reversion; one Shadow Brute working in the right window, Shane on Town's real paths),
+  - cloud (Winter tamper; the valley map at the map tab's size in its frame, a whole-screen cloud
+    from the north, thickest on the farm).
+- Every-loop guarantee: crows and thief forced from Summer 15, reversion from Fall 15, on the first
+  night each can act; never over a ward, an empty chest or nothing fair.
+- Junimo "tainted" scene: plays on the first farmhouse-door exit onto the Farm, names the exact
+  item, flavour included, with correct plurals.
+- Tamper rule: only an item (id + flavour) asked in exactly one slot on the board; the flavour is
+  cleared from the rewritten slot; a tainted item is never a later replacement.
+- Dark aura on every copy of the exact tainted item, cleared at reset.
+- Witness lines: Linus (crows) and Shane (hall), once in the 7 days after the scene, every loop.
+- `tly_sabotage status` shows struck, owed, scenes played and seen, and pending witness lines.
+
+**Live checks 2026-10-07 (automated, throwaway farms, deleted):** a crop blight armed on a bus
+repair night landed without its scene (`WorldChangeEvent has the overnight slot`) and the next armed
+blight played the crows; on Summer 14 with nothing struck, night 15 forced the crows and night 16
+the thief; with the Summer Ward of the Fields, the thief came on 15 and no crows. Details in
+`.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/task-13-report.md`.
+
+**Owed: Jeff's pass.** Three throwaway farms are saved for it (all named Rodger, farm "standard"):
+`standard_451080087` (Summer 14), `standard_451080418` (Fall 14), `standard_451080615` (Winter 1).
+What to watch and the open questions are in `TODO.md` under "Darkness agents and gate scenes".
 
 ## 2026-09-21: master 0.18.17 to 0.18.37 merged into story
 

@@ -1,5 +1,8 @@
 # Darkness Pushback (the sabotage mechanic)
 
+> **Superseded in part (2026-10-07):** first-strike letters removed and presentation replaced by
+> `2026-09-21-darkness-agents-and-gate-scenes-design.md` (built on `story`).
+
 **Date:** 2026-09-09
 **Status:** built from the story spec's section 6 on Jeff's "go ahead and implement" (2026-09-09),
 then reworked the same day on his rulings (below). Every number is still an ASSUMPTION for Jeff
