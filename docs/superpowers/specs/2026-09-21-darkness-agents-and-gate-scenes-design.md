@@ -215,6 +215,30 @@ where they differ.
   home, the direction of Marnie's ranch, and out of the frame. The camera may move if the facade
   and his path past it need it to share the frame.
 
+**Changed again, 2026-09-25 to 2026-10-07 (Jeff, and the controller's rulings on them).** These
+override everything above where they differ.
+
+- No made up paths. Every tile Shane steps on is a path tile on Town's own map (Back layer Type
+  Dirt, Stone or Wood, nothing standing on it), checked against an export of the map in the unit
+  tests and again against the live map before the scene uses the route. A tile that fails is
+  re-routed over path tiles only; if no path route exists he is left out of the scene.
+- His route: up from the riverside path and over the wooden bridge east of the hall, west along
+  the dirt road below the hall (row 28), stopping level with the hall below its right hand window
+  at (57,28). He never sets foot on the cobbled approach to the door or the lawn. After the jump
+  he backs two tiles down the road, then hurries home down the road's south west arm toward the
+  square, which is his way back through town to Marnie's ranch, where he lives.
+- The scene runs ten seconds (the cap). The camera opens on the whole facade and tilts down to the
+  road, keeping the windows in the top of the frame. He walks at vanilla's walking pace (533 ms a
+  tile) and hurries off at 320 ms a tile. After he has gone the shot holds on the lit windows.
+- The silhouettes of men are gone (Jeff: "about as intimidating as a mens room silhouette").
+  There is ONE figure, a Shadow Brute from the mines (the controller's pick; the Shadow Shaman was
+  the fallback and was not needed), drawn solid black with no interior detail and cut at the glass.
+  It is NOT looking out at Shane: it walks into the right hand window side-on and then works
+  there, turned from the street, leaning in and reaching with its hands in a slow loop. The
+  reversion is what it is doing. Shane's fright is at seeing a dark shape busy inside, not at being
+  watched.
+- The firelight is unchanged: same colour, same dimness, same fill on the glass's texel grid.
+
 ### Scene 4: the cloud (tampering, Winter), about 10 seconds
 
 - The world map fills the screen, in its Winter art.

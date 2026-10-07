@@ -1056,6 +1056,30 @@ where they differ.
   in shot plus three tiles out of it (`SceneRoute`). "Runs out the way he came" at 4600 becomes
   "hurries on toward home".
 
+**Changed again in fix round 2 (Jeff 2026-09-25 and 2026-10-07, with the controller's rulings).**
+These override everything above where they differ.
+
+- Shane's route is designed, not pathfound, and every tile is checked: `HallRoute` (Core) holds the
+  corners, `TileRoute.Expand` turns them into tiles, `HallRouteTests` checks every tile against an
+  export of Town's Back layer (Type Dirt, Stone or Wood, no Buildings tile, no Paths object), and
+  `HallWalker` checks every tile again on the live map. A tile that fails is re-routed over path
+  tiles only (`TileRoute.Between`); no path route means no Shane, never a line across the lawn.
+  Route: bridge (75,34) up to (75,29), (74,29), (74,28), west along row 28 to the stop (57,28);
+  back off to (57,30); home via (57,33), (56,33), (56,34), (55,34), (55,35), (54,35), (54,36),
+  west to (49,36) and down to (49,42). He never touches the door's cobbled approach.
+- The schedule pathfinder and the straight column fallback are gone.
+- Ten seconds. Camera opens on the whole facade (centre tile 50.5,18), tilts down to the road
+  (centre 50.5,24) from 700 over 1400 ms with an eased move. Shane walks in at 533 ms a tile,
+  starting as early as his in-shot route needs (under the fade if need be), stops at 5000, jumps at
+  5300 (`ApplyStrike()`), backs off from 5800 over 800, hurries off at 6600 at 320 ms a tile, hold
+  from 7600 (`shadowDie`), fade at 9200, end 10000.
+- The windows hold ONE figure, a Shadow Brute (`Characters\Monsters\Shadow Brute`), solid black
+  (fully opaque texels, holes such as eyes and mouth filled with `SceneWindow.FillHoles`), cut at
+  the glass, on the texel grid. It walks into the right hand window side-on (frames 4 to 7) from
+  900 to 2400, then works there turned from the street, looping frames 21, 22, 23, 22 at 320 ms
+  (leaning in and reaching). It never faces the viewer. The man silhouettes, their slide and their
+  bob are removed. The firelight is unchanged.
+
 ---
 
 ### Task 10: The cloud

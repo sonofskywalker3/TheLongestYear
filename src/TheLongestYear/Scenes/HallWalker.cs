@@ -1,97 +1,67 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Pathfinding;
 using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Scenes
 {
-    /// <summary>Shane in the hall scene (Jeff, 2026-09-23). He is NOT going to the Community Center.
-    /// It is late, he has left the Saloon and is walking past the hall to clear his head before he
-    /// heads home to Marnie's. He comes along the town's own paths, sees the lit windows, stops,
-    /// jumps, backs away two tiles still looking at it, then turns and hurries off toward home.
+    /// <summary>Shane in the hall scene (Jeff, 2026-09-23 and 2026-09-25). He is NOT going to the
+    /// Community Center. He has left the Saloon and taken the long way round to clear his head, and
+    /// he walks PAST the hall along the dirt road below it. Level with it he sees the lit windows,
+    /// stops dead, jumps, backs off two tiles still looking at it, then hurries home down the path
+    /// toward the square and Marnie's ranch, where he lives.
     ///
-    /// BOTH HALVES OF HIS WALK ARE THE GAME'S OWN ROUTES, from
-    /// <c>PathFindController.findPathForNPCSchedules</c>, the pathing his schedule uses, which
-    /// prefers stone, wood and dirt over grass. He comes along the dirt road below the hall from the
-    /// east, up the short dirt path to its front and onto the cobbles, and after the fright he goes
-    /// west and down the dirt path that runs south toward the square and the road to Marnie's.
-    /// Each route is cut to the part in shot, plus a few tiles out of it at the open end
-    /// (<see cref="SceneRoute"/>).
-    ///
-    /// WHY NOT FROM THE SALOON DOOR TO THE FOREST EXIT. That was tried first (2026-09-23). Neither
-    /// real route goes near the hall, so both came up and went down the same column of grass under
-    /// the door, which reads as a man visiting the hall rather than passing it. The two ends below
-    /// are points on Town's own paths, read off the map's Back layer (the Type property), so the
-    /// routes between them are still the pathfinder's.
+    /// EVERY TILE HE STEPS ON IS A PATH TILE ON TOWN'S MAP. The route is designed in
+    /// <see cref="HallRoute"/>, read off the map's own Back layer (Type Dirt or Wood) and tested
+    /// against an export of it. A scripted walk ignores collision, so before the scene uses the
+    /// route it checks every tile again on the LIVE map: the Back tile's Type must be Dirt, Stone or
+    /// Wood, and <see cref="SceneGround.CanStandOn"/> must agree. A part that fails (a map mod, say)
+    /// is re-routed between the same two ends with <see cref="TileRoute.Between"/>, which searches
+    /// path tiles ONLY. If even that finds nothing he is left out of the scene altogether, which is
+    /// better than a man walking through a fence.
     ///
     /// He is a <see cref="SceneActor"/> drawn from his sheet, never the real NPC. Nothing about him
-    /// can stop the scene: no route in leaves him standing on the path when his cue comes, no route
-    /// out sends him straight down out of the shot, and a sheet that will not load leaves him out
-    /// of it altogether.</summary>
+    /// can stop the scene.</summary>
     internal sealed class HallWalker
     {
         private const string ShaneSheet = "Characters\\Shane";
         private const int SpriteWidth = 16;
         private const int SpriteHeight = 32;
 
-        /// <summary>The same search budget the rewind's town walkers are given.</summary>
-        private const int PathfinderLimit = 30000;
+        /// <summary>Back layer Types that are path, not lawn. Wood is the bridge.</summary>
+        private static readonly HashSet<string> PathTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Dirt", "Stone", "Wood",
+        };
 
-        /// <summary>Where he stops: on the path this many tiles below the front door, well short of
-        /// the steps. He is passing, not calling.</summary>
-        private const int NoticeBelowDoorTiles = 3;
-        /// <summary>How far round that spot to look for ground he can stand on, if it is not.</summary>
-        private const int NoticeSearchTiles = 2;
-
-        /// <summary>How many tiles of each route are kept out of shot, so he walks in over the edge
-        /// of the frame and out over it. He is two tiles tall, so three puts all of him outside.</summary>
+        /// <summary>How many tiles of a route are kept out of shot, so he walks in over the edge of
+        /// the frame and out over it. He is two tiles tall, so three puts all of him outside.</summary>
         private const int OutOfShotTiles = 3;
 
-        /// <summary>A walking pace, in ms a tile. Faster than vanilla's stroll, because a scene has
-        /// seven seconds, but still a walk. A long way in starts earlier rather than going faster.</summary>
-        private const int WalkMsPerTile = 250;
+        /// <summary>Vanilla's walking pace, in ms a tile: a villager walks at speed 2, two pixels a
+        /// tick at sixty ticks a second, so a 64 pixel tile takes 32 ticks.</summary>
+        internal const int WalkMsPerTile = 533;
 
-        /// <summary>His pace when he hurries off, in ms a tile, bounded both ways. The real pace is
-        /// set so he is out of the shot by the hold on the windows when the route allows it.</summary>
-        private const int SlowestRunMsPerTile = 150;
-        private const int FastestRunMsPerTile = 75;
+        /// <summary>His pace when he hurries off home, in ms a tile. Quicker than a walk, short of
+        /// the farmer's run.</summary>
+        internal const int HurryMsPerTile = 320;
 
-        /// <summary>Walk frames a tile, so the feet keep up with the ground at any pace.</summary>
-        private const int FramesPerTile = 2;
-        private const int FastestFrameMs = 40;
-
-        /// <summary>Where his way in starts: the dirt road that runs east and west below the hall,
-        /// out of shot to the east. From here the pathfinder brings him up the short dirt path at
-        /// (54,25) to (56,27) onto the cobbles in front of the door.</summary>
-        private static readonly Point ComesAlongFrom = new Point(66, 29);
-
-        /// <summary>Where his way out is aimed: the dirt path west of the hall, out of shot below the
-        /// frame, which runs south toward the square and the road to Marnie's.</summary>
-        private static readonly Point LeavesBy = new Point(40, 32);
-
-        /// <summary>Where he joins that path, in shot, west of the hall. Without it the pathfinder
-        /// takes him straight down from where he backed away to, which is the way he came and reads
-        /// as a man retreating from a visit rather than carrying on past (seen 2026-09-23).</summary>
-        private static readonly Point JoinsThePathAt = new Point(40, 23);
+        /// <summary>Walk frames a tile. At a walking pace this is vanilla's own 175 ms a frame.</summary>
+        private const int FramesPerTile = 3;
 
         private readonly GameLocation _town;
         private readonly IMonitor _monitor;
 
         private SceneActor _shane;
         private SceneWalk _in;
+        private SceneWalk _back;
         private SceneWalk _out;
-        private Point _notice;
-        private Point _backed;
         private int _walkFromMs;
-        private int _walkFrameMs;
-        private int _runMsPerTile = SlowestRunMsPerTile;
-        private string _inSaid = "no route in";
-        private string _outSaid = "no route out";
+        private bool[,] _pathGrid;
+        private readonly List<string> _notes = new List<string>();
 
         public HallWalker(GameLocation town, IMonitor monitor)
         {
@@ -101,9 +71,10 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- staging
 
-        /// <summary>Load his sheet and plan both routes. Call it after the camera has cut to the
-        /// hall, because the routes are cut to the frame. False only when he cannot be drawn at all.</summary>
-        public bool Stage()
+        /// <summary>Load his sheet and check and cut his routes. <paramref name="roadFrame"/> is the
+        /// tiles in shot once the camera has come down to the road, which is where he walks.
+        /// False when he is left out of the scene.</summary>
+        public bool Stage(Rectangle roadFrame)
         {
             try
             {
@@ -116,111 +87,68 @@ namespace TheLongestYear.Scenes
                 return false;
             }
 
-            Point? notice = FindNotice();
-            if (notice == null)
+            IReadOnlyList<(int X, int Y)> wayIn = OnPath("way in", HallRoute.WayIn);
+            IReadOnlyList<(int X, int Y)> backAway = OnPath("back away", HallRoute.BackAway);
+            IReadOnlyList<(int X, int Y)> wayOut = OnPath("way out", HallRoute.WayOut);
+            if (wayIn == null || backAway == null || wayOut == null)
             {
-                _monitor.Log("Darkness: the hall scene found no clear ground on the path in front of the Community Center, so it plays with nobody passing.", LogLevel.Info);
+                _monitor.Log($"Darkness: the hall scene found no path route for Shane on this Town ({string.Join("; ", _notes)}), so it plays with nobody passing.", LogLevel.Info);
                 _shane = null;
                 return false;
             }
-            _notice = notice.Value;
-            _backed = BackAwayFrom(_notice);
 
-            Rectangle frame = SceneCamera.FrameInTiles();
-            PlanWayIn(frame);
-            PlanWayOut(frame);
+            // The way in: what is in shot plus a few tiles out of it, and no more than he can walk
+            // at a walking pace before his stop. A longer way in starts further along, never faster.
+            IReadOnlyList<(int X, int Y)> inShot = SceneRoute.IntoFrame(wayIn, roadFrame.X, roadFrame.Y, roadFrame.Width, roadFrame.Height, OutOfShotTiles);
+            inShot = TileRoute.LastSteps(inShot, HallScene.StopAtMs / WalkMsPerTile);
+            _in = new SceneWalk(inShot);
+            _walkFromMs = HallScene.StopAtMs - _in.Steps * WalkMsPerTile;
 
-            _shane.Position = _in != null ? _in.At(0f) : TilePixels(_notice);
-            _shane.Facing = SceneActor.FacingUp;
+            _back = new SceneWalk(backAway);
+            _out = new SceneWalk(SceneRoute.OutOfFrame(wayOut, roadFrame.X, roadFrame.Y, roadFrame.Width, roadFrame.Height, OutOfShotTiles));
+
+            _shane.Position = _in.At(0f);
+            _shane.Facing = _in.FacingAt(0f, false);
             return true;
         }
 
-        /// <summary>The spot on the path where he stops, a few tiles below the door, or the nearest
-        /// ground he can stand on round it.</summary>
-        private Point? FindNotice()
+        /// <summary>The route if every tile of it is path on the live map, else the shortest walk
+        /// between its two ends over path tiles only, else null.</summary>
+        private IReadOnlyList<(int X, int Y)> OnPath(string part, IReadOnlyList<(int X, int Y)> route)
         {
-            var aim = new Point((int)HallFacade.DoorTile.X, (int)HallFacade.DoorTile.Y + NoticeBelowDoorTiles);
-            for (int r = 0; r <= NoticeSearchTiles; r++)
-                for (int dy = -r; dy <= r; dy++)
-                    for (int dx = -r; dx <= r; dx++)
-                    {
-                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != r) continue;
-                        if (SceneGround.CanStandOn(_town, aim.X + dx, aim.Y + dy))
-                            return new Point(aim.X + dx, aim.Y + dy);
-                    }
-            return null;
-        }
+            int off = TileRoute.FirstOffPath(route, IsTownPath);
+            if (off < 0) return route;
 
-        /// <summary>Straight back down, away from the hall, as far as the ground allows up to
-        /// <see cref="HallScene.BackAwayTiles"/>.</summary>
-        private Point BackAwayFrom(Point from)
-        {
-            int tiles = 0;
-            while (tiles < HallScene.BackAwayTiles && SceneGround.CanStandOn(_town, from.X, from.Y + tiles + 1)) tiles++;
-            return new Point(from.X, from.Y + tiles);
-        }
-
-        private void PlanWayIn(Rectangle frame)
-        {
-            List<(int X, int Y)> route = Route(ComesAlongFrom, _notice);
-            if (route == null)
+            (int X, int Y) bad = route[off];
+            _pathGrid ??= PathGrid();
+            IReadOnlyList<(int X, int Y)> detour = TileRoute.Between(_pathGrid, route[0], route[route.Count - 1]);
+            if (detour.Count == 0)
             {
-                _inSaid = $"no route in from the road at ({ComesAlongFrom.X},{ComesAlongFrom.Y}), so he is standing on the path at his cue";
-                return;
-            }
-            if (route[route.Count - 1] != (_notice.X, _notice.Y)) route.Add((_notice.X, _notice.Y));
-            IReadOnlyList<(int X, int Y)> inShot = SceneRoute.IntoFrame(route, frame.X, frame.Y, frame.Width, frame.Height, OutOfShotTiles);
-            if (inShot.Count < 2)
-            {
-                _inSaid = "a route in with nothing of it in shot, so he is standing on the path at his cue";
-                return;
-            }
-            _in = new SceneWalk(inShot);
-            _walkFromMs = Math.Max(0, Math.Min(HallScene.WalkInAtMs, HallScene.StopAtMs - _in.Steps * WalkMsPerTile));
-            int msPerTile = (HallScene.StopAtMs - _walkFromMs) / Math.Max(1, _in.Steps);
-            _walkFrameMs = Math.Max(FastestFrameMs, msPerTile / FramesPerTile);
-            _inSaid = $"walks in {_in.Steps} tile(s) from ({_in.Start.X},{_in.Start.Y}) at {msPerTile} ms a tile from {_walkFromMs} ms";
-        }
-
-        private void PlanWayOut(Rectangle frame)
-        {
-            List<(int X, int Y)> route = Route(_backed, JoinsThePathAt);
-            List<(int X, int Y)> onward = route == null ? null : Route(JoinsThePathAt, LeavesBy);
-            if (onward != null && route.Count > 0)
-                route.AddRange(onward.SkipWhile(t => t == route[route.Count - 1]).ToList());
-            if (route != null && route.Count > 0 && route[0] != (_backed.X, _backed.Y)) route.Insert(0, (_backed.X, _backed.Y));
-            IReadOnlyList<(int X, int Y)> inShot = route == null
-                ? null
-                : SceneRoute.OutOfFrame(route, frame.X, frame.Y, frame.Width, frame.Height, OutOfShotTiles);
-            if (inShot == null || inShot.Count < 2)
-            {
-                // Straight down and out of the bottom of the shot, which is still away from the hall.
-                var down = new List<(int X, int Y)>();
-                for (int y = _backed.Y; y <= frame.Bottom + OutOfShotTiles; y++) down.Add((_backed.X, y));
-                inShot = down;
-                _outSaid = $"no route toward the path at ({LeavesBy.X},{LeavesBy.Y}), so he runs straight down out of the shot";
-            }
-            _out = new SceneWalk(inShot);
-            _runMsPerTile = Math.Max(FastestRunMsPerTile, Math.Min(SlowestRunMsPerTile, (HallScene.HoldAtMs - HallScene.RunOutAtMs) / Math.Max(1, _out.Steps)));
-            if (_outSaid == "no route out")
-                _outSaid = $"hurries off toward home {_out.Steps} tile(s) to ({_out.End.X},{_out.End.Y}) at {_runMsPerTile} ms a tile";
-        }
-
-        /// <summary>The game's own schedule route between two tiles in Town, first tile first, or
-        /// null when the pathfinder finds none or refuses.</summary>
-        private List<(int X, int Y)> Route(Point from, Point to)
-        {
-            try
-            {
-                Stack<Point> path = PathFindController.findPathForNPCSchedules(from, to, _town, PathfinderLimit);
-                if (path == null || path.Count == 0) return null;
-                return path.Select(p => (p.X, p.Y)).ToList();
-            }
-            catch (Exception ex)
-            {
-                _monitor.Log($"Darkness: the pathfinder refused Shane's route from ({from.X},{from.Y}) to ({to.X},{to.Y}): {ex.Message}", LogLevel.Trace);
+                _notes.Add($"{part}: ({bad.X},{bad.Y}) is not path and no path joins ({route[0].X},{route[0].Y}) to ({route[route.Count - 1].X},{route[route.Count - 1].Y})");
                 return null;
             }
+            _notes.Add($"{part}: ({bad.X},{bad.Y}) is not path, re-routed over {detour.Count} path tile(s)");
+            _monitor.Log($"Darkness: the hall scene's {part} for Shane crosses ({bad.X},{bad.Y}), which is not a path tile on this Town, so it is re-routed over path tiles only ({detour.Count} tiles).", LogLevel.Info);
+            return detour;
+        }
+
+        /// <summary>A path tile on the live map: its Back tile is Dirt, Stone or Wood, and nothing
+        /// stands on it.</summary>
+        private bool IsTownPath(int x, int y)
+        {
+            string type = _town.doesTileHaveProperty(x, y, "Type", "Back");
+            return type != null && PathTypes.Contains(type) && SceneGround.CanStandOn(_town, x, y);
+        }
+
+        private bool[,] PathGrid()
+        {
+            int width = _town.map.Layers[0].LayerWidth;
+            int height = _town.map.Layers[0].LayerHeight;
+            var grid = new bool[width, height];
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    grid[x, y] = IsTownPath(x, y);
+            return grid;
         }
 
         // ---------------------------------------------------------------- moving
@@ -230,72 +158,61 @@ namespace TheLongestYear.Scenes
         {
             if (_shane == null) return;
             _shane.Lift = 0f;
-            _shane.StepMs = _walkFrameMs > 0 ? _walkFrameMs : _shane.StepMs;
+            _shane.StepMs = WalkMsPerTile / FramesPerTile;
 
             if (elapsed < HallScene.StopAtMs)
             {
-                if (_in == null)
-                {
-                    Stand(SceneActor.FacingUp);
-                }
-                else
-                {
-                    float tiles = _in.Steps * Math.Max(0, elapsed - _walkFromMs) / (float)Math.Max(1, HallScene.StopAtMs - _walkFromMs);
-                    _shane.Position = _in.At(tiles);
-                    _shane.Facing = _in.FacingAt(tiles, false);
-                    _shane.Walking = elapsed >= _walkFromMs;
-                }
+                float tiles = Math.Max(0, elapsed - _walkFromMs) / (float)WalkMsPerTile;
+                _shane.Position = _in.At(tiles);
+                _shane.Facing = _in.FacingAt(tiles, false);
+                _shane.Walking = elapsed >= _walkFromMs;
             }
             else if (elapsed < HallScene.BackAwayAtMs)
             {
-                Stand(SceneActor.FacingUp);
+                // Stopped dead on the road, turned to the hall.
+                _shane.Position = _in.At(_in.Steps);
+                _shane.Facing = SceneActor.FacingUp;
+                _shane.Walking = false;
                 int intoJump = elapsed - HallScene.JumpAtMs;
                 if (intoJump >= 0 && intoJump < HallScene.JumpLengthMs) _shane.Lift = HallScene.JumpLift(intoJump);
             }
             else if (elapsed < HallScene.RunOutAtMs)
             {
-                // Backing away: down the path, eyes still on the hall.
-                float across = (elapsed - HallScene.BackAwayAtMs) / (float)HallScene.BackAwayMs;
-                _shane.Position = Vector2.Lerp(TilePixels(_notice), TilePixels(_backed), Math.Min(1f, across));
+                // Backing off down the road, eyes still on the hall.
+                float across = Math.Min(1f, (elapsed - HallScene.BackAwayAtMs) / (float)HallScene.BackAwayMs);
+                _shane.Position = _back.At(across * _back.Steps);
                 _shane.Facing = SceneActor.FacingUp;
-                _shane.Walking = _backed != _notice;
+                _shane.Walking = _back.Steps > 0;
+                _shane.StepMs = Math.Max(1, HallScene.BackAwayMs / Math.Max(1, _back.Steps) / FramesPerTile);
             }
             else
             {
-                float tiles = (elapsed - HallScene.RunOutAtMs) / (float)_runMsPerTile;
+                float tiles = (elapsed - HallScene.RunOutAtMs) / (float)HurryMsPerTile;
                 _shane.Position = _out.At(tiles);
                 _shane.Facing = _out.FacingAt(Math.Min(tiles, _out.Steps), false);
                 _shane.Walking = true;
-                _shane.StepMs = Math.Max(FastestFrameMs, _runMsPerTile / FramesPerTile);
+                _shane.StepMs = HurryMsPerTile / FramesPerTile;
             }
             _shane.Animate(elapsed);
         }
 
-        private void Stand(int facing)
-        {
-            _shane.Position = TilePixels(_notice);
-            _shane.Facing = facing;
-            _shane.Walking = false;
-        }
-
-        /// <summary>He is drawn from the moment he starts walking in, or from his cue when he has no
-        /// way in. He is never drawn before, which would read as a man who had been watching the hall
-        /// all along. He runs clean off the shot at the end, so there is no far cut-off to test.</summary>
+        /// <summary>He is drawn from the moment he starts walking. Before that he is somewhere out
+        /// of shot on his way, not standing waiting. He walks clean off the shot at the end.</summary>
         public void Draw(SpriteBatch b, int elapsed)
         {
-            if (_shane == null) return;
-            int from = _in != null ? _walkFromMs : HallScene.WalkInAtMs;
-            if (elapsed < from) return;
+            if (_shane == null || elapsed < _walkFromMs) return;
             _shane.Draw(b, SceneCamera.NightTint);
         }
-
-        private static Vector2 TilePixels(Point tile) => new Vector2(tile.X, tile.Y) * SceneCamera.TileSize;
 
         /// <summary>For the log.</summary>
         public string Describe()
         {
             if (_shane == null) return "nobody passing";
-            return $"Shane {_inSaid}, stops on the path at ({_notice.X},{_notice.Y}), backs away to ({_backed.X},{_backed.Y}), {_outSaid}, drawn from a sheet of {_shane.Describe()}";
+            string notes = _notes.Count == 0 ? "every tile checked as path on this Town" : string.Join("; ", _notes);
+            return $"Shane walks in {_in.Steps} tile(s) from ({_in.Start.X},{_in.Start.Y}) at {WalkMsPerTile} ms a tile from {_walkFromMs} ms, "
+                + $"stops on the road at ({_in.End.X},{_in.End.Y}), backs off to ({_back.End.X},{_back.End.Y}), "
+                + $"hurries home {_out.Steps} tile(s) to ({_out.End.X},{_out.End.Y}) at {HurryMsPerTile} ms a tile ({notes}), "
+                + $"drawn from a sheet of {_shane.Describe()}";
         }
     }
 }

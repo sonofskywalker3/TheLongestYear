@@ -493,3 +493,186 @@ every one.
 - **The six `standard_4497*` farms the original report said were deleted are back** in the saves
   folder, all recreated at 06:47 on 2026-09-22, which looks like Steam Cloud restoring them. I did
   not touch them. Mine from this round may come back the same way.
+
+
+## Fix round 2
+
+A fresh implementer. Two things changed: Shane's walk (the open finding) and, mid round, the
+figure in the window (two coordinator messages relaying Jeff, 2026-10-07). Base `5194e4a`.
+
+### 1. Shane's route: designed on the map, checked tile by tile
+
+**What was wrong.** Round 1 routed him with `PathFindController.findPathForNPCSchedules`, which is
+happy to cross grass, so he came up the CC's cobbled approach to (52,23) and then crossed the lawn
+west. Its fallback was a straight column down with no check at all.
+
+**What it is now.** The route is a designed list of corners in Core (`HallRoute`), expanded to
+tiles by `TileRoute.Expand` (straight legs only, a diagonal leg is refused). The schedule
+pathfinder and the column fallback are deleted. `HallWalker` checks every tile again on the LIVE
+map before using it: the Back tile's `Type` must be Dirt, Stone or Wood and
+`SceneGround.CanStandOn` must agree. A part that fails is re-routed between the same two ends by
+`TileRoute.Between`, a breadth first search over path tiles ONLY. If that finds nothing too, Shane
+is left out of the scene and the log says why. No code path can walk him over a non path tile.
+
+**Where he lives and which way is home.** Shane lives at Marnie's ranch, in the Forest, reached
+from Town's west edge. The hall is at the north of town, nowhere near his direct way home from the
+Saloon, so the scene is his long way round to clear his head: up from the riverside path east of
+the hall, over the wooden bridge, west along the dirt road that runs below the hall, then home down
+the road's south west arm to the path into the square, from where the road runs to the west exit
+and the Forest.
+
+**The route, every tile** (Town tile coordinates):
+
+- Way in (25 tiles): (75,34) (75,33) (75,32) (75,31) (75,30) [the bridge, Type Wood], (75,29)
+  (74,29), (74,28), then row 28 west: (73,28) through (58,28) to the stop **(57,28)** [Dirt].
+- Back off (3 tiles): (57,28) (57,29) (57,30) [Dirt].
+- Way home (21 tiles): (57,30) (57,31) (57,32) (57,33) (56,33) (56,34) (55,34) (55,35) (54,35)
+  (54,36) (53,36) (52,36) (51,36) (50,36) (49,36) (49,37) (49,38) (49,39) (49,40) (49,41) (49,42)
+  [Dirt].
+
+The stop (57,28) is on the road directly below the hall's right hand window (the hall is x 47 to
+58), level with the hall, nine rows below its wall. Nothing in the route is above row 28, so the
+cobbled approach (52..53, 21..23) and the lawn between the hall and the road are never touched.
+
+**How each tile was verified from map data.** `patch export Maps/Town` (the game folder's
+`patch export/Maps_Town.tmx`, 1.6) parsed with a scratch script: for every route tile, the Back
+layer tile's tileset `Type` property (Dirt or Wood), no tile on the Buildings layer, and no tile on
+the Paths layer (where Town's trees and bushes come from). Every tile passed; the only other layer
+touched anywhere on the route is a Back2 shadow tile at (49,42). I also rendered the map region from
+the exported tilesheets with the route overlaid and looked at it: every box sits on the dirt road,
+the bridge planks or the dirt path, none on grass (`fix2-12-route-on-town-map.png`). The same Back
+layer export, (44,24) to (79,44), is embedded as a text mask in `HallRouteTests`, so the check is a
+unit test, and the live log line on every run says `every tile checked as path on this Town`.
+
+### 2. The window figure (Jeff, 2026-10-07, two messages)
+
+First: the men's silhouettes were "about as intimidating as a mens room silhouette". One figure
+only, an actual dark enemy from the mines, completely blacked out, cut at the glass; keep the
+firelight exactly. Then: it must NOT stand in the window looking out at Shane; it is inside, busy
+working on something (the reversion), side-on or turned away, with a small working motion.
+
+**Done.** One **Shadow Brute** (`Characters\Monsters\Shadow Brute`, the controller's pick). I
+exported both it and the Shadow Shaman fallback (`patch export`) and looked at them as black
+masks: the Brute's side-on frames read clearly at window scale (pointed head, hunched back,
+reaching arm), so the Shaman was not needed. Details:
+
+- Solid black: only fully opaque texels count (the alpha 113 texels are its soft outline and the
+  shadow under its feet), and holes inside a frame's outline, its eyes and mouth, are filled
+  (`SceneWindow.FillHoles`, a flood fill from the frame's edge). Drawn in full `Color.Black`.
+- At the game's 4 pixels a texel, on the texel grid, cut at the glass with the existing
+  `SceneWindow.Clip` (source slice, no scissor). The frame's top is one texel above the glass, so
+  its head is inside the pane and its legs are below the sill.
+- Right hand window (`HallFacade.FigureWindow = 1`), the one Shane stops below.
+- 900 to 2400 ms: walks in from the left of the glass, side-on, frames 4 to 7 at 175 ms.
+- From 2400: works, turned from the street, looping frames 21, 22, 23, 22 at 320 ms each (upright,
+  lean in and reach, lean in, reach). It never faces the viewer.
+- Firelight untouched: same colour, same 0.35 plus or minus 0.10 flicker, same 60 percent lights,
+  same texel grid panes. The left window shows it plainly in every frame.
+- The man mask, the three-shape slide and the stride bob are deleted from Core with their tests.
+
+### 3. The scene timeline (ms), ten seconds
+
+| At | What |
+|---|---|
+| 0 | cut to Town on the whole facade (centre tile 50.5,18), fade in 700, firelight on |
+| 203 | Shane starts walking (his in-shot route is 9 tiles at 533 ms a tile, so he starts out of shot, under the fade) |
+| 700 to 2100 | the camera tilts down (eased) to the road framing (centre 50.5,24): windows at the top, road at the bottom |
+| 900 to 2400 | the Brute walks into the right hand window, then works |
+| about 1300 | Shane steps into shot at the right edge, on the road (at 1920x1080) |
+| 5000 | stops at (57,28), turns to face the hall |
+| 5300 | jump (28 px arc over 300), `dwop`, `ApplyStrike()` |
+| 5800 to 6600 | backs off to (57,30), still facing the hall |
+| 6600 | hurries home at 320 ms a tile, out of shot at the bottom by about 7300 |
+| 7600 | `shadowDie`, the hold on the windows (static camera, nobody in shot) |
+| 9200 | fade 800 |
+| 10000 | end |
+
+The walk pace is vanilla's walk: an NPC at speed 2 moves 2 px a tick at 60 ticks a second, 32
+ticks a 64 px tile, 533 ms. Walk frames are 3 a tile (178 ms, vanilla's 175 ms interval). A larger
+screen shows more of the road; the way in is then trimmed from the front (`TileRoute.LastSteps`) so
+he starts further along it rather than walking faster.
+
+### Files
+
+- New: `src/TheLongestYear.Core/Sabotage/TileRoute.cs`, `src/TheLongestYear.Core/Sabotage/HallRoute.cs`,
+  `tests/TheLongestYear.Tests/TileRouteTests.cs`, `tests/TheLongestYear.Tests/HallRouteTests.cs`.
+- Changed: `HallWalker.cs` (rewritten), `HallScene.cs` (timeline, camera tilt), `HallFacade.cs`
+  (`CameraTile` removed, `FigureWindow` added), `SceneCamera.cs` (`CenterOnPixel`),
+  `SceneWindowGlow.cs` (the Brute replaces the silhouettes), `SceneWindow.cs` (Core: `FigureX`,
+  `Cycle`, `FillHoles` added; silhouette mask, `SlideX`, `StrideBob`, `ShapeCount` removed),
+  `SceneWindowTests.cs`.
+- Docs: spec Scene 3 and plan Task 9 each gained a "changed again" block that overrides the older
+  lines (route, timeline, the single working Brute, firelight unchanged).
+
+### Tests
+
+```
+> dotnet build TheLongestYear.sln --nologo -v q
+    0 Error(s)
+> dotnet test tests/TheLongestYear.Tests --no-build --nologo -v q
+Passed!  - Failed: 0, Passed: 3760, Skipped: 0, Total: 3760
+```
+
+New: `TileRouteTests` (11: expand straight and cornered, single corner, diagonal and empty refused,
+first off path tile, `Between` goes round a lawn on the path only, disconnected and off path ends
+give nothing, a tile to itself, `LastSteps`), `HallRouteTests` (12 cases: every tile of the three
+parts is a path tile on Town's map, every step is one orthogonal tile, nothing on the approach or
+above the road, the parts join, the stop is level with the hall on row 28, the way home never
+retraces the way in), and 6 new in `SceneWindowTests` (figure position before, during and after
+its walk in, monotone, bad timing refused, the work loop's order, holes filled, gaps open to the
+outside not filled), with 8 removed for the deleted silhouette code. 3762 before the window change,
+3760 after.
+
+### Live check (automated runs, my launches)
+
+`tools/deploy.ps1 -Minimized`, `tools/bridge.ps1`, `tools/send-smapi-command.ps1` (only for
+`patch export`), and a PrintWindow burst script in my scratchpad that restores the game window with
+`SW_SHOWNOACTIVATE` and re-minimises it with `SW_SHOWMINNOACTIVE`, as the earlier rounds did. No
+mouse, no keyboard, no focus taken. One throwaway farm, `standard_451058127`, from
+`tly_newgame standard skipintro`, then `tly_select Farming` and `tly_sabotage scene hall` (no slot
+donated, so the no-op effect). Four launches (a deploy after each code change, reloading that farm
+with `tly_loadsave`). The farm is deleted, the game is closed, no other save touched. No ERROR or
+WARN line in any run. Final staging line:
+
+```
+Darkness: the hall is staged on the Community Center front at (47,11) to (58,20) in Town, facade
+abandoned, 2 window(s) in world pixels (3128,1120 56x88) (3600,1120 56x88), 2 light(s), a
+Characters\Monsters\Shadow Brute figure in window 1, Shane walks in 9 tile(s) from (66,28) at 533
+ms a tile from 203 ms, stops on the road at (57,28), backs off to (57,30), hurries home 4 tile(s)
+to (56,33) at 320 ms a tile (every tile checked as path on this Town), ...
+```
+
+Frames, untracked (test-output is gitignored), in
+`C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear\test-output\scenes\hall\`, all from
+the final build except the map overlay. I looked at every one; Shane is on a dirt tile in every
+frame he is in, never on the cobbles or the lawn. The Steam overlay's "Access Steam features" toast
+sits in the bottom right of the early frames; it is Steam's own launch notice, not the mod.
+
+| File | What it shows |
+|---|---|
+| `fix2-01-facade-opening.png` | The opening: the whole facade at night, roof to steps, both windows lit, the road not yet in shot. |
+| `fix2-02-brute-steps-into-the-window.png` | Mid tilt: the Brute's black shape coming into the right hand window from its left edge; Shane appearing at the right edge on the road. |
+| `fix2-03-shane-enters-on-the-road.png` | Road framing: Shane walking west along the dirt road at the right of the frame; the Brute at work in the right window. |
+| `fix2-04-passing-below-the-hall.png` | Shane further west on the road, walking, the hall and both windows above him. |
+| `fix2-05-stopped-facing-the-hall.png` | Shane stopped at (57,28), back to the camera, facing up at the hall, on the road's top edge with grass just above. |
+| `fix2-06-the-jump.png` | The jump frame, same spot, the reversion beat. |
+| `fix2-07-jump-crop-2x.png` | Ten consecutive frames at the stop, 2x: walking, stopped, lifted off the ground (shadow left behind), landed, then backing down the road. |
+| `fix2-08-backing-off.png` | Shane backing down the road still facing the hall. |
+| `fix2-09-hurrying-home-down-the-path.png` | Shane facing the camera, walking down the road's dirt toward the bottom edge, the way home. |
+| `fix2-10-hold-on-the-windows.png` | Nobody in shot: both windows burning, the Brute at work in the right one. |
+| `fix2-11-brute-at-work-4x.png` | The right window at 4x over 16 consecutive frames (150 ms apart): solid black side-on Brute, pointed head, hunched back, the arm reaching out and back and the lean dipping a texel, in a loop; cut exactly at the glass, firelight round it. |
+| `fix2-12-route-on-town-map.png` | Town's exported map (44..78, 16..43) with the route tiles boxed and numbered: all on dirt, bridge planks or the dirt path. |
+
+### Still open, plainly
+
+- After the tilt the roof and the top of the clock are out of the frame (the windows, the door and
+  the sign stay in). The whole facade and the road do not fit one 1080 pixel frame at zoom 1, and
+  zooming out was not attempted. The opening shot does show the whole facade.
+- The Brute fills most of its pane (a big monster at true scale, 16 texels wide against 14 of
+  glass), so that window shows firelight only round its head, back and hand. That is the look Jeff
+  should judge; drawing it smaller, off the texel grid, was not tried.
+- On a screen much larger than 1920x1080 the way home ends in shot at (49,42), and he carries on
+  south along column 49 by extrapolation over (49,43), a tile with no Type on the Back layer (the
+  path's edge into the square). Not seen live; on 1920x1080 he is out of shot long before.
+- The with-candidate branch of `tly_sabotage scene hall` and a restored Community Center were again
+  not exercised live (day 1 farm).

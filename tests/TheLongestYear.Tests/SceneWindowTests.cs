@@ -4,8 +4,8 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Spec 2026-09-21: the hall's windows glow like firelight and shadow shapes cross them,
-/// and the shapes must never spill outside the glass. The flicker, the slide and the cut are pure
+/// <summary>Spec 2026-09-21: the hall's windows glow like firelight and one shadow figure stands in one,
+/// and the shapes must never spill outside the glass. The flicker, the figure's step and the cut are pure
 /// arithmetic, so they are tested here.</summary>
 public class SceneWindowTests
 {
@@ -40,51 +40,88 @@ public class SceneWindowTests
         Assert.Equal(start, round, 2);
     }
 
-    // ------------------------------------------------------------------ the slide
+    // ------------------------------------------------------------------ the figure (Jeff, 2026-10-07)
 
     [Fact]
-    public void Every_shape_starts_and_stays_within_its_own_journey()
+    public void The_figure_waits_out_of_sight_then_steps_across_and_stands()
     {
-        const int spanLeft = 3000, spanWidth = 768, shapeWidth = 96;
-        for (int shape = 0; shape < SceneWindow.ShapeCount; shape++)
+        Assert.Equal(-64, SceneWindow.FigureX(0, 900, 2400, -64, 0, out bool walking));
+        Assert.False(walking);
+        int mid = SceneWindow.FigureX(1650, 900, 2400, -64, 0, out walking);
+        Assert.True(walking);
+        Assert.InRange(mid, -40, -24);
+        Assert.Equal(0, SceneWindow.FigureX(2400, 900, 2400, -64, 0, out walking));
+        Assert.False(walking);
+        Assert.Equal(0, SceneWindow.FigureX(9000, 900, 2400, -64, 0, out walking));
+        Assert.False(walking);
+    }
+
+    [Fact]
+    public void The_figure_only_ever_moves_toward_where_it_stands()
+    {
+        int last = int.MinValue;
+        for (int ms = 0; ms < 4000; ms += 17)
         {
-            for (int ms = 0; ms < 20000; ms += 13)
-            {
-                int x = SceneWindow.SlideX(ms, shape, spanLeft, spanWidth, shapeWidth);
-                Assert.InRange(x, spanLeft - shapeWidth, spanLeft + spanWidth + shapeWidth);
-            }
+            int x = SceneWindow.FigureX(ms, 900, 2400, -64, 0, out _);
+            Assert.InRange(x, -64, 0);
+            Assert.True(x >= last);
+            last = x;
         }
     }
 
     [Fact]
-    public void The_shapes_are_not_on_top_of_each_other_when_the_scene_opens()
+    public void A_figure_that_arrives_before_it_enters_is_refused()
     {
-        int first = SceneWindow.SlideX(0, 0, 0, 768, 96);
-        int second = SceneWindow.SlideX(0, 1, 0, 768, 96);
-        int third = SceneWindow.SlideX(0, 2, 0, 768, 96);
-        Assert.NotEqual(first, second);
-        Assert.NotEqual(second, third);
-        Assert.NotEqual(first, third);
+        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.FigureX(0, 900, 900, 0, 1, out _));
     }
 
     [Fact]
-    public void A_shape_moves_to_the_right_as_time_passes()
+    public void The_working_poses_loop_in_order_from_when_it_arrives()
     {
-        Assert.True(SceneWindow.SlideX(500, 0, 0, 768, 96) > SceneWindow.SlideX(0, 0, 0, 768, 96));
+        Assert.Equal(0, SceneWindow.Cycle(0, 2400, 4, 320));
+        Assert.Equal(0, SceneWindow.Cycle(2400, 2400, 4, 320));
+        Assert.Equal(1, SceneWindow.Cycle(2400 + 320, 2400, 4, 320));
+        Assert.Equal(3, SceneWindow.Cycle(2400 + 3 * 320 + 10, 2400, 4, 320));
+        Assert.Equal(0, SceneWindow.Cycle(2400 + 4 * 320, 2400, 4, 320));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.Cycle(0, 0, 0, 320));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.Cycle(0, 0, 4, 0));
+    }
+
+    private static bool[,] Mask(params string[] rows)
+    {
+        var mask = new bool[rows[0].Length, rows.Length];
+        for (int y = 0; y < rows.Length; y++)
+            for (int x = 0; x < rows[y].Length; x++)
+                mask[x, y] = rows[y][x] == '#';
+        return mask;
     }
 
     [Fact]
-    public void A_negative_clock_is_treated_as_the_start()
+    public void Eyes_and_a_mouth_inside_the_outline_are_filled_black()
     {
-        Assert.Equal(SceneWindow.SlideX(0, 0, 0, 768, 96), SceneWindow.SlideX(-500, 0, 0, 768, 96));
+        bool[,] solid = SceneWindow.FillHoles(Mask(
+            ".....",
+            ".###.",
+            ".#.#.",
+            ".###.",
+            "....."));
+        Assert.True(solid[2, 2], "the enclosed hole should be filled");
+        Assert.False(solid[0, 0], "the outside stays clear");
+        Assert.False(solid[2, 4], "the outside stays clear");
     }
 
     [Fact]
-    public void Asking_for_a_shape_that_does_not_exist_is_refused()
+    public void A_gap_open_to_the_outside_is_not_filled()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.SlideX(0, SceneWindow.ShapeCount, 0, 768, 96));
-        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.SlideX(0, -1, 0, 768, 96));
-        Assert.Throws<ArgumentOutOfRangeException>(() => SceneWindow.SlideX(0, 0, 0, 768, 0));
+        bool[,] solid = SceneWindow.FillHoles(Mask(
+            ".....",
+            ".#.#.",
+            ".#.#.",
+            ".###.",
+            "....."));
+        Assert.False(solid[2, 1]);
+        Assert.False(solid[2, 2]);
+        Assert.True(solid[1, 1]);
     }
 
     // ------------------------------------------------------------------ the cut
@@ -183,39 +220,7 @@ public class SceneWindowTests
         Assert.False(SceneWindow.Clip(0, 0, 20, 20, 0, 0, 100, 100, 16, 0, out _));
     }
 
-    // ------------------------------------------------------------------ the silhouette (Jeff, 2026-09-23)
-
-    [Fact]
-    public void The_silhouette_mask_is_a_rectangle_of_filled_and_empty_texels()
-    {
-        Assert.NotEmpty(SceneWindow.Silhouette);
-        int width = SceneWindow.Silhouette[0].Length;
-        foreach (string row in SceneWindow.Silhouette)
-        {
-            Assert.Equal(width, row.Length);
-            Assert.Matches("^[#.]+$", row);
-        }
-        Assert.Equal(width, SceneWindow.SilhouetteWidth);
-        Assert.Equal(SceneWindow.Silhouette.Count, SceneWindow.SilhouetteHeight);
-    }
-
-    [Fact]
-    public void The_silhouette_has_a_head_narrower_than_its_shoulders_and_a_neck_between()
-    {
-        static int Filled(string row) => row.Split('#').Length - 1;
-        int head = Filled(SceneWindow.Silhouette[1]);
-        int shoulders = 0;
-        int neck = int.MaxValue;
-        for (int y = 0; y < SceneWindow.Silhouette.Count; y++)
-        {
-            shoulders = Math.Max(shoulders, Filled(SceneWindow.Silhouette[y]));
-            if (y > 1 && y < 6) neck = Math.Min(neck, Filled(SceneWindow.Silhouette[y]));
-        }
-        Assert.True(head < shoulders, "the head should be narrower than the shoulders");
-        Assert.True(neck < head, "a neck should pinch in below the head");
-        // A man is several heads tall, not a blob as wide as he is high.
-        Assert.True(SceneWindow.SilhouetteHeight >= 2 * SceneWindow.SilhouetteWidth);
-    }
+    // ------------------------------------------------------------------ the texel grid
 
     [Theory]
     [InlineData(0, 0)]
@@ -228,23 +233,5 @@ public class SceneWindowTests
     public void A_position_snaps_down_to_the_texel_grid(int pixels, int snapped)
     {
         Assert.Equal(snapped, SceneWindow.SnapToTexel(pixels, 4));
-    }
-
-    [Fact]
-    public void A_walking_silhouette_bobs_by_one_texel_and_the_three_do_not_bob_in_step()
-    {
-        bool[] seenUp = new bool[SceneWindow.ShapeCount];
-        for (int ms = 0; ms < 4000; ms += 10)
-            for (int s = 0; s < SceneWindow.ShapeCount; s++)
-            {
-                int bob = SceneWindow.StrideBob(ms, s);
-                Assert.InRange(bob, 0, 1);
-                if (bob == 1) seenUp[s] = true;
-            }
-        Assert.All(seenUp, Assert.True);
-        bool allSame = true;
-        for (int ms = 0; ms < 4000; ms += 10)
-            if (SceneWindow.StrideBob(ms, 0) != SceneWindow.StrideBob(ms, 1)) allSame = false;
-        Assert.False(allSame);
     }
 }
