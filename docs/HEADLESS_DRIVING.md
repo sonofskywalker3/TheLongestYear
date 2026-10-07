@@ -210,6 +210,7 @@ crosses a save boundary.
 remixed audit the board vanilla would build for that Advanced Options choice),
 `tly_boost list` (the boost roster with each row's state and price), `tly_activeeffects` (running boosts, stacks per modifier), `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
 copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate`.
+`tly_hud` logs `displayHUD`, `eventUp`, `freezeControls`, `fadeToBlack`, `fadeAlpha`, the open menu, time and day (poll it to catch the clock HUD drawing over a black screen).
 
 ## Menus that block a sleep
 
