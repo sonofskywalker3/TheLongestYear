@@ -150,7 +150,7 @@ namespace TheLongestYear.Loop
             {
                 $"Darkness: level {Level}; blight={(Enabled(SabotageKind.Blight) ? "on" : "off")}, reversion={(Enabled(SabotageKind.Reversion) ? "on" : "off")}, tampering={(Enabled(SabotageKind.Tampering) ? "on" : "off")}; model {(_obtainability() == null ? "MISSING (no fairness filter)" : "published")}",
                 $"  season {Run.Season} day {Run.DayOfMonth}: options = {string.Join(", ", NightRoll.Options(Run.Season))}; chance tonight {NightRoll.ChanceTonight(Run, week, Run.Season):P0}",
-                $"  unmoderated this loop: reversion {(Run.UnmoderatedReversionSpent ? "spent" : "available")}, tamper {(Run.UnmoderatedTamperSpent ? "spent" : "available")}; guaranteed Winter tamper {(Run.GuaranteedTamperDone ? "done" : "pending")} (first Winter ever: {(!Meta.FirstWinterTamperSeen)})",
+                $"  unmoderated this loop: reversion {(Run.UnmoderatedReversionSpent ? "spent" : "available")}, tamper {(Run.UnmoderatedTamperSpent ? "spent" : "available")}; guaranteed Winter tamper {(Run.GuaranteedTamperDone ? "done" : Run.GuaranteedTamperPostponed ? "pending (postponed, owed past week 1)" : "pending")} (first Winter ever: {(!Meta.FirstWinterTamperSeen)})",
                 $"  wards owned: {string.Join(", ", WardIds.All.Where(Meta.HasUpgrade).DefaultIfEmpty("none"))}",
                 $"  blight week {Run.BlightWeek} nights {Run.BlightNightsThisWeek}; last reversion week {Run.LastReversionWeek}; tamper days [{string.Join(",", Run.TamperDays)}]",
                 $"  live crops on the farm: {BlightPass.LiveCropTiles().Count}; units in chests (stash excluded): {SpoilagePass.StoredUnits(DarknessLevels.StorageReachesEverything(Level))}",
