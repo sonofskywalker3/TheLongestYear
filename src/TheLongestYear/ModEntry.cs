@@ -2143,7 +2143,8 @@ namespace TheLongestYear
                     $"tly_ringtest [{id}] type={item.GetType().Name} bundle={asking.name} (area {area}) vanillaHighlight={vanilla} liveHighlight={live} " +
                     $"liveBoardHasNonObjectSlots={TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots} enableNonObjectDonations={_config.EnableNonObjectDonations}",
                     live ? LogLevel.Info : LogLevel.Warn);
-                Game1.exitActiveMenu();
+                // "keep" leaves the bundle page open (used to look at it on screen).
+                if (!args.Any(x => x.Equals("keep", StringComparison.OrdinalIgnoreCase))) Game1.exitActiveMenu();
                 return;
             }
             this.Monitor.Log($"tly_ringtest [{id}] type={item.GetType().Name} vanillaHighlight={vanilla}: no bundle on the live board asks for it.", LogLevel.Info);
@@ -2611,6 +2612,17 @@ namespace TheLongestYear
                     circle.TileLocation = at;
                     farm.furniture.Add(circle);
                     this.Monitor.Log($"Circle of Warding placed at ({at.X},{at.Y}); covers x {at.X}..{at.X + 2}, y {at.Y}..{at.Y + 2}.", LogLevel.Info);
+                    break;
+                }
+                case "aurachest":
+                {
+                    // Debug: open a loose chest holding every tainted item plus a Parsnip, so the
+                    // dark aura can be looked at in a chest menu (no chest has to be placed).
+                    var loose = new StardewValley.Objects.Chest(true);
+                    foreach (TheLongestYear.Core.Sabotage.TamperRecord t in _meta.Run.Tampers)
+                        loose.Items.Add(ItemRegistry.Create(t.OldItemId, 1));
+                    loose.Items.Add(ItemRegistry.Create("(O)24", 1));
+                    loose.ShowMenu();
                     break;
                 }
                 case "fixture":
