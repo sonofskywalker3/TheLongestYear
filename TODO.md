@@ -19,7 +19,7 @@ with `tly_loadsave <folder>`:
 |---|---|---|
 | `standard_451080087` | Summer 14, nothing struck yet | Night 14 is quiet. Pick a theme on 15, sleep: the crows (Linus walks in). Talk to Linus on 16 ("last night") and again a few days later. Sleep on 16: the thief at a chest on the farm. |
 | `standard_451080418` | Fall 14, nothing struck yet in Fall | Night 14 is quiet. Pick a theme on 15, sleep: the hall (Shane passes, the figure in the window). Talk to Shane on 16 and again later ("the other night"). |
-| `standard_451080615` | Winter 1, guaranteed tamper due tonight | Sleep: the cloud. On Winter 2 step out of the farmhouse door: the Junimos name the tainted item. Look at the aura on that item (`tly_sabotage aurachest` puts it in a chest). The Winter gate scene already played on this farm; replay it with `tly_seasonturn winter` to watch the held glow. |
+| `standard_451080615` | Winter 1, guaranteed tamper due tonight | Sleep: the cloud. On Winter 2 step out of the farmhouse door (or arrive on the farm any other way): the Junimos name the tainted item at the porch, then you are back where you came in. Look at the aura on that item (`tly_sabotage aurachest` puts it in a chest). The Winter gate scene already played on this farm; replay it with `tly_seasonturn winter` to watch the held glow. |
 
 Things to judge: every scene's look and length, the aura's colour (it also tints the top of the
 hair when held), the cloud's darkness, "our war" over "our fight" in the Winter closer, and the gate

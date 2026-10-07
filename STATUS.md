@@ -1,8 +1,8 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13, final-review fix wave)
+**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13, final-review fix wave, Jeff's corrections)
 **Branch:** `story`; every commit pushed to `origin/story`
-**Tests:** 4007 passing
+**Tests:** 4032 passing
 **Build:** clean, 0 errors; deployed to the local Mods folder for the live checks; game closed
 **Last public release:** 0.19.1 (tag v0.19.1). Nothing below is released: `story` merges to master once, as one release, when Jeff says so.
 
@@ -19,8 +19,8 @@ Spec: `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.
 - Pick at dusk, strike in the scene: the night's targets are picked at day end and the damage lands
   at the scene's beat, or at once when no scene plays. Nothing pending crosses a save.
 - The overnight slot: our scene replaces a random vanilla night event; a wedding, a
-  `WorldChangeEvent`, another mod's override or a personal farm event keeps the night and the strike
-  lands with no scene.
+  `WorldChangeEvent`, another mod's override, a personal farm event or a Wildcard night event keeps
+  the night and the strike is postponed, effect and scene both (Jeff's correction below).
 - Four scenes, first strike of each kind per loop, unskippable the first time on a save:
   - crows (crop blight; Linus walks in),
   - thief (chest blight; a Shadow Brute, one chest per night, farm maps only, family asleep in the
@@ -30,25 +30,38 @@ Spec: `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.
     from the north, thickest on the farm).
 - Every-loop guarantee: crows and thief forced from Summer 15, reversion from Fall 15, on the first
   night each can act; never over a ward, an empty chest or nothing fair.
-- Junimo "tainted" scene: plays on the first farmhouse-door exit onto the Farm, names the exact
+- Junimo "tainted" scene: plays on the first arrival on the Farm by any route, staged at the porch,
+  then the farmer goes back to his arrival tile; names the exact
   item, flavour included, with correct plurals.
-- Tamper rule: only an item (id + flavour) asked in exactly one slot on the board; the flavour is
+- Tamper rule: only an item (id + flavour) one bundle asks for; every open slot of it in that
+  bundle is rewritten (Construction's double Wood); the flavour is
   cleared from the rewritten slot; a tainted item is never a later replacement.
 - Dark aura on every copy of the exact tainted item, cleared at reset.
 - Witness lines: Linus (crows) and Shane (hall), once in the 7 days after the scene, every loop.
 - `tly_sabotage status` shows struck, owed, scenes played and seen, and pending witness lines.
 
 **Live checks 2026-10-07 (automated, throwaway farms, deleted):** a crop blight armed on a bus
-repair night landed without its scene (`WorldChangeEvent has the overnight slot`) and the next armed
+repair night landed without its scene (`WorldChangeEvent has the overnight slot`; re-run after Jeff's
+correction: the strike is postponed, no crop dies, nothing is recorded) and the next armed
 blight played the crows; on Summer 14 with nothing struck, night 15 forced the crows and night 16
 the thief; with the Summer Ward of the Fields, the thief came on 15 and no crows. Details are in
 `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/task-13-report.md`.
 
 **Final-review fix wave (2026-10-07):** a Wildcard night event keeps the overnight slot (the strike
-lands without its scene, which stays due); the thief skips Mini-Shipping Bins and Junimo Chests; a
+lands without its scene, which stays due; superseded: now postponed); the thief skips Mini-Shipping
+Bins and Junimo Chests (superseded: Junimo Chests are targets again); a
 tamper scene consumes only its own report and other reports show on waking; the first Winter counts
 as reached only once its tamper lands; the tainted aura needs an active run and never throws into a
 draw; `SabotageService` split into partial files.
+
+**Jeff's corrections (2026-10-07, after the fix wave), built:** Junimo Chests are thief targets again
+(their shared stock is one chest in the draw, and a stolen unit is gone from all of them;
+Mini-Shipping Bins stay out); a strike whose scene cannot have the night is postponed, never landed
+without its scene, and a postponed night records nothing (chance, caps and the guarantee untouched;
+a postponed guaranteed Winter tamper stays owed past week 1); the tamper scene plays on any arrival
+on the Farm, staged at the porch, returning the farmer to his arrival tile; "only one bundle" is per
+bundle, every open slot of the item in it rewritten. Live-checked on throwaway farms (deleted).
+Details: `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/corrections-report.md`.
 
 **Owed: Jeff's pass.** Three throwaway farms are saved for it (all named Rodger, farm "standard"):
 `standard_451080087` (Summer 14), `standard_451080418` (Fall 14), `standard_451080615` (Winter 1).
