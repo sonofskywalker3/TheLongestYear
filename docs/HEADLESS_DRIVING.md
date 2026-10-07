@@ -223,8 +223,10 @@ Commands:
 - `tly_sabotage arm blight crops|chest`, `arm revert`, `arm tamper` make tonight's roll strike with
   that kind, and the real scene plays in the night. An arm beats the every-loop guarantee for that
   night.
-- `tly_sabotage status` adds, under the usual lines: `Scenes played this loop`, `Scenes seen on save`,
-  `Struck this loop`, `Owed tonight` (the guarantee's kinds still owed from day 15 of their debut
+- `tly_sabotage status` adds, under the usual lines: `units in chests (stash excluded): N, of which
+  the thief can take tonight: M` (M counts only chests on the Farm, FarmHouse, Cellar and Sheds while
+  the thief scene is due), `Scenes played this loop`, `Scenes seen on save`, `Queued for the next
+  free night` (postponed strikes, oldest first), `Struck this loop`, `Owed tonight` (the guarantee's kinds still owed from day 15 of their debut
   season; a kind listed there is only forced if it can act, so a warded Summer still lists
   CropBlight), `Witness lines pending` (npc, scene day of year, last day of the window), the tamper
   targets (an item asked twice in its one bundle shows `xN slots`) and the items two or more bundles
@@ -237,9 +239,10 @@ The overnight slot (see the night order above): our scene replaces a random vani
 (fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
 (the Community Center's repairs and Joja's), a farm event override from another mod, a personal
 farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: the strike
-is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is recorded, so the roll
-and the every-loop guarantee bring it back on a later night with its scene. The same goes for the
-first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
+is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is recorded. It is queued
+and fires with its scene on the next free night, instead of the roll (designer, 2026-10-07); a
+queued kind that cannot act that night stays queued and the night rolls normally. The same goes for
+the first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
 
 The Junimo "tainted" scene does not play on waking. It starts the first time the farmer arrives on
 the Farm by any route (Jeff, 2026-10-07): the log reads `starting the board-changed scene at the
@@ -255,11 +258,20 @@ Forest edge (arrives (40,64)). Step the three Junimo lines with `tly_eventstep`.
 **The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
 scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`
 (queues the bus repair, `WorldChangeEvent(7)`, for tonight) and `debug sleep`. The log reads
-`Darkness: tonight's CropBlight is postponed (WorldChangeEvent has the overnight slot)`, the live
-crop count does NOT drop, `Scenes played this loop` and `Struck this loop` stay `none`, and the
-chance tonight is unchanged. The arm is spent, so arm again (or let the guarantee force it from day
-15) and sleep: the crows play (`the CrowsScene scene takes tonight's overnight slot for
-CropBlight`) and the crops die at their beat.
+`Darkness: tonight's CropBlight is postponed (WorldChangeEvent has the overnight slot): ... it is
+queued for the next free night`, the live crop count does NOT drop, `Scenes played this loop` and
+`Struck this loop` stay `none`, the chance tonight is unchanged, and status reads `Queued for the
+next free night (...): CropBlight`. Sleep again with nothing armed: `the postponed CropBlight fires
+tonight (Summer N) instead of the roll`, the crows play (`the CrowsScene scene takes tonight's
+overnight slot for CropBlight`), `the postponed CropBlight has struck, so it leaves the queue`, and
+the crops die at their beat.
+
+**The thief's draw while his scene is due** (verified 2026-10-07). On the Farm, `debug forcebuild
+Barn 42 14` (`debug build` refuses on an uncleared farm), `debug warp Barn 8 10`, `tly_sabotage
+fixture here`: status reads `units in chests ...: 75, of which the thief can take tonight: 45` (the
+barn's 30 are out). `debug warp Farm 64 15`, `tly_sabotage arm blight chest`, sleep: `the thief is
+staged on a chest at (69,21) on Farm`. Afterwards `75 -> 72, of which the thief can take tonight:
+72`: the barn chest kept its 30 and is in the draw again now the scene has played.
 
 **The guarantee recipe.** `Run.Season` only syncs at day start, so after `debug season summer` set
 `tly_setday 13` and sleep once (a real gate pass with `tly_playseason` works too). On Summer 14 with
