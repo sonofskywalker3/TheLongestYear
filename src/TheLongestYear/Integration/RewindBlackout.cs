@@ -3,6 +3,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Rewind;
 
 namespace TheLongestYear.Integration
 {
@@ -59,7 +60,6 @@ namespace TheLongestYear.Integration
         private static float _held;
         private static float _fade;
         private static bool _hudSuppressed;
-        private static bool _displayHudWasOn;
         private static bool _vanillaHudHeld;
 
         /// <summary>True while the mod's own HUD should stay off screen. Read by ModEntry's JP box.</summary>
@@ -88,21 +88,30 @@ namespace TheLongestYear.Integration
             HoldVanillaHud();
         }
 
-        /// <summary>Switches vanilla's HUD off, remembering whether it was on. Once per sequence, so a
-        /// re-armed bedroom or the black window cannot record "off" as the value to give back.</summary>
+        /// <summary>Switches vanilla's HUD off for the rest of the sequence. It used to remember the
+        /// value it found and give that back, but the season reset inside the hold (loadForNewGame)
+        /// turns the HUD on again behind it, so the hold is now re-asserted every frame
+        /// (<see cref="KeepVanillaHudOff"/>) and release always turns it on (RewindHudRule).</summary>
         private static void HoldVanillaHud()
         {
             if (_vanillaHudHeld) return;
             _vanillaHudHeld = true;
-            _displayHudWasOn = Game1.displayHUD;
             Game1.displayHUD = false;
+        }
+
+        /// <summary>Puts the HUD back off if something in the hold switched it on (the reset's
+        /// loadForNewGame does). Runs on every tick and again just before the HUD would draw.</summary>
+        private static void KeepVanillaHudOff()
+        {
+            bool? fix = RewindHudRule.Correction(_vanillaHudHeld, Game1.displayHUD);
+            if (fix.HasValue) Game1.displayHUD = fix.Value;
         }
 
         private static void GiveBackVanillaHud()
         {
             if (!_vanillaHudHeld) return;
             _vanillaHudHeld = false;
-            Game1.displayHUD = _displayHudWasOn;
+            Game1.displayHUD = RewindHudRule.ValueOnRelease;
         }
 
         /// <summary>Takes the screen at full black. Called by the morning beat once its own fade-out
@@ -135,6 +144,7 @@ namespace TheLongestYear.Integration
 
         private static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            KeepVanillaHudOff();
             if (_state == State.Idle) return;
             // Dormancy (project rule): this state is static and outlives the save it was set on.
             if (!RunActivation.IsActive) { Release("save unloaded"); return; }
@@ -184,6 +194,7 @@ namespace TheLongestYear.Integration
 
         private static void OnRenderedWorld(object sender, RenderedWorldEventArgs e)
         {
+            KeepVanillaHudOff();
             if (_state == State.Idle || _fade <= 0f) return;
             e.SpriteBatch.Draw(
                 Game1.fadeToBlackRect,
