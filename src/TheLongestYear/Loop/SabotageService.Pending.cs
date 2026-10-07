@@ -32,7 +32,7 @@ namespace TheLongestYear.Loop
             Pending = null;
             if (p.Applied) return false;
             _monitor.Log($"Darkness: applying tonight's {p.Event} with no scene by design ({why}) at tick {Game1.ticks}.", LogLevel.Trace);
-            p.Apply();
+            p.LandNow();
             return true;
         }
 
@@ -44,52 +44,57 @@ namespace TheLongestYear.Loop
         {
             PendingStrike p = Pending;
             if (p == null) return false;
-            if (p.Committed)
-                return SettlePendingIfAny(why);
+            if (!p.Postpone())
+            {
+                // Its scene staged, so tonight is spent on it: the net lands it. Already applied or
+                // postponed: just let it go.
+                if (p.Committed) return SettlePendingIfAny(why);
+                Pending = null;
+                return false;
+            }
             Pending = null;
             if (_guaranteedTamperTonight && p.Event == DarknessEvent.Tampering)
-                Run.GuaranteedTamperPostponed = true;
+                GuaranteedTamper.OnPostponed(Run);
             _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, so the roll and the guarantee bring it back.", LogLevel.Info);
             return true;
         }
 
         /// <summary>The net under the save, the morning and the next night pass: a strike still
-        /// waiting lands only if its scene had the slot (<see cref="StrikeSlot.LandsAtNet"/>), and is
-        /// postponed otherwise (a collision nobody caught, or the first night of a save, when
-        /// vanilla runs no <c>pickFarmEvent</c>). Never applies a strike whose scene never had the
-        /// slot.</summary>
+        /// waiting lands only if its scene actually staged (<see cref="StrikeLifecycle.AtNet"/>), and is
+        /// postponed otherwise: a collision nobody caught, a scene that took the slot but could not
+        /// stage or threw in setUp, another mod replacing the event after our postfix, or the first
+        /// night of a save, when vanilla runs no <c>pickFarmEvent</c>. Never applies a strike whose
+        /// scene never staged.</summary>
         public bool SettlePendingIfAny(string why)
         {
             PendingStrike p = Pending;
             if (p == null) return false;
-            if (!StrikeSlot.LandsAtNet(p.Committed)) return PostponePendingIfAny(why);
-            Pending = null;
-            if (p.Applied) return false;
-            _monitor.Log($"Darkness: tonight's {p.Event} lands now ({why}): its scene had the overnight slot but did not reach its beat, at tick {Game1.ticks}.", LogLevel.Trace);
-            p.Apply();
-            return true;
+            switch (p.AtNet())
+            {
+                case StrikeNetAction.Postpone:
+                    return PostponePendingIfAny(why);
+                case StrikeNetAction.Land:
+                    Pending = null;
+                    _monitor.Log($"Darkness: tonight's {p.Event} lands now ({why}): its scene staged but did not reach its beat, at tick {Game1.ticks}.", LogLevel.Trace);
+                    p.Apply();
+                    return true;
+                default:
+                    Pending = null;
+                    return false;
+            }
         }
 
-        /// <summary>Tonight's scene has taken the overnight slot: the strike is committed.</summary>
-        public void CommitPendingScene()
-        {
-            PendingStrike p = Pending;
-            if (p == null || p.Committed) return;
-            p.Commit();
-            _monitor.Log($"Darkness: tonight's {p.Event} is committed: its scene has the overnight slot.", LogLevel.Trace);
-        }
-
-        /// <summary>A strike is committed to tonight: its scene took the slot, or it is landing with no
+        /// <summary>A strike is committed to tonight: its scene has staged, or it is landing with no
         /// scene by design. Only now does the run record it (the week's chance, the front's cap or
         /// spacing, the every-loop guarantee), so a postponed strike spends nothing. The guaranteed
         /// Winter tamper counts as done here too.</summary>
         private void OnStrikeCommitted(PendingStrike strike, int week, CoreSeason season, int dayOfYear)
         {
             StrikeLedger.Record(Run, strike.Event, week, season, dayOfYear);
+            _monitor.Log($"Darkness: tonight's {strike.Event} is committed and recorded.", LogLevel.Trace);
             if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
             {
-                Run.GuaranteedTamperDone = true;
-                Run.GuaranteedTamperPostponed = false;
+                GuaranteedTamper.OnCommitted(Run);
                 _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {Run.DayOfMonth}.", LogLevel.Info);
             }
         }
@@ -110,19 +115,17 @@ namespace TheLongestYear.Loop
         /// random week-1 night instead of tomorrow.</summary>
         private void OnStrikeApplied(PendingStrike strike)
         {
+            bool guaranteed = _guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering;
+            if (guaranteed) GuaranteedTamper.OnApplied(Run, strike.Landed);
             if (strike.Landed)
             {
-                if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
-                    Meta.FirstWinterTamperSeen = true;
+                if (guaranteed) Meta.FirstWinterTamperSeen = true;
                 return;
             }
             (Run.StruckEvents ??= new()).Remove(strike.Event.ToString());
             _monitor.Log($"Darkness: tonight's {strike.Event} found nothing to do when it came to it, so the kind is still owed this loop.", LogLevel.Info);
-            if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
-            {
-                Run.GuaranteedTamperDone = false;
+            if (guaranteed)
                 _monitor.Log("Darkness: the guaranteed Winter tamper did not land, so it retries tomorrow.", LogLevel.Info);
-            }
         }
     }
 }

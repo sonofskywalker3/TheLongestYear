@@ -38,8 +38,6 @@ namespace TheLongestYear.Loop
         /// <summary>Set by ModEntry: postpone the waiting strike, effect and scene both.</summary>
         internal static Action<string> Postpone;
 
-        /// <summary>Set by ModEntry: the scene has taken the slot, so the strike is committed.</summary>
-        internal static Action SceneTookSlot;
 
         /// <summary>Set by ModEntry: true on a fail night (the same test the suppression patch uses).</summary>
         internal static Func<bool> FailNight;
@@ -173,8 +171,10 @@ namespace TheLongestYear.Loop
                     ? "Darkness: the strike scene takes tonight's empty overnight slot."
                     : $"Darkness: the strike scene takes the overnight slot from {picked.GetType().Name}, which comes round again.",
                 LogLevel.Trace);
+            // Not committed here: the strike commits only when vanilla's setUp actually stages the
+            // scene (StrikeSceneBase.setUp). A scene that cannot stage, or another mod replacing
+            // the event after this postfix, leaves it uncommitted, and the save net postpones it.
             __result = scene;
-            SceneTookSlot?.Invoke();
         }
 
         /// <summary>Who has the slot tonight, for the log line of a postponed strike.</summary>

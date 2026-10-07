@@ -61,13 +61,94 @@ public static class StrikeSlot
             return StrikeSlotVerdict.Postpone;
         return StrikeSlotVerdict.PlayScene;
     }
+}
 
-    /// <summary>A strike still waiting when the save begins, the morning comes or a new night pass
-    /// runs: it lands only if its scene had the slot (the scene staged and ended early, or took the
-    /// slot and then could not stage). Otherwise its scene never had the slot (a collision, or a
-    /// night with no <c>pickFarmEvent</c> at all, which vanilla skips while DaysPlayed is 1), and it
-    /// is postponed like any collision.</summary>
-    public static bool LandsAtNet(bool sceneHadTheSlot) => sceneHadTheSlot;
+/// <summary>What the save, morning or next-night net does with a strike still waiting.</summary>
+public enum StrikeNetAction
+{
+    /// <summary>It has landed or been postponed already.</summary>
+    None,
+
+    /// <summary>Its scene staged (so tonight is spent on it) but ended before the beat: land it.</summary>
+    Land,
+
+    /// <summary>Its scene never staged: a collision, a scene that could not stage or threw in setUp,
+    /// another mod replacing the event after the slot was decided, or a night with no
+    /// <c>pickFarmEvent</c> at all (DaysPlayed 1). Postpone it like any collision.</summary>
+    Postpone,
+}
+
+/// <summary>One strike's life, pure (review C1, Jeff 2026-10-07: a strike never lands without its
+/// scene). It is committed (the run records it) only when its scene has actually staged, or when it
+/// lands with no scene by design. Only a committed strike may apply; only an uncommitted one may be
+/// postponed; each happens at most once.</summary>
+public sealed class StrikeLifecycle
+{
+    public bool Committed { get; private set; }
+    public bool Applied { get; private set; }
+    public bool Postponed { get; private set; }
+
+    /// <summary>The scene staged. True the first time, when the run must record the strike.</summary>
+    public bool Commit()
+    {
+        if (Committed || Postponed) return false;
+        Committed = true;
+        return true;
+    }
+
+    /// <summary>May the effect run now? True once, and only for a committed, unpostponed strike.</summary>
+    public bool BeginApply()
+    {
+        if (!Committed || Applied || Postponed) return false;
+        Applied = true;
+        return true;
+    }
+
+    /// <summary>A strike with no scene by design: commit (if not yet) and apply now.</summary>
+    public bool LandNow(out bool newlyCommitted)
+    {
+        newlyCommitted = Commit();
+        return BeginApply();
+    }
+
+    /// <summary>Drop it unapplied. Only a strike that never committed can be postponed: once its
+    /// scene staged, tonight is spent on it.</summary>
+    public bool Postpone()
+    {
+        if (Committed || Postponed) return false;
+        Postponed = true;
+        return true;
+    }
+
+    public StrikeNetAction AtNet()
+        => Applied || Postponed ? StrikeNetAction.None
+            : Committed ? StrikeNetAction.Land
+            : StrikeNetAction.Postpone;
+}
+
+/// <summary>The guaranteed Winter tamper's flags through a strike's life (review I1). Done when it
+/// commits; carried past week 1 when postponed; the carry is dropped only when it lands, and a
+/// failed apply makes it owed again (with the carry kept).</summary>
+public static class GuaranteedTamper
+{
+    public static void OnPostponed(RunState run)
+    {
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        run.GuaranteedTamperPostponed = true;
+    }
+
+    public static void OnCommitted(RunState run)
+    {
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        run.GuaranteedTamperDone = true;
+    }
+
+    public static void OnApplied(RunState run, bool landed)
+    {
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        if (landed) run.GuaranteedTamperPostponed = false;
+        else run.GuaranteedTamperDone = false;
+    }
 }
 
 /// <summary>What a strike spends once it is committed to tonight: the week's chance drop, the

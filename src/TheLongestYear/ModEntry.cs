@@ -242,7 +242,6 @@ namespace TheLongestYear
             StrikeScenePatch.Monitor = this.Monitor;
             StrikeScenePatch.FailNight = () => FarmEventSuppressionPatch.SuppressTonight?.Invoke() == true;
             StrikeScenePatch.Postpone = why => _sabotage?.PostponePendingIfAny(why);
-            StrikeScenePatch.SceneTookSlot = () => _sabotage?.CommitPendingScene();
             StrikeScenePatch.StrikeWaiting = () => _sabotage?.Pending is { Applied: false };
             StrikeScenePatch.SceneFor = () =>
             {
