@@ -100,15 +100,12 @@ public static class BundleClassifier
         // BundleRequirement so the season-goals UI can render the correct quantity badge +
         // quality star on each icon. Uses MAX across duplicate entries (Construction lists
         // Wood twice with stack 99; max of 99 is the safe "what fits any slot" reading).
-        Dictionary<string, int> ingredientStacks = new();
+        Dictionary<string, int> ingredientStacks = BundleStacks.Of(parsed.Ingredients);
         Dictionary<string, int> ingredientQualities = new();
         foreach (BundleIngredient ing in parsed.Ingredients)
         {
             if (BundleParsing.IsCategoryRef(ing.ItemRef)) continue;
             string id = BundleParsing.NormalizeItemId(ing.ItemRef);
-            int stack = ing.Stack > 0 ? ing.Stack : 1;
-            if (!ingredientStacks.TryGetValue(id, out int existingStack) || stack > existingStack)
-                ingredientStacks[id] = stack;
             if (!ingredientQualities.TryGetValue(id, out int existingQ) || ing.Quality > existingQ)
                 ingredientQualities[id] = ing.Quality;
         }
