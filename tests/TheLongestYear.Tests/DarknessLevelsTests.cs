@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
 using Xunit;
@@ -116,12 +118,70 @@ public class DarknessLevelsTests
         => Assert.Equal(inPool, BlightRule.InStoragePool(plain, big, placed, onFarm, warded, everything));
 
     [Theory]
-    // A plain chest, a big chest, a hopper: in the draw.
-    [InlineData(false, false, true)]
+    // A plain chest, a big chest, a hopper, a Junimo Chest: in the draw.
+    [InlineData(false, true)]
     // A Mini-Shipping Bin ships overnight before the strike lands.
-    [InlineData(true, false, false)]
-    // A Junimo Chest shares one inventory across every Junimo Chest.
-    [InlineData(false, true, false)]
-    public void The_chest_draw_skips_shipping_bins_and_junimo_chests(bool shipsOvernight, bool sharedInventory, bool inDraw)
-        => Assert.Equal(inDraw, BlightRule.ChestInDraw(shipsOvernight, sharedInventory));
+    [InlineData(true, false)]
+    public void The_chest_draw_skips_only_shipping_bins(bool shipsOvernight, bool inDraw)
+        => Assert.Equal(inDraw, BlightRule.ChestInDraw(shipsOvernight));
+
+    // ---------------------------------------------------------------- shared inventories (Junimo Chests)
+
+    [Fact]
+    public void Junimo_chests_share_one_seat_in_the_draw()
+    {
+        // Two plain chests and three Junimo Chests (inventory 7): the Junimo stock is drawn once.
+        var seats = new[]
+        {
+            new ChestSeat(1, OnFarm: true, Warded: false),
+            new ChestSeat(7, OnFarm: false, Warded: false),
+            new ChestSeat(2, OnFarm: true, Warded: false),
+            new ChestSeat(7, OnFarm: true, Warded: false),
+            new ChestSeat(7, OnFarm: true, Warded: false),
+        };
+        IReadOnlyList<ChestHost> hosts = BlightRule.ChestHosts(seats);
+        Assert.Equal(new[] { true, false, true, true, false }, hosts.Select(h => h.Host).ToArray());
+    }
+
+    [Fact]
+    public void The_shared_stock_is_shown_at_a_junimo_chest_on_the_farm_when_there_is_one()
+    {
+        var offFarmOnly = BlightRule.ChestHosts(new[] { new ChestSeat(7, false, false), new ChestSeat(7, false, false) });
+        Assert.Equal(new[] { true, false }, offFarmOnly.Select(h => h.Host).ToArray());
+        var farmSecond = BlightRule.ChestHosts(new[] { new ChestSeat(7, false, false), new ChestSeat(7, true, false) });
+        Assert.Equal(new[] { false, true }, farmSecond.Select(h => h.Host).ToArray());
+    }
+
+    [Fact]
+    public void One_warded_junimo_chest_protects_the_shared_stock()
+    {
+        IReadOnlyList<ChestHost> hosts = BlightRule.ChestHosts(new[]
+        {
+            new ChestSeat(7, true, false), new ChestSeat(7, false, true), new ChestSeat(3, true, false),
+        });
+        Assert.True(hosts[0].Host);
+        Assert.True(hosts[0].Warded);
+        Assert.False(hosts[2].Warded);
+    }
+
+    [Fact]
+    public void A_shared_stock_counted_once_is_weighted_once_in_the_pick()
+    {
+        // One plain chest of 10 units and one Junimo stock of 10 units seen through two Junimo
+        // Chests: with one seat each the night lands in either about half the time. Counted twice,
+        // the Junimo stock would win about two thirds of the nights.
+        var seats = new[] { new ChestSeat(1, true, false), new ChestSeat(7, true, false), new ChestSeat(7, true, false) };
+        IReadOnlyList<ChestHost> hosts = BlightRule.ChestHosts(seats);
+        var pool = new List<TakeCandidate>();
+        for (int i = 0; i < seats.Length; i++)
+            if (hosts[i].Host) pool.Add(new TakeCandidate(seats[i].InventoryId, 10, false));
+        int junimo = 0;
+        const int nights = 2000;
+        for (int seed = 0; seed < nights; seed++)
+        {
+            IReadOnlyList<int> taken = BlightRule.PlanTake(pool, 1, new System.Random(seed));
+            if (pool[taken[0]].OwnerId == 7) junimo++;
+        }
+        Assert.InRange(junimo, nights * 40 / 100, nights * 60 / 100);
+    }
 }

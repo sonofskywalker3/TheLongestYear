@@ -134,11 +134,7 @@ namespace TheLongestYear.Scenes
         {
             SpoilagePass.Hit hit = strike?.SceneTarget;
             if (hit?.Location == null) return null;
-            bool onFarm = hit.Location is Farm
-                       || hit.Location is FarmHouse
-                       || hit.Location is Cellar
-                       || hit.Location is Shed;
-            return onFarm ? hit : null;
+            return SpoilagePass.OnSceneMap(hit.Location) ? hit : null;
         }
 
         // ---------------------------------------------------------------- staging
