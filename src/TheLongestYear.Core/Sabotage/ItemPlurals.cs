@@ -67,6 +67,11 @@ namespace TheLongestYear.Core.Sabotage
         public static string Tainted(string name, string baseItemId, bool flavored, Func<string, string> gamePlural)
         {
             if (flavored && FlavoredSlotRules.IsFlavored(baseItemId)) return name;
+            // The ask's own word lists (AskPhrases): bulk stuff and container goods are mass nouns
+            // here ("all the Wood", "all the Copper Ore", "all the Pumpkin Soup"), the jellyfish
+            // are counted ("all the Sea Jellies").
+            if (AskPhrases.ContainerFor(baseItemId) != null || AskPhrases.IsSameInThePlural(baseItemId)) return name;
+            if (AskPhrases.IsCountable(baseItemId)) return CountedPlural(name, gamePlural);
             return Plural(name, gamePlural);
         }
 

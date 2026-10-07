@@ -19,13 +19,6 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>The main farmhouse's location name.</summary>
         public const string FarmHouseLocationName = "FarmHouse";
 
-        /// <summary>The farm's door tile is the doorway itself; the porch step is one below it.</summary>
-        public const int StepDown = 1;
-
-        /// <summary>The row on which vanilla nudges a farmer one tile right when an event ends on the
-        /// Farm (Game1.eventFinished, Game1.cs:6837).</summary>
-        public const int VanillaNudgeRow = 64;
-
         /// <param name="tamperPending">A tamper report is waiting for its scene.</param>
         /// <param name="enteredLocationName">The location the warp just put the player in.</param>
         /// <param name="isLocalPlayer">The warp was this player's own.</param>
@@ -42,18 +35,13 @@ namespace TheLongestYear.Core.Sabotage
 
         /// <summary>The porch tile the scene is staged on: where the farmhouse's own warp onto the
         /// Farm puts the farmer (read from the house's warp data, so every farm type and a moved
-        /// house are right), else the step below the farm's reported door tile, else none.</summary>
+        /// house are right), else the farm's own main-house entry tile, which is the same tile on
+        /// the standard farm (64,15), else none.</summary>
         public static (int X, int Y)? PorchTile(IReadOnlyList<(int X, int Y)>? doorExits, (int X, int Y)? doorTile)
         {
             if (doorExits != null && doorExits.Count > 0) return doorExits[0];
-            if (doorTile is (int x, int y)) return (x, y + StepDown);
+            if (doorTile is (int x, int y)) return (x, y);
             return null;
         }
-
-        /// <summary>The tile to hand vanilla's event end so the farmer lands exactly where he arrived.
-        /// Vanilla adds one to X when an event ends on the Farm with the saved tile on row
-        /// <see cref="VanillaNudgeRow"/>, so that row gets one to the left in advance.</summary>
-        public static (int X, int Y) ReturnTileForVanilla((int X, int Y) arrival)
-            => arrival.Y == VanillaNudgeRow ? (arrival.X - 1, arrival.Y) : arrival;
     }
 }

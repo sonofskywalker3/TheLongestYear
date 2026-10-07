@@ -10,8 +10,8 @@ namespace TheLongestYear.Tests;
 /// is staged at the farmhouse porch and the farmer is put back where he arrived when it ends.</summary>
 public class TamperPorchRuleTests
 {
-    // The standard farm: the farmhouse's warp onto the Farm lands the farmer on (64,16).
-    private static readonly (int X, int Y) Porch = (64, 16);
+    // The standard farm: the farmhouse's warp onto the Farm lands the farmer on (64,15).
+    private static readonly (int X, int Y) Porch = (64, 15);
 
     private static bool Start(
         bool pending = true, string? entered = "Farm", bool local = true, bool busy = false, bool porchKnown = true)
@@ -51,32 +51,20 @@ public class TamperPorchRuleTests
 
     [Fact]
     public void The_porch_is_where_the_house_door_warp_puts_the_farmer()
-        => Assert.Equal((64, 16), TamperPorchRule.PorchTile(new[] { (64, 16) }, (64, 15)));
+        => Assert.Equal((64, 15), TamperPorchRule.PorchTile(new[] { (64, 15) }, (64, 15)));
 
     [Fact]
     public void A_farm_type_with_its_door_elsewhere_reads_its_own_exit()
         => Assert.Equal((82, 14), TamperPorchRule.PorchTile(new[] { (82, 14) }, (64, 15)));
 
     [Fact]
-    public void With_no_door_warp_the_porch_is_the_step_below_the_farms_door_tile()
+    public void With_no_door_warp_the_porch_is_the_farms_main_house_entry()
     {
-        Assert.Equal((64, 16), TamperPorchRule.PorchTile(new (int X, int Y)[0], (64, 15)));
-        Assert.Equal((64, 16), TamperPorchRule.PorchTile(null, (64, 15)));
+        Assert.Equal((64, 15), TamperPorchRule.PorchTile(new (int X, int Y)[0], (64, 15)));
+        Assert.Equal((64, 15), TamperPorchRule.PorchTile(null, (64, 15)));
     }
 
     [Fact]
     public void With_neither_there_is_no_porch()
         => Assert.Null(TamperPorchRule.PorchTile(null, null));
-
-    // ---------------------------------------------------------------- where he goes back to
-
-    [Theory]
-    // Vanilla's eventFinished adds one to X when an event ends on the Farm with the saved position
-    // on row 64 (Game1.cs:6837). The rule hands vanilla a tile one to the left there, so the farmer
-    // lands on the exact tile he arrived at.
-    [InlineData(41, 64, 40, 64)]
-    [InlineData(64, 16, 64, 16)]
-    [InlineData(0, 30, 0, 30)]
-    public void The_return_tile_undoes_vanillas_row_64_nudge(int x, int y, int handX, int handY)
-        => Assert.Equal((handX, handY), TamperPorchRule.ReturnTileForVanilla((x, y)));
 }

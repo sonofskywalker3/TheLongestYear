@@ -115,6 +115,14 @@ namespace TheLongestYear.Core.Sabotage
             return map;
         }
 
+        /// <summary>Is this item's plural the bare word ("3 Wood", "3 Clay")?</summary>
+        public static bool IsSameInThePlural(string? itemId)
+            => !string.IsNullOrEmpty(itemId) && SameInThePlural.Contains(BundleParsing.NormalizeItemId(itemId!));
+
+        /// <summary>Is this a countable thing whose last word the mass-noun rule would catch?</summary>
+        public static bool IsCountable(string? itemId)
+            => !string.IsNullOrEmpty(itemId) && Countable.Contains(BundleParsing.NormalizeItemId(itemId!));
+
         /// <summary>The container word for this item ("bottles"), or null when it has none.</summary>
         public static string? ContainerFor(string? itemId)
         {

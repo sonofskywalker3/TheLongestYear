@@ -18,6 +18,9 @@ namespace TheLongestYear.Integration
         private readonly MetaStore _meta;
         private Action _onComplete;
         private bool _running;
+        /// <summary>A tamper scene ended and the farmer is being put back where he arrived: log the
+        /// tile once vanilla's warp back has landed.</summary>
+        private bool _reportReturn;
         private int _startedTick;
 
         public bool Running => _running;
@@ -27,7 +30,7 @@ namespace TheLongestYear.Integration
         public void Attach(IModHelper helper)
         {
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
-            helper.Events.GameLoop.ReturnedToTitle += (_, _) => { _running = false; _onComplete = null; };
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => { _running = false; _onComplete = null; _reportReturn = false; };
         }
 
         public bool Start(SeasonTurnKind kind, Action onComplete)
@@ -61,10 +64,10 @@ namespace TheLongestYear.Integration
             if (FarmPorch() is not (int porchX, int porchY)) return false;
             Microsoft.Xna.Framework.Point arrived = Game1.player.TilePoint;
             int facing = Game1.player.FacingDirection;
-            (int returnX, int returnY) = TheLongestYear.Core.Sabotage.TamperPorchRule.ReturnTileForVanilla((arrived.X, arrived.Y));
             bool skippable = _meta.State.SeasonTurnsSeen.Contains(TamperSeenName);
             _monitor.Log($"Darkness: starting the board-changed scene at the porch ({porchX},{porchY}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, returnX, returnY, facing, oldItemName, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, arrived.X, arrived.Y, facing, oldItemName, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            _reportReturn = true;
             // Black from this very frame: the arrival is not seen before the porch is.
             EndingEventCommands.HoldBlack();
             _meta.State.SeasonTurnsSeen.Add(TamperSeenName);
@@ -111,6 +114,11 @@ namespace TheLongestYear.Integration
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            if (_reportReturn && !_running && Context.IsWorldReady && !Game1.eventUp && Game1.locationRequest == null && !Game1.isWarping)
+            {
+                _reportReturn = false;
+                _monitor.Log($"Darkness: after the board-changed scene the farmer is at ({Game1.player.TilePoint.X},{Game1.player.TilePoint.Y}) facing {Game1.player.FacingDirection} on {Game1.currentLocation?.NameOrUniqueName}.", LogLevel.Info);
+            }
             if (!_running || !Context.IsWorldReady) return;
             if (Game1.ticks - _startedTick < SettleTicks) return;
             bool eventGone = !Game1.eventUp && Game1.currentLocation?.currentEvent == null;

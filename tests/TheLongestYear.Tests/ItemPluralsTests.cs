@@ -69,6 +69,21 @@ public class ItemPluralsTests
         Assert.Equal(name, ItemPlurals.Plural(name, VanillaPlural));
     }
 
+    // Wood became a tamper target with the per-bundle rule (Construction's double Wood, Jeff
+    // 2026-10-07), and the first live run read "It has tainted all the Woods". The tainted name
+    // follows the ask's own word lists: bulk stuff and container goods stay bare, the jellyfish
+    // count.
+    [Theory]
+    [InlineData("Wood", "(O)388", "Wood")]
+    [InlineData("Hardwood", "(O)709", "Hardwood")]
+    [InlineData("Copper Ore", "(O)378", "Copper Ore")]
+    [InlineData("Refined Quartz", "(O)338", "Refined Quartz")]
+    [InlineData("Pumpkin Soup", "(O)236", "Pumpkin Soup")]
+    [InlineData("Sea Jelly", "(O)SeaJelly", "Sea Jellies")]
+    [InlineData("Parsnip", "(O)24", "Parsnips")]
+    public void The_tainted_name_reads_like_the_ask(string name, string id, string expected)
+        => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural));
+
     [Fact]
     public void A_vowel_before_the_y_takes_a_plain_s()
         => Assert.Equal("Turkeys", ItemPlurals.Plural("Turkey", VanillaPlural));
