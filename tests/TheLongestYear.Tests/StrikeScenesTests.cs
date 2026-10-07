@@ -36,4 +36,18 @@ public class StrikeScenesTests
         Assert.Contains("Reversion", run.StrikeScenesPlayed);
         Assert.Contains("Reversion", meta.StrikeScenesSeen);
     }
+
+    [Fact]
+    public void A_wildcard_night_event_keeps_the_overnight_slot()
+        => Assert.True(StrikeScenes.WildcardTwistHasTheSlot(WildcardSchedule.NightEvent, suppressed: false));
+
+    [Fact]
+    public void A_suppressed_wildcard_night_leaves_the_slot_alone()
+        => Assert.False(StrikeScenes.WildcardTwistHasTheSlot(WildcardSchedule.NightEvent, suppressed: true));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(WildcardSchedule.SnowDay)]
+    public void Any_other_night_leaves_the_slot_to_the_scene(string twist)
+        => Assert.False(StrikeScenes.WildcardTwistHasTheSlot(twist, suppressed: false));
 }

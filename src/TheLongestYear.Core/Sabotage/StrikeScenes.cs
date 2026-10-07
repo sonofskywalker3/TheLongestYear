@@ -26,6 +26,13 @@ public static class StrikeScenes
         (meta.StrikeScenesSeen ??= new()).Add(e.ToString());
     }
 
+    /// <summary>Does the Wildcard night event own tonight's overnight slot? On a night_event night
+    /// the player was told that morning that something will happen on the farm, so the twist keeps
+    /// the slot and a waiting strike lands without its scene (the scene stays due for a later
+    /// night). A suppressed night (a rewind morning) runs no twist, so it owns nothing.</summary>
+    public static bool WildcardTwistHasTheSlot(string nightTwist, bool suppressed)
+        => !suppressed && nightTwist == WildcardSchedule.NightEvent;
+
     private static bool Contains(IReadOnlyCollection<string> set, string name)
     {
         foreach (string s in set) if (s == name) return true;
