@@ -7,7 +7,7 @@ namespace TheLongestYear.Tests;
 
 /// <summary>Jeff, 2026-10-07: "we don't delay scenes without delaying the effect of them". A strike
 /// whose scene cannot have tonight's overnight slot does not land at all: it is postponed, and the
-/// night is as if no strike happened, so the roll and the every-loop guarantee bring it back.</summary>
+/// night is as if no strike happened, and it is queued for the next free night (StrikeQueueTests).</summary>
 public class StrikeSlotTests
 {
     private static Func<bool> Personal(bool owns) => () => owns;
