@@ -421,7 +421,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", this.CmdNewGame);
             helper.ConsoleCommands.Add("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             helper.ConsoleCommands.Add("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
-            helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
+            helper.ConsoleCommands.Add("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count] | query <item query>", this.CmdAddItem);
             helper.ConsoleCommands.Add("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);
             helper.ConsoleCommands.Add("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             helper.ConsoleCommands.Add("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
@@ -1537,6 +1537,17 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_additem <qualifiedId> [count]", LogLevel.Warn); return; }
 
+            // "query <item query>" adds the first result, e.g. "query FLAVORED_ITEM Jelly (O)258"
+            // for a flavoured Jelly (a ColoredObject), which a plain id cannot make.
+            if (args[0].Equals("query", StringComparison.OrdinalIgnoreCase))
+            {
+                var found = StardewValley.Internal.ItemQueryResolver.TryResolve(string.Join(" ", args.Skip(1)), null);
+                if (found.Length == 0) { this.Monitor.Log("tly_additem query: no result.", LogLevel.Warn); return; }
+                Item queried = found[0].Item as Item;
+                Game1.player.addItemByMenuIfNecessary(queried);
+                this.Monitor.Log($"tly_additem: granted {queried.DisplayName} ({queried.GetType().Name}, {queried.QualifiedItemId}).", LogLevel.Info);
+                return;
+            }
             int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 1;
             Item item;
             try { item = ItemRegistry.Create(args[0], count); }
