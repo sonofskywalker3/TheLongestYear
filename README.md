@@ -39,7 +39,7 @@ Every option in it is off by default, so if you never open it, the game plays ex
 - **Double theme week.** Once a season, in week 2 or 3, you take both cards: both buffs, both drawbacks and two goal lists.
 - **Wildcard days.** One day each week gets a one-day twist, good, bad or odd. You see which day at the start of the week and the twist that morning.
 - **Random shrine donations.** Extra weekly goals for items with no Community Center slot, donated on the farm statue's new Donate tab. Missing them never fails you, but the theme keeps its drawback.
-- **Random bundle rewards.** Bundle rewards are picked at random, starting from the next loop.
+- **Random bundle rewards.** Bundle rewards are picked at random, starting from the next loop. The Vault bundles are included.
 - **Random cart days.** The Traveling Cart comes on random days, about two a week, never on a festival.
 
 The old **Allow re-rolling the weekly themes** switch has moved into the Randomizer section. If you had it on, Theme rerolls is set to Free.
