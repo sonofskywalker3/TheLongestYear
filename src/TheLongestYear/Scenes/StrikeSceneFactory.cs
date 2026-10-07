@@ -7,8 +7,8 @@ using TheLongestYear.Loop;
 namespace TheLongestYear.Scenes
 {
     /// <summary>Which strike gets which scene (spec 2026-09-21), and whether tonight's strike has
-    /// anything for its scene to play against. Asked twice: once at pick time, so a strike with no
-    /// scene lands at once, and once when the overnight slot comes round.</summary>
+    /// anything for its scene to play against. Asked at pick time: a strike whose scene is due but
+    /// cannot show its pick waits for a later night, effect and scene both.</summary>
     internal static class StrikeSceneFactory
     {
         /// <summary>Can tonight's strike be filmed at all? Asked at pick time, before the slot.</summary>

@@ -20,11 +20,11 @@ namespace TheLongestYear.Loop
         public PendingStrike Pending { get; private set; }
 
         /// <summary>Set by ModEntry once the overnight scenes exist (Task 6). Until then no scene
-        /// can play, so every strike lands at once exactly as it did before the split.</summary>
+        /// can play, so a strike whose scene is due waits (it never lands without it).</summary>
         public Func<PendingStrike, bool> SceneCanPlay { get; set; } = _ => false;
 
-        /// <summary>Land a waiting strike now. Only for a strike with no scene by design: its kind
-        /// already played this loop, or its target is somewhere the scene cannot show.</summary>
+        /// <summary>Land a waiting strike now. Only for a strike with no scene by design: its kind's
+        /// scene already played this loop.</summary>
         private bool ApplyPendingIfAny(string why)
         {
             PendingStrike p = Pending;

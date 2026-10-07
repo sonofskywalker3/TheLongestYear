@@ -9,9 +9,10 @@ namespace TheLongestYear.Core.Sabotage;
 /// farm maps the thief scene can show, and whether it sits on a Circle of Warding.</summary>
 public readonly record struct ChestSeat(int InventoryId, bool OnFarm, bool Warded);
 
-/// <summary>Whether a chest brings its inventory to the draw (<see cref="Host"/>), and whether that
-/// inventory is warded.</summary>
-public readonly record struct ChestHost(bool Host, bool Warded);
+/// <summary>Whether a chest brings its inventory to the draw (<see cref="Host"/>), whether that
+/// inventory is warded, and whether the thief scene can show it (<see cref="Filmable"/>: the host
+/// stands on a scene map, which for a Junimo group means any of its chests does).</summary>
+public readonly record struct ChestHost(bool Host, bool Warded, bool Filmable = false);
 
 /// <summary>The chest side of the storage draw: which chests are in it, and which chests share one
 /// stock (every Junimo Chest).</summary>
@@ -47,8 +48,16 @@ public static partial class BlightRule
         for (int i = 0; i < chests.Count; i++)
         {
             int id = chests[i].InventoryId;
-            result[i] = new ChestHost(host[id] == i, warded[id]);
+            result[i] = new ChestHost(host[id] == i, warded[id], chests[host[id]].OnFarm);
         }
         return result;
     }
+
+    /// <summary>Does this chest bring its stock to tonight's thief draw? Only a host does. While the
+    /// thief scene is still due this loop, only a chest the scene can show is in (designer,
+    /// 2026-10-07: a theft never lands without its scene while that scene is due); once it has
+    /// played, every chest is in again and later thefts land with no scene by design. A night
+    /// whose filmable chests hold nothing to take is a night the thief cannot act.</summary>
+    public static bool InThiefDraw(ChestHost host, bool thiefSceneDue)
+        => host.Host && (!thiefSceneDue || host.Filmable);
 }

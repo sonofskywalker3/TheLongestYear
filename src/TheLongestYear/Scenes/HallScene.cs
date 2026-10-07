@@ -90,7 +90,7 @@ namespace TheLongestYear.Scenes
             _town = Game1.getLocationFromName("Town");
             if (_town?.map == null)
             {
-                Monitor.Log("Darkness: Town has no map loaded, so the reversion lands with no scene.", LogLevel.Info);
+                Monitor.Log("Darkness: Town has no map loaded, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
                 return false;
             }
 
