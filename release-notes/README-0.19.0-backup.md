@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.1`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,11 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.1
-
-**Fixed: the Bundle Log shows the same counts as the Community Center.** After a theme week's discount ended, the Bundle Log could keep showing the lower count while the Community Center asked for the full amount (or the other way round right after picking a theme). The Log now reads the counts from the Community Center each time you open it. Reported on Reddit.
-
-## 0.19.0: the Randomizer
+## What's New in 0.19.0: the Randomizer
 
 **A new Randomizer section in the mod's settings, for runs that play out differently each time.**
 

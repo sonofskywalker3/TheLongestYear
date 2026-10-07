@@ -65,6 +65,10 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
 
+        // The CC's board as of BuildEntries, and its stacks per bundle index (filled on first use).
+        private IReadOnlyDictionary<string, string> _liveBoard;
+        private readonly Dictionary<int, IReadOnlyDictionary<string, int>> _liveStacks = new();
+
         public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
             IReadOnlyList<BundleRequirement> requirements)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
@@ -126,6 +130,8 @@ namespace TheLongestYear.UI
         {
             SlotLedger donated = _run.DonatedLedger();
             _entries.Clear();
+            _liveBoard = Game1.netWorldState?.Value?.BundleData;
+            _liveStacks.Clear();
 
             // Collect first, then sort. Completed bundles (Have >= Need) sink to the bottom
             // so the active obligations stay at the top where the player scans first
@@ -166,6 +172,20 @@ namespace TheLongestYear.UI
                 _entries.Add(vaultEntry);
             else
                 _entries.Insert(0, vaultEntry);
+        }
+
+        /// <summary>How many of the item the CC asks for right now. Read from the live board, not the
+        /// requirement: requirements are built at save load, and the theme week discount lowers and
+        /// restores stacks mid-session (Reddit report 2026-10-07: the Log showed fewer Tulips than the
+        /// CC wanted). Falls back to the requirement's stack when the board has no such bundle.</summary>
+        private int StackFor(BundleRequirement bundle, string itemId)
+        {
+            if (!_liveStacks.TryGetValue(bundle.BundleIndex, out IReadOnlyDictionary<string, int> live))
+            {
+                live = BundleStacks.ForBundle(_liveBoard, bundle.BundleIndex) ?? bundle.IngredientStacks;
+                _liveStacks[bundle.BundleIndex] = live;
+            }
+            return live.TryGetValue(itemId, out int stack) ? stack : 1;
         }
 
         /// <summary>True if this bundle has any obligation that's due BY the current season's
@@ -291,7 +311,7 @@ namespace TheLongestYear.UI
                     if (iconRect.Contains(x, y))
                     {
                         string itemId = e.MissingItems[k];
-                        int stack = e.Bundle.IngredientStacks.TryGetValue(itemId, out int s) ? s : 1;
+                        int stack = StackFor(e.Bundle, itemId);
                         int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
                         Item probe = ResolveItem(itemId, stack, quality);
                         string qty = stack > 1
@@ -455,7 +475,7 @@ namespace TheLongestYear.UI
                 // Pull stack + quality from THIS bundle's ingredient data so the icon
                 // renders the donation count badge + the right-tier quality star
                 // (Quality Crops needs gold, Pantry crops need basic, same id different shape).
-                int stack = e.Bundle.IngredientStacks.TryGetValue(itemId, out int s) ? s : 1;
+                int stack = StackFor(e.Bundle, itemId);
                 int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
                 Item probe = ResolveItem(itemId, stack, quality);
                 var pos = new Vector2(

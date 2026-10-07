@@ -16,6 +16,13 @@ aims to follow [Semantic Versioning](https://semver.org/).
 ### Debug
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
+
+## 0.19.1 - 2026-10-07
+
+### Fixed
+
+- **The Bundle Log shows the same item counts as the Community Center.** The Log read its counts once, when the save loaded, while the theme week discount lowers a week's goal lines on the board and puts the un-donated ones back when the week ends. A save loaded during a discount week kept the discounted count in the Log after the Community Center went back to the full ask, and picking a theme mid-session showed the reverse. The Log now reads the counts from the live board each time it opens. Reported on Reddit (2026-10-07).
+
 ## 0.19.0 - 2026-10-07 - The Randomizer
 
 ### Added
