@@ -114,4 +114,14 @@ public class DarknessLevelsTests
     [InlineData(true, false, true, true, false, true, false)]
     public void The_storage_pool_by_level(bool plain, bool big, bool placed, bool onFarm, bool warded, bool everything, bool inPool)
         => Assert.Equal(inPool, BlightRule.InStoragePool(plain, big, placed, onFarm, warded, everything));
+
+    [Theory]
+    // A plain chest, a big chest, a hopper: in the draw.
+    [InlineData(false, false, true)]
+    // A Mini-Shipping Bin ships overnight before the strike lands.
+    [InlineData(true, false, false)]
+    // A Junimo Chest shares one inventory across every Junimo Chest.
+    [InlineData(false, true, false)]
+    public void The_chest_draw_skips_shipping_bins_and_junimo_chests(bool shipsOvernight, bool sharedInventory, bool inDraw)
+        => Assert.Equal(inDraw, BlightRule.ChestInDraw(shipsOvernight, sharedInventory));
 }
