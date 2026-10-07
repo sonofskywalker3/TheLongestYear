@@ -281,12 +281,16 @@ namespace TheLongestYear.Scenes
         {
             float black = BlackAt(ElapsedMs);
             if (black <= 0f || Game1.fadeToBlackRect == null) return;
-            // The world layer draws in the zoomed backbuffer, the debug preview in UI space. Cover
-            // whichever is bigger, since over-covering a full screen black costs nothing.
+            b.Draw(Game1.fadeToBlackRect, WholeScreen(), Color.Black * black);
+        }
+
+        /// <summary>A rectangle that covers the whole frame in the world layer. The world layer
+        /// draws in the zoomed backbuffer, the debug preview in UI space, so it covers whichever is
+        /// bigger, since over-covering a full screen costs nothing.</summary>
+        protected static Rectangle WholeScreen()
+        {
             Viewport screen = Game1.graphics.GraphicsDevice.Viewport;
-            int width = Math.Max(screen.Width, Game1.uiViewport.Width);
-            int height = Math.Max(screen.Height, Game1.uiViewport.Height);
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, width, height), Color.Black * black);
+            return new Rectangle(0, 0, Math.Max(screen.Width, Game1.uiViewport.Width), Math.Max(screen.Height, Game1.uiViewport.Height));
         }
 
         private float BlackAt(int elapsed)

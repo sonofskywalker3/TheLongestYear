@@ -900,9 +900,10 @@
     "event.turn.winter-2": "The agents of the enemy will not stop, but with the cold and dark of Winter, it may attack directly.",
     "event.turn.winter-3": "It will corrupt whatever it can. To go on, you must mend what it breaks.",
     "event.turn.winter-4": "If you win here, this cycle will be broken. But I fear our war will continue.",
-    "event.darkness.tamper-1": "@, every {{old}} is tainted now.",
+    "event.darkness.tamper-1": "@, last night the darkness struck! It has tainted all the {{old}}.",
     "event.darkness.tamper-2": "The darkness has touched them. We can no longer use them for our restoration.",
     "event.darkness.tamper-3": "Bring us {{new}} instead. It remains pure.",
+    "event.darkness.tamper-3-plural": "Bring us {{new}} instead. They remain pure.",
 
     // -- day-28 cutscene (preserve @, #$b#, $h) ----------------------------------------
     "cutscene.day28.continue": "Great job, @, you're doing well!#$b#Keep this up and we'll save the valley together. We'll gain even more power from the work you do this season.$h",

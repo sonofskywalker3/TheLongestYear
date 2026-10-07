@@ -31,29 +31,35 @@ namespace TheLongestYear.Integration
         private static string Sanitise(string value)
             => string.IsNullOrEmpty(value) ? value : value.Replace('"', '\'').Replace('/', ',');
 
-        /// <summary>Darkness pushback (Jeff, 2026-09-09): the morning after the board changed, two
-        /// Junimos on the porch explain it. The darkness got into the old item, everywhere, so the
-        /// hall cannot take one without letting it in; they crossed it off and ask for something
-        /// the darkness has not reached. Same staging as the turn, no music, the Winter glow.</summary>
-        internal static string BuildTamper(int doorX, int doorY, string oldItemName, string newItemName, bool skippable)
+        /// <summary>Darkness pushback (Jeff, 2026-09-09): after the board changed, two Junimos explain
+        /// it. The darkness got into the old item, everywhere, so the hall cannot take one without
+        /// letting it in; they crossed it off and ask for something the darkness has not reached. No
+        /// music and no screen glow, the low sound under the middle line.
+        ///
+        /// It plays WHERE THE FARMER ALREADY STANDS, the moment he steps out onto the Farm (Jeff,
+        /// 2026-10-07: the old wake-up version blinked and warped him to his doorstep). So there is
+        /// no location change and no warp: the scene holds black while the two Junimos are put on
+        /// their marks round him, then fades in. The marks are the porch scene's, taken from his own
+        /// tile as though it were the step below the door, which it is when he has just walked out.</summary>
+        internal static string BuildTamper(int farmerX, int farmerY, int facing, string oldItemName, string newItemName, bool newIsPlural, bool skippable)
         {
             const int count = 2;
-            int stepY = doorY + StepDown;
+            int doorX = farmerX, doorY = farmerY - StepDown;
             var s = new List<string>
             {
                 "none",
                 "-1000 -1000",
-                $"farmer {doorX} {stepY} 2",
+                $"farmer {farmerX} {farmerY} {facing}",
                 EndingEventCommands.BlackName,
             };
             if (skippable) s.Add("skippable");
-            s.AddRange(new[]
-            {
-                $"{EndingEventCommands.ChangeLocationName} Farm {doorX} {stepY}",
-                $"warp farmer {doorX} {stepY}",
-                "faceDirection farmer 2",
-                $"viewport {doorX} {stepY} clamp",
-            });
+            // Pinned to his own tile under the black. Without it the first live run had him a tile
+            // up, in the doorway, for the scene, and the event's end then put him back on the step:
+            // a one-tile jump the moment the black lifted (2026-10-07). With it, the event's end
+            // returns him to the tile he is already on.
+            s.Add($"warp farmer {farmerX} {farmerY}");
+            s.Add($"faceDirection farmer {facing}");
+            s.Add($"viewport {farmerX} {farmerY} clamp");
             for (int j = 0; j < count; j++)
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X} {doorY + Marks[j].Y} {j}");
             s.Add($"{EndingEventCommands.FadeInName} {FadeMs}");
@@ -67,13 +73,17 @@ namespace TheLongestYear.Integration
             {
                 Strings.Get("event.darkness.tamper-1", new Dictionary<string, string> { ["old"] = oldItemName ?? "" }),
                 Strings.Get("event.darkness.tamper-2"),
-                Strings.Get("event.darkness.tamper-3", new Dictionary<string, string> { ["new"] = newItemName ?? "" }),
+                newIsPlural
+                    ? Strings.Get("event.darkness.tamper-3-plural", new Dictionary<string, string> { ["new"] = newItemName ?? "" })
+                    : Strings.Get("event.darkness.tamper-3", new Dictionary<string, string> { ["new"] = newItemName ?? "" }),
             };
             int[] who = { 0, 1, 0 };
             for (int i = 0; i < lines.Length; i++)
             {
-                if (i == 1) { s.Add("glow 60 0 90 true"); s.Add("playSound shadowDie"); }
-                if (i == lines.Length - 1) s.Add("stopGlowing");
+                // The low sound stays under the middle line. The purple screen glow that used to
+                // come with it ("glow 60 0 90 true", lifted by "stopGlowing" before the last line)
+                // darkened the whole view; Jeff did not want it (2026-10-07).
+                if (i == 1) s.Add("playSound shadowDie");
                 s.Add($"jump {Junimo(who[i])} 6");
                 s.Add($"{EndingEventCommands.SayName} {Junimo(who[i])} \"{Sanitise(lines[i])}\"");
                 s.Add("pause 250");
