@@ -199,18 +199,18 @@ Commits `79c4eb0` (M2 split, no behaviour change) and `a04020b` (C1, I1, M1, M5)
 
 **C1, a strike commits only when its scene stages.** The commit (chance drop, cap or spacing,
 StruckEvents) moved out of the `pickFarmEvent` postfix into `StrikeSceneBase.setUp`, after staging
-and the timeline build succeed (`src/TheLongestYear/Scenes/StrikeSceneBase.cs:189`). `PendingStrike.Apply`
-(`src/TheLongestYear/Loop/PendingStrike.cs:79`) now runs the effect only for a committed strike, so a
+and the timeline build succeed (`src/TheLongestYear/Scenes/StrikeSceneBase.cs:190`). `PendingStrike.Apply`
+(`src/TheLongestYear/Loop/PendingStrike.cs:90`) now runs the effect only for a committed strike, so a
 scene that could not stage or threw in setUp ends without landing anything; it stays uncommitted and
-the save/morning net (`SabotageService.Pending.cs:69` `SettlePendingIfAny`) postpones it (nothing
+the save/morning net (`SabotageService.Pending.cs:68` `SettlePendingIfAny`) postpones it (nothing
 recorded, guarantee still owed; the displaced random farm event loses that night). The same holds
 when another mod replaces the event after our postfix: setUp never runs, the net postpones. The
-no-scene-by-design path uses `PendingStrike.LandNow` (`:89`). `StrikeScenePatch.SceneTookSlot` and
+no-scene-by-design path uses `PendingStrike.LandNow` (`:97`). `StrikeScenePatch.SceneTookSlot` and
 `SabotageService.CommitPendingScene` are gone. The pure life is `StrikeLifecycle` and
-`StrikeNetAction` in `src/TheLongestYear.Core/Sabotage/StrikeSlot.cs:76,97`; `StrikeSlot.LandsAtNet` and
+`StrikeNetAction` in `src/TheLongestYear.Core/Sabotage/StrikeSlot.cs:85,67`; `StrikeSlot.LandsAtNet` and
 its identity test were removed.
 
-**I1.** `GuaranteedTamper` (`StrikeSlot.cs:145`): done at commit, carried past week 1 when
+**I1.** `GuaranteedTamper` (`StrikeSlot.cs:132`): done at commit, carried past week 1 when
 postponed, the carry cleared only when the tamper lands; a failed apply makes it owed again with the
 carry kept. Wired in `SabotageService.Pending.cs` (OnPostponed, OnCommitted, OnApplied).
 
