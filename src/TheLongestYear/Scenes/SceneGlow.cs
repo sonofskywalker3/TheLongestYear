@@ -2,6 +2,7 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear.Scenes
 {
@@ -93,8 +94,10 @@ namespace TheLongestYear.Scenes
                 _builtOn = device;
                 _gaveUp = false;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Logged once: _gaveUp stops the rebuild being tried again on this device.
+                PatchLog.Warn($"Darkness: the scene glow texture could not be built, so the eyes draw as their solid cores alone. {ex}");
                 _glow = null;
                 _builtOn = device;
                 _gaveUp = true;
@@ -112,7 +115,11 @@ namespace TheLongestYear.Scenes
             _gaveUp = false;
             if (old == null || old.IsDisposed) return;
             try { old.Dispose(); }
-            catch (Exception) { /* a texture that will not let go is not worth failing a scene for. */ }
+            catch (Exception ex)
+            {
+                // A texture that will not let go is not worth failing a scene for.
+                PatchLog.Warn($"Darkness: the old scene glow texture would not dispose, so it is left to the garbage collector. {ex}");
+            }
         }
     }
 }

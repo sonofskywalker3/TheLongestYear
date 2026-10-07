@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using StardewValley;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear.Scenes
 {
@@ -176,7 +177,11 @@ namespace TheLongestYear.Scenes
             // the overnight path vanilla warps the farmer a moment later and does it again, which
             // costs nothing, and without it the debug preview would keep the night's lamp lights.
             try { back.resetForPlayerEntry(); }
-            catch (Exception) { /* a map that will not reset is still better than a held camera. */ }
+            catch (Exception ex)
+            {
+                // A map that will not reset is still better than a held camera.
+                PatchLog.Warn($"Darkness: {back.Name} would not reset after the scene's camera let go, so the scene carries on without it. {ex}");
+            }
         }
 
         /// <summary>Where a world pixel lands on the screen.</summary>
