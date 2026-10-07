@@ -141,6 +141,8 @@ public class I18nGuardTests
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
+            foreach (string key in TheLongestYear.Core.Sabotage.WitnessLines.AllKeys)
+                _ = Strings.Get(key);
             // reach.* keys are built from the reach metric (ReachText.Describe); walk every catalog requirement.
             foreach (var def in UpgradeCatalog.All)
                 _ = ReachText.Describe(def.RunReachRequirement);

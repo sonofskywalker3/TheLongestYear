@@ -329,6 +329,10 @@ public sealed class RunState
     /// (spec 2026-09-21): a kind's scene is due only the first time it strikes in a loop.</summary>
     public HashSet<string> StrikeScenesPlayed { get; set; } = new();
 
+    /// <summary>Villagers who saw a strike scene and still owe the player one line about it
+    /// (see <see cref="Sabotage.WitnessLines"/>). Cleared at the loop reset.</summary>
+    public List<Sabotage.WitnessRecord> WitnessLines { get; set; } = new();
+
     // ---- Morris's offer (spec 2026-09-25-joja-offer-design). Per loop: a rewind starts all four over. ----
 
     /// <summary>Day of year (1..112) the offer scene played this loop, -1 = not yet this loop.</summary>
@@ -595,6 +599,7 @@ public sealed class RunState
         GuaranteedTamperDone = false;
         (StruckEvents ??= new()).Clear();
         (StrikeScenesPlayed ??= new()).Clear();
+        (WitnessLines ??= new()).Clear();
         JojaSceneSeenDay = -1;
         (JojaLetterDays ??= new()).Clear();
         JojaLettersSent = 0;
