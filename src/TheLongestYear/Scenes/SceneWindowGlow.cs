@@ -7,11 +7,12 @@ using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Scenes
 {
-    /// <summary>Firelight behind a row of windows, and one dark figure standing in one of them (spec
+    /// <summary>Firelight behind a row of windows, and one dark figure at work in one of them (spec
     /// 2026-09-21, the hall; Jeff, 2026-10-07: one of the mines' own shadow monsters, completely
-    /// blacked out, replacing the row of men's silhouettes, which read like a washroom sign). The Community Center's front wears it and nothing else does yet, but
-    /// it knows nothing about the Community Center: it is given a list of panes in world pixels and
-    /// it lights them.
+    /// blacked out, side-on and busy, replacing the row of men's silhouettes, which read like a
+    /// washroom sign). The Community Center's front wears it and nothing else does yet, but it
+    /// knows nothing about the Community Center: it is given a list of panes in world pixels and it
+    /// lights them.
     ///
     /// TWO PARTS, AND THEY ARE DIFFERENT THINGS. The PAINTED glow is what the player reads as a lit
     /// room: a flat warm fill on the glass itself, flickering, drawn by the scene after the lightmap

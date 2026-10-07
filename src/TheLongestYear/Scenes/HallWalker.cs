@@ -37,8 +37,8 @@ namespace TheLongestYear.Scenes
             "Dirt", "Stone", "Wood",
         };
 
-        /// <summary>How many tiles of a route are kept out of shot, so he walks in over the edge of
-        /// the frame and out over it. He is two tiles tall, so three puts all of him outside.</summary>
+        /// <summary>How many tiles of the way in are kept out of shot, so he walks in over the edge
+        /// of the frame. (The way home is cut by <see cref="HallRoute.WayOutInShot"/>.)</summary>
         private const int OutOfShotTiles = 3;
 
         /// <summary>Vanilla's walking pace, in ms a tile: a villager walks at speed 2, two pixels a
@@ -58,7 +58,10 @@ namespace TheLongestYear.Scenes
         private SceneActor _shane;
         private SceneWalk _in;
         private SceneWalk _back;
-        private SceneWalk _out;
+        /// <summary>The way home, as tiles, played back clamped (<see cref="TileRoute.At"/>) so he
+        /// can never walk past its last checked tile, whatever the screen size.</summary>
+        private IReadOnlyList<(int X, int Y)> _out;
+        private SceneWalk _outFacing;
         private int _walkFromMs;
         private bool[,] _pathGrid;
         private readonly List<string> _notes = new List<string>();
@@ -105,7 +108,8 @@ namespace TheLongestYear.Scenes
             _walkFromMs = HallScene.StopAtMs - _in.Steps * WalkMsPerTile;
 
             _back = new SceneWalk(backAway);
-            _out = new SceneWalk(SceneRoute.OutOfFrame(wayOut, roadFrame.X, roadFrame.Y, roadFrame.Width, roadFrame.Height, OutOfShotTiles));
+            _out = HallRoute.WayOutInShot(wayOut, roadFrame.X, roadFrame.Y, roadFrame.Width, roadFrame.Height);
+            _outFacing = new SceneWalk(_out);
 
             _shane.Position = _in.At(0f);
             _shane.Facing = _in.FacingAt(0f, false);
@@ -187,10 +191,15 @@ namespace TheLongestYear.Scenes
             }
             else
             {
+                // Clamped to the checked tiles. On any screen the scene supports he is out of shot
+                // long before the end; on one tall enough to show the whole way home he is still
+                // walking it when the scene fades (20 tiles at 320 ms a tile outlasts it), and even
+                // then he can only ever stop on its last checked tile, never walk past it.
                 float tiles = (elapsed - HallScene.RunOutAtMs) / (float)HurryMsPerTile;
-                _shane.Position = _out.At(tiles);
-                _shane.Facing = _out.FacingAt(Math.Min(tiles, _out.Steps), false);
-                _shane.Walking = true;
+                (float x, float y) = TileRoute.At(_out, tiles);
+                _shane.Position = new Vector2(x, y) * SceneCamera.TileSize;
+                _shane.Facing = _outFacing.FacingAt(Math.Min(tiles, _outFacing.Steps), false);
+                _shane.Walking = tiles < _outFacing.Steps;
                 _shane.StepMs = HurryMsPerTile / FramesPerTile;
             }
             _shane.Animate(elapsed);
@@ -211,7 +220,7 @@ namespace TheLongestYear.Scenes
             string notes = _notes.Count == 0 ? "every tile checked as path on this Town" : string.Join("; ", _notes);
             return $"Shane walks in {_in.Steps} tile(s) from ({_in.Start.X},{_in.Start.Y}) at {WalkMsPerTile} ms a tile from {_walkFromMs} ms, "
                 + $"stops on the road at ({_in.End.X},{_in.End.Y}), backs off to ({_back.End.X},{_back.End.Y}), "
-                + $"hurries home {_out.Steps} tile(s) to ({_out.End.X},{_out.End.Y}) at {HurryMsPerTile} ms a tile ({notes}), "
+                + $"hurries home {_outFacing.Steps} tile(s) to ({_outFacing.End.X},{_outFacing.End.Y}) and no further at {HurryMsPerTile} ms a tile ({notes}), "
                 + $"drawn from a sheet of {_shane.Describe()}";
         }
     }
