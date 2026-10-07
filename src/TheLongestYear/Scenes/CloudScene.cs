@@ -126,6 +126,22 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- staging
 
+        /// <summary>Can the cloud stage tonight at all? The farm has a position on a world map region
+        /// with a base texture whose condition holds: the two checks <see cref="Stage"/> calls the
+        /// scene off on, asked at pick time (review I1) so a tamper whose scene cannot stage cannot
+        /// act, rather than failing to stage every night.</summary>
+        internal static bool CanStage()
+        {
+            Farm farm = Game1.getFarm();
+            if (farm == null) return false;
+            WorldMapManager.ReloadData();
+            MapRegion region = WorldMapManager.GetPositionData(farm, Point.Zero)?.Data?.Region;
+            if (region?.Data?.BaseTexture == null) return false;
+            foreach (WorldMapTextureData entry in region.Data.BaseTexture)
+                if (GameStateQuery.CheckConditions(entry.Condition)) return true;
+            return false;
+        }
+
         /// <inheritdoc />
         protected override bool Stage()
         {

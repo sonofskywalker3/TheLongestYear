@@ -181,6 +181,11 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- staging
 
+        /// <summary>Can the crows stage tonight? The Farm is there; the crops they land on are the
+        /// picked live crops themselves, so a non-empty pick always has a patch. Asked at pick time
+        /// (review I1).</summary>
+        internal static bool CanStage() => Game1.getFarm()?.map != null;
+
         /// <inheritdoc />
         protected override bool Stage()
         {

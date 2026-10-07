@@ -140,6 +140,15 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- staging
 
+
+        /// <summary>Is there a tile beside <paramref name="tile"/> on <paramref name="where"/> the
+        /// Brute can stand on? <see cref="Stage"/> calls the scene off without one, so the thief's
+        /// draw asks this at pick time while the scene is due (review I1): a boxed-in chest is never
+        /// picked, instead of failing to stage and coming back every night.</summary>
+        internal static bool HasWayIn(GameLocation where, Vector2 tile)
+            => where?.map != null
+               && ScenePath.CanStandBeside(t => SceneGround.CanStandOn(where, t.X, t.Y), ((int)tile.X, (int)tile.Y));
+
         /// <inheritdoc />
         protected override bool Stage()
         {

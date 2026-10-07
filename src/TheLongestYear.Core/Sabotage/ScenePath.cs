@@ -138,6 +138,26 @@ public static class ScenePath
         return pair.Key.Y < start.Y;
     }
 
+    /// <summary>Is there a tile beside <paramref name="target"/> he may stand on? Exactly when
+    /// <see cref="WalkTo"/> finds a walk, so the thief's draw can ask it at pick time (review I1:
+    /// a chest he cannot stand beside is not filmable).</summary>
+    public static bool CanStandBeside(bool[,] passable, (int X, int Y) target)
+    {
+        if (passable is null) throw new ArgumentNullException(nameof(passable));
+        int width = passable.GetLength(0), height = passable.GetLength(1);
+        return CanStandBeside(t => InBounds(t, width, height) && passable[t.X, t.Y], target);
+    }
+
+    /// <summary>As above, asking <paramref name="canStand"/> about the four tiles beside the target
+    /// only, so the game side need not build the whole map's grid for every chest.</summary>
+    public static bool CanStandBeside(Func<(int X, int Y), bool> canStand, (int X, int Y) target)
+    {
+        if (canStand is null) throw new ArgumentNullException(nameof(canStand));
+        foreach ((int X, int Y) beside in Neighbours(target))
+            if (beside != target && canStand(beside)) return true;
+        return false;
+    }
+
     private static bool InBounds((int X, int Y) tile, int width, int height)
         => tile.X >= 0 && tile.Y >= 0 && tile.X < width && tile.Y < height;
 

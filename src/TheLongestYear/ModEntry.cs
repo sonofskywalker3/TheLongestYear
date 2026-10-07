@@ -241,7 +241,7 @@ namespace TheLongestYear
             // lazily the way the driver above does.
             StrikeScenePatch.Monitor = this.Monitor;
             StrikeScenePatch.FailNight = () => FarmEventSuppressionPatch.SuppressTonight?.Invoke() == true;
-            StrikeScenePatch.Postpone = why => _sabotage?.PostponePendingIfAny(why);
+            StrikeScenePatch.Postpone = why => _sabotage?.PostponePendingIfAny(why, TheLongestYear.Core.Sabotage.PostponeCause.SlotTaken);
             StrikeScenePatch.StrikeWaiting = () => _sabotage?.Pending is { Applied: false };
             StrikeScenePatch.SceneFor = () =>
             {
@@ -909,6 +909,7 @@ namespace TheLongestYear
             _sabotage.StartTamperScene = (oldName, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, newName, newIsPlural, done);
             // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
             _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
+            _sabotage.SceneCanStage = TheLongestYear.Scenes.StrikeSceneFactory.CanStage;
             _runController.AttachSabotage(_sabotage);
             _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
             TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;

@@ -33,7 +33,7 @@ namespace TheLongestYear.Loop
             if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()))
                 ApplyPendingIfAny("no scene due");
             else if (SceneCannotShow(e, strike) is string why)
-                PostponePendingIfAny(why);
+                PostponePendingIfAny(why, PostponeCause.CannotStage);
             return strike;
         }
 
@@ -84,75 +84,77 @@ namespace TheLongestYear.Loop
             // every later Winter rolls the random week-1 date instead of Winter 1.
             if (season == CoreSeason.Winter && day >= NightRoll.Week1Nights)
                 Meta.FirstWinterTamperSeen = true;
-            if (guaranteedTonight)
-            {
-                _guaranteedTamperTonight = true;
-                PendingStrike tamper = night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true)
-                    ? Strike(night, DarknessEvent.Tampering, week, season, dayOfYear)
-                    : null;
-                // Either it is still waiting for its scene, or it has already landed. A write that
-                // failed the moment it ran leaves the flags alone and falls through to tomorrow.
-                if (tamper != null && (!tamper.Applied || tamper.Landed))
+            // Who takes tonight's one strike, in order (NightPrecedence, pure): the guaranteed Winter
+            // tamper, a debug arm, a strike queued from a collision night, the every-loop guarantee,
+            // the roll. Each question is asked only when every one before it came back empty: CanAct
+            // can plan a reversion (spending rng) and TakeArmed consumes the arms.
+            NightChoice choice = NightPrecedence.Choose(
+                guaranteedTonight,
+                guaranteedTakes: () => GuaranteedTamperTakesTheNight(night, week, season, dayOfYear, day),
+                dice: () =>
                 {
-                    // GuaranteedTamperDone is set when it commits (OnStrikeCommitted), so a tamper
-                    // postponed by a collision retries tomorrow; FirstWinterTamperSeen is set by
-                    // OnStrikeApplied once it lands.
-                    _armed.Clear(); _armedBlightTarget = null;
-                    return;
-                }
-                _guaranteedTamperTonight = false;
-                _monitor.Log($"Darkness: guaranteed Winter tamper had no fair target on Winter {day}, retrying tomorrow.", LogLevel.Info);
-            }
-
-            double chance = NightRoll.ChanceTonight(Run, week, season);
-            bool dice = rng.NextDouble() < chance;
-            DarknessEvent? forced = TakeArmed(night);
-            _monitor.Log($"Darkness: night roll {season} {day} at {chance:P0}: {(dice ? "strike" : "quiet")}{(forced != null ? $", armed {forced}" : "")}; level {level}.", LogLevel.Trace);
-
-            // A strike postponed on an earlier night fires on the next free night instead of the
-            // normal roll (designer, 2026-10-07), as tonight's one strike. A queued kind that cannot
-            // act tonight (capped, spaced, warded, nothing fair) stays queued and the night rolls
-            // normally. An arm takes precedence: that is Jeff asking for a front by hand.
-            if (forced == null)
-            {
-                DarknessEvent? queued = StrikeQueue.Tonight(Run, night.CanAct);
-                if (queued != null)
+                    double chance = NightRoll.ChanceTonight(Run, week, season);
+                    bool strike = rng.NextDouble() < chance;
+                    _monitor.Log($"Darkness: night roll {season} {day} at {chance:P0}: {(strike ? "strike" : "quiet")}; level {level}.", LogLevel.Trace);
+                    return strike;
+                },
+                armed: () => TakeArmed(night),
+                queued: () => QueuedTonight(night, season, day),
+                owed: () =>
                 {
-                    forced = queued;
-                    _queuedTonight = true;
-                    _monitor.Log($"Darkness: the postponed {queued} fires tonight ({season} {day}) instead of the roll.", LogLevel.Info);
-                }
-                else if (Run.QueuedStrikes is { Count: > 0 })
-                    _monitor.Log($"Darkness: queued {string.Join(", ", Run.QueuedStrikes)} cannot act tonight, so it stays queued and the night rolls normally.", LogLevel.Trace);
-            }
+                    DarknessEvent? owed = StrikeGuarantee.ForcedTonight(season, day, Run.StruckEvents ??= new(), night.CanAct);
+                    if (owed != null)
+                        _monitor.Log($"Darkness: {owed} has not struck this loop by {season} {day}, so it is forced tonight.", LogLevel.Info);
+                    return owed;
+                },
+                roll: () => NightRoll.Pick(NightRoll.Options(season), night.CanAct, rng));
 
-            // The every-loop guarantee (spec 2026-09-21): a kind that has not struck this loop by
-            // day 15 of its debut season is forced on the first night it can act, even on a quiet
-            // roll. An arm or a queued strike takes precedence.
-            if (forced == null)
+            if (choice.Source == NightSource.Guaranteed)
             {
-                // Asked only when nothing was armed: CanAct can plan a reversion, which spends rng,
-                // and an armed night must roll exactly as it did before the guarantee existed.
-                DarknessEvent? owed = StrikeGuarantee.ForcedTonight(season, day, Run.StruckEvents ??= new(), night.CanAct);
-                if (owed != null)
-                {
-                    forced = owed;
-                    _monitor.Log($"Darkness: {owed} has not struck this loop by {season} {day}, so it is forced tonight.", LogLevel.Info);
-                }
-            }
-
-            if (!dice && forced == null) return;
-
-            DarknessEvent? pick = forced ?? NightRoll.Pick(NightRoll.Options(season), night.CanAct, rng);
-            if (pick == null)
-            {
-                _monitor.Log("Darkness: nothing could act tonight; no strike and the chance does not drop.", LogLevel.Trace);
+                // GuaranteedTamperDone is set when it commits (OnStrikeCommitted), so a tamper
+                // postponed by a collision retries tomorrow; FirstWinterTamperSeen is set by
+                // OnStrikeApplied once it lands.
+                _armed.Clear(); _armedBlightTarget = null;
                 return;
             }
-            if (Strike(night, pick.Value, week, season, dayOfYear) == null)
-                _monitor.Log($"Darkness: {pick} was picked but took nothing.", LogLevel.Trace);
+            if (choice.Event is not DarknessEvent pick)
+            {
+                _monitor.Log("Darkness: no strike tonight (a quiet roll with nothing forced, or nothing could act); the chance does not drop.", LogLevel.Trace);
+                return;
+            }
+            _queuedTonight = choice.Source == NightSource.Queued;
+            if (Strike(night, pick, week, season, dayOfYear) == null)
+                _monitor.Log($"Darkness: {pick} was picked ({choice.Source}) but took nothing.", LogLevel.Trace);
             else if (Pending != null)
                 _monitor.Log($"Darkness: night pass done at tick {Game1.ticks}, leaving {Pending.Event} waiting for its scene.", LogLevel.Trace);
+        }
+
+        /// <summary>Try the guaranteed Winter tamper (spec 2.6). True when it took the night: it is
+        /// waiting for its scene, was postponed, or has landed. False when it had no fair target (or a
+        /// write failed the moment it ran), and the night goes on to the other sources.</summary>
+        private bool GuaranteedTamperTakesTheNight(NightPlan night, int week, CoreSeason season, int dayOfYear, int day)
+        {
+            _guaranteedTamperTonight = true;
+            PendingStrike tamper = night.CanAct(DarknessEvent.Tampering, ignoreTamperReservation: true)
+                ? Strike(night, DarknessEvent.Tampering, week, season, dayOfYear)
+                : null;
+            if (tamper != null && (!tamper.Applied || tamper.Landed)) return true;
+            _guaranteedTamperTonight = false;
+            _monitor.Log($"Darkness: guaranteed Winter tamper had no fair target on Winter {day}, retrying tomorrow.", LogLevel.Info);
+            return false;
+        }
+
+        /// <summary>The queued strike that fires tonight instead of the roll (designer, 2026-10-07),
+        /// or null. A queued kind that cannot act tonight (capped, spaced, warded, nothing fair, its
+        /// scene cannot stage) stays queued and the night rolls normally.</summary>
+        private DarknessEvent? QueuedTonight(NightPlan night, CoreSeason season, int day)
+        {
+            DarknessEvent? queued = StrikeQueue.Tonight(Run, night.CanAct);
+            if (queued != null)
+                _monitor.Log($"Darkness: the postponed {queued} fires tonight ({season} {day}) instead of the roll.", LogLevel.Info);
+            else if (Run.QueuedStrikes is { Count: > 0 })
+                _monitor.Log($"Darkness: queued {string.Join(", ", Run.QueuedStrikes)} cannot act tonight, so it stays queued and the night rolls normally.", LogLevel.Trace);
+            return queued;
         }
 
         /// <summary>Everything one night needs, computed lazily so a plan is built once and reused
@@ -175,6 +177,16 @@ namespace TheLongestYear.Loop
 
             private RunState Run => _s.Run;
 
+            private readonly Dictionary<DarknessEvent, bool> _stages = new();
+
+            private bool SceneStages(DarknessEvent e)
+            {
+                if (_stages.TryGetValue(e, out bool can)) return can;
+                can = _s.SceneStagesTonight(e);
+                if (!can) _s._monitor.Log($"Darkness: {e}'s scene cannot stage tonight, so {e} cannot act.", LogLevel.Info);
+                return _stages[e] = can;
+            }
+
             /// <summary>Has the thief scene still to play this loop? While it has, the chest draw
             /// holds only chests the scene can show (designer, 2026-10-07).</summary>
             private bool ThiefSceneDue => StrikeScenes.IsDue(DarknessEvent.ChestBlight, Run.StrikeScenesPlayed ??= new());
@@ -188,6 +200,10 @@ namespace TheLongestYear.Loop
             /// explicit request for one.</summary>
             public bool CanAct(DarknessEvent e, bool ignoreTamperReservation)
             {
+                // While the kind's scene is due, a scene that cannot stage tonight means the kind
+                // cannot act (review I1): asked first, so it spends no rng, and once per night.
+                if (StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()) && !SceneStages(e))
+                    return false;
                 switch (e)
                 {
                     case DarknessEvent.CropBlight:

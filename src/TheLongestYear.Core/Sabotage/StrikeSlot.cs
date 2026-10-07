@@ -37,8 +37,9 @@ public enum StrikeSlotVerdict
 /// something else the strike is postponed, and the night is as if no strike happened (nothing is
 /// recorded, so the week's chance, the cap slot and the tamper spacing stay unspent and the
 /// every-loop guarantee still owes the kind). It is queued and fires on the next free night
-/// (<see cref="StrikeQueue"/>; the guaranteed Winter tamper keeps its own carry). A strike with no scene by design (its kind's scene already played this loop) never
-/// reaches this: it lands at the night pass.</summary>
+/// (<see cref="StrikeQueue"/>; the guaranteed Winter tamper keeps its own carry). A strike with no
+/// scene by design (its kind's scene already played this loop) never reaches this: it lands at
+/// the night pass.</summary>
 public static class StrikeSlot
 {
     /// <param name="failNight">The morning rewinds (Fail or a voluntary restart).</param>

@@ -84,6 +84,10 @@ namespace TheLongestYear.Scenes
 
         // ---------------------------------------------------------------- staging
 
+        /// <summary>Can the hall stage tonight? Town has a map (<see cref="Stage"/>'s one check),
+        /// asked at pick time (review I1).</summary>
+        internal static bool CanStage() => Game1.getLocationFromName("Town")?.map != null;
+
         /// <inheritdoc />
         protected override bool Stage()
         {

@@ -23,6 +23,25 @@ namespace TheLongestYear.Loop
         /// can play, so a strike whose scene is due waits (it never lands without it).</summary>
         public Func<PendingStrike, bool> SceneCanPlay { get; set; } = _ => false;
 
+        /// <summary>Can this kind's scene stage tonight at all (review I1)? Set by ModEntry. Asked
+        /// only while the kind's scene is due; until it is set every kind may act and the pick-time
+        /// <see cref="SceneCanPlay"/> still guards the strike.</summary>
+        public Func<DarknessEvent, bool> SceneCanStage { get; set; } = _ => true;
+
+        /// <summary><see cref="SceneCanStage"/>, with a throwing check counted as "cannot".</summary>
+        private bool SceneStagesTonight(DarknessEvent e)
+        {
+            try
+            {
+                return SceneCanStage(e);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Darkness: the staging check for {e}'s scene threw, so {e} cannot act tonight. {ex}", LogLevel.Error);
+                return false;
+            }
+        }
+
         /// <summary>Land a waiting strike now. Only for a strike with no scene by design: its kind's
         /// scene already played this loop.</summary>
         private bool ApplyPendingIfAny(string why)
@@ -39,9 +58,10 @@ namespace TheLongestYear.Loop
         /// <summary>Drop a waiting strike whose scene cannot have tonight's overnight slot (Jeff,
         /// 2026-10-07: "we don't delay scenes without delaying the effect of them"). Neither its
         /// effect nor its scene happens tonight, and since nothing was recorded the night is as if
-        /// no strike happened. It is queued for the next free night (<see cref="StrikeQueue"/>);
-        /// the guaranteed Winter tamper keeps its own carry instead.</summary>
-        public bool PostponePendingIfAny(string why)
+        /// no strike happened. Only a slot collision (<see cref="PostponeCause.SlotTaken"/>) queues it
+        /// for the next free night (<see cref="StrikeQueue"/>), or carries the guaranteed Winter
+        /// tamper; a staging failure would fail the same way again, so it is dropped (review I1).</summary>
+        public bool PostponePendingIfAny(string why, PostponeCause cause)
         {
             PendingStrike p = Pending;
             if (p == null) return false;
@@ -54,13 +74,14 @@ namespace TheLongestYear.Loop
                 return false;
             }
             Pending = null;
-            // The guaranteed Winter tamper keeps its own carry; every other strike is queued for the
-            // next free night (designer, 2026-10-07).
-            if (_guaranteedTamperTonight && p.Event == DarknessEvent.Tampering)
+            // A collision queues it for the next free night (designer, 2026-10-07); the guaranteed
+            // Winter tamper keeps its own carry instead. A staging failure queues nothing.
+            bool queue = StrikeQueue.Queues(cause);
+            if (queue && _guaranteedTamperTonight && p.Event == DarknessEvent.Tampering)
                 GuaranteedTamper.OnPostponed(Run);
-            else
+            else if (queue)
                 StrikeQueue.Enqueue(Run, p.Event);
-            _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, and it is queued for the next free night.", LogLevel.Info);
+            _monitor.Log($"Darkness: tonight's {p.Event} is postponed ({why}): no effect and no scene tonight; the night counts as no strike, and {(queue ? "it is queued for the next free night" : "it is not queued (its scene could not stage)")}.", LogLevel.Info);
             return true;
         }
 
@@ -77,7 +98,7 @@ namespace TheLongestYear.Loop
             switch (p.AtNet())
             {
                 case StrikeNetAction.Postpone:
-                    return PostponePendingIfAny(why);
+                    return PostponePendingIfAny(why, PostponeCause.NeverStaged);
                 case StrikeNetAction.Land:
                     Pending = null;
                     _monitor.Log($"Darkness: tonight's {p.Event} lands now ({why}): its scene staged but did not reach its beat, at tick {Game1.ticks}.", LogLevel.Trace);
@@ -100,6 +121,8 @@ namespace TheLongestYear.Loop
             if (_guaranteedTamperTonight && strike.Event == DarknessEvent.Tampering)
             {
                 GuaranteedTamper.OnCommitted(Run);
+                // Review M3: a tamper queued from an earlier collision is paid by this one too.
+                StrikeQueue.OnCommitted(Run, DarknessEvent.Tampering);
                 _monitor.Log($"Darkness: the guaranteed Winter tamper struck on Winter {Run.DayOfMonth}.", LogLevel.Info);
             }
             else if (StrikeQueue.OnCommitted(Run, strike.Event))
