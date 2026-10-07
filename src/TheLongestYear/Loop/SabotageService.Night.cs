@@ -18,33 +18,36 @@ namespace TheLongestYear.Loop
         // ------------------------------------------------------------------ the night pass
 
         /// <summary>Pick tonight's strike and either leave it waiting for its scene or, with no
-        /// scene by design, land it now. The one path every strike goes through. Nothing is recorded
-        /// here: the run records a strike when it commits (its scene takes the overnight slot, or it
-        /// lands), so a strike postponed by a collision leaves no trace. Null when the event found
-        /// nothing to take.</summary>
+        /// scene by design (its kind's scene already played this loop), land it now. The one path
+        /// every strike goes through. Nothing is recorded here: the run records a strike when it
+        /// commits (its scene stages, or it lands with no scene by design), so a postponed strike
+        /// leaves no trace. A strike whose scene is due but cannot show tonight's pick is postponed
+        /// at once, effect and scene both (designer, 2026-10-07: never its effect without its scene
+        /// while that scene is due). Null when the event found nothing to take.</summary>
         private PendingStrike Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
         {
             PendingStrike strike = night.Prepare(e, OnStrikeApplied, p => OnStrikeCommitted(p, week, season, dayOfYear));
             if (strike == null) return null;
             SettlePendingIfAny("replaced by a new strike");
             Pending = strike;
-            string reason = SceneReasonToSkip(e, strike);
-            if (reason != null) ApplyPendingIfAny(reason);
+            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()))
+                ApplyPendingIfAny("no scene due");
+            else if (SceneCannotShow(e, strike) is string why)
+                PostponePendingIfAny(why);
             return strike;
         }
 
-        /// <summary>Why tonight's scene will not play, or null when it will. A scene test that
-        /// throws must not strand the night, so it counts as "cannot play".</summary>
-        private string SceneReasonToSkip(DarknessEvent e, PendingStrike strike)
+        /// <summary>Why a due scene cannot show tonight's pick, or null when it can. A scene test that
+        /// throws must not strand the night, so it counts as "cannot show", and the strike waits.</summary>
+        private string SceneCannotShow(DarknessEvent e, PendingStrike strike)
         {
-            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new())) return "no scene due";
             try
             {
-                return SceneCanPlay(strike) ? null : "its scene cannot play";
+                return SceneCanPlay(strike) ? null : "its scene cannot show tonight's pick";
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Darkness: the scene test for {e} threw, so tonight's strike lands without it. {ex}", LogLevel.Error);
+                _monitor.Log($"Darkness: the scene test for {e} threw, so tonight's strike waits with it. {ex}", LogLevel.Error);
                 return "its scene test threw";
             }
         }
@@ -154,6 +157,10 @@ namespace TheLongestYear.Loop
 
             private RunState Run => _s.Run;
 
+            /// <summary>Has the thief scene still to play this loop? While it has, the chest draw
+            /// holds only chests the scene can show (designer, 2026-10-07).</summary>
+            private bool ThiefSceneDue => StrikeScenes.IsDue(DarknessEvent.ChestBlight, Run.StrikeScenesPlayed ??= new());
+
             /// <summary>Can this event act tonight? The ordinary nightly roll asks this, so it keeps
             /// the guaranteed Winter tamper's slot reserved through week 1.</summary>
             public bool CanAct(DarknessEvent e) => CanAct(e, ignoreTamperReservation: false);
@@ -172,7 +179,7 @@ namespace TheLongestYear.Loop
                     case DarknessEvent.ChestBlight:
                         if (!_s.Enabled(SabotageKind.Blight)) return false;
                         if (!SabotageSchedule.WithinCaps(SabotageKind.Blight, Run, _week, _dayOfYear)) return false;
-                        return (_stored ??= SpoilagePass.StoredUnits(DarknessLevels.StorageReachesEverything(_level))) > 0;
+                        return (_stored ??= SpoilagePass.StoredUnits(DarknessLevels.StorageReachesEverything(_level), ThiefSceneDue)) > 0;
                     case DarknessEvent.Reversion:
                         if (!_s.Enabled(SabotageKind.Reversion) || !SabotageSchedule.IsOpen(SabotageKind.Reversion, _season)) return false;
                         if (SabotageSchedule.IsQuietDay(SabotageKind.Reversion, _day) || !SabotageSchedule.WithinCaps(SabotageKind.Reversion, Run, _week, _dayOfYear)) return false;
@@ -211,8 +218,8 @@ namespace TheLongestYear.Loop
                     case DarknessEvent.ChestBlight:
                     {
                         bool everything = DarknessLevels.StorageReachesEverything(_level);
-                        int units = _stored ?? SpoilagePass.StoredUnits(everything);
-                        List<SpoilagePass.Hit> hits = SpoilagePass.Plan(BlightRule.SpoilCount(units, _season, _level), _rng, everything);
+                        int units = _stored ?? SpoilagePass.StoredUnits(everything, ThiefSceneDue);
+                        List<SpoilagePass.Hit> hits = SpoilagePass.Plan(BlightRule.SpoilCount(units, _season, _level), _rng, everything, ThiefSceneDue);
                         if (hits.Count == 0) return null;
                         return new PendingStrike(e, () => _s.ReportBlight(0, SpoilagePass.Apply(hits)) > 0, onApplied, onCommitted) { Hits = hits };
                     }

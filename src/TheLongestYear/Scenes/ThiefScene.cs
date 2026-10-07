@@ -32,7 +32,7 @@ namespace TheLongestYear.Scenes
     /// NOTHING HERE MAY STRAND THE NIGHT. Every staging decision degrades: no way to walk in means
     /// he simply starts nearer, an unreadable lid means the lid does not move, a household that
     /// cannot be posed is left where it is. Only a target with no ground at all beside it calls the
-    /// scene off, and then the take lands with no scene.</summary>
+    /// scene off, and then the strike waits for a later night, effect and scene both.</summary>
     internal sealed class ThiefScene : StrikeSceneBase
     {
         // ---------------------------------------------------------------- the timeline, in ms
@@ -128,8 +128,9 @@ namespace TheLongestYear.Scenes
             : base(strike, skippable, monitor, onFinished) { }
 
         /// <summary>Where the thief is staged: the night's chest, else the first machine it takes,
-        /// but only on a map the scene can actually show. Null when nothing tonight can be filmed,
-        /// and then the take lands with no scene.</summary>
+        /// but only on a map the scene can actually show. Null when nothing tonight can be filmed.
+        /// While the scene is due the draw only holds chests it can show (designer, 2026-10-07), so
+        /// this is null only for a strike with no scene due, or a pick that changed under it.</summary>
         internal static SpoilagePass.Hit SceneTargetOnFarm(PendingStrike strike)
         {
             SpoilagePass.Hit hit = strike?.SceneTarget;
@@ -151,7 +152,7 @@ namespace TheLongestYear.Scenes
             IReadOnlyList<(int X, int Y)> walk = PlanWalk();
             if (walk.Count == 0)
             {
-                Monitor.Log($"Darkness: the thief has nowhere to stand beside the target at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, so the take lands with no scene.", LogLevel.Info);
+                Monitor.Log($"Darkness: the thief has nowhere to stand beside the target at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
                 return false;
             }
             _walk = new SceneWalk(walk);
@@ -164,7 +165,7 @@ namespace TheLongestYear.Scenes
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Darkness: the thief scene could not load the Shadow Brute, so the take lands with no scene. {ex}", LogLevel.Warn);
+                Monitor.Log($"Darkness: the thief scene could not load the Shadow Brute, so the strike waits for a later night, effect and scene both. {ex}", LogLevel.Warn);
                 return false;
             }
             _brute.Position = _walk.At(0f);

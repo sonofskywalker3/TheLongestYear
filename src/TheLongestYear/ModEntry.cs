@@ -2902,14 +2902,14 @@ namespace TheLongestYear
 
             TheLongestYear.Core.DifficultyStep level = _meta.State.EffectiveDifficulty(_config).Darkness;
             bool everything = TheLongestYear.Core.Sabotage.DarknessLevels.StorageReachesEverything(level);
-            int units = TheLongestYear.Loop.SpoilagePass.StoredUnits(everything);
+            int units = TheLongestYear.Loop.SpoilagePass.StoredUnits(everything, thiefSceneDue: true);
             int want = Math.Max(1, TheLongestYear.Core.Sabotage.BlightRule.SpoilCount(units, _meta.Run.Season, level));
             List<TheLongestYear.Loop.SpoilagePass.Hit> hits = units > 0
-                ? TheLongestYear.Loop.SpoilagePass.Plan(want, rng, everything)
+                ? TheLongestYear.Loop.SpoilagePass.Plan(want, rng, everything, thiefSceneDue: true)
                 : new List<TheLongestYear.Loop.SpoilagePass.Hit>();
             if (hits.Count == 0)
             {
-                this.Monitor.Log("tly_sabotage scene thief: nothing stored, no thief.", LogLevel.Info);
+                this.Monitor.Log("tly_sabotage scene thief: nothing stored where the scene can show it (the farm, a shed, the cellar or the farmhouse), no thief.", LogLevel.Info);
                 return;
             }
 

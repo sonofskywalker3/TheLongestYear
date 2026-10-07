@@ -19,7 +19,9 @@ namespace TheLongestYear.Loop
     /// taken (never tools, weapons or big
     /// craftables). On Extreme (<paramref name="everything"/>, spec 2026-09-15 Part B, 2.5) anything
     /// in an unwarded chest can go, and machines placed on the FARM map join the pool at three units
-    /// each; a machine on a circle's tiles is protected like a chest there.</summary>
+    /// each; a machine on a circle's tiles is protected like a chest there. While the thief scene is
+    /// still due this loop, only chests it can show (<see cref="OnSceneMap"/>) are in the draw
+    /// (designer, 2026-10-07); once it has played, every chest is.</summary>
     internal static class SpoilagePass
     {
         private sealed class Entry
@@ -74,7 +76,11 @@ namespace TheLongestYear.Loop
         internal static bool OnSceneMap(GameLocation loc)
             => loc is Farm || loc is StardewValley.Locations.FarmHouse || loc is StardewValley.Locations.Cellar || loc is StardewValley.Shed;
 
-        private static List<Entry> Entries(bool everything)
+        /// <param name="everything">Extreme: anything in a chest, and the farm's placed machines.</param>
+        /// <param name="thiefSceneDue">The thief scene has not played this loop yet: only chests it
+        /// can show are in (<see cref="BlightRule.InThiefDraw"/>). Placed machines are only ever in
+        /// on the Farm map, which the scene shows.</param>
+        private static List<Entry> Entries(bool everything, bool thiefSceneDue)
         {
             var circles = CircleOfWardingService.ProtectedTiles();
             Farm farm = Game1.getFarm();
@@ -123,7 +129,7 @@ namespace TheLongestYear.Loop
                 if (s.Chest != null)
                 {
                     ChestHost host = hosts[seatOf[s]];
-                    if (!host.Host) continue;
+                    if (!BlightRule.InThiefDraw(host, thiefSceneDue)) continue;
                     bool onFarmMap = s.Location == farm;
                     for (int i = 0; i < s.Inventory.Count; i++)
                     {
@@ -153,11 +159,12 @@ namespace TheLongestYear.Loop
             return inventories.Count - 1;
         }
 
-        /// <summary>Total units at stake (stash excluded), for the roll.</summary>
-        public static int StoredUnits(bool everything)
+        /// <summary>Total units at stake (stash excluded), for the roll. With
+        /// <paramref name="thiefSceneDue"/>, only what the thief scene can show.</summary>
+        public static int StoredUnits(bool everything, bool thiefSceneDue = false)
         {
             int units = 0;
-            foreach (Entry e in Entries(everything)) units += e.Units;
+            foreach (Entry e in Entries(everything, thiefSceneDue)) units += e.Units;
             return units;
         }
 
@@ -167,11 +174,11 @@ namespace TheLongestYear.Loop
         /// the report, because one keg went missing, not three. The night has ONE chest (Jeff,
         /// 2026-09-21): once a roll lands in a chest, every other chest leaves the pool, though
         /// machines stay in it. Reads only: nothing is removed until <see cref="Apply"/> runs.</summary>
-        public static List<Hit> Plan(int count, Random rng, bool everything)
+        public static List<Hit> Plan(int count, Random rng, bool everything, bool thiefSceneDue = false)
         {
             var hits = new List<Hit>();
             if (count <= 0) return hits;
-            List<Entry> entries = Entries(everything);
+            List<Entry> entries = Entries(everything, thiefSceneDue);
             // The rule lives in Core so it can be tested without a game: it draws the units and
             // enforces the one-chest constraint. This side only says which chest each entry is in.
             var pool = new List<TakeCandidate>(entries.Count);
@@ -240,6 +247,6 @@ namespace TheLongestYear.Loop
 
         /// <summary>Plan and apply in one call: the debug entry point, and the shape the night pass
         /// had before the pick and the apply were split.</summary>
-        public static Taken Strike(int count, Random rng, bool everything) => Apply(Plan(count, rng, everything));
+        public static Taken Strike(int count, Random rng, bool everything) => Apply(Plan(count, rng, everything, thiefSceneDue: false));
     }
 }

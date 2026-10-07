@@ -33,8 +33,7 @@ namespace TheLongestYear.Scenes
     /// the zoom).
     ///
     /// NOTHING HERE MAY STRAND THE NIGHT. No Valley region, or no farm position on it, calls the
-    /// scene off and the tamper lands with no scene, which is the popup and the Junimos' porch scene
-    /// in the morning exactly as before.</summary>
+    /// scene off, and the tamper waits for a later night, effect and scene both (Jeff, 2026-10-07).</summary>
     internal sealed class CloudScene : StrikeSceneBase
     {
         // ---------------------------------------------------------------- the timeline, in ms
@@ -137,12 +136,12 @@ namespace TheLongestYear.Scenes
             MapRegion region = farmOnMap?.Region;
             if (region == null)
             {
-                Monitor.Log("Darkness: the world map has no position for the farm, so the tamper lands with no scene.", LogLevel.Info);
+                Monitor.Log("Darkness: the world map has no position for the farm, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
                 return false;
             }
             if (!TakeTextures(region))
             {
-                Monitor.Log($"Darkness: the world map region '{region.Id}' has no base texture to draw, so the tamper lands with no scene.", LogLevel.Info);
+                Monitor.Log($"Darkness: the world map region '{region.Id}' has no base texture to draw, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
                 return false;
             }
 
