@@ -85,14 +85,38 @@ public class SceneCloudTests
         Assert.All(cells, c => { Assert.InRange(c.Item1, 0, 5); Assert.InRange(c.Item2, 0, 4); });
     }
 
-    [Fact]
-    public void Every_blob_comes_from_the_top_right()
+    [Theory]
+    [InlineData(7)]
+    [InlineData(3)]
+    [InlineData(99)]
+    public void Every_blob_starts_wholly_above_the_map_and_comes_in_from_the_north(int seed)
     {
-        foreach (SceneCloud.Blob b in Cloud())
+        // Jeff, 2026-10-07: "all the clouds come in from the north, not start on the map".
+        foreach (SceneCloud.Blob b in Cloud(seed))
         {
-            Assert.True(b.SpawnX >= MapW * 0.5, $"spawn x {b.SpawnX}");
-            Assert.True(b.SpawnY <= MapH * 0.5, $"spawn y {b.SpawnY}");
+            Assert.True(b.SpawnY + b.Diameter / 2 < 0, $"blob disc reaches y {b.SpawnY + b.Diameter / 2} at its start");
+            Assert.True(b.SpawnY < b.RestY, "it drifts south");
+            // Roughly above its own rest: a little sideways drift only.
+            Assert.InRange(b.SpawnX - b.RestX, -MapW * 0.041, MapW * 0.041);
         }
+    }
+
+    [Fact]
+    public void The_starts_are_spread_across_the_whole_width_not_one_corner()
+    {
+        SceneCloud.Blob[] cloud = Cloud();
+        Assert.Contains(cloud, b => b.SpawnX < MapW / 4.0);
+        Assert.Contains(cloud, b => b.SpawnX > MapW * 3 / 4.0);
+    }
+
+    [Fact]
+    public void A_blob_resting_further_south_drifts_for_longer_and_sets_out_earlier()
+    {
+        SceneCloud.Blob[] scattered = Cloud().Where(b => !b.OnFarm).ToArray();
+        SceneCloud.Blob south = scattered.OrderByDescending(b => b.RestY).First();
+        SceneCloud.Blob north = scattered.OrderBy(b => b.RestY).First();
+        Assert.True(south.ArriveMs - south.StartMs > north.ArriveMs - north.StartMs);
+        Assert.True(south.StartMs < north.StartMs);
     }
 
     [Fact]
@@ -172,20 +196,34 @@ public class SceneCloudTests
     }
 
     [Fact]
-    public void Blob_alpha_ramps_from_nothing_to_point_seven_and_holds()
+    public void A_blob_is_unseen_before_it_sets_out_and_full_from_then_on()
     {
         foreach (SceneCloud.Blob b in Cloud())
         {
             Assert.Equal(0f, SceneCloud.Alpha(b, b.StartMs));
-            Assert.Equal(0.7f, SceneCloud.Alpha(b, b.ArriveMs), 4);
-            Assert.Equal(0.7f, SceneCloud.Alpha(b, 12000), 4);
-            float last = 0f;
-            for (int ms = b.StartMs; ms <= b.ArriveMs; ms += 10)
+            for (int ms = b.StartMs + 1; ms <= 12200; ms += 50)
+                Assert.Equal(0.7f, SceneCloud.Alpha(b, ms), 4);
+        }
+    }
+
+    [Theory]
+    [InlineData(7)]
+    [InlineData(3)]
+    [InlineData(99)]
+    public void A_blob_is_at_full_darkness_when_it_crosses_the_maps_top_edge(int seed)
+    {
+        // Jeff, 2026-10-07: "blowing in transparent and then darkened already halfway down". The
+        // first instant any of its disc is on the map, it is already at full darkness.
+        foreach (SceneCloud.Blob b in Cloud(seed))
+        {
+            int crossing = -1;
+            for (int ms = b.StartMs; ms <= b.ArriveMs; ms++)
             {
-                float a = SceneCloud.Alpha(b, ms);
-                Assert.InRange(a, last, 0.7f);
-                last = a;
+                (double _, double y) = SceneCloud.Position(b, ms);
+                if (y + b.Diameter / 2 >= 0) { crossing = ms; break; }
             }
+            Assert.True(crossing > b.StartMs, "it starts wholly off the map");
+            Assert.Equal(0.7f, SceneCloud.Alpha(b, crossing), 4);
         }
     }
 

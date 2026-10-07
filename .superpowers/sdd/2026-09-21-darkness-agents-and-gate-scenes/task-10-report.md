@@ -279,3 +279,130 @@ The `raw*`, `final*`, `porch1`, `porch2`, `morning*` and `lines4k` subfolders ho
   debug commands), one scene plays, for the first, and both reports are consumed.
 - **Edge case in the plural ask.** For a mass noun with a count above 1, it reads "Bring us 3 Beer
   instead. They remain pure."
+
+## Fix round 1
+
+### Important #1: only a farmhouse-door exit starts the Junimo scene
+
+`TamperPorchRule.ShouldStart` now takes eight inputs: `tamperPending`, `enteredLocationName`,
+`previousLocationName`, `isLocalPlayer`, `busy`, `farmerX`, `farmerY` and `doorExits`.
+
+The scene starts only when all of these hold:
+
+- the player entered `Farm`;
+- he came from `FarmHouse`;
+- he is on, or within one tile of, a door exit tile (`DoorReachTiles` = 1).
+
+Every other Farm entry keeps the report waiting for the next door exit. That covers the Forest,
+Bus Stop and Backwoods edges, the Cellar, the Greenhouse, and a missing previous location.
+
+**Totems.** A Warp Totem or the Return Scepter used inside the house also reports `FarmHouse` as
+the previous location. It lands the farmer away from the porch, so the door-tile check rejects it.
+
+**Where the door exit comes from.** `ModEntry.FarmHouseDoorExits(e.OldLocation)` reads the house's
+own warps whose target is `Farm`, and takes each warp's target tile. Nothing is hard-coded. In 1.6
+the farmhouse is a building, and `updateWarps` then calls `Building.updateInteriorWarps`, which
+points those warps at the building's real door. So every farm type and any moved house is read
+correctly. With no door exit known, the scene does not start.
+
+The visible behaviour at the door is unchanged, so this part needed no live run. The earlier live
+runs used `debug warp Farm 64 16` from inside the house. That is the same FarmHouse-to-Farm warp
+onto the door exit, so it still satisfies the rule.
+
+`TamperPorchRuleTests` grew from 10 to 24 tests, covering:
+
+- the FarmHouse door starting the scene;
+- the Forest, BusStop, Backwoods, Cellar, Greenhouse, Town and null origins not starting it;
+- totem-style landings at (48,7), (64,18) and (66,16) not starting it;
+- on or within one tile of the exit starting it;
+- a farm type with its door elsewhere reading its own exit;
+- no exits known, another player, and busy.
+
+### Designer change: the cloud comes in from the north (Jeff, 2026-10-07)
+
+**Where blobs start.** Every blob now starts with its whole disc above the map's top edge:
+`SpawnY = -(diameter / 2) - 2% of the map height`. Its start x is above its own rest, within 4% of
+the map width either side, so the starts are spread across the whole width and nothing comes from
+a corner. Each blob drifts south to its rest.
+
+**Travel time and starts.** A scattered blob's travel time grows with how far south it rests:
+3000 ms for a rest on the top edge, up to 4500 ms for one on the bottom edge. The starts are handed
+out longest-drift first (1500 to 5500 ms), so the far-south blobs set out first and every blob
+still arrives by 9000. Farm blobs are unchanged: they start between 4500 and 6000 and all arrive
+at 9000.
+
+**Easing.** The ease-out is now a sine instead of a cubic. The cubic rushed a blob most of the way
+down the map in its first third, which read as darting.
+
+**Alpha** (Jeff: "blowing in transparent and then darkened already halfway down"). The per-blob
+ramp is removed. A blob is at full alpha (0.7) the moment it sets out. It sets out off the map, so
+it crosses the top edge already at full darkness. The valley darkens from more cloud arriving and
+overlapping, and from the full-map dim, which is unchanged.
+
+**Clipping. I chose to clip to the map image.** After the blobs, `CloudScene.MaskOutside` paints
+black over the four bands outside the map (no scissor, since the scene paints inside the game's
+batch). A blob waiting above the map is never seen on the black around it, and it appears as it
+rolls over the map's top edge. At 1280x720 the map's top is the screen's top anyway. At native
+resolution there is a 75 px black band above the map, and the frames show it stays clean.
+
+Unchanged: the 75/25 split, the even rest grids, the timeline (pour from 1500, farm settles at
+9000, fade at 11000, end at 12200) and the fill-the-screen fit.
+
+`SceneCloudTests` grew from 29 to 36. The changed tests:
+
+- **Start position:** every blob's disc is wholly above the map at its start and its path goes
+  south. The start x is within 4% of the map width of its rest x. The starts span both outer
+  quarters of the width.
+- **Timing:** a blob resting further south drifts longer and sets out earlier.
+- **Alpha:** a blob is unseen before it sets out and at 0.7 from then on. At the first millisecond
+  its disc touches the map, its alpha is already 0.7 (three seeds).
+
+The old top-right spawn test and the alpha-ramp test are gone. The spec and the plan were updated
+to match.
+
+### Commands and output
+
+```
+dotnet build TheLongestYear.sln            -> Build succeeded. 0 Error(s)
+dotnet test tests/TheLongestYear.Tests --no-build
+  -> Passed!  - Failed: 0, Passed: 3855, Skipped: 0, Total: 3855
+dotnet test ... --filter "FullyQualifiedName~TamperPorchRuleTests|FullyQualifiedName~SceneCloudTests"
+  -> Passed!  - Failed: 0, Passed: 60
+```
+
+### Live check (my launches, minimized, no input)
+
+- Three throwaway farms from `tly_newgame standard skipintro`, then `tly_select Farming` and
+  `tly_sabotage scene cloud`.
+- Captures at 1280x720 and at native 3840x2130, with the window-size setting switched for the
+  runs and then restored to 1920x1080.
+- All three farms (`standard_451062885`, `_451063005`, `_451063084`) are deleted. The saves folder
+  matches the original listing. The game is closed, and `git checkout -- test-output/` was run.
+
+Frames are in `test-output/scenes/cloud/`. The scene times below are approximate, mapped from the
+capture clock. I looked at every one.
+
+| File | What it shows |
+| --- | --- |
+| `north-720-01-first-in-1800.png` / `north-4k-01-...` | The map is in and clear; the first blobs are only just past the top edge. |
+| `north-720-02-entering-2300.png` / `north-4k-02-...` | Dark violet puffs entering over the top edge across the width, over the mountains and the north of the map. Nothing on the black above the map at native. |
+| `north-720-03-rolling-south-3000.png` / `north-4k-03-...`, plus `dark4k-topedge-3000.png` (a crop of the top band) | More puffs, the earliest reaching the middle of the map. Each is at its full 0.7 from the top edge down: no blob fades up mid-map. The black band above the map is clean. |
+| `north-720-04-rolling-4000.png` / `north-4k-04-...` | The veil reaching the south coast and the farm row. |
+| `north-720-05-southward-5500.png` / `north-4k-05-...` | Most of the map under the veil; the farm puffs coming in from the north. |
+| `north-720-06-farm-arriving-7000.png` / `north-4k-06-...` | The farm mass arriving, the darkest patch on the map. |
+| `north-720-07-settled-10000.png` / `north-4k-07-...` | Settled: an even veil everywhere and the farm darkest, as before. |
+| `north-720-08-fade-11600.png` / `north-4k-08-...` | Fading out. |
+| `dark720-sheet.png`, `dark4k-sheet.png` | Contact sheets of the eight beats. |
+
+`north720/` and `north720-sheet.png` are from an intermediate build that still had a short alpha
+ramp, before the "already dark at the top edge" ruling. They are kept only as a record.
+
+### Open
+
+- **How dark a single blob looks.** "Full darkness" here is the brief's 0.7 alpha over a soft
+  (1 - r^2)^2 profile. A single blob crossing the top edge therefore reads as a dark grey-violet
+  puff over the bright snow, not an opaque cloud. The darkness builds as more of them arrive and
+  overlap. If Jeff wants the leading edge itself heavier, the knobs are `SceneCloud.BlobAlpha` and
+  the blob profile in `CloudScene.BuildBlob`.
+- **The earlier report commit.** The previous report commit (`37108ac`) could not be pushed: GitHub
+  answered 500 three times. It goes up with this round if GitHub accepts the push.

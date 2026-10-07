@@ -87,7 +87,8 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
 - The morning popups stay exactly as they are.
 - The Junimo tamper scene keeps its staging and its popup, with two changes (Jeff, 2026-10-07):
   - It no longer plays on waking (that version blinked and warped the farmer to his doorstep). It
-    plays the first time the farmer steps out onto the Farm while the tamper report waits, as an
+    plays the first time the farmer steps out of the farmhouse door onto the Farm while the
+    tamper report waits (any other way onto the Farm, an edge or a totem, keeps it waiting), as an
     event where he stands: black while the two Junimos are put on their marks round him, then a
     fade in. No warp, no location change. A day he never leaves the house, it plays on his next Farm
     entry. It plays once. The night's other reports still show after it.
@@ -254,7 +255,8 @@ override everything above where they differ.
 
 - The world map fills the screen, in its Winter art (the map tab's art, scaled to fill the
   screen rather than at the map tab's own size, which is tiny on a large screen).
-- A dark cloud drifts in slowly from the mountain side and settles sort of everywhere: evenly
+- A dark cloud drifts in slowly from the north, every blob entering over the map's top edge
+  (none starts on the map), and settles sort of everywhere: evenly
   over the whole map image, forest, mountains, water, the desert edge, empty land and the
   margins alike, never clustered on the town or any settlement. It lies a little thicker on the
   farm, which is the darkest place on the map. The Community Center gets no special treatment:

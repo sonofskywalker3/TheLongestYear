@@ -41,8 +41,10 @@ namespace TheLongestYear.Core.Sabotage
         /// is still moving after it.</summary>
         public const int SettledAtMs = 9000;
 
-        /// <summary>How long a scattered blob takes to cross to its rest, at least and at most. A
-        /// drift, not a dart (Jeff, 2026-10-07: the first cut's two seconds "darted in").</summary>
+        /// <summary>How long a blob takes to drift to its rest, at least and at most. A drift, not a
+        /// dart (Jeff, 2026-10-07: the first cut's two seconds "darted in"). A scattered blob's time
+        /// grows with how far south it rests, so the far ones are not hurried, and the far ones
+        /// start first so they still arrive before the farm settles.</summary>
         public const int TravelMinMs = 3000;
         public const int TravelMaxMs = 4500;
 
@@ -51,10 +53,6 @@ namespace TheLongestYear.Core.Sabotage
 
         /// <summary>The full-map dim's alpha once it has eased in.</summary>
         public const float DimAlpha = 0.35f;
-
-        /// <summary>The share of a blob's journey its alpha takes to reach <see cref="BlobAlpha"/>,
-        /// so a blob is already dark when it is halfway across and does not fade in on arrival.</summary>
-        private const double AlphaRampShare = 0.6;
 
         /// <summary>A scattered blob's diameter, as a share of the map's width. Big enough that the
         /// thirty of them overlap into a veil over the whole valley rather than standing as dark
@@ -85,14 +83,15 @@ namespace TheLongestYear.Core.Sabotage
         /// the farm's size, so the packed blobs sit ON the farm rather than straddling its border.</summary>
         private const double FarmInset = 0.2;
 
-        /// <summary>The spawn line runs along the map's top right, the mountain and mines side:
-        /// from above the top edge at this share of the width to past the right edge at this share
-        /// of the height.</summary>
-        private const double SpawnFromX = 0.55;
-        private const double SpawnToY = 0.45;
+        /// <summary>Every blob comes in from the north (Jeff, 2026-10-07: "all the clouds come in
+        /// from the north, not start on the map and spread outward"). It starts wholly above the
+        /// map's top edge, its whole disc off the map, this much higher again as a share of the
+        /// map's height, and drifts south to its rest.</summary>
+        private const double SpawnAboveMap = 0.02;
 
-        /// <summary>How far off the map the spawn line sits, as a share of the map's height.</summary>
-        private const double SpawnOffMap = 0.15;
+        /// <summary>How far sideways a blob may start from above its own rest, as a share of the
+        /// map's width, so the cloud drifts in a little on the slant rather than in plumb lines.</summary>
+        private const double SpawnSideways = 0.04;
 
         /// <summary>The most a blob's path bows sideways, as a share of the map's height, so the
         /// cloud pours rather than marches in straight lines.</summary>
@@ -113,7 +112,7 @@ namespace TheLongestYear.Core.Sabotage
                 StartMs = startMs; ArriveMs = arriveMs; OnFarm = onFarm;
             }
 
-            /// <summary>Where it comes from, on the spawn line, in map pixels.</summary>
+            /// <summary>Where it comes from, wholly above the map's top edge, in map pixels.</summary>
             public double SpawnX { get; }
             public double SpawnY { get; }
             /// <summary>Where it settles, in map pixels.</summary>
@@ -151,14 +150,23 @@ namespace TheLongestYear.Core.Sabotage
             var blobs = new List<Blob>(count);
             double farmShort = Math.Max(1, Math.Min(farmWidth, farmHeight));
 
+            // Scattered blobs: rests first, then the drift time from how far south each rests,
+            // then the starts, longest drift first, so a far-south blob sets out early and a blob
+            // that rests near the top edge comes in last.
+            var rests = new List<(double X, double Y, double Diameter, int Travel)>(scatter);
             for (int i = 0; i < scatter; i++)
             {
-                // Scattered starts are spread from the pour to ScatterLastStartMs, and each one
-                // drifts for its own few seconds, never past the farm settling.
-                int start = PourAtMs + Spread(i, scatter, ScatterLastStartMs - PourAtMs);
-                int travel = (int)Math.Round(Between(rng, TravelMinMs, TravelMaxMs));
                 double diameter = mapWidth * Between(rng, ScatterSizeMin, ScatterSizeMax);
                 (double restX, double restY) = GridRest(i, scatter, ScatterColumns, 0, 0, mapWidth, mapHeight, rng);
+                double south = Math.Max(0, Math.Min(1, restY / mapHeight));
+                int travel = (int)Math.Round(TravelMinMs + (TravelMaxMs - TravelMinMs) * south);
+                rests.Add((restX, restY, diameter, travel));
+            }
+            rests.Sort((a, b) => b.Travel.CompareTo(a.Travel));
+            for (int i = 0; i < rests.Count; i++)
+            {
+                (double restX, double restY, double diameter, int travel) = rests[i];
+                int start = PourAtMs + Spread(i, scatter, ScatterLastStartMs - PourAtMs);
                 blobs.Add(Make(rng, mapWidth, mapHeight, restX, restY,
                     diameter, start, Math.Min(SettledAtMs, start + travel), onFarm: false));
             }
@@ -203,14 +211,9 @@ namespace TheLongestYear.Core.Sabotage
 
         private static Blob Make(Random rng, int mapWidth, int mapHeight, double restX, double restY, double diameter, int start, int arrive, bool onFarm)
         {
-            // A point on the spawn line, from above the top edge right of centre round to past the
-            // right edge above the middle.
-            double along = rng.NextDouble();
-            double off = mapHeight * SpawnOffMap;
-            double fromX = mapWidth * SpawnFromX, fromY = -off;
-            double toX = mapWidth + off, toY = mapHeight * SpawnToY;
-            double spawnX = fromX + (toX - fromX) * along;
-            double spawnY = fromY + (toY - fromY) * along;
+            // Above its own rest, a little to one side, with its whole disc off the top of the map.
+            double spawnX = restX + mapWidth * SpawnSideways * (rng.NextDouble() * 2 - 1);
+            double spawnY = -(diameter / 2) - mapHeight * SpawnAboveMap;
             double bow = mapHeight * BowMax * (rng.NextDouble() * 2 - 1);
             double phase = rng.NextDouble() * Math.PI * 2;
             return new Blob(spawnX, spawnY, restX, restY, diameter, bow, phase, start, Math.Max(start + 1, arrive), onFarm);
@@ -223,8 +226,9 @@ namespace TheLongestYear.Core.Sabotage
             if (elapsedMs <= blob.StartMs) return 0;
             if (elapsedMs >= blob.ArriveMs) return 1;
             double t = (elapsedMs - blob.StartMs) / (double)(blob.ArriveMs - blob.StartMs);
-            double rest = 1 - t;
-            return 1 - rest * rest * rest;
+            // A sine ease-out: it slows into its rest without the cubic's rush off the start,
+            // which carried a blob most of the way down the map in its first third.
+            return Math.Sin(t * Math.PI / 2);
         }
 
         /// <summary>Where a blob's centre is this instant, in map pixels: on its bowed path while it
@@ -248,15 +252,15 @@ namespace TheLongestYear.Core.Sabotage
             return (x, y);
         }
 
-        /// <summary>A blob's alpha this instant: 0 before it starts, rising to
-        /// <see cref="BlobAlpha"/> over the first part of its journey, and held there.</summary>
+        /// <summary>A blob's alpha this instant: nothing before it sets out, then
+        /// <see cref="BlobAlpha"/> at once, held all the way in. It sets out wholly above the map,
+        /// where the painter masks it, so it is already at full darkness when it crosses the map's
+        /// top edge and the cloud is seen rolling in dark from the north (Jeff, 2026-10-07: a ramp
+        /// over the journey looked like "blowing in transparent and then darkened already halfway
+        /// down the screen"). The valley darkens from more cloud arriving and overlapping, and from
+        /// the full-map dim, never from a blob fading up on the map.</summary>
         public static float Alpha(Blob blob, int elapsedMs)
-        {
-            if (elapsedMs <= blob.StartMs) return 0f;
-            double ramp = (blob.ArriveMs - blob.StartMs) * AlphaRampShare;
-            double t = ramp <= 0 ? 1 : Math.Min(1, (elapsedMs - blob.StartMs) / ramp);
-            return BlobAlpha * (float)SmoothStep(t);
-        }
+            => elapsedMs <= blob.StartMs ? 0f : BlobAlpha;
 
         /// <summary>The full-map dim this instant: eases in with the cloud, from the first blob to
         /// the farm settling, and holds.</summary>
