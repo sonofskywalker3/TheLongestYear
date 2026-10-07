@@ -331,8 +331,10 @@ namespace TheLongestYear.Scenes
             // The cloud covers the whole screen, frame and backdrop included, and comes in from
             // above its top edge, so nothing is clipped.
             if (_blob == null) return;
-            foreach (SceneCloud.Blob blob in _cloud)
+            // Indexed: foreach over an IReadOnlyList boxes its enumerator, once a frame.
+            for (int i = 0; i < _cloud.Count; i++)
             {
+                SceneCloud.Blob blob = _cloud[i];
                 float alpha = SceneCloud.Alpha(blob, elapsed);
                 if (alpha <= 0f) continue;
                 (double x, double y) = SceneCloud.Position(blob, elapsed);
