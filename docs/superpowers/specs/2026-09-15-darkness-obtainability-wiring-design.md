@@ -132,7 +132,12 @@ among the ones that pass. If none pass, reversion has nothing to act on and the 
 through (section 2.2).
 
 **Tampering.** Targets keep today's shape: unfilled slots in unfinished item-room bundles, the slots
-whose item the player holds first. The replacement pool is the item catalog filtered by room theme (the
+whose item the player holds first. Since 2026-10-07 (designer: "only let it pick an item that only
+appears in 1 bundle") a slot is a target only when its exact item, id plus the flavour the slot names
+(Dried Apples and Dried Cucumbers are two items, quality ignored), is asked in exactly one slot on the
+whole board, filled or open, in any bundle. A slot that names no flavour takes any, so it shares its
+item with every flavoured slot of the same id. An item asked in two or more slots is never a target;
+when nothing qualifies, tampering has nothing to act on, as below. The replacement pool is the item catalog filtered by room theme (the
 Bulletin Board's Mixed takes any), not already an ingredient of that bundle, and passing the rule from
 the day after the hit to Winter 28. Among those, the five closest in effort to the original item, one at
 random. The effort figure still comes from the existing item model (`ItemAvailabilityModel.For(id).Effort`),

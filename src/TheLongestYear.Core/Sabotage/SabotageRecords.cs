@@ -1,14 +1,18 @@
 namespace TheLongestYear.Core.Sabotage;
 
 /// <summary>One requirement the darkness rewrote this loop. Plain POCO for save serialization;
-/// kept for tly_sabotage status and the log, never read back to re-apply (the tampered board
-/// lives in MetaState.WrittenBoard and the live BundleData).</summary>
+/// kept for tly_sabotage status, the log and the aura, never read back to re-apply (the tampered
+/// board lives in MetaState.WrittenBoard and the live BundleData).</summary>
 public sealed class TamperRecord
 {
     public int BundleIndex { get; set; }
     public int IngredientIndex { get; set; }
     public string BundleName { get; set; } = "";
     public string OldItemId { get; set; } = "";
+    /// <summary>The flavour the old slot named (a Dried Fruit's fruit, a Smoked Fish's fish), or
+    /// null for a slot that named none. Saves written before 2026-10-07 lack the field and read
+    /// back null, which the aura treats as every copy of the item, exactly as it did then.</summary>
+    public string? OldFlavor { get; set; }
     public string NewItemId { get; set; } = "";
     public int Stack { get; set; } = 1;
     public int DayOfYear { get; set; }
@@ -28,4 +32,6 @@ public sealed class SabotageReport
     public string BundleName { get; set; } = "";
     public string ItemId { get; set; } = "";
     public string OldItemId { get; set; } = "";
+    /// <summary>Tampering: the flavour the old slot named, null when none (and on older saves).</summary>
+    public string? OldFlavor { get; set; }
 }

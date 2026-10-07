@@ -93,8 +93,14 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     fade in. No warp, no location change. A day he never leaves the house, it plays on his next Farm
     entry. It plays once. The night's other reports still show after it.
   - Its first line is "@, last night the darkness struck! It has tainted all the {{old}}."
+  - {{old}} names the exact item the tamper took, flavour included: "all the Dried Apples", not
+    "all the Dried Fruit" (designer, 2026-10-07). The tamper only ever takes an item the board asks
+    for in exactly one slot (wiring spec 2026-09-15, Tampering), so the line is true: nothing else
+    on the board still wants the tainted thing.
   - Plurals are right: {{old}} is the item's plural (the game's own pluralizer, corrected for
-    mass nouns like Beer, Wool, Hay and Honey), the ask is "3 Parsnips" for more than one and the
+    mass nouns like Beer, Wool, Hay and Honey, also as the last word of a name such as Blueberry
+    Jelly; a flavoured Dried Fruit or Smoked Fish keeps the game's own name, which already reads
+    right: "Dried Apples", "Smoked Salmon"), the ask is "3 Parsnips" for more than one and the
     bare name for one, and a plural ask ends "They remain pure." (key
     `event.darkness.tamper-3-plural`) instead of "It remains pure.".
   - No purple screen glow under the middle line; the low sound stays.
@@ -267,11 +273,19 @@ override everything above where they differ.
 - Everything dims under it. The low `shadowDie` from the Winter gate scene. Hold. Apply. Fade.
 - No witness.
 
-**The dark aura.** From that morning until the loop ends, every item of the tainted type (the
-tamper record's old item id) is drawn with a dark aura wherever an item is drawn: inventory,
-chests, shop and bundle menus, held overhead. A postfix on `Object.drawInMenu` (and the held-item
-draw) keyed on `RunState.TamperRecords`; a dim purple pulse under the sprite (**mine**: the visual;
-a first version for Jeff to look at). Cleared with the run at reset.
+**The dark aura.** From that morning until the loop ends, every copy of the exact item tainted
+(the tamper record's old item id and its flavour, `TamperRecord.OldFlavor`) is drawn with a dark
+aura wherever an item is drawn: inventory, chests, shop and bundle menus, held overhead. Tainted
+Dried Apples glow; Dried Cucumbers, another flavour of the same item, do not (designer,
+2026-10-07). The flavour is matched against the item's `preservedParentSheetIndex`. A record with
+no flavour (a slot that named none and took any, or a record saved before the field existed) marks
+every copy of its item id, as the aura always did. A plain Potato's taint never marks Pickled
+Potato: that is another item id. A prefix on `Object.drawInMenu` (and the held-item draw) keyed on
+`RunState.Tampers` through `TaintedItems`, allocation-free per draw; a dim purple pulse under the
+sprite (**mine**: the visual; a first version for Jeff to look at). Cleared with the run at reset.
+
+A rewritten slot forgets its flavour: the tamper removes the slot's entry from
+`MetaState.WrittenBoardFlavors`, so `FlavoredSlotPatch` cannot pin the old fruit onto the new ask.
 
 ### The witnesses
 

@@ -389,7 +389,11 @@ namespace TheLongestYear
             }
             // The dark aura on tainted items: manual patch so a signature mismatch fails loudly.
             var taintedItems = new TheLongestYear.Core.Sabotage.TaintedItems();
-            TheLongestYear.Loop.TaintedAuraPatch.Tainted = () => taintedItems.Refresh(_meta?.Run?.Tampers);
+            TheLongestYear.Loop.TaintedAuraPatch.Tainted = () =>
+            {
+                taintedItems.Refresh(_meta?.Run?.Tampers);
+                return taintedItems;
+            };
             TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
             this.Monitor.Log(
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
@@ -2567,6 +2571,23 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_remember: {name} now qualifies as the ending speaker (tier {tier}); persists on the next save.", LogLevel.Info);
         }
 
+        /// <summary>Debug (tly_sabotage aurachest): another flavour of the same good to set beside a
+        /// flavoured taint, so the chest shows one marked and one not: a fixed fruit or fish, the
+        /// second one when the first is the tainted flavour itself.</summary>
+        private static string OtherFlavorFor(string itemId, string flavor)
+        {
+            string bare = TheLongestYear.Core.BundleParsing.StripQualifier(flavor);
+            bool fish = TheLongestYear.Core.BundleParsing.NormalizeItemId(itemId) == TheLongestYear.Core.FlavoredSlotRules.SmokedFish;
+            string first = fish ? AuraContrastFish : AuraContrastFruit;
+            string second = fish ? AuraContrastFishAlt : AuraContrastFruitAlt;
+            return first == bare ? second : first;
+        }
+
+        private const string AuraContrastFruit = "613";     // Apple
+        private const string AuraContrastFruitAlt = "634";  // Apricot
+        private const string AuraContrastFish = "145";      // Sunfish
+        private const string AuraContrastFishAlt = "142";   // Carp
+
         /// <summary>Debug: replay a season-turn scene now (spec 2026-09-07), no continuation.</summary>
         /// <summary>Darkness pushback debug: force a front now, or print the state.</summary>
         private void CmdSabotage(string command, string[] args)
@@ -2661,10 +2682,19 @@ namespace TheLongestYear
                 case "aurachest":
                 {
                     // Debug: open a loose chest holding every tainted item plus a Parsnip, so the
-                    // dark aura can be looked at in a chest menu (no chest has to be placed).
+                    // dark aura can be looked at in a chest menu (no chest has to be placed). A
+                    // flavoured taint also gets another flavour of the same good beside it, which
+                    // must stay unmarked.
                     var loose = new StardewValley.Objects.Chest(true);
                     foreach (TheLongestYear.Core.Sabotage.TamperRecord t in _meta.Run.Tampers)
-                        loose.Items.Add(ItemRegistry.Create(t.OldItemId, 1));
+                    {
+                        Item exact = TheLongestYear.Loop.SabotageService.CreateExact(t.OldItemId, t.OldFlavor);
+                        if (exact != null) loose.Items.Add(exact);
+                        if (string.IsNullOrEmpty(t.OldFlavor)) continue;
+                        string other = OtherFlavorFor(t.OldItemId, t.OldFlavor);
+                        Item contrast = other == null ? null : TheLongestYear.Loop.SabotageService.CreateExact(t.OldItemId, other);
+                        if (contrast != null) loose.Items.Add(contrast);
+                    }
                     loose.Items.Add(ItemRegistry.Create("(O)24", 1));
                     loose.ShowMenu();
                     break;

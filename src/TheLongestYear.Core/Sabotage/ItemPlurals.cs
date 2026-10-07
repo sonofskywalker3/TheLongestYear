@@ -25,6 +25,7 @@ namespace TheLongestYear.Core.Sabotage
             "Oil", "Truffle Oil", "Vinegar", "Maple Syrup", "Oak Resin", "Pine Tar", "Sap", "Bug Meat",
             "Roe", "Aged Roe", "Caviar", "Squid Ink", "Mayonnaise", "Duck Mayonnaise",
             "Void Mayonnaise", "Dinosaur Mayonnaise", "Moss", "Cranberry Sauce", "Seaweed",
+            "Jelly",
         };
 
         /// <summary>The plural of an item's display name. <paramref name="gamePlural"/> is the
@@ -32,7 +33,7 @@ namespace TheLongestYear.Core.Sabotage
         public static string Plural(string name, Func<string, string> gamePlural)
         {
             if (string.IsNullOrEmpty(name) || gamePlural == null) return name;
-            if (MassNouns.Contains(name)) return name;
+            if (MassNouns.Contains(name) || MassNouns.Contains(LastWord(name))) return name;
             string plural = gamePlural(name);
             // The game left it alone (its own list, or a language it does not pluralize): so do we.
             if (plural == name) return name;
@@ -50,6 +51,25 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>Whether the ask reads as plural, which picks "They remain pure." over "It
         /// remains pure.".</summary>
         public static bool AskIsPlural(int count) => count > 1;
+
+        /// <summary>The old item in "It has tainted all the {{old}}": the exact item, flavour
+        /// included, pluralised (designer, 2026-10-07: "all the Dried Apples"). <paramref name="name"/>
+        /// is the game's display name for it. The game's own names for a flavoured Dried Fruit or
+        /// Smoked Fish already read right: Object.loadDisplayName runs Dried Fruit through
+        /// makePlural itself ("Dried Apples"), and "all the Smoked Salmon" is how the fish is said,
+        /// so those stay as the game wrote them. Anything else takes <see cref="Plural"/>.</summary>
+        public static string Tainted(string name, string baseItemId, bool flavored, Func<string, string> gamePlural)
+        {
+            if (flavored && FlavoredSlotRules.IsFlavored(baseItemId)) return name;
+            return Plural(name, gamePlural);
+        }
+
+        /// <summary>The head noun of a multi-word name ("Blueberry Jelly" to "Jelly").</summary>
+        private static string LastWord(string name)
+        {
+            int space = name.LastIndexOf(' ');
+            return space < 0 ? name : name.Substring(space + 1);
+        }
 
         private static bool IsVowel(char c) => "aeiouAEIOU".IndexOf(c) >= 0;
     }
