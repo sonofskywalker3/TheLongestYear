@@ -212,7 +212,7 @@ Commands:
 
 - `tly_sabotage scene crows|thief|hall|cloud` plays a scene now against a fresh pick, without
   sleeping (stand on the Farm with no event up). `tly_sabotage scene [old] [new]` plays the Junimos'
-  "tainted" scene where the farmer stands.
+  "tainted" scene at the porch and puts the farmer back on his tile after.
 - `tly_sabotage fixture [scarecrow] [rows=<1..5>]` plants ten in-season crops per row in front of the
   house and drops a chest with 20 Parsnip and 10 Copper Ore beside them (refuses on a save this
   session did not create unless you add `confirm`); `fixture here` drops only the chest beside the
@@ -224,7 +224,8 @@ Commands:
   `Struck this loop`, `Owed tonight` (the guarantee's kinds still owed from day 15 of their debut
   season; a kind listed there is only forced if it can act, so a warded Summer still lists
   CropBlight), `Witness lines pending` (npc, scene day of year, last day of the window), the tamper
-  target count and the multi-slot items that are never tampered.
+  targets (an item asked twice in its one bundle shows `xN slots`) and the items two or more bundles
+  ask for, which are never tampered.
 - `tly_sabotage aurachest` opens a loose chest with every tainted item (and an untainted flavour
   beside a flavoured one) to look at the dark aura.
 - `tly_witness list | peek <npc> | talk <npc> | click` reads and plays the Linus / Shane line.
@@ -237,10 +238,12 @@ is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is rec
 and the every-loop guarantee bring it back on a later night with its scene. The same goes for the
 first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
 
-The Junimo "tainted" scene does not play on waking. It starts the first time the farmer goes out of
-the farmhouse door onto the Farm (log `(old -> new, skippable=...)`). Headless, `debug warp Farm 64
-16` from inside the house is the same FarmHouse-to-Farm warp onto the door tile and starts it; a warp
-from anywhere else does not.
+The Junimo "tainted" scene does not play on waking. It starts the first time the farmer arrives on
+the Farm by any route (Jeff, 2026-10-07): the log reads `starting the board-changed scene at the
+porch (x,y); the farmer arrived at (x,y) facing f and goes back there after`. It is staged at the
+porch behind black and, when it ends or is skipped, vanilla's event end warps him back to the
+arrival tile (`tlyReturnTo` sets `positionBeforeEvent`). Headless, `debug warp Farm 64 16` from the
+house, or `debug warp BusStop 10 23` then `debug warp Farm 79 17`, or a Forest arrival, all start it.
 
 **The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
 scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`

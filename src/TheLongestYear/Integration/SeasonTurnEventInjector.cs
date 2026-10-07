@@ -36,30 +36,32 @@ namespace TheLongestYear.Integration
         /// letting it in; they crossed it off and ask for something the darkness has not reached. No
         /// music and no screen glow, the low sound under the middle line.
         ///
-        /// It plays WHERE THE FARMER ALREADY STANDS, the moment he steps out onto the Farm (Jeff,
-        /// 2026-10-07: the old wake-up version blinked and warped him to his doorstep). So there is
-        /// no location change and no warp: the scene holds black while the two Junimos are put on
-        /// their marks round him, then fades in. The marks are the porch scene's, taken from his own
-        /// tile as though it were the step below the door, which it is when he has just walked out.</summary>
-        internal static string BuildTamper(int farmerX, int farmerY, int facing, string oldItemName, string newItemName, bool newIsPlural, bool skippable)
+        /// It plays the moment he arrives on the Farm, by any route (Jeff, 2026-10-07: "however you
+        /// get to the farm map, just show the scene, vanilla does this too"). Like vanilla's
+        /// Community Center cutscene on entering Town, it is staged at a fixed spot, the porch step
+        /// (<paramref name="porchX"/>, <paramref name="porchY"/>), with the porch scene's marks round
+        /// it, behind black, then fades in. When it ends (or is skipped) vanilla puts him back on
+        /// (<paramref name="returnX"/>, <paramref name="returnY"/>) facing <paramref name="returnFacing"/>:
+        /// tlyReturnTo sets the position the event end restores.</summary>
+        internal static string BuildTamper(int porchX, int porchY, int returnX, int returnY, int returnFacing, string oldItemName, string newItemName, bool newIsPlural, bool skippable)
         {
             const int count = 2;
-            int doorX = farmerX, doorY = farmerY - StepDown;
+            const int facingDown = 2;
+            int doorX = porchX, doorY = porchY - StepDown;
             var s = new List<string>
             {
                 "none",
                 "-1000 -1000",
-                $"farmer {farmerX} {farmerY} {facing}",
+                $"farmer {porchX} {porchY} {facingDown}",
                 EndingEventCommands.BlackName,
+                // Before anything else, so a skip returns him to where he arrived too.
+                $"{EndingEventCommands.ReturnToName} {returnX} {returnY} {returnFacing}",
             };
             if (skippable) s.Add("skippable");
-            // Pinned to his own tile under the black. Without it the first live run had him a tile
-            // up, in the doorway, for the scene, and the event's end then put him back on the step:
-            // a one-tile jump the moment the black lifted (2026-10-07). With it, the event's end
-            // returns him to the tile he is already on.
-            s.Add($"warp farmer {farmerX} {farmerY}");
-            s.Add($"faceDirection farmer {facing}");
-            s.Add($"viewport {farmerX} {farmerY} clamp");
+            // On the porch step under the black, facing out, the way the season-turn scenes stand him.
+            s.Add($"warp farmer {porchX} {porchY}");
+            s.Add($"faceDirection farmer {facingDown}");
+            s.Add($"viewport {porchX} {porchY} clamp");
             for (int j = 0; j < count; j++)
                 s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X} {doorY + Marks[j].Y} {j}");
             s.Add($"{EndingEventCommands.FadeInName} {FadeMs}");

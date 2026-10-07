@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace TheLongestYear.Core.Sabotage
 {
-    /// <summary>When the Junimos' "tainted" scene plays after a tamper (Jeff, 2026-10-07). Not on
-    /// waking: the old wake-up scene blinked and warped the farmer to his doorstep. It plays where
-    /// the farmer stands the first time he steps OUT OF THE FARMHOUSE onto the Farm while a tamper
-    /// report is waiting. The scene's marks are the porch's, taken from his tile as the step below
-    /// the door, so any other way onto the Farm (the Forest, Backwoods or Bus Stop edge, a Warp
-    /// Totem or the Return Scepter used inside the house) would put the Junimos on cliffs, water or
-    /// buildings. Those entries leave the report waiting for the next farmhouse-door exit (review
-    /// ruling, fix round 1). Once it has started the report is consumed, so it plays once.</summary>
+    /// <summary>When and where the Junimos' "tainted" scene plays after a tamper (Jeff, 2026-10-07).
+    /// Not on waking. It plays the first time the farmer arrives on the Farm by ANY route while a
+    /// tamper report waits: the farmhouse door, the Bus Stop, Forest or Backwoods edge, a building
+    /// door, a totem ("however you get to the farm map, just show the scene, vanilla does this
+    /// too"). Like vanilla's Community Center cutscene on entering Town, it is staged somewhere fixed,
+    /// the farmhouse porch, and the farmer is put back on the tile and facing he arrived at when it
+    /// ends. An arrival while something else is up keeps the report for the next one. Once it has
+    /// started the report is consumed, so it plays once.</summary>
     public static class TamperPorchRule
     {
         /// <summary>The farm's location name, which every farm type shares.</summary>
@@ -19,40 +19,41 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>The main farmhouse's location name.</summary>
         public const string FarmHouseLocationName = "FarmHouse";
 
-        /// <summary>How far, in tiles either way, the farmer may stand from the door's exit tile.
-        /// A totem used inside the house also reports the FarmHouse as where he came from, but lands
-        /// him somewhere else on the farm; the door exit is the only arrival near the porch.</summary>
-        public const int DoorReachTiles = 1;
+        /// <summary>The farm's door tile is the doorway itself; the porch step is one below it.</summary>
+        public const int StepDown = 1;
+
+        /// <summary>The row on which vanilla nudges a farmer one tile right when an event ends on the
+        /// Farm (Game1.eventFinished, Game1.cs:6837).</summary>
+        public const int VanillaNudgeRow = 64;
 
         /// <param name="tamperPending">A tamper report is waiting for its scene.</param>
         /// <param name="enteredLocationName">The location the warp just put the player in.</param>
-        /// <param name="previousLocationName">The location the warp took the player from.</param>
         /// <param name="isLocalPlayer">The warp was this player's own.</param>
-        /// <param name="busy">An event, a farm event or a menu is up, so a scene cannot start now;
-        /// the report waits for the next entry.</param>
-        /// <param name="farmerX">The farmer's tile on arrival.</param>
-        /// <param name="farmerY">The farmer's tile on arrival.</param>
-        /// <param name="doorExits">Where the farmhouse's own warps onto the Farm put the farmer, read
-        /// from the house's warp data. None known means the door cannot be confirmed: no scene.</param>
+        /// <param name="busy">An event, a farm event, a menu or a season turn is up, so a scene
+        /// cannot start now; the report waits for the next arrival.</param>
+        /// <param name="porch">Where the scene is staged (<see cref="PorchTile"/>); none known means
+        /// no scene.</param>
         public static bool ShouldStart(
-            bool tamperPending, string enteredLocationName, string previousLocationName, bool isLocalPlayer, bool busy,
-            int farmerX, int farmerY, IReadOnlyList<(int X, int Y)> doorExits)
+            bool tamperPending, string? enteredLocationName, bool isLocalPlayer, bool busy, (int X, int Y)? porch)
         {
-            if (!tamperPending || !isLocalPlayer || busy) return false;
-            if (!string.Equals(enteredLocationName, FarmLocationName, StringComparison.Ordinal)) return false;
-            if (!string.Equals(previousLocationName, FarmHouseLocationName, StringComparison.Ordinal)) return false;
-            return AtDoor(farmerX, farmerY, doorExits);
+            if (!tamperPending || !isLocalPlayer || busy || porch == null) return false;
+            return string.Equals(enteredLocationName, FarmLocationName, StringComparison.Ordinal);
         }
 
-        /// <summary>Is the farmer on, or within <see cref="DoorReachTiles"/> of, one of the door's
-        /// exit tiles?</summary>
-        public static bool AtDoor(int farmerX, int farmerY, IReadOnlyList<(int X, int Y)> doorExits)
+        /// <summary>The porch tile the scene is staged on: where the farmhouse's own warp onto the
+        /// Farm puts the farmer (read from the house's warp data, so every farm type and a moved
+        /// house are right), else the step below the farm's reported door tile, else none.</summary>
+        public static (int X, int Y)? PorchTile(IReadOnlyList<(int X, int Y)>? doorExits, (int X, int Y)? doorTile)
         {
-            if (doorExits == null) return false;
-            foreach ((int x, int y) in doorExits)
-                if (Math.Abs(farmerX - x) <= DoorReachTiles && Math.Abs(farmerY - y) <= DoorReachTiles)
-                    return true;
-            return false;
+            if (doorExits != null && doorExits.Count > 0) return doorExits[0];
+            if (doorTile is (int x, int y)) return (x, y + StepDown);
+            return null;
         }
+
+        /// <summary>The tile to hand vanilla's event end so the farmer lands exactly where he arrived.
+        /// Vanilla adds one to X when an event ends on the Farm with the saved tile on row
+        /// <see cref="VanillaNudgeRow"/>, so that row gets one to the left in advance.</summary>
+        public static (int X, int Y) ReturnTileForVanilla((int X, int Y) arrival)
+            => arrival.Y == VanillaNudgeRow ? (arrival.X - 1, arrival.Y) : arrival;
     }
 }
