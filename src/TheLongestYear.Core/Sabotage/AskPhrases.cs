@@ -61,6 +61,21 @@ namespace TheLongestYear.Core.Sabotage
             "(O)SeaJelly", "(O)RiverJelly", "(O)CaveJelly",
         };
 
+        /// <summary>Crab-pot and beach shellfish: Fish category, but counted with their plurals
+        /// (designer, 2026-10-07: "7 Oysters", "7 Mussels"). Shrimp and Crayfish are not here: they
+        /// keep the same word like the fish ("7 Shrimp", "7 Crayfish").</summary>
+        private static readonly HashSet<string> ShellfishTakePlural = new(StringComparer.Ordinal)
+        {
+            "(O)723", // Oyster
+            "(O)372", // Clam
+            "(O)717", // Crab
+            "(O)715", // Lobster
+            "(O)721", // Snail
+            "(O)719", // Mussel
+            "(O)718", // Cockle
+            "(O)722", // Periwinkle
+        };
+
         private static Dictionary<string, string> BuildContainers()
         {
             var map = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -137,10 +152,14 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>Does this item keep the same word in the plural because it is a fish (designer,
         /// 2026-10-07: "7 Pike", "7 Salmon", "3 Largemouth Bass")? Every Object of the Fish category
         /// (<see cref="FlavoredSlotRules.FishCategory"/>), except the jellies he chose to count
-        /// ("Sea Jellies"). Fish goods with a container or a bare word of their own (Roe, Aged Roe,
-        /// Caviar, Smoked Fish) are matched by those tables first.</summary>
+        /// ("Sea Jellies") and the shellfish that take their plurals ("7 Oysters"; Shrimp and Crayfish
+        /// keep the same word). Fish goods with a container or a bare word of their own (Roe, Aged
+        /// Roe, Caviar, Smoked Fish) are matched by those tables first.</summary>
         public static bool IsFishSameInThePlural(string? itemId, int category)
-            => category == FlavoredSlotRules.FishCategory && !IsCountable(itemId);
+        {
+            if (category != FlavoredSlotRules.FishCategory || IsCountable(itemId)) return false;
+            return string.IsNullOrEmpty(itemId) || !ShellfishTakePlural.Contains(BundleParsing.NormalizeItemId(itemId!));
+        }
 
         /// <summary>The ask: the bare <paramref name="name"/> for one, otherwise the count and a
         /// container phrase, plural or bare word. <paramref name="gamePlural"/> is the game's own
