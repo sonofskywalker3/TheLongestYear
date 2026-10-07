@@ -50,13 +50,87 @@ public class StrikeSlotTests
         Assert.Equal(StrikeSlotVerdict.Postpone, StrikeSlot.Decide(false, false, OvernightEvent.Scripted, false, false, boom));
     }
 
-    [Theory]
-    // The scene had the slot (it staged, or it failed after taking it): the strike lands.
-    [InlineData(true, true)]
-    // It never had the slot (a collision missed, no pickFarmEvent on the first night): postponed.
-    [InlineData(false, false)]
-    public void A_strike_still_waiting_at_the_save_or_the_morning_lands_only_if_its_scene_had_the_slot(bool sceneHadTheSlot, bool lands)
-        => Assert.Equal(lands, StrikeSlot.LandsAtNet(sceneHadTheSlot));
+    // ---------------------------------------------------------------- one strike's life (review C1)
+
+    [Fact]
+    public void A_scene_that_stages_commits_once_and_lands_once()
+    {
+        var s = new StrikeLifecycle();
+        Assert.True(s.Commit());            // setUp staged: record it now
+        Assert.False(s.Commit());           // never twice
+        Assert.True(s.BeginApply());        // the scene's beat
+        Assert.False(s.BeginApply());       // the end-of-scene net does nothing more
+        Assert.Equal(StrikeNetAction.None, s.AtNet());
+    }
+
+    [Fact]
+    public void A_scene_that_cannot_stage_never_lands_and_the_net_postpones_it()
+    {
+        // Took the slot, then setUp found no ground beside the chest (or threw): the scene's own
+        // ending asks to apply, and must get nothing; the save net then postpones.
+        var s = new StrikeLifecycle();
+        Assert.False(s.BeginApply());
+        Assert.Equal(StrikeNetAction.Postpone, s.AtNet());
+        Assert.True(s.Postpone());
+        Assert.False(s.Commit());
+        Assert.False(s.BeginApply());
+        Assert.Equal(StrikeNetAction.None, s.AtNet());
+    }
+
+    [Fact]
+    public void Another_mod_replacing_our_scene_after_the_postfix_leaves_it_to_the_net_which_postpones()
+    {
+        // pickFarmEvent handed out our scene, but vanilla never set it up: nothing was committed.
+        var s = new StrikeLifecycle();
+        Assert.Equal(StrikeNetAction.Postpone, s.AtNet());
+    }
+
+    [Fact]
+    public void A_staged_scene_that_ended_before_its_beat_lands_at_the_net()
+    {
+        var s = new StrikeLifecycle();
+        s.Commit();
+        Assert.Equal(StrikeNetAction.Land, s.AtNet());
+        Assert.False(s.Postpone());         // committed: tonight is spent, it cannot be postponed
+        Assert.True(s.BeginApply());
+    }
+
+    [Fact]
+    public void A_strike_with_no_scene_by_design_commits_and_lands_at_once()
+    {
+        var s = new StrikeLifecycle();
+        Assert.True(s.LandNow(out bool newlyCommitted));
+        Assert.True(newlyCommitted);
+        Assert.False(s.LandNow(out newlyCommitted));
+        Assert.False(newlyCommitted);
+    }
+
+    // ---------------------------------------------------------------- the guaranteed Winter tamper (review I1)
+
+    [Fact]
+    public void A_postponed_then_failed_guaranteed_tamper_is_still_owed()
+    {
+        var run = new RunState();
+        GuaranteedTamper.OnPostponed(run);
+        GuaranteedTamper.OnCommitted(run);
+        Assert.True(run.GuaranteedTamperDone);
+        GuaranteedTamper.OnApplied(run, landed: false);
+        Assert.False(run.GuaranteedTamperDone);
+        Assert.True(run.GuaranteedTamperPostponed);
+        Assert.True(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: false, Season.Winter, 9));
+    }
+
+    [Fact]
+    public void A_postponed_guaranteed_tamper_that_lands_is_done_and_no_longer_carried()
+    {
+        var run = new RunState();
+        GuaranteedTamper.OnPostponed(run);
+        GuaranteedTamper.OnCommitted(run);
+        GuaranteedTamper.OnApplied(run, landed: true);
+        Assert.True(run.GuaranteedTamperDone);
+        Assert.False(run.GuaranteedTamperPostponed);
+        Assert.False(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: false, Season.Winter, 9));
+    }
 
     // ---------------------------------------------------------------- the ledger
 

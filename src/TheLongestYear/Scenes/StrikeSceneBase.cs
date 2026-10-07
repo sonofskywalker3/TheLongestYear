@@ -97,7 +97,7 @@ namespace TheLongestYear.Scenes
         }
 
         /// <summary>Where the scene plays and what it needs. Return false to call the scene off: the
-        /// strike still lands, the night still goes on.</summary>
+        /// strike is postponed (never landed without its scene), the night goes on.</summary>
         protected abstract bool Stage();
 
         /// <summary>The map the scene is showing, so the base can pump it. Null (the default) means
@@ -152,8 +152,8 @@ namespace TheLongestYear.Scenes
         protected virtual void Cleanup() { }
 
         /// <summary>Land tonight's damage. Safe to call more than once and from anywhere: the strike
-        /// itself runs its effect at most once, and a strike that throws is logged and swallowed so it
-        /// can never strand the night.</summary>
+        /// itself runs its effect at most once, only once the scene has staged and committed it, and
+        /// a strike that throws is logged and swallowed so it can never strand the night.</summary>
         protected void ApplyStrike()
         {
             try
@@ -173,7 +173,7 @@ namespace TheLongestYear.Scenes
             {
                 if (!Stage())
                 {
-                    Monitor.Log($"Darkness: the {GetType().Name} scene found nothing to play against, so tonight's {Strike.Event} lands with no scene.", LogLevel.Info);
+                    Monitor.Log($"Darkness: the {GetType().Name} scene found nothing to play against, so tonight's {Strike.Event} is postponed: no effect and no scene.", LogLevel.Info);
                     End(EndedNotStaged, shown: false);
                     return true;
                 }
@@ -185,6 +185,9 @@ namespace TheLongestYear.Scenes
                 Game1.displayHUD = false;
                 Game1.freezeControls = true;
                 _staged = true;
+                // Staged: only now is tonight spent on the strike (the run records it). Anything
+                // that failed above leaves it uncommitted, and it is postponed.
+                Strike.Commit();
                 Monitor.Log($"Darkness: the {GetType().Name} scene takes tonight's overnight slot for {Strike.Event} ({(_skippable ? "skippable" : "not skippable")}).", LogLevel.Info);
                 return false;
             }
