@@ -2638,7 +2638,7 @@ namespace TheLongestYear
                     TheLongestYear.Loop.MineTravelCheckCommand.Run(this.Monitor, args);
                     break;
                 case "report":
-                    _sabotage.ShowMorning(null);
+                    _sabotage.ShowMorning();
                     break;
                 case "arm":
                 {
