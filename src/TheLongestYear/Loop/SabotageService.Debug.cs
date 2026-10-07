@@ -90,8 +90,8 @@ namespace TheLongestYear.Loop
                  + TargetLine(itemId);
         }
 
-        /// <summary>Can a tamper take this item as its target? Only an item the board asks for in
-        /// exactly one slot (designer, 2026-10-07). A flavoured item is counted per flavour, so this
+        /// <summary>Can a tamper take this item as its target? Only an item one bundle asks for, in
+        /// one slot or several (designer, 2026-10-07). A flavoured item is counted per flavour, so this
         /// gives one line for each flavour the board names.</summary>
         private string TargetLine(string itemId)
         {
@@ -108,19 +108,20 @@ namespace TheLongestYear.Loop
             if (flavors.Count == 0) return "tamper target: no, the board does not ask for it";
             return string.Join("\n", flavors.Select(f =>
             {
+                int bundles = TamperRule.BundlesAsking(requirements, id, f, BoardFlavor);
                 int n = TamperRule.SlotsAsking(requirements, id, f, BoardFlavor);
-                return $"tamper target ({ExactName(id, f)}): {(n == 1 ? "yes, asked in exactly one slot" : $"no, asked in {n} slots (multi-slot items are never targets)")}";
+                return $"tamper target ({ExactName(id, f)}): {(bundles == 1 ? $"yes, asked in one bundle ({n} slot(s), every open one is rewritten)" : $"no, asked in {bundles} bundles (an item two bundles ask for is never a target)")}";
             }));
         }
 
-        /// <summary>Status lines on what a tamper may take tonight: the open slots whose item is asked
-        /// once, and the open items it may not take because another slot asks for them too.</summary>
+        /// <summary>Status lines on what a tamper may take tonight: the items only one bundle asks
+        /// for, and the open items it may not take because another bundle asks for them too.</summary>
         private IEnumerable<string> TargetSummary()
         {
             SlotLedger ledger = Run.DonatedLedger();
             IReadOnlyList<BundleRequirement> requirements = _requirements();
             IReadOnlyList<TamperTarget> targets = TamperRule.Targets(ledger, requirements, BoardFlavor);
-            var single = new HashSet<(int, int)>(targets.Select(t => (t.Bundle.BundleIndex, t.IngredientIndex)));
+            var single = new HashSet<(int, int)>(targets.SelectMany(t => t.IngredientIndices.Select(i => (t.Bundle.BundleIndex, i))));
             var multi = new SortedDictionary<string, int>(StringComparer.Ordinal);
             foreach (BundleRequirement req in requirements)
             {
@@ -129,13 +130,13 @@ namespace TheLongestYear.Loop
                 {
                     if (ledger.IsFilled(req.BundleIndex, slot.IngredientIndex) || single.Contains((req.BundleIndex, slot.IngredientIndex))) continue;
                     string f = FlavoredSlotRules.IsFlavored(slot.ItemId) ? BoardFlavor(req.BundleIndex, slot.IngredientIndex) : null;
-                    multi[ExactName(slot.ItemId, f)] = TamperRule.SlotsAsking(requirements, slot.ItemId, f, BoardFlavor);
+                    multi[ExactName(slot.ItemId, f)] = TamperRule.BundlesAsking(requirements, slot.ItemId, f, BoardFlavor);
                 }
             }
-            string named = string.Join(", ", targets.Take(StatusListCap).Select(t => ExactName(t.ItemId, t.Flavor)));
-            yield return $"  tamper targets (open slots whose exact item, flavour included, is asked in exactly one slot on the board): {targets.Count}"
+            string named = string.Join(", ", targets.Take(StatusListCap).Select(t => ExactName(t.ItemId, t.Flavor) + (t.IngredientIndices.Count > 1 ? $" x{t.IngredientIndices.Count} slots" : "")));
+            yield return $"  tamper targets (open items, flavour included, that only one bundle asks for): {targets.Count}"
                 + (targets.Count == 0 ? "" : $": {named}{(targets.Count > StatusListCap ? ", ..." : "")}");
-            yield return $"  not targets (asked in 2+ slots, filled or open; multi-slot items are never tampered): {(multi.Count == 0 ? "none" : string.Join(", ", multi.Select(kv => $"{kv.Key} x{kv.Value}")))}";
+            yield return $"  not targets (asked by 2+ bundles, filled or open, or beside another flavour spelling): {(multi.Count == 0 ? "none" : string.Join(", ", multi.Select(kv => $"{kv.Key} in {kv.Value} bundle(s)")))}";
         }
 
         /// <summary>How many tamper targets the status line names before it trails off.</summary>

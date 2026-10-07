@@ -50,6 +50,29 @@ public static class BundleDataTamper
         return copy;
     }
 
+    /// <summary>The board with every one of <paramref name="ingredientIndices"/> in one entry
+    /// rewritten to the same item, stack and quality (a target asked in two slots of its bundle,
+    /// Jeff 2026-10-07); the input is not modified. All or nothing: null when the key is missing,
+    /// no slot is given, or any slot is out of range.</summary>
+    public static Dictionary<string, string>? ApplyAll(
+        IReadOnlyDictionary<string, string> board, string key, IReadOnlyList<int> ingredientIndices, string newItemRef, int stack, int quality)
+    {
+        if (board is null) throw new ArgumentNullException(nameof(board));
+        if (key is null) throw new ArgumentNullException(nameof(key));
+        if (ingredientIndices is null || ingredientIndices.Count == 0) return null;
+        if (!board.TryGetValue(key, out string? value)) return null;
+        string? rewritten = value;
+        foreach (int index in ingredientIndices)
+        {
+            rewritten = Rewrite(rewritten, index, newItemRef, stack, quality);
+            if (rewritten is null) return null;
+        }
+        var copy = new Dictionary<string, string>(board.Count, StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> kv in board) copy[kv.Key] = kv.Value;
+        copy[key] = rewritten;
+        return copy;
+    }
+
     /// <summary>The BundleData key ("Room/index") whose parsed index matches, or null.</summary>
     public static string? KeyForIndex(IReadOnlyDictionary<string, string> board, int bundleIndex)
     {

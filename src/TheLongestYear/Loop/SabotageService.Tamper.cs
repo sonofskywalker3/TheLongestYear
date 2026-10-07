@@ -37,7 +37,7 @@ namespace TheLongestYear.Loop
             if (worldState?.BundleData == null) return null;
             TamperPlan plan = PlanFairTamper(rng, dayOfYear);
             if (plan == null) return null;
-            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot {plan.Target.IngredientIndex} ({ExactName(plan.Target.ItemId, plan.Target.Flavor)}) to {plan.Stack} {Strings.ItemName(plan.ItemId)}.", LogLevel.Info);
+            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot(s) {string.Join(",", plan.Target.IngredientIndices)} ({ExactName(plan.Target.ItemId, plan.Target.Flavor)}) to {plan.Stack} {Strings.ItemName(plan.ItemId)} each.", LogLevel.Info);
             return new PendingStrike(DarknessEvent.Tampering, () => WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear));
         }
 
@@ -63,7 +63,7 @@ namespace TheLongestYear.Loop
             {
                 // The same "no fair target" path as ever: tonight's roll takes another event, and
                 // the guaranteed Winter tamper retries tomorrow.
-                _monitor.Log("Darkness: tampering has no target: no open slot in an unfinished bundle asks for an item that no other slot on the board asks for.", LogLevel.Info);
+                _monitor.Log("Darkness: tampering has no target: no open slot in an unfinished bundle asks for an item that no other bundle asks for.", LogLevel.Info);
                 return null;
             }
             IReadOnlyList<TamperCandidate> candidates = Candidates(fair);
@@ -183,13 +183,20 @@ namespace TheLongestYear.Loop
             return ids;
         }
 
+        /// <summary>Rewrite every open slot of the target's item in its bundle to the same new item
+        /// and stack (Jeff, 2026-10-07: a double Wood loses both open Wood slots; filled ones stay).
+        /// One strike: one morning report and one Junimo scene, which names the item and the
+        /// per-slot count. One <see cref="TamperRecord"/> per rewritten slot: the record's shape and
+        /// the save stay as they were, every reader keyed on (bundle, slot) still finds its slot,
+        /// and the aura and the tainted bar read the same exact item from each.</summary>
         private bool WriteTamper(StardewValley.Network.NetWorldState worldState, TamperTarget target, string newItemId, int stack, int dayOfYear)
         {
             Dictionary<string, string> live = worldState.BundleData;
             string key = BundleDataTamper.KeyForIndex(live, target.Bundle.BundleIndex);
             if (key == null) return false;
-            Dictionary<string, string> tampered = BundleDataTamper.Apply(
-                live, key, target.IngredientIndex, newItemId, stack, SabotageTuning.TamperQuality);
+            IReadOnlyList<int> slots = target.IngredientIndices;
+            Dictionary<string, string> tampered = BundleDataTamper.ApplyAll(
+                live, key, slots, newItemId, stack, SabotageTuning.TamperQuality);
             if (tampered == null) return false;
 
             // The board, then the stored copy in lockstep: the next load's manifest check compares
@@ -198,33 +205,37 @@ namespace TheLongestYear.Loop
             if (Meta.WrittenBoard != null && Meta.WrittenBoard.Count > 0 && Meta.WrittenBoard.ContainsKey(key))
                 Meta.WrittenBoard[key] = tampered[key];
 
-            // The slot now asks for something else, so it must not keep the old fruit: FlavoredSlotPatch
-            // would pin it onto a new flavoured ask ("Smoked Apple").
-            if (TamperRule.ClearFlavor(Meta.WrittenBoardFlavors, target.Bundle.BundleIndex, target.IngredientIndex))
-                _monitor.Log($"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} no longer names a flavour (was {target.Flavor ?? "none"}).", LogLevel.Trace);
+            foreach (int slot in slots)
+            {
+                // The slot now asks for something else, so it must not keep the old fruit:
+                // FlavoredSlotPatch would pin it onto a new flavoured ask ("Smoked Apple").
+                if (TamperRule.ClearFlavor(Meta.WrittenBoardFlavors, target.Bundle.BundleIndex, slot))
+                    _monitor.Log($"Darkness: {target.Bundle.Name} slot {slot} no longer names a flavour (was {target.Flavor ?? "none"}).", LogLevel.Trace);
+
+                Run.Tampers.Add(new TamperRecord
+                {
+                    BundleIndex = target.Bundle.BundleIndex,
+                    IngredientIndex = slot,
+                    BundleName = target.Bundle.Name,
+                    OldItemId = target.ItemId,
+                    OldFlavor = target.Flavor,
+                    NewItemId = newItemId,
+                    Stack = stack,
+                    DayOfYear = dayOfYear,
+                });
+            }
 
             // A goal card pointing at the old item would show a slot the board no longer has.
             Run.CurrentWeekBonusSlots?.RemoveAll(s =>
-                s.BundleIndex == target.Bundle.BundleIndex && s.IngredientIndex == target.IngredientIndex);
+                s.BundleIndex == target.Bundle.BundleIndex && slots.Contains(s.IngredientIndex));
 
-            Run.Tampers.Add(new TamperRecord
-            {
-                BundleIndex = target.Bundle.BundleIndex,
-                IngredientIndex = target.IngredientIndex,
-                BundleName = target.Bundle.Name,
-                OldItemId = target.ItemId,
-                OldFlavor = target.Flavor,
-                NewItemId = newItemId,
-                Stack = stack,
-                DayOfYear = dayOfYear,
-            });
             Run.PendingSabotageReports.Add(new SabotageReport
             {
                 Kind = SabotageKind.Tampering, Count = stack, BundleName = target.Bundle.Name,
                 ItemId = newItemId, OldItemId = target.ItemId, OldFlavor = target.Flavor,
             });
             _monitor.Log(
-                $"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} now asks for {stack} {Strings.ItemName(newItemId)} instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
+                $"Darkness: {target.Bundle.Name} slot(s) {string.Join(",", slots)} now ask for {stack} {Strings.ItemName(newItemId)} each instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             _rebuildBoard("darkness tampering");
             return true;
