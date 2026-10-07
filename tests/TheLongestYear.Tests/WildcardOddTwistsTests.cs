@@ -98,6 +98,38 @@ public class WildcardOddTwistsTests
         Assert.True(snowSeeds > 0);
     }
 
+    /// <summary>Jeff: green rain is rare and important; a wildcard snow day never overwrites it.</summary>
+    [Fact]
+    public void Reveal_never_rolls_snow_on_a_green_rain_day()
+    {
+        int snowSeeds = 0;
+        for (int seed = 0; seed < 600; seed++)
+        {
+            var free = RunAt(Season.Summer, 8, seed);
+            WildcardDays.PlanWeek(free, enabled: true);
+            free.DayOfMonth = free.WildcardDay;
+            if (WildcardDays.RevealToday(free, () => true, out _, () => false) == WildcardSchedule.SnowDay) snowSeeds++;
+
+            var green = RunAt(Season.Summer, 8, seed);
+            WildcardDays.PlanWeek(green, enabled: true);
+            green.DayOfMonth = green.WildcardDay;
+            Assert.NotEqual(WildcardSchedule.SnowDay, WildcardDays.RevealToday(green, () => true, out bool revealed, () => true));
+            Assert.True(revealed);
+        }
+        Assert.True(snowSeeds > 0);
+    }
+
+    [Fact]
+    public void Snow_is_allowed_today_only_without_green_rain_or_paid_weather()
+    {
+        var run = RunAt(Season.Summer, 9);
+        Assert.True(WildcardDays.SnowAllowedToday(run, greenRainToday: false));
+        Assert.False(WildcardDays.SnowAllowedToday(run, greenRainToday: true));
+        run.WeatherOverrideDay = Calendar.DayOfYear((int)run.Season, run.DayOfMonth);
+        run.WeatherOverride = BoostPurchase.Rain;
+        Assert.False(WildcardDays.SnowAllowedToday(run, greenRainToday: false));
+    }
+
     [Fact]
     public void Paid_weather_for_another_day_leaves_the_roll_unchanged()
     {

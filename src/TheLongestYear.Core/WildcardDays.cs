@@ -33,19 +33,29 @@ public static class WildcardDays
         => run.WildcardWeek == run.WeekOfYear && run.WildcardDay != NoDay;
 
     /// <summary>Today's twist on the wildcard morning: the stored one when it was already revealed
-    /// today, otherwise rolled now and stored. Null on any other day.</summary>
-    public static string? RevealToday(RunState run, Func<bool> minecartsRepaired, out bool revealedNow)
+    /// today, otherwise rolled now and stored. Null on any other day. <paramref name="greenRainToday"/>
+    /// reports a vanilla green rain day; the snow day never replaces one.</summary>
+    public static string? RevealToday(RunState run, Func<bool> minecartsRepaired, out bool revealedNow,
+        Func<bool>? greenRainToday = null)
     {
         revealedNow = false;
         if (!HasPlanThisWeek(run) || run.DayOfMonth != run.WildcardDay) return null;
         string? stored = StoredTwistToday(run);
         if (stored != null) return stored;
         run.WildcardTwist = WildcardSchedule.TwistFor(run.Seed, run.WeekOfYear, minecartsRepaired(),
-            WildcardSchedule.SnowAllowed((int)run.Season, run.DayOfMonth) && !PaidWeatherToday(run));
+            SnowAllowedToday(run, greenRainToday?.Invoke() ?? false));
         run.WildcardTwistDay = run.DayOfMonth;
         revealedNow = true;
         return run.WildcardTwist;
     }
+
+    /// <summary>Whether today's twist roll may draw the snow day: never out of the season rules
+    /// (<see cref="WildcardSchedule.SnowAllowed"/>), never over weather the player paid for, and
+    /// never over a vanilla green rain day, which is rare and must not be overwritten.</summary>
+    public static bool SnowAllowedToday(RunState run, bool greenRainToday)
+        => WildcardSchedule.SnowAllowed((int)run.Season, run.DayOfMonth)
+           && !PaidWeatherToday(run)
+           && !greenRainToday;
 
     /// <summary>True when a Rain Dance or Storm Call bought yesterday sets today's weather. A
     /// snow day would overwrite the weather the player paid for, so it leaves the pool that day.

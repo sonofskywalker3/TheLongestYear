@@ -48,6 +48,14 @@ namespace TheLongestYear.Loop
             return mail != null && (mail.Contains("ccBoilerRoom") || mail.Contains("jojaBoilerRoom"));
         }
 
+        /// <summary>Whether today is a vanilla green rain day, so the snow day stays out of the roll.
+        /// <c>Game1.isGreenRain</c> is today's applied weather (ApplyWeatherForNewDay sets it before
+        /// DayStarted; SaveGame sets it on load); <c>Utility.isGreenRainDay()</c> is vanilla's own
+        /// schedule for today, kept as a second check so nothing that ran earlier this morning can
+        /// hide the day.</summary>
+        private static bool GreenRainToday()
+            => Game1.isGreenRain || Utility.isGreenRainDay();
+
         /// <summary>Every morning, after the run date sync and before the weekly offer.
         /// <paramref name="weekSettings"/> is read only when a plan may be needed (a week start, or
         /// the week's snapshot already exists), so no snapshot is ever taken early.</summary>
@@ -69,7 +77,7 @@ namespace TheLongestYear.Loop
                     _monitor.Log($"Wildcard day for week {run.WeekOfYear}: {SeasonName(run)} {run.WildcardDay}.", LogLevel.Info);
             }
 
-            string twist = WildcardDays.RevealToday(run, MinecartsRepaired, out bool revealedNow);
+            string twist = WildcardDays.RevealToday(run, MinecartsRepaired, out bool revealedNow, GreenRainToday);
             DayEffects.Set(twist);
             RockslidePatch.Sync(_monitor);
             if (twist != null)
