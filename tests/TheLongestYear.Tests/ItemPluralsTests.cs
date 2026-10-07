@@ -95,6 +95,20 @@ public class ItemPluralsTests
     public void The_tainted_name_of_a_fish_keeps_the_same_word(string name, string id, string expected)
         => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural, FlavoredSlotRules.FishCategory));
 
+    [Theory]
+    [InlineData("Mussel", "(O)719", "Mussels")]
+    [InlineData("Oyster", "(O)723", "Oysters")]
+    [InlineData("Clam", "(O)372", "Clams")]
+    [InlineData("Crab", "(O)717", "Crabs")]
+    [InlineData("Lobster", "(O)715", "Lobsters")]
+    [InlineData("Snail", "(O)721", "Snails")]
+    [InlineData("Cockle", "(O)718", "Cockles")]
+    [InlineData("Periwinkle", "(O)722", "Periwinkles")]
+    [InlineData("Shrimp", "(O)720", "Shrimp")]
+    [InlineData("Crayfish", "(O)716", "Crayfish")]
+    public void The_tainted_name_of_a_shellfish_takes_its_plural(string name, string id, string expected)
+        => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural, FlavoredSlotRules.FishCategory));
+
     [Fact]
     public void The_tainted_name_of_holly_is_bare()
         => Assert.Equal("Holly", ItemPlurals.Tainted("Holly", "(O)283", flavored: false, VanillaPlural));

@@ -123,6 +123,22 @@ public class AskPhrasesTests
     public void A_thing_that_is_not_a_fish_still_takes_its_plural()
         => Assert.Equal("7 Parsnips", AskPhrases.Ask(7, "(O)24", "Parsnip", ItemPluralsTests.VanillaPlural, -75));
 
+    // Review M1: the crab-pot shellfish are Fish category too, but take normal plurals; Shrimp and
+    // Crayfish keep the same word like the fish.
+    [Theory]
+    [InlineData("(O)723", "Oyster", "7 Oysters")]
+    [InlineData("(O)372", "Clam", "7 Clams")]
+    [InlineData("(O)717", "Crab", "7 Crabs")]
+    [InlineData("(O)715", "Lobster", "7 Lobsters")]
+    [InlineData("(O)721", "Snail", "7 Snails")]
+    [InlineData("(O)719", "Mussel", "7 Mussels")]
+    [InlineData("(O)718", "Cockle", "7 Cockles")]
+    [InlineData("(O)722", "Periwinkle", "7 Periwinkles")]
+    [InlineData("(O)720", "Shrimp", "7 Shrimp")]
+    [InlineData("(O)716", "Crayfish", "7 Crayfish")]
+    public void Shellfish_take_their_plurals_but_shrimp_and_crayfish_do_not(string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(7, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
+
     [Fact]
     public void Holly_comes_in_sprigs()
         => Assert.Equal("8 sprigs of Holly", Ask(8, "(O)283", "Holly"));
