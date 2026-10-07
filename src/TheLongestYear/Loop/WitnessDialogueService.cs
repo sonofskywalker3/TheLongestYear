@@ -17,13 +17,14 @@ namespace TheLongestYear.Loop
         public WitnessDialogueService(IMonitor monitor, MetaStore store) { _monitor = monitor; _store = store; }
 
         /// <summary>A scene just played (or was skipped): its witness, if it has one, owes a line.
-        /// Called while the night is still day N on the game's own calendar.</summary>
+        /// The game's own date has already rolled to N+1 when the overnight scene plays (live check,
+        /// 2026-10-07), so the night is read from the run's calendar, which still says N.</summary>
         public void OnScenePlayed(DarknessEvent e)
         {
             string npc = WitnessLines.NpcFor(e);
             if (npc == null) return;
             RunState run = _store.Run;
-            int day = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
+            int day = Calendar.DayOfYear((int)run.Season, run.DayOfMonth);
             (run.WitnessLines ??= new()).Add(new WitnessRecord { Npc = npc, SceneDayOfYear = day });
             _monitor.Log($"Witness: {npc} saw the {e} scene on day {day}.", LogLevel.Debug);
         }

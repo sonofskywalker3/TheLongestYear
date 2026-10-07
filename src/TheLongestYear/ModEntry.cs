@@ -508,6 +508,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_lights", "Debug: dump every light source in the current location with its context, colour, alpha, radius and fadeOut, plus the ambient and the lighting thresholds.", this.CmdLights);
             helper.ConsoleCommands.Add("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
+            helper.ConsoleCommands.Add("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | talk <npc> | click. 'talk' opens the NPC's top dialogue the way a conversation does; 'click' clicks an open dialogue box on.", this.CmdWitness);
             helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1649,6 +1650,34 @@ namespace TheLongestYear
         /// <summary>Debug: say where a running event is stuck and step a speak line on. Headless runs
         /// have no mouse, so an event's `speak` box never advances on its own; this clicks it. Also
         /// prints the current command and every actor's tile so a blocked `move` is visible.</summary>
+        private void CmdWitness(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            string verb = args.Length > 0 ? args[0].ToLowerInvariant() : "list";
+            if (verb == "list")
+            {
+                var records = _meta.Run.WitnessLines ?? new();
+                this.Monitor.Log($"tly_witness: {records.Count} record(s): " + string.Join("; ",
+                    records.ConvertAll(r => $"{r.Npc} scene day {r.SceneDayOfYear} said={r.Said}")), LogLevel.Info);
+                return;
+            }
+            if (verb == "click")
+            {
+                if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox open)
+                {
+                    open.receiveLeftClick(0, 0, false);
+                    this.Monitor.Log($"tly_witness: clicked the dialogue box on; menu now {Game1.activeClickableMenu?.GetType().Name ?? "none"}.", LogLevel.Info);
+                }
+                else this.Monitor.Log("tly_witness: no dialogue box open.", LogLevel.Info);
+                return;
+            }
+            NPC npc = args.Length > 1 ? Game1.getCharacterFromName(args[1]) : null;
+            if (npc == null) { this.Monitor.Log("Usage: tly_witness list | peek <npc> | talk <npc> | click", LogLevel.Warn); return; }
+            var top = npc.CurrentDialogue.Count > 0 ? npc.CurrentDialogue.Peek() : null;
+            this.Monitor.Log($"tly_witness: {npc.Name} stack={npc.CurrentDialogue.Count} top=[{top?.TranslationKey}] '{top?.getCurrentDialogue()}'", LogLevel.Info);
+            if (verb == "talk") Game1.drawDialogue(npc);
+        }
+
         private void CmdEventStep(string command, string[] args)
         {
             // Context.IsWorldReady stays false for the whole pre-Day-1 window (SMAPI holds it off
@@ -3741,6 +3770,7 @@ namespace TheLongestYear
                 case "tly_obtain": this.CmdObtain(command, args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_eventstep": this.CmdEventStep(command, args); break;
+                case "tly_witness": this.CmdWitness(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
