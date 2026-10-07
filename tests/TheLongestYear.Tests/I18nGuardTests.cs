@@ -163,6 +163,8 @@ public class I18nGuardTests
             // reach Strings.Get through a variable, so walk the rule's own key set.
             foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
                 _ = Strings.Get(key);
+            foreach (string key in FlavorlessBundleSlots.AllAskNameKeys)
+                _ = Strings.Get(key);
             // event.turn.* keys: the Summer closer picks its key with a ternary inside the
             // KeyPrefix concatenation (KeyPrefix + (rewound ? "summer-3-again" : "summer-3")),
             // so the literal-scanning regex above can never see either half. Walk the exhaustive

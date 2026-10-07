@@ -32,6 +32,28 @@ public static class FlavorlessBundleSlots
             ["(O)SmokedFish"] = "bundle-slot.any-smoked-fish",
         };
 
+    /// <summary>The plain name of each good, for the Junimos' ask ("Bring us 3 jars of Dried Fruit
+    /// instead"): a tamper writes its replacement unflavoured, so the game's own name for it is the
+    /// bare "Dried" or "Smoked" too.</summary>
+    private static readonly IReadOnlyDictionary<string, string> AskNameKeys =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["(O)DriedFruit"] = "item-name.dried-fruit",
+            ["(O)DriedMushrooms"] = "item-name.dried-mushrooms",
+            ["(O)SmokedFish"] = "item-name.smoked-fish",
+        };
+
+    /// <summary>Every ask-name key, for the i18n orphan guard.</summary>
+    public static IEnumerable<string> AllAskNameKeys => AskNameKeys.Values;
+
+    /// <summary>The i18n key of this good's plain name for an ask, or null for every other item.
+    /// Qualified or unqualified id.</summary>
+    public static string? AskNameKeyFor(string? itemId)
+    {
+        if (string.IsNullOrEmpty(itemId)) return null;
+        return AskNameKeys.TryGetValue(BundleParsing.NormalizeItemId(itemId), out string? key) ? key : null;
+    }
+
     /// <summary>Every key this rule can return. The keys are dictionary values, not literals at a
     /// call site, so the i18n orphan guard walks this to prove they are all reachable.</summary>
     public static IEnumerable<string> AllLabelKeys => LabelKeys.Values;

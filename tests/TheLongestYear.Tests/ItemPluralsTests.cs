@@ -13,7 +13,7 @@ public class ItemPluralsTests
 {
     private static readonly string[] VanillaLeavesAlone = { "Clay", "Tea Leaves", "Hops", "Bream", "Driftwood", "Mixed Seeds", "Weeds" };
 
-    private static string VanillaPlural(string word)
+    internal static string VanillaPlural(string word)
     {
         switch (word)
         {
@@ -82,14 +82,14 @@ public class ItemPluralsTests
         => Assert.Equal("Parsnip", ItemPlurals.Plural("Parsnip", null!));
 
     [Theory]
-    [InlineData(1, "Parsnip", "Parsnip")]
-    [InlineData(3, "Parsnip", "3 Parsnips")]
-    [InlineData(3, "Beer", "3 Beer")]
-    [InlineData(5, "Tea Leaves", "5 Tea Leaves")]
-    [InlineData(2, "Coal", "2 lumps of Coal")]
-    [InlineData(0, "Parsnip", "Parsnip")]
-    public void The_ask_is_the_bare_name_for_one_and_a_counted_plural_for_more(int count, string name, string ask)
-        => Assert.Equal(ask, ItemPlurals.Ask(count, name, VanillaPlural));
+    [InlineData(1, "(O)24", "Parsnip", "Parsnip")]
+    [InlineData(3, "(O)24", "Parsnip", "3 Parsnips")]
+    [InlineData(3, "(O)346", "Beer", "3 mugs of Beer")]
+    [InlineData(5, "(O)815", "Tea Leaves", "5 Tea Leaves")]
+    [InlineData(2, "(O)382", "Coal", "2 lumps of Coal")]
+    [InlineData(0, "(O)24", "Parsnip", "Parsnip")]
+    public void The_ask_is_the_bare_name_for_one_and_a_counted_phrase_for_more(int count, string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(count, id, name, VanillaPlural));
 
     [Theory]
     [InlineData(1, false)]

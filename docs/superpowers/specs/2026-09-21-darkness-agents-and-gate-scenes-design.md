@@ -97,13 +97,19 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     "all the Dried Fruit" (designer, 2026-10-07). The tamper only ever takes an item the board asks
     for in exactly one slot (wiring spec 2026-09-15, Tampering), and a later tamper never picks a
     tainted item, in any flavour, as its replacement, so the line stays true: nothing on the board
-    wants the tainted thing.
+    wants the tainted thing. The replacement is always new to the board: no slot anywhere asks for
+    it, in any flavour.
   - Plurals are right: {{old}} is the item's plural (the game's own pluralizer, corrected for
     mass nouns like Beer, Wool, Hay and Honey, also as the last word of a name such as Blueberry
     Jelly; a flavoured Dried Fruit or Smoked Fish keeps the game's own name, which already reads
-    right: "Dried Apples", "Smoked Salmon"), the ask is "3 Parsnips" for more than one and the
-    bare name for one, and a plural ask ends "They remain pure." (key
-    `event.darkness.tamper-3-plural`) instead of "It remains pure.".
+    right: "Dried Apples", "Smoked Salmon"). {{new}} is the bare name for one. For more than one,
+    a liquid or spread names the container its sprite shows, before the full name ("3 bottles of
+    Blueberry Wine", "3 jars of Wild Honey", "3 mugs of Beer", "3 glasses of Pale Ale", "3 cups of
+    Coffee", "3 tins of Caviar", "3 clusters of Salmon Roe", "3 bowls of Pumpkin Soup"); a
+    countable thing takes its plural ("3 Parsnips", "3 Sea Jellies"); bulk stuff with no container
+    stays bare ("3 Clay", "3 Wool", "3 Hay"), or keeps the game's own phrase ("3 lumps of Coal").
+    The table lives in `AskPhrases`. A plural ask, container phrases included, ends "They remain
+    pure." (key `event.darkness.tamper-3-plural`) instead of "It remains pure.".
   - No purple screen glow under the middle line; the low sound stays.
   It names the item, which the player could not know.
 - New: an overnight scene per kind of strike, in the slot vanilla uses for the fairy and the witch.

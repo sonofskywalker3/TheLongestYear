@@ -335,8 +335,14 @@ public static class TamperRule
     }
 
     /// <summary>The replacement: same room theme (the Bulletin Board's Mixed takes any), not
-    /// already in the bundle, never an item the darkness already tainted this loop, then the
-    /// closest few in effort to the original, one at random. Null when nothing is left.
+    /// already in the bundle, not asked by any slot on <paramref name="board"/>, never an item the
+    /// darkness already tainted this loop, then the closest few in effort to the original, one at
+    /// random. Null when nothing is left.
+    ///
+    /// The board bar (designer, 2026-10-07: "they should skip anything on the board, it's something
+    /// new"): every slot of every bundle in the requirements counts, filled or open, and an id
+    /// counts in every flavour, since the replacement is written unflavoured and would take any of
+    /// them. Null <paramref name="board"/> skips the bar (tests of the other rules).
     ///
     /// The tainted bar covers every flavour of a tainted id (fix round 1, 2026-10-07): a
     /// replacement is written unflavoured, so an "Any Dried Fruit" ask would take the tainted
@@ -344,7 +350,7 @@ public static class TamperRule
     /// tainted.</summary>
     public static TamperCandidate? PickReplacement(
         TamperTarget target, int originalEffort, IReadOnlyList<TamperCandidate> candidates, Random rng,
-        IReadOnlyList<TamperRecord>? tainted = null)
+        IReadOnlyList<TamperRecord>? tainted = null, IReadOnlyList<BundleRequirement>? board = null)
     {
         if (target is null) throw new ArgumentNullException(nameof(target));
         if (candidates is null) throw new ArgumentNullException(nameof(candidates));
@@ -355,9 +361,16 @@ public static class TamperRule
             foreach (TamperRecord record in tainted)
                 if (!string.IsNullOrEmpty(record.OldItemId))
                     taintedIds.Add(BundleParsing.NormalizeItemId(record.OldItemId));
+        var onBoard = new HashSet<string>(StringComparer.Ordinal);
+        if (board != null)
+            foreach (BundleRequirement req in board)
+                foreach (BundleSlot slot in req.Slots)
+                    if (!string.IsNullOrEmpty(slot.ItemId))
+                        onBoard.Add(BundleParsing.NormalizeItemId(slot.ItemId));
         List<TamperCandidate> eligible = candidates
             .Where(c => !inBundle.Contains(c.ItemId))
             .Where(c => !taintedIds.Contains(BundleParsing.NormalizeItemId(c.ItemId)))
+            .Where(c => !onBoard.Contains(BundleParsing.NormalizeItemId(c.ItemId)))
             .Where(c => target.Bundle.Theme == Theme.Mixed || c.Theme == target.Bundle.Theme)
             .OrderBy(c => Math.Abs(c.Effort - originalEffort))
             .ThenBy(c => c.ItemId, StringComparer.Ordinal)
