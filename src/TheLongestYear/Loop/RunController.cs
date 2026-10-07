@@ -979,9 +979,9 @@ namespace TheLongestYear.Loop
         /// exitFunction callback.</summary>
         private void DoDayStartSeasonAndHub()
         {
-            // What the darkness took in the night, before the hub can cover it. A changed board
-            // plays the Junimos' porch scene first and continues the morning after it.
-            if (_sabotage != null && _sabotage.ShowMorning(DoDayStartSeasonAndHubCore)) return;
+            // What the darkness took in the night, before the hub can cover it. A changed board's
+            // report waits for the Junimos' scene at the farmhouse door; the morning goes on at once.
+            _sabotage?.ShowMorning();
             DoDayStartSeasonAndHubCore();
         }
 

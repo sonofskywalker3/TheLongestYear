@@ -760,24 +760,20 @@ namespace TheLongestYear.Loop
 
         // ------------------------------------------------------------------ the morning
 
-        /// <summary>The morning: HUD lines for what the night took. When the board changed, nothing
-        /// shows yet: the reports wait for the Junimos' scene, which plays when the farmer first
-        /// steps out onto the Farm (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07), and they show
-        /// after it exactly as they did after the old wake-up scene. Always returns false: the
+        /// <summary>The morning: HUD lines for what the night took. A tamper report waits for the
+        /// Junimos' scene, which plays when the farmer first steps out onto the Farm
+        /// (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07); every other report (blight,
+        /// spoiled, missing, the hall line for a reversion) shows on waking as it always has. The
         /// morning goes on at once either way.</summary>
-        public bool ShowMorning(Action continueWith)
+        public void ShowMorning()
         {
             // The morning cannot report what has not happened: a strike whose scene never played
             // lands here at the latest.
             ApplyPendingIfAny("morning");
-            if (!RunActivation.IsActive) return false;
+            if (!RunActivation.IsActive) return;
             if (TamperSceneOwed)
-            {
                 _monitor.Log("Darkness: the board changed in the night; the Junimos wait for the farmer to step out onto the farm.", LogLevel.Info);
-                return false;
-            }
             ShowMorningReports();
-            return false;
         }
 
         /// <summary>A tamper report is waiting for the Junimos' scene.</summary>
@@ -788,8 +784,9 @@ namespace TheLongestYear.Loop
 
         /// <summary>Start the Junimos' "tainted" scene where the farmer stands, if a tamper report is
         /// waiting. The report is consumed only once the scene has really started, so it plays once,
-        /// and a scene that cannot start here keeps it for the next Farm entry. The night's other
-        /// reports show after the scene, as they always have.</summary>
+        /// and a scene that cannot start here keeps it for the next Farm entry. Only the report the
+        /// scene tells is consumed: a second tamper keeps its report for the next door exit. Any
+        /// other report still waiting shows after the scene.</summary>
         public bool TryStartTamperScene()
         {
             if (!TamperSceneOwed) return false;
@@ -806,16 +803,20 @@ namespace TheLongestYear.Loop
                 : Strings.ItemName(tamper.ItemId);
             string ask = AskPhrases.Ask(tamper.Count, tamper.ItemId, askName, gamePlural);
             if (!StartTamperScene(oldName, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
-            Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
+            Run.PendingSabotageReports.Remove(tamper);
             return true;
         }
 
-        /// <summary>Show what the night took, as HUD lines, then forget them.</summary>
+        /// <summary>Show what the night took, as HUD lines, then forget what was shown. A tamper
+        /// report stays while the Junimos' scene can still tell it (<see cref="TamperSceneOwed"/>);
+        /// with no scene to tell it, it shows as the hall line like a reversion.</summary>
         public void ShowMorningReports()
         {
             if (!RunActivation.IsActive) return;
-            List<SabotageReport> reports = Run.PendingSabotageReports;
-            if (reports == null || reports.Count == 0) return;
+            List<SabotageReport> pending = Run.PendingSabotageReports;
+            if (pending == null || pending.Count == 0) return;
+            List<SabotageReport> reports = MorningReports.TakeShownNow(pending, tampersWait: StartTamperScene != null);
+            if (reports.Count == 0) return;
             // The hall fronts share one line and say it once, however many struck (Jeff, 2026-09-09:
             // the player wakes with a feeling, the board tells the rest).
             bool hallSaid = false;
@@ -841,7 +842,6 @@ namespace TheLongestYear.Loop
                         break;
                 }
             }
-            reports.Clear();
             Game1.playSound("shadowDie");
         }
 
