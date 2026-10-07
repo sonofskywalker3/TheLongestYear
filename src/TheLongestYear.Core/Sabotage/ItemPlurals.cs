@@ -63,8 +63,9 @@ namespace TheLongestYear.Core.Sabotage
         /// is the game's display name for it. The game's own names for a flavoured Dried Fruit or
         /// Smoked Fish already read right: Object.loadDisplayName runs Dried Fruit through
         /// makePlural itself ("Dried Apples"), and "all the Smoked Salmon" is how the fish is said,
-        /// so those stay as the game wrote them. Anything else takes <see cref="Plural"/>.</summary>
-        public static string Tainted(string name, string baseItemId, bool flavored, Func<string, string> gamePlural)
+        /// so those stay as the game wrote them. Anything else takes <see cref="Plural"/>. A fish (by
+        /// <paramref name="category"/>) keeps the same word: "all the Pike".</summary>
+        public static string Tainted(string name, string baseItemId, bool flavored, Func<string, string> gamePlural, int category = AskPhrases.NoCategory)
         {
             if (flavored && FlavoredSlotRules.IsFlavored(baseItemId)) return name;
             // The ask's own word lists (AskPhrases): bulk stuff and container goods are mass nouns
@@ -72,6 +73,8 @@ namespace TheLongestYear.Core.Sabotage
             // are counted ("all the Sea Jellies").
             if (AskPhrases.ContainerFor(baseItemId) != null || AskPhrases.IsSameInThePlural(baseItemId)) return name;
             if (AskPhrases.IsCountable(baseItemId)) return CountedPlural(name, gamePlural);
+            // A fish keeps the same word (designer, 2026-10-07: "all the Pike").
+            if (AskPhrases.IsFishSameInThePlural(baseItemId, category)) return name;
             return Plural(name, gamePlural);
         }
 

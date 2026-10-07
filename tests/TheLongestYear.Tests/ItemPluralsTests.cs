@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
 using Xunit;
 
@@ -83,6 +84,20 @@ public class ItemPluralsTests
     [InlineData("Parsnip", "(O)24", "Parsnips")]
     public void The_tainted_name_reads_like_the_ask(string name, string id, string expected)
         => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural));
+
+    // Designer, 2026-10-07: "all the Pike", "all the Holly"; the jellies still count.
+    [Theory]
+    [InlineData("Pike", "(O)144", "Pike")]
+    [InlineData("Salmon", "(O)139", "Salmon")]
+    [InlineData("Largemouth Bass", "(O)136", "Largemouth Bass")]
+    [InlineData("Octopus", "(O)149", "Octopus")]
+    [InlineData("Sea Jelly", "(O)SeaJelly", "Sea Jellies")]
+    public void The_tainted_name_of_a_fish_keeps_the_same_word(string name, string id, string expected)
+        => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural, FlavoredSlotRules.FishCategory));
+
+    [Fact]
+    public void The_tainted_name_of_holly_is_bare()
+        => Assert.Equal("Holly", ItemPlurals.Tainted("Holly", "(O)283", flavored: false, VanillaPlural));
 
     [Fact]
     public void A_vowel_before_the_y_takes_a_plain_s()

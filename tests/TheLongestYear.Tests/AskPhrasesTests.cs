@@ -96,6 +96,37 @@ public class AskPhrasesTests
     public void Bulk_stuff_with_no_container_stays_bare(string id, string name, string ask)
         => Assert.Equal(ask, Ask(3, id, name));
 
+    // Designer, 2026-10-07: every fish keeps the same word ("7 Pike", "7 Salmon"), except the
+    // jellies he already chose ("Sea Jellies") and the fish goods with a container or a bare word.
+    [Theory]
+    [InlineData(7, "(O)144", "Pike", "7 Pike")]
+    [InlineData(7, "(O)139", "Salmon", "7 Salmon")]
+    [InlineData(3, "(O)136", "Largemouth Bass", "3 Largemouth Bass")]
+    [InlineData(5, "(O)132", "Bream", "5 Bream")]
+    [InlineData(4, "(O)128", "Pufferfish", "4 Pufferfish")]
+    [InlineData(2, "(O)149", "Octopus", "2 Octopus")]
+    [InlineData(3, "(O)SeaJelly", "Sea Jelly", "3 Sea Jellies")]
+    [InlineData(3, "(O)RiverJelly", "River Jelly", "3 River Jellies")]
+    [InlineData(3, "(O)CaveJelly", "Cave Jelly", "3 Cave Jellies")]
+    public void A_fish_keeps_the_same_word(int count, string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(count, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
+
+    [Theory]
+    [InlineData("(O)812", "Salmon Roe", "3 clusters of Salmon Roe")]
+    [InlineData("(O)447", "Aged Salmon Roe", "3 jars of Aged Salmon Roe")]
+    [InlineData("(O)445", "Caviar", "3 tins of Caviar")]
+    [InlineData("(O)SmokedFish", "Smoked Salmon", "3 Smoked Salmon")]
+    public void The_fish_goods_keep_their_containers(string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(3, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
+
+    [Fact]
+    public void A_thing_that_is_not_a_fish_still_takes_its_plural()
+        => Assert.Equal("7 Parsnips", AskPhrases.Ask(7, "(O)24", "Parsnip", ItemPluralsTests.VanillaPlural, -75));
+
+    [Fact]
+    public void Holly_comes_in_sprigs()
+        => Assert.Equal("8 sprigs of Holly", Ask(8, "(O)283", "Holly"));
+
     [Theory]
     [InlineData("(O)346", "Beer")]
     [InlineData("(O)340", "Wild Honey")]
