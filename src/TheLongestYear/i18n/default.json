@@ -583,6 +583,10 @@
     "bundle-slot.any-dried-fruit": "Any Dried Fruit",
     "bundle-slot.any-dried-mushrooms": "Any Dried Mushrooms",
     "bundle-slot.any-smoked-fish": "Any Smoked Fish",
+    // The same goods' plain names, for the Junimos' tamper ask ("Bring us 3 jars of Dried Fruit").
+    "item-name.dried-fruit": "Dried Fruit",
+    "item-name.dried-mushrooms": "Dried Mushrooms",
+    "item-name.smoked-fish": "Smoked Fish",
 
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",

@@ -601,13 +601,13 @@ namespace TheLongestYear.Loop
             foreach (TamperTarget target in ordered)
             {
                 int effort = availability.For(target.ItemId).Effort;
-                TamperCandidate replacement = TamperRule.PickReplacement(target, effort, candidates, rng, Run.Tampers);
+                TamperCandidate replacement = TamperRule.PickReplacement(target, effort, candidates, rng, Run.Tampers, requirements);
                 if (replacement == null) continue;
                 int maxCount = TamperRule.MaxCount(replacement.ItemId, QuantityAskPass.BasisByDeadline(replacement.ItemId, CoreSeason.Winter));
                 int stack = TamperRule.Stack(maxCount, weekOfWinter, Level, rng);
                 return new TamperPlan { Target = target, ItemId = replacement.ItemId, Stack = stack };
             }
-            _monitor.Log("Darkness: tampering found no fair replacement for any open slot.", LogLevel.Info);
+            _monitor.Log("Darkness: tampering found no fair replacement for any open slot (a replacement must be new to the board and never a tainted item).", LogLevel.Info);
             return null;
         }
 
@@ -790,7 +790,12 @@ namespace TheLongestYear.Loop
             Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
             // The exact item, flavour included (designer, 2026-10-07: "all the Dried Apples").
             string oldName = ItemPlurals.Tainted(ExactName(tamper.OldItemId, tamper.OldFlavor), tamper.OldItemId, !string.IsNullOrEmpty(tamper.OldFlavor), gamePlural);
-            string ask = ItemPlurals.Ask(tamper.Count, Strings.ItemName(tamper.ItemId), gamePlural);
+            // The counted ask names a container or a proper plural (designer, 2026-10-07: "jars of
+            // wild honey, and sea jellies, and bottles of blueberry wine").
+            string askName = FlavorlessBundleSlots.AskNameKeyFor(tamper.ItemId) is string nameKey
+                ? Strings.Get(nameKey)
+                : Strings.ItemName(tamper.ItemId);
+            string ask = AskPhrases.Ask(tamper.Count, tamper.ItemId, askName, gamePlural);
             if (!StartTamperScene(oldName, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
             Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
             return true;
