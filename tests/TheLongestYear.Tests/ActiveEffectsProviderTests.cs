@@ -86,4 +86,48 @@ public class ActiveEffectsProviderTests
         Assert.False(ActiveEffectsProvider.ActiveLiability("forage_off"));
         ActiveEffectsProvider.Clear();
     }
+
+    [Fact]
+    public void Two_bonuses_stack_and_either_liability_is_active_until_suppressed()
+    {
+        RunActivation.Activate();
+        try
+        {
+            ActiveEffectsProvider.Set("forage_yield_up", "mines_closed");
+            ActiveEffectsProvider.SetSecond("forage_yield_up", "fishing_off");
+            Assert.Equal(2, ActiveEffectsProvider.BonusStacks("forage_yield_up"));
+            Assert.True(ActiveEffectsProvider.ActiveLiability("mines_closed"));
+            Assert.True(ActiveEffectsProvider.ActiveLiability("fishing_off"));
+            ActiveEffectsProvider.SuppressSecondLiability();
+            Assert.True(ActiveEffectsProvider.ActiveLiability("mines_closed"));
+            Assert.False(ActiveEffectsProvider.ActiveLiability("fishing_off"));
+            ActiveEffectsProvider.SetSecond("x", "fishing_off");
+            ActiveEffectsProvider.SuppressLiability();
+            Assert.False(ActiveEffectsProvider.ActiveLiability("mines_closed"));
+            Assert.True(ActiveEffectsProvider.ActiveLiability("fishing_off"));
+        }
+        finally
+        {
+            ActiveEffectsProvider.Clear();
+            RunActivation.Deactivate();
+        }
+    }
+
+    [Fact]
+    public void Set_and_Clear_clear_the_second_entry()
+    {
+        try
+        {
+            ActiveEffectsProvider.SetSecond("a", "b");
+            ActiveEffectsProvider.SuppressSecondLiability();
+            ActiveEffectsProvider.Set("c", "d");
+            Assert.Null(ActiveEffectsProvider.SecondBonusId);
+            Assert.Null(ActiveEffectsProvider.SecondLiabilityId);
+            Assert.False(ActiveEffectsProvider.SecondLiabilitySuppressed);
+            ActiveEffectsProvider.SetSecond("a", "b");
+            ActiveEffectsProvider.Clear();
+            Assert.Null(ActiveEffectsProvider.SecondBonusId);
+        }
+        finally { ActiveEffectsProvider.Clear(); }
+    }
 }

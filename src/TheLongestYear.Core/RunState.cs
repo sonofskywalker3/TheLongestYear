@@ -89,6 +89,20 @@ public sealed class RunState
     /// </summary>
     public Theme? NextMonthSelection { get; set; }
 
+    /// <summary>The drawback paired with <see cref="CurrentSelection"/> this week (randomizer
+    /// pairings). Null means the theme's own drawback (old saves, pairings off). The caller sets
+    /// it right after <see cref="Select"/>.</summary>
+    public string? CurrentLiabilityId { get; set; }
+
+    /// <summary>The randomizer multiplier on this week's goal JP (the weekly bonus shares and the
+    /// goal-slot donation bonus), stored at selection so payment never recomputes it. 1.0 for old
+    /// saves, pairings that predate it, and every pick made off the hub cards.</summary>
+    public double CurrentGoalMultiplier { get; set; } = 1.0;
+
+    /// <summary>The goal multiplier of the day-28 pre-pick card, carried into
+    /// <see cref="CurrentGoalMultiplier"/> when <see cref="BeginNewMonth"/> applies the pre-pick.</summary>
+    public double NextMonthGoalMultiplier { get; set; } = 1.0;
+
     /// <summary>The week-of-year for which the planning hub last presented an offer (-1 = never).
     /// Used so a re-trigger mid-week is a no-op — the hub only opens once per target week.</summary>
     public int OfferPresentedWeek { get; set; } = -1;
@@ -97,6 +111,65 @@ public sealed class RunState
     /// day-28 pre-pick hub this is next month's week 1. State for any other week is stale and
     /// ignored (Nijah, Nexus 2026-09-28: a re-roll is kept for the week when the hub closes).</summary>
     public int RerollWeek { get; set; } = -1;
+
+    /// <summary>The week <see cref="RandomizerSnapshot"/> was taken for; -1 when none.</summary>
+    public int RandomizerWeek { get; set; } = -1;
+
+    /// <summary>Wildcard days: the week (of year) whose day is in <see cref="WildcardDay"/>; -1 = none.</summary>
+    public int WildcardWeek { get; set; } = -1;
+
+    /// <summary>Wildcard days: this week's wildcard day-of-month; 0 = none.</summary>
+    public int WildcardDay { get; set; }
+
+    /// <summary>Wildcard days: the twist, set when the day is revealed; null until then.</summary>
+    public string? WildcardTwist { get; set; }
+
+    /// <summary>Wildcard days: the day-of-month the twist was revealed, so a reload re-applies it.</summary>
+    public int WildcardTwistDay { get; set; }
+
+    /// <summary>Wildcard days: set at the end of an extra_growth day so tonight's crop pass adds its
+    /// tick (the overnight hooks already see tomorrow's date); cleared the next morning.</summary>
+    public bool WildcardGrowthNight { get; set; }
+
+    /// <summary>Wildcard days: the snow day or night event whose overnight half runs tonight, set
+    /// at DayEnding of that day (<see cref="WildcardDays.NightTwistTonight"/>); cleared the next morning.</summary>
+    public string? WildcardNightTwist { get; set; }
+
+    /// <summary>Random Cart Days: the week (of year) whose rolled days are in <see cref="CartDays"/>; -1 = none.</summary>
+    public int CartDaysWeek { get; set; } = -1;
+
+    /// <summary>Random Cart Days: this week's rolled cart days (day-of-month), stored the first time they are asked for.</summary>
+    public List<int> CartDays { get; set; } = new();
+
+    /// <summary>The Randomizer settings as they stood when this week's offer was first shown.</summary>
+    public RandomizerSettings? RandomizerSnapshot { get; set; }
+
+    /// <summary>This week's Randomizer settings. The first call in a week stores a copy of
+    /// <paramref name="live"/>; later calls that week return the copy, so a setting changed mid-week
+    /// waits for the next weekly offer.</summary>
+    public RandomizerSettings RandomizerFor(int weekOfYear, RandomizerSettings live)
+    {
+        if (RandomizerWeek == weekOfYear && RandomizerSnapshot != null) return RandomizerSnapshot;
+        RandomizerWeek = weekOfYear;
+        RandomizerSnapshot = (live ?? new RandomizerSettings()).Clone();
+        return RandomizerSnapshot;
+    }
+
+    /// <summary>On load: a save made mid-week before the Randomizer existed has no snapshot for a
+    /// week whose offer was already shown (or whose theme is already picked), so the first read
+    /// would take whatever the live config says now. That week ran with everything off, so store
+    /// an all-off snapshot for it. True when the snapshot was stored (final review M1).</summary>
+    public bool SnapshotOffIfWeekAlreadyOffered()
+    {
+        int week = WeekOfYear;
+        if (RandomizerWeek == week && RandomizerSnapshot != null) return false;
+        bool offered = OfferPresentedWeek == week;
+        bool pickedThisWeek = CurrentSelection.HasValue && DiscountWeek == week;
+        if (!offered && !pickedThisWeek) return false;
+        RandomizerWeek = week;
+        RandomizerSnapshot = new RandomizerSettings();
+        return true;
+    }
 
     /// <summary>Pair keys (<see cref="RerollCycle.PairKey"/>) shown on the hub during
     /// <see cref="RerollWeek"/>, the first offer included.</summary>
@@ -361,6 +434,45 @@ public sealed class RunState
     /// <summary>The ledger as a read view for the gate, the page and the sims.</summary>
     public SlotLedger DonatedLedger() => new SlotLedger(DonatedSlots ?? new List<DonatedSlot>());
 
+    /// <summary>Double theme week: the second picked theme and its per-week state (all cleared by
+    /// <see cref="Select"/>, <see cref="BeginNewMonth"/> and <see cref="BeginNewRun"/>).</summary>
+    public Theme? SecondSelection { get; set; }
+    public List<BonusSlot> SecondWeekBonusSlots { get; set; } = new();
+    public string? SecondLiabilityId { get; set; }
+    public double SecondGoalMultiplier { get; set; } = 1.0;
+    public bool SecondLiabilitySuppressedThisWeek { get; set; }
+    public bool IsDoubleWeekSelection => SecondSelection.HasValue;
+
+    /// <summary>The week's random shrine donation goals (Randomizer). ListIndex 0 belongs to the
+    /// first theme (cleared by <see cref="Select"/>), 1 to the double-week second theme (cleared by
+    /// <see cref="SelectSecond"/>); all cleared by BeginNewMonth and BeginNewRun.</summary>
+    public List<ShrineGoal> CurrentWeekShrineGoals { get; set; } = new();
+
+    public void SelectSecond(Theme theme)
+    {
+        SecondSelection = theme;
+        if (!SelectedThemesThisMonth.Contains(theme))
+            SelectedThemesThisMonth.Add(theme);
+        (SecondWeekBonusSlots ??= new()).Clear();
+        (CurrentWeekShrineGoals ??= new()).RemoveAll(g => g.ListIndex == 1);
+        ClearSecondState(keepSelection: true);
+    }
+
+    private void ClearSecondState(bool keepSelection = false)
+    {
+        if (!keepSelection) SecondSelection = null;
+        SecondLiabilityId = null;
+        SecondGoalMultiplier = 1.0;
+        SecondLiabilitySuppressedThisWeek = false;
+    }
+
+    private void ClearSecondSelection()
+    {
+        (CurrentWeekShrineGoals ??= new()).RemoveAll(g => g.ListIndex == 1);
+        (SecondWeekBonusSlots ??= new()).Clear();
+        ClearSecondState();
+    }
+
     /// <summary>Select a theme for this week: set current and add to the month's selections set.
     /// Also clears <see cref="LiabilitySuppressedThisWeek"/> — a fresh pick must always start
     /// with the liability active, otherwise the player could keep cycling themes to skip
@@ -368,6 +480,10 @@ public sealed class RunState
     public void Select(Theme theme)
     {
         CurrentSelection = theme;
+        CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
+        CurrentWeekShrineGoals.RemoveAll(g => g.ListIndex == 0);
         if (!SelectedThemesThisMonth.Contains(theme))
             SelectedThemesThisMonth.Add(theme);
         LiabilitySuppressedThisWeek = false;
@@ -386,6 +502,10 @@ public sealed class RunState
         DayOfMonth = 1;
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
+        CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
+        CurrentWeekShrineGoals.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         LiabilitySuppressedThisWeek = false;
@@ -397,8 +517,10 @@ public sealed class RunState
         if (NextMonthSelection.HasValue)
         {
             Select(NextMonthSelection.Value);
+            CurrentGoalMultiplier = NextMonthGoalMultiplier;
             NextMonthSelection = null;
         }
+        NextMonthGoalMultiplier = 1.0;
     }
 
     /// <summary>Start a fresh loop attempt: reset to Spring 1, wipe ledger + selections, set the new seed.</summary>
@@ -412,10 +534,15 @@ public sealed class RunState
         (DonatedSlots ??= new()).Clear();
         SelectedThemesThisMonth.Clear();
         CurrentSelection = null;
+        CurrentLiabilityId = null;
         NextMonthSelection = null;
+        CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
+        NextMonthGoalMultiplier = 1.0;
         AwardedBundleCompletions.Clear();
         AwardedRoomCompletions.Clear();
         VaultBundlesPaid.Clear();
+        CurrentWeekShrineGoals.Clear();
         CurrentWeekBonusItems.Clear();
         CurrentWeekBonusSlots.Clear();
         // The rewind rewrites the whole board, so no discounted line is left to put back.
@@ -423,6 +550,16 @@ public sealed class RunState
         RestartMenusDone = false;
         OfferPresentedWeek = -1;
         ClearReroll();
+        RandomizerWeek = -1;
+        RandomizerSnapshot = null;
+        CartDaysWeek = -1;
+        (CartDays ??= new()).Clear();
+        WildcardWeek = -1;
+        WildcardDay = 0;
+        WildcardTwist = null;
+        WildcardTwistDay = 0;
+        WildcardGrowthNight = false;
+        WildcardNightTwist = null;
         PeakMineFloor = 0;
         CartStockDay = -1;
         // A rewind means the festival has not happened yet for this farmer: the calendar is back

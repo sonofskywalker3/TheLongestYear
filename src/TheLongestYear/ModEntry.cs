@@ -80,6 +80,7 @@ namespace TheLongestYear
         private PeakMineFloorTracker _peakMineFloorTracker;
         private JunimoStashService _stashService;
         private WeeklyThemeQuestService _questService;
+        private TheLongestYear.Loop.WildcardDayService _wildcardDays;
         private IntroEventInjector _introInjector;
         private OpeningStringsEditor _openingStrings;
         private OpeningEventInjector _openingEvent;
@@ -145,12 +146,13 @@ namespace TheLongestYear
             TheLongestYear.Core.Strings.InitItemNames(id => ItemRegistry.GetDataOrErrorItem(id).DisplayName);
 
             _config = helper.ReadConfig<GameplayConfig>();
+            _config.Randomizer ??= new RandomizerSettings();
             CartSlotLimitPatch.Enabled = _config.LimitTravelingCartStock;
             TheLongestYear.Loop.FestivalTimeFlow.Enabled = _config.FestivalTimeFlows;
             TheLongestYear.Loop.FestivalMainEventOncePatch.Enabled = _config.FestivalMainEventOncePerDay;
 
             // One-shot config migration.
-            bool migrated = false;
+            bool stashTileMigrated = false;
             // 2026-05-28 second-pass migration for the stash tile:
             // The first migration set (72,12) as a hardcoded default, but the 2026-05-27 playtest
             // showed that tile is invisible on the Standard farm (under the farmhouse roof on
@@ -158,9 +160,13 @@ namespace TheLongestYear
             // relative to the FarmHouse entry instead.
             if (_config.StashTileX == 72 && _config.StashTileY == 12)
             {
-                _config.StashTileX = 0; _config.StashTileY = 0; migrated = true;
+                _config.StashTileX = 0; _config.StashTileY = 0; stashTileMigrated = true;
             }
-            if (migrated)
+            if (RandomizerMigration.Apply(_config))
+            {
+                this.Monitor.Log("Migrated config.json: theme reroll switch moved to Randomizer > Rerolls = Free.", LogLevel.Info);
+            }
+            if (stashTileMigrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
             // Darkness dial (spec 2026-09-15 Part B, 2.3): a config from before the dial sets it,
             // and the overall lever, to the lowest of the nine existing dials (Jeff, 2026-09-14).
@@ -168,7 +174,6 @@ namespace TheLongestYear
             // changes nothing the player would recognise, so it says nothing.
             if (_config.Difficulty.MigrateDarkness() && !_config.Difficulty.IsAllNormal())
             {
-                migrated = true;
                 this.Monitor.Log($"Migrated config.json: Darkness dial set to {_config.Difficulty.Darkness} (the lowest existing dial).", LogLevel.Info);
             }
 
@@ -250,6 +255,7 @@ namespace TheLongestYear
                         // Task 12 adds the witness hook here.
                     });
             };
+            TheLongestYear.Loop.WildcardNightEventPatch.Monitor = this.Monitor;
             WeatherScheduleWriterPatch.Monitor = this.Monitor;
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
@@ -425,7 +431,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
             helper.ConsoleCommands.Add("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             helper.ConsoleCommands.Add("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
-            helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme>", this.CmdSelect);
+            helper.ConsoleCommands.Add("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme> [left|right]", this.CmdSelect);
             helper.ConsoleCommands.Add("tly_offer", "Show this week's selection offer.", this.CmdOffer);
             helper.ConsoleCommands.Add("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call; 'all' presses the rewind's skip button (debug/automation).", this.CmdSkipScene);
             helper.ConsoleCommands.Add("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
@@ -454,8 +460,11 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
             helper.ConsoleCommands.Add("tly_trophytest", "Diagnostics-only proof that the weapon/hat donation patches accept (W)13/(H)8/(O)520 as valid Gil's Trophies ingredients. Builds ephemeral items + a detached synthetic Bundle (never touches the real CC board) and logs PASS/FAIL per id. Requires a loaded save.", this.CmdTrophyTest);
             helper.ConsoleCommands.Add("tly_testdonate", "Simulate a CC donation through the JP service. Usage: tly_testdonate <qualifiedId> [count]", this.CmdTestDonate);
+            helper.ConsoleCommands.Add("tly_hubcards", "Log each planning hub card: slot, theme (? if face down), drawback, goal multiplier (debug).", this.CmdHubCards);
+            helper.ConsoleCommands.Add("tly_shrinegoals", "List this week's random shrine donation goals: index, list, item, stack, deposited, paid (debug).", this.CmdShrineGoals);
+            helper.ConsoleCommands.Add("tly_shrinedonate", "Donate shrine goal N through the statue's donate path, spawning the stack into the inventory if missing (debug). Usage: tly_shrinedonate <index>", this.CmdShrineDonate);
             helper.ConsoleCommands.Add("tly_openhub", "Open the weekly planning hub menu (debug).", this.CmdOpenHub);
-            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen]", this.CmdReroll);
+            helper.ConsoleCommands.Add("tly_reroll", "Press the planning hub's re-roll button N times, or close and reopen the hub (debug). Usage: tly_reroll [count|reopen|paid]", this.CmdReroll);
             helper.ConsoleCommands.Add("tly_seasongoals", "Open the Season Goals page, the same one the Bundle Log book opens (debug).", this.CmdSeasonGoals);
             helper.ConsoleCommands.Add("tly_driedprobe", "Diagnostics: what each mushroom and fruit dries into, and whether vanilla's PreserveType names resolve as item ids. Read-only.", this.CmdDriedProbe);
             helper.ConsoleCommands.Add("tly_flavors", "Diagnostics: for every flavored bundle slot on the live board (Dried Fruit, Dried Mushrooms, Smoked Fish), show which fruit/mushroom/fish it names and how it reads. Read-only.", this.CmdFlavors);
@@ -467,9 +476,10 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_dumpreplayable", "Audit which Data/Events cutscenes the loop treats as REPLAYABLE (re-fire each loop): logs each unlock-granting event id, the matched grant command, whether it's excluded, and the active exclusion set (debug — diagnoses 'an event keeps replaying').", this.CmdDumpReplayable);
             helper.ConsoleCommands.Add("tly_buyupgrade", "Buy an upgrade by id (debug). Usage: tly_buyupgrade <id>", this.CmdBuyUpgrade);
             helper.ConsoleCommands.Add("tly_boost", "Buy a shrine boost today (debug, the same purchase the shrine's Buy button makes), or list the roster with each row's state. Usage: tly_boost list | tly_boost <id> [farming|fishing|foraging|mining|combat]", this.CmdBoost);
+            helper.ConsoleCommands.Add("tly_wildcard", "Debug: show this week's wildcard day and twist, or set today's twist (headless twist checks). Usage: tly_wildcard [twistId|clear]", this.CmdWildcard);
             helper.ConsoleCommands.Add("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
             helper.ConsoleCommands.Add("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, a dialogue box via its own close, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
-            helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan) exactly as the statue does, so every tab's rows build and draw headlessly. Usage: tly_openshrine [active|boosts|plan]", this.CmdOpenShrine);
+            helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan|donate) exactly as the statue does, so every tab's rows build and draw headlessly. Donate shows only on weeks with shrine goals. Usage: tly_openshrine [active|boosts|plan|donate]", this.CmdOpenShrine);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
@@ -684,6 +694,8 @@ namespace TheLongestYear
             TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider =
                 () => (IReadOnlyDictionary<string, string>)_meta.State.WrittenBoardFlavors;
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
+            CartDaysPatch.RunProvider = () => _meta.Run;
+            CartDaysPatch.Settings = week => _runController?.RandomizerForWeekPeek(week);
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
             // not end the day, so the map stays re-entrant and vanilla would offer the hunt again.
@@ -837,6 +849,10 @@ namespace TheLongestYear
             // Wire the post-donation callback so each CC deposit refreshes the quest's progress
             // text (and auto-completes when every goal slot this week is complete).
             DonationService.Active.AfterDonation = _questService.OnItemDonated;
+            ShrineDonationService.Active = new ShrineDonationService(this.Monitor, _meta, _config)
+            {
+                AfterDonation = _questService.OnItemDonated,
+            };
 
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             _runController.GoalCaps = new[]
@@ -846,6 +862,12 @@ namespace TheLongestYear
                 new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
+            // Random shrine donations: the theme item pools and seasons for off-board goals.
+            _runController.ShrineThemeIds = theme => _enginePools == null || _effortData == null
+                ? Array.Empty<string>()
+                : ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
+            _runController.ShrineExcludedIds = () => _enginePools?.ExcludedIds;
+            _runController.SeasonsOf = id => _seasonResolver?.SeasonsFor(id);
             // The theme week discount rewrites stacks on the board; that is our own write, not
             // another mod's, so the vanilla-mode fingerprint follows it.
             _runController.AfterBoardWrite = () =>
@@ -870,6 +892,10 @@ namespace TheLongestYear
             // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
             _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
             _runController.AttachSabotage(_sabotage);
+            _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
+            TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;
+            TheLongestYear.Loop.WildcardDayService.NightRun = () => _meta.Run;
+            _runController.AttachWildcardService(_wildcardDays);
             _runController.OnRunLoaded();
             if (_peakMineFloorTracker != null)
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
@@ -913,6 +939,7 @@ namespace TheLongestYear
             _planningShrine.AttachRestart(
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart());
+            _planningShrine.AttachDonate(() => ShrineDonationService.Active);
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);
@@ -983,6 +1010,10 @@ namespace TheLongestYear
             _playSeasonDonatedThisSeason = 0;
             TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots = false;
             ActiveEffectsProvider.Clear();
+            DayEffects.Clear();
+            TheLongestYear.Loop.WildcardDayService.GrowthNight = null;
+            TheLongestYear.Loop.WildcardDayService.NightRun = null;
+            TheLongestYear.Loop.RockslidePatch.Forget();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = null;
@@ -993,6 +1024,8 @@ namespace TheLongestYear
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = null;
             ActiveEffectsProvider.DetachBoosts();
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
+            TheLongestYear.Loop.CartDaysPatch.RunProvider = null;
+            TheLongestYear.Loop.CartDaysPatch.Settings = null;
             TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;
             BundleOptionPatch.ResetChoice();
@@ -1007,6 +1040,7 @@ namespace TheLongestYear
                 this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.SneakPeekChannelService.StringsAssetName);
             }
             DonationService.Active = null;
+            ShrineDonationService.Active = null;
             TheLongestYear.Loop.ReplayableEventScan.Clear();
             TheLongestYear.Loop.HerdBookService.ClearPending();
             // The peak-mine-floor tracker is only subscribed/unsubscribed on the proceed path of
@@ -2195,15 +2229,20 @@ namespace TheLongestYear
             var tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
             if (args.Length > 0 && !System.Enum.TryParse(args[0], ignoreCase: true, out tab))
             {
-                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan]", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan|donate]", LogLevel.Warn);
                 return;
             }
             var menu = new TheLongestYear.UI.ShrinePreviewMenu(
                 _meta.State, _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor, _meta.Run,
                 (id, skill) => _boostPurchases.TryBuy(id, skill),
                 () => _runController?.IsVoluntaryRestartOffered() == true,
-                () => _runController?.AskVoluntaryRestart());
-            menu.ShowTab(tab);
+                () => _runController?.AskVoluntaryRestart(),
+                ShrineDonationService.Active);
+            if (!menu.ShowTab(tab))
+            {
+                this.Monitor.Log($"tly_openshrine: no {tab} tab this week (no shrine goals); opened on Active.", LogLevel.Warn);
+                tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
+            }
             Game1.activeClickableMenu = menu;
             this.Monitor.Log($"tly_openshrine: shrine opened on the {tab} tab.", LogLevel.Info);
             var block = _runController?.VoluntaryRestartBlock() ?? TheLongestYear.Core.Day28.RestartBlock.ResetRunning;
@@ -2294,8 +2333,16 @@ namespace TheLongestYear
             string liability = TheLongestYear.Core.ActiveEffectsProvider.LiabilityId ?? "(none)";
             this.Monitor.Log(
                 $"Active effects: bonus={bonus}, liability={liability}. " +
-                $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}.",
+                $"Selection={_meta?.Run.CurrentSelection?.ToString() ?? "none"}." +
+                (TheLongestYear.Core.ActiveEffectsProvider.LiabilitySuppressed ? " (liability lifted)" : ""),
                 LogLevel.Info);
+            if (TheLongestYear.Core.ActiveEffectsProvider.SecondBonusId != null)
+                this.Monitor.Log(
+                    $"Double week second entry: bonus={TheLongestYear.Core.ActiveEffectsProvider.SecondBonusId}, " +
+                    $"liability={TheLongestYear.Core.ActiveEffectsProvider.SecondLiabilityId ?? "(none)"}. " +
+                    $"Selection={_meta?.Run.SecondSelection?.ToString() ?? "none"}." +
+                    (TheLongestYear.Core.ActiveEffectsProvider.SecondLiabilitySuppressed ? " (liability lifted)" : ""),
+                    LogLevel.Info);
             if (_meta == null) return;
             int today = TodayDayOfYear();
             foreach (TheLongestYear.Core.ActiveBoost b in _meta.Run.ActiveBoosts)
@@ -3183,12 +3230,6 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.dejavu.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
-                getValue: () => _config.EnableThemeReroll,
-                setValue: v => _config.EnableThemeReroll = v,
-                name: () => Strings.Get("gmcm.theme-reroll.name"),
-                tooltip: () => Strings.Get("gmcm.theme-reroll.tooltip"));
-
-            gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.EnableNonObjectDonations,
                 setValue: v => _config.EnableNonObjectDonations = v,
                 name: () => Strings.Get("gmcm.non-object.name"),
@@ -3300,6 +3341,63 @@ namespace TheLongestYear
                 () => _config.Difficulty.DarknessOrLowest, v => _config.Difficulty.Darkness = v,
                 () => Strings.Get("gmcm.difficulty.darkness.name"),
                 () => Strings.Get("gmcm.difficulty.darkness.tooltip"));
+
+            gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.randomizer.section"));
+            gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.randomizer.blurb"));
+
+            gmcm.AddTextOption(this.ModManifest,
+                getValue: () => _config.Randomizer.Rerolls.ToString(),
+                setValue: v => _config.Randomizer.Rerolls = Enum.TryParse(v, out RerollMode m) && Enum.IsDefined(typeof(RerollMode), m) ? m : RerollMode.Off,
+                name: () => Strings.Get("gmcm.randomizer.rerolls.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.rerolls.tooltip"),
+                allowedValues: new[] { "Off", "CostsJp", "Free" },
+                formatAllowedValue: FormatRerollMode);
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomThemeItems,
+                setValue: v => _config.Randomizer.RandomThemeItems = v,
+                name: () => Strings.Get("gmcm.randomizer.random-theme-items.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-theme-items.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomPairings,
+                setValue: v => _config.Randomizer.RandomPairings = v,
+                name: () => Strings.Get("gmcm.randomizer.random-pairings.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-pairings.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomMultiplier,
+                setValue: v => _config.Randomizer.RandomMultiplier = v,
+                name: () => Strings.Get("gmcm.randomizer.random-multiplier.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-multiplier.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.MysteryCard,
+                setValue: v => _config.Randomizer.MysteryCard = v,
+                name: () => Strings.Get("gmcm.randomizer.mystery-card.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.mystery-card.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomBundleRewards,
+                setValue: v => _config.Randomizer.RandomBundleRewards = v,
+                name: () => Strings.Get("gmcm.randomizer.random-bundle-rewards.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-bundle-rewards.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomCartDays,
+                setValue: v => _config.Randomizer.RandomCartDays = v,
+                name: () => Strings.Get("gmcm.randomizer.random-cart-days.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-cart-days.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.DoubleThemeWeek,
+                setValue: v => _config.Randomizer.DoubleThemeWeek = v,
+                name: () => Strings.Get("gmcm.randomizer.double-theme-week.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.double-theme-week.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.WildcardDays,
+                setValue: v => _config.Randomizer.WildcardDays = v,
+                name: () => Strings.Get("gmcm.randomizer.wildcard-days.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.wildcard-days.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.Randomizer.RandomShrineDonations,
+                setValue: v => _config.Randomizer.RandomShrineDonations = v,
+                name: () => Strings.Get("gmcm.randomizer.random-shrine-donations.name"),
+                tooltip: () => Strings.Get("gmcm.randomizer.random-shrine-donations.tooltip"));
+
             this.Monitor.Log("Registered GMCM options.", LogLevel.Info);
         }
 
@@ -3495,6 +3593,9 @@ namespace TheLongestYear
                 case "tly_trophytest": this.CmdTrophyTest(command, args); break;
                 case "tly_testdonate": this.CmdTestDonate(command, args); break;
                 case "tly_openhub": this.CmdOpenHub(command, args); break;
+                case "tly_hubcards": this.CmdHubCards(command, args); break;
+                case "tly_shrinegoals": this.CmdShrineGoals(command, args); break;
+                case "tly_shrinedonate": this.CmdShrineDonate(command, args); break;
                 case "tly_reroll": this.CmdReroll(command, args); break;
                 case "tly_seasongoals": this.CmdSeasonGoals(command, args); break;
                 case "tly_jpbudget": this.CmdJpBudget(command, args); break;
@@ -3506,6 +3607,7 @@ namespace TheLongestYear
                 case "tly_buyupgrade": this.CmdBuyUpgrade(command, args); break;
                 case "tly_boost": this.CmdBoost(command, args); break;
                 case "tly_boostexpire": _boostEffects?.OnDayStarted(); break;
+                case "tly_wildcard": this.CmdWildcard(command, args); break;
                 case "tly_dismiss": this.CmdDismiss(command, args); break;
                 case "tly_openshrine": this.CmdOpenShrine(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
@@ -3570,16 +3672,27 @@ namespace TheLongestYear
         private void CmdSelect(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme>", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_select <theme> [left|right]", LogLevel.Warn); return; }
             // With the planning hub open this is the same as clicking the card, so an unattended
             // run never needs the mouse: the hub commits the pick (current week or the day-28
             // next-month pre-pick) and closes itself.
             if (Game1.activeClickableMenu is TheLongestYear.UI.WeeklyHubMenu hub)
             {
-                if (hub.ConfirmByName(args[0]))
+                // Optional side: the real card click (multiplier and mystery included).
+                string side = args.Length > 1 ? args[1] : null;
+                if (side != null && !hub.TryPickSide(args[0], side, out string sideError))
+                {
+                    this.Monitor.Log($"tly_select: {sideError}", LogLevel.Warn);
+                    return;
+                }
+                if (side != null)
+                    return; // TryPickSide already logged the real outcome.
+                if (!hub.ConfirmByName(args[0]))
+                    this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
+                else if (hub.LastPickTook)
                     this.Monitor.Log($"tly_select: picked {args[0]} on the open planning hub.", LogLevel.Info);
                 else
-                    this.Monitor.Log($"tly_select: unknown theme '{args[0]}'. Options: {string.Join(", ", Enum.GetNames(typeof(TheLongestYear.Core.Theme)))}.", LogLevel.Warn);
+                    this.Monitor.Log($"tly_select: {args[0]} was rejected (already picked this month).", LogLevel.Warn);
                 return;
             }
             // skipOfferCheck: this is a debug/playtest command; let it force any theme, not just
@@ -4622,12 +4735,15 @@ namespace TheLongestYear
 
             if (chaseGoals && !quarterMode)
             {
-                foreach (BonusSlot slot in run.CurrentWeekBonusSlots)
+                // Both lists on a double week (the second is empty otherwise); each deposit lands on its own list.
+                var goalLists = new List<List<BonusSlot>> { run.CurrentWeekBonusSlots, run.SecondWeekBonusSlots ?? new List<BonusSlot>() };
+                foreach (List<BonusSlot> goalList in goalLists)
+                foreach (BonusSlot slot in goalList)
                 {
                     if (Flip(slot.BundleIndex, slot.IngredientIndex))
                     {
                         run.RecordDonation(slot.BundleIndex, slot.IngredientIndex, slot.ItemId);
-                        WeeklyGoalCredit.RecordDeposit(run.CurrentWeekBonusSlots, slot.BundleIndex, slot.IngredientIndex);
+                        WeeklyGoalCredit.RecordDeposit(goalList, slot.BundleIndex, slot.IngredientIndex);
                         flipped++;
                         log.Add($"  goal: deposited {DisplayName(slot.ItemId)} into {slot.BundleName}");
                     }
@@ -4749,6 +4865,28 @@ namespace TheLongestYear
                         LogLevel.Info);
                 }
             }
+
+            // This week's committed lists (both on a double week), with each goal's done state.
+            LogCommittedGoals("This week's goals", run.CurrentSelection, run.CurrentGoalMultiplier,
+                run.LiabilitySuppressedThisWeek, run.CurrentWeekBonusSlots);
+            if (run.SecondSelection.HasValue)
+                LogCommittedGoals("Double week second list", run.SecondSelection, run.SecondGoalMultiplier,
+                    run.SecondLiabilitySuppressedThisWeek, run.SecondWeekBonusSlots);
+        }
+
+        private void LogCommittedGoals(string label, TheLongestYear.Core.Theme? theme, double multiplier, bool lifted,
+            IReadOnlyList<BonusSlot> slots)
+        {
+            if (!theme.HasValue) { this.Monitor.Log($"{label}: no theme picked.", LogLevel.Info); return; }
+            this.Monitor.Log(
+                $"{label}: {theme} ({slots?.Count ?? 0} goal(s), goal JP {CardMultiplier.Format(multiplier)}{(lifted ? ", drawback lifted" : "")})",
+                LogLevel.Info);
+            if (slots == null) return;
+            foreach (BonusSlot slot in slots)
+                this.Monitor.Log(
+                    $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]" +
+                    $"{(slot.Deposited ? " deposited" : "")}{(slot.Paid ? " paid" : "")}",
+                    LogLevel.Info);
         }
 
         /// <summary>The season-gate audit shared by <c>tly_gatecheck</c> (live board) and
@@ -5435,7 +5573,7 @@ namespace TheLongestYear
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             firstEngine.Availability = _availability;
-            GeneratedBundleSet first = firstEngine.Generate(seed);
+            GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
                 LogLevel.Info);
@@ -5443,7 +5581,7 @@ namespace TheLongestYear
 
             var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
-            GeneratedBundleSet second = secondEngine.Generate(seed);
+            GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
                 this.Monitor.Log("tly_genbundles: determinism OK (second generation matched the first byte-for-byte).", LogLevel.Info);
@@ -5809,6 +5947,38 @@ namespace TheLongestYear
             _launcher?.OpenWeeklyHub();
         }
 
+        /// <summary>Wildcard days debug: the week's plan, or set/clear today's twist.</summary>
+        private void CmdWildcard(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _wildcardDays == null) { this.Monitor.Log("Load a TLY save first.", LogLevel.Warn); return; }
+            this.Monitor.Log("tly_wildcard: " + _wildcardDays.Debug(args), LogLevel.Info);
+        }
+
+        /// <summary>Random shrine donations debug: list this week's shrine goals.</summary>
+        private void CmdShrineGoals(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            ShrineDonationDebug.List(this.Monitor);
+        }
+
+        /// <summary>Random shrine donations debug: donate goal N through ShrineDonationService.</summary>
+        private void CmdShrineDonate(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            ShrineDonationDebug.Donate(args, this.Monitor);
+        }
+
+        private void CmdHubCards(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (Game1.activeClickableMenu is not TheLongestYear.UI.WeeklyHubMenu hub)
+            {
+                this.Monitor.Log("tly_hubcards: the planning hub is not open.", LogLevel.Warn);
+                return;
+            }
+            hub.LogCards();
+        }
+
         /// <summary>Headless re-roll check: presses the hub's re-roll button, or closes and reopens
         /// the hub so a run can see the re-rolled pair restored.</summary>
         private void CmdReroll(string command, string[] args)
@@ -5823,6 +5993,12 @@ namespace TheLongestYear
             {
                 Game1.activeClickableMenu = null;
                 _launcher?.OpenWeeklyHub();
+                return;
+            }
+            if (args.Length > 0 && args[0].Equals("paid", StringComparison.OrdinalIgnoreCase))
+            {
+                // The reroll button's own code: price check, JP spend, RerollCanChange gate.
+                this.Monitor.Log(hub.RerollPaidForDebug(), LogLevel.Info);
                 return;
             }
             int count = args.Length > 0 && int.TryParse(args[0], out int n) && n > 0 ? n : 1;
@@ -6277,7 +6453,7 @@ namespace TheLongestYear
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
-                    GeneratedBundleSet set = engine.Generate(seed);
+                    GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))
                     {
@@ -6319,7 +6495,9 @@ namespace TheLongestYear
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty);
                 engine.Availability = _availability;
-                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0));
+                // Randomizer: the fresh-run board is a NEW board, so it stamps the option here.
+                state.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
+                GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0), state.RandomBundleRewardsBoard);
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;
                 state.WrittenBoard = new Dictionary<string, string>(set.ToBundleData());
@@ -6505,6 +6683,15 @@ namespace TheLongestYear
                 return Strings.Get("gmcm.bundle-source.remixed");
             return Strings.Get("gmcm.bundle-source.engine");
         }
+
+        private static string FormatRerollMode(string rawValue) => Enum.TryParse(rawValue, out RerollMode m)
+            ? m switch
+            {
+                RerollMode.CostsJp => Strings.Get("gmcm.randomizer.rerolls.costs-jp"),
+                RerollMode.Free => Strings.Get("gmcm.randomizer.rerolls.free"),
+                _ => Strings.Get("gmcm.randomizer.rerolls.off"),
+            }
+            : Strings.Get("gmcm.randomizer.rerolls.off");
 
         private static string FormatDifficultyStep(string rawValue) => DifficultySteps.Parse(rawValue) switch
         {

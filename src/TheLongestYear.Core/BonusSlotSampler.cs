@@ -87,6 +87,14 @@ public static class BonusSlotSampler
         var weights = GoalWeighting.For(idPool, rules, rarityOf)
             .Where(w => w.Weight > 0)
             .ToList();
+        if (rules.Even)
+        {
+            // Randomizer: every id weighs 1 (no Spring zero-weight drop), one pass, no due tier
+            // and no filler split. Need caps, group caps and maxCount still apply in Take.
+            List<(string Id, int Weight)> everyId = weights.Select(w => (w.ItemId, w.Weight)).ToList();
+            draw.Take(everyId, maxCount, filler: false, dueOnly: false);
+            return draw.Result;
+        }
         List<(string Id, int Weight)> due = weights
             .Where(w => slotsById[w.ItemId].Any(s => s.Due))
             .Select(w => (w.ItemId, w.Weight))

@@ -38,7 +38,8 @@ namespace TheLongestYear.Loop
         {
             __state = null;
             if (__instance?.objects == null) return;
-            if (!ActiveEffectsProvider.ActiveBonus("forage_yield_up")) return;
+            if (!ActiveEffectsProvider.ActiveBonus("forage_yield_up")
+                && !DayEffects.Has(WildcardSchedule.DoubleForage)) return;
 
             System.Collections.Generic.Dictionary<Vector2, Object> snapshot = null;
             foreach (var pair in __instance.objects.Pairs)
@@ -55,7 +56,8 @@ namespace TheLongestYear.Loop
             System.Collections.Generic.Dictionary<Vector2, Object> __state)
         {
             if (__state == null || who == null || __instance?.objects == null) return;
-            if (!ActiveEffectsProvider.ActiveBonus("forage_yield_up")) return;
+            bool wildcard = DayEffects.Has(WildcardSchedule.DoubleForage);
+            if (!ActiveEffectsProvider.ActiveBonus("forage_yield_up") && !wildcard) return;
 
             // A successful forage pickup removes exactly one object from the tile. Find the
             // tile that disappeared this action — that's what the player just grabbed.
@@ -71,6 +73,8 @@ namespace TheLongestYear.Loop
                     if (BonusDropResolver.ShouldGrantExtraDrop("forage_yield_up", src.QualifiedItemId, Game1.random))
                         hits++;
                 }
+                // Wildcard double forage: a guaranteed +1 on top of any theme rolls.
+                hits += WildcardEffects.ForageExtraFor(wildcard);
                 if (hits == 0)
                     return;
 

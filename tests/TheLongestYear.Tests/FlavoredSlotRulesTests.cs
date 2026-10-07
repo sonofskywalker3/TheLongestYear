@@ -15,6 +15,7 @@ public class FlavoredSlotRulesTests
     private const string Cherry = "(O)638";       // Spring tree: second year or the cart
     private const string Apricot = "(O)634";      // ditto
     private const string Blueberry = "(O)258";    // Summer crop
+    private const string Grape = "(O)398";        // dehydrates to Raisins, not Dried Fruit
     private const string Morel = "(O)257";
     private const string Sardine = "(O)131";
 
@@ -68,6 +69,17 @@ public class FlavoredSlotRulesTests
         IReadOnlyList<string> all = Candidates(FlavoredSlotRules.DriedFruit, deadlineWeek);
         Assert.DoesNotContain(Cherry, all);
         Assert.DoesNotContain(Apricot, all);
+    }
+
+    /// <summary>Nexus post, Treedomy, 2026-10-05: a bundle asked for Dried Grapes. The Dehydrator
+    /// turns grapes into Raisins, never Dried Fruit, so that ask can't be filled.</summary>
+    [Fact]
+    public void Grapes_are_never_offered_for_dried_fruit()
+    {
+        ItemPools pools = Pools() with { Crops = new List<PoolItem> { Fruit(Blueberry), Fruit(Grape) } };
+        IReadOnlyList<string> all = FlavoredSlotRules.CandidatesFor(FlavoredSlotRules.DriedFruit, pools, _ => 1, 16);
+        Assert.DoesNotContain(Grape, all);
+        Assert.Contains(Blueberry, all);
     }
 
     [Fact]

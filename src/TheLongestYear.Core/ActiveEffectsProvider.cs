@@ -14,6 +14,30 @@ public static class ActiveEffectsProvider
     private static string? _bonusId;
     private static string? _liabilityId;
     private static bool _liabilitySuppressed;
+    private static string? _bonusId2;
+    private static string? _liabilityId2;
+    private static bool _liabilitySuppressed2;
+
+    /// <summary>Second entry, used only on a double theme week.</summary>
+    public static string? SecondBonusId => _bonusId2;
+    public static string? SecondLiabilityId => _liabilityId2;
+    public static bool SecondLiabilitySuppressed => _liabilitySuppressed2;
+
+    public static void SetSecond(string? bonusId, string? liabilityId)
+    {
+        _bonusId2 = bonusId;
+        _liabilityId2 = liabilityId;
+        _liabilitySuppressed2 = false;
+    }
+
+    public static void SuppressSecondLiability() => _liabilitySuppressed2 = true;
+
+    private static void ClearSecond()
+    {
+        _bonusId2 = null;
+        _liabilityId2 = null;
+        _liabilitySuppressed2 = false;
+    }
 
     /// <summary>Id of the active bonus this week, or null if no selection has been made.</summary>
     public static string? BonusId => _bonusId;
@@ -33,6 +57,7 @@ public static class ActiveEffectsProvider
         _bonusId = bonusId;
         _liabilityId = liabilityId;
         _liabilitySuppressed = false;
+        ClearSecond();
     }
 
     /// <summary>Clear effects (no selection active — start of a new run or before first pick).</summary>
@@ -41,6 +66,7 @@ public static class ActiveEffectsProvider
         _bonusId = null;
         _liabilityId = null;
         _liabilitySuppressed = false;
+        ClearSecond();
     }
 
     /// <summary>Lift the active liability for the remaining days of the week. Called by
@@ -69,6 +95,7 @@ public static class ActiveEffectsProvider
     {
         if (!RunActivation.IsActive) return 0;
         int n = _bonusId != null && _bonusId == id ? 1 : 0;
+        if (_bonusId2 != null && _bonusId2 == id) n++;
         if (_boosts != null)
         {
             foreach (string m in _boosts())
@@ -84,5 +111,7 @@ public static class ActiveEffectsProvider
     /// liability checks short-circuit to false for the rest of the week. Always false while
     /// TLY is dormant.</summary>
     public static bool ActiveLiability(string id)
-        => RunActivation.IsActive && !_liabilitySuppressed && _liabilityId != null && _liabilityId == id;
+        => RunActivation.IsActive
+           && ((!_liabilitySuppressed && _liabilityId != null && _liabilityId == id)
+               || (!_liabilitySuppressed2 && _liabilityId2 != null && _liabilityId2 == id));
 }

@@ -101,6 +101,25 @@ namespace TheLongestYear.Loop
 
         private RunState Run => _store.Run;
 
+        /// <summary>This week's Randomizer settings (snapshotted at the first read of the week).</summary>
+        internal RandomizerSettings Randomizer => Run.RandomizerFor(Run.WeekOfYear, _config.Randomizer);
+
+        /// <summary>Settings for a week. For the current week this is <see cref="Randomizer"/>, which
+        /// stores the week's snapshot on first read; a week that has not started is never
+        /// snapshotted early (the pre-pick preview reads the live config).</summary>
+        internal RandomizerSettings RandomizerForWeekPeek(int week)
+            => week == Run.WeekOfYear ? Randomizer : _config.Randomizer;
+
+        private const int DoubleWeekCards = 2;
+
+        /// <summary>True when the offer for <paramref name="week"/> is a double theme week: the option
+        /// is on for that week, it is the season's double week, the offer has both cards, and it is
+        /// not the day-28 pre-pick hub. A double offer with fewer cards is a normal week.</summary>
+        internal bool IsDoubleWeekOffer(int week, int offerCount, bool prePick)
+            => !prePick
+               && offerCount == DoubleWeekCards
+               && DoubleWeek.Is(Run.Seed, week, (RandomizerForWeekPeek(week) ?? new RandomizerSettings()).DoubleThemeWeek);
+
         /// <summary>Per-group caps on a theme's weekly goal list: at most one fruit-tree fruit
         /// (Data/FruitTrees) and at most one crab-pot catch (Data/Fish trap rows); Jeff,
         /// 2026-08-28. Null = no caps.</summary>
@@ -172,6 +191,14 @@ namespace TheLongestYear.Loop
             if (Run.PendingDay28 == Day28Branch.None)
                 Run.DayOfMonth = Game1.dayOfMonth;
 
+            // A pre-Randomizer save loaded mid-week: that week ran with everything off, so a
+            // Randomizer option turned on since must wait for the next weekly offer (final review M1).
+            if (Run.SnapshotOffIfWeekAlreadyOffered())
+                _monitor.Log(
+                    $"No Randomizer snapshot for week {Run.WeekOfYear}, whose offer was already shown: " +
+                    "keeping the Randomizer off until next week's offer.",
+                    LogLevel.Info);
+
             // 2026-07-09 slot redesign migration: a mid-week save from an older version has the
             // legacy id-only bonus list but no slot goals. Re-sample once (the week's goals
             // re-roll — one-time, beta-acceptable) and rebuild the quest from slots.
@@ -224,7 +251,7 @@ namespace TheLongestYear.Loop
             // Restore active effects from persisted selection (if any).
             if (Run.CurrentSelection.HasValue)
             {
-                var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                 ActiveEffectsProvider.Set(bonus, liability);
                 _monitor.Log(
                     $"Restored active effects for week {Run.WeekOfYear}: theme={Run.CurrentSelection}, " +
@@ -236,6 +263,19 @@ namespace TheLongestYear.Loop
                 // resets to unsuppressed on Set above, so re-apply if the run-state flag is on.
                 if (Run.LiabilitySuppressedThisWeek)
                     ActiveEffectsProvider.SuppressLiability();
+
+                // Double week: the second card's entry, with its own lifted state.
+                if (Run.SecondSelection is Theme second)
+                {
+                    var (bonus2, liability2) = RandomPairing.SecondEffectsFor(Run, second);
+                    ActiveEffectsProvider.SetSecond(bonus2, liability2);
+                    if (Run.SecondLiabilitySuppressedThisWeek)
+                        ActiveEffectsProvider.SuppressSecondLiability();
+                    _monitor.Log(
+                        $"Restored double-week second entry: theme={second}, bonus={bonus2}, liability={liability2}" +
+                        (Run.SecondLiabilitySuppressedThisWeek ? " (suppressed)" : ""),
+                        LogLevel.Info);
+                }
 
                 // 2026-05-28 fix: do NOT re-sweep on save load even if forage_off is active.
                 // The sweep only needs to run when the theme is FRESHLY selected (via
@@ -255,6 +295,9 @@ namespace TheLongestYear.Loop
             // Refresh the weekly quest's objective text against the restored ledger so a
             // save+reload mid-week reflects already-donated items.
             _questService?.OnRunLoaded();
+
+            // Wildcard day: re-publish a twist already revealed today (never re-rolled).
+            _wildcard?.OnRunLoaded();
 
             // Clear the stale vanilla "Rat Problem" quest (the CC is already open this run). The
             // Harmony prefix stops new adds; this strips it from a save that already received it.
@@ -316,6 +359,8 @@ namespace TheLongestYear.Loop
                 // _pendingReset early-return. Manual tly_reset intentionally stays raw.
                 // Releases the driver's Restart branch (DayStartedWhileBranchPending).
                 _dayStartedWhileBranchPending = true;
+                // Yesterday's wildcard twist (max luck) must not reach the boosts' morning pass.
+                DayEffects.Clear();
                 // A voluntary restart resets as soon as the morning is clear; keep the new day's
                 // date off the screen until the world is back on Spring 1.
                 if (_pendingCutscene == Day28Branch.Restart)
@@ -860,6 +905,7 @@ namespace TheLongestYear.Loop
             _reset.ProfessionPicker.DrainOnDayStart();
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
+            _wildcard?.OnReset();
             // Persist the post-reset meta (JP spent at the shrine, new OwnedUpgrades, the bumped
             // run/reset counters) IMMEDIATELY. A deferred SaveLoaded fires after the in-place reset
             // and calls MetaStore.Load(), which would otherwise overwrite our in-memory state with
@@ -956,10 +1002,14 @@ namespace TheLongestYear.Loop
                 if (Run.CurrentSelection.HasValue)
                 {
                     PopulateBonusSlotsForCurrentSelection();
-                    var (bonus, liability) = ThemeModifiers.For(Run.CurrentSelection.Value);
+                    // The card was shown with this week's settings; pick the drawback the same way.
+                    Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear,
+                        Run.CurrentSelection.Value, RandomizerForWeekPeek(Run.WeekOfYear).RandomPairings);
+                    var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(
-                        $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season}.",
+                        $"Day-28 pre-pick applied: {Run.CurrentSelection} is the week-1 selection of {season} " +
+                        $"(goal JP {CardMultiplier.Format(Run.CurrentGoalMultiplier)}).",
                         LogLevel.Info);
 
                     ApplyEmptyPoolLiftIfNeeded();
@@ -975,6 +1025,9 @@ namespace TheLongestYear.Loop
             }
             Run.Season = season;
             Run.DayOfMonth = Game1.dayOfMonth;
+
+            // Wildcard days: plan the week (week start) and reveal today's twist, before the offer.
+            _wildcard?.OnDayStarted(() => RandomizerForWeekPeek(Run.WeekOfYear));
 
             // Open the weekly planning hub on every week-start morning (days 1, 8, 15, 22).
             // This replaces the prior Sunday-night DayEnding trigger, which fired during the
@@ -1009,6 +1062,8 @@ namespace TheLongestYear.Loop
             (Run.DoubleProduceToday ??= new System.Collections.Generic.List<DoubleProduceRecord>()).Clear();
             // A new night: this morning's DayStarted mark (RunController.Restart.cs) no longer counts.
             _dayStartedWhileBranchPending = false;
+            // Wildcard extra growth: tonight's crop pass sees tomorrow's date, so flag it now.
+            _wildcard?.OnDayEnding();
             // Deja-vu familiarity: read today's talk/gift flags before vanilla clears them overnight.
             TheLongestYear.Integration.FamiliarityGlue.Rollup(_store.State, Run, _monitor);
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(Run);
@@ -1165,7 +1220,9 @@ namespace TheLongestYear.Loop
         };
 
         /// <summary>Select one of this week's offered themes (driven by the UI; debug command + UI).</summary>
-        public void SelectByName(string themeName, bool skipOfferCheck = false)
+        /// <param name="slot">The hub card position the pick came from (0 left, 1 right); it sets
+        /// this week's goal multiplier. -1 (console and debug picks) pays 1x.</param>
+        public void SelectByName(string themeName, bool skipOfferCheck = false, int slot = -1)
         {
             if (!Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
             {
@@ -1191,6 +1248,46 @@ namespace TheLongestYear.Loop
             // A re-pick or re-roll replaces the goal lines, so the old ones go back to full first.
             RevertWeekDiscount("re-pick");
             Run.Select(theme);
+            RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
+            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme, rand.RandomPairings);
+            Run.CurrentGoalMultiplier = slot < 0 ? 1.0 : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, theme, slot, rand);
+            CommitSelection();
+        }
+
+        /// <summary>Double theme week (spec section 6): take both cards. The first card keeps every
+        /// single-pick rule (left slot multiplier, its own drawback); the second gets its own drawback,
+        /// right slot multiplier and goal list (minus any line the first card already owns).</summary>
+        public void SelectBoth(Theme first, Theme second, bool skipOfferCheck = false)
+        {
+            if (!skipOfferCheck)
+            {
+                var offer = OfferFor(Run.WeekOfYear, Run.Season, Run.SelectedThemesThisMonth);
+                if (!offer.Contains(first) || !offer.Contains(second))
+                {
+                    _monitor.Log($"{first} + {second} is not this week's offer. Offer: {string.Join(", ", offer)}.", LogLevel.Warn);
+                    return;
+                }
+            }
+
+            RevertWeekDiscount("re-pick");
+            Run.Select(first);
+            RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
+            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, first, rand.RandomPairings, otherCard: second);
+            Run.CurrentGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, first, FirstCardSlot, rand, doubleWeek: true);
+            Run.SelectSecond(second);
+            Run.SecondLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, second, rand.RandomPairings, otherCard: first);
+            Run.SecondGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, second, SecondCardSlot, rand, doubleWeek: true);
+            CommitSelection();
+        }
+
+        private const int FirstCardSlot = 0, SecondCardSlot = 1;
+        private const string ForageOffLiability = "forage_off";
+
+        /// <summary>The shared tail of a pick: consume the offer, sample the goals, set the effects,
+        /// add the quest(s) and sweep forage. Run.Select (and SelectSecond on a double week) already ran.</summary>
+        private void CommitSelection()
+        {
+            Theme theme = Run.CurrentSelection.Value;
             // A made pick CONSUMES the week's offer, however it was made (hub card, rerolled
             // card, console). Mark the week presented and drop any deferred re-present for it —
             // otherwise a stale deferred offer (stashed while a picker was already up) drains the
@@ -1201,13 +1298,26 @@ namespace TheLongestYear.Loop
             if (_deferredOffer is { } stale && stale.week == Run.WeekOfYear)
                 _deferredOffer = null;
             PopulateBonusSlotsForCurrentSelection();
-            var (bonus, liability) = ThemeModifiers.For(theme);
+            var (bonus, liability) = RandomPairing.EffectsFor(Run, theme);
             ActiveEffectsProvider.Set(bonus, liability);
+            string liability2 = null;
+            if (Run.SecondSelection is Theme second)
+            {
+                var (bonus2, secondLiability) = RandomPairing.SecondEffectsFor(Run, second);
+                liability2 = secondLiability;
+                ActiveEffectsProvider.SetSecond(bonus2, liability2);
+            }
             ApplyEmptyPoolLiftIfNeeded();
             _monitor.Log(
-                $"Selected {theme} (bonus {bonus}, liability {liability}). " +
+                $"Selected {theme} (bonus {bonus}, liability {liability}, goal JP {CardMultiplier.Format(Run.CurrentGoalMultiplier)}). " +
                 $"Goal slots this week: [{string.Join(", ", Run.CurrentWeekBonusSlots.Select(s => $"{s.ItemId}@{s.BundleName}#{s.IngredientIndex}"))}].",
                 LogLevel.Info);
+            if (Run.SecondSelection is Theme also)
+                _monitor.Log(
+                    $"Double week: also selected {also} (bonus {ActiveEffectsProvider.SecondBonusId}, liability {liability2}, " +
+                    $"goal JP {CardMultiplier.Format(Run.SecondGoalMultiplier)}). Second goal slots: " +
+                    $"[{string.Join(", ", Run.SecondWeekBonusSlots.Select(s => $"{s.ItemId}@{s.BundleName}#{s.IngredientIndex}"))}].",
+                    LogLevel.Info);
 
             // Surface the weekly theme + bonus checklist as a quest entry.
             _questService?.OnThemeSelected();
@@ -1216,7 +1326,7 @@ namespace TheLongestYear.Loop
             // spawnObjects already ran on each outdoor location during the load/sleep sequence
             // (well before the player got to the planning hub), so the Harmony prefix on
             // future spawnObjects calls is too late for today's wild forage on the maps.
-            if (liability == "forage_off")
+            if (liability == ForageOffLiability || liability2 == ForageOffLiability)
                 SweepExistingForage();
         }
 
@@ -1230,7 +1340,14 @@ namespace TheLongestYear.Loop
             if (!Run.CurrentSelection.HasValue) return;
             var sample = SampleSlotsForTheme(Run.CurrentSelection.Value, Run.Season, Run.WeekOfYear);
             Run.CurrentWeekBonusSlots.AddRange(sample);
+            // Double week: the second card's list, without any line the first card already owns.
+            (Run.SecondWeekBonusSlots ??= new System.Collections.Generic.List<BonusSlot>()).Clear();
+            if (Run.SecondSelection is Theme second)
+                Run.SecondWeekBonusSlots.AddRange(GoalLists.Dedupe(
+                    Run.CurrentWeekBonusSlots, SampleSlotsForTheme(second, Run.Season, Run.WeekOfYear)));
             ApplyWeekDiscount();
+            // Random shrine donations: top each list up (only lists that have none, so a reload never re-rolls).
+            RollShrineGoals();
         }
 
         /// <summary>Empty goal pool (everything for this theme already donated): no quest this
@@ -1239,18 +1356,46 @@ namespace TheLongestYear.Loop
         /// so setting it here also prevents a later JP payout.</summary>
         private void ApplyEmptyPoolLiftIfNeeded()
         {
+            LiftFirstListIfEmpty();
+            LiftSecondListIfEmpty();
+        }
+
+        private void LiftFirstListIfEmpty()
+        {
             if (!Run.CurrentSelection.HasValue) return;
-            if (Run.CurrentWeekBonusSlots.Count > 0) return;
+            // Shrine goals (Randomizer) keep the list alive: the lift needs both kinds empty.
+            if (!ShrineGoalRules.ListIsEmpty(Run.CurrentWeekBonusSlots.Count, ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, FirstShrineList))) return;
             if (Run.LiabilitySuppressedThisWeek) return;
 
             Run.LiabilitySuppressedThisWeek = true;
             ActiveEffectsProvider.SuppressLiability();
+            // A double week names the theme, since the other list's drawback stays on.
             Game1.addHUDMessage(new HUDMessage(
-                Strings.Get("hud.nothing-to-donate"),
+                Run.IsDoubleWeekSelection
+                    ? Strings.Get("hud.nothing-to-donate-named", new Dictionary<string, string> { ["theme"] = ThemeDisplay.Name(Run.CurrentSelection.Value) })
+                    : Strings.Get("hud.nothing-to-donate"),
                 HUDMessage.newQuest_type));
             _monitor.Log(
                 $"Weekly goal pool for {Run.CurrentSelection} is empty (all in-play slots donated) - " +
                 "no quest this week; drawback auto-lifted, no weekly JP bonus.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Double week: the second list lifts its own drawback when it is empty (every line
+        /// it could ask for is donated, or the first card owns them all).</summary>
+        private void LiftSecondListIfEmpty()
+        {
+            if (Run.SecondSelection is not Theme second) return;
+            if (!ShrineGoalRules.ListIsEmpty(Run.SecondWeekBonusSlots.Count, ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, SecondShrineList))) return;
+            if (Run.SecondLiabilitySuppressedThisWeek) return;
+
+            Run.SecondLiabilitySuppressedThisWeek = true;
+            ActiveEffectsProvider.SuppressSecondLiability();
+            Game1.addHUDMessage(new HUDMessage(
+                Strings.Get("hud.nothing-to-donate-named", new Dictionary<string, string> { ["theme"] = ThemeDisplay.Name(second) }),
+                HUDMessage.newQuest_type));
+            _monitor.Log(
+                $"Second weekly goal pool for {second} is empty - no second quest; its drawback auto-lifted, no weekly JP bonus for it.",
                 LogLevel.Info);
         }
 
@@ -1304,13 +1449,14 @@ namespace TheLongestYear.Loop
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
                 remainingNeedForBundle: idx => SeasonNeedForBundle(idx, season),
                 caps: GoalCaps,
-                rules: RulesFor(season));
+                rules: RulesFor(season, weekOfYear));
         }
 
         /// <summary>Rules A, B and E for a season: filler allowance from config, effort from the
         /// derived model (null for an id no rule placed, which then takes the price bucket).</summary>
-        private GoalSamplingRules RulesFor(CoreSeason season)
-            => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf);
+        private GoalSamplingRules RulesFor(CoreSeason season, int weekOfYear)
+            => new GoalSamplingRules(season, _config.FillerAllowanceFor(season), EffortOf,
+                Even: RandomizerForWeekPeek(weekOfYear).RandomThemeItems);
 
         private int? EffortOf(string itemId)
             => Availability != null && Availability.HasDerivedEffort(itemId)
@@ -1352,7 +1498,7 @@ namespace TheLongestYear.Loop
             pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
                 theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf, RouteBasisOf);
-            return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season), RarityForItem);
+            return GoalWeighting.For(pool.Select(s => s.ItemId), RulesFor(season, weekOfYear), RarityForItem);
         }
 
         /// <summary>How many more ingredient lines a bundle can still take: its required count
@@ -1476,11 +1622,17 @@ namespace TheLongestYear.Loop
         public ItemAvailabilityModel Availability { get; set; }
 
         /// <summary>Day-28 Sunday-night flow: store the player's pick for week 1 of next month.</summary>
-        public void PreSelectForNextMonth(Theme theme)
+        /// <param name="slot">The hub card position (0 left, 1 right); -1 pays 1x. The multiplier is
+        /// stored now with the live settings the day-28 hub showed, and applied by BeginNewMonth.</param>
+        public void PreSelectForNextMonth(Theme theme, int slot = -1)
         {
             Run.NextMonthSelection = theme;
+            Run.NextMonthGoalMultiplier = slot < 0
+                ? 1.0
+                : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear + 1, theme, slot, _config.Randomizer ?? new RandomizerSettings());
             _monitor.Log(
-                $"Pre-pick set: {theme} will be the week-1 selection of {NextSeason(Run.Season)}.",
+                $"Pre-pick set: {theme} will be the week-1 selection of {NextSeason(Run.Season)} " +
+                $"(goal JP {CardMultiplier.Format(Run.NextMonthGoalMultiplier)}).",
                 LogLevel.Info);
         }
 
@@ -1560,6 +1712,11 @@ namespace TheLongestYear.Loop
         /// Continue verdict, the morning report shows from the normal day start.</summary>
         public void AttachSabotage(SabotageService sabotage) => _sabotage = sabotage;
 
+        private WildcardDayService _wildcard;
+
+        /// <summary>Wildcard days (Randomizer): planned and revealed from the day start.</summary>
+        public void AttachWildcardService(WildcardDayService wildcard) => _wildcard = wildcard;
+
         /// <summary>Open the planning hub for a specific upcoming week. Sunday-night flow passes
         /// <c>Run.WeekOfYear + 1</c> (and a <paramref name="seasonOverride"/> on day 28) so the
         /// offer pool reflects what the player is actually choosing for.</summary>
@@ -1596,9 +1753,19 @@ namespace TheLongestYear.Loop
             }
 
             string seasonTag = seasonOverride.HasValue ? $" (for {seasonOverride.Value})" : "";
+            // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
+            RandomizerSettings offerRand = RandomizerForWeekPeek(week);
+            // A stored re-roll replaces the seeded pair when the hub opens, so log the pair that will show.
+            var restored = Run.RerolledOfferFor(week, selectionsForOffer);
+            var shown = restored ?? offer;
+            string restoredTag = restored != null ? " [restored re-roll]" : "";
+            bool doubleOffer = IsDoubleWeekOffer(week, shown.Count, prePick: seasonOverride.HasValue);
             _monitor.Log(
-                $"Week {week}{seasonTag} selection offer: {string.Join(" OR ", offer)} (opening planning hub).",
+                $"Week {week}{seasonTag} selection offer: " +
+                $"{string.Join(" OR ", CardMultiplier.OfferLabels(shown, Run.Seed, week, offerRand, doubleOffer))}{restoredTag}{(doubleOffer ? " [double week]" : "")} (opening planning hub).",
                 LogLevel.Info);
+            if (CardMultiplier.AnySealed(shown.Count, Run.Seed, week, offerRand, doubleOffer))
+                _monitor.Log($"Week {week} offer with the face-down card: {string.Join(" OR ", shown)}.", LogLevel.Trace);
 
             bool opened = _launcher?.OpenWeeklyHub(seasonOverride) ?? false;
             if (opened)

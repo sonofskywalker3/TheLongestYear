@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace TheLongestYear.Core;
 
 /// <summary>
@@ -15,13 +17,7 @@ public static class CartStockPreview
     /// <summary>Cart visit days within the week starting at <paramref name="weekStartDay"/>.</summary>
     public static int[] CartVisitDaysInWeek(int weekStartDay)
     {
-        var days = new System.Collections.Generic.List<int>();
-        for (int d = weekStartDay; d < weekStartDay + 7; d++)
-        {
-            if (d % 7 % 5 == 0)
-                days.Add(d);
-        }
-        return days.ToArray();
+        return CartSchedule.VanillaDaysInWeek(weekStartDay).ToArray();
     }
 
     /// <summary>Total preview slots granted by tier N Cart Whisperer (tier N = 2N items).</summary>

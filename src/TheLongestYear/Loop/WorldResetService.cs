@@ -691,6 +691,13 @@ namespace TheLongestYear.Loop
             // from under the player on load. This is that next loop.
             if (_meta.ClearRetiredSeasonPityState())
                 _monitor.Log("Reset: cleared the retired season-pity state carried by this save.", LogLevel.Info);
+            // Randomizer "Random bundle rewards" is board-level: stamp it only when this reset builds
+            // a NEW board. A held board (vanilla snapshot restored, or the Engine re-deriving off the
+            // pinned seed loop; ConsecutiveHolds > 0 only after a Kept choice) keeps the stamp it was
+            // built under, so toggling the option never changes a board the player paid to keep.
+            bool holdingBoard = vanillaBoard ? heldVanillaBoard != null : _meta.ConsecutiveHolds > 0;
+            if (!holdingBoard)
+                _meta.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
 
             if (vanillaBoard)
             {
@@ -714,6 +721,7 @@ namespace TheLongestYear.Loop
                 {
                     _monitor.Log("Reset: vanilla board — keeping the game's own board (no engine write).", LogLevel.Info);
                     ApplyVanillaBoardDifficulty();
+                    ApplyVanillaBoardRewardShuffle();
                 }
             }
             else
@@ -730,7 +738,7 @@ namespace TheLongestYear.Loop
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
-                GeneratedBundleSet generatedSet = engine.Generate(seed);
+                GeneratedBundleSet generatedSet = engine.Generate(seed, _meta.RandomBundleRewardsBoard);
                 _timing.Mark("11a engine.Generate");
                 engine.WriteToWorld(generatedSet, _monitor);
                 _timing.Mark("11a engine.WriteToWorld");
@@ -1476,6 +1484,33 @@ namespace TheLongestYear.Loop
                 $"required slots {difficulty.Steps.RequiredSlots}; seed {seed}). " +
                 "Item ids are unchanged.",
                 LogLevel.Info);
+        }
+
+        /// <summary>Randomizer "Random bundle rewards" on a freshly built Vanilla or Remixed board.
+        /// Runs after the difficulty pass and never on a held board (the held snapshot already
+        /// carries its rewards). Only field 1 of each bundle changes. Same seed basis as
+        /// <see cref="ApplyVanillaBoardDifficulty"/> and the same reward pool the Engine draws from.</summary>
+        private void ApplyVanillaBoardRewardShuffle()
+        {
+            if (!_meta.RandomBundleRewardsBoard)
+                return;
+
+            Dictionary<string, string> live = Game1.netWorldState.Value.BundleData;
+            if (live == null || live.Count == 0)
+            {
+                _monitor.Log("Randomizer: bundle reward shuffle skipped, no bundle data on the board.", LogLevel.Warn);
+                return;
+            }
+
+            IReadOnlyList<string> pool = BundleEngine.RewardPool(new VanillaBundlePool(_monitor).BuildRoomPools());
+            int seed = BundleEngineSeed.For(
+                unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
+            IDictionary<string, string> shuffled = TheLongestYear.Core.BundleRewardShuffle.ApplyToData(
+                new Dictionary<string, string>(live), seed, pool, BundleEngine.IsRewardShuffleSkippedRoom);
+            Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(shuffled));
+
+            int bundles = shuffled.Keys.Count(k => !BundleEngine.IsRewardShuffleSkippedRoom(k.Split('/')[0]));
+            _monitor.Log($"Randomizer: bundle rewards shuffled ({bundles} bundles, pool {pool.Count}).", LogLevel.Info);
         }
 
         /// <summary>The all-Normal half of <see cref="ApplyVanillaBoardDifficulty"/>: writes only

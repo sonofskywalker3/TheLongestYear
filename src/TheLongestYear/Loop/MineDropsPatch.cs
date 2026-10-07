@@ -147,7 +147,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static bool Prefix(MineShaft __instance, xTile.Dimensions.Location tileLocation, ref bool __result)
         {
-            if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
+            bool themeClosed = ActiveEffectsProvider.ActiveLiability("mines_closed");
+            if (!themeClosed && !DayEffects.Has(WildcardSchedule.MinesClosedDay))
                 return true;
 
             // Vanilla only activates the elevator on floors <= 120; tile 112 is inert otherwise.
@@ -191,7 +192,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static bool Prefix(string[] action, Farmer who, ref bool __result)
         {
-            if (!ActiveEffectsProvider.ActiveLiability("mines_closed"))
+            bool themeClosed = ActiveEffectsProvider.ActiveLiability("mines_closed");
+            if (!themeClosed && !DayEffects.Has(WildcardSchedule.MinesClosedDay))
                 return true;
             if (action == null || action.Length == 0)
                 return true;

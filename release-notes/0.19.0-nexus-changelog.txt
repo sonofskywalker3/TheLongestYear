@@ -1,0 +1,23 @@
+0.19.0 - The Randomizer: ten optional settings that make every run play out differently. All off by default.
+
+Added
+- A Randomizer section in the mod's settings. Every option is off by default, so if you never open it the game plays exactly as balanced. Weekly options start with next week's offer; Random bundle rewards start with the next loop. Thanks to Nijah, whose Nexus thread started this.
+- Theme rerolls (Off / Costs JP / Free). On Costs JP the first reroll each week is 50 JP, each one after costs double, and the price goes back to 50 every week.
+- Random theme items. Weekly goals are drawn evenly from everything a theme could ask for. Nothing impossible is ever asked.
+- Random pairings. Each card keeps its buff but gets a random drawback, never one that blocks its own goals.
+- Random multiplier. Each card shows its own JP multiplier, 0.5x to 1.5x, for the JP from that theme's goals.
+- Mystery card. About one week in four, one card is face down. It shows only its multiplier, 1.25x to 1.75x, and the theme is revealed when you pick it.
+- Double theme week. Once a season, in week 2 or 3, you take both cards: both buffs, both drawbacks, two goal lists. Each list lifts its own drawback.
+- Wildcard days. One day a week gets a one-day twist, good, bad or odd. You see the day at the start of the week and the twist that morning. Snow never replaces green rain.
+- Random shrine donations. Extra weekly goals for items with no Community Center slot, donated on the farm statue's new Donate tab. Missing them never fails you, but that theme keeps its drawback.
+- Random bundle rewards. Every bundle's reward, the Vault's included, is picked at random each loop.
+- Random cart days. The Traveling Cart comes on random days, about two a week, never on a festival.
+
+Changed
+- The "Allow re-rolling the weekly themes" switch moved into the Randomizer section. If you had it on, Theme rerolls is set to Free.
+
+Fixed
+- Dried Fruit slots no longer ask for grapes. The Dehydrator turns grapes into Raisins, so a Dried Grapes slot could never be filled. Reported by Treedomy.
+- A festival that ends while someone is talking no longer freezes the night.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
