@@ -191,3 +191,56 @@ rather than landed bare (none is expected on the nights listed).
 - A thief scene that took the slot and then cannot stage still lands without a scene (unchanged).
 - The Junimo lines say "them" ("The darkness has touched them") after "all the Wood" and asks like
   "8 Hollies" / "7 Pikes" read oddly; dialogue and the ask table were not mine to change.
+
+## Fix round 1
+
+Commits `79c4eb0` (M2 split, no behaviour change) and `a04020b` (C1, I1, M1, M5), pushed to
+`origin/story`. Not touched, per the coordinator: ChestBlight off the scene maps, Junimo-network warding.
+
+**C1, a strike commits only when its scene stages.** The commit (chance drop, cap or spacing,
+StruckEvents) moved out of the `pickFarmEvent` postfix into `StrikeSceneBase.setUp`, after staging
+and the timeline build succeed (`src/TheLongestYear/Scenes/StrikeSceneBase.cs:189`). `PendingStrike.Apply`
+(`src/TheLongestYear/Loop/PendingStrike.cs:79`) now runs the effect only for a committed strike, so a
+scene that could not stage or threw in setUp ends without landing anything; it stays uncommitted and
+the save/morning net (`SabotageService.Pending.cs:69` `SettlePendingIfAny`) postpones it (nothing
+recorded, guarantee still owed; the displaced random farm event loses that night). The same holds
+when another mod replaces the event after our postfix: setUp never runs, the net postpones. The
+no-scene-by-design path uses `PendingStrike.LandNow` (`:89`). `StrikeScenePatch.SceneTookSlot` and
+`SabotageService.CommitPendingScene` are gone. The pure life is `StrikeLifecycle` and
+`StrikeNetAction` in `src/TheLongestYear.Core/Sabotage/StrikeSlot.cs:76,97`; `StrikeSlot.LandsAtNet` and
+its identity test were removed.
+
+**I1.** `GuaranteedTamper` (`StrikeSlot.cs:145`): done at commit, carried past week 1 when
+postponed, the carry cleared only when the tamper lands; a failed apply makes it owed again with the
+carry kept. Wired in `SabotageService.Pending.cs` (OnPostponed, OnCommitted, OnApplied).
+
+**M1.** `StrikeScenes.WildcardTwistHasTheSlot` doc says postponed.
+
+**M2.** `SabotageRules.cs` 490 -> 210 lines, with `TamperRule.cs` (241: TamperCandidate,
+TamperTarget, TamperRule) and `ChestDraw.cs` (54: ChestSeat, ChestHost, the chest draw half of the
+now-partial `BlightRule`). `SabotageService.Night.cs` 403 -> 293, the pending strike in
+`SabotageService.Pending.cs` (131).
+
+**M5.** New tests in `StrikeSlotTests` drive the life through its paths: staged scene commits once
+and lands once; a scene that cannot stage never lands and the net postpones it, after which it can
+neither commit nor apply; another mod's replacement leaves it to the net, which postpones; a staged
+scene that ended before its beat lands at the net and can no longer be postponed; no-scene-by-design
+commits and lands at once. Two guaranteed-tamper sequences: postponed, committed, failed (still owed
+on Winter 9) and postponed, committed, landed (done, carry cleared).
+
+Tests:
+```
+dotnet build TheLongestYear.sln            -> 0 Error(s)
+dotnet test tests/TheLongestYear.Tests --no-build
+Passed!  - Failed: 0, Passed: 4037, Skipped: 0, Total: 4037
+```
+
+Live (mine, minimized, throwaway farm deleted after, config and Saves as before, no ERROR lines, game
+closed): the bus-repair collision still logs `tonight's CropBlight is postponed (WorldChangeEvent has
+the overnight slot)`; the next armed night logs `the crows are staged ...`, then `tonight's
+CropBlight is committed and recorded.` (the commit now follows staging), then `2 crop(s) struck
+down`, status `Struck this loop: CropBlight`, live crops 30 -> 28. A real staging failure (a chest
+with no ground beside it) was not forced live: no headless way to wall a chest in; the unit tests
+cover the path.
+
+Handoff farms: still valid (unchanged by this round).
