@@ -164,3 +164,91 @@ of Holly"). All three remain valid.
 - Not checked live: a queued tamper held by the 5-day spacing (unit-tested), a queued thief with no
   filmable stock (unit-tested via `InThiefDraw`), a Junimo group across a barn and the farm.
 - Still waiting on Jeff from the earlier round: the "touched them" line after a mass noun.
+
+## Fix round 1
+
+Commits `28513c5` (M1), `85b42a3` (I1, M2, M3, M4), and a docs commit that follows them; all pushed to
+origin/story. Manifest Version still 0.18.15.
+
+**I1 (a) staging checked at pick time.**
+- Thief, per chest: `ThiefScene.HasWayIn` (`src/TheLongestYear/Scenes/ThiefScene.cs:148`) asks whether any
+  of the four tiles beside the target is standable (`SceneGround.CanStandOn`, the same test
+  `PassableGrid` uses). It goes through `ScenePath.CanStandBeside` (`src/TheLongestYear.Core/Sabotage/ScenePath.cs:144,153`),
+  which is true exactly when `ScenePath.WalkTo` is non-empty, and that is the one failure that ends
+  `Stage` there. While the scene is due, a seat counts as filmable only with a way in
+  (`BlightRule.SeatFilmable`, `ChestDraw.cs:67`; `SpoilagePass.cs:159`). So a boxed-in chest is out
+  of the draw, and a Junimo group is hosted (and staged) only through a chest he can reach. A placed
+  machine needs one too (`BlightRule.MachineInThiefDraw`, `ChestDraw.cs:71`; `SpoilagePass.cs:111`).
+- The other kinds: `StrikeSceneFactory.CanStage` (`StrikeSceneFactory.cs:31`) calls `CrowsScene.CanStage` (the Farm map), `HallScene.CanStage`
+  (Town map) and `CloudScene.CanStage` (the farm has a world map region whose base texture condition holds). Those are the
+  checks each `Stage` calls the scene off on. Crows land on the picked live crops themselves, so a
+  non-empty pick always has a patch. `NightPlan.CanAct` asks it first while the kind's scene is due,
+  once per night and before any rng is spent (`SabotageService.Night.cs:182,205`). It is wired from
+  ModEntry (`ModEntry.cs:912`). A throwing check counts as "cannot" (`SabotageService.Pending.cs:32`).
+  A kind whose scene cannot stage cannot act that night, and that includes the guaranteed tamper.
+- Not pre-checked: the cloud's texture load and the Brute's sprite load. They throw only on missing
+  assets, and then fall under (b).
+
+**I1 (b) a failure that slips through postpones without queuing.** `PostponeCause` { SlotTaken,
+CannotStage, NeverStaged } and `StrikeQueue.Queues` (`StrikeQueue.cs:7,38`). `PostponePendingIfAny(why,
+cause)` (`SabotageService.Pending.cs:79`) queues the strike, or carries the guaranteed tamper, only for
+SlotTaken. The `pickFarmEvent` postpone from `StrikeScenePatch` passes SlotTaken (`ModEntry.cs:244`).
+The pick-time "cannot show" path passes CannotStage (`Night.cs:36`). The save, morning and next-night
+net passes NeverStaged (`Pending.cs:101`). Another mod replacing our event after the postfix is also
+caught only by the net, so it is not queued either. The carry rule follows the same logic: a staging
+failure does not set `GuaranteedTamperPostponed`. In week 1 the guaranteed tamper retries anyway, and
+it cannot act at all while the cloud cannot stage.
+
+**M1.** `AskPhrases.ShellfishTakePlural` (`AskPhrases.cs:67`) excludes Oyster, Clam, Crab, Lobster,
+Snail, Mussel, Cockle and Periwinkle from the fish rule. Shrimp and Crayfish keep the same word. This applies to the ask and the
+tainted name.
+
+**M2.** `NightPrecedence.Choose` (`src/TheLongestYear.Core/Sabotage/NightPrecedence.cs`) is a clean
+extraction. Each source is a lazy callback, asked in order: guaranteed tamper, then the dice, then the
+arm, the queue, the every-loop guarantee, and the roll. The dice are thrown after the guaranteed
+attempt and before the arm, as before, so the random stream is unchanged. `RunNight` now calls it
+(`Night.cs:91`), and the guaranteed attempt and the queue lookup became two small methods. One log line
+changed: `night roll ... : strike|quiet; level X` no longer carries the `, armed X` suffix, because the
+arm logs its own line.
+
+**M3.** When the guaranteed tamper commits, it also clears a queued Tampering (`Pending.cs:125`).
+**M4.** The `StrikeSlot.cs` summary line is rewrapped.
+
+**Fail-night trace.** `RunController` runs `RunNight` only when `action == Continue`, and a voluntary
+restart's night does reach it. That night `StrikeSlot.Decide` returns LeaveAlone, so `Postpone` is never
+called. The waiting strike is settled by the save net. Before this round that path queued it (the leak
+risk). The new loop's `BeginNewRun` runs in the morning after the save, so it cleared the queue anyway.
+After this round the net passes NeverStaged and never queues, so nothing can reach the new loop's queue
+whatever the order. `BeginNewRun` still clears `QueuedStrikes` and the carry. Test:
+`A_strike_left_waiting_on_a_fail_night_settles_unqueued_and_the_reset_starts_clean`.
+
+**Tests** (each written and run red first: compile failures on the new API):
+- `StagingAtPickTests` (13): reachability, boxed-in chest excluded, Junimo group only through a
+  reachable chest, machines, only a collision queues, fail-night and reset.
+- `NightPrecedenceTests` (9): every precedence step and the order sources are asked in.
+- `AskPhrasesTests`: `Shellfish_take_their_plurals_but_shrimp_and_crayfish_do_not` (10 rows).
+- `ItemPluralsTests`: `The_tainted_name_of_a_shellfish_takes_its_plural` (10 rows).
+```
+dotnet build TheLongestYear.sln               -> Build succeeded, 0 Error(s)
+dotnet test tests/TheLongestYear.Tests --no-build
+Passed!  - Failed: 0, Passed: 4115, Skipped: 0, Total: 4115
+```
+
+**Live check** (mine, minimized, no mouse or keyboard). Throwaway farm `standard_451092661`, deleted
+afterwards. Log: `test-output/log-archive/SMAPI-v0.18.15-20261007-193409.txt`, with no ERROR lines.
+The Saves listing, `Default_options` and the mod `config.json` match what they were before;
+`startup_preferences` is restored byte for byte; the game is closed; no tracked log was pruned.
+- I placed five fixture chests close together on the Farm. Status read `units in chests: 195, of
+  which the thief can take tonight: 105`: three of the chests were hemmed in by the others and the
+  farm debris, so they were left out.
+- Collision night (bus repair): `... and it is queued for the next free night`. The next night:
+  `the postponed CropBlight fires tonight (Summer 7) instead of the roll`, the crows scene played,
+  and 2 crops died.
+- Armed thief: staged at `(68,30) on Farm, walking 2 tile(s) in from (66,31)`, a chest he could
+  reach. After his scene: `188, of which the thief can take tonight: 188`.
+
+**Handoff farms.** Not loaded; every file's SHA-1 is unchanged. Their chests are at Farm (69,21),
+Farm (67,17) and FarmHouse (3,7), and earlier runs staged the thief at (69,21). The draw on those
+farms would change only if one of those chests has no standable tile beside it; then that chest is
+left out while the scene is due. I can't check that offline. The cloud's pick-time check passes on a
+vanilla world map, which is where the earlier cloud runs staged. All three remain valid.

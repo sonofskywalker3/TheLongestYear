@@ -118,7 +118,9 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     Every fish (Object category -4) keeps the same word (designer, 2026-10-07): "7 Pike", "7
     Salmon", "3 Largemouth Bass", and "all the Pike" in the tainted line; the jellies still count
     ("Sea Jellies") and Roe, Aged Roe, Caviar and Smoked Fish keep their containers or bare word.
-    Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
+    The crab-pot and beach shellfish take their plurals ("7 Oysters", "7 Clams", "7 Crabs", "7
+    Lobsters", "7 Snails", "7 Mussels", "7 Cockles", "7 Periwinkles", "all the Mussels"); Shrimp
+    and Crayfish keep the same word. Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
     The table lives in `AskPhrases`. A plural ask, container phrases included, ends "They remain
     pure." (key `event.darkness.tamper-3-plural`) instead of "It remains pure.".
   - No purple screen glow under the middle line; the low sound stays.
@@ -172,8 +174,11 @@ crops would already be gone when the crows land. `NightPlan.Execute` splits in t
 When a scene is due, the scene calls Apply at its beat (the crow pecks, the lid opens). When no
 scene is due (its kind already played this loop), Apply runs at once, as today: that strike has no
 scene by design. A due scene that cannot show its pick does not land the strike bare: it is
-postponed like a collision (designer, 2026-10-07). While the thief scene is due the chest draw only
-holds chests the scene can show (Scene 2), so this does not happen in practice. Once the scene has taken the
+postponed (designer, 2026-10-07). **Staging is checked at pick time (review I1, 2026-10-07):** while
+a kind's scene is due, the night's "can act" test asks whether its scene can stage tonight (the
+crows need the Farm, the hall needs Town, the cloud needs the farm on a world map region with a
+base texture; the thief draws only chests and machines he can stand beside, Scene 2), so a kind
+whose scene cannot stage simply cannot act that night. Once the scene has taken the
 overnight slot, a skip, a staging failure or a throw also lands it. Apply is idempotent per night so
 a skip mid-scene cannot double it. The morning report does not change.
 
@@ -184,7 +189,11 @@ a strike only when it commits (its scene takes the slot, or it lands with no sce
 postponed night is a night with no strike: the week's chance does not drop, no cap slot or tamper
 spacing is spent, and the every-loop guarantee still owes the kind.
 
-**A postponed strike is queued for the next free night (designer, 2026-10-07).** Its kind goes on a
+**A strike postponed by a slot collision is queued for the next free night (designer,
+2026-10-07).** Only a collision queues (`StrikeSlot.Decide` gives the slot to something else): a
+staging failure that still slips through (setUp fails or throws, another mod replaces the event, a
+fail or restart night leaves the slot alone) postpones without queuing, because it would fail the
+same way again and, firing ahead of the roll, starve the darkness (review I1). Its kind goes on a
 queue kept on the run (`RunState.QueuedStrikes`, cleared at the loop reset, empty on older saves).
 Nothing about the pick is kept: on the night it fires it is planned afresh and fairly. On every
 later night pass the oldest queued kind that can act tonight fires instead of the normal roll, with
@@ -193,8 +202,9 @@ strike). It honours everything the kind's own "can act" test does: caps, the spa
 tampers, wards, quiet days, nothing fair to take. A queued kind that cannot act tonight stays queued
 and the night rolls normally. It leaves the queue only when it commits; a night whose slot is taken
 again postpones it and it stays queued. A debug arm still takes precedence; the every-loop guarantee
-waits behind the queue. A guaranteed Winter tamper that is postponed keeps its own carry instead: it
-stays owed past week 1, every night until it lands. Rule: `StrikeQueue`. The nets under the save, the morning and the next night pass follow the
+waits behind the queue. A guaranteed Winter tamper postponed by a collision keeps its own carry
+instead: it stays owed past week 1, every night until it lands; when it commits it also clears a
+queued Tampering. The order of the night's sources is `NightPrecedence`; the queue is `StrikeQueue`. The nets under the save, the morning and the next night pass follow the
 same rule: a waiting strike lands there only if its scene had the slot; otherwise (for example the
 first night of a save, when vanilla runs no `pickFarmEvent`) it is postponed. Rules:
 `StrikeSlot.Decide`, `StrikeSlot.LandsAtNet`, `StrikeLedger.Record`.
@@ -237,7 +247,9 @@ sleeping farm.
 - Wherever the picked chest is: the Farm, a shed, the cellar, the farmhouse. **While the thief
   scene is still due this loop, the chest draw only holds chests on those maps (designer,
   2026-10-07, option a)**, so the first theft always has its scene; a barn, coop, greenhouse or
-  island chest is safe until then. If no chest there has anything to take, the thief cannot act
+  island chest is safe until then, and so is a chest with no tile beside it he could stand on (a
+  Junimo group counts only through a chest he can reach; a placed machine likewise). If no chest
+  there has anything to take, the thief cannot act
   that night (the every-loop guarantee and the queue keep him owed). Once his scene has played,
   every chest is in the draw again and later thefts there land with no scene, by design.
 - **Junimo Chests are chests (Jeff, 2026-10-07).** Every Junimo Chest shows one shared inventory,
