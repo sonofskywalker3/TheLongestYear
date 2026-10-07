@@ -1465,10 +1465,10 @@ namespace TheLongestYear.Loop
             int seed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
             IDictionary<string, string> shuffled = TheLongestYear.Core.BundleRewardShuffle.ApplyToData(
-                new Dictionary<string, string>(live), seed, pool, BundleEngine.IsPassThroughRoom);
+                new Dictionary<string, string>(live), seed, pool, BundleEngine.IsRewardShuffleSkippedRoom);
             Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(shuffled));
 
-            int bundles = shuffled.Keys.Count(k => !BundleEngine.IsPassThroughRoom(k.Split('/')[0]));
+            int bundles = shuffled.Keys.Count(k => !BundleEngine.IsRewardShuffleSkippedRoom(k.Split('/')[0]));
             _monitor.Log($"Randomizer: bundle rewards shuffled ({bundles} bundles, pool {pool.Count}).", LogLevel.Info);
         }
 

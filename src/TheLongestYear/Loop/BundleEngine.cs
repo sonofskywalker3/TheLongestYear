@@ -107,6 +107,12 @@ namespace TheLongestYear.Loop
         /// the room still re-rolls.</summary>
         public static bool IsPassThroughRoom(string room) => PassThroughRooms.Contains(room);
 
+        /// <summary>Whether the Randomizer's "Random bundle rewards" leaves this room's rewards
+        /// alone and keeps them out of the reward pool. Only the Abandoned Joja Mart: the Vault's
+        /// rewards are ordinary item rewards (field 1, e.g. "O 220 3") and shuffle like any other
+        /// bundle's, while its gold amounts (field 2) are never touched by the shuffle.</summary>
+        public static bool IsRewardShuffleSkippedRoom(string room) => Core.BundleRewardShuffle.SkipsRoom(room);
+
         /// <summary>Rooms the Prismatic Shard / Mystery Box board count leaves out: the Vault and
         /// the Abandoned Joja Mart are outside the year's goal (no theme, no season gate), so their
         /// asks are not the year's. The Missing's own Prismatic Shard is not counted against the
@@ -456,22 +462,22 @@ namespace TheLongestYear.Loop
 
             // Last, so it moves no other stream: rewards never feed back into what a bundle asks.
             IReadOnlyList<string> rewardPool = RewardPool(roomPools);
-            IReadOnlyList<BundleSpec> rewarded = Core.BundleRewardShuffle.Apply(allPicks, seed, rewardPool, IsPassThroughRoom);
+            IReadOnlyList<BundleSpec> rewarded = Core.BundleRewardShuffle.Apply(allPicks, seed, rewardPool, IsRewardShuffleSkippedRoom);
             _monitor?.Log(
-                $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsPassThroughRoom(b.Room))} bundles, pool {rewardPool.Count}).",
+                $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
                 LogLevel.Info);
             return new GeneratedBundleSet(rewarded, flavors);
         }
 
         /// <summary>Randomizer reward pool: every reward vanilla's standard and remixed bundles
-        /// can give, from every room except the pass-through ones (the Vault's "rewards" belong
-        /// to money bundles). Shared by the Engine board and the Vanilla/Remixed reset pass so
+        /// can give, from every room except the Abandoned Joja Mart (the Vault's item rewards are
+        /// included). Shared by the Engine board and the Vanilla/Remixed reset pass so
         /// both sources draw from the same list.</summary>
         public static IReadOnlyList<string> RewardPool(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools)
             => Core.BundleRewardShuffle.CleanPool(
                 roomPools
-                    .Where(room => !IsPassThroughRoom(room.Key))
+                    .Where(room => !IsRewardShuffleSkippedRoom(room.Key))
                     .SelectMany(room => room.Value)
                     .SelectMany(candidates => candidates)
                     .Select(spec => spec.RewardField));
