@@ -149,10 +149,11 @@ public sealed class GameplayConfig
     /// next save load.</summary>
     public bool AutoDetectReplayableUnlockCutscenes { get; set; } = true;
 
-    /// <summary>QA/debug: show the "Re-roll Themes" button on the planning hub, which regenerates
-    /// the week's theme offer in place. Off by default — the week's offer is meant to be fixed —
-    /// but the re-roll code is retained behind this switch. Toggle via config.json / GMCM.</summary>
+    /// <summary>Legacy: read once by RandomizerMigration, then always false. Kept so an old config.json's value can still be read.</summary>
     public bool EnableThemeReroll { get; set; } = false;
+
+    /// <summary>Randomizer section: all off by default.</summary>
+    public RandomizerSettings Randomizer { get; set; } = new();
 
     /// <summary>Better Start (Nexus 32131) mails Robin's starter gift (chests, wood, stone, coal,
     /// seeds, 1,500g) through a one-shot trigger action. The reset now clears the "already fired"

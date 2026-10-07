@@ -160,6 +160,12 @@ public sealed class MetaState
         BoardEaseSteps = 0;
         return hadAny;
     }
+    /// <summary>Randomizer "Random bundle rewards" as it stood when the CURRENT board was built.
+    /// Stamped from live config only where a new board is built (a reset that does not hold the
+    /// board, and the fresh-run Engine board); a held board keeps its stamp. Every reproduction
+    /// of the board (reload re-derivation, tly_genbundles) reads this, never live config, so a
+    /// GMCM change applies at the next new board. False on saves from before the option.</summary>
+    public bool RandomBundleRewardsBoard { get; set; }
 
     /// <summary>The loop number to seed bundle generation with: <see cref="BundleSeedLoop"/>
     /// when set, else <see cref="CompletedResets"/>. Both the reset-time generation and the

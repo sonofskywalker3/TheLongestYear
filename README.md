@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.18.144`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.0`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,232 +25,42 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.18.144
+## What's New in 0.19.0: the Randomizer
 
-**Keep the Special Orders board all year, fish bundles ask for the right fish, and fixes for the recipe books and the crop fairy.**
+**A new Randomizer section in the mod's settings, for runs that play out differently each time.**
 
-- **Keep Special Orders Board** (Junimo Upgrades, Buildings, 1,500 JP). The Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop. You can buy it once the board has opened in a loop (Fall 2). Suggested by elaineofshalott.
-- **Extreme opens the desert in Spring week 3.** With Item rarity on Extreme, the bus counts as repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items can turn up in Spring. Hard and the other settings are unchanged. Suggested by elaineofshalott.
-- **Fish bundles ask for fish from their own water.** Lake Fish could ask for Catfish and Woodskip, and Specialty Fish for Herring. Lake, River and Ocean Fish now pick only fish that live in that water. Specialty Fish picks hard-to-reach fish: Secret Woods, desert, mine and Night Market fish, the legendaries, and the hard short-window catches (Pufferfish, Octopus, Super Cucumber), with at most one Night Market fish. Fish bundles never ask for a jelly. A board you already have keeps its fish until it re-rolls. Reported by Nerlana.
-- **Special orders start fresh every loop.** An order taken in one loop carried into the next with its old due date, the board kept last loop's offers, and one-time orders you had finished never came back. Each rewind now drops orders in progress and puts every town order back on offer.
-- **The recipe book picker steps back instead of closing.** Pressing X, Escape or B on the recipe list now goes back to the slot list. Before, it closed the Cookbook or Craftbook and started the run. Reported by gmastern1.
-- **The crop fairy turns wild seeds into forage.** Wild seeds the fairy grew stayed half-grown and all harvested as Wild Horseradish. They now become seasonal forage on the spot. A stuck crop already in your save fixes itself overnight if you leave it. Reported by sigyn2002.
+Every option in it is off by default, so if you never open it, the game plays exactly as balanced. The weekly options take effect from next week's offer, and Random bundle rewards from the next loop.
 
-## What's New in 0.18.139
+- **Theme rerolls** (Off / Costs JP / Free). A Re-roll Themes button in the planning hub. On Costs JP the first reroll each week is 50 JP, each one after costs double, and the price goes back to 50 every week.
+- **Random theme items.** Weekly goals are drawn evenly from everything a theme could ask for. Nothing impossible is ever asked.
+- **Random pairings.** Each card keeps its theme's buff but gets a random drawback, never one that blocks that theme's own goals.
+- **Random multiplier.** Each card shows its own JP multiplier, from 0.5x to 1.5x, for the JP from that theme's goals.
+- **Mystery card.** About one week in four, one card is dealt face down. It shows only its multiplier, 1.25x to 1.75x, and the theme is revealed when you pick it.
+- **Double theme week.** Once a season, in week 2 or 3, you take both cards: both buffs, both drawbacks and two goal lists.
+- **Wildcard days.** One day each week gets a one-day twist, good, bad or odd. You see which day at the start of the week and the twist that morning.
+- **Random shrine donations.** Extra weekly goals for items with no Community Center slot, donated on the farm statue's new Donate tab. Missing them never fails you, but the theme keeps its drawback.
+- **Random bundle rewards.** Bundle rewards are picked at random, starting from the next loop. The Vault bundles are included.
+- **Random cart days.** The Traveling Cart comes on random days, about two a week, never on a festival.
 
-**Season crop bundles only ask for what the season can grow, and Ginger Island fish stay out of bundles.**
+The old **Allow re-rolling the weekly themes** switch has moved into the Randomizer section. If you had it on, Theme rerolls is set to Free.
 
-- **Season crop bundles only ask for what the season can grow.** Spring Crops could ask for Rhubarb or Coffee Bean, and Summer Crops for Starfruit, which you can't get in time for that season's deadline. They now pick only crops you can have by then. If your current board already has one, the amount due is lowered to what that season can supply when you load your save, and the rest is due by Winter.
-- **Ginger Island fish stay out of bundles.** Weatherman's could ask for Stingray, and Lionfish or Blue Discus could turn up too, all island-only fish. Ginger Island and its modded counterparts are now always off limits, and a board that already asks for one gets it swapped for a reachable fish when you load your save. Reported by paigefromabook.
+**Also fixed: Dried Fruit slots no longer ask for grapes.** The Dehydrator turns grapes into Raisins, not Dried Fruit, so a Dried Grapes slot could never be filled. Reported by Treedomy.
 
-## What's New in 0.18.135
+**Also fixed: a festival that ends while someone is talking no longer freezes the night.**
 
-**A dresser in the stash keeps its clothes, and three new upgrades keep your farm decor, your worn gear and your farmhouse furniture.**
+Thanks to Nijah, whose Nexus thread started this.
 
-- **A dresser in the Junimo Stash keeps what's in it.** A stashed dresser came back empty after a rewind. Hats, shirts, pants, furniture, wallpaper and flooring now stay inside. Anything else in it, like rings, boots or fish, has to come out first: the stash hands the dresser back with a message. A dresser stashed by an older version with other things inside gets them taken out into the stash. Reported by sarahwinchester97.
-- **Stashed items keep their looks and stats.** Dyed clothes keep their colour, tailored boots keep their stats, a Combined Ring keeps both rings, a trinket keeps its rolled stats and a fishing rod keeps its bait and tackle.
-- **Keep Farm Decor (Junimo Upgrades, Buildings, 500 JP).** Paths, fences, gates, lamp-posts, torches, braziers, signs and decorations come back where you left them every loop. Furniture is not kept. A stump, log or boulder in the way is cleared if your kept axe or pickaxe could break it. A piece with no room goes to the stash, or is left on the ground nearby when the stash is full.
-- **Keep Worn Gear (Junimo Upgrades, Loadout, 1,000 JP).** The boots, rings and trinket you're wearing when the year rewinds stay on you.
-- **Keep Farmhouse Furniture (Junimo Upgrades, Buildings, 250 JP).** Furniture inside your farmhouse stays where you put it, dressers included. Anything in a dresser that isn't clothing, furniture, wallpaper or flooring is wiped, so stash it first. If your house is a different size after the rewind, furniture moves with its room, and anything with no room is left by the front door.
+## 0.18 in brief
 
-## What's New in 0.18.118
+- **Seven new keeps.** The Herd Book brings your registered animals back with their names and hearts, and Junimo Upgrades adds Keep Fish Pond, Keep Lost Books, Keep Farm Decor, Keep Worn Gear, Keep Farmhouse Furniture and Keep Special Orders Board.
+- **Restart the year.** A button on the Junimo Shrine starts a fresh loop whenever you like. Season pity is gone; use the Difficulty settings instead.
+- **Spring, Summer and Fall Returns.** One-week boosts that bring a past season's fish and forage back.
+- **One Difficulty setting** sets every dial at once, and once-per-loop items like the legendary fish are only ever asked for once.
+- **Bundles only ask for what a year can reach.** Items from other mods, Ginger Island, year 2 shops and the wrong water or season stay off the board, and a board you already have gets repaired when you load it.
+- **Cookbook and Craftbook start with four free slots**, and a fourth tier takes them to 20.
+- **Picking a theme lowers that week's goals** on Easy and Normal.
 
-**The Sticky bundle asks for sticky things, bundle amounts follow what a year can produce, and Prismatic Shard and Mystery Box are rare asks.**
-
-- **The Sticky bundle asks for sticky things.** It could ask for a single Acorn. It now shows six sticky things and needs four (three on Easy, five on Hard, all six on Extreme): Sap, the tapper syrups, Honey, Jelly, Sugar, Slime, Ice Cream, Maple Bar, Cranberry Sauce and Miner's Treat. Reported by elaineofshalott.
-- **Bundle amounts follow what a year can produce.** Tree seeds, Moss, tree fruit, forage, trash, pantry goods, Hay, Prize Tickets, the rare fish and most cooked dishes now ask for amounts sized to what you can gather, grow, buy or cook by then, instead of just one. A dish is never asked for before you can cook it.
-- **Prismatic Shard and Mystery Box are rare asks.** On the boards the mod builds, your Stack size setting limits them: none on Easy, at most one on Normal, two on Hard and three on Extreme, each asked for one at a time. Helper's asks for one Mystery Box instead of five. The Abandoned Joja Mart's own bundle still asks for one Prismatic Shard.
-- **No more Mystic Syrup.** Its tree only comes from a late-game mastery reward.
-- **Fairer dates.** Prismatic Shard is a Fall-or-later ask (it was counted as a Spring item), the Night Market fish wait for Winter 15, and Moss waits for Summer.
-
-## What's New in 0.18.98
-
-**Picking a theme lowers that week's goals, restarting at the shrine asks its questions first, and a new Keep Lost Books upgrade.**
-
-- **Picking a theme lowers that week's goals.** A goal that asks for more than 10 items asks for less for the rest of the week: half with Stack size on Easy, a quarter less on Normal, unchanged on Hard or Extreme. It never goes below 10, so 31 Cauliflower becomes 23 on Normal. The planning hub shows the lowered counts before you pick. Reported by Nijah.
-- **Restarting at the Junimo Shrine asks its questions first.** It used to end the day first, so you saw the shipping payout, level-ups and the next day's date before being asked about your bundles. Now the bundle question, the upgrade menu and the books come right after you say yes, then you wake on Spring 1. Anything left in the shipping bin that night is not sold, since the restart resets your gold anyway. Spotted in Dummy Dog Ben's stream.
-- **Keep Lost Books (Junimo Upgrades, 100 JP).** Lost Books you have found stay found through a rewind, so artifact spots and fishing chests stop turning up ones you already have and you can dig for bundle artifacts instead. Suggested by tanky24u.
-- **Marnie brings a pet again after a rewind.** A farm with no pet after a rewind gets her visit again, instead of only the paid Adopt option at her counter. Keep Pet now costs 50 JP (was 75). Spotted in Dummy Dog Ben's stream.
-- **Artifacts wait for week 3.** A week 1 goal could ask for something like Elvish Jewelry. Artifacts now start showing up in goals from week 3, giving geodes and dig spots time to turn them up. Spotted in Dummy Dog Ben's stream.
-- **The Dye bundle asks for grown and gathered things.** It could ask for cooked dishes, bombs, skill books or Joja Cola. It now picks from the vanilla Dye items, the common gems and crystals, and coloured crops, flowers, forage and beach finds. Spotted in Dummy Dog Ben's stream.
-- **No more Qi Bean goals.** Qi Beans only drop during one of Mr. Qi's challenges, which needs Ginger Island, but a bundle could still ask for one.
-- **The Guarantee Year 1 Completable checkbox says it does not affect TLY Custom bundles.** It only changes the game's own bundle board.
-
-## What's New in 0.18.84
-
-**Weekly goals stop asking for things you can't have yet, and long descriptions fit on the screen.**
-
-- **Weekly goals wait for their items.** Bundles tied to one season, like Spring Crops, could hand out a weekly goal before its item could exist, in any week of that season: Strawberries before the Egg Festival sells the seeds, or Cauliflower before it has had time to grow. Those goals now wait until you can actually get the item. Reported by Nijah, and spotted in Dummy Dog Ben's stream.
-- **No quality goals in the first two weeks.** A weekly goal could ask for silver or gold crops on day 1, when a gold Carrot is about a 1 in 100 roll. Quality asks now start in week 3. Spotted in Dummy Dog Ben's stream.
-- **Long descriptions fit on the screen.** Upgrade and boost descriptions, like Sneak Peek's, were drawn on one line and could run off the screen at larger UI scales. They now wrap. Spotted in Dummy Dog Ben's stream.
-
-## What's New in 0.18.81
-
-**Each save keeps its own bundle choice, and bundles stop asking for Ostrich Mayo.**
-
-- **Your bundle choice stays with your save.** Picking Normal or Remixed bundles for one farm, then starting another farm on TLY Custom, switched the first farm to TLY Custom bundles at its next rewind. Each save now keeps the choice it was made with. The Bundle source setting in the mod's settings menu changes the save you have loaded; on the title screen it only sets what a new game starts on. If this already happened to your farm, set it back there and your next rewind uses that board again. Reported by victoriatauanem.
-- **No more Ostrich Mayo in bundles.** With Blue Eggs and Golden Mayo installed, a bundle could ask for Ostrich Mayo, which needs Ostrich Eggs from Ginger Island. The mod now follows machine goods back to what goes in them, and farm animals back to where you get them, so an item from any mod that needs something a year can't reach stays off the board. Reported by Ninjamaid.
-
-## What's New in 0.18.79
-
-**Keep your Fish Pond through a rewind, and re-rolling the weekly themes stops showing the same pair.**
-
-- **Keep Fish Pond.** A new upgrade in Junimo Upgrades (Buildings, 750 JP), unlocked once you build a Fish Pond. After a rewind your pond is back in the same spot, finished and empty, so you skip the rebuild and the seaweed. The fish don't come with it; carry one in the Junimo Stash if you want to restock. With several ponds, the one with the most fish is the one kept. Suggested by elaineofshalott.
-- **Re-rolling the themes shows something new.** With the re-roll setting on, a week where only two themes could ask for two goals re-rolled the same pair forever. A re-roll now offers any theme you haven't picked this month that has at least one goal, and never shows a pair twice until every pair has come up. Reported by Nijah.
-
-## What's New in 0.18.76
-
-**Seasons pass again under Challenging CC Bundles, and eggs and year-2 flowers from other mods stay out of your bundles.**
-
-- **Seasons pass with Challenging CC Bundles.** With Challenging CC Bundles installed, a season could fail on its last night even with every bundle filled, because the mod was checking the smaller standard board instead of the one you filled. It now checks the board you actually filled. A bundle that asks for 8 of its 9 items also showed "needs 9" in the Bundle Log; it now says 8. Reported by ozzy2540.
-- **No eggs in the Foraging bundles.** Some mods, like Visit Mount Vapius, scatter eggs on the ground to pick up, and those eggs could turn up in a Foraging bundle. Eggs, milk and other animal products are now left out of Foraging. The Animal and Chef's bundles still ask for them. Reported by Thrippa.
-- **Items another mod holds back until year 2 stay off the board.** Some mods only sell a seed from year 2 on, like Cornucopia's Spring Rose and its other rare flowers, but the mod couldn't read how those shops are written and asked for them anyway. It now reads them, so anything you can't get in year 1 stays out of your bundles. This works for any mod that writes its shops that way. Two base-game items, the Tea Set and the Animal Catalogue, are left out for the same reason. Reported by Thrippa.
-
-## What's New in 0.18.72
-
-**Keep your favorite barn and coop animals through a rewind with the new Herd Book, and the Start with an animal keeps can finally be bought.**
-
-- **The Herd Book.** A new book you carry from the first day, like the Cookbook and Craftbook. Put an animal in one of its slots and it comes back after every rewind as the same animal: same name, same hearts, fully grown. You start with one Chicken slot. Junimo Upgrades sells the rest in a fixed order: a second Chicken, then two each for Cows, Ducks, Goats, Rabbits, Sheep and Pigs, then one each for the Void Chicken, Golden Chicken, Dinosaur and Ostrich. Suggested by tanky24u.
-- **Herd Book rows look like the Animals tab.** Bigger rows laid out the way the game's own Animals tab does, so it's easy to see who's in each slot.
-- **The Herd Book opens before a rewind.** After the Cookbook and Craftbook, it opens on its own when it has an empty slot and an animal on your farm that fits it.
-- **Start with an animal can be bought.** None of the ten Start with keeps could ever be bought, because the mod never noticed the animals you owned. It now notes every kind of animal on your farm each morning, so once you have had a chicken, Start with Chicken is for sale after Keep Coop.
-- **Start with Ostrich uses a Barn.** Ostriches live in barns, but this keep put one in a Deluxe Coop. It now needs Keep Barn.
-- **Room rule for keeps.** A Start with keep can't be bought if it would overflow the coop or barn you've kept, and Herd Book slots count toward that room too. A Herd Book slot only counts against other Herd Book slots though, so the full Herd Book always fits inside one Deluxe Coop and one Deluxe Barn. The menu tells you when you're out of room: "Needs more coop room" or "Needs more barn room".
-- **On a rewind, Herd Book animals move in first.** Start with animals get whatever room is left over, not the other way around.
-- **Gift of the Junimos room keeps can be bought.** Keep Greenhouse, Keep Quarry Bridge, Keep Glittering Boulder and Keep Minecarts could never be bought, because the mod could not read that room's unlock check. They now unlock once you finish that room. Keep the Bus was fine. Reported by tanky24u.
-
-## What's New in 0.18.58
-
-**Start the year over whenever you like from the Junimo Shrine, and season pity is gone.**
-
-- **Restart the year.** The Junimo Shrine on your farm has a new Restart the year button. It works like a failed season without the Junimo scene: the day ends right away, you choose whether to keep your bundles, spend JP in Junimo Upgrades, bank recipes, and wake on Spring 1 of the next loop. Your JP carries over as usual, and a restart counts as a loop, so holding the same board again still costs more each time in a row. The button is hidden on the last day of a season and while an event or festival is playing. Suggested by tanky24u.
-- **It works after Keep playing too.** If you won and kept playing, a restart starts a fresh loop that can be won again.
-- **The Junimos no longer offer to ease a season you keep failing.** A Fail night now asks one thing, whether to keep your bundles or let them reshuffle, and then opens the upgrade menu. If a season is too hard, turn it down with the Difficulty settings instead. A season the Junimos had already eased goes back to normal. The "Hold and pity prices" setting is now just "Hold prices".
-- **Fortune: Rare Fish's description now says what it does.** The upgrade menu used to say "Rare fish catch chance increased by 25%", which is not how it works. It now reads "Your rod always works as if it has a Curiosity Lure." Reported by tanky24u.
-
-## What's New in 0.18.50
-
-**Missed a fish or forage item in its season? Buy the season back for a week.**
-
-- **Spring Returns, Summer Returns and Fall Returns.** Three new one-week boosts at the Junimo Shrine, 100 JP each. Each is sold once its season has passed this loop: Spring Returns from Summer on, Summer Returns from Fall on, Fall Returns in Winter. While one runs, that season's fish bite and its forage turns up again, on top of the current season's. Time of day, weather and fishing spots still apply, and the legendary fish are included, still once per loop.
-- **Seasonal items are back on their normal deadlines.** 0.18.47 made a seasonal fish or forage item due by the last season it could be found. The Returns boosts replace that: a Summer-only fish can be due at Winter again, and if you missed it, Summer Returns brings it back. Reported by tanky24u.
-- **Rain Dance works in Winter.** A past season's rain fish can be caught in Winter with Rain Dance and a Returns boost. Snow still does not count as rain. Storm Call is still not sold in Winter.
-- **Two descriptions swapped a line.** 0.18.47 took Artichoke out of the wrong description. Year-Two Seeds now lists only Garlic and Red Cabbage, and Pierre's year-2 seeds upgrade lists Artichoke again, which he does stock.
-
-## What's New in 0.18.47
-
-**Boosted crops look ready when they are, seasonal items stop being due after they leave, and the rewind's upgrade menu gets its own name.**
-
-- **Crops sped up by a boost look ready when they are ready.** Growth Spurt, the Farming week bonus and Green Thumb added their extra day after the game's own nightly growth, so a crop they finished could be picked while it still looked half grown. Wild seeds were hit hardest, because they never turned into their forage. The extra day now comes first. Green Thumb also no longer makes a ready regrowing crop look unripe for a day. Reported by tanky24u.
-- **A seasonal item is never due after its season ends.** A Summer-only fish like the Pufferfish could be due by Winter, so Summer and Fall let you through without it and the loop then failed at Winter, when it could no longer be caught. Every item is now due by the last season it can be found, so a missing Pufferfish shows up at the end of Summer instead of two seasons later. Reported by tanky24u.
-- **Year-Two Seeds is Spring and Summer only.** Fall Mixed Seeds already grow Artichoke a quarter of the time, so the Fall version only nudged that to about 29%. It can no longer be bought in Fall. Raised by tanky24u.
-- **The upgrade menu has its own name.** The menu where you spend JP on keeps after a rewind is now called Junimo Upgrades, and the Shrine prices setting is now Upgrade prices. The Junimo Shrine is the statue on your farm.
-
-## What's New in 0.18.43
-
-**The Difficulty setting reaches Hard and Extreme again, Marlon stops selling back last loop's items, and Cactus Fruit waits for the desert.**
-
-- **The Difficulty setting can reach Hard and Extreme.** Moving the mouse over the list counted as picking, so the page redrew the moment the list opened and only Easy and Normal could ever be chosen. It now waits for your click, and the page stays where you were instead of jumping back to the top. Reported by goblinslayer66666.
-- **Marlon no longer sells back last loop's items.** The rewind never cleared the list of things you dropped when you passed out, so the Adventurer's Guild could hand back an item from a previous loop. The rewind now empties it. Reported by Mycatisinapiano1528.
-- **Cactus Fruit waits for the desert.** It could land on a board as a crop from Spring, because Cactus Seeds were missing from the list of seeds that wait for Sandy's shop. It now shows up from Fall, like the desert's other forage, or from mid-Summer on Hard. Reported by Mycatisinapiano1528.
-- **Four config labels no longer run under their controls.** They are now Better Start gift every loop, Replay mod unlock cutscenes, Gear slots in Gil's Trophies, and Item rarity (TLY Custom only). The tooltips are unchanged.
-
-## What's New in 0.18.38
-
-**The mine's coal carts and barrels come back every loop.**
-
-- **Mine carts and barrels refill when the year rewinds.** A new year in Stardew refills the coal carts and resets the barrels and crates in the mines, but a rewind never counted as a new year, so once you had emptied them they stayed empty for every loop after. The rewind now refills them the way a new year does. Treasure chests still only open once. Contributed by supercam19.
-
-## What's New in 0.18.37
-
-**A season you had finished could still fail, dried fruit and smoked fish now name what they want, and Sneak Peek moves to Wednesday.**
-
-- **Sneak Peek airs on Wednesday.** It used to air next year's episode on Sunday and quietly teach you that week's own recipe alongside it, so the television named one dish and gave you two. It now takes over Wednesday's rerun and shows next year's version of the episode that aired on Sunday, so the two are separate and you can see which one you are getting. You give up the reruns for the season you buy it in. Winter 28's episode has no Wednesday after it, so Shrimp Cocktail is no longer asked for by any bundle.
-- **A season you had finished could still fail.** A bundle can only hold as many items as it has slots, but a season's goal could ask for more than that. The bundle went green, the goal still counted you short, and the season failed with nothing you could do about it. Boards from other bundle mods were hit hardest, because a bundle there can share a vanilla bundle's name while having fewer slots. A save already in progress repairs itself the next time you load it. Reported by ozzy2540.
-- **Dried fruit and smoked fish now name the fruit and the fish.** These slots only read "Dried" or "Smoked", and nothing in game would tell you which one was wanted, not even Lookup Anything. A dried fruit slot now asks for a named fruit, Dried Apples for instance, and takes only that one. Smoked fish works the same way. Dried mushrooms still take any mushroom, and now say "Any Dried Mushrooms" instead of just "Dried". Reported by ShadowedAciexox.
-- **The dried and smoked asks come down.** A dehydrator eats five fruit or five mushrooms for every dried one it makes, which the old numbers never counted, so a slot could ask for thirteen dried mushrooms and mean sixty-five mushrooms. These asks are now sized by what you have to gather rather than by how fast the machines run.
-
-## What's New in 0.18.28
-
-**The Cookbook and Craftbook come with four free slots, a fourth tier takes them to 20, and the bundles can no longer ask for anything a year cannot reach.**
-
-- **Cookbook and Craftbook start with four free slots.** Each book used to start empty until you bought its first tier. Now both hold four recipes from day one, each tier adds four (8, 12, 16), and a new fourth tier at 1200 JP takes them to 20. The first three tiers cost what they did. If your book already holds more than its new limit, every recipe stays banked and usable; the book only refuses new entries until you are back under the limit.
-- **Dye and the other pools cannot ask for what a year cannot reach.** The Dye bundle asked for the Queen of Sauce Cookbook, which needs 100 golden walnuts. The colour pools behind Dye, and the pools behind the gem, resource, egg, milk, artifact, mineral, artisan and monster loot asks, now drop anything the mod cannot place inside a year, instead of one item being banned at a time. Reported by SilviaVA.
-- **A second visit to a festival lets you leave.** Going back into the Flower Dance on the same day left you stuck: the dance only runs once a day, and that clearing has no way out. When a festival's main event has already happened, the host now offers to let you leave instead. Reported by asteriaths.
-
-## What's New in 0.18.16
-
-**Once-per-loop items always ask for one, and the mine and monster asks now follow what the mines really give.**
-
-- **Once-per-loop items ask for one, as a setting.** Some items a loop can only give once: the five legendary fish, the two books hidden around town and the Golden Pumpkin from the Spirit's Eve maze. The Stack size dial used to turn their ask into two on Hard and Extreme, which no one can ever fill. A new Difficulty setting, on by default, holds every one of them at one whatever the dial says; off, they scale like everything else. A board already asking for two is lowered on load. Thanks to FayGabi for the report.
-- **Mine and monster asks follow measured yields.** Every mine floor from 1 to 120 and the first 40 Skull Cavern floors were generated on seven different days, every stone broken, every geode cracked and every monster killed through the game's own drop code, and the result counted. The ore, geode and crystal numbers behind the asks were already right. Four were not: Coal asks go up, since a week of mining gives three to four times what the old number said, Quartz asks come down by more than half, and Topaz, Jade, Aquamarine, Emerald and Ruby asks come down by about half. Drops that only one uncommon monster gives (Squid Ink, Crab Cakes, Cloth, Refined Quartz, the bars, the algae) are now capped at twice what clearing floors actually yields, instead of assuming a whole week spent hunting that one monster.
-
-## What's New in 0.18.11
-
-**The two hidden books are gated fairly: Easy never asks for them, and everyone else gets Fall and Winter to find them.**
-
-- **The two hidden books get the time their routes take.** Both of the books hidden around town take real work to reach, so their bundle deadlines now sit in Fall and Winter rather than Spring, and on Easy the Book bundle never asks for them at all.
-
-## What's New in 0.18.10
-
-**Five fixes from your reports: festival contests stop the clock, rings stay off the Dye bundle, a new farm survives a quit before its first night, and the Junimo stash works with Chests Anywhere.**
-
-- **Festival contests and cutscenes stop the clock.** The ice fishing contest and the Egg Hunt run on their own real-time timer, and the Flower Dance, the Luau soup and the grange judging take the controls away. The in-game clock kept running through all of them, so the festival's end could pull you out in the middle of the ice fishing contest and leave you stuck holding the contest rod. Time now only passes while you are walking around the festival, and the end of the festival waits until any contest or scene is over. Reported by amaliekirstine.
-- **Rings stay off the Dye bundle, and a ring a bundle does ask for can be donated.** The game tags the Amethyst Ring purple, so the Dye bundle could ask for it, and the donation menu then refused to pick it up because a ring is not an ordinary item. Rings are kept out of the colour bundles now, a ring on a board you already have can be picked up and donated, and Hard never asks for two of a ring. The setting called Allow donating tools and rings only ever controlled whether Gil's Trophies asks for a weapon or a hat, so it is now called Weapon and hat slots in Gil's Trophies and says what off does. Reported by FayGabi.
-- **Friendship 101 is no longer in the Book bundle.** It is the ninth prize from the prize ticket machine, about 25 Help Wanted quests, and the ticket count starts over every loop, so no one reaches it inside a year. On Hard the Book bundle wants four of its five books, so that one book made the season unwinnable. The Alleyway Buffet and Mapping Cave Systems stay: those books are actually hidden around town, and can be grabbed each loop under the right conditions. Reported by FayGabi.
-- **A new farm quit before its first night is still a Longest Year run.** The game saves a brand-new farm the moment you finish making your character, before this mod has written anything to it. Quitting on that first Spring 1 without sleeping and reloading gave you a farm with no books, no shrine, no Junimo chest and a locked Community Center. The run is now marked in that first save, and a farm you already have in that state is picked up as a run the next time you load it. Reported by FayGabi.
-- **The Junimo stash works with Chests Anywhere.** You can name it, give it a category, and switch to another chest from it. The stash was opened in a way that hid it from Chests Anywhere, to keep Better Chests and Unlimited Storage from resizing it; that now only happens when one of those two mods is installed, and in that case the stash is simply left out of the Chests Anywhere list so you can never get stuck in it. Reported by asteriaths and FayGabi.
-
-## What's New in 0.18.4
-
-**One Difficulty setting for all ten dials, and two fixes from your reports.**
-
-- **One Difficulty setting sets all ten dials.** A new Difficulty option sits at the top of the Difficulty section. Pick Easy, Normal, Hard or Extreme and every dial below it switches to that level, then change any single dial you like. Normal is the default, and a setup you already have is left as it is.
-- **Gil's Trophies never asks for more than one of a trophy.** On Hard and Extreme the Stack size dial was raising a trophy to two, but Gil gives each one only once and hats, the Insect Head and rings never stack, so that slot could never be filled. Every trophy now asks for one, and a board that already has a two on it is fixed the next time you load the save. Reported by ShadowedAciexox.
-- **Quitting after a failed season's last night no longer skips the rewind.** Going to bed on day 28 saves the game already dated to the next season, and the rewind only happened the next morning. Quitting before it played and then reloading carried the run into a season you had not earned. The save now remembers the rewind is owed, and reloading plays it. Reported by gmastern1.
-
-## What's New in 0.18.1
-
-**Garlic can be cultivated too, and both Cultivation upgrades are cheaper.**
-
-- **Cultivation: Garlic joins the upgrade menu, and both Cultivation upgrades drop to 3,000 Junimo Points.** The upgrade menu sold Cultivation: Red Cabbage and nothing for Garlic, which was backwards: Red Cabbage turns up at the Traveling Cart in year 1, while Garlic has no year-1 source at all. Garlic now has the same deal, a 10% chance from Spring Mixed Seeds, and both cost 3,000 instead of Red Cabbage's old 5,000. Buying both is still cheaper than Pierre's Special Order, which stays the guaranteed route. Raised by Tottelotta123.
-- **Artichoke is no longer held off an Easy board.** On the Easy item-rarity setting all three of Pierre's year-two crops were kept off the board until you bought an upgrade, but Artichoke never needed one: Mixed Seeds planted in Fall give Artichoke Seeds about a quarter of the time, in any year, for free.
-
-## What's New in 0.18.0
-
-**The Mod Compatibility Update: bundles no longer ask for things this run cannot reach, and a board that already has one gets repaired.**
-
-- **Bundles no longer ask for things this run cannot reach.** Reported by pitytheviolins: with The Fishmonger installed, a Community Center bundle asked for a dish only Constance sells, from a shop on Ginger Island, which this mod's time loop never reaches. There was no way to complete that bundle. The game now traces every item back to where it actually comes from (a shop, a crop's seed, a cooking recipe) and keeps an item off the board unless at least one of those routes is somewhere this run can reach. An item with no known source at all is left alone, so this only ever removes things proven unreachable, never guesses.
-- **A board you already have gets repaired, not just new ones.** If a bundle on your current board is asking for something this run can never reach, it is swapped for something you can actually get the next time you load that save. Anything you already donated stays donated.
-- **The Abandoned Joja Mart's bundle is vanilla again.** The Missing Bundle was being re-rolled by the mod's own board generator, which is how it came to ask for a legendary fish. That room sits outside the loop entirely, so it is now passed through untouched exactly as the Vault always has been, and a save that already picked up a re-rolled version gets the real one back on its next rewind. Reported by ChaoticMindset.
-- **Zoom Level and UI Scale survive the rewind.** Both dials snapped back to the game's defaults every time the Junimos rewound the year, and there was no way to change what those defaults were. The game treats them as belonging to the save rather than to you, so the fresh year was starting them over while every other setting came back on its own. The loop now carries both across the reset. Reported by RiseiJaku.
-
-Coming from 0.17.15 or earlier? See the previous update below, or the full history in [CHANGELOG.md](CHANGELOG.md).
-
-## What's New in 0.17.12
-
-**The Reasonable Quantities Update: every ask on the board is now a share of what you can really gather, and the difficulty dials finally mean what they say.**
-
-- **Every bundle asks for a share of what a week of going after it actually yields.** Fish, forage, crops, crab pots, monster drops, the mines, animals, machines and raw resources each have a real weekly yield behind them now: fish modelled from the game's own spawn tables at a level-10 fishing pace, forage measured by sweeping every map for three in-game years, crops on 100 tiles, ten crab pots, a full day in the mines. Your Stack size dial then picks a share of it: Easy 10 to 30%, Normal 20 to 50%, Hard 50 to 65%, Extreme 65 to 80%, never above 80%. Two Smallmouth Bass is no longer an Extreme ask, and 90 Common Mushrooms is no longer a Spring one.
-- **Legendary fish are asked for once, plain, and rarely.** Never two of one, never at silver or gold. A Normal board wants at most one legendary and only one board in four wants any; Hard boards up to two, Extreme up to three, and never two from the same season in one bundle. The Hard and Extreme dial used to double a single legendary into an impossible pair.
-- **Hard and Extreme mean it.** Before, the Stack size dial multiplied a one-item ask into two, so Hard and Extreme were identical for most of the board. Now an Extreme Spring Foraging bundle wants 40 to 60 of each item, an Extreme Adventurer's 80 Slimes, an Extreme Jeweler's a dozen of each gem.
-- **Two new mineral bundles.** Jeweler's (the seven fancy gems, a Diamond for finishing it) and Rockhound's (geode minerals, a Geode Crusher) join Mineral in the Boiler Room, and all three now ask for rocks only rather than the artifacts geodes also drop.
-- **0.17.12: the Copper Pan and chained scenes come back every loop.** Same family: Willy's pan scene, and any scene that only unlocks after another scene that replays (the 14-heart chains, Shane's morning-after, Pam's bus follow-up), were stuck as seen from loop 1.
-- **0.17.12: Willy's letter arrives after you keep playing.** A finished Community Center could still be read as unfinished by the mod's own check, which silently blocked the game from sending Willy's back-room letter, so Ginger Island stayed shut. The restored hall is now the authority. Reported by ChaoticMindset.
-- **0.17.12: quest-finishing scenes play again every loop.** Jodi's fish casserole dinner and Marnie's cave carrot thank-you were being treated as already seen from your first loop, so the quest came back each loop but could never be turned in. Reported by ChaoticMindset.
-- **0.17.12: Gunther brings the Rusty Key again every loop.** The museum empties on the rewind and the 60-donation reward re-fired, but Gunther's farm visit that hands the key over never played again, so the sewers stayed shut after loop 1 unless you had bought the keep. Reported by ChaoticMindset.
-- **0.17.8: a must-donate-all bundle's season gate takes any of its items.** The Bundle Log showed only the items pinned to the current season and the gate refused the rest. The pins now decide how many are due; which ones you bring is your call. Reported by ada113.
-- **0.17.8: the Cookbook and Craftbook open between the upgrade menu and the reset.** A book bought in the upgrade menu had nothing to bank by the time it first opened, because the reset had already wiped your recipes. Each book with a free slot now opens right after the upgrade menu. Reported by ada113.
-- **0.17.6: a crops bundle every season.** The Pantry always has Spring Crops, Summer Crops and Fall Crops on the board now. A board could roll Orchard, Preserver's and Home Cook's Feast in their place, which left the Farming theme with nothing to ask for in week 1 but saplings.
-- **0.17.6: one jelly a week.** A weekly theme asks for at most one of Sea Jelly, River Jelly and Cave Jelly. Two of them in the same week meant two slow, separate fishing trips for one theme.
-- **0.17.5: every farm type.** Riverland, Forest, Hilltop, Wilderness, Four Corners, Beach and Meadowlands are all open now; the mod no longer forces Standard. Kept buildings go back to your own spots and the Junimo stash sits by your door on any map. Balance is shared across types, see Limitations.
-- **0.17.5: the Skip intro checkbox is back.** Rerolling farms? Tick Skip intro on the character screen and the opening scene is skipped, straight to the theme picker. A note pops up recommending you watch it the first time, since it is the only in-game explanation of the loop. Asked for by gazumbrado.
-- **0.17.5: new book art.** The Cookbook, Craftbook and Bundle Log have proper covers now, drawn by **supercam19**. Thank you!
-- **0.17.1: the Dye bundle never asks for a legendary fish.** It picks by colour, and a green Legend or a red Crimsonfish counted. Its season gates were already right.
-- **Fixes from your reports.** Golden Egg (Perfection only) and Son of Crimsonfish (a Mr. Qi quest) can no longer be asked for. A Spring bundle can no longer want 90 Common Mushrooms because Fall Wild Seeds could theoretically grow them. Coffee Bean, Cloth and a few Skull Cavern drops were asking for more than a first loop can produce. Normal now caps a vanilla ask at a stack, so Hard never asks for fewer than Normal.
-- **Thank you to gazumbrado, nyxnyx2234, spenderg and Bumblewyn** for the reports and the reroll logs behind this release.
-
-Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials in the settings menu and made every bundle apply pressure at the season checkpoints, which makes the year harder at every difficulty. Details in [CHANGELOG.md](CHANGELOG.md).
+Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -261,6 +71,7 @@ Coming from 0.15.0 or earlier? 0.16.0 added ten independent **Difficulty** dials
 - **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
 - **JP Boosts.** The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
+- **Randomizer.** An optional settings section that adds chance to the weekly themes, goals, bundle rewards and the cart. Everything in it starts off.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
 - **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.

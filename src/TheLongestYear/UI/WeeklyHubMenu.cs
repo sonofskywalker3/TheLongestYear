@@ -40,6 +40,15 @@ namespace TheLongestYear.UI
         private const int BodyLineHeight = 26;
         private const int SectionGap = 8;
 
+        // ---------- Card positions (the slot index the randomizer's multiplier is keyed on) ----------
+        private const int LeftSlot = 0;
+        private const int RightSlot = 1;
+        private const int NoSlot = -1;
+
+        // ---------- Face-down mystery card ----------
+        private const float MysteryMarkScale = 3f;
+        private const int MysteryMarkGap = 16;
+
         // ---------- Header tip lines (banking tip + season-multiplier line) ----------
         // Vertical gap from the banking-tip line to the season-multiplier line below it
         // (0.12.0 clarity pass). titleBlock must reserve this same amount so the cards
@@ -91,6 +100,24 @@ namespace TheLongestYear.UI
         /// sleeping on day 28). The pick routes through <see cref="RunController.PreSelectForNextMonth"/>
         /// rather than the normal current-week selection path.</summary>
         private readonly bool _isPreSelectForNextMonth;
+        private readonly RandomizerSettings _rand;
+
+        /// <summary>Double theme week (spec section 6): one click takes both cards. Never on the day-28
+        /// pre-pick hub, and an offer with fewer than two cards is a normal week. Recomputed when the
+        /// offer changes (a reroll on a double week rerolls the pair).</summary>
+        private bool _double;
+
+        private const int DoubleWeekCards = 2;
+
+        private bool ComputeDouble()
+            => !_isPreSelectForNextMonth
+               && _offer.Count == DoubleWeekCards
+               && DoubleWeek.Is(_run.Seed, OfferWeek, _rand.DoubleThemeWeek);
+
+        /// <summary>The card beside <paramref name="slot"/> on a double week (its drawback must not block
+        /// that card's goals, matching RunController.SelectBoth); null on a single week.</summary>
+        private Theme? OtherCard(int slot)
+            => _double ? _offer[slot == LeftSlot ? RightSlot : LeftSlot] : null;
 
         private IReadOnlyList<Theme> _offer;
 
@@ -98,6 +125,8 @@ namespace TheLongestYear.UI
         private ClickableComponent _rightCard;
         private ClickableComponent _rerollButton;
         private int _rerollCounter;
+        private readonly System.Func<long> _getJp;
+        private readonly System.Action<long> _spendJp;
         private readonly List<ClickableComponent> _weatherRows = new List<ClickableComponent>();
         private readonly List<ClickableComponent> _cartRows = new List<ClickableComponent>();
 
@@ -126,9 +155,12 @@ namespace TheLongestYear.UI
         public WeeklyHubMenu(IMonitor monitor, RunController runController, GameplayConfig config,
             RunState run, IReadOnlyList<Theme> offer,
             CoreSeason? offerSeason = null, bool isPreSelectForNextMonth = false,
-            int weatherSageSlots = 0, int cartPreviewSlots = 0)
+            int weatherSageSlots = 0, int cartPreviewSlots = 0,
+            System.Func<long> getJp = null, System.Action<long> spendJp = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: false)
         {
+            _getJp = getJp;
+            _spendJp = spendJp;
             _monitor = monitor;
             _runController = runController;
             _config = config;
@@ -136,6 +168,9 @@ namespace TheLongestYear.UI
             _offer = offer ?? new List<Theme>();
             _offerSeason = offerSeason ?? run.Season;
             _isPreSelectForNextMonth = isPreSelectForNextMonth;
+            // The day-28 hub offers next month's week: read live rather than snapshot a future week.
+            _rand = isPreSelectForNextMonth ? (config.Randomizer ?? new RandomizerSettings()) : runController.Randomizer;
+            _double = ComputeDouble();
             _weatherSageSlots = weatherSageSlots;
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
@@ -144,10 +179,15 @@ namespace TheLongestYear.UI
             if (rerolled != null)
             {
                 _offer = rerolled.ToList();
+                _double = ComputeDouble();
                 _rerollCounter = System.Math.Max(1, _run.RerollCount);
                 _monitor.Log(
-                    $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = [{string.Join(", ", _offer)}] (reroll #{_rerollCounter}).",
+                    $"WeeklyHubMenu: restored re-rolled offer for week {OfferWeek} = " +
+                    $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}] (reroll #{_rerollCounter}).",
                     LogLevel.Info);
+                if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand, _double))
+                    _monitor.Log($"WeeklyHubMenu: restored offer with the face-down card = [{string.Join(", ", _offer)}].",
+                        LogLevel.Trace);
             }
             _cartPreviewSlots = cartPreviewSlots;
 
@@ -219,8 +259,8 @@ namespace TheLongestYear.UI
             var btn = b;
             if (btn == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
-                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0]); return; }
-                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1]); return; }
+                if (currentlySnappedComponent == _leftCard && _offer.Count > 0) { ConfirmSelection(_offer[0], LeftSlot); return; }
+                if (currentlySnappedComponent == _rightCard && _offer.Count > 1) { ConfirmSelection(_offer[1], RightSlot); return; }
             }
             if (btn == Microsoft.Xna.Framework.Input.Buttons.B && !_themePicked) return;
 
@@ -271,21 +311,40 @@ namespace TheLongestYear.UI
 
         // ---------- per-card data ----------
 
-        /// <summary>Resolve the bonus-item preview for each card's theme from the current offer.</summary>
+        /// <summary>Resolve the bonus-item preview for each card's theme from the current offer.
+        /// The face-down card gets none: no icons, so no item tooltips either.</summary>
         private void ResolvePerCardData()
         {
-            ResolveBonusItemsForTheme(_offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus);
-            ResolveBonusItemsForTheme(_offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus);
+            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus);
+            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus,
+                // Double week: the right card shows its list without the lines the left card owns.
+                ownedByOtherCard: _double ? PreviewFor(_offer[0]) : null);
         }
 
-        private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest)
+        /// <summary>True when the card in <paramref name="slot"/> is face down this offer week. Keyed on
+        /// seed, week and slot only, so a reroll keeps the same slot sealed.</summary>
+        private bool IsSealed(int slot) => CardMultiplier.IsSealed(_run.Seed, OfferWeek, slot, _rand, _double);
+
+        /// <summary>Show a multiplier line on face-up cards when multipliers are in play this week.</summary>
+        private bool ShowsMultiplier
+            => _rand.RandomMultiplier || (!_double && CardMultiplier.IsMysteryWeek(_run.Seed, OfferWeek, _rand.MysteryCard));
+
+        /// <summary>The goals a card's theme would get, as the hub previews them.</summary>
+        private IReadOnlyList<BonusSlot> PreviewFor(Theme theme)
+        {
+            // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
+            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+            return _runController.PreviewSlotsForTheme(theme, _offerSeason, week);
+        }
+
+        private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest, IReadOnlyList<BonusSlot> ownedByOtherCard = null)
         {
             dest.Clear();
             if (theme == null) return;
 
-            // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
-            int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
-            var sample = _runController.PreviewSlotsForTheme(theme.Value, _offerSeason, week);
+            IReadOnlyList<BonusSlot> sample = PreviewFor(theme.Value);
+            if (ownedByOtherCard != null)
+                sample = GoalLists.Dedupe(ownedByOtherCard, sample);
 
             foreach (BonusSlot slot in sample)
             {
@@ -333,8 +392,8 @@ namespace TheLongestYear.UI
 
             width = (CardWidth * 2) + CardSpacing + (PanelPadding * 2);
             // Reserve space for the reroll debug button row below preview rows / cards — only when
-            // the button is enabled (config.EnableThemeReroll, off by default).
-            int rerollBlock = _config.EnableThemeReroll ? RerollButtonHeight + 24 : 0;
+            // the button is enabled (Randomizer Rerolls is not Off; off by default).
+            int rerollBlock = (_rand.Rerolls != RerollMode.Off) ? RerollButtonHeight + 24 : 0;
             height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
 
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
@@ -349,14 +408,14 @@ namespace TheLongestYear.UI
             {
                 myID = CardIdLeft,
                 rightNeighborID = CardIdRight,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : ((_rand.Rerolls != RerollMode.Off) ? RerollButtonId : -1)
             };
             _rightCard = new ClickableComponent(new Rectangle(cardsRightX, cardsY, CardWidth, CardHeight),
                 _offer.Count > 1 ? ThemeDisplay.Name(_offer[1]) : "right-card")
             {
                 myID = CardIdRight,
                 leftNeighborID = CardIdLeft,
-                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : (_config.EnableThemeReroll ? RerollButtonId : -1)
+                downNeighborID = FirstRowIdBelowCards() != -1 ? FirstRowIdBelowCards() : ((_rand.Rerolls != RerollMode.Off) ? RerollButtonId : -1)
             };
 
             _weatherRows.Clear();
@@ -410,9 +469,9 @@ namespace TheLongestYear.UI
             // Reroll debug button — centred horizontally, sits in the bottom strip of the
             // panel just above its border. Lets the playtester cycle through theme offers
             // without resetting the run. Not gameplay-balanced; QA-only, gated behind
-            // config.EnableThemeReroll (off by default). When disabled it isn't built or added,
+            // Randomizer Rerolls not being Off (off by default). When disabled it isn't built or added,
             // so receiveLeftClick / DrawRerollButton (both null-guarded) skip it entirely.
-            if (_config.EnableThemeReroll)
+            if (_rand.Rerolls != RerollMode.Off)
             {
                 int rerollX = xPositionOnScreen + (width - RerollButtonWidth) / 2;
                 int rerollY = yPositionOnScreen + height - RerollButtonHeight - 16;
@@ -527,18 +586,122 @@ namespace TheLongestYear.UI
 
             if (_rerollButton != null && _rerollButton.containsPoint(x, y))
             {
-                RerollOffer();
-                Game1.playSound("smallSelect");
+                Game1.playSound(TryRerollFromButton(out _) ? "smallSelect" : "cancel");
                 return;
             }
             if (_leftCard != null && _leftCard.containsPoint(x, y) && _offer.Count > 0)
-                ConfirmSelection(_offer[0]);
+                ConfirmSelection(_offer[0], LeftSlot);
             else if (_rightCard != null && _rightCard.containsPoint(x, y) && _offer.Count > 1)
-                ConfirmSelection(_offer[1]);
+                ConfirmSelection(_offer[1], RightSlot);
+        }
+
+        /// <summary>The re-roll button's click: a paid reroll that cannot change the offer, or that
+        /// the player cannot afford, is refused and takes nothing (final review T2: no charge, no
+        /// count, no price step). On success the free or paid reroll runs. <paramref name="message"/>
+        /// is the outcome line (also used by the tly_reroll paid command).</summary>
+        private bool TryRerollFromButton(out string message)
+        {
+            // Off has no button; the tly_reroll paid route must not slip a free reroll past it.
+            if (_rand.Rerolls == RerollMode.Off)
+            {
+                message = "Reroll refused: rerolls are off.";
+                return false;
+            }
+            long cost = CurrentRerollCost();
+            long before = _getJp?.Invoke() ?? 0;
+            if (cost > 0)
+            {
+                if (cost > before)
+                {
+                    message = $"Reroll refused: costs {cost} JP, only {before} JP.";
+                    return false;
+                }
+                if (!RerollCanChange())
+                {
+                    message = "Reroll refused: no other pair to show.";
+                    return false;
+                }
+                _spendJp?.Invoke(cost);
+            }
+            RerollOffer();
+            message = cost > 0
+                ? $"Reroll paid {cost} JP (JP {before} -> {_getJp?.Invoke() ?? 0})"
+                : "Reroll (free)";
+            return true;
+        }
+
+        /// <summary>The reroll button's own click path, for tly_reroll paid.</summary>
+        public string RerollPaidForDebug()
+        {
+            TryRerollFromButton(out string message);
+            return message;
+        }
+
+        /// <summary>The card click for one side, for tly_select &lt;theme&gt; &lt;left|right&gt;: the real card
+        /// path (goal multiplier and mystery card included). Fails if the theme is not on that side.</summary>
+        public bool TryPickSide(string themeName, string side, out string error)
+        {
+            error = null;
+            int slot;
+            if (side.Equals("left", System.StringComparison.OrdinalIgnoreCase)) slot = LeftSlot;
+            else if (side.Equals("right", System.StringComparison.OrdinalIgnoreCase)) slot = RightSlot;
+            else { error = $"side must be left or right, got '{side}'."; return false; }
+            if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
+            { error = $"unknown theme '{themeName}'."; return false; }
+            if (_offer.Count <= slot || _offer[slot] != theme)
+            {
+                // The face-down card never shows its theme at Warn/Info; the real offer goes to Trace.
+                error = $"{theme} is not on the {side} card (offer: [{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}]).";
+                _monitor.Log($"tly_select: real offer = [{string.Join(", ", _offer)}].", LogLevel.Trace);
+                return false;
+            }
+            ConfirmSelection(theme, slot);
+            if (!LastPickTook)
+            { error = $"{theme} was rejected (already picked this month, or not a valid offer)."; return false; }
+            double mult = _isPreSelectForNextMonth ? _run.NextMonthGoalMultiplier : _run.CurrentGoalMultiplier;
+            if (_run.IsDoubleWeekSelection && !_isPreSelectForNextMonth)
+                _monitor.Log(
+                    $"Double week: selected {_run.CurrentSelection} (slot {LeftSlot}, goal JP {CardMultiplier.Format(_run.CurrentGoalMultiplier)}) " +
+                    $"and {_run.SecondSelection} (slot {RightSlot}, goal JP {CardMultiplier.Format(_run.SecondGoalMultiplier)})",
+                    LogLevel.Info);
+            else
+                _monitor.Log($"Selected {theme} (slot {slot}, goal JP {CardMultiplier.Format(mult)})", LogLevel.Info);
+            return true;
+        }
+
+        /// <summary>One line per card for tly_hubcards: slot, theme (? plus the real theme at Trace when
+        /// face down), drawback id and multiplier.</summary>
+        public void LogCards()
+        {
+            for (int slot = 0; slot < _offer.Count; slot++)
+            {
+                Theme theme = _offer[slot];
+                bool sealedCard = IsSealed(slot);
+                string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings, OtherCard(slot));
+                double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double);
+                _monitor.Log(
+                    $"Hub card slot {slot}: {(sealedCard ? CardMultiplier.SealedLabel : theme.ToString())}, " +
+                    $"drawback {drawback}, goal JP {CardMultiplier.Format(mult)}{(sealedCard ? " (face down)" : "")}",
+                    LogLevel.Info);
+                if (sealedCard)
+                    _monitor.Log($"Hub card slot {slot} is {theme}.", LogLevel.Trace);
+            }
         }
 
         /// <summary>The week whose offer this hub shows: next month's week 1 on the day-28 pre-pick hub.</summary>
         private int OfferWeek => _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
+
+        /// <summary>JP the next reroll charges: rerolls already made this week set the price.</summary>
+        private long CurrentRerollCost()
+            => RerollPricing.CostOf(_rand.Rerolls, _run.RerollWeek == OfferWeek ? _run.RerollCount : 0);
+
+        /// <summary>Cached <see cref="RerollCycle.CanChange"/> for the offer on screen; cleared by
+        /// <see cref="RerollOffer"/>. The candidates do not change while the hub is open.</summary>
+        private bool? _rerollCanChange;
+
+        private bool RerollCanChange()
+            => _rerollCanChange ??= RerollCycle.CanChange(
+                _runController.OfferCandidates(OfferWeek, _offerSeason, SelectionsForOffer), _offer);
 
         /// <summary>The picks the offer excludes. The day-28 pre-pick is for next month, so none
         /// (the same rule <see cref="MenuLauncher.OpenWeeklyHub"/> uses for the first offer).</summary>
@@ -547,7 +710,7 @@ namespace TheLongestYear.UI
             : _run.SelectedThemesThisMonth;
 
         /// <summary>
-        /// Regenerate the offer (config EnableThemeReroll). Salt the underlying seed with the
+        /// Regenerate the offer (Randomizer Rerolls setting). Salt the underlying seed with the
         /// week's re-roll count so the offer stays deterministic. Candidates are every theme not
         /// picked this month that can ask for at least one goal, and <see cref="RerollCycle"/>
         /// never repeats a pair shown this week until every pair has been shown (Nijah, Nexus
@@ -573,12 +736,19 @@ namespace TheLongestYear.UI
                 .OfferCandidates(week, _offerSeason, SelectionsForOffer);
             var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
             _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng).ToList();
+            _double = ComputeDouble();
             _run.RecordReroll(week, _offer, _rerollCounter);
+            _rerollCanChange = null;
             ResolvePerCardData();
             RecomputeBoundsAndLayout();
+            // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
             _monitor.Log(
-                $"WeeklyHubMenu reroll #{_rerollCounter}: offer = [{string.Join(", ", _offer)}].",
+                $"WeeklyHubMenu reroll #{_rerollCounter}: offer = " +
+                $"[{string.Join(", ", CardMultiplier.OfferLabels(_offer, _run.Seed, OfferWeek, _rand, _double))}].",
                 LogLevel.Info);
+            if (CardMultiplier.AnySealed(_offer.Count, _run.Seed, OfferWeek, _rand, _double))
+                _monitor.Log($"WeeklyHubMenu reroll #{_rerollCounter}: offer with the face-down card = [{string.Join(", ", _offer)}].",
+                    LogLevel.Trace);
         }
 
         /// <summary>The re-roll button, for the tly_reroll console command (works whether or not the
@@ -593,23 +763,42 @@ namespace TheLongestYear.UI
             if (!System.Enum.TryParse(themeName, ignoreCase: true, out Theme theme))
                 return false;
             _forcedPick = !_offer.Contains(theme);
-            ConfirmSelection(theme);
+            // A debug pick pays 1x, like every other pick made off the cards.
+            ConfirmSelection(theme, NoSlot);
             return true;
         }
 
         private bool _forcedPick;
 
-        private void ConfirmSelection(Theme theme)
+        /// <summary>True when the last <see cref="ConfirmSelection"/> actually recorded the pick
+        /// (SelectByName can reject it), so debug logs never claim a pick that did not happen.</summary>
+        public bool LastPickTook { get; private set; }
+
+        /// <param name="slot">The card position picked (0 left, 1 right); it sets the goal multiplier.</param>
+        private void ConfirmSelection(Theme theme, int slot)
         {
             _themePicked = true;
+            // Double week: either card (mouse, A button, or a console pick of a card on offer)
+            // takes both, left card first (slot 0) and right card second (slot 1).
+            if (_double && !_forcedPick)
+            {
+                _runController.SelectBoth(_offer[LeftSlot], _offer[RightSlot], skipOfferCheck: _rerollCounter > 0);
+                LastPickTook = _run.CurrentSelection == _offer[LeftSlot] && _run.SecondSelection == _offer[RightSlot];
+                Game1.playSound("smallSelect");
+                this.exitThisMenu();
+                return;
+            }
             if (_isPreSelectForNextMonth)
-                _runController.PreSelectForNextMonth(theme);
+                _runController.PreSelectForNextMonth(theme, slot);
             else
                 // skipOfferCheck whenever the menu has rerolled so picks off the rerolled
                 // offer aren't rejected by RunController's canonical OfferForWeek validation.
                 // The reroll path already excludes already-selected-this-month themes, so the
                 // gameplay rule that matters is preserved. A console pick off the cards is forced.
-                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick);
+                _runController.SelectByName(theme.ToString(), skipOfferCheck: _rerollCounter > 0 || _forcedPick, slot: slot);
+            LastPickTook = _isPreSelectForNextMonth
+                ? _run.NextMonthSelection == theme
+                : _run.CurrentSelection == theme;
             Game1.playSound("smallSelect");
             this.exitThisMenu();
         }
@@ -633,7 +822,7 @@ namespace TheLongestYear.UI
                 drawY += JunimoSpriteSize + 12;
             }
 
-            SpriteText.drawStringHorizontallyCenteredAt(b, Strings.Get("menu.hub.pick-theme"), panelCenterX, drawY);
+            SpriteText.drawStringHorizontallyCenteredAt(b, _double ? Strings.Get("menu.hub.double-week") : Strings.Get("menu.hub.pick-theme"), panelCenterX, drawY);
 
             drawY += 48;
             string bankingTip = Strings.Get("menu.hub.banking-tip");
@@ -650,8 +839,8 @@ namespace TheLongestYear.UI
                 new Vector2(panelCenterX - multSize.X / 2f, drawY),
                 Game1.textColor);
 
-            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds);
-            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds);
+            DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds, LeftSlot);
+            DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds, RightSlot);
 
             DrawWeatherCalendar(b);
             for (int i = 0; i < _cartRows.Count; i++)
@@ -679,19 +868,24 @@ namespace TheLongestYear.UI
         {
             if (_rerollButton == null) return;
 
+            long cost = CurrentRerollCost();
+            bool blocked = cost > 0 && (cost > (_getJp?.Invoke() ?? 0) || !RerollCanChange());
+            float boxAlpha = blocked ? 0.5f : 1f;
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 _rerollButton.bounds.X, _rerollButton.bounds.Y,
                 _rerollButton.bounds.Width, _rerollButton.bounds.Height,
-                Color.White, 1f, false);
+                Color.White * boxAlpha, 1f, false);
 
-            string label = _rerollCounter == 0
+            string label = cost > 0
+                ? Strings.Get("menu.hub.reroll-cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
+                : _rerollCounter == 0
                 ? Strings.Get("menu.hub.reroll")
                 : Strings.Get("menu.hub.reroll-count", new Dictionary<string, string> { ["count"] = _rerollCounter.ToString() });
             Vector2 size = Game1.smallFont.MeasureString(label);
             float labelX = _rerollButton.bounds.X + (_rerollButton.bounds.Width - size.X) / 2f;
             float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                new Vector2(labelX, labelY), Game1.textColor);
+                new Vector2(labelX, labelY), Game1.textColor * boxAlpha);
         }
 
         /// <summary>Draw the weather foresight as a calendar strip (a "Weather" header, a row of
@@ -740,7 +934,7 @@ namespace TheLongestYear.UI
         }
 
         private void DrawCard(SpriteBatch b, ClickableComponent card, Theme? theme,
-            List<Item> bonus, List<Rectangle> bonusBounds)
+            List<Item> bonus, List<Rectangle> bonusBounds, int slot)
         {
             if (card == null) return;
 
@@ -758,7 +952,14 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            var (bonusMod, liabilityMod) = ThemeModifiers.For(theme.Value);
+            if (IsSealed(slot))
+            {
+                DrawSealedCard(b, card, theme.Value, slot);
+                return;
+            }
+
+            string bonusMod = ThemeModifiers.For(theme.Value).BonusId;
+            string liabilityMod = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme.Value, _rand.RandomPairings, OtherCard(slot));
             string bonusName = ThemeModifiers.DisplayNameFor(bonusMod);
             string liabilityName = ThemeModifiers.DisplayNameFor(liabilityMod);
 
@@ -792,6 +993,20 @@ namespace TheLongestYear.UI
 
             // Bonus header above the icon row (both share BonusBottomMargin so they move together).
             int bonusHeaderY = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize - BodyLineHeight - 4;
+
+            // Randomizer card multiplier, under the drawback. Two-line bonus and drawback lines still
+            // leave room above the bonus header; the clamp keeps an extreme wrap off the header.
+            if (ShowsMultiplier)
+            {
+                string multLine = Strings.Get("menu.hub.card-mult", new Dictionary<string, string>
+                {
+                    ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme.Value, slot, _rand, _double)),
+                });
+                int multHeight = (int)Game1.smallFont.MeasureString(multLine).Y;
+                int multY = System.Math.Min(textY, bonusHeaderY - multHeight);
+                Utility.drawTextWithShadow(b, multLine, Game1.smallFont,
+                    new Vector2(textX, multY), Game1.textColor);
+            }
             Utility.drawTextWithShadow(b, Strings.Get("menu.hub.bonus-week"), Game1.smallFont,
                 new Vector2(textX, bonusHeaderY), Game1.textColor);
 
@@ -810,6 +1025,30 @@ namespace TheLongestYear.UI
             {
                 DrawBonusIcons(b, bonus, bonusBounds);
             }
+        }
+
+        /// <summary>The face-down mystery card: a large "?" and its multiplier, nothing else (no theme,
+        /// buff, drawback or goal icons). Still a normal card for clicks and gamepad focus.</summary>
+        private void DrawSealedCard(SpriteBatch b, ClickableComponent card, Theme theme, int slot)
+        {
+            const string mark = "?";
+            Vector2 markSize = Game1.dialogueFont.MeasureString(mark) * MysteryMarkScale;
+            string multLine = Strings.Get("menu.hub.mystery-mult", new Dictionary<string, string>
+            {
+                ["mult"] = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double)),
+            });
+            int textWidth = card.bounds.Width - CardInnerPad * 2;
+            string multWrapped = Game1.parseText(multLine, Game1.smallFont, textWidth);
+            Vector2 multSize = Game1.smallFont.MeasureString(multWrapped);
+
+            float blockHeight = markSize.Y + MysteryMarkGap + multSize.Y;
+            float top = card.bounds.Y + (card.bounds.Height - blockHeight) / 2f;
+            Utility.drawTextWithShadow(b, mark, Game1.dialogueFont,
+                new Vector2(card.bounds.X + (card.bounds.Width - markSize.X) / 2f, top),
+                Game1.textColor, MysteryMarkScale);
+            Utility.drawTextWithShadow(b, multWrapped, Game1.smallFont,
+                new Vector2(card.bounds.X + (card.bounds.Width - multSize.X) / 2f, top + markSize.Y + MysteryMarkGap),
+                Game1.textColor);
         }
 
         private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds)

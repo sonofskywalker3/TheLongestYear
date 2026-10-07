@@ -174,6 +174,9 @@ public class I18nGuardTests
                 _ = Strings.Get($"mail.joja.come-{i}");
             for (int i = 1; i <= TheLongestYear.Core.Joja.JojaOffer.DecisionLetters; i++)
                 _ = Strings.Get($"mail.joja.decide-{i}");
+            // wildcard.twist.* is built from the twist id (WildcardText.Name); walk the pool.
+            foreach (string twist in WildcardSchedule.AllTwists)
+                Assert.NotEqual(twist, WildcardText.Name(twist));
         }
         finally
         {

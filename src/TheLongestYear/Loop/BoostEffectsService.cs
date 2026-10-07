@@ -51,6 +51,9 @@ namespace TheLongestYear.Loop
                 Game1.player.team.sharedDailyLuck.Value = LuckyDay;
                 _monitor.Log("Fortune's Favor: daily luck set to +0.10.", LogLevel.Info);
             }
+            // Wildcard max luck: the same ceiling, after the boost's write.
+            if (DayEffects.Has(WildcardSchedule.MaxLuck) && Game1.IsMasterGame && Game1.player?.team != null)
+                Game1.player.team.sharedDailyLuck.Value = WildcardEffects.Luck(Game1.player.team.sharedDailyLuck.Value, true);
             ApplyDailyBuffs();
         }
 

@@ -71,19 +71,51 @@ namespace TheLongestYear.Loop
 
         private RunState Run => _store.Run;
 
+        /// <summary>The week's goal lists: list 0 is the picked theme, list 1 the second card on a
+        /// double theme week (spec section 6). Each list has its own quest, pays its own weekly
+        /// bonus at its own multiplier and lifts its own drawback.</summary>
+        private const int FirstList = 0, SecondList = 1;
+        private static readonly int[] Lists = { FirstList, SecondList };
+
+        /// <summary>The second list's quest id is the first one's plus this suffix.</summary>
+        private const string SecondQuestSuffix = ".b";
+
+        private Theme? SelectionOf(int list) => list == SecondList ? Run.SecondSelection : Run.CurrentSelection;
+
+        private List<BonusSlot> SlotsOf(int list)
+            => list == SecondList ? (Run.SecondWeekBonusSlots ??= new List<BonusSlot>()) : Run.CurrentWeekBonusSlots;
+
+        /// <summary>The list's random shrine donation goals (Randomizer; empty when the option is off).</summary>
+        private IReadOnlyList<ShrineGoal> ShrineGoalsOf(int list)
+            => ShrineGoalRules.OfList(Run.CurrentWeekShrineGoals, list);
+
+        private double MultiplierOf(int list) => list == SecondList ? Run.SecondGoalMultiplier : Run.CurrentGoalMultiplier;
+
+        private (string BonusId, string LiabilityId) EffectsOf(int list, Theme theme)
+            => list == SecondList ? RandomPairing.SecondEffectsFor(Run, theme) : RandomPairing.EffectsFor(Run, theme);
+
         /// <summary>
         /// Called after a theme is selected (current-week pick or day-28 pre-pick application).
-        /// Removes any prior weekly quest and adds a fresh one keyed to the current week.
+        /// Removes any prior weekly quest and adds a fresh one keyed to the current week (two on a
+        /// double week).
         /// </summary>
         public void OnThemeSelected()
         {
             RemoveExistingWeeklyQuests();
+            foreach (int list in Lists)
+                AddQuest(list);
+        }
 
-            if (!Run.CurrentSelection.HasValue) return;
-            if (Run.CurrentWeekBonusSlots.Count == 0) return;
+        private void AddQuest(int list)
+        {
+            if (SelectionOf(list) is not Theme theme) return;
+            List<BonusSlot> slots = SlotsOf(list);
+            IReadOnlyList<ShrineGoal> shrineGoals = ShrineGoalsOf(list);
+            // A list with only shrine goals (Randomizer) still gets its quest.
+            if (slots.Count == 0 && shrineGoals.Count == 0) return;
 
-            Theme theme = Run.CurrentSelection.Value;
-            var (bonusId, liabilityId) = ThemeModifiers.For(theme);
+            var (bonusId, liabilityId) = EffectsOf(list, theme);
+            double multiplier = MultiplierOf(list);
 
             var q = new Quest();
             q.questType.Value = Quest.type_basic;
@@ -98,28 +130,37 @@ namespace TheLongestYear.Loop
                 ["bonus"] = ThemeModifiers.DisplayNameFor(bonusId),
                 ["drawback"] = ThemeModifiers.DisplayNameFor(liabilityId),
             });
-            q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}";
+            // The randomizer's card multiplier (1x shows nothing, the quest log stays as before).
+            if (multiplier != NoGoalMultiplier)
+                q.questDescription += "\n" + Strings.Get("quest.weekly.mult", new Dictionary<string, string>
+                {
+                    ["mult"] = CardMultiplier.Format(multiplier),
+                });
+            q.id.Value = $"{QuestIdPrefix}{Run.WeekOfYear}{(list == SecondList ? SecondQuestSuffix : "")}";
             q.dayQuestAccepted.Value = Game1.Date.TotalDays;
             q.daysLeft.Value = -1;   // no time limit (the next week's pick will replace it)
             Game1.player.questLog.Add(q);
 
-            RefreshObjective(q);
+            RefreshObjective(q, list);
 
             _monitor.Log(
-                $"WeeklyThemeQuestService: added quest '{q.questTitle}' for week {Run.WeekOfYear} " +
-                $"with {Run.CurrentWeekBonusSlots.Count} goal slots.",
+                $"WeeklyThemeQuestService: added quest '{q.questTitle}' ({q.id.Value}) for week {Run.WeekOfYear} " +
+                $"with {slots.Count} goal slots" +
+                (shrineGoals.Count > 0 ? $" and {shrineGoals.Count} shrine goal(s)." : "."),
                 LogLevel.Info);
         }
 
         /// <summary>
-        /// Called after a CC donation lands. Refreshes the current weekly quest's objective text
-        /// and auto-completes it if every goal slot is now complete in live CC state.
+        /// Called after a CC donation lands. Refreshes each weekly quest's objective text and
+        /// auto-completes one if every goal slot on its list is now complete in live CC state.
         /// </summary>
         public void OnItemDonated()
         {
-            Quest q = FindCurrentWeeklyQuest();
-            if (q == null) return;
-            RefreshObjective(q);
+            foreach (int list in Lists)
+            {
+                Quest q = FindCurrentWeeklyQuest(list);
+                if (q != null) RefreshObjective(q, list);
+            }
         }
 
         /// <summary>
@@ -129,6 +170,7 @@ namespace TheLongestYear.Loop
         ///   2. Create the quest if it's missing but a theme is already selected. Covers the
         ///      first-time-installing-this-version case where the player picked a theme on a
         ///      prior build that didn't have the quest service yet.
+        /// Each list (two on a double week) is handled on its own.
         /// </summary>
         public void OnRunLoaded()
         {
@@ -141,21 +183,24 @@ namespace TheLongestYear.Loop
                     $"WeeklyThemeQuest: credited {grandfathered} already-complete goal slot(s) from a pre-0.14.0 save.",
                     LogLevel.Info);
 
-            Quest q = FindCurrentWeeklyQuest();
-            if (q != null)
+            foreach (int list in Lists)
             {
-                RefreshObjective(q);
-                return;
-            }
+                Quest q = FindCurrentWeeklyQuest(list);
+                if (q != null)
+                {
+                    RefreshObjective(q, list);
+                    continue;
+                }
 
-            // No quest in log — back-fill it if a selection is already active.
-            if (Run.CurrentSelection.HasValue && Run.CurrentWeekBonusSlots.Count > 0)
-                OnThemeSelected();
+                // No quest in log: back-fill it if a selection is already active.
+                if (SelectionOf(list).HasValue && (SlotsOf(list).Count > 0 || ShrineGoalsOf(list).Count > 0))
+                    AddQuest(list);
+            }
         }
 
-        private void RefreshObjective(Quest q)
+        private void RefreshObjective(Quest q, int list)
         {
-            List<BonusSlot> slots = Run.CurrentWeekBonusSlots;
+            List<BonusSlot> slots = SlotsOf(list);
             int doneCount = 0;
             var lines = new List<string>();
 
@@ -171,12 +216,20 @@ namespace TheLongestYear.Loop
                 lines.Add(isDone ? $"  [X] {DescribeSlot(slot)}" : $"  [ ] {DescribeSlot(slot)}");
             }
 
+            // Random shrine donation goals (Randomizer) join this list's total, done count and
+            // paid shares; a shrine goal is done once deposited at the statue.
+            IReadOnlyList<ShrineGoal> shrineGoals = ShrineGoalsOf(list);
+            foreach (ShrineGoal goal in shrineGoals)
+                lines.Add(goal.Deposited ? $"  [X] {DescribeShrineGoal(goal)}" : $"  [ ] {DescribeShrineGoal(goal)}");
+            int ccDone = doneCount;
+            (doneCount, int total) = ShrineGoalRules.Tally(ccDone, slots.Count, shrineGoals);
+
             // Checklist first, tip LAST — the tip must never push the goals below the fold
             // (user feedback 2026-07-09).
             string progress = Strings.Get("quest.weekly.progress", new Dictionary<string, string>
             {
                 ["done"] = doneCount.ToString(),
-                ["total"] = slots.Count.ToString(),
+                ["total"] = total.ToString(),
             });
             q.currentObjective =
                 progress + "\n" + string.Join("\n", lines) +
@@ -184,26 +237,36 @@ namespace TheLongestYear.Loop
 
             // Rule D (activity-themes spec): each goal that lands pays its share of the weekly
             // bonus right away; BonusSlot.Paid guards against paying twice across a reload.
-            int newlyPaid = WeeklyGoalPayout.MarkPaid(slots, IsSlotComplete);
+            int newlyPaid = WeeklyGoalPayout.MarkPaid(slots, IsSlotComplete) + ShrineGoalRules.MarkPaid(shrineGoals);
             if (newlyPaid > 0)
-                PayGoalShares(newlyPaid, doneCount, slots.Count);
+                PayGoalShares(newlyPaid, doneCount, total, MultiplierOf(list));
 
             // Auto-complete when every goal slot has been donated this week: the week's liability
             // is lifted for the remaining days (bonus stays active). RunState.LiabilitySuppressedThisWeek
             // persists the lifted state so a reload doesn't snap the liability back on;
             // ActiveEffectsProvider.SuppressLiability drives the live patches (ForageOffPatch et al.).
-            if (slots.Count > 0 && doneCount == slots.Count && !q.completed.Value)
+            // On a double week each list lifts only its own drawback.
+            // Shrine goals count: the drawback lifts only when every goal of both kinds is done.
+            if (total > 0 && doneCount == total && !q.completed.Value)
             {
                 q.questComplete();
-                LiftLiability();
+                if (list == SecondList) LiftSecondLiability();
+                else LiftLiability();
             }
         }
 
+        /// <summary>The goal multiplier that changes nothing (randomizer off, old saves, debug picks).</summary>
+        private const double NoGoalMultiplier = 1.0;
+
         /// <summary>Rule D: the weekly bonus (30 x season multiplier) split evenly across the
-        /// week's goals and paid as each lands. A one-goal Winter week pays 120 / 7, not 120.</summary>
-        private void PayGoalShares(int newlyPaid, int doneCount, int total)
+        /// week's goals and paid as each lands. A one-goal Winter week pays 120 / 7, not 120.
+        /// The randomizer's card multiplier (stored at selection) scales the bonus before the split.
+        /// On a double week each list pays its own bonus at its own multiplier over its own goals.</summary>
+        private void PayGoalShares(int newlyPaid, int doneCount, int total, double multiplier)
         {
-            long perGoal = WeeklyGoalPayout.PerGoal(Jp.WeeklyQuestBonus(Run.WeekOfYear), total);
+            long weeklyBonus = (long)Math.Round(Jp.WeeklyQuestBonus(Run.WeekOfYear) * multiplier,
+                MidpointRounding.AwayFromZero);
+            long perGoal = WeeklyGoalPayout.PerGoal(weeklyBonus, total);
             long paid = JpBoostHelper.Apply(_store.State, perGoal * newlyPaid);
             _store.State.JunimoPoints += paid;
             Game1.addHUDMessage(new HUDMessage(
@@ -247,15 +310,37 @@ namespace TheLongestYear.Loop
             ActiveEffectsProvider.SuppressLiability();
 
             string liabilityName = Run.CurrentSelection.HasValue
-                ? ThemeModifiers.DisplayNameFor(ThemeModifiers.For(Run.CurrentSelection.Value).LiabilityId)
+                ? ThemeModifiers.DisplayNameFor(RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value).LiabilityId)
                 : "drawback";
 
+            // A double week names the theme, since the other list's drawback may still be on.
             Game1.addHUDMessage(new HUDMessage(
-                Strings.Get("hud.theme-complete"),
+                Run.IsDoubleWeekSelection && Run.CurrentSelection.HasValue
+                    ? Strings.Get("hud.theme-complete-named", new Dictionary<string, string> { ["theme"] = ThemeDisplay.Name(Run.CurrentSelection.Value) })
+                    : Strings.Get("hud.theme-complete"),
                 HUDMessage.achievement_type));
 
             _monitor.Log(
                 $"WeeklyThemeQuest complete: liability '{liabilityName}' suppressed for the rest of the week.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Double week: the second list is done, so lift only the second card's drawback.</summary>
+        private void LiftSecondLiability()
+        {
+            if (Run.SecondLiabilitySuppressedThisWeek || Run.SecondSelection is not Theme second)
+                return;
+
+            Run.SecondLiabilitySuppressedThisWeek = true;
+            ActiveEffectsProvider.SuppressSecondLiability();
+
+            Game1.addHUDMessage(new HUDMessage(
+                Strings.Get("hud.theme-complete-named", new Dictionary<string, string> { ["theme"] = ThemeDisplay.Name(second) }),
+                HUDMessage.achievement_type));
+
+            _monitor.Log(
+                $"WeeklyThemeQuest (second list, {second}) complete: liability " +
+                $"'{ThemeModifiers.DisplayNameFor(RandomPairing.SecondEffectsFor(Run, second).LiabilityId)}' suppressed for the rest of the week.",
                 LogLevel.Info);
         }
 
@@ -311,6 +396,33 @@ namespace TheLongestYear.Loop
                 : tagged + Strings.Get("goal.route-tag", new Dictionary<string, string> { ["tag"] = slot.RouteTag });
         }
 
+        /// <summary>"DisplayName (Brown) x5 - Junimo Shrine": a random shrine donation goal, any quality.</summary>
+        private string DescribeShrineGoal(ShrineGoal goal)
+        {
+            string name = goal.ItemId;
+            try
+            {
+                Item item = ItemRegistry.Create(goal.ItemId, 1, 0, allowNull: true);
+                if (item != null) name = item.DisplayName;
+            }
+            catch (Exception ex)
+            {
+                // ItemRegistry may throw for malformed ids; fall back to the raw id.
+                _monitor.Log($"Shrine goal '{goal.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
+            }
+            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(goal.ItemId), out string colorKey)
+                ? Strings.Get(colorKey) : "";
+            string qty = goal.Stack > 1
+                ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = goal.Stack.ToString() })
+                : "";
+            return Strings.Get("quest.weekly.shrine-slot", new Dictionary<string, string>
+            {
+                ["item"] = name,
+                ["color"] = colorTag,
+                ["qty"] = qty,
+            });
+        }
+
         /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used
         /// to key the egg-color table regardless of qualifier.</summary>
         private static string BareItemId(string qualifiedId)
@@ -322,12 +434,17 @@ namespace TheLongestYear.Loop
                 : qualifiedId;
         }
 
-        private static Quest FindCurrentWeeklyQuest()
+        /// <summary>The weekly quest for <paramref name="list"/>: the second list's id ends with
+        /// <see cref="SecondQuestSuffix"/>, the first list's does not. Vanilla removes a completed
+        /// quest from the log, so one list's quest can be gone while the other's is still there.</summary>
+        private static Quest FindCurrentWeeklyQuest(int list)
         {
             if (Game1.player?.questLog == null) return null;
             foreach (Quest q in Game1.player.questLog)
             {
-                if (q?.id?.Value != null && q.id.Value.StartsWith(QuestIdPrefix, StringComparison.Ordinal))
+                string id = q?.id?.Value;
+                if (id == null || !id.StartsWith(QuestIdPrefix, StringComparison.Ordinal)) continue;
+                if (id.EndsWith(SecondQuestSuffix, StringComparison.Ordinal) == (list == SecondList))
                     return q;
             }
             return null;

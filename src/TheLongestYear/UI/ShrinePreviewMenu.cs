@@ -27,7 +27,9 @@ namespace TheLongestYear.UI
     /// Locked section naming what each reach-gated keep still needs this loop. Keeps are bought
     /// only on the loop-boundary JP perk screen; this tab shows the price and the effect.</item>
     /// </list></summary>
-    internal sealed class ShrinePreviewMenu : IClickableMenu
+    /// <remarks>A fourth tab, <b>Donate</b>, shows on weeks with random shrine donation goals
+    /// (ShrinePreviewMenu.Donate.cs).</remarks>
+    internal sealed partial class ShrinePreviewMenu : IClickableMenu
     {
         private const int RowHeight = 56;
         private const int RowIdBase = 7000;
@@ -41,6 +43,7 @@ namespace TheLongestYear.UI
         private const int TabGap = 8;
         private const int TabsTop = 112;
         private const int TabStripH = TabHeight + 12;
+        private const int TabMinWidth = 140;   // four-tab floor: the longest label still fits
 
         // ---- Restart the year (spec 2026-09-24-voluntary-restart): right end of the tab strip ----
         private const int RestartButtonId = 6300;
@@ -71,7 +74,9 @@ namespace TheLongestYear.UI
         private static readonly Color LockedGray = new(110, 100, 90);
         private static readonly Color NoteBrown = new(120, 90, 40);
 
-        public enum ShrineTab { Active, Boosts, Plan }
+        /// <summary>The value is the tab's index in the strip. Donate is last and only present on
+        /// weeks with shrine goals.</summary>
+        public enum ShrineTab { Active, Boosts, Plan, Donate }
 
         private enum RowKind { Header, Note, Running, Boost, Upgrade, LockedToggle, Locked }
 
@@ -123,10 +128,15 @@ namespace TheLongestYear.UI
 
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
             Func<BoostId, int, BoostPurchase.Result> buyBoost = null,
-            Func<bool> restartOffered = null, Action requestRestart = null)
+            Func<bool> restartOffered = null, Action requestRestart = null,
+            ShrineDonationService donations = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
+            // Read once at open, like the restart button: the tab shows only on weeks with goals,
+            // and only for the host (shrine goals live in the host's save data, like Boosts).
+            _donations = donations;
+            _showDonate = Context.IsMainPlayer && donations != null && donations.Goals.Count > 0;
             _priceFactor = priceFactor;
             _run = run;
             _buyBoost = buyBoost;
@@ -171,10 +181,13 @@ namespace TheLongestYear.UI
             bool cartInTown = TravelingCartVisitsToday(Game1.dayOfMonth);
             if (!cartInTown && !catalogAnyDay)
             {
-                _cartHeader = Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
-                {
-                    ["day"] = ShortDayName(NextCartVisitDay(Game1.dayOfMonth)),
-                });
+                int? nextDay = NextCartVisitDay(Game1.dayOfMonth);
+                _cartHeader = nextDay == null
+                    ? Strings.Get("menu.shrine-preview.cart-away-season")
+                    : Strings.Get("menu.shrine-preview.cart-away", new Dictionary<string, string>
+                    {
+                        ["day"] = ShortDayName(nextDay.Value),
+                    });
                 _cartEmptyNote = "";
                 return;
             }
@@ -201,20 +214,33 @@ namespace TheLongestYear.UI
                 _cartEmptyNote = Strings.Get("menu.shrine-preview.cart-nothing");
         }
 
-        /// <summary>The Traveling Cart is in town on days where <c>dayOfMonth % 7 % 5 == 0</c>.</summary>
-        private static bool TravelingCartVisitsToday(int dayOfMonth) => dayOfMonth % 7 % 5 == 0;
+        /// <summary>Cart days for the week starting at <paramref name="weekStart"/>: this week's stored
+        /// roll when random, a computed (not stored) roll for later weeks, vanilla when off.</summary>
+        private IReadOnlyList<int> CartDaysForWeek(int weekStart)
+        {
+            int seasonIndex = Game1.seasonIndex;
+            if (!CartDaysPatch.RandomOn(seasonIndex, weekStart))
+                return CartSchedule.VanillaDaysInWeek(weekStart);
+            if (weekStart == CartSchedule.WeekStartOf(Game1.dayOfMonth))
+                return CartDaysPatch.DaysFor(seasonIndex, weekStart);
+            int week = Calendar.WeekOfYear(seasonIndex, weekStart);
+            return CartSchedule.RandomDaysInWeek(CartDaysPatch.RunProvider().Seed, week, weekStart, CartSchedule.BlockedDays(seasonIndex));
+        }
+
+        private bool TravelingCartVisitsToday(int dayOfMonth)
+            => CartDaysForWeek(CartSchedule.WeekStartOf(dayOfMonth)).Contains(dayOfMonth);
 
         private static string ShortDayName(int dayOfMonth) => Game1.shortDayDisplayNameFromDayOfSeason(dayOfMonth);
 
-        private static int NextCartVisitDay(int today)
+        /// <summary>The next day this season the cart is in town, or null when none are left.</summary>
+        private int? NextCartVisitDay(int today)
         {
-            for (int off = 1; off <= WeatherScheduler.DaysPerMonth; off++)
+            for (int weekStart = CartSchedule.WeekStartOf(today); weekStart <= WeatherScheduler.DaysPerMonth; weekStart += 7)
             {
-                int dom = ((today - 1 + off) % WeatherScheduler.DaysPerMonth) + 1;
-                if (dom % 7 % 5 == 0)
-                    return dom;
+                foreach (int d in CartDaysForWeek(weekStart))
+                    if (d > today) return d;
             }
-            return today;
+            return null;
         }
 
         private int ForesightPanelHeight()
@@ -240,8 +266,30 @@ namespace TheLongestYear.UI
             {
                 case ShrineTab.Active: BuildActiveRows(); break;
                 case ShrineTab.Boosts: BuildBoostRows(); break;
+                case ShrineTab.Donate: BuildDonateGoals(); break;   // no rows: slots + inventory
                 default: BuildPlanRows(); break;
             }
+        }
+
+        /// <summary>The Active tab's theme line. <paramref name="theme"/> is set only on a double
+        /// week, where each line names its theme; otherwise the single-week text is unchanged.</summary>
+        private static string ThemeNote(string bonus, string liability, bool lifted, Theme? theme)
+        {
+            string bonusName = ThemeModifiers.DisplayNameFor(bonus);
+            string liabilityName = ThemeModifiers.DisplayNameFor(liability)
+                + (lifted ? " " + Strings.Get("shrine.active.lifted") : "");
+            if (theme is not Theme named)
+                return Strings.Get("shrine.active.theme", new Dictionary<string, string>
+                {
+                    ["bonus"] = bonusName,
+                    ["liability"] = liabilityName,
+                });
+            return Strings.Get("shrine.active.theme-named", new Dictionary<string, string>
+            {
+                ["theme"] = ThemeDisplay.Name(named),
+                ["bonus"] = bonusName,
+                ["liability"] = liabilityName,
+            });
         }
 
         private void BuildActiveRows()
@@ -272,13 +320,19 @@ namespace TheLongestYear.UI
             string liability = ActiveEffectsProvider.LiabilityId;
             if (bonus == null)
                 _rows.Add(Note(Strings.Get("shrine.active.no-theme")));
+            else if (ActiveEffectsProvider.SecondBonusId == null)
+                _rows.Add(Note(ThemeNote(bonus, liability, ActiveEffectsProvider.LiabilitySuppressed, null)));
             else
-                _rows.Add(Note(Strings.Get("shrine.active.theme", new Dictionary<string, string>
-                {
-                    ["bonus"] = ThemeModifiers.DisplayNameFor(bonus),
-                    ["liability"] = ThemeModifiers.DisplayNameFor(liability)
-                        + (ActiveEffectsProvider.LiabilitySuppressed ? " " + Strings.Get("shrine.active.lifted") : ""),
-                })));
+            {
+                // Double theme week: one note per theme, each with its own "(lifted)".
+                _rows.Add(Note(ThemeNote(bonus, liability, ActiveEffectsProvider.LiabilitySuppressed, _run?.CurrentSelection)));
+                _rows.Add(Note(ThemeNote(ActiveEffectsProvider.SecondBonusId, ActiveEffectsProvider.SecondLiabilityId,
+                    ActiveEffectsProvider.SecondLiabilitySuppressed, _run?.SecondSelection)));
+            }
+            // Wildcard day: today's twist, on its own line (it is not part of either theme).
+            if (DayEffects.Today is string twist)
+                _rows.Add(Note(Strings.Get("shrine.active.wildcard",
+                    new Dictionary<string, string> { ["twist"] = WildcardText.Name(twist) })));
 
             foreach (UpgradeCategory cat in Enum.GetValues(typeof(UpgradeCategory)))
             {
@@ -463,36 +517,48 @@ namespace TheLongestYear.UI
             _listWidth = width - 80;
 
             _tabs.Clear();
-            ShrineTab[] tabs = { ShrineTab.Active, ShrineTab.Boosts, ShrineTab.Plan };
-            for (int i = 0; i < tabs.Length; i++)
+            List<ShrineTab> tabs = new() { ShrineTab.Active, ShrineTab.Boosts, ShrineTab.Plan };
+            if (_showDonate)
+                tabs.Add(ShrineTab.Donate);
+            int contentTopId = _tab == ShrineTab.Donate ? DonateFirstTargetId() : RowIdBase;
+
+            int restartWidth = 0;
+            if (_showRestart)
+            {
+                string restartLabel = Strings.Get("shrine.restart.button");
+                restartWidth = Math.Max(RestartButtonMinWidth, (int)Game1.smallFont.MeasureString(restartLabel).X + RestartButtonPadding);
+            }
+            // Three tabs keep TabWidth exactly; the Donate tab shrinks all four to clear the button.
+            int stripRoom = _showRestart ? _listWidth - restartWidth - TabGap : _listWidth;
+            int tabWidth = ShrineTabLayout.TabWidth(tabs.Count, TabWidth, TabGap, stripRoom, TabMinWidth);
+
+            for (int i = 0; i < tabs.Count; i++)
             {
                 string label = TabLabel(tabs[i]);
                 _tabs.Add(new ClickableTextureComponent(
                     name: label,
-                    bounds: new Rectangle(_listX + i * (TabWidth + TabGap), yPositionOnScreen + TabsTop, TabWidth, TabHeight),
+                    bounds: new Rectangle(_listX + i * (tabWidth + TabGap), yPositionOnScreen + TabsTop, tabWidth, TabHeight),
                     label: null, hoverText: label,
                     texture: Game1.mouseCursors, sourceRect: new Rectangle(16, 368, 16, 16), scale: 1f)
                 {
                     myID = TabIdBase + i,
                     leftNeighborID = i == 0 ? -1 : TabIdBase + i - 1,
-                    rightNeighborID = i == tabs.Length - 1 ? -1 : TabIdBase + i + 1,
-                    downNeighborID = RowIdBase,
+                    rightNeighborID = i == tabs.Count - 1 ? -1 : TabIdBase + i + 1,
+                    downNeighborID = contentTopId,
                 });
             }
 
             _restartButton = null;
             if (_showRestart)
             {
-                string restartLabel = Strings.Get("shrine.restart.button");
-                int w = Math.Max(RestartButtonMinWidth, (int)Game1.smallFont.MeasureString(restartLabel).X + RestartButtonPadding);
                 _restartButton = new ClickableComponent(
-                    new Rectangle(_listX + _listWidth - w, yPositionOnScreen + TabsTop, w, TabHeight), "restart")
+                    new Rectangle(_listX + _listWidth - restartWidth, yPositionOnScreen + TabsTop, restartWidth, TabHeight), "restart")
                 {
                     myID = RestartButtonId,
-                    leftNeighborID = TabIdBase + tabs.Length - 1,
-                    downNeighborID = RowIdBase,
+                    leftNeighborID = TabIdBase + tabs.Count - 1,
+                    downNeighborID = contentTopId,
                 };
-                _tabs[tabs.Length - 1].rightNeighborID = RestartButtonId;
+                _tabs[tabs.Count - 1].rightNeighborID = RestartButtonId;
             }
 
             LayoutForesight();
@@ -517,10 +583,17 @@ namespace TheLongestYear.UI
 
             this.initializeUpperRightCloseButton();
 
-            allClickableComponents = new List<ClickableComponent>(_tabs) { _scrollUp, _scrollDown };
+            LayoutDonate();
+
+            allClickableComponents = new List<ClickableComponent>(_tabs);
+            if (_tab != ShrineTab.Donate)
+                allClickableComponents.AddRange(new[] { _scrollUp, _scrollDown });
             if (_restartButton != null)
                 allClickableComponents.Add(_restartButton);
-            allClickableComponents.AddRange(_rowSlots);
+            if (_tab == ShrineTab.Donate)
+                AddDonateTargets(allClickableComponents);
+            else
+                allClickableComponents.AddRange(_rowSlots);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
 
@@ -531,6 +604,7 @@ namespace TheLongestYear.UI
         {
             ShrineTab.Active => Strings.Get("shrine.tab.active"),
             ShrineTab.Boosts => Strings.Get("shrine.tab.boosts"),
+            ShrineTab.Donate => Strings.Get("shrine.tab.donate"),
             _ => Strings.Get("shrine.tab.plan"),
         };
 
@@ -588,12 +662,19 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>Debug entry (tly_openshrine): open on a given tab so the bridge can exercise
-        /// every tab's row builder and draw path without a mouse.</summary>
-        public void ShowTab(ShrineTab tab) => SetTab(tab);
+        /// every tab's row builder and draw path without a mouse.
+        /// Returns false (and stays put) for the Donate tab on a week without shrine goals.</summary>
+        public bool ShowTab(ShrineTab tab)
+        {
+            if (tab == ShrineTab.Donate && !_showDonate) return false;
+            SetTab(tab);
+            return true;
+        }
 
         private void SetTab(ShrineTab tab)
         {
             if (_tab == tab) return;
+            if (tab == ShrineTab.Donate && !_showDonate) return;
             _tab = tab;
             _scrollIndex = 0;
             _hoverText = "";
@@ -643,6 +724,7 @@ namespace TheLongestYear.UI
                 if (_tabs[i].containsPoint(x, y)) { SetTab((ShrineTab)i); return; }
             }
             if (_restartButton != null && _restartButton.containsPoint(x, y)) { RequestRestart(); return; }
+            if (_tab == ShrineTab.Donate) { DonateClick(x, y); return; }
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
 
@@ -696,6 +778,7 @@ namespace TheLongestYear.UI
         {
             base.performHoverAction(x, y);
             _hoverText = "";
+            if (_tab == ShrineTab.Donate) { DonateHover(x, y); return; }
 
             foreach (var (bounds, item, price, name) in _cartCells)
             {
@@ -787,6 +870,8 @@ namespace TheLongestYear.UI
             }
 
             DrawForesight(b);
+            if (_tab == ShrineTab.Donate)
+                DrawDonate(b);
 
             for (int i = 0; i < _rowsPerPage; i++)
             {
@@ -804,6 +889,8 @@ namespace TheLongestYear.UI
             base.draw(b);
             if (!string.IsNullOrEmpty(_hoverText))
                 HoverText.Draw(b, _hoverText);
+            else
+                DrawDonateTooltip(b);
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
         }

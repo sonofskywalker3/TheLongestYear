@@ -49,6 +49,12 @@ public static class FlavoredSlotRules
     private static readonly IReadOnlySet<string> CartOnlyFruit =
         new HashSet<string>(StringComparer.Ordinal) { "(O)634", "(O)638" };
 
+    /// <summary>Fruit the Dehydrator never turns into Dried Fruit. Data/Machines gives Grapes
+    /// their own rule ahead of the fruit one, so they come out as Raisins and a "Dried Grapes"
+    /// ask could never be filled (Nexus post, Treedomy, 2026-10-05).</summary>
+    private static readonly IReadOnlySet<string> NotDriedFruit =
+        new HashSet<string>(StringComparer.Ordinal) { "(O)398" };
+
     /// <summary>The salt for the flavor's own rng stream. Distinct from
     /// <c>BoardRepairService</c>'s so a repair draw and a flavor draw can never shadow one
     /// another.</summary>
@@ -140,12 +146,13 @@ public static class FlavoredSlotRules
 
     /// <summary>Every fruit the Dehydrator would take: the fruit category wherever it appears in
     /// the pools, plus what a Data/FruitTrees tree grows (tree fruit has no crop row, so the
-    /// category walk alone would never offer an Apple), minus the cart-only Spring fruit.</summary>
+    /// category walk alone would never offer an Apple), minus the cart-only Spring fruit and the
+    /// fruit that dries into something else.</summary>
     private static IEnumerable<string> FruitIds(ItemPools pools)
         => pools.Crops.Concat(pools.Forage).Concat(pools.ArtisanGoods)
             .Where(p => p.Category == FruitCategory).Select(p => p.ItemId)
             .Concat(pools.FruitTreeFruitIds)
-            .Where(i => !CartOnlyFruit.Contains(i));
+            .Where(i => !CartOnlyFruit.Contains(i) && !NotDriedFruit.Contains(i));
 
     /// <summary>The edible mushrooms, the same list the Wild Medicine recipe draws on.</summary>
     private static IEnumerable<string> MushroomIds(ItemPools pools)

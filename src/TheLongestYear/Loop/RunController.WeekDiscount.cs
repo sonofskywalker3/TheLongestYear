@@ -24,19 +24,31 @@ namespace TheLongestYear.Loop
         public IReadOnlyList<BonusSlot> PreviewSlotsForTheme(Theme theme, TheLongestYear.Core.Season season, int weekOfYear)
             => WeeklyGoalDiscount.Preview(
                 SampleSlotsForTheme(theme, season, weekOfYear),
-                Run.CurrentWeekBonusSlots,
+                AllWeekGoalSlots(),
                 _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount());
+
+        /// <summary>This week's goal lines from both lists (the second is empty except on a double
+        /// week). The lists never share a line (GoalLists.Dedupe), so no line is lowered twice.
+        /// The slots are the stored objects, so the discount's writes land on the RunState lists.</summary>
+        private List<BonusSlot> AllWeekGoalSlots()
+        {
+            var all = new List<BonusSlot>(Run.CurrentWeekBonusSlots);
+            if (Run.SecondWeekBonusSlots != null)
+                all.AddRange(Run.SecondWeekBonusSlots);
+            return all;
+        }
 
         /// <summary>Lower this week's goal lines. Runs right after the goal slots are committed.</summary>
         private void ApplyWeekDiscount()
         {
-            if (!Context.IsMainPlayer || Run.CurrentWeekBonusSlots.Count == 0) return;
+            List<BonusSlot> slots = AllWeekGoalSlots();
+            if (!Context.IsMainPlayer || slots.Count == 0) return;
             var board = Game1.netWorldState?.Value?.BundleData;
             if (board == null) return;
 
             double discount = _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount();
             IReadOnlyList<WeeklyGoalDiscount.StackEdit> edits =
-                WeeklyGoalDiscount.Apply(Run.CurrentWeekBonusSlots, board, discount);
+                WeeklyGoalDiscount.Apply(slots, board, discount);
             if (edits.Count == 0)
             {
                 _monitor.Log($"Theme week discount: nothing to lower for week {Run.WeekOfYear} (discount {discount:P0}).", LogLevel.Trace);
@@ -46,7 +58,7 @@ namespace TheLongestYear.Loop
             WriteBoard(edits);
             _monitor.Log(
                 $"Theme week discount ({discount:P0}) for week {Run.WeekOfYear}: " +
-                string.Join(", ", Run.CurrentWeekBonusSlots.Where(s => s.OriginalStack > 0)
+                string.Join(", ", slots.Where(s => s.OriginalStack > 0)
                     .Select(s => $"{s.ItemId}@{s.BundleName}#{s.IngredientIndex} {s.OriginalStack}->{s.Stack}")) + ".",
                 LogLevel.Info);
         }
@@ -56,14 +68,15 @@ namespace TheLongestYear.Loop
         private void RevertWeekDiscount(string why)
         {
             if (!Context.IsMainPlayer) return;
-            bool anyDiscounted = Run.CurrentWeekBonusSlots.Any(s => s.OriginalStack > 0);
+            List<BonusSlot> slots = AllWeekGoalSlots();
+            bool anyDiscounted = slots.Any(s => s.OriginalStack > 0);
             if (Run.DiscountWeek < 0 && !anyDiscounted) return;
 
             int week = Run.DiscountWeek;
             Run.DiscountWeek = -1;
             var board = Game1.netWorldState?.Value?.BundleData;
             IReadOnlyList<WeeklyGoalDiscount.StackEdit> edits =
-                WeeklyGoalDiscount.Revert(Run.CurrentWeekBonusSlots, board, IsSlotDonated);
+                WeeklyGoalDiscount.Revert(slots, board, IsSlotDonated);
             if (edits.Count > 0)
                 WriteBoard(edits);
             _monitor.Log(

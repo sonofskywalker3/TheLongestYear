@@ -22,6 +22,20 @@ public static class RerollCycle
             .Select(t => t.ToString())
             .OrderBy(n => n, StringComparer.Ordinal));
 
+    /// <summary>True when <see cref="Next"/> can return a pair other than <paramref name="current"/>:
+    /// some offer from <paramref name="candidates"/> has a different <see cref="PairKey"/>. A paid
+    /// reroll that cannot change the offer must not charge (final review T2).</summary>
+    public static bool CanChange(IReadOnlyList<Theme> candidates, IReadOnlyList<Theme> current)
+    {
+        List<Theme> pool = (candidates ?? Array.Empty<Theme>()).Distinct().ToList();
+        string onScreen = PairKey(current ?? Array.Empty<Theme>());
+        if (pool.Count < SelectionService.OfferSize) return PairKey(pool) != onScreen;
+        for (int i = 0; i < pool.Count; i++)
+            for (int j = i + 1; j < pool.Count; j++)
+                if (PairKey(new[] { pool[i], pool[j] }) != onScreen) return true;
+        return false;
+    }
+
     /// <summary>
     /// The next offer from <paramref name="candidates"/>. <paramref name="seen"/> holds the pair
     /// keys shown this week and is updated in place: cleared when the cycle starts over, and the

@@ -48,7 +48,7 @@ namespace TheLongestYear.Loop
             return Game1.random.NextDouble() < RollChance;
         }
 
-        // ReSharper disable InconsistentNaming — Harmony convention.
+        // ReSharper disable InconsistentNaming: Harmony convention.
 
         /// <summary>Runs before <see cref="Crop.newDay"/>. Liability: snapshot the growth state so
         /// the postfix can undo today's tick. Bonus (only when the liability didn't fire): add the
@@ -62,6 +62,11 @@ namespace TheLongestYear.Loop
         private static void Prefix(Crop __instance, int state, out (int phase, int dayOfPhase)? __state)
         {
             __state = null;
+            // Wildcard extra growth: the night after the wildcard day, every watered unripe crop
+            // takes one guaranteed extra tick. Taken first so a theme liability skip (which
+            // restores the snapshot below) cancels only vanilla's own day, not this one.
+            if (WildcardGrowthTonight() && IsWateredUnripe(__instance, state))
+                AdvanceOneTick(__instance);
             if (ShouldSkipTickThisDay(__instance, state))
             {
                 __state = (__instance.currentPhase.Value, __instance.dayOfCurrentPhase.Value);
@@ -83,6 +88,13 @@ namespace TheLongestYear.Loop
 
             AdvanceOneTick(__instance);
         }
+
+        private static bool WildcardGrowthTonight()
+            => RunActivation.IsActive && WildcardDayService.GrowthNight?.Invoke() == true;
+
+        private static bool IsWateredUnripe(Crop crop, int state)
+            => state == 1 && !crop.dead.Value && !crop.fullyGrown.Value
+               && crop.phaseDays.Count > 0 && crop.currentPhase.Value < crop.phaseDays.Count - 1;
 
         /// <summary>Liability restore: the crop ends the day exactly where it started (plus any
         /// bonus tick taken before the snapshot), no advance, no regression.</summary>
@@ -109,6 +121,52 @@ namespace TheLongestYear.Loop
                 crop.currentPhase.Value++;
                 crop.dayOfCurrentPhase.Value = 0;
             }
+        }
+    }
+
+    /// <summary>
+    /// Wildcard snow_day (spec section 8): the night after the snow day, outdoor crops in the valley
+    /// do not grow. Greenhouse and other indoor crops, and crops in other weather contexts (Ginger
+    /// Island), grow as usual. Keyed on <see cref="RunState.WildcardNightTwist"/>, set at the snow
+    /// day's DayEnding, because the overnight crop pass already sees tomorrow's date.
+    ///
+    /// A Priority.First prefix snapshots the growth state and skips vanilla's newDay (no growth tick,
+    /// no regrow countdown, no giant crop or wild seed conversion); a Priority.Last postfix puts the
+    /// snapshot back, which also undoes any bonus tick another prefix (theme bonus, Green Thumb)
+    /// added. Nothing is killed: the out-of-season check lives in the skipped newDay, and a snow day
+    /// is never the season's last night.
+    /// </summary>
+    [HarmonyPatch(typeof(Crop), nameof(Crop.newDay))]
+    internal static class WildcardSnowNightCropPatch
+    {
+        private const string DefaultContext = "Default";
+
+        // ReSharper disable InconsistentNaming: Harmony convention.
+
+        [HarmonyPriority(Priority.First)]
+        private static bool Prefix(Crop __instance, out (int phase, int dayOfPhase, int phaseToShow)? __state)
+        {
+            __state = null;
+            if (!Holds(__instance)) return true;
+            __state = (__instance.currentPhase.Value, __instance.dayOfCurrentPhase.Value, __instance.phaseToShow.Value);
+            return false;
+        }
+
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(Crop __instance, (int phase, int dayOfPhase, int phaseToShow)? __state)
+        {
+            if (!__state.HasValue) return;
+            __instance.currentPhase.Value = __state.Value.phase;
+            __instance.dayOfCurrentPhase.Value = __state.Value.dayOfPhase;
+            __instance.phaseToShow.Value = __state.Value.phaseToShow;
+        }
+
+        private static bool Holds(Crop crop)
+        {
+            if (!RunActivation.IsActive) return false;
+            if (WildcardDayService.NightTwist() != WildcardSchedule.SnowDay) return false;
+            GameLocation location = crop?.currentLocation;
+            return location != null && location.IsOutdoors && location.GetLocationContextId() == DefaultContext;
         }
     }
 }
