@@ -10,12 +10,13 @@ namespace TheLongestYear.Scenes
     /// <summary>The reversion scene (spec 2026-09-21). Ten seconds, no text: the Community Center
     /// from OUTSIDE, in Town, at night. Its windows glow like firelight, and a Shadow Brute, solid
     /// black, steps into the right hand one and works there side-on, busy at something and turned
-    /// from the street: the reversion is what it is doing. The camera opens on the
-    /// facade and tilts down to the dirt road below it. Shane, taking the long way home from the Saloon to clear his head, walks along that road past the
-    /// hall. Level with it he stops dead, gives a small jump of shock, backs off two tiles still
-    /// facing it, then hurries off home toward the square and Marnie's (Jeff, 2026-09-23 and
-    /// 2026-09-25: he is not going to the hall, and he walks only the town's real paths). The slot
-    /// comes undone at the jump, and the shot holds on the windows after he has gone.
+    /// from the street: the reversion is what it is doing. The camera opens on the facade and
+    /// tilts down to the dirt road below it. Shane, taking the long way home from the Saloon to
+    /// clear his head, walks along that road past the hall. Level with it he stops dead, gives a
+    /// small jump of shock, backs off two tiles still facing it, then hurries off home toward the
+    /// square and Marnie's (Jeff, 2026-09-23 and 2026-09-25: he is not going to the hall, and he
+    /// walks only the town's real paths). The slot comes undone at the jump, and the shot holds on
+    /// the windows after he has gone.
     ///
     /// THE PLAYER LEARNS NOTHING ABOUT WHICH ROOM OR SLOT WAS HIT, and that is the point of shooting
     /// it from the street. This scene never opens, enters or draws the Community Center's interior,
@@ -27,9 +28,9 @@ namespace TheLongestYear.Scenes
     /// real NPC: the real one has a schedule that would put him back on the map at 6am wherever the
     /// scene left him.
     ///
-    /// NOTHING HERE MAY STRAND THE NIGHT. No route for Shane means he simply stands in view, a sheet
-    /// that will not load means the scene plays without him at all, and only a Town with no map
-    /// loaded calls the scene off. The reversion lands either way.</summary>
+    /// NOTHING HERE MAY STRAND THE NIGHT. No path route for Shane, or a sheet that will not load,
+    /// means the scene plays without him at all, and only a Town with no map loaded calls the scene
+    /// off. The reversion lands either way.</summary>
     internal sealed class HallScene : StrikeSceneBase
     {
         // ---------------------------------------------------------------- the timeline, in ms

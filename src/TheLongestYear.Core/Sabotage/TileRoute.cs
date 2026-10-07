@@ -98,5 +98,24 @@ public static class TileRoute
         return kept;
     }
 
+    /// <summary>Where a walker <paramref name="tilesIn"/> tiles along a route is, in tiles,
+    /// CLAMPED to the route: before its start he is on its first tile, past its end he stands on
+    /// its last. A walker played back with this can only ever be on a tile of the route or between
+    /// two consecutive ones, whatever the clock or the screen size says (task 9 review: an
+    /// extrapolated walk ran on past the last checked tile on a tall screen).</summary>
+    public static (float X, float Y) At(IReadOnlyList<(int X, int Y)> route, float tilesIn)
+    {
+        if (route is null) throw new ArgumentNullException(nameof(route));
+        if (route.Count == 0) throw new ArgumentException("A route needs at least one tile.", nameof(route));
+        int steps = route.Count - 1;
+        if (steps == 0 || tilesIn <= 0f || float.IsNaN(tilesIn)) return (route[0].X, route[0].Y);
+        if (tilesIn >= steps) return (route[steps].X, route[steps].Y);
+        int leg = (int)Math.Floor(tilesIn);
+        float across = tilesIn - leg;
+        (int X, int Y) from = route[leg];
+        (int X, int Y) to = route[leg + 1];
+        return (from.X + (to.X - from.X) * across, from.Y + (to.Y - from.Y) * across);
+    }
+
     private static readonly (int Dx, int Dy)[] Steps = { (0, -1), (1, 0), (0, 1), (-1, 0) };
 }

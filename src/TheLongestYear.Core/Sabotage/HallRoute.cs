@@ -48,6 +48,30 @@ public static class HallRoute
     /// <summary>Every tile of the way home, from where he backed away to.</summary>
     public static IReadOnlyList<(int X, int Y)> WayOut { get; } = TileRoute.Expand(WayOutCorners);
 
+    /// <summary>How far round the whole tiles of the frame still count as in shot when cutting
+    /// the way home. The frame is whole tiles only, so the row its edge cuts through is partly
+    /// visible, and a man standing on the row below the frame still shows his head in it (he is
+    /// two tiles tall). Two tiles all round covers both.</summary>
+    public const int ShotMarginTiles = 2;
+
+    /// <summary>How many tiles of the way home are kept beyond the last one in shot.</summary>
+    public const int OutOfShotTiles = 3;
+
+    /// <summary>The part of <paramref name="wayOut"/> to walk for a camera showing these whole
+    /// tiles: up to where he is wholly out of shot and a few tiles beyond, or ALL of it when it never
+    /// leaves the shot (a very tall or wide screen). Every tile returned is a tile of
+    /// <paramref name="wayOut"/>, and played back with <see cref="TileRoute.At"/> he stops on its
+    /// last tile rather than walking on past it.</summary>
+    public static IReadOnlyList<(int X, int Y)> WayOutInShot(
+        IReadOnlyList<(int X, int Y)> wayOut, int frameLeft, int frameTop, int frameWidth, int frameHeight)
+        => SceneRoute.OutOfFrame(
+            wayOut,
+            frameLeft - ShotMarginTiles,
+            frameTop - ShotMarginTiles,
+            frameWidth + 2 * ShotMarginTiles,
+            frameHeight + 2 * ShotMarginTiles,
+            OutOfShotTiles);
+
     /// <summary>Where he stops, sees the windows and jumps.</summary>
     public static (int X, int Y) Stop => WayIn[WayIn.Count - 1];
 }

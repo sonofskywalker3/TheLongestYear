@@ -127,4 +127,56 @@ public class HallRouteTests
         Assert.True(HallRoute.WayIn[0].X > HallRight);
         Assert.True(HallRoute.WayOut[HallRoute.WayOut.Count - 1].X < HallRoute.Stop.X);
     }
+
+    // ------------------------------------------------------------------ the way home on any screen
+    // Task 9 review, fix round 3: on a screen tall enough to show the whole way home, the cut kept
+    // all of it and the old playback extrapolated him south past (49,42) onto tiles nobody checked.
+
+    /// <summary>Every place he can be along a cut way home, from before he sets off to long after
+    /// the scene would have ended, must lie on a checked tile or between two consecutive ones.</summary>
+    private static void AssertNeverOffTheCheckedTiles(IReadOnlyList<(int X, int Y)> cut)
+    {
+        var checkedTiles = new HashSet<(int X, int Y)>(HallRoute.WayOut);
+        Assert.All(cut, t => Assert.Contains(t, checkedTiles));
+        for (float tiles = -5f; tiles <= 200f; tiles += 0.05f)
+        {
+            (float x, float y) = TileRoute.At(cut, tiles);
+            var low = ((int)Math.Floor(x), (int)Math.Floor(y));
+            var high = ((int)Math.Ceiling(x), (int)Math.Ceiling(y));
+            Assert.True(checkedTiles.Contains(low), $"at {tiles} tiles he is on ({low.Item1},{low.Item2}), which is not a checked tile");
+            Assert.True(checkedTiles.Contains(high), $"at {tiles} tiles he is on ({high.Item1},{high.Item2}), which is not a checked tile");
+        }
+    }
+
+    [Fact]
+    public void On_a_screen_that_shows_the_whole_way_home_he_stops_on_its_last_checked_tile()
+    {
+        // The whole of Town (130 by 110 tiles) in shot: the way home never leaves the frame.
+        IReadOnlyList<(int X, int Y)> cut = HallRoute.WayOutInShot(HallRoute.WayOut, 0, 0, 130, 110);
+        Assert.Equal(HallRoute.WayOut, cut);
+        AssertNeverOffTheCheckedTiles(cut);
+        Assert.Equal((49f, 42f), TileRoute.At(cut, 1000f));
+    }
+
+    [Fact]
+    public void On_a_tall_4k_screen_at_75_percent_zoom_he_never_leaves_the_checked_tiles()
+    {
+        // 3840x2160 at 0.75 zoom is 5120x2880 world pixels, 80 by 45 tiles, centred on the road
+        // framing (50.5, 24): whole tiles 11 to 90 across and 2 to 46 down, so (49,42) is in shot.
+        IReadOnlyList<(int X, int Y)> cut = HallRoute.WayOutInShot(HallRoute.WayOut, 11, 2, 80, 45);
+        Assert.Contains((49, 42), cut);
+        AssertNeverOffTheCheckedTiles(cut);
+    }
+
+    [Fact]
+    public void At_1920_by_1080_he_walks_on_until_wholly_out_of_shot_and_stops_on_a_checked_tile()
+    {
+        // The road framing at 1920x1080: whole tiles 36 to 64 across, 16 to 31 down.
+        IReadOnlyList<(int X, int Y)> cut = HallRoute.WayOutInShot(HallRoute.WayOut, 36, 16, 29, 16);
+        AssertNeverOffTheCheckedTiles(cut);
+        (int x, int y) last = cut[cut.Count - 1];
+        // His head is a tile above his feet: standing on the last tile, all of him is below the
+        // frame's partly visible bottom row (31) and the row under it.
+        Assert.True(last.y - 1 > 31 + 1, $"he stops at ({last.x},{last.y}), close enough to the frame to show");
+    }
 }

@@ -106,4 +106,16 @@ public class TileRouteTests
         Assert.Equal(10, TileRoute.LastSteps(route, 50).Count);
         Assert.Single(TileRoute.LastSteps(route, 0));
     }
+
+    [Fact]
+    public void At_is_clamped_to_the_route_at_both_ends()
+    {
+        var route = new[] { (0, 0), (1, 0), (1, 1) };
+        Assert.Equal((0f, 0f), TileRoute.At(route, -3f));
+        Assert.Equal((0.5f, 0f), TileRoute.At(route, 0.5f));
+        Assert.Equal((1f, 0.25f), TileRoute.At(route, 1.25f));
+        Assert.Equal((1f, 1f), TileRoute.At(route, 2f));
+        Assert.Equal((1f, 1f), TileRoute.At(route, 50f));
+        Assert.Equal((3f, 4f), TileRoute.At(new[] { (3, 4) }, 7f));
+    }
 }

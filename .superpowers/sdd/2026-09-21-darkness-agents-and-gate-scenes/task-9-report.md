@@ -676,3 +676,92 @@ sits in the bottom right of the early frames; it is Steam's own launch notice, n
   path's edge into the square). Not seen live; on 1920x1080 he is out of shot long before.
 - The with-candidate branch of `tly_sabotage scene hall` and a restored Community Center were again
   not exercised live (day 1 farm).
+
+
+## Fix round 3
+
+One open finding (Important, my own concern 3 from round 2). On a screen tall enough to show the
+whole way home (for example 4K at 75 percent zoom), `SceneRoute.OutOfFrame` kept all of it, and
+`SceneWalk.At` extrapolated Shane past its last tile (49,42) south over (49,43) and on, tiles that
+nothing had checked.
+
+### The fix, and why this one
+
+I chose **clamping the walk to the checked tiles**, not lengthening the route. Lengthening cannot
+work on its own: the dirt path south ends at (49,42), and (49,43) and (48,43) have no Type on
+Town's Back layer, so there is no further checked path to add, and any finite route can be fully in
+shot on a big enough screen anyway. Clamping holds for every viewport.
+
+- `TileRoute.At(route, tilesIn)` (Core, new) is where he is along a route, clamped at both ends.
+  Before the start he is on the first tile, and past the end he stands on the last. He can only
+  ever be on a route tile or between two consecutive ones.
+- `HallWalker` plays the way home with it. The old extrapolating `SceneWalk.At` is no longer used
+  for the way home. (It is still used for the way in and the back off, and both of those are
+  already bounded to `[0, Steps]`.)
+- On a screen that shows the whole way home, he is still walking it when the scene ends: 20 tiles at
+  320 ms a tile from 6600 ms takes him to 13000 ms, and the scene ends at 10000. So there is no
+  visible stop or pop. If a future change ever lets him reach the end in shot, he stops and stands
+  on (49,42), a checked tile.
+- `HallRoute.WayOutInShot` (Core, new) does the cut. It now treats the frame as two tiles bigger on
+  every side (`ShotMarginTiles`), because the frame is whole tiles only. **This turned out to fix a
+  visible bug at 1920x1080 too.** The old cut stopped the walk at (56,33), where his head is still
+  in the bottom row of pixels, so the old extrapolation slid a sliver of his hair along the bottom
+  edge of the frame through the whole hold. You can see it in round 2's frames f067 to f073
+  (`fix3-00-before-hair-sliver-at-bottom-edge.png`). Now he walks (57,30) to (55,35), 7 tiles, and
+  stops there wholly out of shot. His sprite's top is at world y 2176 and the viewport's bottom is
+  at 2076.
+
+### The tall viewport tests (`HallRouteTests`, 3 new)
+
+Each test samples his position along the cut way home every 0.05 tiles, from -5 to 200 tiles, and
+asserts that both tiles he is between are in `HallRoute.WayOut`. It also checks that every tile in
+the cut is one of them.
+
+- `On_a_screen_that_shows_the_whole_way_home_he_stops_on_its_last_checked_tile`: the whole of Town
+  is in frame, the cut is the entire route, and at 1000 tiles he is at (49,42).
+- `On_a_tall_4k_screen_at_75_percent_zoom_he_never_leaves_the_checked_tiles`: the frame is 80 by 45
+  tiles round the road framing, and (49,42) is in shot.
+- `At_1920_by_1080_he_walks_on_until_wholly_out_of_shot_and_stops_on_a_checked_tile`: the stop
+  tile's head row is below the frame's partly visible bottom row.
+
+One more in `TileRouteTests`: `At_is_clamped_to_the_route_at_both_ends`.
+
+### Deferred minor
+
+The class summaries of `HallScene.cs` and `SceneWindowGlow.cs` are rewrapped. Each had one 150+
+character line. I also corrected one stale sentence in HallScene's summary: no route for Shane now
+leaves him out of the scene, it no longer stands him in view.
+
+### Tests
+
+```
+> dotnet build TheLongestYear.sln --nologo -v q
+    0 Error(s)
+> dotnet test tests/TheLongestYear.Tests --no-build --nologo -v q --filter "FullyQualifiedName~HallRouteTests|FullyQualifiedName~TileRouteTests"
+Passed!  - Failed: 0, Passed: 27, Skipped: 0, Total: 27
+> dotnet test tests/TheLongestYear.Tests --no-build --nologo -v q
+Passed!  - Failed: 0, Passed: 3764, Skipped: 0, Total: 3764
+```
+
+### Live check (one automated launch, mine)
+
+The fix changes what is visible at 1920x1080 (the hair sliver is gone), so I ran it once. The
+setup was the same as round 2: `tools/deploy.ps1 -Minimized`, a throwaway
+`tly_newgame standard skipintro` farm (`standard_451059382`, deleted afterwards), `tly_select
+Farming`, `tly_sabotage scene hall`, and the unfocused PrintWindow burst. The game is closed and no
+other save was touched. The log's staging line now ends `hurries home 7 tile(s) to (55,35) and no
+further at 320 ms a tile (every tile checked as path on this Town)`. There was no ERROR, and the one
+WARN is the new game's own `Rejected season pins` line, which is unrelated.
+
+- `fix3-02-exit-bottom-edge-crops.png`: the bottom of the frame where he leaves, over 18 frames. He
+  walks down and off the dirt, his head is the last thing visible for three frames, and then the
+  edge is empty.
+- `fix3-01-hold-nobody-at-the-bottom-edge.png`: a hold frame. The bottom 100 pixel strip is
+  pixel-identical across every hold frame from f070 until the fade starts, so nothing of him is
+  left in shot.
+
+### Still open
+
+Nothing from the review. Round 2's other notes are unchanged: after the tilt the roof is out of
+frame, the Brute fills most of its pane, and the with-candidate preview and a restored CC were not
+run live.
