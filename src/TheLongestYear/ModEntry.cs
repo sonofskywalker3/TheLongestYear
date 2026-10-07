@@ -907,7 +907,7 @@ namespace TheLongestYear
                 () => _enginePools,
                 () => _obtainability,
                 RebuildBoardDerivedState);
-            _sabotage.StartTamperScene = (oldName, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperHere(oldName, newName, newIsPlural, done);
+            _sabotage.StartTamperScene = (oldName, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, newName, newIsPlural, done);
             // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
             _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
             _runController.AttachSabotage(_sabotage);
@@ -1070,32 +1070,20 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
         }
 
-        /// <summary>After a tamper, the Junimos' "tainted" scene plays the first time the farmer steps
-        /// out of the farmhouse door onto the Farm, where he stands (Jeff, 2026-10-07; the rule is
-        /// TamperPorchRule). Any other way onto the Farm keeps the report for the next door exit.</summary>
+        /// <summary>After a tamper, the Junimos' "tainted" scene plays the first time the farmer
+        /// arrives on the Farm by any route (Jeff, 2026-10-07; the rule is TamperPorchRule): staged at
+        /// the porch, then he is put back where he arrived. An arrival while something else is up
+        /// keeps the report for the next one.</summary>
         private void OnWarpedForTamperScene(object sender, WarpedEventArgs e)
         {
             if (_sabotage == null || !_sabotage.TamperSceneOwed) return;
             bool busy = Game1.eventUp || Game1.farmEvent != null || Game1.activeClickableMenu != null
                         || (_seasonTurnDriver?.Running ?? false);
-            Microsoft.Xna.Framework.Point at = e.Player?.TilePoint ?? Microsoft.Xna.Framework.Point.Zero;
             if (!TheLongestYear.Core.Sabotage.TamperPorchRule.ShouldStart(
-                    _sabotage.TamperSceneOwed, e.NewLocation?.Name, e.OldLocation?.Name, e.IsLocalPlayer, busy,
-                    at.X, at.Y, FarmHouseDoorExits(e.OldLocation)))
+                    _sabotage.TamperSceneOwed, e.NewLocation?.Name, e.IsLocalPlayer, busy,
+                    TheLongestYear.Integration.SeasonTurnDriver.FarmPorch()))
                 return;
             _sabotage.TryStartTamperScene();
-        }
-
-        /// <summary>Where the farmhouse's own warps onto the Farm put the farmer: the house's real
-        /// door data, so every farm type and any moved house is read, never a hard-coded tile.</summary>
-        private static List<(int X, int Y)> FarmHouseDoorExits(GameLocation house)
-        {
-            var exits = new List<(int X, int Y)>();
-            if (house?.warps == null) return exits;
-            foreach (Warp warp in house.warps)
-                if (warp != null && warp.TargetName == TheLongestYear.Core.Sabotage.TamperPorchRule.FarmLocationName)
-                    exits.Add((warp.TargetX, warp.TargetY));
-            return exits;
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
@@ -2819,8 +2807,9 @@ namespace TheLongestYear
                     this.PlayCloudScenePreview(rng, dayOfYear);
                     break;
                 case "scene":
-                    // The Junimos' "tainted" scene plays where the farmer stands on the Farm.
-                    if (!_seasonTurnDriver.StartTamperHere(
+                    // The Junimos' "tainted" scene, staged at the porch; the farmer goes back to his
+                    // tile after, as on a real arrival.
+                    if (!_seasonTurnDriver.StartTamperAtPorch(
                         args.Length > 1 ? args[1] : "Parsnips", args.Length > 2 ? args[2] : "Crystal Fruit", false,
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info)))
                         this.Monitor.Log("tly_sabotage scene: step out onto the Farm first, with no event up.", LogLevel.Warn);

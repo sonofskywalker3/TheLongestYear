@@ -47,20 +47,26 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>Darkness pushback: the Junimos' "tainted" scene after the board changed, started
-        /// NOW where the farmer stands on the Farm (Jeff, 2026-10-07: never on waking, never a warp to
-        /// the doorstep; <see cref="TheLongestYear.Core.Sabotage.TamperPorchRule"/> says when). False
-        /// when it cannot start here (not on the Farm, an event or another scene already up), and then
-        /// nothing has changed and the caller keeps the report for the next Farm entry. The scene is
+        /// NOW, the moment the farmer arrives on the Farm by any route (Jeff, 2026-10-07; <see
+        /// cref="TheLongestYear.Core.Sabotage.TamperPorchRule"/> says when). Staged at the porch
+        /// behind black like vanilla's Community Center cutscene on entering Town, then the event's
+        /// end puts him back on the tile and facing he arrived at. False when it cannot start here
+        /// (not on the Farm, no porch known, an event or another scene already up), and then nothing
+        /// has changed and the caller keeps the report for the next Farm arrival. The scene is
         /// skippable from its second showing on the save.</summary>
-        public bool StartTamperHere(string oldItemName, string newItemName, bool newIsPlural, Action onComplete)
+        public bool StartTamperAtPorch(string oldItemName, string newItemName, bool newIsPlural, Action onComplete)
         {
             GameLocation loc = Game1.currentLocation;
             if (loc is not Farm || _running || Game1.eventUp || loc.currentEvent != null) return false;
-            Microsoft.Xna.Framework.Point at = Game1.player.TilePoint;
+            if (FarmPorch() is not (int porchX, int porchY)) return false;
+            Microsoft.Xna.Framework.Point arrived = Game1.player.TilePoint;
             int facing = Game1.player.FacingDirection;
+            (int returnX, int returnY) = TheLongestYear.Core.Sabotage.TamperPorchRule.ReturnTileForVanilla((arrived.X, arrived.Y));
             bool skippable = _meta.State.SeasonTurnsSeen.Contains(TamperSeenName);
-            _monitor.Log($"Darkness: starting the board-changed scene where the farmer stands on the Farm, ({at.X},{at.Y}) facing {facing} ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(at.X, at.Y, facing, oldItemName, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            _monitor.Log($"Darkness: starting the board-changed scene at the porch ({porchX},{porchY}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
+            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, returnX, returnY, facing, oldItemName, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            // Black from this very frame: the arrival is not seen before the porch is.
+            EndingEventCommands.HoldBlack();
             _meta.State.SeasonTurnsSeen.Add(TamperSeenName);
             _onComplete = onComplete;
             _running = true;
@@ -69,6 +75,27 @@ namespace TheLongestYear.Integration
         }
 
         public const string TamperSeenName = "DarknessTamper";
+
+        /// <summary>The porch step the tamper scene is staged on: where the farmhouse's own warps
+        /// onto the Farm put the farmer (the house's real door data, so every farm type and a moved
+        /// house are read), else the step below the farm's reported door tile.</summary>
+        internal static (int X, int Y)? FarmPorch()
+        {
+            var exits = new System.Collections.Generic.List<(int X, int Y)>();
+            GameLocation house = Game1.getLocationFromName(TheLongestYear.Core.Sabotage.TamperPorchRule.FarmHouseLocationName);
+            if (house?.warps != null)
+                foreach (Warp warp in house.warps)
+                    if (warp != null && warp.TargetName == TheLongestYear.Core.Sabotage.TamperPorchRule.FarmLocationName)
+                        exits.Add((warp.TargetX, warp.TargetY));
+            Farm farm = Game1.getFarm();
+            (int X, int Y)? door = null;
+            if (farm != null)
+            {
+                Microsoft.Xna.Framework.Point p = farm.GetMainFarmHouseEntry();
+                door = (p.X, p.Y);
+            }
+            return TheLongestYear.Core.Sabotage.TamperPorchRule.PorchTile(exits, door);
+        }
 
         /// <summary>Debug replay (tly_seasonturn): the scene alone, no continuation.</summary>
         public void StartNow(SeasonTurnKind kind)

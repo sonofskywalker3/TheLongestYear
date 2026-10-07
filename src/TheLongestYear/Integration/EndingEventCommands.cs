@@ -67,6 +67,7 @@ namespace TheLongestYear.Integration
         public const string BlackName = "tlyBlack";
         public const string FadeOutName = "tlyFadeOut";
         public const string SayName = "tlySay";
+        public const string ReturnToName = "tlyReturnTo";
         // How long the overlay stays black after the event ends before it lifts, so the hand-off
         // to the continuation (viewport back to the player, the shrine menu) happens unseen.
         private const float HoldAfterEndMs = 1500f, LiftAfterEndMs = 700f;
@@ -171,6 +172,33 @@ namespace TheLongestYear.Integration
                 _black = 1f;
                 _fadingOut = false;
                 _afterEnd = 0f;
+                evt.CurrentCommand++;
+            });
+
+            // tlyReturnTo <x> <y> <facing>: where vanilla puts the farmer back when this event ends
+            // or is skipped. Game1.eventFinished warps him to Game1.player.positionBeforeEvent with
+            // orientationBeforeEvent (Game1.cs:6849), the same restore vanilla's own cutscenes use
+            // (the Community Center scene you see on entering Town, then back to your entrance). The
+            // Junimos' tamper scene is staged at the porch, so it sets these to the tile he arrived
+            // at on the Farm (Jeff, 2026-10-07). It runs right after the black, so a skip returns
+            // him the same way.
+            Event.RegisterCommand(ReturnToName, (evt, args, context) =>
+            {
+                try
+                {
+                    if (ArgUtility.TryGetInt(args, 1, out int x, out _) && ArgUtility.TryGetInt(args, 2, out int y, out _)
+                        && ArgUtility.TryGetInt(args, 3, out int facing, out _))
+                    {
+                        Game1.player.positionBeforeEvent = new Vector2(x, y);
+                        Game1.player.orientationBeforeEvent = facing;
+                    }
+                    else
+                        monitor.Log($"{ReturnToName}: expected <x> <y> <facing>; the farmer goes back where the event began.", LogLevel.Warn);
+                }
+                catch (System.Exception ex)
+                {
+                    monitor.Log($"{ReturnToName} failed; the farmer goes back where the event began. {ex}", LogLevel.Error);
+                }
                 evt.CurrentCommand++;
             });
 

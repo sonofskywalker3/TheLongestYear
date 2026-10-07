@@ -18,7 +18,7 @@ namespace TheLongestYear.Loop
         // ------------------------------------------------------------------ the morning
 
         /// <summary>The morning: HUD lines for what the night took. A tamper report waits for the
-        /// Junimos' scene, which plays when the farmer first steps out onto the Farm
+        /// Junimos' scene, which plays when the farmer first arrives on the Farm by any route
         /// (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07); every other report (blight,
         /// spoiled, missing, the hall line for a reversion) shows on waking as it always has. The
         /// morning goes on at once either way.</summary>
@@ -29,7 +29,7 @@ namespace TheLongestYear.Loop
             SettlePendingIfAny("morning");
             if (!RunActivation.IsActive) return;
             if (TamperSceneOwed)
-                _monitor.Log("Darkness: the board changed in the night; the Junimos wait for the farmer to step out onto the farm.", LogLevel.Info);
+                _monitor.Log("Darkness: the board changed in the night; the Junimos wait for the farmer's first arrival on the farm.", LogLevel.Info);
             ShowMorningReports();
         }
 
@@ -39,11 +39,11 @@ namespace TheLongestYear.Loop
                && Run.PendingSabotageReports != null
                && Run.PendingSabotageReports.Exists(r => r.Kind == SabotageKind.Tampering);
 
-        /// <summary>Start the Junimos' "tainted" scene where the farmer stands, if a tamper report is
-        /// waiting. The report is consumed only once the scene has really started, so it plays once,
-        /// and a scene that cannot start here keeps it for the next Farm entry. Only the report the
-        /// scene tells is consumed: a second tamper keeps its report for the next door exit. Any
-        /// other report still waiting shows after the scene.</summary>
+        /// <summary>Start the Junimos' "tainted" scene at the porch, if a tamper report is waiting.
+        /// The report is consumed only once the scene has really started, so it plays once, and a
+        /// scene that cannot start keeps it for the next Farm arrival. Only the report the scene
+        /// tells is consumed: a second tamper keeps its report for the next arrival. Any other
+        /// report still waiting shows after the scene.</summary>
         public bool TryStartTamperScene()
         {
             if (!TamperSceneOwed) return false;
