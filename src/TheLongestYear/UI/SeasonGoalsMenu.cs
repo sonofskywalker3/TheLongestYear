@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
@@ -360,8 +360,6 @@ namespace TheLongestYear.UI
             // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
             // site: a shared variable passed by reference is invisible to that regex and would
             // make every key here report as having no call site.
-            // The "eased" half of this title reported season pity's ease steps; that system was
-            // retired 2026-09-11, so the title is now held or plain.
             bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
             string season = SeasonName(_season);
             string day = _run.DayOfMonth.ToString();

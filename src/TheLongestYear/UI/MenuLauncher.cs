@@ -1,4 +1,4 @@
-﻿using StardewModdingAPI;
+using StardewModdingAPI;
 using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
