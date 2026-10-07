@@ -384,6 +384,10 @@ namespace TheLongestYear
                         LogLevel.Error);
                 }
             }
+            // The dark aura on tainted items: manual patch so a signature mismatch fails loudly.
+            var taintedItems = new TheLongestYear.Core.Sabotage.TaintedItems();
+            TheLongestYear.Loop.TaintedAuraPatch.Tainted = () => taintedItems.Refresh(_meta?.Run?.Tampers);
+            TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
             this.Monitor.Log(
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
                 failed > 0 ? LogLevel.Warn : LogLevel.Info);
