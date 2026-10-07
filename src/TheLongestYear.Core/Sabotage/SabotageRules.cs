@@ -213,16 +213,26 @@ public static class ReversionRule
 /// filtered by the glue to things the availability model places in Winter.</summary>
 public sealed record TamperCandidate(string ItemId, Theme Theme, int Effort);
 
-/// <summary>An unfilled slot the darkness may rewrite, with the bundle it sits in.</summary>
-public sealed record TamperTarget(BundleRequirement Bundle, int IngredientIndex, string ItemId);
+/// <summary>An unfilled slot the darkness may rewrite, with the bundle it sits in. <see cref="Flavor"/>
+/// is the input the slot names (a Dried Fruit's fruit), null when it names none.</summary>
+public sealed record TamperTarget(BundleRequirement Bundle, int IngredientIndex, string ItemId, string? Flavor = null);
 
 /// <summary>Winter's unavoidable front: pick an unfilled slot (the ones whose item the player is
 /// holding first, that is the sting) and a replacement of similar effort the bundle does not
-/// already ask for.</summary>
+/// already ask for.
+///
+/// Only an item the board asks for ONCE may be the target (Jeff, 2026-10-07: "only let it pick an
+/// item that only appears in 1 bundle"). The Junimos then say the darkness tainted all of it, and
+/// no other slot is left asking for the tainted thing. The item is the exact item: its id and the
+/// flavour the slot names, so Dried Apples and Dried Cucumbers are two items.</summary>
 public static class TamperRule
 {
+    /// <summary>The open slots a tamper may rewrite: unfilled, in an unfinished item-room bundle,
+    /// and asking for an item no other slot on the board asks for. Every slot counts toward that,
+    /// filled or open, in any bundle. <paramref name="flavorOf"/> gives a slot's flavour from the
+    /// board's flavour map (bundle index, slot index); null means no slot names one.</summary>
     public static IReadOnlyList<TamperTarget> Targets(
-        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements)
+        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Func<int, int, string?>? flavorOf = null)
     {
         if (ledger is null) throw new ArgumentNullException(nameof(ledger));
         if (requirements is null) throw new ArgumentNullException(nameof(requirements));
@@ -233,11 +243,55 @@ public static class TamperRule
             if (!ReversionRule.IsItemRoomTheme(req.Theme)) continue;
             if (req.IsFullyComplete(ledger)) continue;
             foreach (BundleSlot slot in req.Slots)
-                if (!ledger.IsFilled(req.BundleIndex, slot.IngredientIndex))
-                    result.Add(new TamperTarget(req, slot.IngredientIndex, slot.ItemId));
+            {
+                if (ledger.IsFilled(req.BundleIndex, slot.IngredientIndex)) continue;
+                string? flavor = FlavorOf(req, slot, flavorOf);
+                if (SlotsAsking(requirements, slot.ItemId, flavor, flavorOf) != SingleSlot) continue;
+                result.Add(new TamperTarget(req, slot.IngredientIndex, slot.ItemId, flavor));
+            }
         }
         return result;
     }
+
+    /// <summary>A target's item is asked in exactly this many slots.</summary>
+    private const int SingleSlot = 1;
+
+    /// <summary>How many slots on the board ask for this exact item, filled or open, in any
+    /// bundle. A slot that names no flavour takes every flavour of its item, so it overlaps every
+    /// flavoured slot of the same id, and they count as asking for the same thing.</summary>
+    public static int SlotsAsking(
+        IReadOnlyList<BundleRequirement> requirements, string itemId, string? flavor, Func<int, int, string?>? flavorOf)
+    {
+        if (requirements is null) throw new ArgumentNullException(nameof(requirements));
+        string id = BundleParsing.NormalizeItemId(itemId ?? "");
+        int n = 0;
+        foreach (BundleRequirement req in requirements)
+            foreach (BundleSlot slot in req.Slots)
+            {
+                if (!string.Equals(BundleParsing.NormalizeItemId(slot.ItemId ?? ""), id, StringComparison.Ordinal)) continue;
+                if (SameFlavorOrAny(flavor, FlavorOf(req, slot, flavorOf))) n++;
+            }
+        return n;
+    }
+
+    /// <summary>The flavour this slot names, read the way FlavoredSlotPatch applies it: only on an
+    /// id that takes a flavour, so a stale map entry under a plain item names nothing.</summary>
+    private static string? FlavorOf(BundleRequirement req, BundleSlot slot, Func<int, int, string?>? flavorOf)
+    {
+        if (flavorOf == null || req.BundleIndex < 0 || !FlavoredSlotRules.IsFlavored(slot.ItemId)) return null;
+        string? f = flavorOf(req.BundleIndex, slot.IngredientIndex);
+        return string.IsNullOrEmpty(f) ? null : f;
+    }
+
+    /// <summary>Both name the same flavour, or either names none (and so takes any).</summary>
+    private static bool SameFlavorOrAny(string? a, string? b)
+        => a == null || b == null
+           || string.Equals(BundleParsing.StripQualifier(a), BundleParsing.StripQualifier(b), StringComparison.Ordinal);
+
+    /// <summary>A rewritten slot forgets the flavour it named, or FlavoredSlotPatch would pin the
+    /// old fruit onto a new flavoured item ("Smoked Apple"). True when an entry was removed.</summary>
+    public static bool ClearFlavor(IDictionary<string, string>? flavors, int bundleIndex, int ingredientIndex)
+        => flavors != null && flavors.Remove(FlavoredSlotPass.KeyFor(bundleIndex, ingredientIndex));
 
     /// <summary>Slots whose item the player holds come first; within a tier the order is random.</summary>
     public static TamperTarget? PickTarget(

@@ -8,7 +8,8 @@ using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>The dark aura (spec 2026-09-21): every item of a tampered-away type is drawn
+    /// <summary>The dark aura (spec 2026-09-21): every copy of the exact item tampered away (its
+    /// flavour included, so Dried Apples glow and Dried Cucumbers do not) is drawn
     /// with a pulsing dim purple glow under the sprite wherever an item is drawn in a menu or
     /// held overhead. Both prefixes only draw the glow; the original draw then runs. Patched
     /// manually from ModEntry so a signature mismatch fails loudly at startup.</summary>
@@ -25,8 +26,8 @@ namespace TheLongestYear.Loop
         // 3 keeps the aura at the base sprite's depth, under both.
         private const int HeldDepthPixels = 3;
 
-        /// <summary>Set by ModEntry: the qualified item ids tampered away this loop.</summary>
-        internal static Func<ISet<string>> Tainted;
+        /// <summary>Set by ModEntry: what was tampered away this loop, refreshed and ready to ask.</summary>
+        internal static Func<TaintedItems> Tainted;
 
         private static readonly Type[] DrawInMenuArgs =
         {
@@ -82,10 +83,13 @@ namespace TheLongestYear.Loop
             return _glow;
         }
 
-        private static bool IsTainted(Item item)
+        /// <summary>The exact item, flavour included (designer, 2026-10-07): a Dried Apple's flavour
+        /// is its preservedParentSheetIndex, the bare id of the apple (ObjectDataDefinition
+        /// .CreateFlavoredDriedFruit). Reads two existing strings, so it allocates nothing.</summary>
+        private static bool IsTainted(StardewValley.Object item)
         {
-            ISet<string> ids = Tainted?.Invoke();
-            return ids != null && ids.Count > 0 && ids.Contains(item.QualifiedItemId);
+            TaintedItems tainted = Tainted?.Invoke();
+            return tainted != null && tainted.IsTainted(item.QualifiedItemId, item.preservedParentSheetIndex.Value);
         }
 
         private static void DrawAura(SpriteBatch b, Vector2 center, float scale, float depth)

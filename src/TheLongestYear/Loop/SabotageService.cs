@@ -557,7 +557,7 @@ namespace TheLongestYear.Loop
             if (worldState?.BundleData == null) return null;
             TamperPlan plan = PlanFairTamper(rng, dayOfYear);
             if (plan == null) return null;
-            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot {plan.Target.IngredientIndex} to {plan.Stack} {Strings.ItemName(plan.ItemId)}.", LogLevel.Info);
+            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot {plan.Target.IngredientIndex} ({ExactName(plan.Target.ItemId, plan.Target.Flavor)}) to {plan.Stack} {Strings.ItemName(plan.ItemId)}.", LogLevel.Info);
             return new PendingStrike(DarknessEvent.Tampering, () => WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear));
         }
 
@@ -578,10 +578,12 @@ namespace TheLongestYear.Loop
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
             SlotLedger ledger = Run.DonatedLedger();
             IReadOnlyList<BundleRequirement> requirements = _requirements();
-            List<TamperTarget> targets = TamperRule.Targets(ledger, requirements).ToList();
+            List<TamperTarget> targets = TamperRule.Targets(ledger, requirements, BoardFlavor).ToList();
             if (targets.Count == 0)
             {
-                _monitor.Log("Darkness: tampering has no unfilled slot in an unfinished bundle.", LogLevel.Trace);
+                // The same "no fair target" path as ever: tonight's roll takes another event, and
+                // the guaranteed Winter tamper retries tomorrow.
+                _monitor.Log("Darkness: tampering has no target: no open slot in an unfinished bundle asks for an item that no other slot on the board asks for.", LogLevel.Info);
                 return null;
             }
             IReadOnlyList<TamperCandidate> candidates = Candidates(fair);
@@ -607,6 +609,35 @@ namespace TheLongestYear.Loop
             }
             _monitor.Log("Darkness: tampering found no fair replacement for any open slot.", LogLevel.Info);
             return null;
+        }
+
+        /// <summary>The flavour the live board's slot names (bundle index, slot index), from the map
+        /// FlavoredSlotPatch applies; null when it names none.</summary>
+        private string BoardFlavor(int bundleIndex, int ingredientIndex)
+        {
+            Dictionary<string, string> map = Meta.WrittenBoardFlavors;
+            return map != null && map.TryGetValue(FlavoredSlotPass.KeyFor(bundleIndex, ingredientIndex), out string f) ? f : null;
+        }
+
+        /// <summary>The exact item a tamper takes, as the game would build it: a flavoured Dried
+        /// Fruit or Smoked Fish when <paramref name="flavor"/> is set, else the plain item. Null when
+        /// the game cannot make it.</summary>
+        internal static Item CreateExact(string itemId, string flavor)
+        {
+            if (string.IsNullOrEmpty(flavor)) return ItemRegistry.Create(itemId, 1, 0, allowNull: true);
+            string preserveType = BundleParsing.StripQualifier(FlavoredSlotRules.WrittenIdFor(itemId));
+            return Utility.CreateFlavoredItem(preserveType, BundleParsing.StripQualifier(flavor));
+        }
+
+        /// <summary>The exact item's display name: "Dried Apples" for a flavoured slot, the plain
+        /// name otherwise.</summary>
+        internal static string ExactName(string itemId, string flavor)
+        {
+            if (string.IsNullOrEmpty(flavor)) return Strings.ItemName(itemId);
+            Item made = CreateExact(itemId, flavor);
+            return made != null
+                ? made.DisplayName
+                : $"{Strings.ItemName(itemId)} ({Strings.ItemName(BundleParsing.NormalizeItemId(flavor))})";
         }
 
         /// <summary>The replacement pool: the board's own universe, which is the live generation
@@ -686,6 +717,11 @@ namespace TheLongestYear.Loop
             if (Meta.WrittenBoard != null && Meta.WrittenBoard.Count > 0 && Meta.WrittenBoard.ContainsKey(key))
                 Meta.WrittenBoard[key] = tampered[key];
 
+            // The slot now asks for something else, so it must not keep the old fruit: FlavoredSlotPatch
+            // would pin it onto a new flavoured ask ("Smoked Apple").
+            if (TamperRule.ClearFlavor(Meta.WrittenBoardFlavors, target.Bundle.BundleIndex, target.IngredientIndex))
+                _monitor.Log($"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} no longer names a flavour (was {target.Flavor ?? "none"}).", LogLevel.Trace);
+
             // A goal card pointing at the old item would show a slot the board no longer has.
             Run.CurrentWeekBonusSlots?.RemoveAll(s =>
                 s.BundleIndex == target.Bundle.BundleIndex && s.IngredientIndex == target.IngredientIndex);
@@ -696,6 +732,7 @@ namespace TheLongestYear.Loop
                 IngredientIndex = target.IngredientIndex,
                 BundleName = target.Bundle.Name,
                 OldItemId = target.ItemId,
+                OldFlavor = target.Flavor,
                 NewItemId = newItemId,
                 Stack = stack,
                 DayOfYear = dayOfYear,
@@ -703,10 +740,10 @@ namespace TheLongestYear.Loop
             Run.PendingSabotageReports.Add(new SabotageReport
             {
                 Kind = SabotageKind.Tampering, Count = stack, BundleName = target.Bundle.Name,
-                ItemId = newItemId, OldItemId = target.ItemId,
+                ItemId = newItemId, OldItemId = target.ItemId, OldFlavor = target.Flavor,
             });
             _monitor.Log(
-                $"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} now asks for {stack} {Strings.ItemName(newItemId)} instead of {Strings.ItemName(target.ItemId)} ({Run.Season} {Run.DayOfMonth}).",
+                $"Darkness: {target.Bundle.Name} slot {target.IngredientIndex} now asks for {stack} {Strings.ItemName(newItemId)} instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             _rebuildBoard("darkness tampering");
             return true;
@@ -751,7 +788,8 @@ namespace TheLongestYear.Loop
             // Plurals the way the game makes them, corrected for its mass nouns (Jeff, 2026-10-07:
             // "all the Parsnip", "Bring us 3 Beer").
             Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
-            string oldName = ItemPlurals.Plural(Strings.ItemName(tamper.OldItemId), gamePlural);
+            // The exact item, flavour included (designer, 2026-10-07: "all the Dried Apples").
+            string oldName = ItemPlurals.Tainted(ExactName(tamper.OldItemId, tamper.OldFlavor), tamper.OldItemId, !string.IsNullOrEmpty(tamper.OldFlavor), gamePlural);
             string ask = ItemPlurals.Ask(tamper.Count, Strings.ItemName(tamper.ItemId), gamePlural);
             if (!StartTamperScene(oldName, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
             Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
@@ -807,8 +845,60 @@ namespace TheLongestYear.Loop
             FairnessVerdict asTamper = FairnessRule.Judge(itemId, dayOfYear, FairnessRule.TamperDeadline, at, save, model);
             return $"{Strings.ItemName(itemId)} at {at}, hit day {dayOfYear}:\n"
                  + $"reversion (deadline day {reversion}): {FairnessRule.Explain(asReversion)}\n"
-                 + $"tampering (deadline day {FairnessRule.TamperDeadline}): {asTamper.Summary}";
+                 + $"tampering (deadline day {FairnessRule.TamperDeadline}): {asTamper.Summary}\n"
+                 + TargetLine(itemId);
         }
+
+        /// <summary>Can a tamper take this item as its target? Only an item the board asks for in
+        /// exactly one slot (designer, 2026-10-07). A flavoured item is counted per flavour, so this
+        /// gives one line for each flavour the board names.</summary>
+        private string TargetLine(string itemId)
+        {
+            string id = BundleParsing.NormalizeItemId(itemId);
+            IReadOnlyList<BundleRequirement> requirements = _requirements();
+            var flavors = new List<string>();
+            foreach (BundleRequirement req in requirements)
+                foreach (BundleSlot slot in req.Slots)
+                    if (BundleParsing.NormalizeItemId(slot.ItemId) == id)
+                    {
+                        string f = FlavoredSlotRules.IsFlavored(slot.ItemId) ? BoardFlavor(req.BundleIndex, slot.IngredientIndex) : null;
+                        if (!flavors.Contains(f)) flavors.Add(f);
+                    }
+            if (flavors.Count == 0) return "tamper target: no, the board does not ask for it";
+            return string.Join("\n", flavors.Select(f =>
+            {
+                int n = TamperRule.SlotsAsking(requirements, id, f, BoardFlavor);
+                return $"tamper target ({ExactName(id, f)}): {(n == 1 ? "yes, asked in exactly one slot" : $"no, asked in {n} slots (multi-slot items are never targets)")}";
+            }));
+        }
+
+        /// <summary>Status lines on what a tamper may take tonight: the open slots whose item is asked
+        /// once, and the open items it may not take because another slot asks for them too.</summary>
+        private IEnumerable<string> TargetSummary()
+        {
+            SlotLedger ledger = Run.DonatedLedger();
+            IReadOnlyList<BundleRequirement> requirements = _requirements();
+            IReadOnlyList<TamperTarget> targets = TamperRule.Targets(ledger, requirements, BoardFlavor);
+            var single = new HashSet<(int, int)>(targets.Select(t => (t.Bundle.BundleIndex, t.IngredientIndex)));
+            var multi = new SortedDictionary<string, int>(StringComparer.Ordinal);
+            foreach (BundleRequirement req in requirements)
+            {
+                if (req.BundleIndex < 0 || !ReversionRule.IsItemRoomTheme(req.Theme) || req.IsFullyComplete(ledger)) continue;
+                foreach (BundleSlot slot in req.Slots)
+                {
+                    if (ledger.IsFilled(req.BundleIndex, slot.IngredientIndex) || single.Contains((req.BundleIndex, slot.IngredientIndex))) continue;
+                    string f = FlavoredSlotRules.IsFlavored(slot.ItemId) ? BoardFlavor(req.BundleIndex, slot.IngredientIndex) : null;
+                    multi[ExactName(slot.ItemId, f)] = TamperRule.SlotsAsking(requirements, slot.ItemId, f, BoardFlavor);
+                }
+            }
+            string named = string.Join(", ", targets.Take(StatusListCap).Select(t => ExactName(t.ItemId, t.Flavor)));
+            yield return $"  tamper targets (open slots whose exact item, flavour included, is asked in exactly one slot on the board): {targets.Count}"
+                + (targets.Count == 0 ? "" : $": {named}{(targets.Count > StatusListCap ? ", ..." : "")}");
+            yield return $"  not targets (asked in 2+ slots, filled or open; multi-slot items are never tampered): {(multi.Count == 0 ? "none" : string.Join(", ", multi.Select(kv => $"{kv.Key} x{kv.Value}")))}";
+        }
+
+        /// <summary>How many tamper targets the status line names before it trails off.</summary>
+        private const int StatusListCap = 12;
 
         /// <summary>One-screen status for tly_sabotage.</summary>
         public string Status()
@@ -825,8 +915,9 @@ namespace TheLongestYear.Loop
                 $"  Scenes played this loop: {string.Join(", ", (Run.StrikeScenesPlayed ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
                 $"  Scenes seen on save: {string.Join(", ", (Meta.StrikeScenesSeen ?? Enumerable.Empty<string>()).DefaultIfEmpty("none"))}",
             };
+            lines.AddRange(TargetSummary());
             foreach (TamperRecord t in Run.Tampers)
-                lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {Strings.ItemName(t.OldItemId)} -> {t.Stack} {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");
+                lines.Add($"  tampered: {t.BundleName} slot {t.IngredientIndex}: {ExactName(t.OldItemId, t.OldFlavor)} [flavour {t.OldFlavor ?? "none"}] -> {t.Stack} {Strings.ItemName(t.NewItemId)} (day {t.DayOfYear})");
             if (Run.PendingSabotageReports.Count > 0)
                 lines.Add($"  pending morning reports: {Run.PendingSabotageReports.Count}");
             return string.Join("\n", lines);
