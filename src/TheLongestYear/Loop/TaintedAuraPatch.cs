@@ -21,6 +21,8 @@ namespace TheLongestYear.Loop
         private const float CenterOffset = 32f;
         private const float DepthStep = 0.0001f;
         private const float HeldDepthDivisor = 10000f;
+        // Vanilla draws the held sprite at StandingPixel.Y + 3 (+ 4 for a ColoredObject's tint layer);
+        // 3 keeps the aura at the base sprite's depth, under both.
         private const int HeldDepthPixels = 3;
 
         /// <summary>Set by ModEntry: the qualified item ids tampered away this loop.</summary>
@@ -39,6 +41,16 @@ namespace TheLongestYear.Loop
 
         internal static void Apply(Harmony harmony)
         {
+            // ColoredObject (coloured flowers, roe, aged roe, dyed goods) overrides both draws
+            // without calling base for the menu draw, so the Object prefixes never see it.
+            harmony.Patch(
+                AccessTools.Method(typeof(StardewValley.Objects.ColoredObject), nameof(StardewValley.Objects.ColoredObject.drawInMenu), DrawInMenuArgs)
+                    ?? throw new MissingMethodException("ColoredObject.drawInMenu"),
+                prefix: new HarmonyMethod(typeof(TaintedAuraPatch), nameof(MenuPrefix)));
+            harmony.Patch(
+                AccessTools.Method(typeof(StardewValley.Objects.ColoredObject), nameof(StardewValley.Objects.ColoredObject.drawWhenHeld), DrawWhenHeldArgs)
+                    ?? throw new MissingMethodException("ColoredObject.drawWhenHeld"),
+                prefix: new HarmonyMethod(typeof(TaintedAuraPatch), nameof(ColoredHeldPrefix)));
             harmony.Patch(
                 AccessTools.Method(typeof(StardewValley.Object), nameof(StardewValley.Object.drawInMenu), DrawInMenuArgs)
                     ?? throw new MissingMethodException("Object.drawInMenu"),
@@ -94,6 +106,14 @@ namespace TheLongestYear.Loop
         }
 
         private static void HeldPrefix(StardewValley.Object __instance, SpriteBatch spriteBatch, Vector2 objectPosition, Farmer f)
+        {
+            // ColoredObject.drawWhenHeld calls Object.drawWhenHeld in one branch. Its own prefix
+            // has already drawn the aura, so the base call must not draw a second one.
+            if (__instance is StardewValley.Objects.ColoredObject) return;
+            ColoredHeldPrefix(__instance, spriteBatch, objectPosition, f);
+        }
+
+        private static void ColoredHeldPrefix(StardewValley.Object __instance, SpriteBatch spriteBatch, Vector2 objectPosition, Farmer f)
         {
             if (!IsTainted(__instance)) return;
             // objectPosition is the sprite's top-left; a 16px sprite at 4x is a 64px square.

@@ -87,3 +87,37 @@ class(es) applied, 0 failed", no ERROR lines.
   swaps bundle ingredient objects), so only `Object` draws are patched. Placed-in-world objects are
   skipped by design.
 - The visual (colour, size, pulse speed) is a first version for Jeff to look at, as the spec says.
+
+## Fix round 1
+
+Finding confirmed: `ColoredObject` overrides `drawInMenu` without calling base, and `drawWhenHeld`
+calls base only in its two-sprite branch, so the Object prefixes never covered it.
+
+- **Which items are ColoredObjects in 1.6.** Flavoured Jelly (344), Pickles (342), Juice (350), Wine (348),
+  Roe (812), Aged Roe (447), flavoured bait, coloured flowers from crops, and Smoked Fish. My earlier
+  Jelly frames were plain (unflavoured) Jelly made by `tly_additem`, which is why they did not contradict this.
+- **OldItemId records the base id.** Board slots hold the base id (for example `(O)344`); the flavour lives in a
+  separate map (`WrittenBoardFlavors`). A `ColoredObject`'s `QualifiedItemId` is also the base id, so the aura
+  matches every colour or flavour of a tainted type. That is the "every item of the tainted type" rule.
+- **Patches added** (manual, throw on mismatch): `ColoredObject.drawInMenu` (same prefix as Object) and
+  `ColoredObject.drawWhenHeld` (`ColoredHeldPrefix`). The Object held prefix now returns early for a
+  `ColoredObject`, so the base call inside `ColoredObject.drawWhenHeld` cannot draw a second aura. No shared
+  state, so no reentrancy bookkeeping.
+- **Comment** on `HeldDepthPixels` added: vanilla draws held sprites at +3 (+4 for the tint layer); 3 keeps the aura under both.
+- **Debug addition:** `tly_additem query <item query>` adds the first result (for `FLAVORED_ITEM Roe (O)136`),
+  since a plain id cannot make a ColoredObject.
+
+Tests: `dotnet build TheLongestYear.sln` 0 errors; `dotnet test tests/TheLongestYear.Tests --no-build`
+Passed 3875, Failed 0 (no new tests; the change is draw wiring).
+
+Live (my launch, minimized, no input; throwaway `tly_newgame standard skipintro` save, deleted; Saves folder matches
+before; game closed). A 40-tamper batch tainted Roe (`Fish Farmer's slot 2 ... instead of Roe`). Then
+`tly_additem query FLAVORED_ITEM Roe (O)136` (granted "Largemouth Bass Roe (ColoredObject, (O)812)"), Parsnip,
+and an untainted flavoured Blueberry Jelly (ColoredObject).
+
+| File | What it shows |
+| --- | --- |
+| `fix1-held-burst-1..4.png` | Farmer holding the tainted ColoredObject Roe overhead with the purple pulse (a single glow); hotbar slot 1 (Roe) glows, Parsnip and the untainted flavoured Jelly do not. Four frames across the pulse. |
+| `fix1-shop.png` | Shop menu (`debug iq FLAVORED_ITEM Roe (O)136`): the Roe in the list and in the inventory row glow; Parsnip and flavoured Jelly do not. |
+
+Not shown: the single-sprite-plus-base branch drawing twice. It is prevented by the early return above; the frames show one glow on a held Roe.
