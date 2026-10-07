@@ -998,5 +998,9 @@
     "dejavu.willy.1.1": "Ye've got the look of an old deckhand o' mine. Can't be, though.",
     "dejavu.willy.2.1": "I trust ye like I've known ye for years, friend.",
     "dejavu.wizard.1.1": "Curious. Your aura carries echoes. Have we met elsewhere?",
-    "dejavu.wizard.2.1": "I sense an old bond between us. Older than it should be."
+    "dejavu.wizard.2.1": "I sense an old bond between us. Older than it should be.",
+    "dialogue.witness.linus": "I was out walking {{when}} and I passed your farm. I've never seen crows like that before. I haven't slept well since.",
+    "dialogue.witness.shane": "When I left the bar {{when}} I could swear I saw something moving in the old Community Center. I'd had a few drinks, but not that many.",
+    "dialogue.witness.when-last-night": "last night",
+    "dialogue.witness.when-other-night": "the other night"
 }

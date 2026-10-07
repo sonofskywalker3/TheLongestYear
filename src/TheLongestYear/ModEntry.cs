@@ -30,6 +30,7 @@ namespace TheLongestYear
         private UpgradePurchaseService _purchases;
         private BoostPurchaseService _boostPurchases;
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
+        private TheLongestYear.Loop.WitnessDialogueService _witness;
         private TheLongestYear.Loop.SabotageService _sabotage;
         private TheLongestYear.Loop.CircleOfWardingService _circles;
         /// <summary>Debug only: plays one overnight strike scene mid-day (tly_sabotage scene crows).</summary>
@@ -252,7 +253,9 @@ namespace TheLongestYear
                     {
                         if (!shown) return;
                         TheLongestYear.Core.Sabotage.StrikeScenes.MarkPlayed(strike.Event, _meta.Run, _meta.State);
-                        // Task 12 adds the witness hook here.
+                        // Shown covers finished and skipped; a scene that could not be staged
+                        // returned above, so nobody saw anything and no witness is recorded.
+                        _witness?.OnScenePlayed(strike.Event);
                     });
             };
             TheLongestYear.Loop.WildcardNightEventPatch.Monitor = this.Monitor;
@@ -929,6 +932,7 @@ namespace TheLongestYear
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
+            _witness = new TheLongestYear.Loop.WitnessDialogueService(this.Monitor, _meta);
             _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
             _boostPurchases.Bought = id =>
             {
@@ -3538,6 +3542,7 @@ namespace TheLongestYear
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
+            _witness?.OnDayStarted();
             _pastSeasonSpawns?.Refresh(TodayDayOfYear());
             // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
             // being a rerun, so the label has to go back with it.
