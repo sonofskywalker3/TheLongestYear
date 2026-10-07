@@ -4,6 +4,7 @@ using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
 
 namespace TheLongestYear.Loop
@@ -12,7 +13,9 @@ namespace TheLongestYear.Loop
     /// flavour included, so Dried Apples glow and Dried Cucumbers do not) is drawn
     /// with a pulsing dim purple glow under the sprite wherever an item is drawn in a menu or
     /// held overhead. Both prefixes only draw the glow; the original draw then runs. Patched
-    /// manually from ModEntry so a signature mismatch fails loudly at startup.</summary>
+    /// manually from ModEntry so a signature mismatch fails loudly at startup. Nothing glows on a
+    /// save without an active run, and a prefix never throws into the item's own draw: the first
+    /// failure is logged and the aura stays quiet after it.</summary>
     internal static class TaintedAuraPatch
     {
         private static readonly Color AuraColor = new(120, 20, 180);
@@ -63,12 +66,22 @@ namespace TheLongestYear.Loop
         }
 
         private static Texture2D _glow;
+        /// <summary>The device the texture belongs to. A graphics device reset throws every texture
+        /// made on the old one away, so the next draw notices and builds a fresh one.</summary>
+        private static GraphicsDevice _builtOn;
+        /// <summary>True once a prefix has thrown. The failure is logged once and the aura stays
+        /// off for the session rather than logging every frame.</summary>
+        private static bool _failed;
 
-        /// <summary>A white soft-edged disc, built once on the first draw. Game1.shadowTexture
+        /// <summary>A white soft-edged disc, built once per graphics device. Game1.shadowTexture
         /// cannot carry the colour: its pixels are black, so tinting it only darkens.</summary>
         private static Texture2D Glow(GraphicsDevice device)
         {
-            if (_glow != null && !_glow.IsDisposed) return _glow;
+            if (_glow != null && !_glow.IsDisposed && ReferenceEquals(_builtOn, device)) return _glow;
+            Texture2D old = _glow;
+            _glow = null;
+            _builtOn = null;
+            if (old != null && !old.IsDisposed) old.Dispose();
             var pixels = new Color[GlowTextureSize * GlowTextureSize];
             float half = GlowTextureSize / 2f;
             for (int y = 0; y < GlowTextureSize; y++)
@@ -78,8 +91,10 @@ namespace TheLongestYear.Loop
                 float a = TaintedItems.Falloff((float)Math.Sqrt(dx * dx + dy * dy));
                 pixels[y * GlowTextureSize + x] = Color.White * a; // premultiplied
             }
-            _glow = new Texture2D(device, GlowTextureSize, GlowTextureSize);
-            _glow.SetData(pixels);
+            var made = new Texture2D(device, GlowTextureSize, GlowTextureSize);
+            made.SetData(pixels);
+            _glow = made;
+            _builtOn = device;
             return _glow;
         }
 
@@ -88,6 +103,7 @@ namespace TheLongestYear.Loop
         /// .CreateFlavoredDriedFruit). Reads two existing strings, so it allocates nothing.</summary>
         private static bool IsTainted(StardewValley.Object item)
         {
+            if (!RunActivation.IsActive) return false;
             TaintedItems tainted = Tainted?.Invoke();
             return tainted != null && tainted.IsTainted(item.QualifiedItemId, item.preservedParentSheetIndex.Value);
         }
@@ -102,11 +118,28 @@ namespace TheLongestYear.Loop
                 Math.Max(0f, depth - DepthStep));
         }
 
+        /// <summary>Log the first failure, then switch the aura off for the session: a draw prefix
+        /// that throws would take the item's own draw down with it.</summary>
+        private static void Fail(string where, Exception ex)
+        {
+            if (_failed) return;
+            _failed = true;
+            PatchLog.Warn($"Darkness: the tainted aura failed in {where}, so tainted items draw without it for the rest of the session. {ex}");
+        }
+
         private static void MenuPrefix(StardewValley.Object __instance, SpriteBatch spriteBatch, Vector2 location, float scaleSize, float layerDepth)
         {
-            if (!IsTainted(__instance)) return;
-            DrawAura(spriteBatch, location + new Vector2(CenterOffset, CenterOffset) * scaleSize,
-                MenuAuraScale * scaleSize, layerDepth);
+            if (_failed) return;
+            try
+            {
+                if (!IsTainted(__instance)) return;
+                DrawAura(spriteBatch, location + new Vector2(CenterOffset, CenterOffset) * scaleSize,
+                    MenuAuraScale * scaleSize, layerDepth);
+            }
+            catch (Exception ex)
+            {
+                Fail("drawInMenu", ex);
+            }
         }
 
         private static void HeldPrefix(StardewValley.Object __instance, SpriteBatch spriteBatch, Vector2 objectPosition, Farmer f)
@@ -119,10 +152,18 @@ namespace TheLongestYear.Loop
 
         private static void ColoredHeldPrefix(StardewValley.Object __instance, SpriteBatch spriteBatch, Vector2 objectPosition, Farmer f)
         {
-            if (!IsTainted(__instance)) return;
-            // objectPosition is the sprite's top-left; a 16px sprite at 4x is a 64px square.
-            float depth = Math.Max(0f, (f.StandingPixel.Y + HeldDepthPixels) / HeldDepthDivisor);
-            DrawAura(spriteBatch, objectPosition + new Vector2(CenterOffset, CenterOffset), HeldAuraScale, depth);
+            if (_failed) return;
+            try
+            {
+                if (!IsTainted(__instance)) return;
+                // objectPosition is the sprite's top-left; a 16px sprite at 4x is a 64px square.
+                float depth = Math.Max(0f, (f.StandingPixel.Y + HeldDepthPixels) / HeldDepthDivisor);
+                DrawAura(spriteBatch, objectPosition + new Vector2(CenterOffset, CenterOffset), HeldAuraScale, depth);
+            }
+            catch (Exception ex)
+            {
+                Fail("drawWhenHeld", ex);
+            }
         }
     }
 }
