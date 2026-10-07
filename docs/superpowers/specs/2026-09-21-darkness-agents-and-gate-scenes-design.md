@@ -115,6 +115,10 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     Coffee", "3 tins of Caviar", "3 clusters of Salmon Roe", "3 bowls of Pumpkin Soup"); a
     countable thing takes its plural ("3 Parsnips", "3 Sea Jellies"); bulk stuff with no container
     stays bare ("3 Clay", "3 Wool", "3 Hay"), or keeps the game's own phrase ("3 lumps of Coal").
+    Every fish (Object category -4) keeps the same word (designer, 2026-10-07): "7 Pike", "7
+    Salmon", "3 Largemouth Bass", and "all the Pike" in the tainted line; the jellies still count
+    ("Sea Jellies") and Roe, Aged Roe, Caviar and Smoked Fish keep their containers or bare word.
+    Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
     The table lives in `AskPhrases`. A plural ask, container phrases included, ends "They remain
     pure." (key `event.darkness.tamper-3-plural`) instead of "It remains pure.".
   - No purple screen glow under the middle line; the low sound stays.
@@ -166,8 +170,10 @@ crops would already be gone when the crows land. `NightPlan.Execute` splits in t
 - **Apply**: do the damage and write the morning report.
 
 When a scene is due, the scene calls Apply at its beat (the crow pecks, the lid opens). When no
-scene is due (its kind already played this loop) or its target is somewhere the scene cannot show,
-Apply runs at once, as today: that strike has no scene by design. Once the scene has taken the
+scene is due (its kind already played this loop), Apply runs at once, as today: that strike has no
+scene by design. A due scene that cannot show its pick does not land the strike bare: it is
+postponed like a collision (designer, 2026-10-07). While the thief scene is due the chest draw only
+holds chests the scene can show (Scene 2), so this does not happen in practice. Once the scene has taken the
 overnight slot, a skip, a staging failure or a throw also lands it. Apply is idempotent per night so
 a skip mid-scene cannot double it. The morning report does not change.
 
@@ -176,9 +182,19 @@ delaying the effect of them, that's stupid").** A strike whose scene is due but 
 overnight slot is postponed: neither its effect nor its scene happens that night. The run records
 a strike only when it commits (its scene takes the slot, or it lands with no scene by design), so a
 postponed night is a night with no strike: the week's chance does not drop, no cap slot or tamper
-spacing is spent, and the every-loop guarantee still owes the kind. The normal roll and the
-guarantee bring it back on a later night. A guaranteed Winter tamper that is postponed stays owed
-past week 1 until it lands. The nets under the save, the morning and the next night pass follow the
+spacing is spent, and the every-loop guarantee still owes the kind.
+
+**A postponed strike is queued for the next free night (designer, 2026-10-07).** Its kind goes on a
+queue kept on the run (`RunState.QueuedStrikes`, cleared at the loop reset, empty on older saves).
+Nothing about the pick is kept: on the night it fires it is planned afresh and fairly. On every
+later night pass the oldest queued kind that can act tonight fires instead of the normal roll, with
+its scene, as that night's one strike (it records the chance drop, the cap and the spacing like any
+strike). It honours everything the kind's own "can act" test does: caps, the spacing between
+tampers, wards, quiet days, nothing fair to take. A queued kind that cannot act tonight stays queued
+and the night rolls normally. It leaves the queue only when it commits; a night whose slot is taken
+again postpones it and it stays queued. A debug arm still takes precedence; the every-loop guarantee
+waits behind the queue. A guaranteed Winter tamper that is postponed keeps its own carry instead: it
+stays owed past week 1, every night until it lands. Rule: `StrikeQueue`. The nets under the save, the morning and the next night pass follow the
 same rule: a waiting strike lands there only if its scene had the slot; otherwise (for example the
 first night of a save, when vanilla runs no `pickFarmEvent`) it is postponed. Rules:
 `StrikeSlot.Decide`, `StrikeSlot.LandsAtNet`, `StrikeLedger.Record`.
@@ -193,7 +209,8 @@ our `FarmEvent` when a scene is due tonight:
 - A wedding, a `WorldChangeEvent` (the Community Center's own repairs, the Joja ones), another
   mod's farm event override, a personal farm event (a birth, a pregnancy question), a Wildcard
   night_event twist, or any event the patch does not recognise as random wins. The strike is
-  postponed, effect and scene both (see above); it comes back on a later night with its scene.
+  postponed, effect and scene both (see above), and queued: it fires on the next free night with
+  its scene.
 - Fail nights are already suppressed and stay so. The strike itself never runs on day 28.
 
 Each scene is a class implementing vanilla's `FarmEvent` (`setUp`, `tickUpdate`, `draw`,
@@ -217,14 +234,17 @@ sleeping farm.
 
 ### Scene 2: the thief (chest blight), about 8 seconds
 
-- Wherever the picked chest is: the Farm, a shed, the cellar, the farmhouse. Any other map the
-  chest could be on (**mine**: a chest off the farm plays no scene; the strike applies at once and
-  the scene waits for a chest on the farm. The thief walking into the mines or the desert is not
-  worth staging).
+- Wherever the picked chest is: the Farm, a shed, the cellar, the farmhouse. **While the thief
+  scene is still due this loop, the chest draw only holds chests on those maps (designer,
+  2026-10-07, option a)**, so the first theft always has its scene; a barn, coop, greenhouse or
+  island chest is safe until then. If no chest there has anything to take, the thief cannot act
+  that night (the every-loop guarantee and the queue keep him owed). Once his scene has played,
+  every chest is in the draw again and later thefts there land with no scene, by design.
 - **Junimo Chests are chests (Jeff, 2026-10-07).** Every Junimo Chest shows one shared inventory,
   so they are ONE chest in the draw: the stock is weighted once, a unit taken is gone from all of
-  them, and the scene is staged at a Junimo Chest on the farm's maps when there is one. A ward on
-  any of them protects the shared stock. Mini-Shipping Bins stay out (they ship overnight).
+  them, and the scene is staged at a Junimo Chest on the farm's maps when there is one. While the
+  scene is due the shared stock is in the draw only when one of its chests stands on those maps. A
+  ward on any of them protects the shared stock. Mini-Shipping Bins stay out (they ship overnight).
 - **One chest per strike (Jeff, 2026-09-21; a rule change).** Chest blight used to take units one
   at a time across every unwarded chest and placed machine on every map. Now the first unit that
   lands on a chest makes it the night's chest, and no other chest loses anything that night.
@@ -232,8 +252,8 @@ sleeping farm.
   night inside the same budget.
 - The scene is staged at one thing: the night's chest if there is one, else one of the machines
   taken. It plays when that thing is on the farm's own maps (the Farm, a shed, the cellar, the
-  farmhouse); anything else taken that night goes at the same beat, off screen. A target
-  anywhere else gets no scene and the thief waits for his next strike.
+  farmhouse); anything else taken that night goes at the same beat, off screen. Placed machines
+  are only ever at stake on the Farm itself, which the scene shows.
 - A Shadow Brute walks in from the nearest door or map edge to the chest. The lid opens with the
   vanilla animation and sound. Beat. Apply: the units vanish.
 - The Brute turns, looks toward the camera for half a second, eyes red, and runs out the way it
@@ -358,7 +378,8 @@ save, and pending witness lines.
 - Live, my automated runs: each scene through `tly_sabotage scene` on a developed throwaway farm,
   screenshots at each beat; the thief in the farmhouse on a married save with a child; the overnight
   slot collision with a forced vanilla event and with a Community Center repair night (the strike
-  is postponed, then lands with its scene on a later night).
+  is postponed and queued, then fires with its scene on the next free night with nothing armed);
+  a thief armed with a farm chest and a barn chest while his scene is due takes from the farm chest.
 - Jeff's pass: sleep into each of the four with `tly_sabotage arm`, talk to Linus and Shane the
   morning after and again three days later, and watch the three gate scenes with the new lines.
 
