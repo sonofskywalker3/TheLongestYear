@@ -18,13 +18,42 @@ public class BundleRewardShuffleTests
     public void The_pool_drops_rewards_with_a_slash()
         => Assert.Equal(new[] { "O 1 1" }, BundleRewardShuffle.CleanPool(new[] { "O 1 1", "O 2/1", null! }));
 
+    private static bool SkipJoja(string room) => BundleRewardShuffle.SkipsRoom(room);
+
     [Fact]
-    public void Every_reward_comes_from_the_pool_and_vault_is_untouched()
+    public void Only_the_abandoned_joja_mart_is_skipped()
     {
-        var specs = new[] { Spec("Pantry", 0, "x"), Spec("Crafts Room", 13, "y"), Spec("Vault", 23, "2500") };
-        var after = BundleRewardShuffle.Apply(specs, 42, Pool, room => room == "Vault");
-        Assert.All(after.Take(2), s => Assert.Contains(s.RewardField, Pool));
-        Assert.Equal("2500", after[2].RewardField);
+        Assert.True(BundleRewardShuffle.SkipsRoom("Abandoned Joja Mart"));
+        Assert.False(BundleRewardShuffle.SkipsRoom("Vault"));
+        Assert.False(BundleRewardShuffle.SkipsRoom("Pantry"));
+    }
+
+    [Fact]
+    public void Every_reward_comes_from_the_pool_vault_is_shuffled_and_joja_is_untouched()
+    {
+        var specs = new[]
+        {
+            Spec("Pantry", 0, "x"), Spec("Crafts Room", 13, "y"), Spec("Vault", 23, "z"),
+            Spec("Abandoned Joja Mart", 36, "joja"),
+        };
+        var after = BundleRewardShuffle.Apply(specs, 42, Pool, SkipJoja);
+        Assert.All(after.Take(3), s => Assert.Contains(s.RewardField, Pool));
+        Assert.Equal("joja", after[3].RewardField);
+    }
+
+    [Fact]
+    public void Data_form_shuffles_the_vault_reward_and_keeps_its_gold_fields()
+    {
+        var board = new Dictionary<string, string>
+        {
+            ["Vault/23"] = "2,500g/O 220 3/-1 2500 2500/4/1//2,500g",
+            ["Abandoned Joja Mart/36"] = "The Missing//348 1 1 807 1 0 74 1 0 454 5 2 795 1 2 445 1 0/1/5//The Missing",
+        };
+        var after = BundleRewardShuffle.ApplyToData(board, 3, Pool, SkipJoja);
+        var a = after["Vault/23"].Split('/'); var b = board["Vault/23"].Split('/');
+        Assert.Contains(a[1], Pool);
+        Assert.Equal(b.Where((_, i) => i != 1), a.Where((_, i) => i != 1));
+        Assert.Equal(board["Abandoned Joja Mart/36"], after["Abandoned Joja Mart/36"]);
     }
 
     [Fact]
@@ -48,9 +77,9 @@ public class BundleRewardShuffleTests
     [Fact]
     public void Data_form_leaves_skipped_rooms_byte_identical()
     {
-        var board = new Dictionary<string, string> { ["Vault/23"] = "2,500g/O 220 3/-1 2500 2500/4/1//2,500g" };
-        var after = BundleRewardShuffle.ApplyToData(board, 3, Pool, room => room == "Vault");
-        Assert.Equal(board["Vault/23"], after["Vault/23"]);
+        var board = new Dictionary<string, string> { ["Abandoned Joja Mart/36"] = "The Missing//348 1 1/1/1//The Missing" };
+        var after = BundleRewardShuffle.ApplyToData(board, 3, Pool, SkipJoja);
+        Assert.Equal(board["Abandoned Joja Mart/36"], after["Abandoned Joja Mart/36"]);
     }
 
     [Fact]

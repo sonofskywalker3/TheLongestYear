@@ -23,6 +23,14 @@ public static class BundleRewardShuffle
     private const uint FnvOffset = 2166136261u;
     private const uint FnvPrime = 16777619u;
 
+    /// <summary>The one room the shuffle leaves alone, rewards and pool alike. The Vault is
+    /// shuffled: its field 1 is an ordinary item reward ("O 220 3") the Junimo note menu grants
+    /// like any other room's, and field 2 (the gold ask) is never touched.</summary>
+    private const string SkippedRoom = "Abandoned Joja Mart";
+
+    /// <summary>Whether the shuffle leaves this room's rewards alone and keeps them out of the pool.</summary>
+    public static bool SkipsRoom(string room) => string.Equals(room, SkippedRoom, StringComparison.Ordinal);
+
     private const char FieldSeparator = '/';
     private const int RewardFieldIndex = 1;
 
