@@ -259,22 +259,39 @@ public sealed record TamperCandidate(string ItemId, Theme Theme, int Effort);
 
 /// <summary>An unfilled slot the darkness may rewrite, with the bundle it sits in. <see cref="Flavor"/>
 /// is the input the slot names (a Dried Fruit's fruit), null when it names none.</summary>
-public sealed record TamperTarget(BundleRequirement Bundle, int IngredientIndex, string ItemId, string? Flavor = null);
+public sealed record TamperTarget(BundleRequirement Bundle, int IngredientIndex, string ItemId, string? Flavor = null)
+{
+    private readonly IReadOnlyList<int>? _slots;
+
+    /// <summary>Every open slot of this exact item in <see cref="Bundle"/>, which a tamper rewrites
+    /// together (Jeff, 2026-10-07: Construction's double Wood is one target over both slots).
+    /// <see cref="IngredientIndex"/> is the first of them. Defaults to that one slot.</summary>
+    public IReadOnlyList<int> IngredientIndices
+    {
+        get => _slots ?? new[] { IngredientIndex };
+        init => _slots = value;
+    }
+}
 
 /// <summary>Winter's unavoidable front: pick an unfilled slot (the ones whose item the player is
 /// holding first, that is the sting) and a replacement of similar effort the bundle does not
 /// already ask for.
 ///
-/// Only an item the board asks for ONCE may be the target (Jeff, 2026-10-07: "only let it pick an
-/// item that only appears in 1 bundle"). The Junimos then say the darkness tainted all of it, and
-/// no other slot is left asking for the tainted thing. The item is the exact item: its id and the
-/// flavour the slot names, so Dried Apples and Dried Cucumbers are two items.</summary>
+/// Only an item ONE bundle asks for may be the target (Jeff, 2026-10-07: "only let it pick an
+/// item that only appears in 1 bundle"; per bundle, so Construction's double Wood counts). The
+/// Junimos then say the darkness tainted all of it, every open slot of it in that bundle is
+/// rewritten, and no slot is left asking for the tainted thing. The item is the exact item: its id
+/// and the flavour the slot names, so Dried Apples and Dried Cucumbers are two items.</summary>
 public static class TamperRule
 {
-    /// <summary>The open slots a tamper may rewrite: unfilled, in an unfinished item-room bundle,
-    /// and asking for an item no other slot on the board asks for. Every slot counts toward that,
-    /// filled or open, in any bundle. <paramref name="flavorOf"/> gives a slot's flavour from the
-    /// board's flavour map (bundle index, slot index); null means no slot names one.</summary>
+    /// <summary>The items a tamper may rewrite, one target per exact item: an open slot in an
+    /// unfinished item-room bundle whose item no OTHER bundle asks for, filled or open. The bundle
+    /// may ask for it in several slots (Construction's double Wood); the target then carries every
+    /// open slot of it in that bundle, and the filled ones stay. A slot that names no flavour takes
+    /// every flavour of its item, so it overlaps the flavoured ones: an item is a target only when
+    /// every slot overlapping it, on the whole board, is the same exact item in the same bundle.
+    /// <paramref name="flavorOf"/> gives a slot's flavour from the board's flavour map (bundle
+    /// index, slot index); null means no slot names one.</summary>
     public static IReadOnlyList<TamperTarget> Targets(
         SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, Func<int, int, string?>? flavorOf = null)
     {
@@ -286,16 +303,45 @@ public static class TamperRule
             if (req.BundleIndex < 0) continue;
             if (!ReversionRule.IsItemRoomTheme(req.Theme)) continue;
             if (req.IsFullyComplete(ledger)) continue;
+            var grouped = new HashSet<string>(StringComparer.Ordinal);
             foreach (BundleSlot slot in req.Slots)
             {
                 if (ledger.IsFilled(req.BundleIndex, slot.IngredientIndex)) continue;
                 string? flavor = FlavorOf(req, slot, flavorOf);
-                if (SlotsAsking(requirements, slot.ItemId, flavor, flavorOf) != SingleSlot) continue;
-                result.Add(new TamperTarget(req, slot.IngredientIndex, slot.ItemId, flavor));
+                string id = BundleParsing.NormalizeItemId(slot.ItemId ?? "");
+                if (!grouped.Add(id + "|" + (flavor == null ? "" : BundleParsing.StripQualifier(flavor)))) continue;
+                List<int>? open = OpenSlotsIfOnlyThisBundle(ledger, requirements, req, id, flavor, flavorOf);
+                if (open == null || open.Count == 0) continue;
+                result.Add(new TamperTarget(req, open[0], slot.ItemId!, flavor) { IngredientIndices = open });
             }
         }
         return result;
     }
+
+    /// <summary>The open slots of this exact item in <paramref name="bundle"/>, or null when any
+    /// slot elsewhere on the board overlaps it (another bundle, or another flavour spelling in this
+    /// one).</summary>
+    private static List<int>? OpenSlotsIfOnlyThisBundle(
+        SlotLedger ledger, IReadOnlyList<BundleRequirement> requirements, BundleRequirement bundle,
+        string id, string? flavor, Func<int, int, string?>? flavorOf)
+    {
+        var open = new List<int>();
+        foreach (BundleRequirement req in requirements)
+            foreach (BundleSlot slot in req.Slots)
+            {
+                if (!string.Equals(BundleParsing.NormalizeItemId(slot.ItemId ?? ""), id, StringComparison.Ordinal)) continue;
+                string? other = FlavorOf(req, slot, flavorOf);
+                if (!SameFlavorOrAny(flavor, other)) continue;
+                if (req.BundleIndex != bundle.BundleIndex || !SameExactFlavor(flavor, other)) return null;
+                if (!ledger.IsFilled(req.BundleIndex, slot.IngredientIndex)) open.Add(slot.IngredientIndex);
+            }
+        return open;
+    }
+
+    /// <summary>Both name no flavour, or both name the same one.</summary>
+    private static bool SameExactFlavor(string? a, string? b)
+        => (a == null && b == null)
+           || (a != null && b != null && string.Equals(BundleParsing.StripQualifier(a), BundleParsing.StripQualifier(b), StringComparison.Ordinal));
 
     /// <summary>A target's item is asked in exactly this many slots.</summary>
     private const int SingleSlot = 1;
@@ -314,6 +360,25 @@ public static class TamperRule
             {
                 if (!string.Equals(BundleParsing.NormalizeItemId(slot.ItemId ?? ""), id, StringComparison.Ordinal)) continue;
                 if (SameFlavorOrAny(flavor, FlavorOf(req, slot, flavorOf))) n++;
+            }
+        return n;
+    }
+
+    /// <summary>How many different bundles ask for this exact item, filled or open, counting the
+    /// overlap of an any-flavour slot as <see cref="SlotsAsking"/> does. One is the tamper's bar.</summary>
+    public static int BundlesAsking(
+        IReadOnlyList<BundleRequirement> requirements, string itemId, string? flavor, Func<int, int, string?>? flavorOf)
+    {
+        if (requirements is null) throw new ArgumentNullException(nameof(requirements));
+        string id = BundleParsing.NormalizeItemId(itemId ?? "");
+        int n = 0;
+        foreach (BundleRequirement req in requirements)
+            foreach (BundleSlot slot in req.Slots)
+            {
+                if (!string.Equals(BundleParsing.NormalizeItemId(slot.ItemId ?? ""), id, StringComparison.Ordinal)) continue;
+                if (!SameFlavorOrAny(flavor, FlavorOf(req, slot, flavorOf))) continue;
+                n++;
+                break;
             }
         return n;
     }

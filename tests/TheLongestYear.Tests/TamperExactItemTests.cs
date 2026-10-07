@@ -67,11 +67,89 @@ public class TamperExactItemTests
         Assert.DoesNotContain(TamperRule.Targets(ledger, new[] { crops, chef }), t => t.ItemId == Potato);
     }
 
+    // "Only one bundle" means per bundle (Jeff, 2026-10-07): Construction's double Wood is a target
+    // when no other bundle asks for Wood, and every open Wood slot in it is rewritten together.
+
+    private const string Wood = "(O)388";
+
     [Fact]
-    public void A_doubled_id_in_one_bundle_is_two_slots()
+    public void An_item_doubled_inside_its_only_bundle_is_one_target_over_both_slots()
     {
-        var crops = Bundle("Spring Crops", Theme.Farming, 1, 3, Potato, Potato, "(O)24");
-        Assert.DoesNotContain(TamperRule.Targets(new SlotLedger(), new[] { crops }), t => t.ItemId == Potato);
+        var construction = Bundle("Construction", Theme.Mixed, 22, 4, Wood, Wood, "(O)390", "(O)709");
+        IReadOnlyList<TamperTarget> targets = TamperRule.Targets(new SlotLedger(), new[] { construction });
+        TamperTarget wood = Assert.Single(targets, t => t.ItemId == Wood);
+        Assert.Equal(new[] { 0, 1 }, wood.IngredientIndices.ToArray());
+        Assert.Equal(0, wood.IngredientIndex);
+    }
+
+    [Fact]
+    public void A_filled_copy_inside_the_bundle_stays_and_only_the_open_one_is_rewritten()
+    {
+        var construction = Bundle("Construction", Theme.Mixed, 22, 4, Wood, Wood, "(O)390", "(O)709");
+        var ledger = new SlotLedger();
+        ledger.Add(22, 0, Wood);
+        TamperTarget wood = Assert.Single(TamperRule.Targets(ledger, new[] { construction }), t => t.ItemId == Wood);
+        Assert.Equal(new[] { 1 }, wood.IngredientIndices.ToArray());
+    }
+
+    [Fact]
+    public void An_item_doubled_in_one_bundle_and_asked_in_another_is_never_a_target()
+    {
+        var construction = Bundle("Construction", Theme.Mixed, 22, 4, Wood, Wood, "(O)390", "(O)709");
+        var forage = Bundle("Spring Foraging", Theme.Foraging, 1, 2, Wood, "(O)16");
+        var ledger = new SlotLedger();
+        ledger.Add(1, 0, Wood);   // filled in the other bundle still counts
+        Assert.DoesNotContain(TamperRule.Targets(ledger, new[] { construction, forage }), t => t.ItemId == Wood);
+    }
+
+    [Fact]
+    public void A_flavoured_slot_beside_an_any_flavour_slot_of_its_item_is_not_a_target()
+    {
+        // "All the Dried Apples" would be false: the any-flavour slot beside it still takes them.
+        var artisan = Bundle("Artisan", Theme.Farming, 4, 3, Dried, Dried, "(O)24");
+        var map = new Dictionary<string, string> { ["4:0"] = Apple };
+        Assert.DoesNotContain(TamperRule.Targets(new SlotLedger(), new[] { artisan }, Flavors(map)), t => t.ItemId == Dried);
+    }
+
+    [Fact]
+    public void Two_flavours_of_one_good_in_a_bundle_are_two_single_targets()
+    {
+        var artisan = Bundle("Artisan", Theme.Farming, 4, 3, Dried, Dried, "(O)24");
+        var map = new Dictionary<string, string> { ["4:0"] = Apple, ["4:1"] = Cucumber };
+        IReadOnlyList<TamperTarget> targets = TamperRule.Targets(new SlotLedger(), new[] { artisan }, Flavors(map));
+        Assert.Equal(new[] { 0 }, Assert.Single(targets, t => t.Flavor == Apple).IngredientIndices.ToArray());
+        Assert.Equal(new[] { 1 }, Assert.Single(targets, t => t.Flavor == Cucumber).IngredientIndices.ToArray());
+    }
+
+    [Fact]
+    public void Every_rewritten_slot_gets_the_same_new_item_and_stack()
+    {
+        const string value = "Construction/BO 114 1/388 99 0 388 99 0 390 99 0 709 10 0/6/4//Construction";
+        var board = new Dictionary<string, string> { ["Crafts Room/22"] = value };
+        Dictionary<string, string>? tampered = BundleDataTamper.ApplyAll(board, "Crafts Room/22", new[] { 0, 1 }, "(O)414", 3, 0);
+        Assert.NotNull(tampered);
+        Assert.Equal("Construction/BO 114 1/(O)414 3 0 (O)414 3 0 390 99 0 709 10 0/6/4//Construction", tampered!["Crafts Room/22"]);
+        Assert.Equal(value, board["Crafts Room/22"]);
+        // All or nothing: one slot out of range writes none.
+        Assert.Null(BundleDataTamper.ApplyAll(board, "Crafts Room/22", new[] { 1, 9 }, "(O)414", 3, 0));
+        Assert.Null(BundleDataTamper.ApplyAll(board, "Crafts Room/22", Array.Empty<int>(), "(O)414", 3, 0));
+    }
+
+    [Fact]
+    public void The_replacement_for_a_doubled_target_is_still_new_to_the_board_and_never_tainted()
+    {
+        var construction = Bundle("Construction", Theme.Mixed, 22, 4, Wood, Wood, "(O)390", "(O)709");
+        var forage = Bundle("Spring Foraging", Theme.Foraging, 1, 2, "(O)16", "(O)18");
+        TamperTarget wood = Assert.Single(TamperRule.Targets(new SlotLedger(), new[] { construction, forage }), t => t.ItemId == Wood);
+        var candidates = new List<TamperCandidate>
+        {
+            new("(O)16", Theme.Mixed, 2),     // on the board
+            new(Potato, Theme.Mixed, 2),      // tainted earlier
+            new("(O)414", Theme.Mixed, 9),
+        };
+        var tainted = new[] { new TamperRecord { OldItemId = Potato } };
+        for (int seed = 0; seed < 40; seed++)
+            Assert.Equal("(O)414", TamperRule.PickReplacement(wood, 2, candidates, new Random(seed), tainted, new[] { construction, forage })!.ItemId);
     }
 
     [Fact]
@@ -128,6 +206,10 @@ public class TamperExactItemTests
         Assert.Equal(2, TamperRule.SlotsAsking(new[] { crops, chef }, Potato, null, null));
         Assert.Equal(1, TamperRule.SlotsAsking(new[] { crops, chef }, "(O)24", null, null));
         Assert.Equal(0, TamperRule.SlotsAsking(new[] { crops, chef }, "(O)999", null, null));
+        var doubled = Bundle("Construction", Theme.Mixed, 22, 3, Wood, Wood, "(O)390");
+        Assert.Equal(2, TamperRule.SlotsAsking(new[] { doubled, crops }, Wood, null, null));
+        Assert.Equal(1, TamperRule.BundlesAsking(new[] { doubled, crops }, Wood, null, null));
+        Assert.Equal(2, TamperRule.BundlesAsking(new[] { crops, chef }, Potato, null, null));
     }
 
     // ---------------------------------------------------------------- replacements after a taint
