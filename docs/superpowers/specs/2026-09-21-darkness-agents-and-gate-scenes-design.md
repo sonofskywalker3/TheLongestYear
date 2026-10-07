@@ -95,8 +95,9 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
   - Its first line is "@, last night the darkness struck! It has tainted all the {{old}}."
   - {{old}} names the exact item the tamper took, flavour included: "all the Dried Apples", not
     "all the Dried Fruit" (designer, 2026-10-07). The tamper only ever takes an item the board asks
-    for in exactly one slot (wiring spec 2026-09-15, Tampering), so the line is true: nothing else
-    on the board still wants the tainted thing.
+    for in exactly one slot (wiring spec 2026-09-15, Tampering), and a later tamper never picks a
+    tainted item, in any flavour, as its replacement, so the line stays true: nothing on the board
+    wants the tainted thing.
   - Plurals are right: {{old}} is the item's plural (the game's own pluralizer, corrected for
     mass nouns like Beer, Wool, Hay and Honey, also as the last word of a name such as Blueberry
     Jelly; a flavoured Dried Fruit or Smoked Fish keeps the game's own name, which already reads

@@ -137,7 +137,8 @@ appears in 1 bundle") a slot is a target only when its exact item, id plus the f
 (Dried Apples and Dried Cucumbers are two items, quality ignored), is asked in exactly one slot on the
 whole board, filled or open, in any bundle. A slot that names no flavour takes any, so it shares its
 item with every flavoured slot of the same id. An item asked in two or more slots is never a target;
-when nothing qualifies, tampering has nothing to act on, as below. The replacement pool is the item catalog filtered by room theme (the
+when nothing qualifies, tampering has nothing to act on, as below. The replacement pool also drops
+every id tainted earlier in the loop, all flavours of it, since a replacement is written unflavoured. The replacement pool is the item catalog filtered by room theme (the
 Bulletin Board's Mixed takes any), not already an ingredient of that bundle, and passing the rule from
 the day after the hit to Winter 28. Among those, the five closest in effort to the original item, one at
 random. The effort figure still comes from the existing item model (`ItemAvailabilityModel.For(id).Effort`),

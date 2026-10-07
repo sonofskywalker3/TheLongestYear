@@ -9,8 +9,10 @@ asked in exactly one slot on the whole board.
 
 - **Target rule (Core, `TamperRule.Targets`).** A slot is a target only when it is open, in an
   unfinished item-room bundle (as before), and `TamperRule.SlotsAsking` finds exactly one slot on the
-  board asking for its exact item. Every slot counts, filled or open, in every bundle (the Vault and
-  Joja included, though they never share an item). A doubled id inside one bundle is two slots.
+  board asking for its exact item. Every slot counts, filled or open, in every bundle the
+  requirements list holds. (Corrected in fix round 1: that list is built by
+  `BoardRequirements.Build`, which drops the Vault and the non-themed rooms, so they are not counted.
+  The effect is nil: they ask for gold, never for an item another slot asks for.) A doubled id inside one bundle is two slots.
   Quality is ignored.
 - **Exact item = id + flavour.** `TamperTarget` gained `Flavor`. The flavour is read from
   `MetaState.WrittenBoardFlavors` (key `bundle:slot`) the way `FlavoredSlotPatch` applies it: only on
@@ -171,3 +173,48 @@ after-scene view of `junimo-04.png`. The hotbar glow on the Dried Apples is fain
    Dried Fruit target in the first tier. Unchanged behaviour; harmless.
 4. **Not run live:** a Smoked Fish strike (the same code path as Dried Fruit), and an old save with
    pre-change records (covered by the deserialisation test).
+
+## Fix round 1
+
+**Finding (Important):** the single-slot rule broke on a second strike. `PickReplacement` only avoided
+items already in the target's bundle, so a later tamper could ask for an item an earlier one tainted
+("Bring us 3 Potatoes" while Potatoes glow), and a Dried Fruit replacement, written unflavoured as
+"Any Dried Fruit", would take the tainted Dried Apples.
+
+**Fix:** `TamperRule.PickReplacement` takes the run's tamper records (optional parameter
+`tainted`) and drops every candidate whose id any record tainted, in every flavour (ids normalised, so
+`192` and `(O)192` match). The fairness, theme, not-in-bundle and five-closest rules are unchanged. If
+that empties the pool for every target, the existing no-fair-replacement path applies ("tampering
+found no fair replacement for any open slot", the night takes another event, the guaranteed tamper
+retries tomorrow). `SabotageService.PlanTamper` passes `Run.Tampers`. Specs updated: the 2026-09-21
+spec's {{old}} bullet now names this as the reason the line stays true, and the 2026-09-15 Tampering
+paragraph states the bar.
+
+**Report corrections (no code):**
+- The single-slot count does not include the Vault or Joja: `BoardRequirements.Build` drops them
+  (corrected in place above). The effect is nil.
+- **The ItemPlurals change also reaches the {{new}} ask**, which the designer should see.
+  `ItemPlurals.Plural` now treats a name whose LAST word is a mass noun as a mass noun, and "Jelly"
+  joined the list. So the ask "Bring us N X instead" changes for such names: "3 Wild Honey" (was "3
+  Wild Honeys"), "3 Sea Jelly" (was "3 Sea Jellies"), "3 Blueberry Wine", "3 Apple Juice", "3 Salmon
+  Roe". Single-word names are unchanged ("3 Parsnips", "3 Beer").
+
+**Tests:** three new Core tests in `TamperExactItemTests.cs`, written first (they failed to compile:
+no five-argument `PickReplacement`):
+- `A_tainted_item_is_never_a_later_replacement`: Potato tainted (bare id `192` in the record), Potato the
+  closest in effort; over 60 seeds the pick is always the other candidate.
+- `After_a_dried_apple_taint_dried_fruit_of_any_flavour_is_never_a_replacement`: Dried Fruit never
+  picked over 60 seeds after a Dried Apple taint.
+- `Only_tainted_candidates_leave_no_replacement`: the pool emptied by the bar gives null (the
+  no-fair-replacement path); without records the same pool gives a pick.
+
+```
+dotnet build TheLongestYear.sln     -> Build succeeded.
+dotnet test tests/TheLongestYear.Tests --no-build --filter "FullyQualifiedName~TamperExactItemTests"
+  Passed!  - Failed: 0, Passed: 25, Skipped: 0, Total: 25
+dotnet test tests/TheLongestYear.Tests --no-build
+  Passed!  - Failed: 0, Passed: 3914, Skipped: 0, Total: 3914
+```
+
+No live run (not required for this round). Open item 1 above (a replacement may still be an item another
+untainted slot asks for) stands as a designer question; this round only bars tainted items.
