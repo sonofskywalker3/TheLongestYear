@@ -130,6 +130,48 @@ public class TamperExactItemTests
         Assert.Equal(0, TamperRule.SlotsAsking(new[] { crops, chef }, "(O)999", null, null));
     }
 
+    // ---------------------------------------------------------------- replacements after a taint
+
+    [Fact]
+    public void A_tainted_item_is_never_a_later_replacement()
+    {
+        var crops = Bundle("Fall Crops", Theme.Farming, 2, 1, "(O)270");
+        var target = new TamperTarget(crops, 0, "(O)270");
+        var candidates = new List<TamperCandidate>
+        {
+            new(Potato, Theme.Farming, 5),        // the closest in effort, and tainted
+            new("(O)248", Theme.Farming, 9),
+        };
+        var tainted = new[] { new TamperRecord { OldItemId = "192" } };   // bare spelling still matches
+        for (int seed = 0; seed < 60; seed++)
+        {
+            TamperCandidate? pick = TamperRule.PickReplacement(target, 5, candidates, new Random(seed), tainted);
+            Assert.Equal("(O)248", pick!.ItemId);
+        }
+    }
+
+    [Fact]
+    public void After_a_dried_apple_taint_dried_fruit_of_any_flavour_is_never_a_replacement()
+    {
+        // A replacement is written unflavoured, so "Any Dried Fruit" would take the tainted apples.
+        var artisan = Bundle("Artisan", Theme.Farming, 4, 1, "(O)24");
+        var target = new TamperTarget(artisan, 0, "(O)24");
+        var candidates = new List<TamperCandidate> { new(Dried, Theme.Farming, 3), new("(O)428", Theme.Farming, 3) };
+        var tainted = new[] { new TamperRecord { OldItemId = Dried, OldFlavor = Apple } };
+        for (int seed = 0; seed < 60; seed++)
+            Assert.Equal("(O)428", TamperRule.PickReplacement(target, 3, candidates, new Random(seed), tainted)!.ItemId);
+    }
+
+    [Fact]
+    public void Only_tainted_candidates_leave_no_replacement()
+    {
+        var artisan = Bundle("Artisan", Theme.Farming, 4, 1, "(O)24");
+        var target = new TamperTarget(artisan, 0, "(O)24");
+        var candidates = new List<TamperCandidate> { new(Potato, Theme.Farming, 3) };
+        Assert.Null(TamperRule.PickReplacement(target, 3, candidates, new Random(1), new[] { new TamperRecord { OldItemId = Potato } }));
+        Assert.NotNull(TamperRule.PickReplacement(target, 3, candidates, new Random(1)));
+    }
+
     // ---------------------------------------------------------------- the flavour map
 
     [Fact]

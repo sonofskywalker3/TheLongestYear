@@ -601,7 +601,7 @@ namespace TheLongestYear.Loop
             foreach (TamperTarget target in ordered)
             {
                 int effort = availability.For(target.ItemId).Effort;
-                TamperCandidate replacement = TamperRule.PickReplacement(target, effort, candidates, rng);
+                TamperCandidate replacement = TamperRule.PickReplacement(target, effort, candidates, rng, Run.Tampers);
                 if (replacement == null) continue;
                 int maxCount = TamperRule.MaxCount(replacement.ItemId, QuantityAskPass.BasisByDeadline(replacement.ItemId, CoreSeason.Winter));
                 int stack = TamperRule.Stack(maxCount, weekOfWinter, Level, rng);

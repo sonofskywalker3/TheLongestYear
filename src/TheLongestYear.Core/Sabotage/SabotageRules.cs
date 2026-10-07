@@ -335,16 +335,29 @@ public static class TamperRule
     }
 
     /// <summary>The replacement: same room theme (the Bulletin Board's Mixed takes any), not
-    /// already in the bundle, then the closest few in effort to the original, one at random.</summary>
+    /// already in the bundle, never an item the darkness already tainted this loop, then the
+    /// closest few in effort to the original, one at random. Null when nothing is left.
+    ///
+    /// The tainted bar covers every flavour of a tainted id (fix round 1, 2026-10-07): a
+    /// replacement is written unflavoured, so an "Any Dried Fruit" ask would take the tainted
+    /// Dried Apples, and a later "Bring us 3 Potatoes" would ask for the very thing glowing as
+    /// tainted.</summary>
     public static TamperCandidate? PickReplacement(
-        TamperTarget target, int originalEffort, IReadOnlyList<TamperCandidate> candidates, Random rng)
+        TamperTarget target, int originalEffort, IReadOnlyList<TamperCandidate> candidates, Random rng,
+        IReadOnlyList<TamperRecord>? tainted = null)
     {
         if (target is null) throw new ArgumentNullException(nameof(target));
         if (candidates is null) throw new ArgumentNullException(nameof(candidates));
         if (rng is null) throw new ArgumentNullException(nameof(rng));
         var inBundle = new HashSet<string>(target.Bundle.Ingredients, StringComparer.Ordinal);
+        var taintedIds = new HashSet<string>(StringComparer.Ordinal);
+        if (tainted != null)
+            foreach (TamperRecord record in tainted)
+                if (!string.IsNullOrEmpty(record.OldItemId))
+                    taintedIds.Add(BundleParsing.NormalizeItemId(record.OldItemId));
         List<TamperCandidate> eligible = candidates
             .Where(c => !inBundle.Contains(c.ItemId))
+            .Where(c => !taintedIds.Contains(BundleParsing.NormalizeItemId(c.ItemId)))
             .Where(c => target.Bundle.Theme == Theme.Mixed || c.Theme == target.Bundle.Theme)
             .OrderBy(c => Math.Abs(c.Effort - originalEffort))
             .ThenBy(c => c.ItemId, StringComparer.Ordinal)
