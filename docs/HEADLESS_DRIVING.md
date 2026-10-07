@@ -216,7 +216,10 @@ Commands:
 - `tly_sabotage fixture [scarecrow] [rows=<1..5>]` plants ten in-season crops per row in front of the
   house and drops a chest with 20 Parsnip and 10 Copper Ore beside them (refuses on a save this
   session did not create unless you add `confirm`); `fixture here` drops only the chest beside the
-  farmer, for the thief in a shed, cellar or farmhouse.
+  farmer, for the thief in a shed, cellar or farmhouse; `fixture here junimo` stands a Junimo Chest
+  there instead (the shared stock gets 20 Parsnip + 10 Copper Ore only while it is empty, and the
+  log prints the shared stock, so a second one shows the same items).
+- `tly_sabotage edge` crosses the current map's own warp onto the Farm (door or map edge).
 - `tly_sabotage arm blight crops|chest`, `arm revert`, `arm tamper` make tonight's roll strike with
   that kind, and the real scene plays in the night. An arm beats the every-loop guarantee for that
   night.
@@ -242,8 +245,12 @@ The Junimo "tainted" scene does not play on waking. It starts the first time the
 the Farm by any route (Jeff, 2026-10-07): the log reads `starting the board-changed scene at the
 porch (x,y); the farmer arrived at (x,y) facing f and goes back there after`. It is staged at the
 porch behind black and, when it ends or is skipped, vanilla's event end warps him back to the
-arrival tile (`tlyReturnTo` sets `positionBeforeEvent`). Headless, `debug warp Farm 64 16` from the
-house, or `debug warp BusStop 10 23` then `debug warp Farm 79 17`, or a Forest arrival, all start it.
+arrival tile and facing (`tlyReturnTo` sets `positionBeforeEvent`, which vanilla's event end warps
+to), logged as `after the board-changed scene the farmer is at (x,y) facing f`. Headless,
+`tly_sabotage edge` takes the current map's own warp onto the Farm, the same `Farmer.warpFarmer`
+call vanilla makes on the edge tile: from the FarmHouse it is the door (porch (64,15)), from
+`debug warp BusStop 20 23` the Bus Stop edge (arrives (78,17)), from `debug warp Forest 68 8` the
+Forest edge (arrives (40,64)). Step the three Junimo lines with `tly_eventstep`.
 
 **The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
 scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`

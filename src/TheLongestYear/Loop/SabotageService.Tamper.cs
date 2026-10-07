@@ -37,7 +37,7 @@ namespace TheLongestYear.Loop
             if (worldState?.BundleData == null) return null;
             TamperPlan plan = PlanFairTamper(rng, dayOfYear);
             if (plan == null) return null;
-            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot(s) {string.Join(",", plan.Target.IngredientIndices)} ({ExactName(plan.Target.ItemId, plan.Target.Flavor)}) to {plan.Stack} {Strings.ItemName(plan.ItemId)} each.", LogLevel.Info);
+            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot(s) {string.Join(",", plan.Target.IngredientIndices)} ({ExactName(plan.Target.ItemId, plan.Target.Flavor)}) to {plan.Stack} {Strings.ItemName(plan.ItemId)}{(plan.Target.IngredientIndices.Count > 1 ? " each" : "")}.", LogLevel.Info);
             return new PendingStrike(DarknessEvent.Tampering, () => WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear));
         }
 
@@ -235,7 +235,7 @@ namespace TheLongestYear.Loop
                 ItemId = newItemId, OldItemId = target.ItemId, OldFlavor = target.Flavor,
             });
             _monitor.Log(
-                $"Darkness: {target.Bundle.Name} slot(s) {string.Join(",", slots)} now ask for {stack} {Strings.ItemName(newItemId)} each instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
+                $"Darkness: {target.Bundle.Name} slot(s) {string.Join(",", slots)} now ask for {stack} {Strings.ItemName(newItemId)}{(slots.Count > 1 ? " each" : "")} instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             _rebuildBoard("darkness tampering");
             return true;
