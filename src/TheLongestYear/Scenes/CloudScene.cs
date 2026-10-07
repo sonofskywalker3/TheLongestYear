@@ -13,7 +13,7 @@ namespace TheLongestYear.Scenes
 {
     /// <summary>The tampering scene (spec 2026-09-21, Scene 4). About twelve seconds, no text, no
     /// witness: the world map in its Winter art, and a dark cloud drifts in over it from the
-    /// mountain and mines side and settles sort of everywhere, evenly over the whole map image and
+    /// north, over the map's top edge, and settles sort of everywhere, evenly over the whole map image and
     /// never clustered on the town, a little thicker on the farm, which ends the darkest place on
     /// the map (Jeff, 2026-10-07). The map dims under it, and as the farm settles the low
     /// <c>shadowDie</c> sounds and the board is rewritten. The Community Center gets no special
@@ -292,6 +292,22 @@ namespace TheLongestYear.Scenes
                 Rectangle at = ToPaint(new Rectangle((int)x - half, (int)y - half, (int)blob.Diameter, (int)blob.Diameter));
                 b.Draw(_blob, at, CloudTint * alpha);
             }
+            MaskOutside(b, map);
+        }
+
+        /// <summary>Black over everything outside the map image, painted after the cloud, so a blob
+        /// waiting above the map, or one hanging past its edge, is never seen on the black around
+        /// it: the cloud is clipped to the map and enters over its top edge (Jeff, 2026-10-07). Four
+        /// black bands rather than a scissor rectangle, for the reason SceneWindow gives: the scene
+        /// paints inside a batch the game opened.</summary>
+        private static void MaskOutside(SpriteBatch b, Rectangle map)
+        {
+            Rectangle screen = WholeScreen();
+            Color black = Color.Black;
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, screen.Width, Math.Max(0, map.Top)), black);
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, map.Bottom, screen.Width, Math.Max(0, screen.Height - map.Bottom)), black);
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, map.Top, Math.Max(0, map.Left), map.Height), black);
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(map.Right, map.Top, Math.Max(0, screen.Width - map.Right), map.Height), black);
         }
 
         // ---------------------------------------------------------------- putting it back

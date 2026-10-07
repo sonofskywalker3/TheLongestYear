@@ -1055,15 +1055,31 @@ namespace TheLongestYear
         }
 
         /// <summary>After a tamper, the Junimos' "tainted" scene plays the first time the farmer steps
-        /// out onto the Farm, where he stands (Jeff, 2026-10-07; the rule is TamperPorchRule).</summary>
+        /// out of the farmhouse door onto the Farm, where he stands (Jeff, 2026-10-07; the rule is
+        /// TamperPorchRule). Any other way onto the Farm keeps the report for the next door exit.</summary>
         private void OnWarpedForTamperScene(object sender, WarpedEventArgs e)
         {
-            if (_sabotage == null) return;
+            if (_sabotage == null || !_sabotage.TamperSceneOwed) return;
             bool busy = Game1.eventUp || Game1.farmEvent != null || Game1.activeClickableMenu != null
                         || (_seasonTurnDriver?.Running ?? false);
-            if (!TheLongestYear.Core.Sabotage.TamperPorchRule.ShouldStart(_sabotage.TamperSceneOwed, e.NewLocation?.Name, e.IsLocalPlayer, busy))
+            Microsoft.Xna.Framework.Point at = e.Player?.TilePoint ?? Microsoft.Xna.Framework.Point.Zero;
+            if (!TheLongestYear.Core.Sabotage.TamperPorchRule.ShouldStart(
+                    _sabotage.TamperSceneOwed, e.NewLocation?.Name, e.OldLocation?.Name, e.IsLocalPlayer, busy,
+                    at.X, at.Y, FarmHouseDoorExits(e.OldLocation)))
                 return;
             _sabotage.TryStartTamperScene();
+        }
+
+        /// <summary>Where the farmhouse's own warps onto the Farm put the farmer: the house's real
+        /// door data, so every farm type and any moved house is read, never a hard-coded tile.</summary>
+        private static List<(int X, int Y)> FarmHouseDoorExits(GameLocation house)
+        {
+            var exits = new List<(int X, int Y)>();
+            if (house?.warps == null) return exits;
+            foreach (Warp warp in house.warps)
+                if (warp != null && warp.TargetName == TheLongestYear.Core.Sabotage.TamperPorchRule.FarmLocationName)
+                    exits.Add((warp.TargetX, warp.TargetY));
+            return exits;
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
