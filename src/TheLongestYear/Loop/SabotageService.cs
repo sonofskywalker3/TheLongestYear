@@ -31,8 +31,10 @@ namespace TheLongestYear.Loop
         private readonly Func<ItemPools> _pools;
         private readonly Func<ObtainabilityModel> _obtainability;
         private readonly Action<string> _rebuildBoard;
-        /// <summary>Starts the board-changed porch scene; set by ModEntry (the season-turn driver).</summary>
-        public Action<string, string, Action> StartTamperScene { get; set; }
+        /// <summary>Starts the board-changed scene where the farmer stands, with the old item's
+        /// plural name, the new ask, whether that ask is plural, and what to do once it ends; false
+        /// when it cannot start here. Set by ModEntry (the season-turn driver).</summary>
+        public Func<string, string, bool, Action, bool> StartTamperScene { get; set; }
 
         private RunState Run => _store.Run;
         private MetaState Meta => _store.State;
@@ -540,10 +542,32 @@ namespace TheLongestYear.Loop
         {
             var worldState = Game1.netWorldState?.Value;
             if (worldState?.BundleData == null) return false;
+            TamperPlan plan = PlanFairTamper(rng, dayOfYear);
+            return plan != null && WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear);
+        }
+
+        /// <summary>Debug entry point (<c>tly_sabotage scene cloud</c>): a fresh fair tamper plan,
+        /// parked rather than written, so the cloud scene lands it at its own beat exactly as the
+        /// overnight path would, and the morning's Junimo scene and popup follow from it. Null when
+        /// no unfilled slot has a fair replacement, and then the caller decides whether to watch the
+        /// scene against a no-op instead.</summary>
+        public PendingStrike PrepareTamper(Random rng, int dayOfYear)
+        {
+            var worldState = Game1.netWorldState?.Value;
+            if (worldState?.BundleData == null) return null;
+            TamperPlan plan = PlanFairTamper(rng, dayOfYear);
+            if (plan == null) return null;
+            _monitor.Log($"Darkness: the cloud scene will rewrite {plan.Target.Bundle.Name} slot {plan.Target.IngredientIndex} to {plan.Stack} {Strings.ItemName(plan.ItemId)}.", LogLevel.Info);
+            return new PendingStrike(DarknessEvent.Tampering, () => WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear));
+        }
+
+        /// <summary>The fair tamper plan both debug entry points share: the save and obtainability
+        /// model the fairness rule reads, at the current level.</summary>
+        private TamperPlan PlanFairTamper(Random rng, int dayOfYear)
+        {
             SaveSnapshot save = SaveSnapshotReader.Read(msg => _monitor.Log(msg, LogLevel.Trace));
             ObtainabilityModel model = _obtainability();
-            TamperPlan plan = PlanTamper(rng, id => FairnessRule.Counts(id, dayOfYear, FairnessRule.TamperDeadline, Level, save, model));
-            return plan != null && WriteTamper(worldState, plan.Target, plan.ItemId, plan.Stack, dayOfYear);
+            return PlanTamper(rng, id => FairnessRule.Counts(id, dayOfYear, FairnessRule.TamperDeadline, Level, save, model));
         }
 
         /// <summary>The target and replacement a tamper would write, or null when no unfilled slot has
@@ -690,25 +714,47 @@ namespace TheLongestYear.Loop
 
         // ------------------------------------------------------------------ the morning
 
-        /// <summary>The morning: HUD lines and letters for what the night took, and when the board
-        /// changed, the Junimos' porch scene first. Returns true when the scene was started and
-        /// <paramref name="continueWith"/> will run after it; false when the caller continues now.</summary>
+        /// <summary>The morning: HUD lines for what the night took. When the board changed, nothing
+        /// shows yet: the reports wait for the Junimos' scene, which plays when the farmer first
+        /// steps out onto the Farm (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07), and they show
+        /// after it exactly as they did after the old wake-up scene. Always returns false: the
+        /// morning goes on at once either way.</summary>
         public bool ShowMorning(Action continueWith)
         {
             // The morning cannot report what has not happened: a strike whose scene never played
             // lands here at the latest.
             ApplyPendingIfAny("morning");
             if (!RunActivation.IsActive) return false;
-            SabotageReport tamper = Run.PendingSabotageReports?.Find(r => r.Kind == SabotageKind.Tampering);
-            if (tamper == null || StartTamperScene == null)
+            if (TamperSceneOwed)
             {
-                ShowMorningReports();
+                _monitor.Log("Darkness: the board changed in the night; the Junimos wait for the farmer to step out onto the farm.", LogLevel.Info);
                 return false;
             }
-            string oldName = Strings.ItemName(tamper.OldItemId);
-            string ask = tamper.Count > 1 ? $"{tamper.Count} {Strings.ItemName(tamper.ItemId)}" : Strings.ItemName(tamper.ItemId);
+            ShowMorningReports();
+            return false;
+        }
+
+        /// <summary>A tamper report is waiting for the Junimos' scene.</summary>
+        public bool TamperSceneOwed
+            => RunActivation.IsActive && StartTamperScene != null
+               && Run.PendingSabotageReports != null
+               && Run.PendingSabotageReports.Exists(r => r.Kind == SabotageKind.Tampering);
+
+        /// <summary>Start the Junimos' "tainted" scene where the farmer stands, if a tamper report is
+        /// waiting. The report is consumed only once the scene has really started, so it plays once,
+        /// and a scene that cannot start here keeps it for the next Farm entry. The night's other
+        /// reports show after the scene, as they always have.</summary>
+        public bool TryStartTamperScene()
+        {
+            if (!TamperSceneOwed) return false;
+            SabotageReport tamper = Run.PendingSabotageReports.Find(r => r.Kind == SabotageKind.Tampering);
+            // Plurals the way the game makes them, corrected for its mass nouns (Jeff, 2026-10-07:
+            // "all the Parsnip", "Bring us 3 Beer").
+            Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
+            string oldName = ItemPlurals.Plural(Strings.ItemName(tamper.OldItemId), gamePlural);
+            string ask = ItemPlurals.Ask(tamper.Count, Strings.ItemName(tamper.ItemId), gamePlural);
+            if (!StartTamperScene(oldName, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
             Run.PendingSabotageReports.RemoveAll(r => r.Kind == SabotageKind.Tampering);
-            StartTamperScene(oldName, ask, () => { ShowMorningReports(); continueWith?.Invoke(); });
             return true;
         }
 

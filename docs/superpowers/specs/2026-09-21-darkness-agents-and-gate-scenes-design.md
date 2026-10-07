@@ -85,7 +85,18 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
 - The three first-strike villager letters are removed (`SabotageMailService`, `mail.darkness.*`,
   `MetaState.SabotageLettersSent`).
 - The morning popups stay exactly as they are.
-- The morning Junimo tamper scene ("@, the {{old}} are tainted now. All of them.") stays as it is.
+- The Junimo tamper scene keeps its staging and its popup, with two changes (Jeff, 2026-10-07):
+  - It no longer plays on waking (that version blinked and warped the farmer to his doorstep). It
+    plays the first time the farmer steps out onto the Farm while the tamper report waits, as an
+    event where he stands: black while the two Junimos are put on their marks round him, then a
+    fade in. No warp, no location change. A day he never leaves the house, it plays on his next Farm
+    entry. It plays once. The night's other reports still show after it.
+  - Its first line is "@, last night the darkness struck! It has tainted all the {{old}}."
+  - Plurals are right: {{old}} is the item's plural (the game's own pluralizer, corrected for
+    mass nouns like Beer, Wool, Hay and Honey), the ask is "3 Parsnips" for more than one and the
+    bare name for one, and a plural ask ends "They remain pure." (key
+    `event.darkness.tamper-3-plural`) instead of "It remains pure.".
+  - No purple screen glow under the middle line; the low sound stays.
   It names the item, which the player could not know.
 - New: an overnight scene per kind of strike, in the slot vanilla uses for the fairy and the witch.
 
@@ -239,12 +250,17 @@ override everything above where they differ.
   watched.
 - The firelight is unchanged: same colour, same dimness, same fill on the glass's texel grid.
 
-### Scene 4: the cloud (tampering, Winter), about 10 seconds
+### Scene 4: the cloud (tampering, Winter), about 12 seconds
 
-- The world map fills the screen, in its Winter art.
-- A dark cloud pours in from the mountain side, spreads over the whole valley, and settles
-  thickest over the farm. The Community Center gets no special treatment: the strike is on the
-  things the farmer was saving to donate, not on the hall.
+- The world map fills the screen, in its Winter art (the map tab's art, scaled to fill the
+  screen rather than at the map tab's own size, which is tiny on a large screen).
+- A dark cloud drifts in slowly from the mountain side and settles sort of everywhere: evenly
+  over the whole map image, forest, mountains, water, the desert edge, empty land and the
+  margins alike, never clustered on the town or any settlement. It lies a little thicker on the
+  farm, which is the darkest place on the map. The Community Center gets no special treatment:
+  the strike is on the things the farmer was saving to donate, not on the hall. (Jeff,
+  2026-10-07, after the first frames: less piled on the farm, more everywhere else, and a slow
+  drift rather than a dart.)
 - The map dims under it. The low `shadowDie` from the Winter gate scene. Hold. Apply. Fade.
 - No witness.
 

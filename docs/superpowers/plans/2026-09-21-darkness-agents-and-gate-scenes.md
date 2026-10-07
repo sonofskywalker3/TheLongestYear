@@ -1086,24 +1086,23 @@ These override everything above where they differ.
 
 **Files:** Modify `src/TheLongestYear/Scenes/CloudScene.cs`.
 
-Read first: `Menus/MapPage.cs` and `Data/WorldMaps` handling in 1.6 (`WorldMapManager`): how the map tab picks its texture per season and scales it to the screen, and the farm's position on it. Use the same texture and the same fit so the scene matches the map tab exactly. Do not open the real menu.
+Read first: `Menus/MapPage.cs` and `Data/WorldMaps` handling in 1.6 (`WorldMapManager`): how the map tab picks its texture per season and scales it to the screen, and the farm's position on it. Use the same texture (in its Winter art). The fit is NOT the map tab's (Jeff, 2026-10-07: it left the map tiny on a large screen): scale the map to fill the screen, the largest scale at which the whole map fits, aspect kept, centred and pixel-snapped, a whole number of screen pixels per art pixel when that still fills at least 90% of the fractional fit, black around it; the cloud and the farm rect scale with it. Do not open the real menu.
 
-- [ ] **Step 1: Paint (above everything).** Black backdrop, then the Winter world map texture centred and scaled as `MapPage` does. The cloud is drawn procedurally: 40 soft blobs (`Game1.mouseCursors` cloud sprite or a generated radial-gradient `Texture2D` built once in `Stage`), tinted `new Color(20, 0, 30)`, each with its own path from a spawn line along the map's top-right (the mountain and mines side) to a rest position. Rest positions: 60% scattered over the whole map, 40% packed over the farm's rect, so the cloud covers the valley and settles thickest on the farm. Blob alpha ramps 0 to 0.7. A full-map dim (`Color.Black * 0.35`) eases in with the cloud.
+- [ ] **Step 1: Paint (above everything).** Black backdrop, then the Winter world map texture, scaled to fill the screen as above and centred. The cloud is drawn procedurally: 40 soft blobs (`Game1.mouseCursors` cloud sprite or a generated radial-gradient `Texture2D` built once in `Stage`), tinted `new Color(20, 0, 30)`, each with its own path from a spawn line along the map's top-right (the mountain and mines side) to a rest position. Rest positions: 75% scattered evenly over the whole map image (a jittered grid over the full map rect: forest, mountains, water, the desert edge, empty land and the margins alike, never clustered on the town or any settlement), 25% over the farm's rect (its own jittered grid), so the whole map is clearly clouded over and the farm is a little thicker and still the darkest place. Blob alpha ramps 0 to 0.7. Each blob drifts in slowly with an ease-out, never darts. (Jeff, 2026-10-07: the first cut's 60/40 piled the farm too high, left the rest bare and darted in; then the scattered share sat too literally on the places with houses.) A full-map dim (`Color.Black * 0.35`) eases in with the cloud.
 
 - [ ] **Step 2: Build:**
 
 | At | What |
 | --- | --- |
 | 0 | map fades in over 800 |
-| 1500 | blobs begin to pour in, staggered over 3000 |
-| 5500 | farm blobs reach rest; dim at full; `Game1.playSound("shadowDie")` low |
-| 6500 | `ApplyStrike()` |
-| 8500 | fade 1200 |
-| 9700 | end |
+| 1500 | blobs begin to drift in: scattered starts 1500 to 5500, farm starts 4500 to 6000, each travelling 3000 to 4500 |
+| 9000 | farm blobs reach rest; dim at full; `Game1.playSound("shadowDie")` low; `ApplyStrike()` |
+| 11000 | fade 1200 |
+| 12200 | end |
 
 - [ ] **Step 3: Debug** `tly_sabotage scene cloud`: a fresh tamper plan; with none, a no-op effect.
 
-- [ ] **Step 4: Live check, screenshots** at 1000, 3500, 6000, 9000, at 1280x720 and at Jeff's native resolution. The farm must be visibly the darkest place on the map. The morning after must still play the Junimo "tainted" scene and the popup, unchanged.
+- [ ] **Step 4: Live check, screenshots** at 1000, 4000, 7000, 10000 and in the fade, at 1280x720 and at Jeff's native resolution. The farm must be visibly the darkest place on the map. The Junimo "tainted" scene must then play when the farmer first walks out of the farmhouse onto the Farm, where he stands (not on waking, no warp to the doorstep; black while the Junimos are placed, then a fade in), with its new first line "@, last night the darkness struck! It has tainted all the {{old}}.", and the popup after it unchanged (Jeff, 2026-10-07). Its item names are pluralized correctly (the game's pluralizer, corrected for mass nouns; "3 Parsnips"; "They remain pure." via `event.darkness.tamper-3-plural` for a plural ask) and the purple screen glow under its middle line is gone.
 
 - [ ] **Step 5: Commit and push.** `git commit -m "scenes: the cloud over the valley"`
 
