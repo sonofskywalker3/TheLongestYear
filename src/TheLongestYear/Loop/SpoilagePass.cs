@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.Inventories;
 using StardewValley.Objects;
 using TheLongestYear.Core.Sabotage;
 
@@ -12,7 +13,10 @@ namespace TheLongestYear.Loop
     /// chest a roll lands in is the night's chest, and the rest are safe until tomorrow. Placed
     /// machines are not chests and stay in the draw throughout. Food spoils; anything else goes
     /// missing. Every chest on every map is in the draw except the Junimo Stash, Mini-Shipping Bins
-    /// (shipped overnight), Junimo Chests (one shared inventory) and chests on a Circle of Warding. Below Extreme only plain objects are taken (never tools, weapons or big
+    /// (shipped overnight) and chests on a Circle of Warding. Junimo Chests are in (Jeff,
+    /// 2026-10-07): they all show one shared inventory, which is drawn once and taken from once, so
+    /// a unit stolen there is gone from every Junimo Chest. Below Extreme only plain objects are
+    /// taken (never tools, weapons or big
     /// craftables). On Extreme (<paramref name="everything"/>, spec 2026-09-15 Part B, 2.5) anything
     /// in an unwarded chest can go, and machines placed on the FARM map join the pool at three units
     /// each; a machine on a circle's tiles is protected like a chest there.</summary>
@@ -21,6 +25,7 @@ namespace TheLongestYear.Loop
         private sealed class Entry
         {
             public Chest Chest;          // null for a placed machine
+            public IInventory Inventory; // what the chest shows: its own, or the shared one
             public int Slot;
             public Item Item;
             public GameLocation Location; // the chest's or the machine's map
@@ -34,6 +39,7 @@ namespace TheLongestYear.Loop
         public sealed class Hit
         {
             public Chest Chest;            // null for a placed machine
+            public IInventory Inventory;   // the stock the unit leaves: shared by every Junimo Chest
             public int Slot;
             public Item Item;
             public GameLocation Location;  // the chest's or the machine's map
@@ -50,47 +56,101 @@ namespace TheLongestYear.Loop
             public int Total => Spoiled + Missing;
         }
 
+        /// <summary>One object met on the walk over the maps, before the shared inventories are
+        /// sorted out: a chest (with the stock it shows) or a placed machine.</summary>
+        private sealed class Seen
+        {
+            public GameLocation Location;
+            public Vector2 Tile;
+            public StardewValley.Object Object;
+            public Chest Chest;
+            public IInventory Inventory;
+            public bool OnFarm;
+            public bool Warded;
+        }
+
+        /// <summary>The maps the thief scene can show (<see cref="TheLongestYear.Scenes.ThiefScene"/>):
+        /// the Farm, the FarmHouse, the Cellar and a Shed.</summary>
+        internal static bool OnSceneMap(GameLocation loc)
+            => loc is Farm || loc is StardewValley.Locations.FarmHouse || loc is StardewValley.Locations.Cellar || loc is StardewValley.Shed;
+
         private static List<Entry> Entries(bool everything)
         {
-            var entries = new List<Entry>();
             var circles = CircleOfWardingService.ProtectedTiles();
             Farm farm = Game1.getFarm();
+            var seen = new List<Seen>();
             Utility.ForEachLocation(loc =>
             {
                 foreach (KeyValuePair<Vector2, StardewValley.Object> pair in loc.objects.Pairs)
                 {
                     StardewValley.Object obj = pair.Value;
-                    bool onFarm = loc == farm;
                     if (obj is Chest chest)
                     {
                         if (chest.modData.ContainsKey(JunimoStashService.StashModDataKey)) continue;
-                        // A Mini-Shipping Bin ships overnight before the strike lands, and a Junimo
-                        // Chest shares one inventory with every other one: neither is in the draw.
-                        Chest.SpecialChestTypes type = chest.SpecialChestType;
-                        if (!BlightRule.ChestInDraw(
-                                shipsOvernight: type == Chest.SpecialChestTypes.MiniShippingBin,
-                                sharedInventory: type == Chest.SpecialChestTypes.JunimoChest)) continue;
-                        bool chestWarded = CircleOfWardingService.Covers(circles, loc, chest.TileLocation);
-                        var items = chest.Items;
-                        for (int i = 0; i < items.Count; i++)
+                        // A Mini-Shipping Bin ships overnight before the strike lands.
+                        if (!BlightRule.ChestInDraw(shipsOvernight: chest.SpecialChestType == Chest.SpecialChestTypes.MiniShippingBin)) continue;
+                        seen.Add(new Seen
                         {
-                            Item item = items[i];
-                            if (item == null || item.Stack <= 0) continue;
-                            bool big = item is StardewValley.Object o && o.bigCraftable.Value;
-                            bool plain = item is StardewValley.Object && !big;
-                            if (!BlightRule.InStoragePool(plain, big, placedOnMap: false, onFarm, chestWarded, everything)) continue;
-                            entries.Add(new Entry { Chest = chest, Slot = i, Item = item, Location = loc, Tile = pair.Key, BigCraftable = big });
-                        }
+                            Location = loc, Tile = pair.Key, Object = obj, Chest = chest,
+                            // A Junimo Chest's own Items list is empty: its stock is the team's
+                            // shared inventory, which GetItemsForPlayer returns (Chest.cs:990).
+                            Inventory = chest.GetItemsForPlayer(),
+                            OnFarm = OnSceneMap(loc),
+                            Warded = CircleOfWardingService.Covers(circles, loc, chest.TileLocation),
+                        });
                         continue;
                     }
-                    bool placedWarded = CircleOfWardingService.Covers(circles, loc, pair.Key);
-                    bool placedBig = obj.bigCraftable.Value;
-                    if (!BlightRule.InStoragePool(!placedBig, placedBig, placedOnMap: true, onFarm, placedWarded, everything)) continue;
-                    entries.Add(new Entry { Item = obj, Location = loc, Tile = pair.Key, BigCraftable = true });
+                    seen.Add(new Seen { Location = loc, Tile = pair.Key, Object = obj, OnFarm = loc == farm, Warded = CircleOfWardingService.Covers(circles, loc, pair.Key) });
                 }
                 return true;
             });
+
+            // Chests that show one inventory are one chest in the draw (the rule is in Core).
+            var inventories = new List<IInventory>();
+            var seats = new List<ChestSeat>();
+            var seatOf = new Dictionary<Seen, int>();
+            foreach (Seen s in seen)
+            {
+                if (s.Chest == null) continue;
+                seatOf[s] = seats.Count;
+                seats.Add(new ChestSeat(InventoryIdOf(s.Inventory, inventories), s.OnFarm, s.Warded));
+            }
+            IReadOnlyList<ChestHost> hosts = BlightRule.ChestHosts(seats);
+
+            var entries = new List<Entry>();
+            foreach (Seen s in seen)
+            {
+                if (s.Chest != null)
+                {
+                    ChestHost host = hosts[seatOf[s]];
+                    if (!host.Host) continue;
+                    bool onFarmMap = s.Location == farm;
+                    for (int i = 0; i < s.Inventory.Count; i++)
+                    {
+                        Item item = s.Inventory[i];
+                        if (item == null || item.Stack <= 0) continue;
+                        bool big = item is StardewValley.Object o && o.bigCraftable.Value;
+                        bool plain = item is StardewValley.Object && !big;
+                        if (!BlightRule.InStoragePool(plain, big, placedOnMap: false, onFarmMap, host.Warded, everything)) continue;
+                        entries.Add(new Entry { Chest = s.Chest, Inventory = s.Inventory, Slot = i, Item = item, Location = s.Location, Tile = s.Tile, BigCraftable = big });
+                    }
+                    continue;
+                }
+                bool placedBig = s.Object.bigCraftable.Value;
+                if (!BlightRule.InStoragePool(!placedBig, placedBig, placedOnMap: true, s.OnFarm, s.Warded, everything)) continue;
+                entries.Add(new Entry { Item = s.Object, Location = s.Location, Tile = s.Tile, BigCraftable = true });
+            }
             return entries;
+        }
+
+        /// <summary>An index standing for <paramref name="inventory"/>: equal for every chest that
+        /// shows the very same inventory object.</summary>
+        private static int InventoryIdOf(IInventory inventory, List<IInventory> inventories)
+        {
+            for (int i = 0; i < inventories.Count; i++)
+                if (ReferenceEquals(inventories[i], inventory)) return i;
+            inventories.Add(inventory);
+            return inventories.Count - 1;
         }
 
         /// <summary>Total units at stake (stash excluded), for the roll.</summary>
@@ -141,6 +201,7 @@ namespace TheLongestYear.Loop
         private static Hit HitFor(Entry e) => new Hit
         {
             Chest = e.Chest,
+            Inventory = e.Inventory,
             Slot = e.Slot,
             Item = e.Item,
             Location = e.Location,
@@ -166,9 +227,12 @@ namespace TheLongestYear.Loop
                     }
                     continue;
                 }
-                if (h.Item.Stack <= 0 || h.Slot >= h.Chest.Items.Count || !ReferenceEquals(h.Chest.Items[h.Slot], h.Item)) continue;
+                // The stock the plan read: a chest's own, or the one every Junimo Chest shows, so a
+                // unit taken there is gone from all of them.
+                IInventory stock = h.Inventory ?? h.Chest.GetItemsForPlayer();
+                if (h.Item.Stack <= 0 || h.Slot >= stock.Count || !ReferenceEquals(stock[h.Slot], h.Item)) continue;
                 h.Item.Stack -= 1;
-                if (h.Item.Stack <= 0) h.Chest.Items[h.Slot] = null;
+                if (h.Item.Stack <= 0) stock[h.Slot] = null;
                 if (h.Perishable) spoiled++; else missing++;
             }
             return new Taken(spoiled, missing);

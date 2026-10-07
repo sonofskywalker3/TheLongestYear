@@ -175,7 +175,8 @@ namespace TheLongestYear.Loop
             {
                 foreach (StardewValley.Object obj in loc.objects.Values)
                     if (obj is Chest chest)
-                        foreach (Item item in chest.Items)
+                        // The stock the chest shows: a Junimo Chest's is the shared inventory.
+                        foreach (Item item in chest.GetItemsForPlayer())
                             if (item != null) ids.Add(item.QualifiedItemId);
                 return true;
             });
