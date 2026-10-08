@@ -237,6 +237,75 @@ public class FishPondAvailabilityTests
 
     [Fact]
     public void Unclaimed_is_null() => Assert.Null(FishPondAvailability.Derive("(O)24", Data(), Effort));
+
+    // Shaped like SVE's Goldenfish pond: Golden Pumpkin at population 10 with Chance 0.01, Gold Bars
+    // at population 5 with Chance 0.2, roe at 0.5.
+    private static EffortData Goldenfish() => new()
+    {
+        Objects = new Dictionary<string, RawObjectEntry> { ["Goldenfish"] = new("Fish", -4, 500, false, new[] { "item_goldenfish" }, "Goldenfish") },
+        FishPonds = new List<RawFishPondRule>
+        {
+            new(new[] { "item_goldenfish" }, new[]
+            {
+                new RawFishPondProduct("(O)373", 10, 0.01),
+                new RawFishPondProduct("(O)336", 5, 0.2),
+                new RawFishPondProduct("(O)812", 1, 0.5),
+            }),
+        },
+    };
+
+    [Theory] [InlineData(DifficultyStep.Easy)] [InlineData(DifficultyStep.Normal)] [InlineData(DifficultyStep.Hard)] [InlineData(DifficultyStep.Extreme)]
+    public void A_one_in_a_hundred_product_is_not_a_route_at_any_step(DifficultyStep step)
+        => Assert.Null(FishPondAvailability.Derive("(O)373", Goldenfish(), _ => 3, _ => 1, step));
+
+    [Theory] [InlineData(DifficultyStep.Easy)] [InlineData(DifficultyStep.Normal)] [InlineData(DifficultyStep.Hard)] [InlineData(DifficultyStep.Extreme)]
+    public void Ordinary_chances_in_the_same_pond_still_count(DifficultyStep step)
+    {
+        Assert.Equal(5, FishPondAvailability.Derive("(O)336", Goldenfish(), _ => 3, _ => 1, step)!.EarliestWeek);
+        Assert.NotNull(FishPondAvailability.Derive("(O)812", Goldenfish(), _ => 3, _ => 1, step));
+    }
+
+    [Theory]
+    [InlineData(DifficultyStep.Easy, 1.0, true)] [InlineData(DifficultyStep.Easy, 0.10, true)] [InlineData(DifficultyStep.Easy, 0.075, false)] [InlineData(DifficultyStep.Easy, 0.05, false)]
+    [InlineData(DifficultyStep.Normal, 0.10, true)] [InlineData(DifficultyStep.Normal, 0.08, false)] [InlineData(DifficultyStep.Normal, 0.05, false)]
+    [InlineData(DifficultyStep.Hard, 0.10, true)] [InlineData(DifficultyStep.Hard, 0.05, true)] [InlineData(DifficultyStep.Hard, 0.033, false)] [InlineData(DifficultyStep.Hard, 0.01, false)]
+    [InlineData(DifficultyStep.Extreme, 0.05, true)] [InlineData(DifficultyStep.Extreme, 0.02, false)] [InlineData(DifficultyStep.Extreme, 0.0, false)]
+    public void Chance_threshold_by_step(DifficultyStep step, double chance, bool counts)
+        => Assert.Equal(counts, FishPondAvailability.CountsAsRoute(chance, step));
+
+    [Fact]
+    public void Game_data_float_chances_at_the_threshold_count()
+    {
+        Assert.True(FishPondAvailability.CountsAsRoute(0.05f, DifficultyStep.Hard));
+        Assert.True(FishPondAvailability.CountsAsRoute(0.1f, DifficultyStep.Normal));
+    }
+
+    [Fact]
+    public void A_six_percent_row_counts_on_Hard_but_not_on_Normal()
+    {
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry> { ["Coral"] = new("Fish", -4, 80, false, new[] { "item_coral" }, "Coral") },
+            FishPonds = new List<RawFishPondRule> { new(new[] { "item_coral" }, new[] { new RawFishPondProduct("(O)543", 9, 0.06) }) },
+        };
+        Assert.NotNull(FishPondAvailability.Derive("(O)543", data, _ => 3, _ => 1, DifficultyStep.Hard));
+        Assert.Null(FishPondAvailability.Derive("(O)543", data, _ => 3, _ => 1, DifficultyStep.Normal));
+    }
+
+    [Fact]
+    public void A_rare_row_does_not_hide_a_common_row_for_the_same_item()
+    {
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry> { ["149"] = new("Fish", -4, 150, false, new[] { "item_octopus" }, "Octopus") },
+            FishPonds = new List<RawFishPondRule>
+            {
+                new(new[] { "item_octopus" }, new[] { new RawFishPondProduct("(O)749", 9, 0.01), new RawFishPondProduct("(O)749", 9, 0.1) }),
+            },
+        };
+        Assert.NotNull(FishPondAvailability.Derive("(O)749", data, _ => 3, _ => 1, DifficultyStep.Normal));
+        Assert.NotNull(FishPondAvailability.Derive("(O)749", data, _ => 3, _ => 1, DifficultyStep.Extreme));
+    }
 }
 
 public class CookedDishAvailabilityTests

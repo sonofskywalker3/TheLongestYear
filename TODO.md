@@ -36,6 +36,19 @@ scenes' lines.
 ### PARKED (Jeff, 2026-10-08): modded items TLY can't place yet, for the mod-support phase
 SVE + Cornucopia items the model can't place, questionable placements and engine gaps: see `docs/mod-support-unknowns.md`.
 
+### MIGHT NEED (Jeff, 2026-10-08): ask other mod authors to tag their items, IF our own readers can't place them
+We might need to reach out to other mod authors if, after TLY reads all the standard 1.6 data properly, a mod
+still has items whose timing can only come from its own systems (Farm Type Manager spawns, Custom Bush, SpaceCore
+spawn groups, custom machines, shops, events, quests). Order, so nobody is asked for what the game data already says:
+1. Fix our own readers first (the 0.19.11 to 0.19.17 pass did the first round; `docs/mod-support-unknowns.md`
+   lists what's left and why).
+2. Add an optional Content Patcher-editable asset (e.g. `Mods/TheLongestYear/ItemAvailability`: item id to earliest
+   week or season, plus a note) that any mod, compat pack or player can fill with a few lines of JSON. No code, no
+   hard dependency on TLY (`When: HasMod`).
+3. Only then contact the 3 to 5 most-requested mods, each with a finished patch for their remaining items in
+   hand (a pull request where the repo is open and the author is fine with it; Tech's Cross-Mod Bundles is
+   no-AI, so never a PR there).
+
 ### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
 "My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
 fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:

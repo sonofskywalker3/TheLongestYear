@@ -82,6 +82,9 @@ late-area monsters, flours from crops that are themselves out of reach.
   pool, no spot row" because its dig spots are in its own ArtifactSpotChances; reading those for
   items that are already placed would change the effort of vanilla's Ancient Doll, Anchor, Bone
   Flute, Golden Relic and Prehistoric Handaxe, so the new reader is a fallback only.
-- **Golden Pumpkin** (vanilla item, with SVE), week 5 instead of 12: SVE's Goldenfish pond yields
-  it at population 10, and Goldenfish is catchable in Sprite Spring from week 1. Correct by SVE's
-  data; worth a look if it shows up on a board.
+- **Golden Pumpkin** (vanilla item, with SVE): back to week 12, the Spirit's Eve maze (0.19.19).
+  SVE's Goldenfish pond lists it at population 10 with Chance 0.01, which used to put it at week 5.
+  Pond rows now count only at Chance 0.10 or more on Easy and Normal Item Rarity, 0.05 or more on
+  Hard and Extreme, so that row is not a route. The same rule moved SVE's Slime Egg to week 6 (the
+  Slime Egg-Press; the Frog pond row is 0.01) and made Iridium Sprinkler unknown (the Meteor Carp
+  pond was its only route).

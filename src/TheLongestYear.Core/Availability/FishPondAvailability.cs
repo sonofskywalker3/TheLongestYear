@@ -6,18 +6,41 @@ namespace TheLongestYear.Core.Availability;
 /// <summary>Effort and first week for a fish pond output (Data/FishPondData): the cheapest fish
 /// any matching pond entry accepts, plus the pond itself, plus one step per three fish of
 /// population the product needs beyond the first. The week is the fish's week plus a season
-/// (AvailabilityWeeks.PondDelayWeeks) to build and populate a 5,000g pond.</summary>
+/// (AvailabilityWeeks.PondDelayWeeks) to build and populate a 5,000g pond.
+///
+/// A product row whose daily <c>Chance</c> is below the Item Rarity step's minimum is not a route
+/// (<see cref="CountsAsRoute"/>): SVE's Goldenfish pond lists Golden Pumpkin at 0.01, which put it
+/// at week 5 instead of the Spirit's Eve maze in week 12. Jeff, 2026-10-08: 0.10 on Easy and
+/// Normal, 0.05 on Hard and Extreme.</summary>
 public static class FishPondAvailability
 {
     private const int PondCost = 2;
     private const int PopulationStepSize = 3;
     private const string FishType = "Fish";
 
+    /// <summary>Lowest row Chance that counts on Easy and Normal Item Rarity: about ten days'
+    /// wait at a full pond.</summary>
+    public const double MinRouteChanceEasyNormal = 0.10;
+
+    /// <summary>Lowest row Chance that counts on Hard and Extreme Item Rarity: about twenty days'
+    /// wait at a full pond.</summary>
+    public const double MinRouteChanceHardExtreme = 0.05;
+
+    /// <summary>Slack for game data's single-precision Chance (0.05f widens to 0.0500000007).</summary>
+    private const double ChanceTolerance = 1e-6;
+
+    public static double MinRouteChance(DifficultyStep step)
+        => step >= DifficultyStep.Hard ? MinRouteChanceHardExtreme : MinRouteChanceEasyNormal;
+
+    /// <summary>True when a product row's daily chance is at least the step's minimum.</summary>
+    public static bool CountsAsRoute(double chance, DifficultyStep step)
+        => chance + ChanceTolerance >= MinRouteChance(step);
+
     public static int PopulationSteps(int requiredPopulation)
         => requiredPopulation <= 1 ? 0 : (requiredPopulation - 2) / PopulationStepSize + 1;
 
     public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf,
-        Func<string, int?>? weekOf = null)
+        Func<string, int?>? weekOf = null, DifficultyStep step = DifficultyStep.Normal)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
@@ -27,7 +50,7 @@ public static class FishPondAvailability
         {
             foreach (RawFishPondProduct product in rule.Products)
             {
-                if (product.ItemId != qualifiedId) continue;
+                if (product.ItemId != qualifiedId || !CountsAsRoute(product.Chance, step)) continue;
                 int? fishEffort = null;
                 int? fishWeek = null;
                 string fishId = "";
