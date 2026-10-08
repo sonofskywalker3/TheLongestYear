@@ -237,6 +237,49 @@ public class FishPondAvailabilityTests
 
     [Fact]
     public void Unclaimed_is_null() => Assert.Null(FishPondAvailability.Derive("(O)24", Data(), Effort));
+
+    // Shaped like SVE's Goldenfish pond: Golden Pumpkin at population 10 with Chance 0.01, Gold Bars
+    // at population 5 with Chance 0.2, roe at 0.5.
+    private static EffortData Goldenfish() => new()
+    {
+        Objects = new Dictionary<string, RawObjectEntry> { ["Goldenfish"] = new("Fish", -4, 500, false, new[] { "item_goldenfish" }, "Goldenfish") },
+        FishPonds = new List<RawFishPondRule>
+        {
+            new(new[] { "item_goldenfish" }, new[]
+            {
+                new RawFishPondProduct("(O)373", 10, 0.01),
+                new RawFishPondProduct("(O)336", 5, 0.2),
+                new RawFishPondProduct("(O)812", 1, 0.5),
+            }),
+        },
+    };
+
+    [Fact]
+    public void A_one_in_a_hundred_product_is_not_a_route() => Assert.Null(FishPondAvailability.Derive("(O)373", Goldenfish(), _ => 3, _ => 1));
+
+    [Fact]
+    public void Ordinary_chances_in_the_same_pond_still_count()
+    {
+        Assert.Equal(5, FishPondAvailability.Derive("(O)336", Goldenfish(), _ => 3, _ => 1)!.EarliestWeek);
+        Assert.NotNull(FishPondAvailability.Derive("(O)812", Goldenfish(), _ => 3, _ => 1));
+    }
+
+    [Theory] [InlineData(1.0, true)] [InlineData(0.05, true)] [InlineData(0.02, true)] [InlineData(0.01, false)] [InlineData(0.003, false)] [InlineData(0.0, false)]
+    public void Chance_threshold(double chance, bool counts) => Assert.Equal(counts, FishPondAvailability.CountsAsRoute(chance));
+
+    [Fact]
+    public void A_rare_row_does_not_hide_a_common_row_for_the_same_item()
+    {
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry> { ["149"] = new("Fish", -4, 150, false, new[] { "item_octopus" }, "Octopus") },
+            FishPonds = new List<RawFishPondRule>
+            {
+                new(new[] { "item_octopus" }, new[] { new RawFishPondProduct("(O)749", 9, 0.01), new RawFishPondProduct("(O)749", 9, 0.1) }),
+            },
+        };
+        Assert.NotNull(FishPondAvailability.Derive("(O)749", data, _ => 3, _ => 1));
+    }
 }
 
 public class CookedDishAvailabilityTests
