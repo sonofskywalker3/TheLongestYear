@@ -12,15 +12,15 @@ using CoreSeason = TheLongestYear.Core.Season;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>The morning: HUD reports and the Junimos' tainted scene.</summary>
+    /// <summary>The morning: the message box reports and the Junimos' tainted scene.</summary>
     internal sealed partial class SabotageService
     {
         // ------------------------------------------------------------------ the morning
 
-        /// <summary>The morning: HUD lines for what the night took. A tamper report waits for the
+        /// <summary>The morning: message boxes for what the night took. A tamper report waits for the
         /// Junimos' scene, which plays when the farmer first arrives on the Farm by any route
-        /// (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07); every other report (blight,
-        /// spoiled, missing, the hall line for a reversion) shows on waking as it always has. The
+        /// (<see cref="TryStartTamperScene"/>, Jeff 2026-10-07); every other report (the crows,
+        /// the thief, the hall line for a reversion) queues for the morning box on waking. The
         /// morning goes on at once either way.</summary>
         public void ShowMorning()
         {
@@ -69,9 +69,10 @@ namespace TheLongestYear.Loop
             return true;
         }
 
-        /// <summary>Show what the night took, as HUD lines, then forget what was shown. A tamper
-        /// report stays while the Junimos' scene can still tell it (<see cref="TamperSceneOwed"/>);
-        /// with no scene to tell it, it shows as the hall line like a reversion.</summary>
+        /// <summary>Show what the night took in the morning message box (<see cref="MorningBox"/>,
+        /// designer 2026-10-08), one box per message, then forget what was shown. A tamper report
+        /// stays while the Junimos' scene can still tell it (<see cref="TamperSceneOwed"/>); with no
+        /// scene to tell it, it shows as the hall line like a reversion.</summary>
         public void ShowMorningReports()
         {
             if (!RunActivation.IsActive) return;
@@ -82,37 +83,48 @@ namespace TheLongestYear.Loop
             // The hall fronts share one line and say it once, however many struck (Jeff, 2026-09-09:
             // the player wakes with a feeling, the board tells the rest).
             bool hallSaid = false;
+            bool first = true;
             foreach (SabotageReport report in reports)
             {
                 switch (report.Kind)
                 {
                     case SabotageKind.Blight:
-                        // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
-                        if (report.Count == 1)
-                            Hud(Strings.Get("hud.sabotage.blight.one"));
-                        else if (report.Count > 1)
-                            Hud(Strings.Get("hud.sabotage.blight.other", new Dictionary<string, string> { ["count"] = report.Count.ToString() }));
-                        if (report.Spoiled > 0)
-                            Hud(Strings.Get("hud.sabotage.spoiled", new Dictionary<string, string> { ["count"] = report.Spoiled.ToString() }));
-                        if (report.Missing > 0)
-                            Hud(Strings.Get("hud.sabotage.missing", new Dictionary<string, string> { ["count"] = report.Missing.ToString() }));
+                        if (report.Count > 0) Box(CrowsLine(report.Count), ref first);
+                        if (report.Stolen != null && report.Stolen.Count > 0) Box(StolenLine(report.Stolen), ref first);
                         break;
                     case SabotageKind.Reversion:
                     case SabotageKind.Tampering:
-                        if (!hallSaid) Hud(Strings.Get("hud.sabotage.hall"));
+                        if (!hallSaid) Box(Strings.Get("morning.sabotage.hall"), ref first);
                         hallSaid = true;
                         break;
                 }
             }
-            Game1.playSound("shadowDie");
         }
 
-        /// <summary>One morning HUD line, also written to the log (Trace) so a headless run can
-        /// read what the player was shown.</summary>
-        private void Hud(string text)
+        /// <summary>The crows' morning line, the designer's own words (2026-10-08).</summary>
+        private static string CrowsLine(int withered)
+            // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
+            => withered == 1
+                ? Strings.Get("morning.sabotage.crows.one")
+                : Strings.Get("morning.sabotage.crows.other", new Dictionary<string, string> { ["count"] = withered.ToString() });
+
+        /// <summary>The thief's morning line, naming what he took ("3 Parsnips, 1 bottle of Wine
+        /// and 2 other things").</summary>
+        private static string StolenLine(List<StolenStack> stolen)
         {
-            _monitor.Log($"Darkness: morning HUD line: {text}", LogLevel.Trace);
-            Game1.addHUDMessage(new HUDMessage(text, HUDMessage.error_type));
+            Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
+            (List<string> named, int other) = MorningLines.StolenPhrases(MorningLines.Merge(stolen), gamePlural);
+            if (other == 1) named.Add(Strings.Get("morning.sabotage.stolen.more.one"));
+            else if (other > 1) named.Add(Strings.Get("morning.sabotage.stolen.more.other", new Dictionary<string, string> { ["count"] = other.ToString() }));
+            return Strings.Get("morning.sabotage.stolen", new Dictionary<string, string> { ["items"] = MorningLines.JoinList(named) });
+        }
+
+        /// <summary>Queue one morning box. The first of the morning carries the darkness's sound.</summary>
+        private void Box(string text, ref bool first)
+        {
+            _monitor.Log($"Darkness: morning message queued: {text}", LogLevel.Trace);
+            MorningBox.Enqueue(text, first ? "shadowDie" : null);
+            first = false;
         }
     }
 }

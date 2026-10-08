@@ -77,24 +77,6 @@ public static partial class BlightRule
         return Math.Min(n, have);
     }
 
-    /// <summary>Vanilla object categories that are food and so "spoil": vegetables, fruit,
-    /// flowers, forage greens, fish, eggs, milk and other animal products, cooked dishes,
-    /// artisan goods. Anything else taken from a chest "goes missing" instead.</summary>
-    public static bool IsPerishableCategory(int category) => category switch
-    {
-        -75 => true,   // vegetable
-        -79 => true,   // fruit
-        -80 => true,   // flower
-        -81 => true,   // greens / forage
-        -4 => true,    // fish
-        -5 => true,    // egg
-        -6 => true,    // milk
-        -18 => true,   // animal product
-        -7 => true,    // cooking
-        -26 => true,   // artisan goods
-        _ => false,
-    };
-
     /// <summary>Which things a chest blight takes a unit from tonight, as indexes into
     /// <paramref name="pool"/> in the order they were taken (an entry repeats once per unit).
     /// Units are drawn one at a time, each off an entry picked by <paramref name="rng"/> weighted by

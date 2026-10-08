@@ -35,9 +35,10 @@ namespace TheLongestYear.Loop
             }
             Run.PendingSabotageReports.Add(new SabotageReport
             {
-                Kind = SabotageKind.Blight, Count = killed, Spoiled = taken.Spoiled, Missing = taken.Missing,
+                Kind = SabotageKind.Blight, Count = killed,
+                Stolen = taken.Stolen == null ? new List<StolenStack>() : MorningLines.Merge(taken.Stolen),
             });
-            _monitor.Log($"Darkness: {killed} crop(s) struck down, {taken.Spoiled} stored unit(s) spoiled, {taken.Missing} gone missing on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
+            _monitor.Log($"Darkness: {killed} crop(s) struck down, {taken.Total} stored thing(s) stolen on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
             return killed + taken.Total;
         }
 
