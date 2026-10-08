@@ -33,6 +33,12 @@ public sealed class RunState
     /// <see cref="PendingDay28"/> so a quit after the night save still resets without re-asking.</summary>
     public bool RestartMenusDone { get; set; }
 
+    /// <summary>The season-turn porch scene owed to the farmer's next arrival on the Farm
+    /// (<see cref="SeasonTurnArrival"/>, Jeff 2026-10-08): the kind's name, empty when none. Set on
+    /// the Continue morning, cleared when the scene starts. Persisted so a day spent without
+    /// stepping on the Farm still owes it.</summary>
+    public string PendingSeasonTurn { get; set; } = "";
+
     /// <summary>True when a load should run the month rollover itself: the calendar moved on
     /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
     /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
@@ -604,6 +610,7 @@ public sealed class RunState
         (TamperDays ??= new()).Clear();
         (Tampers ??= new()).Clear();
         (PendingSabotageReports ??= new()).Clear();
+        PendingSeasonTurn = "";
         DarknessChanceWeek = -1;
         DarknessChance = 0.0;
         UnmoderatedReversionSpent = false;

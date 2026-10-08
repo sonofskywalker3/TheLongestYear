@@ -157,15 +157,21 @@ namespace TheLongestYear.Integration
             }
             if (branch == Day28Branch.Continue)
             {
-                // Season Turn Beats (spec 2026-09-07): the Continue morning plays the porch scene in
-                // place of the card. Its completion runs the same OnCutsceneEnded. An event, not a
-                // menu, so the replaced-menu watchdog above stays off (_openedMenu null).
+                // Season Turn Beats (spec 2026-09-07): a Continue morning has the porch scene in
+                // place of the card. It no longer plays on waking (Jeff, 2026-10-08: "It's weird it
+                // happens and then I get out of bed"): the morning runs the normal day start now (the
+                // planning hub opens in the farmhouse as on any week-start morning) and the scene is
+                // owed to his first arrival on the Farm (SeasonTurnArrival, ModEntry's Farm-arrival
+                // handler). A load that replays a pending Continue lands here too. Like the Restart
+                // branch, wait for vanilla's end-of-night hand-off and this morning's DayStarted, so
+                // the day-start flow never runs twice.
                 SeasonTurnKind? kind = SeasonTurn.ForSeasonStart((TheLongestYear.Core.Season)(int)Game1.season);
                 SeasonTurnDriver turn = _turnDriver?.Invoke();
-                if (kind != null && turn != null && turn.Start(kind.Value, () => _runController?.Invoke()?.OnCutsceneEnded()))
+                if (kind != null && turn != null)
                 {
-                    _openedMenu = null;
-                    _opened = true;
+                    if (Game1.showingEndOfNightStuff || !rc.DayStartedWhileBranchPending) return;
+                    rc.OweSeasonTurn(kind.Value);
+                    rc.OnCutsceneEnded();
                     return;
                 }
                 _monitor.Log("Day-28 cutscene: no season turn scene for this morning; showing the card.", LogLevel.Info);

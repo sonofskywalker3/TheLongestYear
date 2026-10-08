@@ -637,8 +637,26 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
+        /// <summary>The season-turn porch scene owed to the next Farm arrival, or none
+        /// (<see cref="SeasonTurnArrival"/>).</summary>
+        public SeasonTurnKind? SeasonTurnOwed => SeasonTurnArrival.Owed(Run.PendingSeasonTurn);
+
+        /// <summary>The Continue morning: the porch scene waits for the farmer's first arrival on the
+        /// Farm instead of playing on waking (Jeff, 2026-10-08).</summary>
+        public void OweSeasonTurn(SeasonTurnKind kind)
+        {
+            if (SeasonTurnOwed is SeasonTurnKind older && older != kind)
+                _monitor.Log($"Season turn: the {older} scene was never watched; the {kind} scene replaces it.", LogLevel.Info);
+            Run.PendingSeasonTurn = SeasonTurnArrival.Owe(kind);
+            _monitor.Log($"Season turn: the {kind} scene waits for the farmer's first arrival on the farm.", LogLevel.Info);
+        }
+
+        /// <summary>The owed scene has started; it plays once.</summary>
+        public void ClearSeasonTurnOwed() => Run.PendingSeasonTurn = "";
+
         /// <summary>Called by the <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
-        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart.
+        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart and for a
+        /// Continue morning, whose porch scene waits for the first Farm arrival (Jeff, 2026-10-08).
         /// Clears the pending branch and runs its continuation: FAIL → JP shop, then on close PerformReset + forced full save
         /// (ContinueAfterResetSpend); CONTINUE → roll straight into the next season's day-start
         /// flow (no shop, no reset).</summary>
@@ -1102,9 +1120,10 @@ namespace TheLongestYear.Loop
                     Game1.addHUDMessage(new HUDMessage(
                         Strings.Get("hud.checkpoint-award", new Dictionary<string, string> { ["jp"] = checkpointJp.ToString() }),
                         HUDMessage.newQuest_type));
-                    // Queue the "great job, next season" Junimo cutscene for the morning. The
-                    // game still advances the date; OnCutsceneEnded → DoDayStartSeasonAndHub
-                    // clears the month's selections and opens the planning hub after the scene.
+                    // Queue the Continue outcome for the morning (its porch scene waits for the first
+                    // Farm arrival). The game still advances the date; OnCutsceneEnded runs
+                    // DoDayStartSeasonAndHub, which
+                    // clears the month's selections and opens the planning hub on waking.
                     _pendingCutscene = Day28Branch.Continue;
                     break;
 
@@ -1169,6 +1188,13 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"Win night ({reason}): ending already seen, queuing shrine + choice for the morning.", LogLevel.Info);
                 _pendingChoice = true;
                 return;
+            }
+            // The ending owns the next Farm arrival; a season turn never watched is dropped, not
+            // played after the ending.
+            if (SeasonTurnOwed is SeasonTurnKind dropped)
+            {
+                Run.PendingSeasonTurn = "";
+                _monitor.Log($"Win night: the {dropped} season-turn scene was still owed; the ending replaces it.", LogLevel.Info);
             }
             Run.EndingArmed = true;
             ForceTomorrowSunny();

@@ -9,10 +9,10 @@ namespace TheLongestYear.Integration
         public const string SeenMail = "tly_turn_seen";
     }
 
-    /// <summary>Season Turn Beats (spec 2026-09-07): the porch scene on the morning of Summer 1,
-    /// Fall 1 or Winter 1 after a passed gate. Built like EndingEventInjector and played with the
-    /// same custom commands. It starts wherever the farmer woke (the farmhouse) under black and
-    /// moves to the doorstep, so no frame of the bedroom draws. Marks are relative to the farm's
+    /// <summary>Season Turn Beats (spec 2026-09-07): the porch scene on Summer 1, Fall 1 or Winter 1
+    /// after a passed gate. Built like EndingEventInjector and played with the same custom commands.
+    /// Since 2026-10-08 it plays on the farmer's first arrival on the Farm that day, not on waking,
+    /// staged at the porch under black and returning him to where he arrived (SeasonTurnArrival). Marks are relative to the farm's
     /// door tile so every farm type works. Who says what is SeasonTurn.Lines; the words are i18n.</summary>
     internal static class SeasonTurnEventInjector
     {
@@ -114,7 +114,14 @@ namespace TheLongestYear.Integration
             return string.Join("/", s);
         }
 
-        internal static string Build(SeasonTurnKind kind, int doorX, int doorY, bool skippable, bool rewound)
+        /// <summary>The season-turn scene. With <paramref name="returnTo"/> it is the Farm-arrival
+        /// version (Jeff, 2026-10-08, <see cref="SeasonTurnArrival"/>): the farmer is already on the
+        /// Farm, so it is staged at the porch behind black exactly like <see cref="BuildTamper"/> and
+        /// its end (or a skip) puts him back on the tile and facing he arrived at. Without it (the
+        /// tly_seasonturn replay from off the Farm) it moves to the Farm itself, as it did when it
+        /// played on waking.</summary>
+        internal static string Build(SeasonTurnKind kind, int doorX, int doorY, bool skippable, bool rewound,
+            (int X, int Y, int Facing)? returnTo = null)
         {
             int count = SeasonTurn.JunimoCount(kind);
             int stepY = doorY + StepDown;
@@ -125,10 +132,14 @@ namespace TheLongestYear.Integration
                 $"farmer {doorX} {stepY} 2",
                 EndingEventCommands.BlackName,
             };
+            // Before anything else, so a skip returns him to where he arrived too.
+            if (returnTo is (int rx, int ry, int rf))
+                s.Add($"{EndingEventCommands.ReturnToName} {rx} {ry} {rf}");
             if (skippable) s.Add("skippable");
+            if (returnTo == null)
+                s.Add($"{EndingEventCommands.ChangeLocationName} Farm {doorX} {stepY}");
             s.AddRange(new[]
             {
-                $"{EndingEventCommands.ChangeLocationName} Farm {doorX} {stepY}",
                 $"warp farmer {doorX} {stepY}",
                 "faceDirection farmer 2",
                 $"viewport {doorX} {stepY} clamp",
