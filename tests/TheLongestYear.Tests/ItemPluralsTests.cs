@@ -106,8 +106,16 @@ public class ItemPluralsTests
     [InlineData("Periwinkle", "(O)722", "Periwinkles")]
     [InlineData("Shrimp", "(O)720", "Shrimp")]
     [InlineData("Crayfish", "(O)716", "Crayfish")]
+    [InlineData("Super Cucumber", "(O)155", "Super Cucumbers")]
+    [InlineData("Sea Cucumber", "(O)154", "Sea Cucumbers")]
     public void The_tainted_name_of_a_shellfish_takes_its_plural(string name, string id, string expected)
         => Assert.Equal(expected, ItemPlurals.Tainted(name, id, flavored: false, VanillaPlural, FlavoredSlotRules.FishCategory));
+
+    [Theory]
+    [InlineData("Super Cucumber", "(O)155")]
+    [InlineData("Sea Cucumber", "(O)154")]
+    public void A_tainted_cucumber_reads_as_counted(string name, string id)
+        => Assert.False(ItemPlurals.TaintedReadsAsMass(name, id, flavored: false, VanillaPlural, FlavoredSlotRules.FishCategory));
 
     [Fact]
     public void The_tainted_name_of_holly_is_bare()

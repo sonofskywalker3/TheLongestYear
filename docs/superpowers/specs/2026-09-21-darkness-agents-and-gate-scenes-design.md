@@ -135,7 +135,9 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     ("Sea Jellies") and Roe, Aged Roe, Caviar and Smoked Fish keep their containers or bare word.
     The crab-pot and beach shellfish take their plurals ("7 Oysters", "7 Clams", "7 Crabs", "7
     Lobsters", "7 Snails", "7 Mussels", "7 Cockles", "7 Periwinkles", "all the Mussels"); Shrimp
-    and Crayfish keep the same word. Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
+    and Crayfish keep the same word. Amended 2026-10-08: Super Cucumber and Sea Cucumber are fish
+    but take normal plurals too ("all the Super Cucumbers", "all the Sea Cucumbers", "7 Sea
+    Cucumbers"); live, the tamper line had said "all the Super Cucumber". Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
     The table lives in `AskPhrases`. A plural ask, container phrases included, ends "They remain
     pure." (key `event.darkness.tamper-3-plural`) instead of "It remains pure.".
   - No purple screen glow under the middle line; the low sound stays.
