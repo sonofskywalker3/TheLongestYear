@@ -43,7 +43,7 @@ namespace TheLongestYear.Integration
         /// it, behind black, then fades in. When it ends (or is skipped) vanilla puts him back on
         /// (<paramref name="returnX"/>, <paramref name="returnY"/>) facing <paramref name="returnFacing"/>:
         /// tlyReturnTo sets the position the event end restores.</summary>
-        internal static string BuildTamper(int porchX, int porchY, int returnX, int returnY, int returnFacing, string oldItemName, string newItemName, bool newIsPlural, bool skippable)
+        internal static string BuildTamper(int porchX, int porchY, int returnX, int returnY, int returnFacing, string oldItemName, bool oldIsMass, string newItemName, bool newIsPlural, bool skippable)
         {
             const int count = 2;
             const int facingDown = 2;
@@ -74,7 +74,9 @@ namespace TheLongestYear.Integration
             string[] lines =
             {
                 Strings.Get("event.darkness.tamper-1", new Dictionary<string, string> { ["old"] = oldItemName ?? "" }),
-                Strings.Get("event.darkness.tamper-2"),
+                // "touched it" after an uncountable item ("all the Wood"), "touched them" after a
+                // counted one ("all the Pike"); designer, 2026-10-08 (ItemPlurals.TaintedReadsAsMass).
+                oldIsMass ? Strings.Get("event.darkness.tamper-2-mass") : Strings.Get("event.darkness.tamper-2"),
                 newIsPlural
                     ? Strings.Get("event.darkness.tamper-3-plural", new Dictionary<string, string> { ["new"] = newItemName ?? "" })
                     : Strings.Get("event.darkness.tamper-3", new Dictionary<string, string> { ["new"] = newItemName ?? "" }),

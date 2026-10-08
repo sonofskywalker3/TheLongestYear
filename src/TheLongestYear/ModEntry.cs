@@ -444,7 +444,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
@@ -911,7 +911,7 @@ namespace TheLongestYear
                 () => _enginePools,
                 () => _obtainability,
                 RebuildBoardDerivedState);
-            _sabotage.StartTamperScene = (oldName, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, newName, newIsPlural, done);
+            _sabotage.StartTamperScene = (oldName, oldIsMass, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, oldIsMass, newName, newIsPlural, done);
             // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
             _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
             _sabotage.SceneCanStage = TheLongestYear.Scenes.StrikeSceneFactory.CanStage;
@@ -2856,12 +2856,14 @@ namespace TheLongestYear
                     // The Junimos' "tainted" scene, staged at the porch; the farmer goes back to his
                     // tile after, as on a real arrival.
                     if (!_seasonTurnDriver.StartTamperAtPorch(
-                        args.Length > 1 ? args[1] : "Parsnips", args.Length > 2 ? args[2] : "Crystal Fruit", false,
+                        args.Length > 1 ? args[1] : "Parsnips",
+                        args.Length > 3 && args[3].ToLowerInvariant() == "mass",
+                        args.Length > 2 ? args[2] : "Crystal Fruit", false,
                         () => this.Monitor.Log("Darkness: scene replay finished.", LogLevel.Info)))
                         this.Monitor.Log("tly_sabotage scene: step out onto the Farm first, with no event up.", LogLevel.Warn);
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] | fixture [scarecrow] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]", LogLevel.Info);
                     break;
             }
         }

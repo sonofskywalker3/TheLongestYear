@@ -906,6 +906,7 @@
     "event.turn.winter-4": "If you win here, this cycle will be broken. But I fear our war will continue.",
     "event.darkness.tamper-1": "@, last night the darkness struck! It has tainted all the {{old}}.",
     "event.darkness.tamper-2": "The darkness has touched them. We can no longer use them for our restoration.",
+    "event.darkness.tamper-2-mass": "The darkness has touched it. We can no longer use it for our restoration.",
     "event.darkness.tamper-3": "Bring us {{new}} instead. It remains pure.",
     "event.darkness.tamper-3-plural": "Bring us {{new}} instead. They remain pure.",
 

@@ -34,9 +34,10 @@ namespace TheLongestYear.Loop
         private readonly Func<ObtainabilityModel> _obtainability;
         private readonly Action<string> _rebuildBoard;
         /// <summary>Starts the board-changed scene where the farmer stands, with the old item's
-        /// plural name, the new ask, whether that ask is plural, and what to do once it ends; false
-        /// when it cannot start here. Set by ModEntry (the season-turn driver).</summary>
-        public Func<string, string, bool, Action, bool> StartTamperScene { get; set; }
+        /// plural name, whether that name reads as uncountable ("touched it"), the new ask, whether
+        /// that ask is plural, and what to do once it ends; false when it cannot start here. Set by
+        /// ModEntry (the season-turn driver).</summary>
+        public Func<string, bool, string, bool, Action, bool> StartTamperScene { get; set; }
 
         private RunState Run => _store.Run;
         private MetaState Meta => _store.State;

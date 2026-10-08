@@ -78,6 +78,42 @@ namespace TheLongestYear.Core.Sabotage
             return Plural(name, gamePlural);
         }
 
+        /// <summary>Goods counted one by one whose name stays the same word: "all the Smoked
+        /// Salmon", "all the Dried Apples", "all the Cookies".</summary>
+        private static readonly HashSet<string> CountedSameWord = new HashSet<string>(StringComparer.Ordinal)
+        {
+            FlavoredSlotRules.SmokedFish, FlavoredSlotRules.DriedFruit, FlavoredSlotRules.DriedMushrooms,
+            "(O)198", // Baked Fish
+            "(O)223", // Cookies
+            "(O)Raisins",
+        };
+
+        /// <summary>Names that are already plural, which the game leaves alone (its own list in
+        /// Lexicon.makePlural, plus the ones the ask tables keep bare).</summary>
+        private static readonly HashSet<string> AlreadyPlural = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Broken Glasses", "Crab Cakes", "Cranberries", "Dried Cranberries", "Dried Sunflowers",
+            "Fossilized Ribs", "Glass Shards", "Glazed Yams", "Green Canes", "Hashbrowns", "Hops",
+            "Mixed Seeds", "Pancakes", "Pepper Poppers", "Pickles", "Red Canes", "Roasted Hazelnuts",
+            "Star Shards", "Tea Leaves", "Weeds", "Cookies", "Raisins", "Dried Mushrooms",
+        };
+
+        /// <summary>Does "It has tainted all the X" read X as uncountable, so the next line says
+        /// "The darkness has touched it" (designer, 2026-10-08)? True for a mass noun, bulk stuff or
+        /// a container good whose tainted name stays singular ("all the Wood", "all the Honey",
+        /// "all the Blueberry Wine"). False for anything counted: a name the rule pluralised ("all
+        /// the Parsnips", "all the lumps of Coal"), a fish or shellfish ("all the Pike"), a counted
+        /// good that keeps one word ("all the Smoked Salmon", "all the Dried Apples") and a name
+        /// that is already plural ("all the Hops").</summary>
+        public static bool TaintedReadsAsMass(string name, string baseItemId, bool flavored, Func<string, string> gamePlural, int category = AskPhrases.NoCategory)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            if (Tainted(name, baseItemId, flavored, gamePlural, category) != name) return false;
+            if (AskPhrases.IsFishSameInThePlural(baseItemId, category) || AskPhrases.IsCountable(baseItemId)) return false;
+            if (!string.IsNullOrEmpty(baseItemId) && CountedSameWord.Contains(BundleParsing.NormalizeItemId(baseItemId))) return false;
+            return !AlreadyPlural.Contains(name);
+        }
+
         /// <summary>The head noun of a multi-word name ("Blueberry Jelly" to "Jelly").</summary>
         private static string LastWord(string name)
         {
