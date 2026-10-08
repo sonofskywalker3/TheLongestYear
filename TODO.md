@@ -21,6 +21,10 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
    has to work when it is the first conversation too. BUILT d5f9e4f (intro, then the line, same
    talk; Shane too; live check owed).
 6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying).
+
+**Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
+7. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it.
+8. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
 7. Thief: nothing spoils, a thief steals. One morning box listing what was taken with counts.
    BUILT f83b6c1. Draft line (placeholder, Jeff to judge): "Some of your things have gone missing
    overnight: {{items}}." e.g. "6 Parsnips, 1 bottle of Wine and 3 other things".
