@@ -110,6 +110,9 @@ namespace TheLongestYear.Scenes
         private SceneActor _brute;
         private SceneChestLid _lid;
         private SceneSleepers _sleepers;
+        /// <summary>Trees, bushes and buildings in front of the chest or his path, faded for the
+        /// scene (designer, 2026-10-08).</summary>
+        private ScenePeekThrough _peek;
         /// <summary>The walk in, the tile he starts on first and the tile beside the target last.
         /// The way out is this, backwards.</summary>
         private SceneWalk _walk;
@@ -188,11 +191,14 @@ namespace TheLongestYear.Scenes
                 _sleepers.Pose(house, Monitor);
             }
             if (!_target.Machine && _target.Chest != null) _lid = new SceneChestLid(_target.Chest);
+            // Nothing tall may hide the chest, its lid or him (designer, 2026-10-08: the chest was
+            // behind a tree).
+            _peek = new ScenePeekThrough(_where, SceneSeeThrough.Watched(((int)_targetTile.X, (int)_targetTile.Y), walk));
 
             Monitor.Log(
                 $"Darkness: the thief is staged on {(_target.Machine ? "a machine" : "a chest")} at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, "
                 + $"walking {_steps} tile(s) in from ({_walk.Start.X},{_walk.Start.Y}), lid {(_lid == null ? "none" : _lid.Available ? "driven" : "unreadable")}, "
-                + $"asleep in bed: {(_sleepers == null ? "not a house" : _sleepers.Describe())}. He is drawn from a sheet of {_brute.Describe()}.",
+                + $"asleep in bed: {(_sleepers == null ? "not a house" : _sleepers.Describe())}, {_peek.Count} thing(s) in front faded. He is drawn from a sheet of {_brute.Describe()}.",
                 LogLevel.Trace);
             return true;
         }
@@ -287,6 +293,7 @@ namespace TheLongestYear.Scenes
             // after the pump.
             MoveLid(elapsed);
             _lid?.Hold();
+            _peek?.Tick();
             MoveBrute(elapsed);
         }
 
@@ -377,6 +384,7 @@ namespace TheLongestYear.Scenes
         protected override void Cleanup()
         {
             _lid?.Restore();
+            _peek?.Restore();
             _sleepers?.Restore();
             SceneCamera.Restore();
         }

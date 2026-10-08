@@ -2883,6 +2883,9 @@ namespace TheLongestYear
                     chest.Items.Add(ItemRegistry.Create("(O)24", 20));
                     chest.Items.Add(ItemRegistry.Create("(O)378", 10));
                     farm.objects.Add(chestTile, chest);
+                    // Nothing tall in front of it, so the thief scene can show it (designer,
+                    // 2026-10-08: the fixture chest was behind a tree).
+                    int clearedInFront = TheLongestYear.Scenes.ScenePeekThrough.ClearInFrontOf(farm, ((int)chestTile.X, (int)chestTile.Y));
                     // "fixture scarecrow" also stands one at the head of the row, for the crows
                     // scene: it needs something within twelve tiles of the crops that scares birds.
                     string scarecrowAt = "none";
@@ -2896,7 +2899,7 @@ namespace TheLongestYear
                         farm.objects.Add(scarecrowTile, scarecrow);
                         scarecrowAt = $"({scarecrowTile.X},{scarecrowTile.Y})";
                     }
-                    this.Monitor.Log($"Sabotage fixture: {planted} crop(s) of seed {seed ?? "none (Winter)"} at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore, scarecrow {scarecrowAt}.", LogLevel.Info);
+                    this.Monitor.Log($"Sabotage fixture: {planted} crop(s) of seed {seed ?? "none (Winter)"} at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore ({clearedInFront} tree(s) or bush(es) in front of it cleared), scarecrow {scarecrowAt}.", LogLevel.Info);
                     break;
                 }
                 case "edge":
