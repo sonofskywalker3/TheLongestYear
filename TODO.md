@@ -20,17 +20,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 5. Linus's witness line lost to his first-meeting intro (they had never talked). The witness line
    has to work when it is the first conversation too. BUILT d5f9e4f (intro, then the line, same
    talk; Shane too; live check owed).
-6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying).
-
-**Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
-7. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it.
-8. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
+6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying). DONE (moved to Mods-disabled).
 7. Thief: nothing spoils, a thief steals. One morning box listing what was taken with counts.
    BUILT f83b6c1. Draft line (placeholder, Jeff to judge): "Some of your things have gone missing
    overnight: {{items}}." e.g. "6 Parsnips, 1 bottle of Wine and 3 other things".
 8. The thief's chest was hidden behind a tree on save 1 (fixture chest at Farm 69,21). Anything in
    front of the chest or his path goes see-through for the scene; `tly_sabotage fixture` clears
    trees and bushes in front of its chest. BUILT 9ae2774 (live check owed).
+
+**Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
+9. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it.
+10. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
+
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
 when Jeff says. Summary in `STATUS.md` (2026-10-07).
