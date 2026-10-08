@@ -139,6 +139,13 @@ public class AskPhrasesTests
     public void Shellfish_take_their_plurals_but_shrimp_and_crayfish_do_not(string id, string name, string ask)
         => Assert.Equal(ask, AskPhrases.Ask(7, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
 
+    // Designer, 2026-10-08: the cucumbers are fish but take normal plurals (live: "all the Super Cucumber").
+    [Theory]
+    [InlineData("(O)154", "Sea Cucumber", "7 Sea Cucumbers")]
+    [InlineData("(O)155", "Super Cucumber", "7 Super Cucumbers")]
+    public void The_cucumbers_take_their_plurals(string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(7, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
+
     [Fact]
     public void Holly_comes_in_sprigs()
         => Assert.Equal("8 sprigs of Holly", Ask(8, "(O)283", "Holly"));

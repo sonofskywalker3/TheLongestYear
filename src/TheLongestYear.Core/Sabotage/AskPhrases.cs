@@ -61,11 +61,14 @@ namespace TheLongestYear.Core.Sabotage
             "(O)SeaJelly", "(O)RiverJelly", "(O)CaveJelly",
         };
 
-        /// <summary>Crab-pot and beach shellfish: Fish category, but counted with their plurals
-        /// (designer, 2026-10-07: "7 Oysters", "7 Mussels"). Shrimp and Crayfish are not here: they
-        /// keep the same word like the fish ("7 Shrimp", "7 Crayfish").</summary>
-        private static readonly HashSet<string> ShellfishTakePlural = new(StringComparer.Ordinal)
+        /// <summary>Fish category, but counted with their plurals: the crab-pot and beach shellfish
+        /// (designer, 2026-10-07: "7 Oysters", "7 Mussels") and the two cucumbers (designer,
+        /// 2026-10-08: "all the Super Cucumbers", "7 Sea Cucumbers"). Shrimp and Crayfish are not
+        /// here: they keep the same word like the fish ("7 Shrimp", "7 Crayfish").</summary>
+        private static readonly HashSet<string> FishTakePlural = new(StringComparer.Ordinal)
         {
+            "(O)154", // Sea Cucumber
+            "(O)155", // Super Cucumber
             "(O)723", // Oyster
             "(O)372", // Clam
             "(O)717", // Crab
@@ -152,13 +155,13 @@ namespace TheLongestYear.Core.Sabotage
         /// <summary>Does this item keep the same word in the plural because it is a fish (designer,
         /// 2026-10-07: "7 Pike", "7 Salmon", "3 Largemouth Bass")? Every Object of the Fish category
         /// (<see cref="FlavoredSlotRules.FishCategory"/>), except the jellies he chose to count
-        /// ("Sea Jellies") and the shellfish that take their plurals ("7 Oysters"; Shrimp and Crayfish
-        /// keep the same word). Fish goods with a container or a bare word of their own (Roe, Aged
+        /// ("Sea Jellies") and the shellfish and cucumbers that take their plurals ("7 Oysters",
+        /// "7 Sea Cucumbers"; Shrimp and Crayfish keep the same word). Fish goods with a container or a bare word of their own (Roe, Aged
         /// Roe, Caviar, Smoked Fish) are matched by those tables first.</summary>
         public static bool IsFishSameInThePlural(string? itemId, int category)
         {
             if (category != FlavoredSlotRules.FishCategory || IsCountable(itemId)) return false;
-            return string.IsNullOrEmpty(itemId) || !ShellfishTakePlural.Contains(BundleParsing.NormalizeItemId(itemId!));
+            return string.IsNullOrEmpty(itemId) || !FishTakePlural.Contains(BundleParsing.NormalizeItemId(itemId!));
         }
 
         /// <summary>Each container word's singular, for a count of one ("1 bottle of Wine").</summary>
