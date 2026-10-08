@@ -238,19 +238,7 @@ namespace TheLongestYear.Loop
         }
 
         private static BundleSpec SpecFromStandardEntry(string key, string value)
-        {
-            ParsedBundle parsed = BundleParsing.Parse(key, value);
-            string[] fields = value.Split('/');
-            string reward = fields.Length > 1 ? fields[1] : "";
-            int color = fields.Length > 3 && int.TryParse(fields[3], out int c) ? c : 0;
-            string displayName = fields.Length > 6 && !string.IsNullOrEmpty(fields[6]) ? fields[6] : parsed.Name;
-
-            List<BundleSlotSpec> slots = parsed.Ingredients
-                .Select(ing => new BundleSlotSpec(ing.ItemRef, ing.Stack, ing.Quality))
-                .ToList();
-
-            return new BundleSpec(parsed.Room, parsed.Index, parsed.Name, displayName, reward, color, parsed.NumberOfSlots, slots);
-        }
+            => BundleParsing.ToSpec(key, value);
 
         private BundleSpec SpecFromRandomEntry(string room, int index, BundleData bundle)
         {

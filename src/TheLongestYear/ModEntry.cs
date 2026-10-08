@@ -648,8 +648,17 @@ namespace TheLongestYear
             // fingerprint, so everything downstream reads the repaired board rather than the one
             // with the impossible ask still in it. Host only, donated slots untouched, and a
             // no-op on a clean board.
+            // A TLY Custom board takes its replacements from vanilla-only pools, like the engine
+            // that wrote it (spec 2026-10-08-custom-board-vanilla-only). A Normal or Remixed board
+            // keeps the shared pools, other mods' items included, as before.
+            TheLongestYear.Core.ItemPools repairPools = BundleSourceNames.IsVanilla(_meta.State.BundleSource)
+                ? enginePools
+                : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(
+                        _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
+                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds);
             int repaired = new TheLongestYear.Loop.BoardRepairService(
-                this.Monitor, enginePoolReader.LastReachability, enginePools,
+                this.Monitor, enginePoolReader.LastReachability, repairPools,
                 _config.PoolTuning, _availability, _meta.Run.Seed, oncePerLoopAsksOne).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
@@ -4070,7 +4079,8 @@ namespace TheLongestYear
             BundleGenerationTuning tuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, difficulty);
             var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             ItemPools pools = enginePoolReader
-                .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity));
+                .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity),
+                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds);
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
             var sb = new System.Text.StringBuilder();

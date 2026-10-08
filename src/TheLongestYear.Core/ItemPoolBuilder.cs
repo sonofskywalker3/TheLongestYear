@@ -73,7 +73,8 @@ public static class ItemPoolBuilder
         IReadOnlySet<string>? extraExcludedIds = null,
         IReadOnlyDictionary<string, RawFishEntry>? fishRows = null,
         IReadOnlyDictionary<string, Season>? festivalSeasons = null,
-        SourceReachability? reachability = null)
+        SourceReachability? reachability = null,
+        IReadOnlySet<string>? vanillaOnlyIds = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
@@ -87,6 +88,17 @@ public static class ItemPoolBuilder
         {
             foreach (string id in AllCandidateIds(crops, objects, forageSpawns, fishSpawns))
                 if (reachability.IsUnreachable(id))
+                    excluded.Add(id);
+        }
+
+        // TLY Custom boards ask only for vanilla items (spec 2026-10-08-custom-board-vanilla-only):
+        // every other id joins `excluded`, so every pool drops it through Vets and ExcludedIds
+        // carries it to the consumers that read ids from outside the pools (a bundle's own items,
+        // flavored-slot inputs). Null (Normal, Remixed, the shared load-time pools) adds nothing.
+        if (vanillaOnlyIds != null)
+        {
+            foreach (string id in AllCandidateIds(crops, objects, forageSpawns, fishSpawns))
+                if (!vanillaOnlyIds.Contains(id))
                     excluded.Add(id);
         }
 
