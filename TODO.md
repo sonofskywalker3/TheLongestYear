@@ -31,6 +31,11 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 **Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
 9. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it.
 10. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
+11. Several scarecrows: the scene picks ONE scarecrow for the landing crow, never one crow per scarecrow.
+12. Linus's line STILL lost after the first-meeting Introduction on the second pass, although the log
+    said "Witness: Linus's line follows his Characters\Dialogue\Linus:Introduction dialogue" (17:22:13).
+    The follow-up never showed. Fine either way (Jeff): say it after the intro, or mark the witness
+    as already met on test farms before a pass. Fix the follow-up AND meet Linus/Shane on handoff farms.
 
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
