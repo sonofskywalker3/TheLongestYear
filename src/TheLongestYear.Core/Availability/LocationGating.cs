@@ -59,6 +59,17 @@ public static class LocationGating
         return 1;
     }
 
+    /// <summary>True when the key matches one of the gated markers (the Desert, the mines, the
+    /// Sewer...): a place whose timing is a known ruling even when no door leads to it
+    /// (<see cref="LocationWeeks"/>).</summary>
+    public static bool IsGated(string locationKey)
+    {
+        if (string.IsNullOrEmpty(locationKey)) return false;
+        foreach ((string marker, int _, int _, int _, bool exact) in GatedMarkers)
+            if (Matches(locationKey, marker, exact)) return true;
+        return false;
+    }
+
     /// <summary>The EASIEST week among the given locations, because reaching any one of them is
     /// enough to get the item. An empty list means no location signal, which reads as ungated.</summary>
     public static int WeekForAny(IReadOnlyList<string> locationKeys)
