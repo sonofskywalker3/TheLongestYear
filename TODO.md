@@ -33,6 +33,9 @@ scenes' lines.
   "all the X" are unchanged. The full table is in
   `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/asks-report.md`.
 
+### PARKED (Jeff, 2026-10-08): modded items TLY can't place yet, for the mod-support phase
+SVE + Cornucopia items the model can't place, questionable placements and engine gaps: see `docs/mod-support-unknowns.md`.
+
 ### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
 "My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
 fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:

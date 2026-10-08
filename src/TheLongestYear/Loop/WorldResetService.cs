@@ -70,6 +70,10 @@ namespace TheLongestYear.Loop
         /// on any host that never sets it, which leaves player.fishCaught untouched.</summary>
         public IReadOnlyList<string> CatchLimitedFishIds { get; set; }
 
+        /// <summary>Tech's Cross-Mod Bundles, for the Normal and Remixed reroll (spec 2026-10-08 addendum 2).
+        /// Null skips it.</summary>
+        public TheLongestYear.Core.ITechBundlesRerollTarget TechBundles { get; set; }
+
         /// <summary>Rebuilds <see cref="AvailabilityModel"/> for one difficulty step, called right
         /// after <see cref="PerformReset"/> re-resolves the new run's difficulty (spec
         /// 2026-08-28-obtainable-board, section 1: the week mode is a function of that step). Set by
@@ -703,6 +707,16 @@ namespace TheLongestYear.Loop
                 _meta.WrittenBoardSeasonPins = null;
                 _meta.WrittenBoardFlavors = null;
                 LastGeneratedRequirements = null;
+                // Normal or Remixed with Tech's Cross-Mod Bundles: roll a fresh Tech board in place
+                // of the old one, before the difficulty and reward passes below run over it (spec
+                // 2026-10-08 addendum 2). Skipped for a held board and TLY Custom; a failure logs
+                // one warning and keeps the game's own board. The post-reset
+                // reload classifies and fingerprints whatever is live, so this board is the
+                // expected one for the loop.
+                TheLongestYear.Core.TechBundlesReroll.Run(
+                    TechBundles, boardSource, restoringHeldBoard: heldVanillaBoard != null,
+                    message => _monitor.Log(message, LogLevel.Info),
+                    message => _monitor.Log(message, LogLevel.Warn));
                 if (heldVanillaBoard != null)
                 {
                     // The held board already carries whatever difficulty adjustments it was built
@@ -718,6 +732,15 @@ namespace TheLongestYear.Loop
                     ApplyVanillaBoardDifficulty();
                     ApplyVanillaBoardRewardShuffle();
                 }
+                // With Tech's Cross-Mod Bundles loaded, store the board this reset just wrote: Tech's
+                // mod writes its own saved board over it on every load, and the load puts this one
+                // back (spec 2026-10-08 addendum 3). Without Tech it stays null, as before.
+                _meta.WrittenBoard = TheLongestYear.Core.TechBoardOfRecord.VanillaBoardToStore(
+                    TechBundles?.IsLoaded ?? false, Game1.netWorldState.Value.BundleData);
+                if (_meta.WrittenBoard != null)
+                    _monitor.Log(
+                        $"Reset: stored this loop's board ({_meta.WrittenBoard.Count} bundles) as the board of record, since Tech's Cross-Mod Bundles rewrites the board on every load.",
+                        LogLevel.Info);
             }
             else
             {
@@ -729,6 +752,12 @@ namespace TheLongestYear.Loop
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty);
                 engine.Availability = AvailabilityModel;
+                // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1): a new board takes
+                // the save's choice, a held board keeps the value it was built under. Stamped with the
+                // board so the load-time check re-derives it the same way after a mid-loop toggle.
+                _meta.BoardAllowsModItems = TheLongestYear.Core.CustomBoardModItems.ForReset(
+                    holdingBoard, _meta.BoardAllowsModItems, _meta.AllowModItemsInCustomBundles);
+                engine.AllowModItems = _meta.BoardAllowsModItems.Value;
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.

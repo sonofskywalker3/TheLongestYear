@@ -16,8 +16,8 @@ namespace TheLongestYear.Loop
     /// <summary>Reads the live game data tables into the Core Raw* boundary records and
     /// delegates pool derivation to the pure ItemPoolBuilder. Because everything is read
     /// from the game's OWN data at generation time, mod-added content (SVE crops/fish/
-    /// forage/monsters) joins the pools automatically — the spec's "SVE-proof by
-    /// construction". Locations whose key matches a tuning.ExcludedLocationMarkers entry
+    /// forage/monsters) joins the pools automatically, unless the caller passes the vanilla id
+    /// set (the TLY Custom board does: spec 2026-10-08-custom-board-vanilla-only). Locations whose key matches a tuning.ExcludedLocationMarkers entry
     /// are skipped (Ginger Island and other post-CC / late-game areas are not year-1
     /// content). All failures degrade to smaller pools, never throw: a bundle whose pool
     /// can't fill it keeps its vanilla slots (filler fallback).</summary>
@@ -38,7 +38,10 @@ namespace TheLongestYear.Loop
 
         /// <param name="extraExcludedIds">Save-specific exclusions merged into the tuning's
         /// excluded ids (YearTwoCrops.ExcludedFor on the current MetaState); null = none.</param>
-        public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null)
+        /// <param name="vanillaOnlyIds">TLY Custom boards pass <see cref="VanillaItemIds.All"/>: every
+        /// other item is left out of every pool (spec 2026-10-08-custom-board-vanilla-only). Null
+        /// keeps modded items, as the shared load-time pools and the Normal/Remixed paths need.</param>
+        public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null, IReadOnlySet<string> vanillaOnlyIds = null)
         {
             IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var crops = new List<RawCropEntry>();
@@ -384,7 +387,7 @@ namespace TheLongestYear.Loop
                 crops, objects, forage, fish, trapIds, drops,
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
-                festivalSeasons, reachability);
+                festivalSeasons, reachability, vanillaOnlyIds);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +

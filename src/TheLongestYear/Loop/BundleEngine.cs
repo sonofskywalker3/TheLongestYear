@@ -170,6 +170,29 @@ namespace TheLongestYear.Loop
         private static readonly HashSet<string> AuthoredBundleNames =
             new(AuthoredBundleCatalog.All.Select(def => def.Name), StringComparer.Ordinal);
 
+        /// <summary>TLY Custom boards ask only for vanilla items and give only vanilla rewards
+        /// (spec 2026-10-08-custom-board-vanilla-only): balancing every item of every other mod is
+        /// not possible, so their items never enter this board's item pools, templates or reward
+        /// pool. This class only ever builds the Engine board; Normal and Remixed never construct
+        /// it, so they keep other mods' items exactly as before. Category slots ("any fish") still
+        /// take a modded fish when donated.</summary>
+        public static IReadOnlySet<string> VanillaOnlyIds => Core.VanillaItemIds.All;
+
+        /// <summary>The filter for a board built with "Allow mod items in custom bundles" set to
+        /// <paramref name="allowModItems"/>: null (no filter, the pre-0.19.2 board) when allowed,
+        /// <see cref="VanillaOnlyIds"/> otherwise (spec addendum 1).</summary>
+        public static IReadOnlySet<string> VanillaOnlyIdsFor(bool allowModItems)
+            => allowModItems ? null : VanillaOnlyIds;
+
+        /// <summary>"Allow mod items in custom bundles" for THIS board. Every construction site
+        /// sets it from the save: a reset from <see cref="Core.CustomBoardModItems.ForReset"/>, a
+        /// load-time re-derivation or diagnostic from the board's stamp
+        /// (<see cref="Core.MetaState.BoardAllowsModItems"/>), never the live choice. Off (the
+        /// default) is the vanilla-only board.</summary>
+        public bool AllowModItems { get; set; }
+
+        private IReadOnlySet<string> VanillaFilter => VanillaOnlyIdsFor(AllowModItems);
+
         private readonly VanillaBundlePool _pool;
         private readonly IMonitor _monitor;
         private readonly BundleGenerationTuning _tuning;
@@ -235,7 +258,7 @@ namespace TheLongestYear.Loop
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
             var timing = _monitor != null ? new ResetTiming(_monitor, "BundleEngine.Generate") : null;
-            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds);
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter);
             timing?.Mark("GameDataPools.Build");
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
@@ -255,7 +278,7 @@ namespace TheLongestYear.Loop
             // stamped Stack size step, no roll, so it moves no stream.
             int cappedAllowance = Core.CappedAsks.BoardAllowance(_difficulty.Steps?.StackSize ?? Core.DifficultyStep.Normal);
             _monitor?.Log($"BundleEngine: Prismatic Shard / Mystery Box allowance for this board: {cappedAllowance} each.", LogLevel.Trace);
-            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools = _pool.BuildRoomPools();
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools = VanillaRoomPools();
             timing?.Mark("BuildRoomPools");
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
                 WidenWithAuthoredBundles(roomPools, itemPools, seed, legendaryAllowance, cappedAllowance);
@@ -476,7 +499,7 @@ namespace TheLongestYear.Loop
                 return new GeneratedBundleSet(allPicks, flavors);
 
             // Last, so it moves no other stream: rewards never feed back into what a bundle asks.
-            IReadOnlyList<string> rewardPool = RewardPool(roomPools);
+            IReadOnlyList<string> rewardPool = RewardPool(roomPools, VanillaFilter);
             IReadOnlyList<BundleSpec> rewarded = Core.BundleRewardShuffle.Apply(allPicks, seed, rewardPool, IsRewardShuffleSkippedRoom);
             _monitor?.Log(
                 $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
@@ -487,15 +510,38 @@ namespace TheLongestYear.Loop
         /// <summary>Randomizer reward pool: every reward vanilla's standard and remixed bundles
         /// can give, from every room except the Abandoned Joja Mart (the Vault's item rewards are
         /// included). Shared by the Engine board and the Vanilla/Remixed reset pass so
-        /// both sources draw from the same list.</summary>
+        /// both sources draw from the same list. The Engine passes <see cref="VanillaOnlyIds"/>,
+        /// which leaves out any reward that gives another mod's item; the Vanilla/Remixed pass
+        /// passes nothing and keeps every reward, as it always has.</summary>
         public static IReadOnlyList<string> RewardPool(
-            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools)
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools,
+            IReadOnlySet<string> vanillaOnlyIds = null)
             => Core.BundleRewardShuffle.CleanPool(
                 roomPools
                     .Where(room => !IsRewardShuffleSkippedRoom(room.Key))
                     .SelectMany(room => room.Value)
                     .SelectMany(candidates => candidates)
-                    .Select(spec => spec.RewardField));
+                    .Select(spec => spec.RewardField),
+                vanillaOnlyIds);
+
+        /// <summary>The bundle templates (Data/Bundles + Data/RandomBundles) with every other
+        /// mod's item and reward taken out (<see cref="Core.VanillaOnlyBoard.FilterRoomPools"/>).
+        /// On an unmodded game nothing changes and every candidate is the same instance. With
+        /// <see cref="AllowModItems"/> on, the templates come back as they are, as before 0.19.2.</summary>
+        private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> VanillaRoomPools()
+        {
+            if (AllowModItems)
+                return _pool.BuildRoomPools();
+            IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> filtered =
+                Core.VanillaOnlyBoard.FilterRoomPools(
+                    _pool.BuildRoomPools(), VanillaOnlyIds, Core.VanillaBundleBoard.Standard, out int changed);
+            if (changed > 0)
+                _monitor?.Log(
+                    $"BundleEngine: TLY Custom boards use vanilla items only; {changed} bundle template(s) from other mods " +
+                    "had items or rewards left out.",
+                    LogLevel.Info);
+            return filtered;
+        }
 
         /// <summary>Drops Helper's from every position that has another candidate to pick instead,
         /// for a board with no Mystery Box allowance: its only items are the Prize Ticket and the
@@ -665,7 +711,7 @@ namespace TheLongestYear.Loop
         /// like they have no alternates when they do.</summary>
         public IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> BuildCandidatePools(
             ItemPools itemPools, int seed)
-            => WidenWithAuthoredBundles(_pool.BuildRoomPools(), itemPools, seed, int.MaxValue, int.MaxValue);
+            => WidenWithAuthoredBundles(VanillaRoomPools(), itemPools, seed, int.MaxValue, int.MaxValue);
 
         private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> WidenWithAuthoredBundles(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools,
