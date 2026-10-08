@@ -64,7 +64,7 @@ bundle, every open slot of the item in it rewritten. Live-checked on throwaway f
 Details: `.superpowers/sdd/2026-09-21-darkness-agents-and-gate-scenes/corrections-report.md`.
 
 **Owed: Jeff's pass.** Three throwaway farms are saved for it (all named Rodger, farm "standard"):
-`standard_451080087` (Summer 14), `standard_451080418` (Fall 14), `standard_451080615` (Winter 1).
+`standard_451170160` (Summer 14), `standard_451080418` (Fall 14), `standard_451080615` (Winter 1).
 What to watch and the open questions are in `TODO.md` under "Darkness agents and gate scenes".
 
 ## 2026-09-21: master 0.18.17 to 0.18.37 merged into story
