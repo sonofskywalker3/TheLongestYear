@@ -101,6 +101,8 @@ public sealed class EffortComposer
             CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode, _locationWeeks),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             TapperAvailability.Derive(qualifiedId, _data),
+            WildTreeAvailability.Derive(qualifiedId, _data, _locationWeeks, _mode),
+            BeachTidePoolAvailability.Derive(qualifiedId, _locationWeeks, WeekOf, _mode),
             FruitTreeAvailability.Derive(qualifiedId, _data.FruitTrees, _shopWeeks, _mode),
             PoolArtifact(qualifiedId),
             PoolBook(qualifiedId),

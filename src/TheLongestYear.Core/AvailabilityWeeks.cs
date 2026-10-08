@@ -239,6 +239,9 @@ public static class AvailabilityWeeks
             ["(O)178"] = (1, "Hay, Marnie's shop from the first Wednesday (closed Mon and Tue), Jeff 2026-08-29"),
             ["(O)Book_Artifact"] = (6, "Treasure Appraisal Guide, artifact spots and fishing treasure, Jeff 2026-08-29"),
             ["(O)399"] = (1, "Spring Onion, the forest south of Leah's from Spring 1, Jeff 2026-08-29"),
+            // GameLocation.cs (PC 1.6) SquidFest rewards: Winter 12 targets 1/3/5/8 squid, reward
+            // "12_2" (5 squid) is a Pearl. Winter 12 is day 96, week 14.
+            ["(O)797"] = (14, "Pearl, SquidFest Winter 12 reward for 5 squid"),
         };
 
     /// <summary>Hard weeks for <see cref="OtherPlacements"/> rows whose earliest possible week is
