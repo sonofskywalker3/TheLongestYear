@@ -238,14 +238,25 @@ Commands:
 The overnight slot (see the night order above): our scene replaces a random vanilla night event
 (fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
 (the Community Center's repairs and Joja's), a farm event override from another mod, a personal
-farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: the strike
-is postponed, effect and scene both (Jeff, 2026-10-07), and nothing of it is recorded. It is queued
-and fires with its scene on the next free night, instead of the roll (designer, 2026-10-07); a
-queued kind that cannot act that night stays queued and the night rolls normally. A scene that
-fails to stage postpones without queuing (`... and it is not queued (its scene could not stage)`);
-while a scene is due its staging is checked at pick time (`<Kind>'s scene cannot stage tonight, so
-<Kind> cannot act`), and the thief skips chests he cannot stand beside. The same goes for
-the first night of a save (vanilla runs no `pickFarmEvent` then): the save net postpones it.
+farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: that is a
+conflict, and the strike is postponed, effect and scene both, with nothing of it recorded (Jeff,
+2026-10-08: "we push back one day"). It is queued and fires with its scene on the next free night,
+instead of the roll; a queued kind that cannot act that night stays queued and the night rolls
+normally. Another mod replacing our scene before its setUp runs is a conflict too (`... another mod
+replaced the scene before it was set up ... it is queued for the next free night`). A broken scene
+is not a conflict: when the scene cannot stage at the pick (`<Kind>'s scene cannot stage tonight`
+or `cannot show tonight's pick`), or its `Stage()` says no or setUp throws, the strike lands at once
+without it (`tonight's <Kind> lands now without its scene (...); the scene stays due for a later
+strike`, or `the <Scene> scene failed and was ended. The strike still lands, without its scene`),
+is recorded like any strike, and is never queued. The thief still skips chests he cannot stand
+beside while his scene is due. A strike never handed the slot (a fail night, the first night of a
+save, when vanilla runs no `pickFarmEvent`) is postponed by the save net without queuing.
+
+Each morning HUD line the darkness shows is also logged at Trace: `Darkness: morning HUD line: ...`.
+
+`tly_sabotage breakscene <crows|thief|hall|cloud> [pick|setup]` breaks that scene on purpose (in
+memory, until `tly_sabotage breakscene off` or a relaunch): `pick` (the default) fails its pick-time
+staging check, `setup` makes its setUp throw before staging.
 
 The Junimo "tainted" scene does not play on waking. It starts the first time the farmer arrives on
 the Farm by any route (Jeff, 2026-10-07): the log reads `starting the board-changed scene at the
@@ -268,6 +279,16 @@ next free night (...): CropBlight`. Sleep again with nothing armed: `the postpon
 tonight (Summer N) instead of the roll`, the crows play (`the CrowsScene scene takes tonight's
 overnight slot for CropBlight`), `the postponed CropBlight has struck, so it leaves the queue`, and
 the crops die at their beat.
+
+**The broken-scene recipe** (verified 2026-10-08 on a throwaway farm). Summer 6 with the fixture:
+`tly_sabotage breakscene crows`, `tly_sabotage arm blight crops`, `debug sleep`: `CropBlight's scene
+cannot stage tonight.`, `tonight's CropBlight lands now without its scene (...); the scene stays due
+for a later strike`, `committed and recorded`, `2 crop(s) struck down`, then `morning HUD line: 2
+crops were struck down by the darkness overnight.`; status shows `Scenes played this loop: none`,
+`Struck this loop: CropBlight` and a lower chance. For setUp: `tly_sabotage breakscene thief setup`,
+`arm blight chest`, sleep: `the ThiefScene scene failed and was ended. The strike still lands,
+without its scene.` (an ERROR line, on purpose), `2 stored unit(s) spoiled, 1 gone missing`, and the
+two HUD lines. `tly_sabotage breakscene off` afterwards.
 
 **The thief's draw while his scene is due** (verified 2026-10-07). On the Farm, `debug forcebuild
 Barn 42 14` (`debug build` refuses on an uncleared farm), `debug warp Barn 8 10`, `tly_sabotage
