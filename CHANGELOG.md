@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.19 - 2026-10-08
+
+3189 tests.
+
+### Changed
+
+- **A fish pond product too rare to turn up in a run no longer dates an item.** Every Data/FishPondData ProducedItems row used to count as a route whatever its Chance, so SVE's Goldenfish pond (Golden Pumpkin at Chance 0.01) put Golden Pumpkin at week 5 instead of the Spirit's Eve maze in week 12. A row now counts only when its Chance is at least 0.10 on Easy and Normal Item Rarity and 0.05 on Hard and Extreme (Jeff's ruling), read for every pond, vanilla or modded.
+- Vanilla items that lose a pond route (`tly_dumpmodel` before and after, unmodded):
+  - Every step: Treasure Chest week 5 to unknown (13); Nautilus Shell week 5 to 13 (Winter beach forage); Pale Broth week 5 to 6 (the dish); Magma Geode week 8 to unknown (13); Pearl week 16 to unknown (13).
+  - Easy and Normal only: Acorn, Maple Seed, Pine Cone week 5 to unknown (13); Coral week 5 to unknown (13); Sea Urchin week 5 to week 1 (its Spring pin, no longer rejected by the pond floor); Cactus Seeds week 13 to unknown (13, effort 8 to 6).
+  - No pool or reachability changes.
+- With SVE: Golden Pumpkin week 5 to 12 (Spirit's Eve maze) at every step; Slime Egg week 5 to 6 (Slime Egg-Press); Iridium Sprinkler week 5 (Meteor Carp pond) to unknown.
+
 ## 0.19.18 - 2026-10-08
 
 3164 tests. Release of 0.19.11 to 0.19.18.
