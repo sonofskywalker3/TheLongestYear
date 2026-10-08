@@ -11,14 +11,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 **Jeff's pass, save 1 (Summer 14), feedback 2026-10-08. Collecting; build once he's done:**
 1. Summer porch scene: both Junimos one tile right, evenly either side of him. DONE f4e72e3.
 2. Morning messages use the big vanilla message box (the "spreading weeds have caused damage to
-   the farm" box), not the terse HUD one-liner with the X. Lets the lines say more.
+   the farm" box), not the terse HUD one-liner with the X. Lets the lines say more. BUILT f83b6c1
+   (vanilla's corner text box, one at a time, held while a menu or scene is up; live check owed).
 3. Crows: they dropped straight down onto the field. They must swoop in from the sides.
-   Rest of the crows scene "pretty good".
+   Rest of the crows scene "pretty good". BUILT 58a497f (live check owed).
 4. Crows morning text, in the big box: "Some strange crows visited the farm last night. They
-   didn't eat your crops, but X have withered away."
+   didn't eat your crops, but X have withered away." BUILT f83b6c1 ("but 1 has" for one).
 5. Linus's witness line lost to his first-meeting intro (they had never talked). The witness line
-   has to work when it is the first conversation too.
+   has to work when it is the first conversation too. BUILT d5f9e4f (intro, then the line, same
+   talk; Shane too; live check owed).
 6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying).
+7. Thief: nothing spoils, a thief steals. One morning box listing what was taken with counts.
+   BUILT f83b6c1. Draft line (placeholder, Jeff to judge): "Some of your things have gone missing
+   overnight: {{items}}." e.g. "6 Parsnips, 1 bottle of Wine and 3 other things".
+8. The thief's chest was hidden behind a tree on save 1 (fixture chest at Farm 69,21). Anything in
+   front of the chest or his path goes see-through for the scene; `tly_sabotage fixture` clears
+   trees and bushes in front of its chest. BUILT 9ae2774 (live check owed).
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
 when Jeff says. Summary in `STATUS.md` (2026-10-07).

@@ -84,7 +84,22 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
 
 - The three first-strike villager letters are removed (`SabotageMailService`, `mail.darkness.*`,
   `MetaState.SabotageLettersSent`).
-- The morning popups stay exactly as they are.
+- The morning popups stay exactly as they are. **Amended 2026-10-08 (designer, save 1 pass):** they
+  move from the HUD one-liner with the X icon into vanilla's corner message box, the one "The
+  spreading weeds have caused damage to the farm" uses (`HUDMessage.ForCornerTextbox`: big text,
+  wrapped, no icon, gone on its own after about five seconds, longer for a long one). Several on
+  one morning show one after another, never stacked. None shows while a menu (the planning hub, a
+  level-up), a dialogue, an event, a strike scene, the Junimos' tamper scene or a fade holds the
+  screen; one already up when such a thing starts is taken down and shown again, in full, after
+  it. The lines (keys `morning.sabotage.*`; the `hud.sabotage.*` keys are retired):
+  - Crows, the designer's own words: "Some strange crows visited the farm last night. They didn't
+    eat your crops, but {{count}} have withered away." (one: "but 1 has withered away").
+  - Thief: "Some of your things have gone missing overnight: {{items}}." {{items}} lists what was
+    taken with counts, the biggest first, five kinds at most and then "N other things" ("6
+    Parsnips, 1 bottle of Wine and 3 other things"). Counts and containers come from `AskPhrases`
+    (`AskPhrases.Counted`; one reads "1 Parsnip", "1 bottle of Wine").
+  - Hall (reversion, or a tamper with no scene to tell it): unchanged, "You awaken with a feeling
+    that something is wrong at the Community Center."
 - The Junimo tamper scene keeps its staging and its popup, with two changes (Jeff, 2026-10-07):
   - It no longer plays on waking (that version blinked and warped the farmer to his doorstep). It
     plays the first time the farmer arrives on the Farm by any route while the tamper report waits
@@ -251,7 +266,12 @@ sleeping farm.
 - The Farm at night. Camera on the largest cluster of the picked crop tiles; a scarecrow in range
   is framed in.
 - Crows fly in from the top of the screen, eyes glowing red (the vanilla crow sprite with a
-  two-pixel red eye overlay and a small red light). One crow per picked crop, six on screen at
+  two-pixel red eye overlay and a small red light). **Amended 2026-10-08 (designer: "they dropped
+  straight down onto the field. They must swoop in from the sides"):** each crow enters off the
+  left or right edge of the frame, a few tiles above its crop, the flock alternating edges in its
+  stagger, and flies a curve that dives and then levels out, fast on entry and braking to land
+  (`CrowSwoop`). It faces the way it flies, then turns to the field once down. The scarecrow crow
+  flies in toward the scarecrow. One crow per picked crop, six on screen at
   most; crops outside the frame die at the same beat.
 - One crow lands beside the scarecrow. Nothing happens to it.
 - Linus walks into the edge of the frame, stops, takes a step back, turns and hurries off the way
@@ -286,6 +306,15 @@ sleeping farm.
   are only ever at stake on the Farm itself, which the scene shows.
 - A Shadow Brute walks in from the nearest door or map edge to the chest. The lid opens with the
   vanilla animation and sound. Beat. Apply: the units vanish.
+- **Nothing spoils (designer, 2026-10-08: a thief steals).** Chest blight used to split what it took
+  into food that "spoiled" and the rest that "went missing". Every unit it takes is now stolen,
+  food included, and the morning box lists it. Nothing else in the mod spoiled things.
+- **Nothing hides the chest (designer, 2026-10-08: on save 1 it was behind a tree).** For the scene,
+  anything drawn in front of the chest, its lid or the thief's walk (and his head above it) goes
+  see-through the way vanilla fades a tree with the farmer behind it: grown trees and fruit trees
+  and buildings through their own alpha, bushes through a tint on their draw. The regions are
+  vanilla's own fade boxes (`SceneSeeThrough`). All back to full opacity when the scene ends.
+  `tly_sabotage fixture` also clears any tree or bush in front of its chest.
 - The Brute turns, looks toward the camera for half a second, eyes red, and runs out the way it
   came. Fade.
 - In the farmhouse the farmer is asleep in bed in the shot. The spouse is placed in the bed and the
@@ -391,6 +420,13 @@ Mechanics: `RunState.WitnessLines` holds (npc, scene day, said). On day start in
 an unsaid line is pushed onto the top of the NPC's dialogue stack; saying it marks it said; the
 window closing drops it. Keys `dialogue.witness.linus`, `dialogue.witness.shane`,
 `dialogue.witness.when-last-night`, `dialogue.witness.when-other-night`.
+
+**Amended 2026-10-08 (designer, save 1: Linus had never been talked to, his introduction played and
+the line did not).** Vanilla's Introduction topic (and any unseen conversation topic) clears the
+NPC's dialogue stack before it pushes itself, which threw the line away. Now the line follows
+whatever dialogue displaced it, in the same conversation: the introduction, then the witness line.
+A location line pushed on top of it is handled the same way. Rule `WitnessLines.FollowsTopic`; a
+postfix on `NPC.checkForNewCurrentDialogue` does it.
 
 ### Debug
 
