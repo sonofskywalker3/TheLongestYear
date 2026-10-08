@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.18 - 2026-10-08
+
+3164 tests. Release of 0.19.11 to 0.19.18.
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.18 keeps the 0.19.10 content and adds one sentence to the other-mods warning: a quick way was found to cut down how many impossible mod items show up, but some will still appear. Beta line set to 0.19.18.
+- `release-notes/0.19.18-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.18-backup.md` and `release-notes/nexus-description-0.19.18-backup.bbcode`. The two older Nexus description backups, `release-notes/_tly-desc-before-0.18.144.bbcode` and `release-notes/_tly-desc-before-0.19.10.bbcode`, are now committed.
+
 ## 0.19.17 - 2026-10-08
 
 3164 tests.
