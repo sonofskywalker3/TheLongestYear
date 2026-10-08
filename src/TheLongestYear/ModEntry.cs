@@ -184,7 +184,10 @@ namespace TheLongestYear
             // Sneak Peek: relabel the Wednesday TV channel while the Boost has taken the rerun slot.
             _sneakPeekChannel = new TheLongestYear.Loop.SneakPeekChannelService(this.Monitor);
             helper.Events.Content.AssetRequested += _sneakPeekChannel.OnAssetRequested;
-            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            // Two registrations, one runs: low priority when Tech's Cross-Mod Bundles is loaded
+            // (TLY's board has to win over the one it writes at load), normal otherwise.
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedNormal;
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedLate;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             helper.Events.GameLoop.Saving += this.OnSaving;
@@ -423,6 +426,29 @@ namespace TheLongestYear
             this.Monitor.Log("The Longest Year loaded.", LogLevel.Info);
         }
 
+        /// <summary>True when Tech's Cross-Mod Bundles is installed and loaded.</summary>
+        private bool IsTechCrossModBundlesLoaded()
+            => this.Helper.ModRegistry.IsLoaded(TheLongestYear.Core.TechBundlesReroll.ModId);
+
+        /// <summary>SaveLoaded at normal priority: runs <see cref="OnSaveLoaded"/> unless Tech's
+        /// Cross-Mod Bundles is loaded, in which case <see cref="OnSaveLoadedLate"/> does.</summary>
+        private void OnSaveLoadedNormal(object sender, SaveLoadedEventArgs e)
+        {
+            if (!TheLongestYear.Core.TechBoardOfRecord.RunLoadLate(IsTechCrossModBundlesLoaded()))
+                OnSaveLoaded(sender, e);
+        }
+
+        /// <summary>SaveLoaded at low priority, only with Tech's Cross-Mod Bundles loaded: its own
+        /// normal-priority SaveLoaded handler writes its saved board over the live one, so TLY's load
+        /// must come after it, whatever the load order, to put this loop's board back (spec 2026-10-08
+        /// addendum 3).</summary>
+        [EventPriority(EventPriority.Low)]
+        private void OnSaveLoadedLate(object sender, SaveLoadedEventArgs e)
+        {
+            if (TheLongestYear.Core.TechBoardOfRecord.RunLoadLate(IsTechCrossModBundlesLoaded()))
+                OnSaveLoaded(sender, e);
+        }
+
         /// <summary>Load this playthrough's banked progress when a save opens.</summary>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
@@ -537,6 +563,14 @@ namespace TheLongestYear
             }
             RunActivation.Activate();
             _metaLoaded = true;
+            // Tech's Cross-Mod Bundles writes its own saved board over the live one on every load
+            // (its SaveLoaded handler, which ran before this one; see OnSaveLoadedLate). Put this
+            // loop's board back before anything below repairs, classifies or verifies it (spec
+            // 2026-10-08 addendum 3). No-op without Tech's mod or without a stored board.
+            TheLongestYear.Core.TechBoardOfRecord.RestoreOnLoad(
+                IsTechCrossModBundlesLoaded(), Context.IsMainPlayer, _meta.State.WrittenBoard,
+                new TheLongestYear.Loop.LiveBundleBoard(),
+                message => this.Monitor.Log(message, LogLevel.Info));
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
