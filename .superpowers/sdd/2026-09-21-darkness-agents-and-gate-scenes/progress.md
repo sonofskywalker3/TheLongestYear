@@ -185,3 +185,11 @@ Answers fix round 1: DONE 889dafa..8f94daf (4115 tests). Re-review dispatched.
 Answers fix round 1/5: re-review clean (I1, M1-M4, reset trace addressed).
 Answers: minor (deferred): M3 queue-clear untested; a NeverStaged/CannotStage drop of the guaranteed tamper on Winter 6-7 has no net (accepted: a scene that cannot stage cannot land a tamper anyway); stray blank line in ThiefScene.cs; asset-load failures not pre-checked (postpone without queue).
 Answers wave: complete (commits f0e9d8b..8f94daf, review clean after round 1). Open for Jeff: the "it" variant of tamper-2 for mass nouns.
+Jeff 2026-10-08 clarifies the rule: "If there's a CONFLICT and a different scene runs, we push back one day. If the SYSTEM is broken and a scene CAN'T run ever, then they miss out on the cool scene, but still get hit."
+Ruling from that: slot collision (another event/scene owns the night, incl. another mod replacing our event so setUp never runs) -> queue, fires the next free night. Staging failure (Stage false, setUp throws, pick-time CanStage false for crows/hall/cloud, missing assets) -> the strike lands now without its scene; the scene stays due. CanStage no longer gates CanAct (except the thief draw's option-a filmable-chest preference, which Jeff chose separately). This also restores the guaranteed Winter tamper when the cloud cannot stage.
+Jeff 2026-10-08: yes to the mass-noun line: event.darkness.tamper-2-mass "The darkness has touched it. We can no longer use it for our restoration." Sent to the conflict-rule implementer as an add-on.
+Conflict rule + it-line: DONE c353637..def4d16 (4184 tests). Open for Jeff: Coal/Wheat get 'them' (game plural 'lumps of Coal'). Review dispatched.
+Jeff 2026-10-08: leave Coal as lumps ("them" line, "3 lumps of Coal").
+Conflict rule + it-line: review Approved (4184 tests verified on an archive copy).
+Conflict rule: minor (deferred): ConflictRuleTests "bare landing leaves the scene due" proves nothing (logic is game-side shown:false); StrikeSceneBase.cs 401 lines (split the ending/landing block next edit); debug preview that fails staging now lands bare (help text silent); "Bok Choy" reads "it"; long doc line in Pending.cs.
+Session end 2026-10-08: story pushed; Jeff's handoff farms standard_451080087 / 451080418 / 451080615 valid; his playthrough is next.
