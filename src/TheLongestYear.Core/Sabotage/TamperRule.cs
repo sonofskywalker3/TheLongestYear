@@ -238,4 +238,37 @@ public static class TamperRule
             .ToList();
         return eligible.Count == 0 ? null : eligible[rng.Next(eligible.Count)];
     }
+    /// <summary>The week's goal lines follow a tamper (designer, 2026-10-08): a goal that points at
+    /// a rewritten slot now names the new item, stack and quality, so the weekly quest and the hub
+    /// show and count what the board asks for. Before this the tamper dropped the goal from the
+    /// first list only and never refreshed the quest text, so the checklist kept asking for the
+    /// tainted item ("Super Cucumbers" after the Ocean Fish slot asked for Red Snapper).
+    ///
+    /// The line's discount is cleared (<see cref="BonusSlot.OriginalStack"/> 0): the week-end revert
+    /// would otherwise put the OLD item's full ask back onto the new item's slot. Stretch and route
+    /// tags described the old item and go too. Returns how many goal lines changed.</summary>
+    public static int FollowGoals(
+        IEnumerable<IList<BonusSlot>?> goalLists, int bundleIndex, IReadOnlyCollection<int> slots,
+        string newItemId, int stack, int quality)
+    {
+        if (goalLists is null) throw new ArgumentNullException(nameof(goalLists));
+        if (slots is null) throw new ArgumentNullException(nameof(slots));
+        int changed = 0;
+        foreach (IList<BonusSlot>? list in goalLists)
+        {
+            if (list is null) continue;
+            foreach (BonusSlot goal in list)
+            {
+                if (goal.BundleIndex != bundleIndex || !slots.Contains(goal.IngredientIndex)) continue;
+                goal.ItemId = newItemId;
+                goal.Stack = stack;
+                goal.Quality = quality;
+                goal.OriginalStack = 0;
+                goal.Stretch = false;
+                goal.RouteTag = null;
+                changed++;
+            }
+        }
+        return changed;
+    }
 }
