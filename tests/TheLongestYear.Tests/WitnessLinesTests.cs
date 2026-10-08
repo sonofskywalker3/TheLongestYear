@@ -29,6 +29,16 @@ public class WitnessLinesTests
     public void The_line_is_live_for_seven_days_after_the_scene(int today, bool live)
         => Assert.Equal(live, WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 }, today));
 
+    [Fact] public void A_first_meeting_intro_that_cleared_the_line_is_followed_by_it()
+        => Assert.True(WitnessLines.FollowsTopic(lineWasQueued: true, lineOnTop: false, topicPushed: true));
+
+    [Theory]
+    [InlineData(false, false, true)]  // no line was waiting
+    [InlineData(true, true, true)]    // the line is still the next thing he says
+    [InlineData(true, false, false)]  // nothing new was pushed
+    public void The_line_only_follows_a_dialogue_that_displaced_it(bool queued, bool onTop, bool pushed)
+        => Assert.False(WitnessLines.FollowsTopic(queued, onTop, pushed));
+
     [Fact] public void A_line_already_said_is_not_live()
         => Assert.False(WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40, Said = true }, 41));
 

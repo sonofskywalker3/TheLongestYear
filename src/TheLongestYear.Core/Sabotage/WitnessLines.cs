@@ -31,5 +31,15 @@ public static class WitnessLines
     public static bool IsLive(WitnessRecord record, int today)
         => record != null && !record.Said && today > record.SceneDayOfYear && today - record.SceneDayOfYear <= WindowDays;
 
+    /// <summary>Does the witness line follow the NPC's topic dialogue in the same conversation
+    /// (designer, 2026-10-08)? On a first meeting vanilla clears the NPC's dialogue stack to push
+    /// its Introduction (any unseen conversation topic does the same), which threw the line away:
+    /// Linus played his introduction and kept the line for a later talk. A location line pushed on
+    /// top of it would likewise put it off to a second talk. When the line was queued, vanilla just
+    /// pushed a dialogue and the line is no longer on top (cleared away or buried), it is spoken
+    /// right after that dialogue ends, in the same conversation.</summary>
+    public static bool FollowsTopic(bool lineWasQueued, bool lineOnTop, bool topicPushed)
+        => lineWasQueued && topicPushed && !lineOnTop;
+
     public static IReadOnlyList<string> AllKeys { get; } = new[] { LineKey("Linus"), LineKey("Shane"), WhenLastNight, WhenOtherNight };
 }
