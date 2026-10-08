@@ -21,14 +21,16 @@ public sealed class EffortComposer
     private readonly IReadOnlyList<PoolItem> _books;
     private readonly DifficultyStep _step;
     private readonly WeekMode _mode;
+    private readonly LocationWeeks? _locationWeeks;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
         IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
         IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal,
-        WeekMode mode = WeekMode.Pacing)
+        WeekMode mode = WeekMode.Pacing, LocationWeeks? locationWeeks = null)
     {
+        _locationWeeks = locationWeeks;
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
         _books = books ?? Array.Empty<PoolItem>();
         _data = data ?? throw new ArgumentNullException(nameof(data));
@@ -94,7 +96,7 @@ public sealed class EffortComposer
             ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode),
             AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
             CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode),
-            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode),
+            CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode, _locationWeeks),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             TapperAvailability.Derive(qualifiedId, _data),
             PoolArtifact(qualifiedId),
