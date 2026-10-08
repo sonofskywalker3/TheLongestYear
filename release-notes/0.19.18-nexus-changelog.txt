@@ -1,0 +1,12 @@
+0.19.18 - Fewer impossible items when you play with other mods
+
+Covers everything since 0.19.10.
+
+Fixed
+- TLY now works out when more modded items can be obtained: fish from mods' own fishing spots, fruit from modded fruit trees, crops whose seeds are only sold later in the year, forage in areas you reach later, and dug-up artifacts. So bundles ask for fewer impossible items when you play with other mods. Some will still show up.
+- Vanilla items are unchanged.
+
+Please read this if you play with other mods
+- Turning on Allow mod items in custom bundles, or playing Normal or Remixed with other mods installed, can give you bundles that ask for items that are impossible to get. That will stay true until I start tuning for specific mods. Other mods are not officially supported, but if you report an issue with one, I will look at it.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
