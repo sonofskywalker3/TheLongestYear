@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.17 - 2026-10-08
+
+3164 tests.
+
+### Docs
+
+- `docs/mod-support-unknowns.md` rewritten after the mod-support pass (0.19.11 to 0.19.16): what was fixed and by which reader, what is still unknown and why (Farm Type Manager forage, Custom Bush bushes, SpaceCore spawn groups, Spring fruit trees, maps no door reaches, Cornucopia's year-2 seeds), and the placements checked and left as they are (Birch Syrup, Amber, Golden Pumpkin with SVE). With SVE and Cornucopia, 240 of 429 modded items are unknown, down from 283.
+
 ## 0.19.16 - 2026-10-08
 
 3164 tests.
