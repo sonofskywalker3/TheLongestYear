@@ -17,38 +17,45 @@ namespace TheLongestYear.Loop
     {
         // ------------------------------------------------------------------ the night pass
 
-        /// <summary>Pick tonight's strike and either leave it waiting for its scene or, with no
-        /// scene by design (its kind's scene already played this loop), land it now. The one path
-        /// every strike goes through. Nothing is recorded here: the run records a strike when it
-        /// commits (its scene stages, or it lands with no scene by design), so a postponed strike
-        /// leaves no trace. A strike whose scene is due but cannot show tonight's pick is postponed
-        /// at once, effect and scene both (designer, 2026-10-07: never its effect without its scene
-        /// while that scene is due). Null when the event found nothing to take.</summary>
+        /// <summary>Pick tonight's strike and either leave it waiting for its scene or land it now:
+        /// with no scene by design (its kind's scene already played this loop), or bare because its
+        /// due scene cannot stage or cannot show tonight's pick (Jeff, 2026-10-08: "If the SYSTEM is
+        /// broken and a scene CAN'T run ever, then they miss out on the cool scene, but still get
+        /// hit"). The one path every strike goes through. Nothing is recorded here: the run records a
+        /// strike when it commits (its scene stages, or it lands now), so a strike postponed by a
+        /// conflict leaves no trace. Null when the event found nothing to take.</summary>
         private PendingStrike Strike(NightPlan night, DarknessEvent e, int week, CoreSeason season, int dayOfYear)
         {
             PendingStrike strike = night.Prepare(e, OnStrikeApplied, p => OnStrikeCommitted(p, week, season, dayOfYear));
             if (strike == null) return null;
             SettlePendingIfAny("replaced by a new strike");
             Pending = strike;
-            if (!StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()))
-                ApplyPendingIfAny("no scene due");
-            else if (SceneCannotShow(e, strike) is string why)
-                PostponePendingIfAny(why, PostponeCause.CannotStage);
+            switch (StrikeStaging.AtPick(StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()), () => SceneStagesTonight(e), () => SceneShowsPick(e, strike)))
+            {
+                case StrikePickAction.LandNoSceneByDesign:
+                    LandPendingNow("no scene due", bare: false);
+                    break;
+                case StrikePickAction.LandBare:
+                    LandPendingNow("its scene cannot stage or cannot show tonight's pick", bare: true);
+                    break;
+            }
             return strike;
         }
 
-        /// <summary>Why a due scene cannot show tonight's pick, or null when it can. A scene test that
-        /// throws must not strand the night, so it counts as "cannot show", and the strike waits.</summary>
-        private string SceneCannotShow(DarknessEvent e, PendingStrike strike)
+        /// <summary>Can the due scene show tonight's pick? A scene test that throws must not strand
+        /// the night, so it counts as "cannot", and the strike lands bare.</summary>
+        private bool SceneShowsPick(DarknessEvent e, PendingStrike strike)
         {
             try
             {
-                return SceneCanPlay(strike) ? null : "its scene cannot show tonight's pick";
+                if (SceneCanPlay(strike)) return true;
+                _monitor.Log($"Darkness: {e}'s scene cannot show tonight's pick.", LogLevel.Info);
+                return false;
             }
             catch (Exception ex)
             {
-                _monitor.Log($"Darkness: the scene test for {e} threw, so tonight's strike waits with it. {ex}", LogLevel.Error);
-                return "its scene test threw";
+                _monitor.Log($"Darkness: the scene test for {e} threw, so the strike lands without its scene. {ex}", LogLevel.Error);
+                return false;
             }
         }
 
@@ -145,8 +152,8 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>The queued strike that fires tonight instead of the roll (designer, 2026-10-07),
-        /// or null. A queued kind that cannot act tonight (capped, spaced, warded, nothing fair, its
-        /// scene cannot stage) stays queued and the night rolls normally.</summary>
+        /// or null. A queued kind that cannot act tonight (capped, spaced, warded, nothing fair)
+        /// stays queued and the night rolls normally.</summary>
         private DarknessEvent? QueuedTonight(NightPlan night, CoreSeason season, int day)
         {
             DarknessEvent? queued = StrikeQueue.Tonight(Run, night.CanAct);
@@ -177,16 +184,6 @@ namespace TheLongestYear.Loop
 
             private RunState Run => _s.Run;
 
-            private readonly Dictionary<DarknessEvent, bool> _stages = new();
-
-            private bool SceneStages(DarknessEvent e)
-            {
-                if (_stages.TryGetValue(e, out bool can)) return can;
-                can = _s.SceneStagesTonight(e);
-                if (!can) _s._monitor.Log($"Darkness: {e}'s scene cannot stage tonight, so {e} cannot act.", LogLevel.Info);
-                return _stages[e] = can;
-            }
-
             /// <summary>Has the thief scene still to play this loop? While it has, the chest draw
             /// holds only chests the scene can show (designer, 2026-10-07).</summary>
             private bool ThiefSceneDue => StrikeScenes.IsDue(DarknessEvent.ChestBlight, Run.StrikeScenesPlayed ??= new());
@@ -200,10 +197,9 @@ namespace TheLongestYear.Loop
             /// explicit request for one.</summary>
             public bool CanAct(DarknessEvent e, bool ignoreTamperReservation)
             {
-                // While the kind's scene is due, a scene that cannot stage tonight means the kind
-                // cannot act (review I1): asked first, so it spends no rng, and once per night.
-                if (StrikeScenes.IsDue(e, Run.StrikeScenesPlayed ??= new()) && !SceneStages(e))
-                    return false;
+                // A scene that cannot stage never stops its kind from acting: the strike lands
+                // bare (Jeff, 2026-10-08). Only the thief's draw still prefers filmable chests
+                // while his scene is due (designer, 2026-10-07).
                 switch (e)
                 {
                     case DarknessEvent.CropBlight:

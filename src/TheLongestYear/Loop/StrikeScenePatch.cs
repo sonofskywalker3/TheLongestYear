@@ -172,8 +172,9 @@ namespace TheLongestYear.Loop
                     : $"Darkness: the strike scene takes the overnight slot from {picked.GetType().Name}, which comes round again.",
                 LogLevel.Trace);
             // Not committed here: the strike commits only when vanilla's setUp actually stages the
-            // scene (StrikeSceneBase.setUp). A scene that cannot stage, or another mod replacing
-            // the event after this postfix, leaves it uncommitted, and the save net postpones it.
+            // scene (StrikeSceneBase.setUp). A scene whose setUp cannot stage it is broken and lands
+            // the strike bare there; another mod replacing the event after this postfix means setUp
+            // never runs, and the net postpones and queues it as a conflict (Jeff, 2026-10-08).
             __result = scene;
         }
 

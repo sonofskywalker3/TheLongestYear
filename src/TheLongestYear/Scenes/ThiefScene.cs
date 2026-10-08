@@ -32,7 +32,7 @@ namespace TheLongestYear.Scenes
     /// NOTHING HERE MAY STRAND THE NIGHT. Every staging decision degrades: no way to walk in means
     /// he simply starts nearer, an unreadable lid means the lid does not move, a household that
     /// cannot be posed is left where it is. Only a target with no ground at all beside it calls the
-    /// scene off, and then the strike waits for a later night, effect and scene both.</summary>
+    /// scene off, and then the theft lands from that chest without the scene (Jeff, 2026-10-08).</summary>
     internal sealed class ThiefScene : StrikeSceneBase
     {
         // ---------------------------------------------------------------- the timeline, in ms
@@ -161,7 +161,7 @@ namespace TheLongestYear.Scenes
             IReadOnlyList<(int X, int Y)> walk = PlanWalk();
             if (walk.Count == 0)
             {
-                Monitor.Log($"Darkness: the thief has nowhere to stand beside the target at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
+                Monitor.Log($"Darkness: the thief has nowhere to stand beside the target at ({_targetTile.X},{_targetTile.Y}) on {_where.NameOrUniqueName}, so the strike lands without its scene.", LogLevel.Info);
                 return false;
             }
             _walk = new SceneWalk(walk);
@@ -174,7 +174,7 @@ namespace TheLongestYear.Scenes
             }
             catch (Exception ex)
             {
-                Monitor.Log($"Darkness: the thief scene could not load the Shadow Brute, so the strike waits for a later night, effect and scene both. {ex}", LogLevel.Warn);
+                Monitor.Log($"Darkness: the thief scene could not load the Shadow Brute, so the strike lands without its scene. {ex}", LogLevel.Warn);
                 return false;
             }
             _brute.Position = _walk.At(0f);

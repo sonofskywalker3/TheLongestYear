@@ -33,7 +33,7 @@ namespace TheLongestYear.Scenes
     /// the zoom).
     ///
     /// NOTHING HERE MAY STRAND THE NIGHT. No Valley region, or no farm position on it, calls the
-    /// scene off, and the tamper waits for a later night, effect and scene both (Jeff, 2026-10-07).</summary>
+    /// scene off, and the tamper lands without it (Jeff, 2026-10-08).</summary>
     internal sealed class CloudScene : StrikeSceneBase
     {
         // ---------------------------------------------------------------- the timeline, in ms
@@ -128,8 +128,8 @@ namespace TheLongestYear.Scenes
 
         /// <summary>Can the cloud stage tonight at all? The farm has a position on a world map region
         /// with a base texture whose condition holds: the two checks <see cref="Stage"/> calls the
-        /// scene off on, asked at pick time (review I1) so a tamper whose scene cannot stage cannot
-        /// act, rather than failing to stage every night.</summary>
+        /// scene off on, asked at pick time so a tamper whose scene cannot stage lands without it
+        /// (Jeff, 2026-10-08) instead of failing in setUp.</summary>
         internal static bool CanStage()
         {
             Farm farm = Game1.getFarm();
@@ -152,12 +152,12 @@ namespace TheLongestYear.Scenes
             MapRegion region = farmOnMap?.Region;
             if (region == null)
             {
-                Monitor.Log("Darkness: the world map has no position for the farm, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
+                Monitor.Log("Darkness: the world map has no position for the farm, so the strike lands without its scene.", LogLevel.Info);
                 return false;
             }
             if (!TakeTextures(region))
             {
-                Monitor.Log($"Darkness: the world map region '{region.Id}' has no base texture to draw, so the strike waits for a later night, effect and scene both.", LogLevel.Info);
+                Monitor.Log($"Darkness: the world map region '{region.Id}' has no base texture to draw, so the strike lands without its scene.", LogLevel.Info);
                 return false;
             }
 
