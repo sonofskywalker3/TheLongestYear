@@ -610,7 +610,7 @@ namespace TheLongestYear
             // touched that record. Read the catch-limited ids once here (same shape as
             // GameDataPools's own Data/Locations read) and forward them through the reset service.
             _reset.CatchLimitedFishIds = ReadCatchLimitedFishIds();
-            // Remixed rolls a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
+            // Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
             _reset.TechBundles = new TheLongestYear.Loop.TechCrossModBundlesTarget(this.Helper.ModRegistry);
 
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed

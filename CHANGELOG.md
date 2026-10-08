@@ -3,6 +3,18 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.6 - 2026-10-08
+
+3105 tests.
+
+### Changed
+
+- **Normal now rolls a fresh Tech's Cross-Mod Bundles board each loop too, exactly like Remixed.** In 0.19.5 only Remixed asked that mod for a new board at each reset, and Normal got the same Tech board back every loop. Now both do; TLY Custom, a save without that mod, and a board kept on a Fail night still skip it. The one warning logged when the mod's code is not where TLY expects it, or it fails, no longer names Remixed: "Tech's Cross-Mod Bundles changed; this loop uses the game's own board."
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.6 and Switching bundle source later now say that with Tech's Cross-Mod Bundles, both Normal and Remixed roll a fresh board each loop. Spec addendum 2 updated to match.
+
 ## 0.19.5 - 2026-10-08
 
 3103 tests. Rolls up 0.19.4 to 0.19.5.

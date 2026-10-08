@@ -77,23 +77,24 @@ Jeff changed his mind on making the filter unconditional: it stays, but becomes 
   opposite, like the EnableNonObjectDonations retry, so a board written under 0.19.2/0.19.3 (vanilla-only) and
   one written earlier (mod items allowed) both verify instead of falling to the "foreign bundle data" path.
 
-## Addendum 2: Remixed rolls a fresh Tech's Cross-Mod Bundles board each loop (2026-10-08)
+## Addendum 2: Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop (2026-10-08)
 
 Tech's Cross-Mod Bundles (`TechnicalityCreations.CrossModBundles`, Nexus 51035) prefixes `DataLoader.Bundles` to
 return its own static board, which it generates only at save creation (or when its save data is missing). So on
-Normal every TLY reset (`loadForNewGame`) gets the same Tech board back, which is what Normal means. On Remixed
-vanilla's remix starts from that board and replaces positions, so the Tech board is lost or hybridized.
+Normal every TLY reset (`loadForNewGame`) would get the same Tech board back, and on Remixed vanilla's remix starts
+from that board and replaces positions, so the Tech board is lost or hybridized. Jeff's decision (0.19.6): Normal
+rerolls a fresh Tech board each loop too, exactly like Remixed (0.19.5 rerolled on Remixed only).
 
 - **Hook.** `WorldResetService.PerformReset`, vanilla branch, after `loadForNewGame` has built the board and only
-  when no held board is being restored: if the save's source is Remixed and Tech's mod is loaded, call Tech's
+  when no held board is being restored: if the save's source is Normal or Remixed and Tech's mod is loaded, call Tech's
   `TechsCrossModBundles.ModEntry.GenerateBundles` by reflection. It rolls a new board with `Game1.random`, stores
-  it as its own Data/Bundles and writes it to the world. TLY's own Remixed passes (difficulty pass, capped-ask
+  it as its own Data/Bundles and writes it to the world. TLY's own passes (difficulty pass, capped-ask
   clamp, reward shuffle) then run over that board, and the post-reset reload classifies it, so the Tech board is
   the expected board for the loop (no "changed by another mod" pass, since the fingerprint is taken from the board
   the reload sees).
-- **Skips.** Normal, TLY Custom, Tech not loaded, and the held-board restore (Fail-night keep).
+- **Skips.** TLY Custom, Tech not loaded, and the held-board restore (Fail-night keep).
 - **Adapter.** `ITechBundlesRerollTarget` (IsLoaded, Reroll) wraps the reflection; `TechBundlesReroll.Decide/Run`
   in Core holds the decision and the fallback and is unit-tested with a fake. Reroll logs Info on success. If the
-  type or method is missing or it throws, one Warn ("Tech's Cross-Mod Bundles changed; Remixed will use the game's
-  remix this loop") and the reset continues with the game's remix.
+  type or method is missing or it throws, one Warn ("Tech's Cross-Mod Bundles changed; this loop uses the game's
+  own board") and the reset continues with the game's own board.
 - **No code or item lists from Tech's mod** are copied; TLY only names its type and method.
