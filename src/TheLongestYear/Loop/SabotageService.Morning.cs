@@ -94,7 +94,7 @@ namespace TheLongestYear.Loop
                         break;
                     case SabotageKind.Reversion:
                     case SabotageKind.Tampering:
-                        if (!hallSaid) Game1.addHUDMessage(new HUDMessage(Strings.Get("hud.sabotage.hall"), HUDMessage.error_type));
+                        if (!hallSaid) Hud(Strings.Get("hud.sabotage.hall"));
                         hallSaid = true;
                         break;
                 }
@@ -102,6 +102,12 @@ namespace TheLongestYear.Loop
             Game1.playSound("shadowDie");
         }
 
-        private static void Hud(string text) => Game1.addHUDMessage(new HUDMessage(text, HUDMessage.error_type));
+        /// <summary>One morning HUD line, also written to the log (Trace) so a headless run can
+        /// read what the player was shown.</summary>
+        private void Hud(string text)
+        {
+            _monitor.Log($"Darkness: morning HUD line: {text}", LogLevel.Trace);
+            Game1.addHUDMessage(new HUDMessage(text, HUDMessage.error_type));
+        }
     }
 }
