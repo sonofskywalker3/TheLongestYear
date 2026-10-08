@@ -150,3 +150,9 @@ Custom from loop 2 fell to "engine manifest mismatch (stale or foreign bundle da
   the board of record when Tech's mod is loaded and none is stored yet; the existing mirrors keep it current.
   An existing save still in loop 1 without a stored board is not adopted at load, since Tech has already
   rewritten its board by then; it gets one at its next reset.
+- **Board repair is part of the board of record (0.19.9).** The load-time repair seeds from
+  `BoardRepairStability.Seed` (farmer id + `EffectiveBundleSeedLoop`, salted), not the run seed that a new game
+  assigns after the first repair; walks bundles in ordinal key order; and mirrors every swap into
+  `WrittenBoard` when one is stored, like the unstackable clamp. A reload then restores the repaired board and
+  the repair has nothing to do. This also fixes TLY Custom, where an unmirrored swap made the stored-board
+  check fail and the save fall to the read path.
