@@ -64,7 +64,7 @@ namespace TheLongestYear.Loop
         /// on any host that never sets it, which leaves player.fishCaught untouched.</summary>
         public IReadOnlyList<string> CatchLimitedFishIds { get; set; }
 
-        /// <summary>Tech's Cross-Mod Bundles, for the Remixed reroll (spec 2026-10-08 addendum 2).
+        /// <summary>Tech's Cross-Mod Bundles, for the Normal and Remixed reroll (spec 2026-10-08 addendum 2).
         /// Null skips it.</summary>
         public TheLongestYear.Core.ITechBundlesRerollTarget TechBundles { get; set; }
 
@@ -680,10 +680,10 @@ namespace TheLongestYear.Loop
                 _meta.WrittenBoardSeasonPins = null;
                 _meta.WrittenBoardFlavors = null;
                 LastGeneratedRequirements = null;
-                // Remixed with Tech's Cross-Mod Bundles: roll a fresh Tech board in place of the
-                // game's remix of the old one, before the difficulty and reward passes below run
-                // over it (spec 2026-10-08 addendum 2). Skipped for a held board, Normal and TLY
-                // Custom; a failure logs one warning and keeps the game's remix. The post-reset
+                // Normal or Remixed with Tech's Cross-Mod Bundles: roll a fresh Tech board in place
+                // of the old one, before the difficulty and reward passes below run over it (spec
+                // 2026-10-08 addendum 2). Skipped for a held board and TLY Custom; a failure logs
+                // one warning and keeps the game's own board. The post-reset
                 // reload classifies and fingerprints whatever is live, so this board is the
                 // expected one for the loop.
                 TheLongestYear.Core.TechBundlesReroll.Run(

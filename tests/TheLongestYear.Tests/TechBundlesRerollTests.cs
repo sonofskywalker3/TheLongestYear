@@ -3,7 +3,7 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Remixed rerolls a fresh Tech's Cross-Mod Bundles board each loop
+/// <summary>Normal and Remixed reroll a fresh Tech's Cross-Mod Bundles board each loop
 /// (spec 2026-10-08-custom-board-vanilla-only, addendum 2).</summary>
 public class TechBundlesRerollTests
 {
@@ -27,18 +27,19 @@ public class TechBundlesRerollTests
     private TechRerollOutcome Run(FakeTech? tech, string source, bool held = false)
         => TechBundlesReroll.Run(tech, source, held, _info.Add, _warn.Add);
 
-    [Fact]
-    public void Remixed_with_tech_loaded_rerolls_and_logs_info()
+    [Theory]
+    [InlineData(BundleSourceNames.Normal)]
+    [InlineData(BundleSourceNames.Remixed)]
+    public void Vanilla_sources_with_tech_loaded_reroll_and_log_info(string source)
     {
         var tech = new FakeTech();
-        Assert.Equal(TechRerollOutcome.Rerolled, Run(tech, BundleSourceNames.Remixed));
+        Assert.Equal(TechRerollOutcome.Rerolled, Run(tech, source));
         Assert.Equal(1, tech.Rerolls);
         Assert.Equal(new[] { TechBundlesReroll.RerolledInfo }, _info);
         Assert.Empty(_warn);
     }
 
     [Theory]
-    [InlineData(BundleSourceNames.Normal)]
     [InlineData(BundleSourceNames.Engine)]
     [InlineData(BundleSourceNames.LegacyVanilla)]
     public void Other_sources_never_reroll(string source)
@@ -50,11 +51,13 @@ public class TechBundlesRerollTests
         Assert.Empty(_warn);
     }
 
-    [Fact]
-    public void Kept_board_is_never_rerolled()
+    [Theory]
+    [InlineData(BundleSourceNames.Normal)]
+    [InlineData(BundleSourceNames.Remixed)]
+    public void Kept_board_is_never_rerolled(string source)
     {
         var tech = new FakeTech();
-        Assert.Equal(TechRerollOutcome.Skipped, Run(tech, BundleSourceNames.Remixed, held: true));
+        Assert.Equal(TechRerollOutcome.Skipped, Run(tech, source, held: true));
         Assert.Equal(0, tech.Rerolls);
     }
 
@@ -93,5 +96,12 @@ public class TechBundlesRerollTests
 
     [Fact]
     public void Source_match_ignores_case()
-        => Assert.True(TechBundlesReroll.ShouldReroll("remixed", restoringHeldBoard: false, techLoaded: true));
+    {
+        Assert.True(TechBundlesReroll.ShouldReroll("remixed", restoringHeldBoard: false, techLoaded: true));
+        Assert.True(TechBundlesReroll.ShouldReroll("normal", restoringHeldBoard: false, techLoaded: true));
+    }
+
+    [Fact]
+    public void Failure_warning_names_neither_source()
+        => Assert.DoesNotContain("Remixed", TechBundlesReroll.FailureWarning);
 }
