@@ -132,7 +132,8 @@ namespace TheLongestYear.Loop
             if (_failed) return;
             try
             {
-                if (!IsTainted(__instance)) return;
+                // A tainted item, or a bundle slot the darkness emptied (DarkenedSlotMarkPatch).
+                if (!IsTainted(__instance) && !(RunActivation.IsActive && DarkenedSlotMarkPatch.ShowsOn(__instance))) return;
                 DrawAura(spriteBatch, location + new Vector2(CenterOffset, CenterOffset) * scaleSize,
                     MenuAuraScale * scaleSize, layerDepth);
             }

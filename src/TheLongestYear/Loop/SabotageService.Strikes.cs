@@ -108,6 +108,8 @@ namespace TheLongestYear.Loop
                 BundleLabel = value != null ? BundleDataTamper.LabelOf(value) : "",
                 OldFlavor = BoardFlavor(pick.BundleIndex, pick.IngredientIndex),
             });
+            // The bundle menu marks the emptied slot until it is filled again (designer, 2026-10-08).
+            DarkenedSlots.Mark(Run.DarkenedSlots ??= new(), pick.BundleIndex, pick.IngredientIndex, pick.ItemId);
             _monitor.Log($"Darkness: {Strings.ItemName(pick.ItemId)} came undone from {bundleName} (slot {pick.BundleIndex}/{pick.IngredientIndex}) on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
             return true;
         }

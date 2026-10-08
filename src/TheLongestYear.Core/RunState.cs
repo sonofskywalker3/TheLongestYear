@@ -340,6 +340,11 @@ public sealed class RunState
     /// (see <see cref="Sabotage.WitnessLines"/>). Cleared at the loop reset.</summary>
     public List<Sabotage.WitnessRecord> WitnessLines { get; set; } = new();
 
+    /// <summary>Bundle slots a reversion emptied and the player has not filled again: the bundle
+    /// menu marks each in the tainted purple (designer, 2026-10-08). Rules in
+    /// <see cref="Sabotage.DarkenedSlots"/>. Cleared at the loop reset.</summary>
+    public List<DonatedSlot> DarkenedSlots { get; set; } = new();
+
     // ---- Morris's offer (spec 2026-09-25-joja-offer-design). Per loop: a rewind starts all four over. ----
 
     /// <summary>Day of year (1..112) the offer scene played this loop, -1 = not yet this loop.</summary>
@@ -609,6 +614,7 @@ public sealed class RunState
         (StruckEvents ??= new()).Clear();
         (StrikeScenesPlayed ??= new()).Clear();
         (WitnessLines ??= new()).Clear();
+        (DarkenedSlots ??= new()).Clear();
         JojaSceneSeenDay = -1;
         (JojaLetterDays ??= new()).Clear();
         JojaLettersSent = 0;
