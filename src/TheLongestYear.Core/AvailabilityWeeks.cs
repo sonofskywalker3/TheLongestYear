@@ -242,6 +242,8 @@ public static class AvailabilityWeeks
             // GameLocation.cs (PC 1.6) SquidFest rewards: Winter 12 targets 1/3/5/8 squid, reward
             // "12_2" (5 squid) is a Pearl. Winter 12 is day 96, week 14.
             ["(O)797"] = (14, "Pearl, SquidFest Winter 12 reward for 5 squid"),
+            // Winter 13 targets 2/5/7/10; reward "13_2" (7 squid) is a Treasure Chest. Day 97, week 14.
+            ["(O)166"] = (14, "Treasure Chest, SquidFest Winter 13 reward for 7 squid"),
         };
 
     /// <summary>Hard weeks for <see cref="OtherPlacements"/> rows whose earliest possible week is
