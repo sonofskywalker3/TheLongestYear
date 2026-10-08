@@ -11,7 +11,9 @@ using SObject = StardewValley.Object;
 namespace TheLongestYear.Scenes
 {
     /// <summary>The crop blight scene (spec 2026-09-21). Eight seconds on the night farm, no text and
-    /// no dialogue: crows with red eyes drop onto the exact crops that are about to die, one settles
+    /// no dialogue: crows with red eyes swoop in from both sides of the frame onto the exact crops
+    /// that are about to die (designer, 2026-10-08: not straight down; the curve is
+    /// <see cref="CrowSwoop"/>), one settles
     /// beside a scarecrow and is not troubled by it, Linus wanders in, sees them, backs off and
     /// hurries away, the crows peck, the crops die on that beat, the crows lift off, black.
     ///
@@ -37,10 +39,10 @@ namespace TheLongestYear.Scenes
         private const int FadeInMs = 600;
         private const int CrowsEnterMs = 600;
         private const int CrowGapMs = 120;
-        /// <summary>How long a crow is in the air on its way down. The spec asks for 3.5 tiles a
-        /// second, but a crow entering above the frame has ten or more tiles to fall and would still
-        /// have it gliding when Linus arrives, so the glide is a fixed length instead and the speed
-        /// falls out of it (about four tiles a second on a normal window).</summary>
+        /// <summary>How long a crow is in the air on its way in. A crow entering off the side of the
+        /// frame has ten or more tiles to cover and would still be gliding when Linus arrives at a
+        /// fixed speed, so the glide is a fixed length instead and the speed falls out of it, fast
+        /// on entry and braking to land (<see cref="CrowSwoop.Progress"/>).</summary>
         private const int GlideMs = 1600;
         private const int ScarecrowCrowLandMs = 2200;
         private const int LinusEnterMs = 2600;
@@ -96,6 +98,13 @@ namespace TheLongestYear.Scenes
         private const int CrowFlapMs = 60;
 
         private const int TileSize = 64;
+        /// <summary>How far past the frame's side edge a crow starts, so it flies in from off screen
+        /// (its sprite hangs a tile either side of its feet).</summary>
+        private const int SwoopStartOutsideTiles = 2;
+        /// <summary>How high above its crop a crow starts its swoop: this many tiles, plus up to
+        /// <see cref="SwoopExtraRiseTiles"/> more so no two come in at one height.</summary>
+        private const int SwoopRiseTiles = 3;
+        private const int SwoopExtraRiseTiles = 3;
         private const float DrawScale = 4f;
         /// <summary>A crow's drawn sprite is four tiles across and hangs two tiles above its feet,
         /// the offset <c>Critter.draw</c> uses (Critter.cs:69).</summary>
@@ -154,11 +163,15 @@ namespace TheLongestYear.Scenes
             public int EnterAtMs;
             public int LandAtMs;
             public bool Flip;
+            /// <summary>Facing on the way in: the way it flies (the sheet's bird faces left).</summary>
+            public bool FlyFlip;
             public Vector2 Position;
             public int Frame = CrowStandFrame;
             public bool Visible;
             /// <summary>On the ground: between its landing and the lift-off.</summary>
             public bool Perched;
+            /// <summary>Has come down (it keeps its landed facing through the lift-off too).</summary>
+            public bool Landed;
             /// <summary>Pixels a millisecond upward once it lifts off, and sideways as it goes.</summary>
             public float RiseRate;
             public float DriftRate;
@@ -206,11 +219,16 @@ namespace TheLongestYear.Scenes
 
             SceneCamera.CutTo(_farm, _focus);
 
-            foreach ((int X, int Y) tile in CropCluster.Nearest(patch, centre, MaxCrows))
-                _crows.Add(MakeCrow(new Vector2(tile.X, tile.Y), CrowsEnterMs + _crows.Count * CrowGapMs));
+            IReadOnlyList<(int X, int Y)> landings = CropCluster.Nearest(patch, centre, MaxCrows);
+            // The flock comes in from both edges in turn; the first from the side its crop is on.
+            bool firstFromLeft = landings.Count > 0 && landings[0].X <= _focus.X;
+            foreach ((int X, int Y) tile in landings)
+                _crows.Add(MakeCrow(new Vector2(tile.X, tile.Y), CrowsEnterMs + _crows.Count * CrowGapMs, CrowSwoop.FromLeft(_crows.Count, firstFromLeft)));
             if (scarecrow.HasValue)
             {
-                SceneCrow perched = MakeCrow(TileBesideScarecrow(scarecrow.Value, centroid), ScarecrowCrowLandMs - GlideMs);
+                Vector2 beside = TileBesideScarecrow(scarecrow.Value, centroid);
+                // It flies in toward the scarecrow and lands facing it.
+                SceneCrow perched = MakeCrow(beside, ScarecrowCrowLandMs - GlideMs, fromLeft: scarecrow.Value.X > beside.X);
                 perched.Flip = scarecrow.Value.X > perched.Tile.X;
                 _crows.Add(perched);
             }
@@ -224,17 +242,23 @@ namespace TheLongestYear.Scenes
             return true;
         }
 
-        private SceneCrow MakeCrow(Vector2 tile, int enterAtMs)
+        private SceneCrow MakeCrow(Vector2 tile, int enterAtMs, bool fromLeft)
         {
             Vector2 landing = SceneCamera.TileCentre(tile);
+            // Off the frame's side edge, a few tiles above the crop: the swoop's dive starts there.
+            float startX = fromLeft
+                ? Game1.viewport.X - TileSize * SwoopStartOutsideTiles
+                : Game1.viewport.X + Game1.viewport.Width + TileSize * SwoopStartOutsideTiles;
+            float startY = landing.Y - TileSize * (SwoopRiseTiles + _spread.Next(0, SwoopExtraRiseTiles + 1));
             var crow = new SceneCrow
             {
                 Sprite = new AnimatedSprite(CritterSheet, CrowBaseFrame, CrowSpriteSize, CrowSpriteSize),
                 Tile = tile,
                 Landing = landing,
-                Start = new Vector2(landing.X, Game1.viewport.Y - TileSize * 2),
+                Start = new Vector2(startX, startY),
                 EnterAtMs = Math.Max(0, enterAtMs),
                 Flip = tile.X < _focus.X,
+                FlyFlip = fromLeft,
             };
             // The scene is silent and every crow leaves on the same beat, so the only thing keeping
             // the lift-off from looking like one object is that no two birds climb alike.
@@ -364,6 +388,7 @@ namespace TheLongestYear.Scenes
         {
             crow.Visible = elapsed >= crow.EnterAtMs;
             crow.Perched = elapsed >= crow.LandAtMs && elapsed < LiftOffMs;
+            crow.Landed = elapsed >= crow.LandAtMs;
             if (elapsed < crow.EnterAtMs)
             {
                 crow.Position = crow.Start;
@@ -371,8 +396,9 @@ namespace TheLongestYear.Scenes
             }
             else if (elapsed < crow.LandAtMs)
             {
-                float travelled = (elapsed - crow.EnterAtMs) / (float)GlideMs;
-                crow.Position = Vector2.Lerp(crow.Start, crow.Landing, travelled);
+                // The swoop: a dive from the side that levels out and brakes onto the crop.
+                (float x, float y) = CrowSwoop.At((crow.Start.X, crow.Start.Y), (crow.Landing.X, crow.Landing.Y), (elapsed - crow.EnterAtMs) / (float)GlideMs);
+                crow.Position = new Vector2(x, y);
                 crow.Frame = FlapFrame(elapsed);
             }
             else if (elapsed < LiftOffMs)
@@ -467,8 +493,10 @@ namespace TheLongestYear.Scenes
                         SpriteEffects.None,
                         0.898f);
                 }
-                crow.Sprite.draw(b, corner, 0.9f, 0, 0, SceneCamera.NightTint, crow.Flip, DrawScale);
-                PaintEye(b, crow, corner);
+                // On the way in it faces the way it flies; once down it turns to the field as before.
+                bool flip = crow.Landed ? crow.Flip : crow.FlyFlip;
+                crow.Sprite.draw(b, corner, 0.9f, 0, 0, SceneCamera.NightTint, flip, DrawScale);
+                PaintEye(b, crow, corner, flip);
             }
             if (_linusInFrame) _linus?.Draw(b, SceneCamera.NightTint);
         }
@@ -476,10 +504,10 @@ namespace TheLongestYear.Scenes
         /// <summary>A glowing red eye: a soft radial pool, then two sheet pixels of solid red in the
         /// middle of it, at the eye's real place in this frame. Neither is tinted by the night, which
         /// is the point of it.</summary>
-        private static void PaintEye(SpriteBatch b, SceneCrow crow, Vector2 corner)
+        private static void PaintEye(SpriteBatch b, SceneCrow crow, Vector2 corner, bool flip)
         {
             if (!EyeOffsets.TryGetValue(crow.Frame, out Point eye)) return;
-            float x = crow.Flip ? (CrowSpriteSize - EyeDotPixels - eye.X) * DrawScale : eye.X * DrawScale;
+            float x = flip ? (CrowSpriteSize - EyeDotPixels - eye.X) * DrawScale : eye.X * DrawScale;
             float core = EyeDotPixels * DrawScale;
             var centre = new Vector2(corner.X + x + core / 2f, corner.Y + eye.Y * DrawScale + core / 2f);
             SceneGlow.Draw(b, centre, EyeGlowSheetPixels * DrawScale, core, Color.Red);
