@@ -3,6 +3,18 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.3 - 2026-10-08
+
+3082 tests. Rolls up 0.19.2 to 0.19.3.
+
+### Changed
+
+- **TLY Custom boards ask only for vanilla items.** Items from other mods never enter a TLY Custom board: not its item pools, not the bundle templates it draws from (a bundle mod's bundle has its modded items taken out, and a position left with nothing gets vanilla's own bundle), not the reward pool, and not the replacements the board repair picks. A modded bundle reward is swapped for vanilla's reward at that spot. Balancing every item of every mod is not possible, so the balance now holds whatever else is installed. Category slots ("any fish") still take a modded item when you donate one. Normal and Remixed are unchanged and keep working with other mods, bundle mods included. The vanilla item list is read from the unmodded game (1.6.15) by a new tool, `tools/vanilla-ids`, and is re-run after a game update. A board you already have keeps its bundles until your next loop. Asked about by PixxiePerfect (Nexus posts, 2026-10-07), on Tech's Cross-Mod Bundles.
+
+### Docs
+
+- README and the Nexus description say plainly that other mods are not officially supported, that TLY Custom boards use vanilla items only, and that Normal or Remixed with other mods may not reshuffle each loop and may ask for items you can't get.
+
 ## 0.19.1 - 2026-10-07
 
 ### Fixed
