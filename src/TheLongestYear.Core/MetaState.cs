@@ -75,7 +75,11 @@ public sealed class MetaState
     /// instead of re-deriving from the seed: a data mod whose Content Patcher edits shift the item
     /// pools after the reset (SVE audit, 2026-08-29) made the re-derivation disagree with a healthy
     /// board and demoted the save to the legacy read path. Null on saves written before 0.16.158
-    /// (the seed re-derivation stays as their fallback) and in Vanilla board mode.</summary>
+    /// (the seed re-derivation stays as their fallback) and in Vanilla board mode.
+    /// <para>Exception: on Normal or Remixed with Tech's Cross-Mod Bundles loaded at the reset, it holds
+    /// the final board that reset wrote, so the load can put it back after Tech's mod overwrites it
+    /// (<see cref="TechBoardOfRecord"/>, spec 2026-10-08 addendum 3). The Engine manifest path never
+    /// reads it on a vanilla source.</para></summary>
     public Dictionary<string, string>? WrittenBoard { get; set; }
 
     /// <summary>See <see cref="WrittenBoard"/>: item id -> <see cref="Season"/> as int.</summary>

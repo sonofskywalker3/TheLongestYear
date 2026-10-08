@@ -98,3 +98,50 @@ rerolls a fresh Tech board each loop too, exactly like Remixed (0.19.5 rerolled 
   type or method is missing or it throws, one Warn ("Tech's Cross-Mod Bundles changed; this loop uses the game's
   own board") and the reset continues with the game's own board.
 - **No code or item lists from Tech's mod** are copied; TLY only names its type and method.
+
+## Addendum 3: TLY is the board of record on every load when Tech's mod is loaded (2026-10-08)
+
+A live check (TLY 0.19.6 + Tech's Cross-Mod Bundles 1.0.2) found Tech's `SaveLoaded` handler reads its
+save key `TCMB` and calls `SetBundleData(DataLoader.Bundles)` with its own raw board on every load (or
+generates a brand-new one when `TCMB` is empty). TLY's post-reset save calls `SaveGame.Save()` directly, so
+SMAPI's `Saving` never fires and `TCMB` never learns TLY's reroll. Tech loads before TLY, so its handler ran
+first and TLY classified the replaced board. Normal/Remixed lost the reroll and TLY's difficulty pass,
+capped-ask clamp and reward shuffle on the post-reset reload, and replayed one raw Tech board every loop; TLY
+Custom from loop 2 fell to "engine manifest mismatch (stale or foreign bundle data)" and played Tech's board.
+
+- **The stored board.** Engine already keeps `MetaState.WrittenBoard`. On Normal/Remixed the reset now stores
+  the final board it wrote (after the difficulty pass, capped-ask clamp and reward shuffle, or the held-board
+  restore) in the same field, but only when Tech's mod is loaded at that reset; otherwise it stays null as
+  before. Reusing the field means the existing mirrors (unstackable-ask clamp, theme week discount) keep it in
+  step with every later TLY board write. The Engine manifest path never reads it on a vanilla source
+  (`EngineModeDecider` returns read-and-classify there).
+- **Load order.** TLY's `SaveLoaded` work is registered twice: a normal-priority handler that runs it when
+  Tech's mod is NOT loaded (unchanged for everyone else), and an `[EventPriority(EventPriority.Low)]` handler
+  that runs it when Tech's mod IS loaded, so it always follows Tech's normal-priority handler regardless of
+  load order.
+- **Restore.** Inside that load, after the save's TLY state is read and before any board repair,
+  classification or `ResolveRequirements`: when Tech's mod is loaded, this is the host, and a stored board
+  exists, every stored key whose live value is missing or differs (display-name field ignored, as the
+  manifest check does) is written back with `SetBundleData`, the CC ingredient cache is refreshed, and one Info
+  line is logged ("Tech's Cross-Mod Bundles rewrote the board on load; restored this loop's board"). Tech's
+  board and TLY's share vanilla's key space (Tech uses the vanilla `Room/index` keys; the Engine writes every
+  key of `Data/Bundles`, which Tech does not edit since it patches `DataLoader.Bundles`, not the asset), so
+  after the write every key TLY owns equals TLY's board and no Tech-only key is left behind. Classification,
+  the fingerprint and, for Engine, the stored-board manifest check then see TLY's board. Decision logic lives
+  in `Core.TechBoardOfRecord` behind `ILiveBundleBoard`, unit-tested with a fake.
+- **Tech's own state is left alone (design step 3 skipped).** After the restore, Tech's static board and its
+  `TCMB` still hold an older raw board. That is harmless: TLY wins on every load anyway, and `TCMB` could never
+  match TLY's post-pass board, so syncing it would not remove the restore. The stale static only feeds
+  `DataLoader.Bundles`, whose readers are the reset (Normal/Remixed reroll right after it, Engine overwrites
+  every key, a held board is written back from the snapshot), the empty-board lazy init (never after a load),
+  and `UpdateBundleDisplayNames` (below). Writing another mod's save data through its private `Helper` was
+  judged too invasive for no gain.
+- **Localized names.** `NetWorldState.UpdateBundleDisplayNames` fills field 6 of every live bundle by matching
+  the bundle NAME against `DataLoader.Bundles` values (Tech's board when Tech has data); Tech's values have
+  only five fields, so the lookup finds no display name and falls back to `Strings\BundleNames:<name>`, then
+  the raw name. That is the same for a stale or a fresh Tech board and for TLY's restored values, and it is
+  recomputed on every `BundleData` refresh, so a restored value's field 6 never sticks. The CC menu keeps
+  working; names on a Tech-loaded save are the BundleNames strings or the raw names, as already the case.
+- **Scope.** Without Tech's mod nothing changes: same handler priority, no stored vanilla board, no restore.
+  Challenging CC Bundles and other bundle mods keep the detect-and-reclassify path. A Normal/Remixed save from
+  0.19.6 has no stored board until its next reset; until then it keeps today's behavior.

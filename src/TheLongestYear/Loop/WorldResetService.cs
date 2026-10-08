@@ -705,6 +705,15 @@ namespace TheLongestYear.Loop
                     ApplyVanillaBoardDifficulty();
                     ApplyVanillaBoardRewardShuffle();
                 }
+                // With Tech's Cross-Mod Bundles loaded, store the board this reset just wrote: Tech's
+                // mod writes its own saved board over it on every load, and the load puts this one
+                // back (spec 2026-10-08 addendum 3). Without Tech it stays null, as before.
+                _meta.WrittenBoard = TheLongestYear.Core.TechBoardOfRecord.VanillaBoardToStore(
+                    TechBundles?.IsLoaded ?? false, Game1.netWorldState.Value.BundleData);
+                if (_meta.WrittenBoard != null)
+                    _monitor.Log(
+                        $"Reset: stored this loop's board ({_meta.WrittenBoard.Count} bundles) as the board of record, since Tech's Cross-Mod Bundles rewrites the board on every load.",
+                        LogLevel.Info);
             }
             else
             {

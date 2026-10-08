@@ -3,6 +3,18 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.7 - 2026-10-08
+
+3118 tests.
+
+### Fixed
+
+- **With Tech's Cross-Mod Bundles installed, reloading a save no longer swaps TLY's board for an older Tech board.** That mod writes its own saved board over the live one every time a save loads, and TLY's save right after a reset does not fire the save event it listens to, so its saved board never learned TLY's. On Normal and Remixed the reload wiped the fresh reroll and TLY's difficulty pass, capped-ask clamp and reward shuffle, and every loop after the first night replayed one raw Tech board. On TLY Custom, from loop 2 the reload replaced TLY's board with Tech's ("engine manifest mismatch ... falling back to read path"). Now TLY is the board of record whenever that mod is loaded: a Normal or Remixed reset stores the final board it wrote (a kept Fail-night board too) next to the TLY Custom board it already stored, TLY's save-load work runs at low priority after other mods' handlers, and before it repairs or classifies anything it writes back every bundle where the live board differs and logs one line ("Tech's Cross-Mod Bundles rewrote the board on load; restored this loop's board"). Without that mod nothing changes: same event order, no stored Normal/Remixed board, no restore, and other bundle mods (Challenging CC Bundles) keep the detect-and-reclassify path. Tech's own saved board is left alone; it only feeds bundle display names, which it cannot change (spec addendum 3). A Normal or Remixed save from 0.19.6 picks this up at its next reset. Decision logic in `Core.TechBoardOfRecord`, unit-tested with a fake board.
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.7 adds a line about reloads keeping the loop's board with Tech's mod. Spec addendum 3.
+
 ## 0.19.6 - 2026-10-08
 
 3105 tests.
