@@ -126,8 +126,13 @@ namespace TheLongestYear.Loop
         {
             if (_pending is not { } p) return;
             if (e.OldMenu is not DialogueBox closed || !ReferenceEquals(closed.characterDialogue, p.Topic)) return;
-            _pending = null;
             Stack<Dialogue> stack = p.Npc.CurrentDialogue;
+            if (WitnessLines.WaitsForTopicToFinish(closedBoxWasTopic: true, topicStillOnTop: stack.Count > 0 && ReferenceEquals(stack.Peek(), p.Topic)))
+            {
+                Monitor?.Log($"Witness: {p.Npc.Name}'s {p.Topic.TranslationKey} dialogue goes on next talk, so his line waits for its end.", LogLevel.Debug);
+                return;
+            }
+            _pending = null;
             bool lineIsNext = stack.Count > 0 && ReferenceEquals(stack.Peek(), p.Line);
             bool open = WitnessLines.OpensAfterTopic(
                 closedBoxWasTopic: true,
