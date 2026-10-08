@@ -51,6 +51,23 @@ public static class BundleParsing
         return new ParsedBundle(room, index, name, ingredients, slots);
     }
 
+    /// <summary>A Data/Bundles entry as an engine <see cref="BundleSpec"/>: reward is field 1,
+    /// color field 3, display name field 6 (falling back to the name).</summary>
+    public static BundleSpec ToSpec(string key, string value)
+    {
+        ParsedBundle parsed = Parse(key, value);
+        string[] fields = value.Split('/');
+        string reward = fields.Length > 1 ? fields[1] : "";
+        int color = fields.Length > 3 && int.TryParse(fields[3], out int c) ? c : 0;
+        string displayName = fields.Length > 6 && !string.IsNullOrEmpty(fields[6]) ? fields[6] : parsed.Name;
+
+        var slots = new List<BundleSlotSpec>(parsed.Ingredients.Count);
+        foreach (BundleIngredient ing in parsed.Ingredients)
+            slots.Add(new BundleSlotSpec(ing.ItemRef, ing.Stack, ing.Quality));
+
+        return new BundleSpec(parsed.Room, parsed.Index, parsed.Name, displayName, reward, color, parsed.NumberOfSlots, slots);
+    }
+
     public static IReadOnlyList<BundleIngredient> ParseIngredients(string ingredientField)
     {
         List<BundleIngredient> result = new List<BundleIngredient>();

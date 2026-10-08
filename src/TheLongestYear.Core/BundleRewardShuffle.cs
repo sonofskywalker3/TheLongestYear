@@ -36,9 +36,13 @@ public static class BundleRewardShuffle
 
     /// <summary>Distinct, non-empty, no '/' (it would break the bundle string), ordinal-sorted
     /// so the pool, and with it every pick, is the same on every machine.</summary>
-    public static IReadOnlyList<string> CleanPool(IEnumerable<string> rewards)
+    /// <param name="vanillaOnlyIds">TLY Custom boards pass <see cref="VanillaItemIds.All"/>, and
+    /// a reward that gives anything outside it is left out (spec 2026-10-08-custom-board-vanilla-only).
+    /// Null keeps every reward, as Normal and Remixed always have.</param>
+    public static IReadOnlyList<string> CleanPool(IEnumerable<string> rewards, IReadOnlySet<string>? vanillaOnlyIds = null)
         => rewards
             .Where(r => !string.IsNullOrWhiteSpace(r) && r.IndexOf(FieldSeparator) < 0)
+            .Where(r => vanillaOnlyIds == null || VanillaOnlyBoard.IsVanillaReward(r, vanillaOnlyIds))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(r => r, StringComparer.Ordinal)
             .ToList();
