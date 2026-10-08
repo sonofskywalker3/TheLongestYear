@@ -29,6 +29,89 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|talk|click`; `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
 
+## 0.19.10 - 2026-10-08
+
+3129 tests. Release of 0.19.2 to 0.19.10 (the live Nexus page was on 0.19.1).
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.10 covers everything since 0.19.1 (TLY Custom boards vanilla-only by default, the per-save Allow mod items in custom bundles option, a fresh Tech's Cross-Mod Bundles board each loop on Normal and Remixed, the loop's board and repair swaps surviving reloads) and says plainly that turning the option on, or playing Normal or Remixed with other mods, can ask for items that are impossible to get until Jeff tunes for specific mods. Beta line set to 0.19.10. PixxiePerfect added to Thanks.
+- `docs/mod-support-unknowns.md`: the SVE and Cornucopia items TLY can't place yet, saved for the mod-support phase, with a pointer in TODO.md.
+- `release-notes/0.19.10-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.10-backup.md` and `release-notes/nexus-description-0.19.10-backup.bbcode`.
+
+## 0.19.9 - 2026-10-08
+
+3129 tests.
+
+### Fixed
+
+- **An unfilled bundle slot no longer changes item when you reload.** The load-time board repair (which swaps an ask this run cannot reach, such as Cornucopia's Zucchini when its seed is out of reach) drew its replacement from the run seed, which a new game only sets after that first repair, and walked the board in whatever order the live data happened to be in. Its swaps also never reached the stored board of record, so with Tech's Cross-Mod Bundles each load restored the unreachable ask and the repair drew again, often a different item (loop 1: Fall Crops took (O)300/(O)266 at creation, (O)284/Cornucopia Bamboo after a reload). Now the repair seeds from the board's own basis (farmer id and bundle seed loop, the same on every load of a loop), walks bundles in key order, and writes every swap into the stored board, so the next load restores the repaired board and the repair finds nothing to do.
+- **Same seam on TLY Custom.** A repair swap on a TLY Custom board (possible with "Allow mod items in custom bundles" on) used to leave the stored board unrepaired, so the next load saw the live board as different, failed the seed re-derivation too and fell back to "engine manifest mismatch ... falling back to read path" for the rest of the loop (with Tech's mod, the restore also put the unreachable ask back each load). The stored board now takes the swap, so the stored-board check matches.
+
+## 0.19.8 - 2026-10-08
+
+3124 tests.
+
+### Fixed
+
+- **Loop 1 of a new Normal or Remixed game with Tech's Cross-Mod Bundles keeps its board across reloads.** 0.19.7 stored the board of record only at a reset, so in the first loop a plain reload let that mod write its saved board back with nothing restoring it (a theme week discount, Adventurer's 99 to 74, came back as 99). The new-game load now stores the live board right after Tech's handler and before TLY's own load-time edits, and the unstackable-ask clamp and the week discount keep it current from then on. Only with Tech's mod loaded, on the host, and never over a board already stored. An existing Normal or Remixed save still in loop 1 with no stored board is not adopted at load (that mod has already rewritten its board by then, so storing it would lock in the wrong board); it picks this up at its next reset. Spec addendum 3 updated.
+
+## 0.19.7 - 2026-10-08
+
+3118 tests.
+
+### Fixed
+
+- **With Tech's Cross-Mod Bundles installed, reloading a save no longer swaps TLY's board for an older Tech board.** That mod writes its own saved board over the live one every time a save loads, and TLY's save right after a reset does not fire the save event it listens to, so its saved board never learned TLY's. On Normal and Remixed the reload wiped the fresh reroll and TLY's difficulty pass, capped-ask clamp and reward shuffle, and every loop after the first night replayed one raw Tech board. On TLY Custom, from loop 2 the reload replaced TLY's board with Tech's ("engine manifest mismatch ... falling back to read path"). Now TLY is the board of record whenever that mod is loaded: a Normal or Remixed reset stores the final board it wrote (a kept Fail-night board too) next to the TLY Custom board it already stored, TLY's save-load work runs at low priority after other mods' handlers, and before it repairs or classifies anything it writes back every bundle where the live board differs and logs one line ("Tech's Cross-Mod Bundles rewrote the board on load; restored this loop's board"). Without that mod nothing changes: same event order, no stored Normal/Remixed board, no restore, and other bundle mods (Challenging CC Bundles) keep the detect-and-reclassify path. Tech's own saved board is left alone; it only feeds bundle display names, which it cannot change (spec addendum 3). A Normal or Remixed save from 0.19.6 picks this up at its next reset. Decision logic in `Core.TechBoardOfRecord`, unit-tested with a fake board.
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.7 adds a line about reloads keeping the loop's board with Tech's mod. Spec addendum 3.
+
+## 0.19.6 - 2026-10-08
+
+3105 tests.
+
+### Changed
+
+- **Normal now rolls a fresh Tech's Cross-Mod Bundles board each loop too, exactly like Remixed.** In 0.19.5 only Remixed asked that mod for a new board at each reset, and Normal got the same Tech board back every loop. Now both do; TLY Custom, a save without that mod, and a board kept on a Fail night still skip it. The one warning logged when the mod's code is not where TLY expects it, or it fails, no longer names Remixed: "Tech's Cross-Mod Bundles changed; this loop uses the game's own board."
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.6 and Switching bundle source later now say that with Tech's Cross-Mod Bundles, both Normal and Remixed roll a fresh board each loop. Spec addendum 2 updated to match.
+
+## 0.19.5 - 2026-10-08
+
+3103 tests. Rolls up 0.19.4 to 0.19.5.
+
+### Added
+
+- **Remixed rolls a fresh Tech's Cross-Mod Bundles board each loop.** Tech's Cross-Mod Bundles (Nexus 51035) builds its board only when a save is created and serves that board as the game's bundle data from then on, so Normal got the same Tech board back every loop (which is what Normal means) and Remixed mixed the old Tech board with the game's remix. On a Remixed save with that mod loaded, each reset now asks it for a new board right after the game rebuilds the world, before TLY's own Remixed passes (difficulty, capped asks, reward shuffle) run over it. A board kept on a Fail night is restored as it was, never rerolled. If the mod's code is not where TLY expects it, or it fails, the log gets one warning and the reset goes on with the game's remix. The call is reached by reflection behind a small adapter (`ITechBundlesRerollTarget`), and the decision and fallback are unit-tested with a fake.
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.5 covers both changes, and Switching bundle source later says that with Tech's Cross-Mod Bundles, Normal keeps the same board every loop and Remixed rolls a fresh one.
+
+## 0.19.4 - 2026-10-08
+
+3093 tests.
+
+### Added
+
+- **Allow mod items in custom bundles.** A new per-save setting next to Bundle source in GMCM (config `AllowModItemsInCustomBundles`). Off, TLY Custom boards ask only for vanilla items and give only vanilla rewards, as in 0.19.2. On, they work as before 0.19.2 and take other mods' items into their pools, templates, rewards and board repair. It is off on new games; a save from before this version has no value stored and starts with it on, so it keeps the behavior it was created with. Like Bundle source, the title-screen value only sets what a new game starts with, and a change on a loaded save applies at its next loop. The board on disk records which value built it, so the load-time check re-derives it the same way after a mid-loop toggle, and a board kept on a Fail night keeps its value. Normal and Remixed are unaffected.
+
+## 0.19.3 - 2026-10-08
+
+3082 tests. Rolls up 0.19.2 to 0.19.3.
+
+### Changed
+
+- **TLY Custom boards ask only for vanilla items.** Items from other mods never enter a TLY Custom board: not its item pools, not the bundle templates it draws from (a bundle mod's bundle has its modded items taken out, and a position left with nothing gets vanilla's own bundle), not the reward pool, and not the replacements the board repair picks. A modded bundle reward is swapped for vanilla's reward at that spot. Balancing every item of every mod is not possible, so the balance now holds whatever else is installed. Category slots ("any fish") still take a modded item when you donate one. Normal and Remixed are unchanged and keep working with other mods, bundle mods included. The vanilla item list is read from the unmodded game (1.6.15) by a new tool, `tools/vanilla-ids`, and is re-run after a game update. A board you already have keeps its bundles until your next loop. Asked about by PixxiePerfect (Nexus posts, 2026-10-07), on Tech's Cross-Mod Bundles.
+
+### Docs
+
+- README and the Nexus description say plainly that other mods are not officially supported, that TLY Custom boards use vanilla items only, and that Normal or Remixed with other mods may not reshuffle each loop and may ask for items you can't get.
+
 ## 0.19.1 - 2026-10-07
 
 ### Fixed

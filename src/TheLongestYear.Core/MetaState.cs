@@ -75,7 +75,11 @@ public sealed class MetaState
     /// instead of re-deriving from the seed: a data mod whose Content Patcher edits shift the item
     /// pools after the reset (SVE audit, 2026-08-29) made the re-derivation disagree with a healthy
     /// board and demoted the save to the legacy read path. Null on saves written before 0.16.158
-    /// (the seed re-derivation stays as their fallback) and in Vanilla board mode.</summary>
+    /// (the seed re-derivation stays as their fallback) and in Vanilla board mode.
+    /// <para>Exception: on Normal or Remixed with Tech's Cross-Mod Bundles loaded at the reset, it holds
+    /// the final board that reset wrote, so the load can put it back after Tech's mod overwrites it
+    /// (<see cref="TechBoardOfRecord"/>, spec 2026-10-08 addendum 3). The Engine manifest path never
+    /// reads it on a vanilla source.</para></summary>
     public Dictionary<string, string>? WrittenBoard { get; set; }
 
     /// <summary>See <see cref="WrittenBoard"/>: item id -> <see cref="Season"/> as int.</summary>
@@ -174,6 +178,23 @@ public sealed class MetaState
     /// reset. Vanilla never persists it (Nexus bug 1108030). Null until captured (new game) or
     /// inferred from the live board against the Data/Bundles asset.</summary>
     public string? VanillaBundleType { get; set; }
+
+    /// <summary>"Allow mod items in custom bundles" for THIS save, applied at its next reset (see
+    /// <see cref="CustomBoardModItems"/>). Written on the new-game load from the config default;
+    /// null only on saves from before the option, which read it as on.</summary>
+    public bool? AllowModItemsInCustomBundles { get; set; }
+
+    /// <summary>Whether the TLY Custom board on disk was generated with other mods' items allowed.
+    /// Stamped with <see cref="WrittenBoard"/>; load-time re-derivation reads this, never the live
+    /// choice, so toggling the option mid-loop leaves the current board valid. Null on boards
+    /// written before the option.</summary>
+    public bool? BoardAllowsModItems { get; set; }
+
+    /// <summary>The save's choice, a missing value read as an existing save (on).</summary>
+    public bool ModItemsChosen() => CustomBoardModItems.Chosen(AllowModItemsInCustomBundles);
+
+    /// <summary>The value the board on disk was built with (see <see cref="BoardAllowsModItems"/>).</summary>
+    public bool ModItemsOnBoard() => CustomBoardModItems.OnBoard(BoardAllowsModItems, AllowModItemsInCustomBundles);
 
     /// <summary>
     /// True once the player has chosen "Keep playing" after winning the loop (CC restored on

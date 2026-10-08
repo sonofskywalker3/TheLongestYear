@@ -204,6 +204,11 @@ public sealed class GameplayConfig
     /// <see cref="BundleSourceNames"/>.</summary>
     public string BundleSource { get; set; } = BundleSourceNames.Engine;
 
+    /// <summary>"Allow mod items in custom bundles": the value a NEW game starts with (off). Each
+    /// save keeps its own choice in <see cref="MetaState.AllowModItemsInCustomBundles"/>; saves
+    /// from before the option keep mod items on. See <see cref="CustomBoardModItems"/>.</summary>
+    public bool AllowModItemsInCustomBundles { get; set; }
+
     /// <summary>Kill-switch for the weapon/hat donation patches. When false, Gil's Trophies
     /// composes rings-only (no weapon/hat slots offered), for compatibility with mods that
     /// conflict with those patches. Governs the NEXT generated board: a board already composed

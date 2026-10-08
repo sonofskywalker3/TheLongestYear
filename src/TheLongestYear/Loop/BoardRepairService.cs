@@ -78,12 +78,17 @@ namespace TheLongestYear.Loop
         private readonly ItemAvailabilityModel _availability;
         private readonly int _seed;
         private readonly bool _oncePerLoopAsksOne;
+        private readonly Dictionary<string, string> _storedBoard;
 
         public BoardRepairService(
             IMonitor monitor, SourceReachability reachability, ItemPools pools,
             BundleGenerationTuning tuning, ItemAvailabilityModel availability, int seed,
-            bool oncePerLoopAsksOne = true)
+            bool oncePerLoopAsksOne = true, Dictionary<string, string> storedBoard = null)
         {
+            // The stored board of record (MetaState.WrittenBoard), when the save has one: every swap
+            // is mirrored into it, like ClampUnstackableAsks, so the next load restores or verifies
+            // the repaired board instead of the unreachable one (0.19.9).
+            _storedBoard = storedBoard;
             _oncePerLoopAsksOne = oncePerLoopAsksOne;
             _monitor = monitor;
             _reachability = reachability;
@@ -127,8 +132,11 @@ namespace TheLongestYear.Loop
             int unfixable = 0;
             int scanned = 0;
             int slotsRead = 0;
-            foreach (KeyValuePair<string, string> entry in board)
+            // Ordinal key order, not the live dictionary's insertion order: the no-repeat set fills
+            // in this order, so the same board must always be walked the same way.
+            foreach (string boardKey in BoardRepairStability.ScanOrder(board.Keys))
             {
+                var entry = new KeyValuePair<string, string>(boardKey, board[boardKey]);
                 ParsedBundle bundle = TryParse(entry.Key, entry.Value);
                 if (bundle == null) continue;
                 if (!RoomThemeMap.TryGetTheme(bundle.Room, out _)) continue;
@@ -324,6 +332,7 @@ namespace TheLongestYear.Loop
             }
             fields[IngredientFieldIndex] = string.Join(" ",
                 slots.Select(s => $"{s.ItemRef} {s.Stack} {s.Quality}"));
+            BoardRepairStability.MirrorIngredients(_storedBoard, key, fields[IngredientFieldIndex]);
             worldState.SetBundleData(new Dictionary<string, string> { [key] = string.Join("/", fields) });
         }
 
