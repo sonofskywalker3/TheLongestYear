@@ -105,7 +105,7 @@ public sealed class EffortComposer
             PoolArtifact(qualifiedId),
             PoolBook(qualifiedId),
             ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
-            FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
+            FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _step),
             CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf, _step),
         })
         {
