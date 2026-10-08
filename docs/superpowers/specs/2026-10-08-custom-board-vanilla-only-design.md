@@ -145,3 +145,8 @@ Custom from loop 2 fell to "engine manifest mismatch (stale or foreign bundle da
 - **Scope.** Without Tech's mod nothing changes: same handler priority, no stored vanilla board, no restore.
   Challenging CC Bundles and other bundle mods keep the detect-and-reclassify path. A Normal/Remixed save from
   0.19.6 has no stored board until its next reset; until then it keeps today's behavior.
+- **Loop 1 (0.19.8).** A new Normal/Remixed game has no reset to store its board, so the new-game load (the
+  low-priority one, after Tech's handler, before TLY's clamp and any week discount) stores the live board as
+  the board of record when Tech's mod is loaded and none is stored yet; the existing mirrors keep it current.
+  An existing save still in loop 1 without a stored board is not adopted at load, since Tech has already
+  rewritten its board by then; it gets one at its next reset.

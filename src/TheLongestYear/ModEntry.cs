@@ -571,6 +571,22 @@ namespace TheLongestYear
                 IsTechCrossModBundlesLoaded(), Context.IsMainPlayer, _meta.State.WrittenBoard,
                 new TheLongestYear.Loop.LiveBundleBoard(),
                 message => this.Monitor.Log(message, LogLevel.Info));
+            // Loop 1 of a new Normal/Remixed game has no reset to store its board, so store it here,
+            // on the new-game load, after Tech's handler and before TLY's own load-time edits (the
+            // unstackable clamp and later the week discount mirror into it from here on). An
+            // existing loop-1 save without one is not adopted: Tech has already rewritten its board
+            // by now, so it waits for its next reset (spec 2026-10-08 addendum 3).
+            Dictionary<string, string> newGameBoard = TheLongestYear.Core.TechBoardOfRecord.NewGameBoardToStore(
+                wasNewGame || !_meta.LoadedExistingData, Context.IsMainPlayer,
+                BundleSourceNames.IsVanilla(_meta.State.BundleSource), IsTechCrossModBundlesLoaded(),
+                _meta.State.WrittenBoard, Game1.netWorldState?.Value?.BundleData);
+            if (newGameBoard != null)
+            {
+                _meta.State.WrittenBoard = newGameBoard;
+                this.Monitor.Log(
+                    $"New game: stored loop 1's board ({newGameBoard.Count} bundles) as the board of record, since Tech's Cross-Mod Bundles rewrites the board on every load.",
+                    LogLevel.Info);
+            }
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
