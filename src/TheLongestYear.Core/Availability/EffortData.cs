@@ -45,6 +45,20 @@ public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation, d
 /// <summary>One Data/FishPondData entry: which fish (by tags) and what they produce.</summary>
 public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOnlyList<RawFishPondProduct> Products);
 
+/// <summary>One Data/WildTrees entry reduced to what chopping and shaking yield: the seed when its
+/// shake or chop chance is above zero, Wood when DropWoodOnChop, and the unconditional ChopItems
+/// rows (a row's Season, when set, is the only condition kept; rows with a Condition are dropped
+/// by the glue).</summary>
+public sealed record RawWildTree(string TreeId, string? SeedItemId, double SeedOnShakeChance, double SeedOnChopChance,
+    bool DropsWood, IReadOnlyList<RawWildTreeDrop> ChopItems);
+
+/// <summary>One Data/WildTrees ChopItems row.</summary>
+public sealed record RawWildTreeDrop(string ItemId, double Chance, Season? Season);
+
+/// <summary>A full-grown wild tree standing in the live world when the save loaded: its type and
+/// its map.</summary>
+public sealed record RawWildTreeSpot(string TreeId, string Location);
+
 /// <summary>One Data/WildTrees TapItems row: which tree, what item, how many nights.</summary>
 public sealed record RawTapItem(string TreeId, string ItemId, int Days);
 
@@ -82,6 +96,10 @@ public sealed class EffortData
     /// that only need obtainability (the effort rules never read it).</summary>
     public IReadOnlyList<RawLocationForageRate> ForageRates { get; init; } = new List<RawLocationForageRate>();
     public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
+    /// <summary>Data/WildTrees: seed, wood and chop drops per tree type.</summary>
+    public IReadOnlyList<RawWildTree> WildTrees { get; init; } = new List<RawWildTree>();
+    /// <summary>Full-grown wild trees in the live world at load, by type and map.</summary>
+    public IReadOnlyList<RawWildTreeSpot> WildTreeSpots { get; init; } = new List<RawWildTreeSpot>();
     /// <summary>Data/FruitTrees: sapling, fruit and fruiting seasons per tree.</summary>
     public IReadOnlyList<RawFruitTree> FruitTrees { get; init; } = new List<RawFruitTree>();
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
