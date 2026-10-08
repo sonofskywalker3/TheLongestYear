@@ -1002,6 +1002,7 @@ namespace TheLongestYear
                 () => _enginePools,
                 () => _obtainability,
                 RebuildBoardDerivedState);
+            _sabotage.AfterGoalsChanged = () => _questService?.OnItemDonated();
             _sabotage.StartTamperScene = (oldName, oldIsMass, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, oldIsMass, newName, newIsPlural, done);
             // The morning boxes wait out the Junimos' tamper scene and any season turn.
             TheLongestYear.Loop.MorningBox.Monitor = this.Monitor;

@@ -231,9 +231,11 @@ namespace TheLongestYear.Loop
                 });
             }
 
-            // A goal card pointing at the old item would show a slot the board no longer has.
-            Run.CurrentWeekBonusSlots?.RemoveAll(s =>
-                s.BundleIndex == target.Bundle.BundleIndex && slots.Contains(s.IngredientIndex));
+            // The week's goal lines on these slots follow the rewrite (designer, 2026-10-08): both
+            // lists, new item and stack; the quest text is refreshed below, after the board rebuild.
+            int followed = TamperRule.FollowGoals(
+                new IList<BonusSlot>[] { Run.CurrentWeekBonusSlots, Run.SecondWeekBonusSlots },
+                target.Bundle.BundleIndex, slots, newItemId, stack, SabotageTuning.TamperQuality);
 
             Run.PendingSabotageReports.Add(new SabotageReport
             {
@@ -244,6 +246,11 @@ namespace TheLongestYear.Loop
                 $"Darkness: {target.Bundle.Name} slot(s) {string.Join(",", slots)} now ask for {stack} {Strings.ItemName(newItemId)}{(slots.Count > 1 ? " each" : "")} instead of {ExactName(target.ItemId, target.Flavor)} ({Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             _rebuildBoard("darkness tampering");
+            if (followed > 0)
+            {
+                _monitor.Log($"Darkness: {followed} weekly goal line(s) on {target.Bundle.Name} now ask for {stack} {Strings.ItemName(newItemId)}.", LogLevel.Info);
+                AfterGoalsChanged?.Invoke();
+            }
             return true;
         }
     }

@@ -39,6 +39,10 @@ namespace TheLongestYear.Loop
         /// ModEntry (the season-turn driver).</summary>
         public Func<string, bool, string, bool, Action, bool> StartTamperScene { get; set; }
 
+        /// <summary>A tamper moved this week's goal lines onto a new item: the weekly quest's
+        /// checklist text is rebuilt from them (it is a cached string on the quest).</summary>
+        public Action AfterGoalsChanged { get; set; }
+
         private RunState Run => _store.Run;
         private MetaState Meta => _store.State;
         private DifficultyStep Level => Meta.EffectiveDifficulty(_config).Darkness;
