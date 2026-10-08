@@ -642,6 +642,8 @@
     "gmcm.bundle-source.engine": "TLY Custom",
     "gmcm.bundle-source.normal": "Normal (the game's own)",
     "gmcm.bundle-source.remixed": "Remixed (the game's own)",
+    "gmcm.allow-mod-items.name": "Allow mod items in custom bundles",
+    "gmcm.allow-mod-items.tooltip": "Lets TLY Custom bundles ask for items and give rewards from your other mods. Other mods aren't supported, so a bundle may ask for an item you can't get. Each save keeps its own setting, and a change applies at your next loop.",
     "gmcm.cart-limit.name": "Limit Traveling Cart stock",
     "gmcm.cart-limit.tooltip": "Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). Off = full vanilla cart; the Cart Stall upgrades do nothing.",
     "gmcm.resend-better-start.name": "Better Start gift every loop",

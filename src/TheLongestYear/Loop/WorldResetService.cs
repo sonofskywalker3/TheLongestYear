@@ -702,6 +702,12 @@ namespace TheLongestYear.Loop
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty);
                 engine.Availability = AvailabilityModel;
+                // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1): a new board takes
+                // the save's choice, a held board keeps the value it was built under. Stamped with the
+                // board so the load-time check re-derives it the same way after a mid-loop toggle.
+                _meta.BoardAllowsModItems = TheLongestYear.Core.CustomBoardModItems.ForReset(
+                    holdingBoard, _meta.BoardAllowsModItems, _meta.AllowModItemsInCustomBundles);
+                engine.AllowModItems = _meta.BoardAllowsModItems.Value;
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
