@@ -13,9 +13,11 @@ namespace TheLongestYear.Scenes
     /// <summary>The crop blight scene (spec 2026-09-21). Eight seconds on the night farm, no text and
     /// no dialogue: crows with red eyes swoop in from both sides of the frame onto the exact crops
     /// that are about to die (designer, 2026-10-08: not straight down; the curve is
-    /// <see cref="CrowSwoop"/>), one settles
-    /// beside a scarecrow and is not troubled by it, Linus wanders in, sees them, backs off and
-    /// hurries away, the crows peck, the crops die on that beat, the crows lift off, black.
+    /// <see cref="CrowSwoop"/>), one perches ON a scarecrow's hat and is not troubled by it (one
+    /// scarecrow only, however many stand near: <see cref="CrowPerch.ChooseScarecrow"/>), Linus
+    /// wanders in, sees them, backs off and hurries away, the crows peck each on its own random
+    /// timing (<see cref="CrowPerch.PeckTimes"/>), the crops die on their beat, the crows lift off
+    /// together, black (designer, 2026-10-08).
     ///
     /// WHAT IS REAL AND WHAT IS PAINTED. The crops are real: the scene never draws one. The world
     /// keeps drawing underneath for the whole scene (<c>farmEvent.draw</c> is called after the map,
@@ -54,9 +56,6 @@ namespace TheLongestYear.Scenes
         private const float LinusShakePixels = 8f;
         private const int LinusStepsBackMs = 4200;
         private const int LinusStepBackLengthMs = 400;
-        private const int PeckMs = 4600;
-        private const int PeckLengthMs = 250;
-        private const int Pecks = 3;
         private const int StrikeMs = 5400;
         private const int LinusLeavesMs = 5600;
         private const int LiftOffMs = 6400;
@@ -117,6 +116,10 @@ namespace TheLongestYear.Scenes
             /// <summary>Pixels a millisecond upward once it lifts off, and sideways as it goes.</summary>
             public float RiseRate;
             public float DriftRate;
+            /// <summary>When it pecks while down: its own random timing, not the flock's.</summary>
+            public IReadOnlyList<int> Pecks = Array.Empty<int>();
+            /// <summary>The scarecrow crow: stands on the hat, casts no ground shadow, does not peck.</summary>
+            public bool OnScarecrow;
         }
 
         /// <summary>Only ever used to make the birds leave unalike. It takes no part in what dies,
@@ -168,10 +171,19 @@ namespace TheLongestYear.Scenes
                 _crows.Add(MakeCrow(new Vector2(tile.X, tile.Y), CrowsEnterMs + _crows.Count * CrowGapMs, CrowSwoop.FromLeft(_crows.Count, firstFromLeft)));
             if (scarecrow.HasValue)
             {
-                Vector2 beside = TileBesideScarecrow(scarecrow.Value, centroid);
-                // It flies in toward the scarecrow and lands facing it.
-                SceneCrow perched = MakeCrow(beside, ScarecrowCrowLandMs - GlideMs, fromLeft: scarecrow.Value.X > beside.X);
-                perched.Flip = scarecrow.Value.X > perched.Tile.X;
+                // It flies in from the side away from the crops and lands ON the scarecrow's hat,
+                // facing the field. One crow for one scarecrow, never one per scarecrow.
+                bool cropsToRight = centroid.X >= scarecrow.Value.X;
+                SceneCrow perched = MakeCrow(scarecrow.Value, ScarecrowCrowLandMs - GlideMs, fromLeft: !cropsToRight);
+                (float hatX, float hatY) = CrowPerch.OnHat((int)scarecrow.Value.X, (int)scarecrow.Value.Y, TileSize);
+                // The swoop starts as far above the hat as the others start above their crops.
+                perched.Start += new Vector2(0f, hatY - perched.Landing.Y);
+                perched.Position = perched.Start;
+                perched.Landing = new Vector2(hatX, hatY);
+                perched.OnScarecrow = true;
+                perched.Pecks = Array.Empty<int>();
+                // The sheet's bird faces left; flipped it faces right, toward crops on that side.
+                perched.Flip = cropsToRight;
                 _crows.Add(perched);
             }
             if (_crows.Count == 0) return false;
@@ -207,33 +219,24 @@ namespace TheLongestYear.Scenes
             crow.RiseRate = 0.5f + _spread.Next(0, 5) * 0.05f;
             crow.DriftRate = (tile.X < _focus.X ? -1f : 1f) * (0.2f + _spread.Next(0, 5) * 0.06f);
             crow.LandAtMs = crow.EnterAtMs + GlideMs;
+            crow.Pecks = CrowPerch.PeckTimes(_spread, crow.LandAtMs, LiftOffMs);
             crow.Position = crow.Start;
             return crow;
         }
 
-        /// <summary>The nearest thing on the farm that scares crows, within reach of the patch.
-        /// Null when there is none, and then the scene simply has no scarecrow crow.</summary>
+        /// <summary>The ONE scarecrow the perched crow lands on: the nearest to the patch that still
+        /// shares the frame with it (<see cref="CrowPerch.ChooseScarecrow"/>). However many
+        /// scarecrows stand near, only one gets a crow. Null when none qualifies, and then the scene
+        /// simply has no scarecrow crow.</summary>
         private Vector2? NearestScarecrow(Vector2 centroid)
         {
-            Vector2? best = null;
-            float bestDistance = float.MaxValue;
+            var scarecrows = new List<(int X, int Y)>();
             foreach (KeyValuePair<Vector2, SObject> pair in _farm.objects.Pairs)
-            {
-                if (pair.Value == null || !pair.Value.IsScarecrow()) continue;
-                float distance = Vector2.Distance(pair.Key, centroid);
-                if (distance > ScarecrowReachTiles || distance >= bestDistance) continue;
-                bestDistance = distance;
-                best = pair.Key;
-            }
-            return best;
-        }
-
-        /// <summary>The tile a crow perches on beside the scarecrow: the one on the crops' side of
-        /// it, so both are in the same half of the frame.</summary>
-        private static Vector2 TileBesideScarecrow(Vector2 scarecrow, Vector2 centroid)
-        {
-            int step = centroid.X >= scarecrow.X ? 1 : -1;
-            return new Vector2(scarecrow.X + step, scarecrow.Y);
+                if (pair.Value != null && pair.Value.IsScarecrow()) scarecrows.Add(((int)pair.Key.X, (int)pair.Key.Y));
+            (int X, int Y)? pick = CrowPerch.ChooseScarecrow(
+                scarecrows, ((int)centroid.X, (int)centroid.Y), ScarecrowReachTiles,
+                Game1.viewport.Width / TileSize, Game1.viewport.Height / TileSize);
+            return pick.HasValue ? new Vector2(pick.Value.X, pick.Value.Y) : null;
         }
 
         /// <summary>Find Linus a clear line to walk. He comes in from whichever side of the frame is
@@ -346,7 +349,7 @@ namespace TheLongestYear.Scenes
             else if (elapsed < LiftOffMs)
             {
                 crow.Position = crow.Landing;
-                crow.Frame = PeckFrame(elapsed);
+                crow.Frame = PeckFrame(crow, elapsed);
             }
             else
             {
@@ -360,12 +363,13 @@ namespace TheLongestYear.Scenes
 
         private static int FlapFrame(int elapsed) => CrowFlapFirstFrame + Math.Abs(elapsed / CrowFlapMs) % CrowFlapFrames;
 
-        private static int PeckFrame(int elapsed)
+        /// <summary>Each crow pecks on its own random timing (designer, 2026-10-08: not in sync).</summary>
+        private static int PeckFrame(SceneCrow crow, int elapsed) => CrowPerch.PoseAt(crow.Pecks, elapsed) switch
         {
-            int since = elapsed - PeckMs;
-            if (since < 0 || since >= Pecks * PeckLengthMs) return CrowStandFrame;
-            return since % PeckLengthMs < PeckLengthMs / 2 ? CrowPeckDownFrame : CrowPeckStrikeFrame;
-        }
+            CrowPerch.PeckPose.HeadDown => CrowPeckDownFrame,
+            CrowPerch.PeckPose.Strike => CrowPeckStrikeFrame,
+            _ => CrowStandFrame,
+        };
 
         private void MoveLinus(int elapsed)
         {
@@ -422,7 +426,7 @@ namespace TheLongestYear.Scenes
                 crow.Sprite.currentFrame = crow.Frame;
                 crow.Sprite.UpdateSourceRect();
                 Vector2 corner = SceneCamera.ToScreen(crow.Position + CrowDrawOffset);
-                if (Game1.shadowTexture != null && crow.Perched)
+                if (Game1.shadowTexture != null && crow.Perched && !crow.OnScarecrow)
                 {
                     b.Draw(
                         Game1.shadowTexture,
