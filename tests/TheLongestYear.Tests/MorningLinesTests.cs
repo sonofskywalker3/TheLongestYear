@@ -1,3 +1,4 @@
+using TheLongestYear.Core;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core.Sabotage;
@@ -95,4 +96,40 @@ public class MorningLinesTests
         Assert.Equal("Parsnip", Assert.Single(back.Stolen).Name);
         Assert.Equal(3, back.Stolen[0].Count);
     }
+}
+
+/// <summary>Designer, 2026-10-08: the hall's morning box names what came undone, no count.</summary>
+public class RevertedCalloutTests
+{
+    private static (string, bool) Item(int stack, string name, string id, int category = AskPhrases.NoCategory)
+        => MorningLines.RevertedItem(stack, name, id, flavored: false, ItemPluralsTests.VanillaPlural, category);
+
+    [Fact] public void One_is_the_bare_name() => Assert.Equal(("Parsnip", false), Item(1, "Parsnip", "(O)24"));
+    [Fact] public void Several_is_the_bare_plural_with_are() => Assert.Equal(("Parsnips", true), Item(5, "Parsnip", "(O)24"));
+    [Fact] public void A_mass_noun_stays_singular_with_is() => Assert.Equal(("Wild Honey", false), Item(3, "Wild Honey", "(O)340"));
+    [Fact] public void A_container_good_has_no_container_phrase() => Assert.Equal(("Wine", false), Item(3, "Wine", "(O)348"));
+    [Fact] public void A_fish_keeps_its_word_and_takes_are()
+        => Assert.Equal(("Pike", true), Item(3, "Pike", "(O)144", FlavoredSlotRules.FishCategory));
+    [Fact] public void A_cucumber_takes_its_plural()
+        => Assert.Equal(("Sea Cucumbers", true), Item(3, "Sea Cucumber", "(O)154", FlavoredSlotRules.FishCategory));
+
+    [Theory]
+    [InlineData("Spring Crops", false)]
+    [InlineData("Abigail's Bundle", true)]
+    [InlineData("Odd bundle ", true)]
+    [InlineData("", false)]
+    public void A_label_that_says_bundle_is_not_doubled(string label, bool says)
+        => Assert.Equal(says, MorningLines.LabelSaysBundle(label));
+
+    private const string Value = "Spring Crops/O 465 20/24 1 0 188 5 0 190 1 0/0/4/0/Spring Crops Display";
+
+    [Fact] public void The_slot_stack_is_read_off_the_board()
+    {
+        Assert.Equal(1, BundleDataTamper.StackAt(Value, 0));
+        Assert.Equal(5, BundleDataTamper.StackAt(Value, 1));
+        Assert.Equal(0, BundleDataTamper.StackAt(Value, 3));
+    }
+
+    [Fact] public void The_label_is_the_display_name_field() => Assert.Equal("Spring Crops Display", BundleDataTamper.LabelOf(Value));
+    [Fact] public void No_display_name_falls_back_to_the_name() => Assert.Equal("Spring Crops", BundleDataTamper.LabelOf("Spring Crops/O 465 20/24 1 0/0/4/0"));
 }
