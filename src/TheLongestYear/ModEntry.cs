@@ -410,6 +410,8 @@ namespace TheLongestYear
                 return taintedItems;
             };
             TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
+            // The same glow marks a bundle slot the darkness emptied, until it is filled again.
+            TheLongestYear.Loop.DarkenedSlotMarkPatch.Marks = () => _meta?.Run?.DarkenedSlots;
             this.Monitor.Log(
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
                 failed > 0 ? LogLevel.Warn : LogLevel.Info);
@@ -3793,6 +3795,12 @@ namespace TheLongestYear
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
             _witness?.OnDayStarted();
+            // A darkened slot the player filled again loses its mark (designer, 2026-10-08).
+            TheLongestYear.Core.Sabotage.DarkenedSlots.ClearFilled(_meta.Run?.DarkenedSlots, (bundle, slot) =>
+            {
+                bool[] state = TheLongestYear.Loop.RunController.SlotStateForBundle(bundle);
+                return state != null && slot < state.Length && state[slot];
+            });
             _pastSeasonSpawns?.Refresh(TodayDayOfYear());
             // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
             // being a rerun, so the label has to go back with it.
