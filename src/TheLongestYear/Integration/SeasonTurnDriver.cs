@@ -6,9 +6,10 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.Integration
 {
-    /// <summary>Starts a season-turn scene and reports when it ends. The Day28CutsceneDriver calls
-    /// Start on a Continue morning instead of opening its menu; the completion callback is the same
-    /// RunController.OnCutsceneEnded. The event adds SeenMail on its last line; a skipped or lost
+    /// <summary>Starts the mod's porch scenes (a season turn, the Junimos' tamper scene) and reports
+    /// when they end. Both start on the farmer's first arrival on the Farm (ModEntry's Farm-arrival
+    /// handler; a season turn since 2026-10-08, before which the Day28CutsceneDriver started it on
+    /// waking). The event adds SeenMail on its last line; a skipped or lost
     /// event never does, so "event gone" also counts as finished (the morning is never stranded).</summary>
     internal sealed class SeasonTurnDriver
     {
@@ -18,7 +19,7 @@ namespace TheLongestYear.Integration
         private readonly MetaStore _meta;
         private Action _onComplete;
         private bool _running;
-        /// <summary>A tamper scene ended and the farmer is being put back where he arrived: log the
+        /// <summary>A porch scene ended and the farmer is being put back where he arrived: log the
         /// tile once vanilla's warp back has landed.</summary>
         private bool _reportReturn;
         private int _startedTick;
@@ -48,6 +49,35 @@ namespace TheLongestYear.Integration
             _startedTick = Game1.ticks;
             return true;
         }
+
+        /// <summary>The season-turn scene on the farmer's first arrival on the Farm after a Continue
+        /// morning (Jeff, 2026-10-08; <see cref="SeasonTurnArrival"/> says when). Staged exactly like
+        /// <see cref="StartTamperAtPorch"/>: at the porch behind black, then the event's end puts him
+        /// back on the tile and facing he arrived at. False when it cannot start here, and then
+        /// nothing has changed and the caller keeps the scene owed for the next arrival.</summary>
+        public bool StartAtPorch(SeasonTurnKind kind, Action onComplete)
+        {
+            GameLocation loc = Game1.currentLocation;
+            if (loc is not Farm || _running || Game1.eventUp || loc.currentEvent != null) return false;
+            if (FarmPorch() is not (int porchX, int porchY)) return false;
+            Microsoft.Xna.Framework.Point arrived = Game1.player.TilePoint;
+            int facing = Game1.player.FacingDirection;
+            bool skippable = SeasonTurn.IsSkippable(kind, _meta.State.SeasonTurnsSeen);
+            bool rewound = _meta.State.CompletedResets > 0;
+            _monitor.Log($"Season turn: starting {kind} at the porch ({porchX},{porchY}) on arrival (junimos={SeasonTurn.JunimoCount(kind)}, skippable={skippable}, rewound={rewound}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after.", LogLevel.Info);
+            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, porchX, porchY - PorchStepDown, skippable, rewound, (arrived.X, arrived.Y, facing)), null, SeasonTurnEventKeys.EventId));
+            _reportReturn = true;
+            // Black from this very frame: the arrival is not seen before the porch is.
+            EndingEventCommands.HoldBlack();
+            _meta.State.SeasonTurnsSeen.Add(SeasonTurn.SeenName(kind));
+            _onComplete = onComplete;
+            _running = true;
+            _startedTick = Game1.ticks;
+            return true;
+        }
+
+        /// <summary>The porch step is one tile below the doorway the scene's marks are measured from.</summary>
+        private const int PorchStepDown = 1;
 
         /// <summary>Darkness pushback: the Junimos' "tainted" scene after the board changed, started
         /// NOW, the moment the farmer arrives on the Farm by any route (Jeff, 2026-10-07; <see
@@ -108,7 +138,11 @@ namespace TheLongestYear.Integration
                 _monitor.Log("tly_seasonturn: the game is busy (event, menu or warp up); try again with nothing open.", LogLevel.Warn);
                 return;
             }
-            if (!Start(kind, () => _monitor.Log("Season turn: replay finished (no continuation).", LogLevel.Info)))
+            // On the Farm it plays the way the real one does now: at the porch, then back to where
+            // he stood. Anywhere else it moves to the Farm itself.
+            Action done = () => _monitor.Log("Season turn: replay finished (no continuation).", LogLevel.Info);
+            bool started = Game1.currentLocation is Farm ? StartAtPorch(kind, done) : Start(kind, done);
+            if (!started)
                 _monitor.Log("tly_seasonturn: could not start (no location or an event is up).", LogLevel.Warn);
         }
 
@@ -117,7 +151,7 @@ namespace TheLongestYear.Integration
             if (_reportReturn && !_running && Context.IsWorldReady && !Game1.eventUp && Game1.locationRequest == null && !Game1.isWarping)
             {
                 _reportReturn = false;
-                _monitor.Log($"Darkness: after the board-changed scene the farmer is at ({Game1.player.TilePoint.X},{Game1.player.TilePoint.Y}) facing {Game1.player.FacingDirection} on {Game1.currentLocation?.NameOrUniqueName}.", LogLevel.Info);
+                _monitor.Log($"Porch scene: afterwards the farmer is at ({Game1.player.TilePoint.X},{Game1.player.TilePoint.Y}) facing {Game1.player.FacingDirection} on {Game1.currentLocation?.NameOrUniqueName}.", LogLevel.Info);
             }
             if (!_running || !Context.IsWorldReady) return;
             if (Game1.ticks - _startedTick < SettleTicks) return;

@@ -339,7 +339,7 @@ namespace TheLongestYear
             // (TLY's board has to win over the one it writes at load), normal otherwise.
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedNormal;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedLate;
-            helper.Events.Player.Warped += this.OnWarpedForTamperScene;
+            helper.Events.Player.Warped += this.OnWarpedForFarmArrivalScene;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             // A witness line waiting under a first-meeting introduction opens when that box closes.
@@ -1173,20 +1173,34 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
         }
 
-        /// <summary>After a tamper, the Junimos' "tainted" scene plays the first time the farmer
-        /// arrives on the Farm by any route (Jeff, 2026-10-07; the rule is TamperPorchRule): staged at
-        /// the porch, then he is put back where he arrived. An arrival while something else is up
-        /// keeps the report for the next one.</summary>
-        private void OnWarpedForTamperScene(object sender, WarpedEventArgs e)
+        /// <summary>The farmer's arrival on the Farm by any route starts the porch scene owed to it
+        /// (TamperPorchRule, SeasonTurnArrival): the season turn after a passed gate (Jeff,
+        /// 2026-10-08) first, else the Junimos' "tainted" scene after a tamper (Jeff, 2026-10-07).
+        /// Staged at the porch, then he is put back where he arrived. An arrival while something
+        /// else is up keeps the scene for the next one; a tamper scene owed on the same arrival as a
+        /// season turn waits for the next arrival (the turn's own return to his tile is one).</summary>
+        private void OnWarpedForFarmArrivalScene(object sender, WarpedEventArgs e)
         {
-            if (_sabotage == null || !_sabotage.TamperSceneOwed) return;
+            if (!RunActivation.IsActive || _seasonTurnDriver == null) return;
+            TheLongestYear.Core.SeasonTurnKind? turn = _runController?.SeasonTurnOwed;
+            bool tamper = _sabotage?.TamperSceneOwed ?? false;
+            if (turn == null && !tamper) return;
             bool busy = Game1.eventUp || Game1.farmEvent != null || Game1.activeClickableMenu != null
-                        || (_seasonTurnDriver?.Running ?? false);
-            if (!TheLongestYear.Core.Sabotage.TamperPorchRule.ShouldStart(
-                    _sabotage.TamperSceneOwed, e.NewLocation?.Name, e.IsLocalPlayer, busy,
-                    TheLongestYear.Integration.SeasonTurnDriver.FarmPorch()))
-                return;
-            _sabotage.TryStartTamperScene();
+                        || _seasonTurnDriver.Running;
+            var pick = TheLongestYear.Core.SeasonTurnArrival.Pick(
+                turn, tamper, _meta.Run.EndingArmed, e.NewLocation?.Name, e.IsLocalPlayer, busy,
+                TheLongestYear.Integration.SeasonTurnDriver.FarmPorch());
+            switch (pick)
+            {
+                case TheLongestYear.Core.FarmArrivalScene.SeasonTurn:
+                    TheLongestYear.Core.SeasonTurnKind kind = turn.Value;
+                    if (_seasonTurnDriver.StartAtPorch(kind, () => this.Monitor.Log($"Season turn: the {kind} scene is over.", LogLevel.Info)))
+                        _runController.ClearSeasonTurnOwed();
+                    break;
+                case TheLongestYear.Core.FarmArrivalScene.Tamper:
+                    _sabotage.TryStartTamperScene();
+                    break;
+            }
         }
 
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
