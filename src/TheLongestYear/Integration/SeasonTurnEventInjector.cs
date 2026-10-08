@@ -21,6 +21,17 @@ namespace TheLongestYear.Integration
         // one on the first try, 2026-09-07): A on the path below, B and C to either side, D out wide.
         private const int StepDown = 1;
         private static readonly (int X, int Y)[] Marks = { (0, 3), (-2, 3), (2, 3), (-4, 4) };
+
+        // With only A and B on their marks the pair sits left of him (A under him, B two left), so a
+        // two-Junimo scene shifts both one tile right to stand them evenly either side (Jeff, 2026-10-08).
+        private const int PairCount = 2;
+        private const int PairShiftX = 1;
+
+        private static string PlaceJunimo(int j, int count, int doorX, int doorY)
+        {
+            int shift = count == PairCount ? PairShiftX : 0;
+            return $"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X + shift} {doorY + Marks[j].Y} {j}";
+        }
         private const int FadeMs = 1400;
 
         private static string Junimo(int i) => $"Junimo{i}";
@@ -63,7 +74,7 @@ namespace TheLongestYear.Integration
             s.Add($"faceDirection farmer {facingDown}");
             s.Add($"viewport {porchX} {porchY} clamp");
             for (int j = 0; j < count; j++)
-                s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X} {doorY + Marks[j].Y} {j}");
+                s.Add(PlaceJunimo(j, count, doorX, doorY));
             s.Add($"{EndingEventCommands.FadeInName} {FadeMs}");
             s.Add("pause 400");
             for (int j = 0; j < count; j++) s.Add($"jump {Junimo(j)} 8");
@@ -123,7 +134,7 @@ namespace TheLongestYear.Integration
                 $"viewport {doorX} {stepY} clamp",
             });
             for (int j = 0; j < count; j++)
-                s.Add($"{EndingEventCommands.JunimoName} {Junimo(j)} {doorX + Marks[j].X} {doorY + Marks[j].Y} {j}");
+                s.Add(PlaceJunimo(j, count, doorX, doorY));
             s.Add($"{EndingEventCommands.FadeInName} {FadeMs}");
             s.Add("pause 500");
             for (int j = 0; j < count; j++) s.Add($"jump {Junimo(j)} 8");
