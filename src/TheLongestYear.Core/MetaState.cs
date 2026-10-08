@@ -175,6 +175,23 @@ public sealed class MetaState
     /// inferred from the live board against the Data/Bundles asset.</summary>
     public string? VanillaBundleType { get; set; }
 
+    /// <summary>"Allow mod items in custom bundles" for THIS save, applied at its next reset (see
+    /// <see cref="CustomBoardModItems"/>). Written on the new-game load from the config default;
+    /// null only on saves from before the option, which read it as on.</summary>
+    public bool? AllowModItemsInCustomBundles { get; set; }
+
+    /// <summary>Whether the TLY Custom board on disk was generated with other mods' items allowed.
+    /// Stamped with <see cref="WrittenBoard"/>; load-time re-derivation reads this, never the live
+    /// choice, so toggling the option mid-loop leaves the current board valid. Null on boards
+    /// written before the option.</summary>
+    public bool? BoardAllowsModItems { get; set; }
+
+    /// <summary>The save's choice, a missing value read as an existing save (on).</summary>
+    public bool ModItemsChosen() => CustomBoardModItems.Chosen(AllowModItemsInCustomBundles);
+
+    /// <summary>The value the board on disk was built with (see <see cref="BoardAllowsModItems"/>).</summary>
+    public bool ModItemsOnBoard() => CustomBoardModItems.OnBoard(BoardAllowsModItems, AllowModItemsInCustomBundles);
+
     /// <summary>
     /// True once the player has chosen "Keep playing" after winning the loop (CC restored on
     /// Winter 28). Set inside the post-win JP-spend → choice flow; when true, the Winter 28

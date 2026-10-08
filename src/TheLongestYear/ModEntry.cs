@@ -485,6 +485,20 @@ namespace TheLongestYear
             // Stamp the marker so new games (and back-filled legacy TLY saves) take the clean flag
             // path next load; it persists with the game's own save via OnSaving.
             _meta.State.IsLongestYearRun = true;
+            // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1). A new game (or an
+            // adopted farm with no TLY data yet) starts on the title-screen default, which is off.
+            // Any other save without a value predates the option and keeps mod items on, as its
+            // boards were built. Written here, before ResolveRequirements builds a fresh-run board.
+            if (_meta.State.AllowModItemsInCustomBundles == null)
+            {
+                bool isNewSave = wasNewGame || !_meta.LoadedExistingData;
+                _meta.State.AllowModItemsInCustomBundles = TheLongestYear.Core.CustomBoardModItems.Initial(
+                    isNewSave, _config.AllowModItemsInCustomBundles);
+                this.Monitor.Log(
+                    $"Allow mod items in custom bundles: {(_meta.State.AllowModItemsInCustomBundles.Value ? "on" : "off")} " +
+                    $"for this save ({(isNewSave ? "new game, from the default" : "existing save, keeps mod items")}).",
+                    LogLevel.Info);
+            }
             if (wasNewGame)
             {
                 // "Skip intro" ticked on character creation: plant the cc-seen flag now, so the
@@ -649,9 +663,11 @@ namespace TheLongestYear
             // with the impossible ask still in it. Host only, donated slots untouched, and a
             // no-op on a clean board.
             // A TLY Custom board takes its replacements from vanilla-only pools, like the engine
-            // that wrote it (spec 2026-10-08-custom-board-vanilla-only). A Normal or Remixed board
+            // that wrote it (spec 2026-10-08-custom-board-vanilla-only), unless that board was built
+            // with mod items allowed (its stamp, never the live choice). A Normal or Remixed board
             // keeps the shared pools, other mods' items included, as before.
-            TheLongestYear.Core.ItemPools repairPools = BundleSourceNames.IsVanilla(_meta.State.BundleSource)
+            TheLongestYear.Core.ItemPools repairPools =
+                BundleSourceNames.IsVanilla(_meta.State.BundleSource) || _meta.State.ModItemsOnBoard()
                 ? enginePools
                 : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
@@ -2340,6 +2356,23 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.bundle-source.tooltip"),
                 allowedValues: BundleSourceNames.All,
                 formatAllowedValue: FormatBundleSource);
+
+            gmcm.AddBoolOption(this.ModManifest,
+                // Per save, like Bundle source: with a save loaded it reads and writes THAT save's
+                // choice (applied at its next loop); on the title screen it sets what a new game
+                // starts with (spec 2026-10-08 addendum 1).
+                getValue: () => Context.IsWorldReady && _metaLoaded
+                    ? _meta.State.ModItemsChosen()
+                    : _config.AllowModItemsInCustomBundles,
+                setValue: v =>
+                {
+                    if (Context.IsWorldReady && _metaLoaded)
+                        _meta.State.AllowModItemsInCustomBundles = v;
+                    else
+                        _config.AllowModItemsInCustomBundles = v;
+                },
+                name: () => Strings.Get("gmcm.allow-mod-items.name"),
+                tooltip: () => Strings.Get("gmcm.allow-mod-items.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.AutoDetectReplayableUnlockCutscenes,
@@ -4080,7 +4113,7 @@ namespace TheLongestYear
             var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             ItemPools pools = enginePoolReader
                 .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity),
-                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds);
+                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIdsFor(state.ModItemsOnBoard()));
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
             var sb = new System.Text.StringBuilder();
@@ -4158,6 +4191,7 @@ namespace TheLongestYear
                 TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, candidateDifficulty.Steps.ItemRarity),
                 candidateDifficulty);
             engine.Availability = _availability;
+            engine.AllowModItems = _meta.State.ModItemsOnBoard();
             int candidateSeed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);
             var rooms = engine.BuildCandidatePools(pools, candidateSeed);
@@ -4566,6 +4600,7 @@ namespace TheLongestYear
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
             var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             firstEngine.Availability = _availability;
+            firstEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
@@ -4574,6 +4609,7 @@ namespace TheLongestYear
 
             var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
             secondEngine.Availability = _availability;
+            secondEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)
@@ -5442,10 +5478,17 @@ namespace TheLongestYear
                         LogLevel.Warn);
                 }
 
+                // "Allow mod items in custom bundles" is a generation input too (spec 2026-10-08
+                // addendum 1). The board's own stamp goes first, never the live choice, so a mid-loop
+                // toggle cannot demote the board; an unstamped board tries both values.
+                bool[] modItemsOrder = TheLongestYear.Core.CustomBoardModItems.ManifestTryOrder(
+                    state.BoardAllowsModItems, state.AllowModItemsInCustomBundles);
+                foreach (bool allowModItems in modItemsOrder)
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
                     engine.Availability = _availability;
+                    engine.AllowModItems = allowModItems;
                     GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))
@@ -5456,13 +5499,17 @@ namespace TheLongestYear
                         // mismatch is undiagnosable from a player log.
                         string? drift = EngineManifestCheck.FirstDifference(generatedData, liveData);
                         this.Monitor.Log(
-                            $"ResolveRequirements: manifest check (EnableNonObjectDonations={nonObject}) differs at {drift ?? "(no difference found)"}.",
+                            $"ResolveRequirements: manifest check (EnableNonObjectDonations={nonObject}, mod items {(allowModItems ? "allowed" : "vanilla only")}) differs at {drift ?? "(no difference found)"}.",
                             LogLevel.Debug);
                         continue;
                     }
 
                     var requirements = engine.BuildRequirements(
                         set, itemSeasonPins, bundleQuotas, _availability);
+                    // An unstamped board now knows what it was built with, so later loads go
+                    // straight to the right value.
+                    if (state.BoardAllowsModItems == null)
+                        state.BoardAllowsModItems = allowModItems;
                     string flagNote = nonObject == _config.EnableNonObjectDonations
                         ? ""
                         : $"; board was generated with EnableNonObjectDonations={nonObject} — honouring it this loop, the current setting applies from the next reset";
@@ -5488,6 +5535,10 @@ namespace TheLongestYear
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty);
                 engine.Availability = _availability;
+                // A NEW board takes the save's "Allow mod items in custom bundles" choice (written
+                // from the new-game default above) and stamps it with the board.
+                state.BoardAllowsModItems = state.ModItemsChosen();
+                engine.AllowModItems = state.BoardAllowsModItems.Value;
                 // Randomizer: the fresh-run board is a NEW board, so it stamps the option here.
                 state.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0), state.RandomBundleRewardsBoard);

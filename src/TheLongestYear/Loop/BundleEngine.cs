@@ -178,6 +178,21 @@ namespace TheLongestYear.Loop
         /// take a modded fish when donated.</summary>
         public static IReadOnlySet<string> VanillaOnlyIds => Core.VanillaItemIds.All;
 
+        /// <summary>The filter for a board built with "Allow mod items in custom bundles" set to
+        /// <paramref name="allowModItems"/>: null (no filter, the pre-0.19.2 board) when allowed,
+        /// <see cref="VanillaOnlyIds"/> otherwise (spec addendum 1).</summary>
+        public static IReadOnlySet<string> VanillaOnlyIdsFor(bool allowModItems)
+            => allowModItems ? null : VanillaOnlyIds;
+
+        /// <summary>"Allow mod items in custom bundles" for THIS board. Every construction site
+        /// sets it from the save: a reset from <see cref="Core.CustomBoardModItems.ForReset"/>, a
+        /// load-time re-derivation or diagnostic from the board's stamp
+        /// (<see cref="Core.MetaState.BoardAllowsModItems"/>), never the live choice. Off (the
+        /// default) is the vanilla-only board.</summary>
+        public bool AllowModItems { get; set; }
+
+        private IReadOnlySet<string> VanillaFilter => VanillaOnlyIdsFor(AllowModItems);
+
         private readonly VanillaBundlePool _pool;
         private readonly IMonitor _monitor;
         private readonly BundleGenerationTuning _tuning;
@@ -242,7 +257,7 @@ namespace TheLongestYear.Loop
             _lastDomains.Clear();
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
-            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaOnlyIds);
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter);
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
             // same instance, so the default path is untouched.
@@ -469,7 +484,7 @@ namespace TheLongestYear.Loop
                 return new GeneratedBundleSet(allPicks, flavors);
 
             // Last, so it moves no other stream: rewards never feed back into what a bundle asks.
-            IReadOnlyList<string> rewardPool = RewardPool(roomPools, VanillaOnlyIds);
+            IReadOnlyList<string> rewardPool = RewardPool(roomPools, VanillaFilter);
             IReadOnlyList<BundleSpec> rewarded = Core.BundleRewardShuffle.Apply(allPicks, seed, rewardPool, IsRewardShuffleSkippedRoom);
             _monitor?.Log(
                 $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
@@ -496,9 +511,12 @@ namespace TheLongestYear.Loop
 
         /// <summary>The bundle templates (Data/Bundles + Data/RandomBundles) with every other
         /// mod's item and reward taken out (<see cref="Core.VanillaOnlyBoard.FilterRoomPools"/>).
-        /// On an unmodded game nothing changes and every candidate is the same instance.</summary>
+        /// On an unmodded game nothing changes and every candidate is the same instance. With
+        /// <see cref="AllowModItems"/> on, the templates come back as they are, as before 0.19.2.</summary>
         private IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> VanillaRoomPools()
         {
+            if (AllowModItems)
+                return _pool.BuildRoomPools();
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> filtered =
                 Core.VanillaOnlyBoard.FilterRoomPools(
                     _pool.BuildRoomPools(), VanillaOnlyIds, Core.VanillaBundleBoard.Standard, out int changed);

@@ -49,3 +49,51 @@ misses unprefixed mod ids.
 
 Cross-Mod Bundles integration, an API, per-mod support lists, Nexus page edits (README + bbcode source change in
 this task; pushing the description to Nexus waits for Jeff's yes).
+
+## Addendum 1: "Allow mod items in custom bundles" (per save, 2026-10-08)
+
+Jeff changed his mind on making the filter unconditional: it stays, but becomes a per-save choice.
+
+- **Option.** GMCM "Allow mod items in custom bundles", next to Bundle source. With a save loaded it reads and
+  writes that save's value; on the title screen it edits the config default that a NEW game starts with. Same
+  shape as BundleSource (config default, `MetaState` choice, applied at the next reset).
+- **Fields.** `MetaState.AllowModItemsInCustomBundles` (bool?, the save's choice) and
+  `MetaState.BoardAllowsModItems` (bool?, what the board on disk was generated with). `GameplayConfig.AllowModItemsInCustomBundles`
+  (default false) is the new-game default only.
+- **Defaults.** A new game (the load right after SaveCreating, or an adopted farm with no TLY data yet) writes
+  the config default, which is OFF. Any other save whose stored choice is missing is an existing save from before
+  this option and reads as ON, so it keeps the behavior it was created with. The rule lives in
+  `Core.CustomBoardModItems` and is tested; the new-game write happens before ResolveRequirements, so the fresh-run
+  board never reads the missing-field rule.
+- **ON** passes null for `vanillaOnlyIds` everywhere the Engine path filters today (pools, templates, reward
+  pool, board repair, dumpbundles/genbundles): exactly the pre-0.19.2 behavior. **OFF** is the 0.19.2 filter.
+  Normal/Remixed never read it.
+- **Applies at the next reset.** The reset stamps `BoardAllowsModItems` from the choice when it builds a new
+  Engine board; a held board (Fail-night keep, `ConsecutiveHolds > 0`) keeps its stamp, like
+  `RandomBundleRewardsBoard`, so keeping a board never changes it.
+- **Determinism.** Load-time checks (board repair pools, the seed re-derivation in ResolveRequirements, the
+  diagnostics) use the board stamp, never the live choice, so toggling mid-loop changes nothing until the next
+  reset. A board with no stamp (written before this field) tries the existing-save value first and then the
+  opposite, like the EnableNonObjectDonations retry, so a board written under 0.19.2/0.19.3 (vanilla-only) and
+  one written earlier (mod items allowed) both verify instead of falling to the "foreign bundle data" path.
+
+## Addendum 2: Remixed rolls a fresh Tech's Cross-Mod Bundles board each loop (2026-10-08)
+
+Tech's Cross-Mod Bundles (`TechnicalityCreations.CrossModBundles`, Nexus 51035) prefixes `DataLoader.Bundles` to
+return its own static board, which it generates only at save creation (or when its save data is missing). So on
+Normal every TLY reset (`loadForNewGame`) gets the same Tech board back, which is what Normal means. On Remixed
+vanilla's remix starts from that board and replaces positions, so the Tech board is lost or hybridized.
+
+- **Hook.** `WorldResetService.PerformReset`, vanilla branch, after `loadForNewGame` has built the board and only
+  when no held board is being restored: if the save's source is Remixed and Tech's mod is loaded, call Tech's
+  `TechsCrossModBundles.ModEntry.GenerateBundles` by reflection. It rolls a new board with `Game1.random`, stores
+  it as its own Data/Bundles and writes it to the world. TLY's own Remixed passes (difficulty pass, capped-ask
+  clamp, reward shuffle) then run over that board, and the post-reset reload classifies it, so the Tech board is
+  the expected board for the loop (no "changed by another mod" pass, since the fingerprint is taken from the board
+  the reload sees).
+- **Skips.** Normal, TLY Custom, Tech not loaded, and the held-board restore (Fail-night keep).
+- **Adapter.** `ITechBundlesRerollTarget` (IsLoaded, Reroll) wraps the reflection; `TechBundlesReroll.Decide/Run`
+  in Core holds the decision and the fallback and is unit-tested with a fake. Reroll logs Info on success. If the
+  type or method is missing or it throws, one Warn ("Tech's Cross-Mod Bundles changed; Remixed will use the game's
+  remix this loop") and the reset continues with the game's remix.
+- **No code or item lists from Tech's mod** are copied; TLY only names its type and method.

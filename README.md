@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.3`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.4`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,9 +25,9 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.3
+## What's New in 0.19.4
 
-**TLY Custom boards ask only for vanilla items.** Other mods' items are left out of TLY Custom bundles and bundle rewards, so the balance holds. A board you already have keeps its bundles until your next loop. Other mods are not officially supported, but I will look at specific issues when you report them. Normal and Remixed keep working with other mods, including other bundle mods (see [Switching bundle source later](#switching-bundle-source-later)).
+**TLY Custom boards ask only for vanilla items, unless you allow mod items.** A new setting, **Allow mod items in custom bundles**, sits next to Bundle source in the mod's settings menu (GMCM). Off, TLY Custom bundles leave other mods' items out of what they ask for and what they give, so the balance holds. On, they ask for and give other mods' items the way they always did. It is off on new games. Saves you already have start with it on, so they carry on the way they were created. Like Bundle source, it belongs to the save you have loaded and a change applies at your next loop. Other mods are not officially supported, but I will look at specific issues when you report them. Normal and Remixed keep working with other mods, including other bundle mods (see [Switching bundle source later](#switching-bundle-source-later)).
 
 ## 0.19.1
 
@@ -98,7 +98,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 2. Download the latest `TheLongestYear` release and unzip it into your `Stardew Valley/Mods` folder, so you have `Mods/TheLongestYear/TheLongestYear.dll`.
 3. Launch the game through SMAPI.
 4. **Start a new game** on any farm type. Leave **Skip intro** off the first time: the mod's own opening plays in place of the vanilla one and explains the loop. Tick it on later farms to go straight to the theme picker.
-5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles, using vanilla items only. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead. The mod keeps that board and re-rolls it the same way on every reset. With other mods installed, those bundles may not reshuffle each loop and may ask for items you can't get. (You can change this later: `Bundle source` in GMCM switches an existing save between all three, applying at its next loop.)
+5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles, using vanilla items only unless you turn on Allow mod items in custom bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead. The mod keeps that board and re-rolls it the same way on every reset. With other mods installed, those bundles may not reshuffle each loop and may ask for items you can't get. (You can change this later: `Bundle source` in GMCM switches an existing save between all three, applying at its next loop.)
 
    ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
 
@@ -147,7 +147,7 @@ Nine difficulty dials live in the mod's settings menu (GMCM) under **Difficulty*
 
 You are not locked into the board you picked when you started. **Bundle source** in the mod's settings menu (GMCM) is one setting with three choices, and you can move an existing save between any of them:
 
-- **TLY Custom** - the mod composes a fresh board every loop from the vanilla and remix pools plus its own authored bundles. It asks only for vanilla items and gives only vanilla rewards: other mods' items are left out so the balance holds.
+- **TLY Custom** - the mod composes a fresh board every loop from the vanilla and remix pools plus its own authored bundles. It asks only for vanilla items and gives only vanilla rewards: other mods' items are left out so the balance holds. **Allow mod items in custom bundles**, next to Bundle source, lets other mods' items in. It is off on new games, and saves from before 0.19.4 start with it on. Other mods aren't supported, so with it on a bundle may ask for an item you can't get.
 - **Normal** - the game's own standard bundle layout, re-rolled the same way each loop.
 - **Remixed** - the game's own remixed layout, likewise.
 
@@ -175,6 +175,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 | `StashTileX/Y` | `0,0` (auto) | Where the Junimo Stash chest is placed (`0,0` = auto-pick near the farmhouse). The Bundle Log / Cookbook / Craftbook are placeable furniture you can put anywhere. |
 | `LimitTravelingCartStock` | `true` | Cap the Traveling Cart to the stalls unlocked by the Cart Stall upgrades (one item until Cart Stall II). `false` = full vanilla cart |
 | `BundleSource` | `Engine` | One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Only the default a new game starts on: each save keeps its own choice, which the in-game settings menu changes, and it takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later) |
+| `AllowModItemsInCustomBundles` | `false` | Whether TLY Custom bundles may ask for and give other mods' items. Only the default a new game starts on: each save keeps its own choice (saves from before 0.19.4 start with it on), which the in-game settings menu changes, and it takes effect at the next loop. Other mods aren't supported, so with it on a bundle may ask for an item you can't get |
 | `BundleHoldCosts` | `[0, 50, 100, 200, 300]` | JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count |
 | `Enabled` | `true` | Master switch: turn the whole mod off to play vanilla |
 
@@ -225,7 +226,7 @@ Anything not on this list, please do report - the bugs tab on Nexus is read.
 ## Limitations (beta)
 
 - **PC only.** No Android port yet.
-- **Other mods are not officially supported.** TLY Custom boards ask only for vanilla items, so other mods' items are left out and the balance holds. Normal or Remixed with other mods (including other bundle mods) is allowed, but the bundles may not reshuffle each loop and may ask for items you can't get. If something goes wrong with a specific mod, report it and I will take a look.
+- **Other mods are not officially supported.** TLY Custom boards ask only for vanilla items unless you turn on Allow mod items in custom bundles (off on new games; saves from before 0.19.4 start with it on), so by default other mods' items are left out and the balance holds. Normal or Remixed with other mods (including other bundle mods) is allowed, but the bundles may not reshuffle each loop and may ask for items you can't get. If something goes wrong with a specific mod, report it and I will take a look.
 - **Farm types are balanced as a set, not individually.** The bundle asks are sized from Standard farm yields. Each other type trades one thing for another (Riverland and Beach: more fish, less field; Forest: more forage; Hilltop: more ore; Wilderness: more monsters; Meadowlands: easier animals), so the year is a little easier in some bundles and a little harder in others. Beach farm's no-sprinklers rule makes its crop bundles a real step harder. Custom farm maps that replace a vanilla slot load fine but are untested for balance.
 - **Start on a new save.** A run can only begin from a new game; other saves load normally and are left untouched.
 - Intro cutscene and dialogue are a first pass.

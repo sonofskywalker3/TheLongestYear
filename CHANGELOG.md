@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.4 - 2026-10-08
+
+3093 tests.
+
+### Added
+
+- **Allow mod items in custom bundles.** A new per-save setting next to Bundle source in GMCM (config `AllowModItemsInCustomBundles`). Off, TLY Custom boards ask only for vanilla items and give only vanilla rewards, as in 0.19.2. On, they work as before 0.19.2 and take other mods' items into their pools, templates, rewards and board repair. It is off on new games; a save from before this version has no value stored and starts with it on, so it keeps the behavior it was created with. Like Bundle source, the title-screen value only sets what a new game starts with, and a change on a loaded save applies at its next loop. The board on disk records which value built it, so the load-time check re-derives it the same way after a mid-loop toggle, and a board kept on a Fail night keeps its value. Normal and Remixed are unaffected.
+
 ## 0.19.3 - 2026-10-08
 
 3082 tests. Rolls up 0.19.2 to 0.19.3.
