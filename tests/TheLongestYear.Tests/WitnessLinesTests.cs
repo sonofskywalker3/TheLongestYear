@@ -39,6 +39,39 @@ public class WitnessLinesTests
     public void The_line_only_follows_a_dialogue_that_displaced_it(bool queued, bool onTop, bool pushed)
         => Assert.False(WitnessLines.FollowsTopic(queued, onTop, pushed));
 
+    // The second fix (2026-10-08): the line goes UNDER the intro, because closing the intro's box
+    // pops the top of the stack, and a line pushed on top while the box animated out was popped.
+    [Fact]
+    public void A_cleared_stack_gets_the_line_under_the_intro()
+    {
+        string intro = "Introduction", line = "witness";
+        Assert.Equal(new[] { intro, line }, WitnessLines.PlaceUnderTop(new[] { intro }, line));
+    }
+
+    [Fact]
+    public void A_buried_line_moves_up_to_just_under_the_top()
+    {
+        string location = "Mountain", other = "older", line = "witness";
+        Assert.Equal(new[] { location, line, other }, WitnessLines.PlaceUnderTop(new[] { location, other, line }, line));
+    }
+
+    [Fact]
+    public void An_empty_stack_just_gets_the_line()
+        => Assert.Equal(new[] { "witness" }, WitnessLines.PlaceUnderTop(new string[0], "witness"));
+
+    [Fact]
+    public void The_line_opens_when_the_intro_box_closes_on_a_free_screen()
+        => Assert.True(WitnessLines.OpensAfterTopic(closedBoxWasTopic: true, screenIsFree: true, lineIsNext: true, eventUp: false, sameLocation: true));
+
+    [Theory]
+    [InlineData(false, true, true, false, true)]  // some other box closed
+    [InlineData(true, false, true, false, true)]  // afterDialogues opened a menu
+    [InlineData(true, true, false, false, true)]  // something else is his next line
+    [InlineData(true, true, true, true, true)]    // an event is up
+    [InlineData(true, true, true, false, false)]  // the player left
+    public void Otherwise_the_line_waits_for_the_next_talk(bool topic, bool free, bool next, bool eventUp, bool here)
+        => Assert.False(WitnessLines.OpensAfterTopic(topic, free, next, eventUp, here));
+
     [Fact] public void A_line_already_said_is_not_live()
         => Assert.False(WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40, Said = true }, 41));
 

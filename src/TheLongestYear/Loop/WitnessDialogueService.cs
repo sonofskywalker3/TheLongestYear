@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
 
@@ -35,25 +37,41 @@ namespace TheLongestYear.Loop
         /// <summary>Day start: put each live line on top of its NPC's dialogue, drop the dead ones.</summary>
         public void OnDayStarted()
         {
+            WitnessIntroPatch.Forget();
             RunState run = _store.Run;
             if (run.WitnessLines == null || run.WitnessLines.Count == 0) return;
             int today = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
             run.WitnessLines.RemoveAll(r => r.Said || today - r.SceneDayOfYear > WitnessLines.WindowDays);
             foreach (WitnessRecord r in run.WitnessLines)
-            {
-                if (!WitnessLines.IsLive(r, today)) continue;
-                NPC npc = Game1.getCharacterFromName(r.Npc);
-                if (npc == null) continue;
-                string when = Strings.Get(WitnessLines.WhenKey(r.SceneDayOfYear, today));
-                // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
-                string text = r.Npc == "Linus"
-                    ? Strings.Get("dialogue.witness.linus", new Dictionary<string, string> { ["when"] = when })
-                    : Strings.Get("dialogue.witness.shane", new Dictionary<string, string> { ["when"] = when });
-                WitnessRecord record = r;
-                var dialogue = new Dialogue(npc, Marker, text) { onFinish = () => record.Said = true };
-                npc.CurrentDialogue.Push(dialogue);
-                _monitor.Log($"Witness: {r.Npc} will say his line (scene day {r.SceneDayOfYear}, today {today}).", LogLevel.Debug);
-            }
+                if (WitnessLines.IsLive(r, today)) Queue(r, today);
+        }
+
+        /// <summary>Put one record's line on top of its NPC's dialogue stack.</summary>
+        private void Queue(WitnessRecord r, int today)
+        {
+            NPC npc = Game1.getCharacterFromName(r.Npc);
+            if (npc == null) return;
+            string when = Strings.Get(WitnessLines.WhenKey(r.SceneDayOfYear, today));
+            // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
+            string text = r.Npc == "Linus"
+                ? Strings.Get("dialogue.witness.linus", new Dictionary<string, string> { ["when"] = when })
+                : Strings.Get("dialogue.witness.shane", new Dictionary<string, string> { ["when"] = when });
+            WitnessRecord record = r;
+            var dialogue = new Dialogue(npc, Marker, text) { onFinish = () => record.Said = true };
+            npc.CurrentDialogue.Push(dialogue);
+            _monitor.Log($"Witness: {r.Npc} will say his line (scene day {r.SceneDayOfYear}, today {today}).", LogLevel.Debug);
+        }
+
+        /// <summary>Debug (<c>tly_witness arm</c>): as if he saw last night's scene, his line queued now.</summary>
+        public bool ArmForTest(string npcName)
+        {
+            if (npcName != "Linus" && npcName != "Shane") return false;
+            RunState run = _store.Run;
+            int today = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
+            var record = new WitnessRecord { Npc = npcName, SceneDayOfYear = today - 1 };
+            (run.WitnessLines ??= new()).Add(record);
+            Queue(record, today);
+            return true;
         }
     }
 
@@ -61,17 +79,23 @@ namespace TheLongestYear.Loop
     /// NPC's dialogue stack before pushing itself (<c>NPC.checkForNewCurrentDialogue</c>), which threw
     /// the witness line away: Linus introduced himself and said nothing about the crows (designer,
     /// 2026-10-08). The prefix notes the waiting line; when vanilla's pick cleared it or buried it
-    /// under a location line, the postfix chains it after that dialogue, so the line plays straight
-    /// after the introduction in the same conversation. The rule is
-    /// <see cref="WitnessLines.FollowsTopic"/>.</summary>
+    /// under a location line, the postfix puts it straight UNDER that dialogue on his stack
+    /// (<see cref="WitnessLines.PlaceUnderTop{T}"/>), so vanilla's own close pops the topic and
+    /// leaves the line next. When the topic's box has closed, <see cref="OnMenuChanged"/> opens the
+    /// line at once, so it plays in the same conversation; if it cannot, the line simply waits for
+    /// the next talk.
+    ///
+    /// The first fix (d5f9e4f) opened the line from the topic's <c>onFinish</c> after 200 ms. That
+    /// fires on the last page while the box is still animating out; the line was pushed on top of
+    /// the not-yet-popped topic and <c>DialogueBox.closeDialogue</c> popped it (it pops the top of
+    /// the speaker's stack), so the line vanished: logged, never shown.</summary>
     [HarmonyPatch(typeof(NPC), nameof(NPC.checkForNewCurrentDialogue))]
     internal static class WitnessIntroPatch
     {
         internal static IMonitor Monitor;
 
-        /// <summary>How long after the topic dialogue closes the line opens: vanilla's own gap for a
-        /// follow-up box (NPC.tryToReceiveActiveObject's quest items).</summary>
-        private const int FollowUpDelayMs = 200;
+        /// <summary>The conversation waiting for its topic box to close: who, the topic, the line.</summary>
+        private static (NPC Npc, Dialogue Topic, Dialogue Line)? _pending;
 
         private static void Prefix(NPC __instance, out Dialogue __state)
         {
@@ -85,33 +109,40 @@ namespace TheLongestYear.Loop
             Stack<Dialogue> stack = __instance.CurrentDialogue;
             bool onTop = stack.Count > 0 && ReferenceEquals(stack.Peek(), __state);
             if (!WitnessLines.FollowsTopic(__state != null, onTop, __result)) return;
-            if (stack.Count == 0)
-            {
-                stack.Push(__state);
-                return;
-            }
-            NPC npc = __instance;
-            Dialogue line = __state;
-            // Buried under a location line rather than cleared: lift it out, it follows instead.
-            if (stack.Contains(line))
-            {
-                var rest = new List<Dialogue>(stack);
-                rest.Remove(line);
-                stack.Clear();
-                for (int i = rest.Count - 1; i >= 0; i--) stack.Push(rest[i]);
-            }
+            // Top first, as the stack enumerates; rebuilt bottom up.
+            List<Dialogue> order = WitnessLines.PlaceUnderTop(new List<Dialogue>(stack), __state);
+            stack.Clear();
+            for (int i = order.Count - 1; i >= 0; i--) stack.Push(order[i]);
             Dialogue topic = stack.Peek();
-            topic.onFinish += () => DelayedAction.functionAfterDelay(() => Speak(npc, line), FollowUpDelayMs);
-            Monitor?.Log($"Witness: {npc.Name}'s line follows his {topic.TranslationKey} dialogue.", LogLevel.Debug);
+            if (ReferenceEquals(topic, __state)) return;
+            _pending = (__instance, topic, __state);
+            Monitor?.Log($"Witness: {__instance.Name}'s line waits under his {topic.TranslationKey} dialogue, to open when it closes.", LogLevel.Debug);
         }
 
-        /// <summary>Open the line now; if something else holds the screen, leave it on his stack for
-        /// the next talk.</summary>
-        private static void Speak(NPC npc, Dialogue line)
+        /// <summary>The topic's box closed: open the line now, in the same conversation. SMAPI raises
+        /// this after <c>DialogueBox.closeDialogue</c> has run, so the topic is already popped and the
+        /// farmer is free again.</summary>
+        internal static void OnMenuChanged(object sender, MenuChangedEventArgs e)
         {
-            if (!npc.CurrentDialogue.Contains(line)) npc.CurrentDialogue.Push(line);
-            if (Game1.activeClickableMenu == null && !Game1.eventUp && Game1.player.currentLocation == npc.currentLocation)
-                Game1.drawDialogue(npc);
+            if (_pending is not { } p) return;
+            if (e.OldMenu is not DialogueBox closed || !ReferenceEquals(closed.characterDialogue, p.Topic)) return;
+            _pending = null;
+            Stack<Dialogue> stack = p.Npc.CurrentDialogue;
+            bool lineIsNext = stack.Count > 0 && ReferenceEquals(stack.Peek(), p.Line);
+            bool open = WitnessLines.OpensAfterTopic(
+                closedBoxWasTopic: true,
+                screenIsFree: e.NewMenu == null && Game1.activeClickableMenu == null,
+                lineIsNext: lineIsNext,
+                eventUp: Game1.eventUp,
+                sameLocation: Game1.player.currentLocation == p.Npc.currentLocation);
+            if (open) Game1.drawDialogue(p.Npc);
+            Monitor?.Log(open
+                ? $"Witness: {p.Npc.Name}'s line opens after his {p.Topic.TranslationKey} dialogue."
+                : $"Witness: {p.Npc.Name}'s line waits for the next talk (next={lineIsNext}, menu={e.NewMenu?.GetType().Name ?? "none"}, event={Game1.eventUp}).",
+                LogLevel.Debug);
         }
+
+        /// <summary>A new day or the title screen: nothing is mid-conversation any more.</summary>
+        internal static void Forget() => _pending = null;
     }
 }
