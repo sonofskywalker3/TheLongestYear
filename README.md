@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.4`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.5`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,9 +25,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.4
+## What's New in 0.19.5
 
 **TLY Custom boards ask only for vanilla items, unless you allow mod items.** A new setting, **Allow mod items in custom bundles**, sits next to Bundle source in the mod's settings menu (GMCM). Off, TLY Custom bundles leave other mods' items out of what they ask for and what they give, so the balance holds. On, they ask for and give other mods' items the way they always did. It is off on new games. Saves you already have start with it on, so they carry on the way they were created. Like Bundle source, it belongs to the save you have loaded and a change applies at your next loop. Other mods are not officially supported, but I will look at specific issues when you report them. Normal and Remixed keep working with other mods, including other bundle mods (see [Switching bundle source later](#switching-bundle-source-later)).
+
+**Remixed rolls a fresh Tech's Cross-Mod Bundles board each loop.** With Tech's Cross-Mod Bundles installed, Normal keeps the same Tech board every loop, and Remixed now asks it for a new board at each reset instead of mixing the old one with the game's remix. Like other mods, it is not officially supported, but I will look at specific issues when you report them.
 
 ## 0.19.1
 
@@ -151,7 +153,7 @@ You are not locked into the board you picked when you started. **Bundle source**
 - **Normal** - the game's own standard bundle layout, re-rolled the same way each loop.
 - **Remixed** - the game's own remixed layout, likewise.
 
-Another bundle mod's board is covered by Normal or Remixed: whatever the game generates is what the mod keeps. Using Normal or Remixed with other mods (bundle mods included) is allowed, but the bundles may not reshuffle each loop and may ask for items you can't get.
+Another bundle mod's board is covered by Normal or Remixed: whatever the game generates is what the mod keeps. Using Normal or Remixed with other mods (bundle mods included) is allowed, but the bundles may not reshuffle each loop and may ask for items you can't get. With Tech's Cross-Mod Bundles, Normal keeps the same board every loop and Remixed rolls a fresh one.
 
 Like the difficulty dials, a switch applies at your **next loop**, not straight away. The year you are already playing keeps the board it started with. The setting belongs to the save you have loaded. On the title screen it only picks what a new game starts with, so one farm's choice never changes another's.
 
