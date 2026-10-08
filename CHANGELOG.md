@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.11 - 2026-10-08
+
+3129 tests.
+
+### Debug
+
+- `tly_dumpmodel [fileName]` writes the whole item availability model as a TSV in the mod folder: every Data/Objects id (plus the guild reward ids) under all four difficulty steps (placed, pacing week, hard week, gate, effort, source, basis), every engine pool's membership, the derived season pins, the reachability verdicts and the generated dish bases. Read-only; the models are built on the side. Made for before/after comparisons of a rule change (the vanilla-unchanged check of the mod-support work) and for listing every modded item still at the unknown week.
+
 ## 0.19.10 - 2026-10-08
 
 3129 tests. Release of 0.19.2 to 0.19.10 (the live Nexus page was on 0.19.1).
