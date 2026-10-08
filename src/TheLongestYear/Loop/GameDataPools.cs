@@ -161,6 +161,8 @@ namespace TheLongestYear.Loop
             // because a partial source graph is worse than none (it looks authoritative while
             // missing exactly the alternative route that would have kept an item allowed).
             SourceReachability reachability = null;
+            List<RawShopListing> listingsForWeeks = null;
+            List<RawShopPlacement> placementsForWeeks = null;
             try
             {
                 var shopListings = new List<RawShopListing>();
@@ -265,6 +267,9 @@ namespace TheLongestYear.Loop
                             shopPlacements.Add(new RawShopPlacement(shop.Key, npc.currentLocation.Name));
                     }
                 }
+
+                listingsForWeeks = shopListings;
+                placementsForWeeks = shopPlacements;
 
                 // Positive-reachability evidence: every id the game already told us spawns
                 // somewhere, from tables this method has ALREADY read above. Without this, an
@@ -388,7 +393,8 @@ namespace TheLongestYear.Loop
                 crops, objects, forage, fish, trapIds, drops,
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
-                festivalSeasons, reachability, vanillaOnlyIds, locationWeeks);
+                festivalSeasons, reachability, vanillaOnlyIds, locationWeeks)
+                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks) };
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
@@ -434,6 +440,24 @@ namespace TheLongestYear.Loop
             catch (Exception ex)
             {
                 _monitor?.Log($"Location weeks could not be read ({ex.GetType().Name}: {ex.Message}); no item is placed from a modded map this generation.", LogLevel.Warn);
+                return null;
+            }
+        }
+
+        /// <summary>The earliest week a walkable shop sells each item, from the listings and
+        /// placements the reachability read already gathered. Null when either read failed.</summary>
+        private ShopWeeks ReadShopWeeks(List<RawShopListing> listings, List<RawShopPlacement> placements, LocationWeeks locationWeeks)
+        {
+            if (listings == null || placements == null || locationWeeks == null) return null;
+            try
+            {
+                ShopWeeks weeks = ShopWeeks.Build(listings, placements, locationWeeks);
+                _monitor?.Log($"Shop weeks: {weeks.Weeks.Count} items sold by a walkable shop.", LogLevel.Trace);
+                return weeks;
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"Shop weeks could not be read ({ex.GetType().Name}: {ex.Message}); fruit trees and seeds get no shop week this generation.", LogLevel.Warn);
                 return null;
             }
         }

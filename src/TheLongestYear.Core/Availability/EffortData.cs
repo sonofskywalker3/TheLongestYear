@@ -76,6 +76,8 @@ public sealed class EffortData
     /// that only need obtainability (the effort rules never read it).</summary>
     public IReadOnlyList<RawLocationForageRate> ForageRates { get; init; } = new List<RawLocationForageRate>();
     public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
+    /// <summary>Data/FruitTrees: sapling, fruit and fruiting seasons per tree.</summary>
+    public IReadOnlyList<RawFruitTree> FruitTrees { get; init; } = new List<RawFruitTree>();
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
     public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
 }

@@ -58,6 +58,7 @@ namespace TheLongestYear.Loop
             var crops = new List<RawCropGrowth>();
             var tapItems = new List<RawTapItem>();
             var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
+            var fruitTrees = new List<RawFruitTree>();
 
             try
             {
@@ -234,6 +235,17 @@ namespace TheLongestYear.Loop
                     }
                 }
 
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
+                {
+                    if (kv.Value == null) continue;
+                    var fruit = (kv.Value.Fruit ?? new List<StardewValley.GameData.FruitTrees.FruitTreeFruitData>())
+                        .SelectMany(f => SpawnIds(f?.ItemId, f?.RandomItemId))
+                        .Distinct(StringComparer.Ordinal).ToList();
+                    var treeSeasons = (kv.Value.Seasons ?? new List<StardewValley.Season>())
+                        .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
+                    fruitTrees.Add(new RawFruitTree(kv.Key, fruit, treeSeasons));
+                }
+
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
                 {
                     if (!int.TryParse(kv.Key, out int episode)) continue;
@@ -264,7 +276,7 @@ namespace TheLongestYear.Loop
                 MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
-                CookingChannel = cookingChannel,
+                CookingChannel = cookingChannel, FruitTrees = fruitTrees,
             };
         }
 
