@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.20 - 2026-10-08
+
+3209 tests.
+
+### Changed
+
+- **Items a rare pond product used to date now have their real routes.** The 0.19.19 pond rule left some vanilla items with no route at all. New readers, all from game data or the game's own code: wild trees (Data/WildTrees plus the trees standing in the world: Acorn, Maple Seed and Pine Cone at week 1, Wood at week 1, Sap from chopping oaks), the beach tide pools past the broken bridge (Coral and Sea Urchin, from Beach.cs; week 1 with the 300 Wood bridge), geodes from mine stones (MineShaft.checkStoneForItems: Geode floors 1 to 39, Frozen Geode week 2, Magma Geode week 3, Omni Geode below floor 20 at week 1), and Squid Fest rewards (Pearl for 5 squid on Winter 12, Treasure Chest for 7 squid on Winter 13, both week 14). Coconut and Tom Kha Soup keep week 9 with lower effort. Pools and reachability are unchanged. With SVE and Cornucopia, SVE Birch Seed and Fir Cone get week 1 and Cornucopia Date Palm Seed week 9 from their wild trees.
+
 ## 0.19.19 - 2026-10-08
 
 3189 tests.
