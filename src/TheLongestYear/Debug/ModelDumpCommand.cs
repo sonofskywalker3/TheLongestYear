@@ -84,6 +84,11 @@ namespace TheLongestYear.DebugCommands
                     sb.Append("place\t").Append(place.Key).Append("\t-\t")
                         .Append(place.Value.Week).Append('\t').Append(place.Value.Hard).Append('\t').Append(place.Value.Extreme).AppendLine();
 
+            if (pools.ShopWeeks != null)
+                foreach (KeyValuePair<string, PlaceWeek> sold in pools.ShopWeeks.Weeks.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                    sb.Append("shop	").Append(sold.Key).Append('	').Append(VanillaItemIds.All.Contains(sold.Key) ? "v" : "m").Append('	')
+                        .Append(sold.Value.Week).Append('	').Append(sold.Value.Hard).Append('	').Append(sold.Value.Extreme).AppendLine();
+
             if (reachability != null)
                 foreach (KeyValuePair<string, string> reason in reachability.Reasons.OrderBy(kv => kv.Key, StringComparer.Ordinal))
                     sb.Append("unreachable\t").Append(reason.Key).Append('\t').Append(VanillaItemIds.All.Contains(reason.Key) ? "v" : "m").Append('\t')

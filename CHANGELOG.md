@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.14 - 2026-10-08
+
+3157 tests.
+
+### Fixed (mod support)
+
+- **Fruit from modded fruit trees gets a week.** Only vanilla's six orchard fruits had one (a ruled table), so SVE's Nectarine and Persimmon and Cornucopia's Fig, Grapefruit, Pistachio, Almond, Walnut and the rest read as unknown. New rule from Data/FruitTrees: the sapling is bought the first week a walkable shop sells it, the tree matures in 28 days, and it fruits from the first week after that in one of its seasons, the same arithmetic as the ruled rows. With SVE and Cornucopia: Summer trees week 5 (Nectarine, Avocado, Ume, Nutmeg), Fall trees week 9 (Grapefruit, Pistachio, Almond, Cashew, Pecan, Walnut, Pomelo, SVE Persimmon), Winter trees week 13 (Fig, Yuzu, Camphor Leaves, Cinnamon Sticks). Dishes made from them follow (Nectarine Fruit Bread week 6).
+- **Not placed, on purpose:** a Spring tree (SVE Pear, Cornucopia Lemon and Lime) first fruits next Spring, and the Traveling Cart route that puts Apricot and Cherry at week 13 sells only vanilla fruit; a sapling no walkable shop sells (Cornucopia's Durian, only at the island trader) gives no week.
+- New `ShopWeeks`: the earliest week a walkable shop sells an item, from the same Data/Shops read as the reachability rule (item queries, year-2 lines closed), each shop dated by its owners' maps, its OpenShop tiles, or the map the game opens it at in code (Desert Trader, island trader, Volcano shop, resort bar). `tly_dumpmodel` lists it.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
 ## 0.19.13 - 2026-10-08
 
 3145 tests.

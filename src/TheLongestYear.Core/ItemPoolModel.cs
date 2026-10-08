@@ -39,6 +39,10 @@ public sealed record ItemPools
     /// doors (<see cref="Availability.LocationWeeks"/>). Null = not read (hand-built pools, or the
     /// read failed): rules fall back to <see cref="Availability.LocationGating"/>'s names alone.</summary>
     public Availability.LocationWeeks? LocationWeeks { get; init; }
+
+    /// <summary>The earliest week a walkable shop sells each item (<see cref="Availability.ShopWeeks"/>).
+    /// Null = not read: the rules that need it (fruit trees, crop seeds) place nothing from it.</summary>
+    public Availability.ShopWeeks? ShopWeeks { get; init; }
     public IReadOnlyList<PoolItem> Forage { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> MonsterDrops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Metals { get; init; } = new List<PoolItem>();
