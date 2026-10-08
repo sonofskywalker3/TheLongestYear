@@ -7,6 +7,18 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 ## Open
 
 ### Darkness agents and gate scenes: BUILT on story 2026-10-07, Jeff's pass owed
+
+**Jeff's pass, save 1 (Summer 14), feedback 2026-10-08. Collecting; build once he's done:**
+1. Summer porch scene: both Junimos one tile right, evenly either side of him. DONE f4e72e3.
+2. Morning messages use the big vanilla message box (the "spreading weeds have caused damage to
+   the farm" box), not the terse HUD one-liner with the X. Lets the lines say more.
+3. Crows: they dropped straight down onto the field. They must swoop in from the sides.
+   Rest of the crows scene "pretty good".
+4. Crows morning text, in the big box: "Some strange crows visited the farm last night. They
+   didn't eat your crops, but X have withered away."
+5. Linus's witness line lost to his first-meeting intro (they had never talked). The witness line
+   has to work when it is the first conversation too.
+6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying).
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
 when Jeff says. Summary in `STATUS.md` (2026-10-07).
