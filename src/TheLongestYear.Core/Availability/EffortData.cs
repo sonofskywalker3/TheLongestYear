@@ -38,8 +38,9 @@ public sealed record RawCookingRecipe(
     public int CountOf(int i) => IngredientCounts != null && i < IngredientCounts.Count ? Math.Max(1, IngredientCounts[i]) : 1;
 }
 
-/// <summary>One product a fish pond can yield and the population it needs.</summary>
-public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation);
+/// <summary>One product a fish pond can yield, the population it needs and its row's daily
+/// <c>Chance</c> (FishPondReward.Chance; 1 when the data gave none).</summary>
+public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation, double Chance = 1.0);
 
 /// <summary>One Data/FishPondData entry: which fish (by tags) and what they produce.</summary>
 public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOnlyList<RawFishPondProduct> Products);

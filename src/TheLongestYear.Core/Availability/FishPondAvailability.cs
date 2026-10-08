@@ -6,12 +6,31 @@ namespace TheLongestYear.Core.Availability;
 /// <summary>Effort and first week for a fish pond output (Data/FishPondData): the cheapest fish
 /// any matching pond entry accepts, plus the pond itself, plus one step per three fish of
 /// population the product needs beyond the first. The week is the fish's week plus a season
-/// (AvailabilityWeeks.PondDelayWeeks) to build and populate a 5,000g pond.</summary>
+/// (AvailabilityWeeks.PondDelayWeeks) to build and populate a 5,000g pond.
+///
+/// A product row whose daily <c>Chance</c> is too small to turn up in a run is not a route
+/// (<see cref="CountsAsRoute"/>): SVE's Goldenfish pond lists Golden Pumpkin at 0.01, which put it
+/// at week 5 instead of the Spirit's Eve maze in week 12.</summary>
 public static class FishPondAvailability
 {
     private const int PondCost = 2;
     private const int PopulationStepSize = 3;
     private const string FishType = "Fish";
+
+    /// <summary>The chance a full pond (10 fish) produces anything on a day: FishPond.dayUpdate's
+    /// Lerp(0.15, 0.95, occupants / 10) at 10 occupants.</summary>
+    public const double FullPondDailyOutputChance = 0.95;
+
+    /// <summary>The longest average wait, in days at a full pond, for a product row to count as a
+    /// route: half the 112-day year. Vanilla's rarest real rows (Pearl, Nautilus Shell, Magma Geode
+    /// at 0.02 to 0.033) wait 32 to 53 days and still count; 0.01 rows (Diamond, Omni Geode, SVE's
+    /// Golden Pumpkin) wait 105 days, nearly the whole year, and do not.</summary>
+    public const int MaxExpectedWaitDays = Calendar.DaysPerYear / 2;
+
+    /// <summary>True when a product row's daily chance gives an average wait at a full pond of at
+    /// most <see cref="MaxExpectedWaitDays"/>.</summary>
+    public static bool CountsAsRoute(double chance)
+        => chance > 0 && 1.0 / (FullPondDailyOutputChance * chance) <= MaxExpectedWaitDays;
 
     public static int PopulationSteps(int requiredPopulation)
         => requiredPopulation <= 1 ? 0 : (requiredPopulation - 2) / PopulationStepSize + 1;
@@ -27,7 +46,7 @@ public static class FishPondAvailability
         {
             foreach (RawFishPondProduct product in rule.Products)
             {
-                if (product.ItemId != qualifiedId) continue;
+                if (product.ItemId != qualifiedId || !CountsAsRoute(product.Chance)) continue;
                 int? fishEffort = null;
                 int? fishWeek = null;
                 string fishId = "";

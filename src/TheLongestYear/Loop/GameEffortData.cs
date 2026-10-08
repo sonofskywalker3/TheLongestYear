@@ -213,7 +213,7 @@ namespace TheLongestYear.Loop
                     var products = new List<RawFishPondProduct>();
                     foreach (FishPondReward reward in pond.ProducedItems ?? new List<FishPondReward>())
                         foreach (string id in SpawnIds(reward?.ItemId, reward?.RandomItemId))
-                            products.Add(new RawFishPondProduct(id, reward.RequiredPopulation));
+                            products.Add(new RawFishPondProduct(id, reward.RequiredPopulation, reward.Chance));
                     ponds.Add(new RawFishPondRule((IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), products));
                 }
 
