@@ -59,6 +59,7 @@ namespace TheLongestYear.Loop
             var tapItems = new List<RawTapItem>();
             var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
             var fruitTrees = new List<RawFruitTree>();
+            var objectArtifactSpots = new List<RawArtifactSpot>();
 
             try
             {
@@ -70,6 +71,9 @@ namespace TheLongestYear.Loop
                         o.Type ?? "", o.Category, o.Price, o.ExcludeFromRandomSale,
                         (IReadOnlyList<string>)(o.ContextTags ?? new List<string>()), o.Name ?? "");
                     string geodeId = BundleParsing.NormalizeItemId(kv.Key);
+                    foreach (var chance in o.ArtifactSpotChances ?? new Dictionary<string, float>())
+                        if (!string.IsNullOrEmpty(chance.Key) && chance.Value > 0)
+                            objectArtifactSpots.Add(new RawArtifactSpot(chance.Key, geodeId, chance.Value));
                     if (o.GeodeDropsDefaultItems)
                         geodeDrops.AddRange(GeodeAvailability.DefaultTableDrops(geodeId));
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
@@ -277,7 +281,7 @@ namespace TheLongestYear.Loop
                 MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
-                CookingChannel = cookingChannel, FruitTrees = fruitTrees,
+                CookingChannel = cookingChannel, FruitTrees = fruitTrees, ObjectArtifactSpots = objectArtifactSpots,
             };
         }
 

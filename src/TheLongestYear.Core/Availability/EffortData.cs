@@ -64,6 +64,9 @@ public sealed class EffortData
     public IReadOnlyList<RawGeodeDrop> GeodeDrops { get; init; } = new List<RawGeodeDrop>();
     public IReadOnlyList<RawMonsterDrop> MonsterDrops { get; init; } = new List<RawMonsterDrop>();
     public IReadOnlyList<RawArtifactSpot> ArtifactSpots { get; init; } = new List<RawArtifactSpot>();
+    /// <summary>Each object's own Data/Objects ArtifactSpotChances (map to chance), one row per map.
+    /// Read only for an item nothing else places (EffortComposer.OwnDigSpots).</summary>
+    public IReadOnlyList<RawArtifactSpot> ObjectArtifactSpots { get; init; } = new List<RawArtifactSpot>();
     public IReadOnlyList<RawMachineRule> MachineRules { get; init; } = new List<RawMachineRule>();
     public IReadOnlyDictionary<string, string> MachineUnlocks { get; init; } = new Dictionary<string, string>();
     public IReadOnlyDictionary<string, int> RecipePrices { get; init; } = new Dictionary<string, int>();

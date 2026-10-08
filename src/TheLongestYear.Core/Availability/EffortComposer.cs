@@ -123,6 +123,8 @@ public sealed class EffortComposer
                 || (candidate.EarliestWeek == best.EarliestWeek && candidate.Effort < best.Effort);
             if (better) best = candidate;
         }
+        if (best?.EarliestWeek == null && OwnDigSpots(qualifiedId) is ItemEffort dug)
+            best = dug;
         return best;
     }
 
@@ -147,6 +149,27 @@ public sealed class EffortComposer
             ? new ItemEffort(PoolArtifactEffort, $"artifact (catalog pool, no spot row), week {AvailabilityWeeks.ArtifactWeek}, effort {PoolArtifactEffort}",
                 AvailabilityWeeks.ArtifactWeek, Season.Spring)
             : null;
+
+    private const string OwnDigSpotsNote = "own dig-spot chances (Data/Objects ArtifactSpotChances)";
+
+    /// <summary>An artifact (Type "Arch") nothing else places, dug from the dig spots its own Data/Objects entry names
+    /// (ArtifactSpotChances), on maps the walked weeks can date. Stardew Valley Expanded's
+    /// Boomerang, Old Coin and Stone of Yoba carry ExcludeFromRandomSale, so the catalog pool that
+    /// <see cref="PoolArtifact"/> reads skips them, and their spots are in that field, not in
+    /// Data/Locations (mod-support work, 2026-10-08). Only a fallback: every placed item, vanilla's
+    /// artifacts included, keeps the week and effort its own rules gave it, and a non-artifact with
+    /// spot chances (vanilla's Lost Book, which the Town's dig spots hand out through a query) is
+    /// left to its own rules.</summary>
+    private ItemEffort? OwnDigSpots(string qualifiedId)
+    {
+        if (_locationWeeks == null || !IsArtifact(qualifiedId)) return null;
+        var spots = new List<RawArtifactSpot>();
+        foreach (RawArtifactSpot spot in _data.ObjectArtifactSpots)
+            if (spot.ItemId == qualifiedId && _locationWeeks.TryGet(spot.Location ?? "", out _))
+                spots.Add(spot);
+        ItemEffort? dug = ArtifactAvailability.Derive(qualifiedId, spots, _mode);
+        return dug == null ? null : dug with { Basis = $"{OwnDigSpotsNote}, {dug.Basis}" };
+    }
 
     private const int PoolBookEffort = 5;
 
