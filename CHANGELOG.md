@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.16 - 2026-10-08
+
+3164 tests.
+
+### Fixed (mod support)
+
+- **SVE's flagged artifacts get a week from their own dig spots.** Boomerang, Faded Button, Fossilized Apple, Old Coin, Rusty Shield and Stone of Yoba list their dig spots in their own Data/Objects ArtifactSpotChances, not in Data/Locations, and carry ExcludeFromRandomSale, so neither the spot rule nor the catalog-pool fallback saw them: unknown, week 13. An artifact (Type "Arch") nothing else places is now dug from its own spot chances on maps the walked weeks can date: all six week 3, the artifact floor.
+- A fallback only, so every placed item keeps its week and effort, and a non-artifact with spot chances (vanilla's Lost Book) is left to its own rules. Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
 ## 0.19.15 - 2026-10-08
 
 3161 tests.
