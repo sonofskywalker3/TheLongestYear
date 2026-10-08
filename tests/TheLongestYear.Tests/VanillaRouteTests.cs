@@ -129,4 +129,12 @@ public class PearlPlacementTests
         Assert.Equal(14, e.EarliestWeek);
         Assert.Contains("SquidFest", e.Basis);
     }
+
+    [Fact]
+    public void Treasure_Chest_is_the_SquidFest_day_two_reward()
+    {
+        ItemEffort e = ShopAvailability.Derive("(O)166")!;
+        Assert.Equal(14, e.EarliestWeek);
+        Assert.Contains("SquidFest", e.Basis);
+    }
 }
