@@ -31,15 +31,20 @@ public static class FishAvailability
 
     /// <param name="mode">The mode the model is built in: Extreme (HardAll) reads the Extreme
     /// desert week for the hard week (LocationGating.HardWeekFor).</param>
-    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row, WeekMode mode = WeekMode.Pacing)
+    /// <param name="weeks">When set, each location's week comes from the walked map weeks
+    /// (<see cref="LocationWeeks"/>) and a location it cannot date is ignored; null reads
+    /// <see cref="LocationGating"/>'s names, as every pooled fish does.</param>
+    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row, WeekMode mode = WeekMode.Pacing, LocationWeeks? weeks = null)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
         int spawnWeek = item.Seasons.Count == 0 ? 1 : AvailabilityWeeks.FirstWeekOf(item.Seasons.Min());
-        int locationWeek = LocationGating.WeekForAny(item.Locations);
+        (int locationWeek, int locationHard) = weeks == null
+            ? (LocationGating.WeekForAny(item.Locations), LocationGating.HardWeekForAny(item.Locations, mode))
+            : EasiestWalked(item.Locations, weeks, mode);
         int week = Math.Max(spawnWeek, locationWeek);
         Season floor = AvailabilityWeeks.SeasonOf(week);
-        int hardWeek = Math.Max(spawnWeek, LocationGating.HardWeekForAny(item.Locations, mode));
+        int hardWeek = Math.Max(spawnWeek, locationHard);
         if (AvailabilityWeeks.MineFishWeeks.TryGetValue(item.ItemId, out (int Week, Season Gate) mineFish))
         {
             week = Math.Max(week, mineFish.Week);
@@ -82,6 +87,20 @@ public static class FishAvailability
             + $"difficulty {row.Difficulty}, level {row.MinFishingLevel}, weather {WeatherLabel(row.Weather)}, "
             + $"window {OpenHours(row.RawTimeSpans)}h, effort {effort}", EffortSource.Derived, week, floor,
             HardWeek: hardWeek);
+    }
+
+    /// <summary>The easiest walked week among the locations (reaching any one is enough); a
+    /// location the walk cannot date is skipped. None datable reads as the last week.</summary>
+    private static (int Week, int Hard) EasiestWalked(IReadOnlyList<string> locations, LocationWeeks weeks, WeekMode mode)
+    {
+        int week = Calendar.WeeksPerYear, hard = Calendar.WeeksPerYear;
+        foreach (string location in locations ?? Array.Empty<string>())
+        {
+            if (!weeks.TryGet(location, out PlaceWeek place)) continue;
+            week = Math.Min(week, place.Week);
+            hard = Math.Min(hard, place.HardFor(mode));
+        }
+        return (week, hard);
     }
 
     private static string SeasonList(IReadOnlyList<Season> seasons)

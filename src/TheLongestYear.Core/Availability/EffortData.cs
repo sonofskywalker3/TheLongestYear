@@ -47,8 +47,10 @@ public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOn
 /// <summary>One Data/WildTrees TapItems row: which tree, what item, how many nights.</summary>
 public sealed record RawTapItem(string TreeId, string ItemId, int Days);
 
-/// <summary>One Data/Crops entry reduced to growth facts.</summary>
-public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons)
+/// <summary>One Data/Crops entry reduced to growth facts. <paramref name="SeedItemId"/> is the
+/// entry's key (Data/Crops is keyed by seed), null in hand-built rows.</summary>
+public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons,
+    string? SeedItemId = null)
 {
     public RawCropGrowth(string harvestItemId, int growthDays, bool regrows, bool trellis)
         : this(harvestItemId, growthDays, regrows, trellis, System.Array.Empty<Season>()) { }
@@ -62,6 +64,9 @@ public sealed class EffortData
     public IReadOnlyList<RawGeodeDrop> GeodeDrops { get; init; } = new List<RawGeodeDrop>();
     public IReadOnlyList<RawMonsterDrop> MonsterDrops { get; init; } = new List<RawMonsterDrop>();
     public IReadOnlyList<RawArtifactSpot> ArtifactSpots { get; init; } = new List<RawArtifactSpot>();
+    /// <summary>Each object's own Data/Objects ArtifactSpotChances (map to chance), one row per map.
+    /// Read only for an item nothing else places (EffortComposer.OwnDigSpots).</summary>
+    public IReadOnlyList<RawArtifactSpot> ObjectArtifactSpots { get; init; } = new List<RawArtifactSpot>();
     public IReadOnlyList<RawMachineRule> MachineRules { get; init; } = new List<RawMachineRule>();
     public IReadOnlyDictionary<string, string> MachineUnlocks { get; init; } = new Dictionary<string, string>();
     public IReadOnlyDictionary<string, int> RecipePrices { get; init; } = new Dictionary<string, int>();
@@ -76,6 +81,8 @@ public sealed class EffortData
     /// that only need obtainability (the effort rules never read it).</summary>
     public IReadOnlyList<RawLocationForageRate> ForageRates { get; init; } = new List<RawLocationForageRate>();
     public IReadOnlyList<RawTapItem> TapItems { get; init; } = new List<RawTapItem>();
+    /// <summary>Data/FruitTrees: sapling, fruit and fruiting seasons per tree.</summary>
+    public IReadOnlyList<RawFruitTree> FruitTrees { get; init; } = new List<RawFruitTree>();
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
     public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
 }

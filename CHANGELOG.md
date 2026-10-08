@@ -29,6 +29,81 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|talk|click`; `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
 
+## 0.19.18 - 2026-10-08
+
+3164 tests. Release of 0.19.11 to 0.19.18.
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.18 keeps the 0.19.10 content and adds one sentence to the other-mods warning: a quick way was found to cut down how many impossible mod items show up, but some will still appear. Beta line set to 0.19.18.
+- `release-notes/0.19.18-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.18-backup.md` and `release-notes/nexus-description-0.19.18-backup.bbcode`. The two older Nexus description backups, `release-notes/_tly-desc-before-0.18.144.bbcode` and `release-notes/_tly-desc-before-0.19.10.bbcode`, are now committed.
+
+## 0.19.17 - 2026-10-08
+
+3164 tests.
+
+### Docs
+
+- `docs/mod-support-unknowns.md` rewritten after the mod-support pass (0.19.11 to 0.19.16): what was fixed and by which reader, what is still unknown and why (Farm Type Manager forage, Custom Bush bushes, SpaceCore spawn groups, Spring fruit trees, maps no door reaches, Cornucopia's year-2 seeds), and the placements checked and left as they are (Birch Syrup, Amber, Golden Pumpkin with SVE). With SVE and Cornucopia, 240 of 429 modded items are unknown, down from 283.
+
+## 0.19.16 - 2026-10-08
+
+3164 tests.
+
+### Fixed (mod support)
+
+- **SVE's flagged artifacts get a week from their own dig spots.** Boomerang, Faded Button, Fossilized Apple, Old Coin, Rusty Shield and Stone of Yoba list their dig spots in their own Data/Objects ArtifactSpotChances, not in Data/Locations, and carry ExcludeFromRandomSale, so neither the spot rule nor the catalog-pool fallback saw them: unknown, week 13. An artifact (Type "Arch") nothing else places is now dug from its own spot chances on maps the walked weeks can date: all six week 3, the artifact floor.
+- A fallback only, so every placed item keeps its week and effort, and a non-artifact with spot chances (vanilla's Lost Book) is left to its own rules. Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
+## 0.19.15 - 2026-10-08
+
+3161 tests.
+
+### Fixed (mod support)
+
+- **A crop whose seed is first sold late waits for the seed.** The crop rule read Data/Crops seasons and growth only, plus a ruled table for vanilla's festival, cart and Oasis seeds, so SVE's Gold Carrot (seed sold only by the Desert Trader) read as a week-1 Spring harvest. A crop with no ruled row whose seed is first sold after week 1 (`ShopWeeks`) is now planted no earlier than that week, in a season it can still finish in. Gold Carrot: week 9, hard week 6 (Hard), 3 (Extreme), the desert's weeks.
+- With Cornucopia, six crops whose seeds only Sandy sells and whose seasons end before the desert opens in pacing (Agave, Aloe, Bamboo, Blue Agave, Lemongrass, Sugarcane) go from too-early weeks (2 to 6) to not placed. A seed sold from week 1, or by no walkable shop (Mixed Seeds, a mod's own framework), keeps the season arithmetic.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical (the ruled seed rows win for Beet, Rhubarb, Starfruit and Cactus Fruit).
+
+## 0.19.14 - 2026-10-08
+
+3157 tests.
+
+### Fixed (mod support)
+
+- **Fruit from modded fruit trees gets a week.** Only vanilla's six orchard fruits had one (a ruled table), so SVE's Nectarine and Persimmon and Cornucopia's Fig, Grapefruit, Pistachio, Almond, Walnut and the rest read as unknown. New rule from Data/FruitTrees: the sapling is bought the first week a walkable shop sells it, the tree matures in 28 days, and it fruits from the first week after that in one of its seasons, the same arithmetic as the ruled rows. With SVE and Cornucopia: Summer trees week 5 (Nectarine, Avocado, Ume, Nutmeg), Fall trees week 9 (Grapefruit, Pistachio, Almond, Cashew, Pecan, Walnut, Pomelo, SVE Persimmon), Winter trees week 13 (Fig, Yuzu, Camphor Leaves, Cinnamon Sticks). Dishes made from them follow (Nectarine Fruit Bread week 6).
+- **Not placed, on purpose:** a Spring tree (SVE Pear, Cornucopia Lemon and Lime) first fruits next Spring, and the Traveling Cart route that puts Apricot and Cherry at week 13 sells only vanilla fruit; a sapling no walkable shop sells (Cornucopia's Durian, only at the island trader) gives no week.
+- New `ShopWeeks`: the earliest week a walkable shop sells an item, from the same Data/Shops read as the reachability rule (item queries, year-2 lines closed), each shop dated by its owners' maps, its OpenShop tiles, or the map the game opens it at in code (Desert Trader, island trader, Volcano shop, resort bar). `tly_dumpmodel` lists it.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
+## 0.19.13 - 2026-10-08
+
+3145 tests.
+
+### Fixed (mod support)
+
+- **With Stardew Valley Expanded, Holly, Crocus and Crystal Fruit are Winter forage again, not week 1.** SVE gives its Grampleton Suburbs forage rows for them (and Daffodil, Sweet Pea, Blackberry) with no season. The forage rule read that map by name, found no gate and called it open from Spring 1, so a Spring gate could ask for Holly. Forage rows are now dated by the walked map weeks (`LocationWeeks`, 0.19.12): a row in a map no door leads to does not place the item. With SVE: Holly, Crocus and Crystal Fruit week 13, Sweet Pea week 5, Blackberry week 9, the same as vanilla; Baked Berry Oatmeal follows its Blackberry to week 9.
+- `tly_dumpmodel` also lists every map the walk reached, with its three weeks.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
+## 0.19.12 - 2026-10-08
+
+3141 tests.
+
+### Fixed (mod support)
+
+- **Stardew Valley Expanded's fish get a real week instead of the unknown week 13.** SVE flags every one of its fish ExcludeFromRandomSale, which keeps an item out of random shop stock and out of TLY's bundle pools; the availability model only placed pooled fish, so a board that asked for a Bull Trout, Minnow or Tadpole (Tech's Cross-Mod Bundles, a TLY Custom board with mod items on) treated it as Winter. Fish the pool leaves out only for that flag are now placed from their own Data/Locations rows and Data/Fish row, never sampled. Bull Trout week 5, Minnow, Tadpole, Starfish and Puppyfish week 1, Radioactive Bass week 7 (the Sewer), and so on. Dishes and fish-pond goods made from them follow (Frog Legs, Big Bark Burger).
+- **A fish is placed only from maps TLY can date.** New `LocationWeeks`: the maps' own warps and door warps, walked one way from the farm, give each map the latest gate on its easiest path (a vanilla gate still dates a map no door leads to, such as the Sewer). A row in a map no door leads to (SVE's Highlands, Junimo Woods, Forbidden Maze) neither places the fish nor widens its seasons, so the Highlands Bass, Gemfish, Fiber Goby, Alligator, Swamp Crab and Diamond Carp stay unknown rather than week 1. Island, Fable Reef and Crimson Badlands fish stay out as before.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is byte-identical (every item, all four difficulty steps, pools, pins, reachability). With SVE installed, some vanilla items gain an SVE fish-pond route (Golden Pumpkin from a Goldenfish pond, week 5).
+
+## 0.19.11 - 2026-10-08
+
+3129 tests.
+
+### Debug
+
+- `tly_dumpmodel [fileName]` writes the whole item availability model as a TSV in the mod folder: every Data/Objects id (plus the guild reward ids) under all four difficulty steps (placed, pacing week, hard week, gate, effort, source, basis), every engine pool's membership, the derived season pins, the reachability verdicts and the generated dish bases. Read-only; the models are built on the side. Made for before/after comparisons of a rule change (the vanilla-unchanged check of the mod-support work) and for listing every modded item still at the unknown week.
+
 ## 0.19.10 - 2026-10-08
 
 3129 tests. Release of 0.19.2 to 0.19.10 (the live Nexus page was on 0.19.1).

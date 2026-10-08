@@ -145,6 +145,12 @@ public class RarityBiasTests
             },
             ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>> { [ItemKind.Gem] = one },
             ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>> { ["color_red"] = one },
+            UnpooledFish = one,
+            LocationWeeks = TheLongestYear.Core.Availability.LocationWeeks.Build(
+                new[] { new RawLocationLink("Farm", "Forest") }, _ => false),
+            ShopWeeks = TheLongestYear.Core.Availability.ShopWeeks.Build(
+                new[] { new RawShopListing("(O)24", "SeedShop") }, new[] { new RawShopPlacement("SeedShop", "Farm") },
+                TheLongestYear.Core.Availability.LocationWeeks.Build(new RawLocationLink[0], _ => false)),
         };
 
         ItemPools biased = RarityBias.Apply(pools, 2.4, new RarityThresholds());
@@ -156,6 +162,11 @@ public class RarityBiasTests
             object? after = property.GetValue(biased);
             Assert.True(before != null, $"{property.Name} was not populated by this test");
             Assert.True(after != null, $"{property.Name} came back null");
+            if (before is not System.Collections.IEnumerable)
+            {
+                Assert.Same(before, after);
+                continue;
+            }
             Assert.True(Count(before) > 0, $"{property.Name} was not populated by this test");
             Assert.Equal(Count(before), Count(after));
         }

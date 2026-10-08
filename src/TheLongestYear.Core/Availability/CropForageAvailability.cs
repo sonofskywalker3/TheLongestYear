@@ -21,7 +21,14 @@ public static class CropForageAvailability
     private const int SaplingEffort = 2;
     private static readonly string[] RemoteMarkers = { "Woods", "Desert", "Island" };
 
-    public static ItemEffort? DeriveCrop(string qualifiedId, IReadOnlyList<RawCropGrowth> crops, WeekMode mode = WeekMode.Pacing)
+    /// <param name="shopWeeks">When set, a crop whose seed has no <see cref="AvailabilityWeeks.SeedSourceWeeks"/>
+    /// row and is first sold after week 1 (<see cref="ShopWeeks"/>) is planted no earlier than that
+    /// week, in a season it can still finish in: Stardew Valley Expanded's Gold Carrot seed is sold
+    /// only by the Desert Trader, and read from its seasons alone the crop was a week-1 Spring
+    /// harvest (mod-support work, 2026-10-08). A seed sold from week 1, or by no walkable shop at
+    /// all (Mixed Seeds, a mod's own framework), keeps the season arithmetic.</param>
+    public static ItemEffort? DeriveCrop(string qualifiedId, IReadOnlyList<RawCropGrowth> crops, WeekMode mode = WeekMode.Pacing,
+        ShopWeeks? shopWeeks = null)
     {
         if (crops == null) throw new ArgumentNullException(nameof(crops));
         ItemEffort? best = null;
@@ -33,6 +40,7 @@ public static class CropForageAvailability
             int effort = BaseEffort + growth + regrow;
             int? week = null;
             int hardWeek = 0;
+            string? sold = null;
             if (crop.Seasons.Count > 0)
             {
                 Season first = crop.Seasons.Min();
@@ -44,7 +52,20 @@ public static class CropForageAvailability
                 int grown = Math.Min(AvailabilityWeeks.FirstWeekOf(first) + growWeeks, AvailabilityWeeks.LastWeekOf(first));
                 week = grown;
                 hardWeek = grown;
-                if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out (int Week, int Hard) seed))
+                if (!AvailabilityWeeks.SeedSourceWeeks.ContainsKey(qualifiedId) && shopWeeks != null
+                    && !string.IsNullOrEmpty(crop.SeedItemId) && shopWeeks.TryGet(crop.SeedItemId, out PlaceWeek seedShop)
+                    && seedShop.Week > 1)
+                {
+                    int? fromShop = OasisHarvestWeek(crop, seedShop.Week);
+                    if (fromShop == null) continue;   // no season of the year fits after the seed arrives
+                    week = Math.Max(grown, fromShop.Value);
+                    int seedHard = seedShop.HardFor(mode);
+                    hardWeek = seedHard > 1 && OasisHarvestWeek(crop, seedHard) is int hardFromShop
+                        ? Math.Max(grown, Math.Min(hardFromShop, week.Value))
+                        : grown;
+                    sold = $", seed sold from week {seedShop.Week}";
+                }
+                else if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out (int Week, int Hard) seed))
                 {
                     week = Math.Max(grown, seed.Week);
                     hardWeek = Math.Max(grown, seed.Hard);
@@ -60,7 +81,7 @@ public static class CropForageAvailability
                 || (week == best.EarliestWeek && effort < best.Effort);
             if (better)
                 best = new ItemEffort(effort,
-                    $"crop, {crop.GrowthDays} days (+{growth}){(regrow > 0 ? ", regrows or trellis (+1)" : "")}, "
+                    $"crop, {crop.GrowthDays} days (+{growth}){(regrow > 0 ? ", regrows or trellis (+1)" : "")}{sold}, "
                     + $"week {(week?.ToString() ?? "unknown")}, effort {effort}"
                     + (week != null && hardWeek < week.Value ? $", hard week {hardWeek}" : ""),
                     week, week == null ? null : AvailabilityWeeks.SeasonOf(week.Value),
@@ -88,10 +109,17 @@ public static class CropForageAvailability
         return null;
     }
 
-    public static ItemEffort? DeriveForage(string qualifiedId, IReadOnlyList<RawSpawnEntry> spawns, WeekMode mode = WeekMode.Pacing)
+    /// <param name="weeks">When set, a row in a map the walked weeks cannot date is ignored and
+    /// each row's location week comes from the walk (<see cref="LocationWeeks"/>): Stardew Valley
+    /// Expanded's Grampleton Suburbs rows (no door from anywhere a player walks, no season) made
+    /// Holly, Crocus and Crystal Fruit read as week-1 forage (mod-support work, 2026-10-08). Null
+    /// reads <see cref="LocationGating"/>'s names for every row.</param>
+    public static ItemEffort? DeriveForage(string qualifiedId, IReadOnlyList<RawSpawnEntry> spawns, WeekMode mode = WeekMode.Pacing,
+        LocationWeeks? weeks = null)
     {
         if (spawns == null) throw new ArgumentNullException(nameof(spawns));
-        List<RawSpawnEntry> rows = spawns.Where(s => s.ItemId == qualifiedId).ToList();
+        List<RawSpawnEntry> rows = spawns.Where(s => s.ItemId == qualifiedId
+            && (weeks == null || weeks.TryGet(s.Location ?? "", out _))).ToList();
         List<string> locations = rows
             .Select(s => s.Location ?? "")
             .Distinct(StringComparer.Ordinal)
@@ -107,15 +135,21 @@ public static class CropForageAvailability
         int remote = locations.All(l => RemoteMarkers.Any(m => l.Contains(m, StringComparison.Ordinal))) ? RemoteLocationStep : 0;
         int effort = BaseEffort + single + remote;
         int week = rows
-            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.WeekFor(s.Location ?? "")))
+            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), PlaceWeekOf(s.Location, weeks)))
             .Min();
         int hardWeek = rows
-            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), LocationGating.HardWeekFor(s.Location ?? "", mode)))
+            .Select(s => Math.Max(AvailabilityWeeks.FirstWeekOf(s.Season ?? Season.Spring), PlaceHardWeekOf(s.Location, weeks, mode)))
             .Min();
         return new ItemEffort(effort,
             $"forage, {locations.Count} location(s) (+{single}){(remote > 0 ? ", remote only (+1)" : "")}, week {week}, effort {effort}",
             week, AvailabilityWeeks.SeasonOf(week), HardWeek: hardWeek);
     }
+
+    private static int PlaceWeekOf(string? location, LocationWeeks? weeks)
+        => weeks != null && weeks.TryGet(location ?? "", out PlaceWeek place) ? place.Week : LocationGating.WeekFor(location ?? "");
+
+    private static int PlaceHardWeekOf(string? location, LocationWeeks? weeks, WeekMode mode)
+        => weeks != null && weeks.TryGet(location ?? "", out PlaceWeek place) ? place.HardFor(mode) : LocationGating.HardWeekFor(location ?? "", mode);
 
     public static ItemEffort? DeriveSapling(string qualifiedId, IReadOnlyList<PoolItem> saplings)
     {
