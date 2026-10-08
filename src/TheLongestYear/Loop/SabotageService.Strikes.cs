@@ -96,9 +96,17 @@ namespace TheLongestYear.Loop
             }
             TheLongestYear.Integration.ItemDonationSync.Reconcile(Run);
             string bundleName = _requirements().FirstOrDefault(r => r.BundleIndex == pick.BundleIndex)?.Name ?? "";
+            // What the morning callout names (designer, 2026-10-08): the slot's stack and the
+            // bundle's name as its menu shows it, read off the live board.
+            Dictionary<string, string> board = Game1.netWorldState?.Value?.BundleData;
+            string key = board != null ? BundleDataTamper.KeyForIndex(board, pick.BundleIndex) : null;
+            string value = key != null ? board[key] : null;
             Run.PendingSabotageReports.Add(new SabotageReport
             {
                 Kind = SabotageKind.Reversion, Count = 1, BundleName = bundleName, ItemId = pick.ItemId,
+                Stack = value != null ? BundleDataTamper.StackAt(value, pick.IngredientIndex) : 0,
+                BundleLabel = value != null ? BundleDataTamper.LabelOf(value) : "",
+                OldFlavor = BoardFlavor(pick.BundleIndex, pick.IngredientIndex),
             });
             _monitor.Log($"Darkness: {Strings.ItemName(pick.ItemId)} came undone from {bundleName} (slot {pick.BundleIndex}/{pick.IngredientIndex}) on {Run.Season} {Run.DayOfMonth}.", LogLevel.Info);
             return true;

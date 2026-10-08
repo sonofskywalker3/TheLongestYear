@@ -82,23 +82,56 @@ namespace TheLongestYear.Loop
             if (reports.Count == 0) return;
             // The hall fronts share one line and say it once, however many struck (Jeff, 2026-09-09:
             // the player wakes with a feeling, the board tells the rest).
-            bool hallSaid = false;
+            // Each reversion adds one sentence after it naming the item and its bundle (designer,
+            // 2026-10-08); the hall box goes where the first hall report was.
+            bool hallQueued = false;
+            int hallAt = -1;
+            var reverted = new List<string>();
             bool first = true;
+            var boxes = new List<string>();
             foreach (SabotageReport report in reports)
             {
                 switch (report.Kind)
                 {
                     case SabotageKind.Blight:
-                        if (report.Count > 0) Box(CrowsLine(report.Count), ref first);
-                        if (report.Stolen != null && report.Stolen.Count > 0) Box(StolenLine(report.Stolen), ref first);
+                        if (report.Count > 0) boxes.Add(CrowsLine(report.Count));
+                        if (report.Stolen != null && report.Stolen.Count > 0) boxes.Add(StolenLine(report.Stolen));
                         break;
                     case SabotageKind.Reversion:
                     case SabotageKind.Tampering:
-                        if (!hallSaid) Box(Strings.Get("morning.sabotage.hall"), ref first);
-                        hallSaid = true;
+                        if (!hallQueued) { hallAt = boxes.Count; boxes.Add(null); hallQueued = true; }
+                        if (report.Kind == SabotageKind.Reversion && RevertedLine(report) is string line) reverted.Add(line);
                         break;
                 }
             }
+            if (hallAt >= 0)
+                boxes[hallAt] = reverted.Count == 0
+                    ? Strings.Get("morning.sabotage.hall")
+                    : Strings.Get("morning.sabotage.hall") + " " + string.Join(" ", reverted);
+            foreach (string text in boxes) Box(text, ref first);
+        }
+
+        /// <summary>The reversion callout, the designer's words (2026-10-08): "The Parsnip is gone
+        /// from the Spring Crops bundle." / "The Parsnips are gone from ...", no count. Null when the
+        /// report names no item (a save from before the callout existed).</summary>
+        private static string RevertedLine(SabotageReport report)
+        {
+            if (string.IsNullOrEmpty(report.ItemId)) return null;
+            Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
+            bool flavored = !string.IsNullOrEmpty(report.OldFlavor);
+            string exact = ExactName(report.ItemId, report.OldFlavor);
+            (string item, bool plural) = MorningLines.RevertedItem(
+                Math.Max(1, report.Stack), exact, report.ItemId, flavored, gamePlural, CategoryOf(report.ItemId));
+            string bundle = string.IsNullOrWhiteSpace(report.BundleLabel) ? report.BundleName : report.BundleLabel;
+            bool named = MorningLines.LabelSaysBundle(bundle);
+            // Literal keys and inline token dictionaries: I18nGuardTests scans for both.
+            if (plural)
+                return named
+                    ? Strings.Get("morning.sabotage.reverted.other-named", new Dictionary<string, string> { ["item"] = item, ["bundle"] = bundle })
+                    : Strings.Get("morning.sabotage.reverted.other", new Dictionary<string, string> { ["item"] = item, ["bundle"] = bundle });
+            return named
+                ? Strings.Get("morning.sabotage.reverted.one-named", new Dictionary<string, string> { ["item"] = item, ["bundle"] = bundle })
+                : Strings.Get("morning.sabotage.reverted.one", new Dictionary<string, string> { ["item"] = item, ["bundle"] = bundle });
         }
 
         /// <summary>The crows' morning line, the designer's own words (2026-10-08).</summary>

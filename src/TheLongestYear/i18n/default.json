@@ -24,6 +24,10 @@
     "morning.sabotage.stolen.more.one": "1 other thing",
     "morning.sabotage.stolen.more.other": "{{count}} other things",
     "morning.sabotage.hall": "You awaken with a feeling that something is wrong at the Community Center.",
+    "morning.sabotage.reverted.one": "The {{item}} is gone from the {{bundle}} bundle.",
+    "morning.sabotage.reverted.other": "The {{item}} are gone from the {{bundle}} bundle.",
+    "morning.sabotage.reverted.one-named": "The {{item}} is gone from the {{bundle}}.",
+    "morning.sabotage.reverted.other-named": "The {{item}} are gone from the {{bundle}}.",
     "hud.stash-nesting-refused": "The stash only holds hats, shirts, pants, furniture, wallpaper and flooring inside a container, so take the rest out first.",
 
     // -- question / message dialogues ---------------------------------------------

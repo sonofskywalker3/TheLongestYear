@@ -82,4 +82,29 @@ public static class BundleDataTamper
                 return kv.Key;
         return null;
     }
+    private const int NameField = 0;
+    private const int DisplayNameField = 6;
+
+    /// <summary>How many slot <paramref name="ingredientIndex"/> asks for, or 0 when the value has
+    /// no such slot.</summary>
+    public static int StackAt(string value, int ingredientIndex)
+    {
+        if (value is null) return 0;
+        string[] fields = value.Split('/');
+        if (fields.Length <= IngredientField) return 0;
+        string[] parts = fields[IngredientField].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        int at = ingredientIndex * 3 + 1;
+        if (ingredientIndex < 0 || at >= parts.Length) return 0;
+        return int.TryParse(parts[at], out int stack) ? stack : 0;
+    }
+
+    /// <summary>The bundle's name as the bundle menu shows it: the display name field when the
+    /// value has one, else the internal name (vanilla's <c>Bundle</c> reads field 6 as its label).</summary>
+    public static string LabelOf(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        string[] fields = value.Split('/');
+        if (fields.Length > DisplayNameField && !string.IsNullOrWhiteSpace(fields[DisplayNameField])) return fields[DisplayNameField];
+        return fields[NameField];
+    }
 }

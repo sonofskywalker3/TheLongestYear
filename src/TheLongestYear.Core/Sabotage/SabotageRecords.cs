@@ -45,6 +45,13 @@ public sealed class SabotageReport
     public string BundleName { get; set; } = "";
     public string ItemId { get; set; } = "";
     public string OldItemId { get; set; } = "";
-    /// <summary>Tampering: the flavour the old slot named, null when none (and on older saves).</summary>
+    /// <summary>Tampering: the flavour the old slot named. Reversion: the flavour the emptied slot
+    /// names. Null when none (and on older saves).</summary>
     public string? OldFlavor { get; set; }
+    /// <summary>Reversion: how many the emptied slot asks for (0 on saves written before
+    /// 2026-10-08, read as one).</summary>
+    public int Stack { get; set; }
+    /// <summary>Reversion: the bundle's name as its menu shows it (the display name field). Empty
+    /// on older saves, which fall back to <see cref="BundleName"/>.</summary>
+    public string BundleLabel { get; set; } = "";
 }

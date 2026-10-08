@@ -69,4 +69,24 @@ public static class MorningLines
 
     /// <summary>Total units the thief took.</summary>
     public static int Units(IEnumerable<StolenStack> taken) => taken?.Where(s => s != null).Sum(s => Math.Max(0, s.Count)) ?? 0;
+    // ---------------------------------------------------------------- the hall's reversion callout
+
+    /// <summary>The item in the reversion callout after the hall line (designer, 2026-10-08):
+    /// "The Parsnip is gone from the Spring Crops bundle." For a slot that asked for more than one,
+    /// the bare plural with no count and no container ("The Parsnips are gone", "The Wild Honey is
+    /// gone", "The Wine is gone", "The Pike are gone"), by the same rules as the tainted line's
+    /// "all the X" (<see cref="ItemPlurals.Tainted"/>, <see cref="ItemPlurals.TaintedReadsAsMass"/>).
+    /// <c>Plural</c> picks "are" over "is".</summary>
+    public static (string Name, bool Plural) RevertedItem(int stack, string name, string itemId, bool flavored, Func<string, string> gamePlural, int category)
+    {
+        if (stack <= 1 || string.IsNullOrEmpty(name)) return (name, false);
+        string plural = ItemPlurals.Tainted(name, itemId, flavored, gamePlural, category);
+        bool mass = ItemPlurals.TaintedReadsAsMass(name, itemId, flavored, gamePlural, category);
+        return (plural, !mass);
+    }
+
+    /// <summary>Does the bundle's own name already end in "Bundle" ("Abigail's Bundle")? Then the
+    /// callout says "from the Abigail's Bundle" instead of doubling it to "Bundle bundle".</summary>
+    public static bool LabelSaysBundle(string label)
+        => !string.IsNullOrWhiteSpace(label) && label.TrimEnd().EndsWith("Bundle", StringComparison.OrdinalIgnoreCase);
 }
