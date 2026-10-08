@@ -36,6 +36,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
     said "Witness: Linus's line follows his Characters\Dialogue\Linus:Introduction dialogue" (17:22:13).
     The follow-up never showed. Fine either way (Jeff): say it after the intro, or mark the witness
     as already met on test farms before a pass. Fix the follow-up AND meet Linus/Shane on handoff farms.
+**Fall save pass (2026-10-08, standard_451080418):**
+13. MY MISTAKE: the Fall handoff farm forces the hall on night 15, and Fall 16 is the Stardew Valley Fair,
+    so the morning after the scene Town and the CC are shut. Handoff farms must put the morning after a
+    scene on a non-festival day (check Data/Festivals before picking the day).
+14. Jeff expected a Junimo scene on leaving the farm after the hall. None exists for reversion (only the
+    Winter tamper has one). Jeff to rule whether the hall gets one.
 
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
