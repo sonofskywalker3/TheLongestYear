@@ -10,7 +10,7 @@ public enum SabotageKind { Blight, Reversion, Tampering }
 /// All values are the 2026-09-09 opening assumptions.</summary>
 public static class SabotageTuning
 {
-    // Blight: crops on the farm die and perishables in chests spoil in the night. Summer, Fall
+    // Blight: crops on the farm die, and the thief steals from a chest, in the night. Summer, Fall
     // and Winter (Jeff, 2026-09-09: Winter blight is wanted; Winter fields are near empty so the
     // chests carry it).
     public const int BlightMinPerNight = 1;

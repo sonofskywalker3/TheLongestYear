@@ -1000,6 +1000,9 @@ namespace TheLongestYear
                 () => _obtainability,
                 RebuildBoardDerivedState);
             _sabotage.StartTamperScene = (oldName, oldIsMass, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, oldIsMass, newName, newIsPlural, done);
+            // The morning boxes wait out the Junimos' tamper scene and any season turn.
+            TheLongestYear.Loop.MorningBox.Monitor = this.Monitor;
+            TheLongestYear.Loop.MorningBox.SceneRunning = () => _seasonTurnDriver?.Running ?? false;
             // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
             _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
             _sabotage.SceneCanStage = TheLongestYear.Scenes.StrikeSceneFactory.CanStage;
@@ -1106,6 +1109,7 @@ namespace TheLongestYear
             // A scene always puts its chest lid back, but a save left mid-scene would keep a dead
             // Chest alive in a static for the rest of the session.
             TheLongestYear.Scenes.SceneChestLid.Forget();
+            TheLongestYear.Loop.MorningBox.Clear();
             DeactivateTly();
         }
 
@@ -3771,6 +3775,8 @@ namespace TheLongestYear
         [EventPriority(EventPriority.High)]
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
+            // Today's morning boxes do not carry into tomorrow.
+            TheLongestYear.Loop.MorningBox.Clear();
             if (!RunActivation.IsActive) return;
             _runController?.OnDayEnding(sender, e);
             // Vanilla spawns tomorrow's forage overnight, before DayStarted: prepare for tomorrow now.
@@ -3801,6 +3807,9 @@ namespace TheLongestYear
                 // hub are gone so they don't expire unseen. Runs after the deferred offer so a hub
                 // that opens this tick keeps them waiting.
                 Loop.HerdBookService.ShowWaitingHud(this.Monitor);
+
+                // The darkness's morning boxes, one at a time, held while anything holds the screen.
+                TheLongestYear.Loop.MorningBox.Tick();
 
                 // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
                 // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the

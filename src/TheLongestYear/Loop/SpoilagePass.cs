@@ -11,8 +11,8 @@ namespace TheLongestYear.Loop
     /// <summary>The blight front reaching into storage (Jeff, 2026-09-09): units vanish in the
     /// night, one at a time off random stacks. A night raids ONE chest (Jeff, 2026-09-21): the first
     /// chest a roll lands in is the night's chest, and the rest are safe until tomorrow. Placed
-    /// machines are not chests and stay in the draw throughout. Food spoils; anything else goes
-    /// missing. Every chest on every map is in the draw except the Junimo Stash, Mini-Shipping Bins
+    /// machines are not chests and stay in the draw throughout. Everything taken is stolen, food
+    /// included (designer, 2026-10-08: a thief steals, nothing spoils). Every chest on every map is in the draw except the Junimo Stash, Mini-Shipping Bins
     /// (shipped overnight) and chests on a Circle of Warding. Junimo Chests are in (Jeff,
     /// 2026-10-07): they all show one shared inventory, which is drawn once and taken from once, so
     /// a unit stolen there is gone from every Junimo Chest. Below Extreme only plain objects are
@@ -47,15 +47,15 @@ namespace TheLongestYear.Loop
             public GameLocation Location;  // the chest's or the machine's map
             public Vector2 Tile;
             public bool Machine;
-            public bool Perishable;
         }
 
+        /// <summary>What a strike took: one entry per unit or machine, in the order taken (the
+        /// morning box merges them), and how many things that is.</summary>
         public readonly struct Taken
         {
-            public readonly int Spoiled;
-            public readonly int Missing;
-            public Taken(int spoiled, int missing) { Spoiled = spoiled; Missing = missing; }
-            public int Total => Spoiled + Missing;
+            public readonly IReadOnlyList<StolenStack> Stolen;
+            public Taken(IReadOnlyList<StolenStack> stolen) { Stolen = stolen ?? Array.Empty<StolenStack>(); }
+            public int Total => Stolen == null ? 0 : MorningLines.Units(Stolen);
         }
 
         /// <summary>One object met on the walk over the maps, before the shared inventories are
@@ -223,14 +223,18 @@ namespace TheLongestYear.Loop
             Location = e.Location,
             Tile = e.Tile,
             Machine = e.Chest == null,
-            Perishable = !e.BigCraftable && BlightRule.IsPerishableCategory(e.Item.Category),
         };
+
+        /// <summary>One unit of <paramref name="item"/> as the morning box names it, read before
+        /// the unit is removed.</summary>
+        private static StolenStack StolenOne(Item item)
+            => new StolenStack { ItemId = item.QualifiedItemId, Name = item.DisplayName, Category = item.Category, Count = 1 };
 
         /// <summary>Do the removals. An item that has already gone (stack spent, machine moved) is
         /// passed over, so a double call cannot take twice from a stack that the plan emptied.</summary>
         public static Taken Apply(List<Hit> hits)
         {
-            int spoiled = 0, missing = 0;
+            var stolen = new List<StolenStack>();
             foreach (Hit h in hits)
             {
                 if (h.Machine)
@@ -238,8 +242,8 @@ namespace TheLongestYear.Loop
                     // A placed machine vanishes with whatever it held (spec 2.5).
                     if (h.Location.objects.TryGetValue(h.Tile, out StardewValley.Object o) && ReferenceEquals(o, h.Item))
                     {
+                        stolen.Add(StolenOne(h.Item));
                         h.Location.objects.Remove(h.Tile);
-                        missing++;
                     }
                     continue;
                 }
@@ -247,11 +251,11 @@ namespace TheLongestYear.Loop
                 // unit taken there is gone from all of them.
                 IInventory stock = h.Inventory ?? h.Chest.GetItemsForPlayer();
                 if (h.Item.Stack <= 0 || h.Slot >= stock.Count || !ReferenceEquals(stock[h.Slot], h.Item)) continue;
+                stolen.Add(StolenOne(h.Item));
                 h.Item.Stack -= 1;
                 if (h.Item.Stack <= 0) stock[h.Slot] = null;
-                if (h.Perishable) spoiled++; else missing++;
             }
-            return new Taken(spoiled, missing);
+            return new Taken(stolen);
         }
 
         /// <summary>Plan and apply in one call: the debug entry point, and the shape the night pass

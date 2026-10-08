@@ -161,6 +161,27 @@ namespace TheLongestYear.Core.Sabotage
             return string.IsNullOrEmpty(itemId) || !ShellfishTakePlural.Contains(BundleParsing.NormalizeItemId(itemId!));
         }
 
+        /// <summary>Each container word's singular, for a count of one ("1 bottle of Wine").</summary>
+        private static readonly IReadOnlyDictionary<string, string> SingularContainers = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["mugs"] = "mug", ["glasses"] = "glass", ["cups"] = "cup", ["tins"] = "tin",
+            ["clusters"] = "cluster", ["jugs"] = "jug", ["jars"] = "jar", ["bottles"] = "bottle",
+            ["cans"] = "can", ["bags"] = "bag", ["sprigs"] = "sprig", ["boxes"] = "box",
+            ["loaves"] = "loaf", ["bowls"] = "bowl", ["plates"] = "plate",
+        };
+
+        /// <summary>A count and the item, always with the number, for a list of things taken
+        /// (designer, 2026-10-08, the thief's morning box): "1 Parsnip", "1 bottle of Wine",
+        /// "3 Parsnips", "3 bottles of Wine". More than one reads exactly as <see cref="Ask"/>.</summary>
+        public static string Counted(int count, string itemId, string name, Func<string, string> gamePlural, int category = NoCategory)
+        {
+            if (string.IsNullOrEmpty(name)) return name;
+            if (count > 1) return Ask(count, itemId, name, gamePlural, category);
+            string? container = ContainerFor(itemId);
+            if (container != null && SingularContainers.TryGetValue(container, out string? one)) return $"1 {one} of {name}";
+            return $"1 {name}";
+        }
+
         /// <summary>The ask: the bare <paramref name="name"/> for one, otherwise the count and a
         /// container phrase, plural or bare word. <paramref name="gamePlural"/> is the game's own
         /// pluralizer (Lexicon.makePlural); null leaves the name unpluralised. <paramref name="category"/> is

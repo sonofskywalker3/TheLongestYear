@@ -130,15 +130,6 @@ public class BlightRuleTests
         Assert.Equal(5, BlightRule.SpoilCount(100, Season.Summer, DifficultyStep.Normal));
     }
 
-    [Theory]
-    [InlineData(-75, true)]   // vegetable
-    [InlineData(-4, true)]    // fish
-    [InlineData(-26, true)]   // artisan goods are food
-    [InlineData(-2, false)]   // minerals go missing instead
-    [InlineData(-15, false)]  // metal
-    public void Food_spoils_and_the_rest_goes_missing(int category, bool perishable)
-        => Assert.Equal(perishable, BlightRule.IsPerishableCategory(category));
-
     [Fact]
     public void Picks_distinct_positions_inside_the_field()
     {

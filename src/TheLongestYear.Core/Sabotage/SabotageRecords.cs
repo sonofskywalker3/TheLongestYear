@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace TheLongestYear.Core.Sabotage;
 
 /// <summary>One requirement the darkness rewrote this loop. Plain POCO for save serialization;
@@ -18,17 +20,28 @@ public sealed class TamperRecord
     public int DayOfYear { get; set; }
 }
 
-/// <summary>A morning report queued by the night pass: shown as a HUD line on the next
-/// OnDayStarted, then cleared. Plain POCO for save serialization.</summary>
+/// <summary>What the thief took of one item: its id, its display name when taken, its Object
+/// category (a fish keeps the same word in the plural) and how many units. Plain POCO for save
+/// serialization.</summary>
+public sealed class StolenStack
+{
+    public string ItemId { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int Category { get; set; }
+    public int Count { get; set; }
+}
+
+/// <summary>A morning report queued by the night pass: shown in the morning message box on the
+/// next OnDayStarted (<see cref="MorningLines"/>), then cleared. Plain POCO for save serialization.</summary>
 public sealed class SabotageReport
 {
     public SabotageKind Kind { get; set; }
     /// <summary>Blight: crops that withered. Reversion and tampering: 1.</summary>
     public int Count { get; set; }
-    /// <summary>Blight: stored food units that spoiled.</summary>
-    public int Spoiled { get; set; }
-    /// <summary>Blight: stored non-food units that went missing.</summary>
-    public int Missing { get; set; }
+    /// <summary>Blight: what the thief took, one entry per item kind (designer, 2026-10-08: a
+    /// thief steals, nothing spoils). Empty for a crops-only night. Saves written before then
+    /// carried Spoiled and Missing counts instead; those read back empty here.</summary>
+    public List<StolenStack> Stolen { get; set; } = new();
     public string BundleName { get; set; } = "";
     public string ItemId { get; set; } = "";
     public string OldItemId { get; set; } = "";

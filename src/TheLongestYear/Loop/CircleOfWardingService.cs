@@ -12,7 +12,7 @@ namespace TheLongestYear.Loop
 {
     /// <summary>Circle of Warding (Jeff, 2026-09-09): a 3x3 rug the Junimos charge for the player,
     /// bought at the shrine up to three times on an escalating ladder. Chests standing on its nine
-    /// tiles are beyond the darkness's reach: they never spoil and never lose a thing. Placeable
+    /// tiles are beyond the darkness's reach: they never lose a thing. Placeable
     /// anywhere, indoors or out, so where the circles go is the player's storage plan. Owned circles
     /// are re-granted every loop (the reset wipes the world and the inventory), and the count is
     /// kept exact the way the books are.
