@@ -36,6 +36,12 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
     said "Witness: Linus's line follows his Characters\Dialogue\Linus:Introduction dialogue" (17:22:13).
     The follow-up never showed. Fine either way (Jeff): say it after the intro, or mark the witness
     as already met on test farms before a pass. Fix the follow-up AND meet Linus/Shane on handoff farms.
+**Winter save pass (2026-10-08, standard_451080615):**
+15. Shane's witness line worked on Fall 16 (met before the scene, "last night").
+16. Winter porch scene: Jeff likes it, but it plays on waking and THEN he gets out of bed, which reads
+    wrong. The porch scenes (Summer, Fall, Winter) play when he wakes and steps out of the farmhouse
+    onto the Farm, like the tamper Junimo scene (first arrival on the Farm, staged at the porch).
+
 **Fall save pass (2026-10-08, standard_451080418):**
 13. MY MISTAKE: the Fall handoff farm forces the hall on night 15, and Fall 16 is the Stardew Valley Fair,
     so the morning after the scene Town and the CC are shut. Handoff farms must put the morning after a
