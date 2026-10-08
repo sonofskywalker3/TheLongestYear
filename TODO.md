@@ -29,13 +29,19 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
    trees and bushes in front of its chest. BUILT 9ae2774 (live check owed).
 
 **Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
-9. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it.
+9. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it. BUILT 0f65f7c
+   (perched on the hat, no ground shadow; live check owed).
 10. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
+    BUILT 0f65f7c (live check owed).
 11. Several scarecrows: the scene picks ONE scarecrow for the landing crow, never one crow per scarecrow.
+    BUILT 0f65f7c (the code already used one; the pick is now the nearest that fits in the frame, unit tested).
 12. Linus's line STILL lost after the first-meeting Introduction on the second pass, although the log
     said "Witness: Linus's line follows his Characters\Dialogue\Linus:Introduction dialogue" (17:22:13).
     The follow-up never showed. Fine either way (Jeff): say it after the intro, or mark the witness
     as already met on test farms before a pass. Fix the follow-up AND meet Linus/Shane on handoff farms.
+    BUILT 4060258: the follow-up was pushed on top of the closing intro and vanilla's close popped it;
+    now it sits under the intro and opens when the intro's box closes. Headless check: `tly_witness
+    fresh|arm|talk|click`. Live check owed. Meeting them on handoff farms: not done (handoff farm process).
 **Winter save pass (2026-10-08, standard_451080615):**
 15. Shane's witness line worked on Fall 16 (met before the scene, "last night").
 16. Winter porch scene: Jeff likes it, but it plays on waking and THEN he gets out of bed, which reads
@@ -47,7 +53,14 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
     so the morning after the scene Town and the CC are shut. Handoff farms must put the morning after a
     scene on a non-festival day (check Data/Festivals before picking the day).
 14. Jeff expected a Junimo scene on leaving the farm after the hall. None exists for reversion (only the
-    Winter tamper has one). Jeff to rule whether the hall gets one.
+    Winter tamper has one). ANSWERED: no hall Junimo scene; the morning box names the item and bundle
+    ("The Parsnips are gone from the Spring Crops bundle.") BUILT 1b42785, and the emptied slot is marked
+    purple in the bundle menu until refilled BUILT 63cc9da (live checks owed).
+15. Super Cucumber and Sea Cucumber take normal plurals ("all the Super Cucumbers", "7 Sea Cucumbers"),
+    not the fish same-word. BUILT 581e083.
+16. Winter save: after a tamper the weekly quest still asked for the tainted Super Cucumbers. Goals on a
+    rewritten slot now follow it (new item and stack, both lists) and the quest text refreshes. BUILT
+    9ccebc6 (live check owed).
 
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,

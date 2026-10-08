@@ -100,6 +100,17 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     (`AskPhrases.Counted`; one reads "1 Parsnip", "1 bottle of Wine").
   - Hall (reversion, or a tamper with no scene to tell it): unchanged, "You awaken with a feeling
     that something is wrong at the Community Center."
+    **Amended 2026-10-08 (designer, second pass; replaces a Junimo scene for the hall):** each
+    reversion adds one sentence after it in the same box, naming the item and its bundle, no
+    quantity: "The {{item}} is gone from the {{bundle}} bundle." For a slot that asked for more
+    than one, the bare plural with "are" and no count or container ("The Parsnips are gone from the
+    Spring Crops bundle."); a mass noun or container good stays singular with "is" ("The Wild Honey
+    is gone ..."), by the tainted line's "all the X" rules (`MorningLines.RevertedItem`). The item
+    is the game's display name (flavour included); the bundle is its name as the bundle menu shows
+    it (the display name field), and a name already ending in "Bundle" is not doubled ("... from
+    the Abigail's Bundle."). Several reversions on one morning: one sentence each. Keys
+    `morning.sabotage.reverted.one|other|one-named|other-named`. A tamper with no scene still says
+    the hall line alone.
 - The Junimo tamper scene keeps its staging and its popup, with two changes (Jeff, 2026-10-07):
   - It no longer plays on waking (that version blinked and warped the farmer to his doorstep). It
     plays the first time the farmer arrives on the Farm by any route while the tamper report waits
@@ -121,6 +132,11 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     tainted item, in any flavour, as its replacement, so the line stays true: nothing on the board
     wants the tainted thing. The replacement is always new to the board: no slot anywhere asks for
     it, in any flavour.
+    **Amended 2026-10-08 (designer, Winter save: the weekly quest still asked for the tainted
+    Super Cucumbers):** a weekly goal on a rewritten slot follows it, on both lists of a double
+    week: it names the new item, stack and quality, and the quest checklist is rebuilt at once
+    (`TamperRule.FollowGoals`). Its theme week discount is dropped, so the week-end revert cannot
+    put the old item's full ask back onto the new item's slot.
   - Plurals are right: {{old}} is the item's plural (the game's own pluralizer, corrected for
     mass nouns like Beer, Wool, Hay and Honey, also as the last word of a name such as Blueberry
     Jelly; a flavoured Dried Fruit or Smoked Fish keeps the game's own name, which already reads
@@ -275,10 +291,17 @@ sleeping farm.
   (`CrowSwoop`). It faces the way it flies, then turns to the field once down. The scarecrow crow
   flies in toward the scarecrow. One crow per picked crop, six on screen at
   most; crops outside the frame die at the same beat.
-- One crow lands beside the scarecrow. Nothing happens to it.
+- One crow lands beside the scarecrow. Nothing happens to it. **Amended 2026-10-08 (designer,
+  second pass):** it lands ON the scarecrow, perched on its hat, facing the crops, with no ground
+  shadow (`CrowPerch.OnHat`). However many scarecrows stand near, only ONE gets a crow: the nearest
+  to the patch centre that still fits in the frame with the patch (`CrowPerch.ChooseScarecrow`).
 - Linus walks into the edge of the frame, stops, takes a step back, turns and hurries off the way
   he came.
-- The crows peck. Apply: each picked crop becomes a dead crop.
+- The crows peck. Apply: each picked crop becomes a dead crop. **Amended 2026-10-08 (designer,
+  second pass):** each crop crow pecks on its own random timing for the whole time it is down
+  (`CrowPerch.PeckTimes`: a short look about after landing, then single pecks and quick doubles
+  with random pauses), never in step with the others; the scarecrow crow just stands. The crops
+  still die at the strike beat and the flock still lifts off together.
 - The crows lift off together. Fade.
 - Sound: the vanilla crow caw pitched down. No music.
 
@@ -332,6 +355,13 @@ sleeping farm.
 - Shane walks in from the saloon side, stops dead, a small jump, backs away, runs.
 - Apply at the jump. The glow holds a beat. Fade.
 - The player learns nothing about which room or slot. The popup and the board tell the rest.
+- **Amended 2026-10-08 (designer, second pass):** no Junimo scene for the hall. The morning box
+  names the item and bundle (see the morning popups above), and the emptied slot is marked in the
+  bundle menu: its icon in the page's ingredient list sits in the tainted aura's purple glow until
+  the slot is filled again. The marks are `RunState.DarkenedSlots` (rules `DarkenedSlots`, cleared
+  at the loop reset, a filled slot's mark dropped at day start and never drawn once the ingredient
+  is completed on the open page). Vanilla and TLY boards both use the vanilla bundle menu, whose
+  icons are numbered by ingredient index.
 
 **Changed by Jeff on 2026-09-23, after seeing the first version.** These override the lines above
 where they differ.
@@ -429,6 +459,18 @@ NPC's dialogue stack before it pushes itself, which threw the line away. Now the
 whatever dialogue displaced it, in the same conversation: the introduction, then the witness line.
 A location line pushed on top of it is handled the same way. Rule `WitnessLines.FollowsTopic`; a
 postfix on `NPC.checkForNewCurrentDialogue` does it.
+
+**Amended 2026-10-08 (designer, second pass: the log said the line followed the introduction, and
+it never showed).** The first fix opened the line 200 ms after the introduction's `onFinish`. That
+fires on the last page while the box is still shrinking away; the line was pushed on top of the
+not yet popped introduction, and `DialogueBox.closeDialogue` pops the TOP of the speaker's stack,
+so it popped the line. Now the postfix puts the line straight UNDER the introduction on the stack
+(`WitnessLines.PlaceUnderTop`): vanilla's close pops the introduction and leaves the line next.
+When the introduction's box closes (`Display.MenuChanged`, after `closeDialogue` has run), the line
+opens at once if nothing else took the screen, no event is up and the player is still there
+(`WitnessLines.OpensAfterTopic`); otherwise it waits on his stack and vanilla shows it on the next
+talk. Headless check: `tly_witness fresh <npc>` (marks him unmet), `tly_witness arm <npc>`,
+`tly_witness talk <npc>` (his real `checkAction`), `tly_witness click` to page on.
 
 ### Debug
 
