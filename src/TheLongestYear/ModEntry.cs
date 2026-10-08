@@ -47,6 +47,8 @@ namespace TheLongestYear
         /// kept for tly_dumpeffort and tly_itemmodel. Null before a save is loaded.</summary>
         private TheLongestYear.Core.Availability.EffortData _effortData;
         private TheLongestYear.Core.ItemPools _enginePools;
+        /// <summary>The reachability verdicts <see cref="_enginePools"/> were built from, for tly_dumpmodel.</summary>
+        private TheLongestYear.Core.Availability.SourceReachability _engineReachability;
         /// <summary>The curated season pins the availability model was last built with, kept so a
         /// difficulty-driven rebuild (<see cref="BuildAvailabilityModelFor"/>) does not need to
         /// re-parse config.json. Null before a save is loaded.</summary>
@@ -311,6 +313,8 @@ namespace TheLongestYear
                 this.CmdWarpGraph);
             helper.ConsoleCommands.Add("tly_dumpavailability", "Write a Markdown listing of every item in every bundle on the LIVE board with the earliest season the engine says it can exist, why, and the season its gate demands it. Usage: tly_dumpavailability [fileName]", this.CmdDumpAvailability);
             helper.ConsoleCommands.Add("tly_itemmodel", "Print the derived availability model for one item id or every ingredient of a bundle. Usage: tly_itemmodel <itemId|bundleName>", this.CmdItemModel);
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.ModelDumpCommand.Name, TheLongestYear.DebugCommands.ModelDumpCommand.Description,
+                (c, a) => this.CmdDumpModel(a));
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
             helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the nine configured difficulty steps, the nine this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
@@ -688,6 +692,7 @@ namespace TheLongestYear
             _effortData = new TheLongestYear.Loop.GameEffortData(this.Monitor)
                 .Build(_config.PoolTuning.ExcludedLocationMarkers);
             _enginePools = enginePools;
+            _engineReachability = enginePoolReader.LastReachability;
             _itemSeasonPins = itemSeasonPins;
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             _reset.AvailabilityModel = _availability;
@@ -2831,6 +2836,7 @@ namespace TheLongestYear
                 case "tly_playseason": this.CmdPlaySeason(command, args); break;
                 case "tly_itemmodel": this.CmdItemModel(command, args); break;
                 case "tly_dumpeffort": this.CmdDumpEffort(command, args); break;
+                case TheLongestYear.DebugCommands.ModelDumpCommand.Name: this.CmdDumpModel(args); break;
                 case "tly_here": this.CmdHere(command, args); break;
                 case "tly_opencookbook":  this.CmdOpenCookbook(command, args); break;
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
@@ -3085,6 +3091,18 @@ namespace TheLongestYear
             if (_boardBuilder != null) _boardBuilder.Availability = _availability;
             return _availability;
         }
+
+        /// <summary><c>tly_dumpmodel</c>: the whole model under every step, built on the side with the
+        /// same inputs as <see cref="BuildAvailabilityModelFor"/> so the live model is not replaced.</summary>
+        private void CmdDumpModel(string[] args)
+            => TheLongestYear.DebugCommands.ModelDumpCommand.Run(
+                this.Monitor, _enginePools, _effortData, _engineReachability,
+                step => TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
+                    _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
+                    hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
+                    weekOverrides: _config.AvailabilityWeekOverrides,
+                    mode: TheLongestYear.Core.WeekModes.For(step), step: step),
+                this.Helper.DirectoryPath, args);
 
         /// <summary>Jeff, 2026-08-28: "define can't exist; list all of the items in all of the bundles
         /// and when the first possible time you can get them is." One row per ingredient of every
