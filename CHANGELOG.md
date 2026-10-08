@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.9 - 2026-10-08
+
+3129 tests.
+
+### Fixed
+
+- **An unfilled bundle slot no longer changes item when you reload.** The load-time board repair (which swaps an ask this run cannot reach, such as Cornucopia's Zucchini when its seed is out of reach) drew its replacement from the run seed, which a new game only sets after that first repair, and walked the board in whatever order the live data happened to be in. Its swaps also never reached the stored board of record, so with Tech's Cross-Mod Bundles each load restored the unreachable ask and the repair drew again, often a different item (loop 1: Fall Crops took (O)300/(O)266 at creation, (O)284/Cornucopia Bamboo after a reload). Now the repair seeds from the board's own basis (farmer id and bundle seed loop, the same on every load of a loop), walks bundles in key order, and writes every swap into the stored board, so the next load restores the repaired board and the repair finds nothing to do.
+- **Same seam on TLY Custom.** A repair swap on a TLY Custom board (possible with "Allow mod items in custom bundles" on) used to leave the stored board unrepaired, so the next load saw the live board as different, failed the seed re-derivation too and fell back to "engine manifest mismatch ... falling back to read path" for the rest of the loop (with Tech's mod, the restore also put the unreachable ask back each load). The stored board now takes the swap, so the stored-board check matches.
+
 ## 0.19.8 - 2026-10-08
 
 3124 tests.

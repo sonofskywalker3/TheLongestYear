@@ -727,7 +727,13 @@ namespace TheLongestYear
                     TheLongestYear.Loop.BundleEngine.VanillaOnlyIds);
             int repaired = new TheLongestYear.Loop.BoardRepairService(
                 this.Monitor, enginePoolReader.LastReachability, repairPools,
-                _config.PoolTuning, _availability, _meta.Run.Seed, oncePerLoopAsksOne).RepairIfNeeded();
+                _config.PoolTuning, _availability,
+                // The board's own seed basis, not the run seed (a new game assigns that only after
+                // this runs), and the stored board of record takes every swap, so a reload restores
+                // the repaired board and the repair finds nothing left to do (0.19.9).
+                TheLongestYear.Core.BoardRepairStability.Seed(
+                    unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop),
+                oncePerLoopAsksOne, _meta.State.WrittenBoard).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
