@@ -30,6 +30,24 @@ The three porch scenes keep their place (the morning of Summer 1, Fall 1, Winter
 gate), their staging and their skip rule. The lines change, the Fall scene loses a line, and the
 Winter glow holds.
 
+**Amendment, 2026-10-08 (Jeff, Winter save pass item 16): the scenes play on the first Farm arrival,
+not on waking.** "It's weird it happens and then I get out of bed." The Continue morning now runs the
+normal day start straight away, so the planning hub opens in the farmhouse on waking as on any
+week-start morning, and the porch scene is owed (`RunState.PendingSeasonTurn`, persisted). The first
+time the farmer then arrives on the Farm by any route (the farmhouse door, the Bus Stop, Forest or
+Backwoods edge, a building door, a totem), the scene plays with the tamper scene's trigger and
+staging: on the porch behind black while the Junimos are placed, a fade in, and at the end (or a
+skip) `tlyReturnTo` puts him back on the tile and facing he arrived at. The rules
+(`SeasonTurnArrival`): an arrival while an event, a farm event, a menu or another porch scene is up
+keeps it for the next arrival; it is consumed when it starts, so it plays once; a day spent off the
+Farm keeps it owed into the next day; a tamper scene owed on the same arrival waits for the next one;
+a newer gate's scene replaces an unwatched older one; the armed Year One Ending drops it. A load that
+replays a pending day-28 Continue follows the same rule. Why the hub first: the hub was only ever
+after the scene because both ran on waking; it does not depend on the scene, and the hub opening on
+waking matches every other week-start morning, while the scene waiting would otherwise keep the
+hub (and the day) from starting until he stepped out. `tly_seasonturn` replays the scene staged at
+the porch when run on the Farm, and moves to the Farm as before from anywhere else.
+
 ### Spring to Summer
 
 The warning scene: the first strike can land that night.

@@ -47,6 +47,10 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 16. Winter porch scene: Jeff likes it, but it plays on waking and THEN he gets out of bed, which reads
     wrong. The porch scenes (Summer, Fall, Winter) play when he wakes and steps out of the farmhouse
     onto the Farm, like the tamper Junimo scene (first arrival on the Farm, staged at the porch).
+    BUILT 8d9c100: the Continue morning runs the normal day start (planning hub on waking, in the
+    farmhouse) and owes the scene; the first Farm arrival by any route plays it at the porch behind
+    black, then returns him to his arrival tile. Owed until seen, across a save; before a tamper scene
+    on the same arrival. Live check owed.
 
 **Fall save pass (2026-10-08, standard_451080418):**
 13. MY MISTAKE: the Fall handoff farm forces the hall on night 15, and Fall 16 is the Stardew Valley Fair,
