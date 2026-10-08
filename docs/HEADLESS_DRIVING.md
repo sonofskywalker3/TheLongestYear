@@ -211,8 +211,9 @@ loop are popup only. A scene is not skippable the first time it ever plays on th
 Commands:
 
 - `tly_sabotage scene crows|thief|hall|cloud` plays a scene now against a fresh pick, without
-  sleeping (stand on the Farm with no event up). `tly_sabotage scene [old] [new]` plays the Junimos'
-  "tainted" scene at the porch and puts the farmer back on his tile after.
+  sleeping (stand on the Farm with no event up). `tly_sabotage scene [old] [new] [mass]` plays the Junimos'
+  "tainted" scene at the porch and puts the farmer back on his tile after (`mass` picks the
+  "touched it" middle line, for an uncountable item such as Wood; without it, "touched them").
 - `tly_sabotage fixture [scarecrow] [rows=<1..5>]` plants ten in-season crops per row in front of the
   house and drops a chest with 20 Parsnip and 10 Copper Ore beside them (refuses on a save this
   session did not create unless you add `confirm`); `fixture here` drops only the chest beside the

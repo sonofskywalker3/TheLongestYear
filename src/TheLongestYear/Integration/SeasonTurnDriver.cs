@@ -57,7 +57,7 @@ namespace TheLongestYear.Integration
         /// (not on the Farm, no porch known, an event or another scene already up), and then nothing
         /// has changed and the caller keeps the report for the next Farm arrival. The scene is
         /// skippable from its second showing on the save.</summary>
-        public bool StartTamperAtPorch(string oldItemName, string newItemName, bool newIsPlural, Action onComplete)
+        public bool StartTamperAtPorch(string oldItemName, bool oldIsMass, string newItemName, bool newIsPlural, Action onComplete)
         {
             GameLocation loc = Game1.currentLocation;
             if (loc is not Farm || _running || Game1.eventUp || loc.currentEvent != null) return false;
@@ -66,7 +66,7 @@ namespace TheLongestYear.Integration
             int facing = Game1.player.FacingDirection;
             bool skippable = _meta.State.SeasonTurnsSeen.Contains(TamperSeenName);
             _monitor.Log($"Darkness: starting the board-changed scene at the porch ({porchX},{porchY}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, arrived.X, arrived.Y, facing, oldItemName, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, arrived.X, arrived.Y, facing, oldItemName, oldIsMass, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
             _reportReturn = true;
             // Black from this very frame: the arrival is not seen before the porch is.
             EndingEventCommands.HoldBlack();

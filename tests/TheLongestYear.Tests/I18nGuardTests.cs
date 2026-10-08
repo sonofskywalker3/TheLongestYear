@@ -209,6 +209,20 @@ public class I18nGuardTests
     }
 
     [Fact]
+    public void Both_tamper_middle_lines_exist_and_are_referenced()
+    {
+        // Designer, 2026-10-08: "touched them" after a counted item, "touched it" after an
+        // uncountable one (ItemPlurals.TaintedReadsAsMass).
+        HashSet<string> referenced = ReferencedKeys();
+        foreach (string key in new[] { "event.darkness.tamper-2", "event.darkness.tamper-2-mass" })
+        {
+            Assert.True(_fixture.Map.ContainsKey(key), key);
+            Assert.Contains(key, referenced);
+        }
+        Assert.Equal("The darkness has touched it. We can no longer use it for our restoration.", _fixture.Map["event.darkness.tamper-2-mass"]);
+    }
+
+    [Fact]
     public void EveryCatalogKey_ExistsInDefaultJson()
     {
         // Lazy resolution returns the key itself when missing — detect that.

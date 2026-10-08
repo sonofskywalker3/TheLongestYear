@@ -52,14 +52,19 @@ namespace TheLongestYear.Loop
             // "all the Parsnip", "Bring us 3 Beer").
             Func<string, string> gamePlural = word => StardewValley.BellsAndWhistles.Lexicon.makePlural(word);
             // The exact item, flavour included (designer, 2026-10-07: "all the Dried Apples").
-            string oldName = ItemPlurals.Tainted(ExactName(tamper.OldItemId, tamper.OldFlavor), tamper.OldItemId, !string.IsNullOrEmpty(tamper.OldFlavor), gamePlural, CategoryOf(tamper.OldItemId));
+            string exactOld = ExactName(tamper.OldItemId, tamper.OldFlavor);
+            bool oldFlavored = !string.IsNullOrEmpty(tamper.OldFlavor);
+            int oldCategory = CategoryOf(tamper.OldItemId);
+            string oldName = ItemPlurals.Tainted(exactOld, tamper.OldItemId, oldFlavored, gamePlural, oldCategory);
+            // "touched it" after an uncountable item, "touched them" otherwise (designer, 2026-10-08).
+            bool oldIsMass = ItemPlurals.TaintedReadsAsMass(exactOld, tamper.OldItemId, oldFlavored, gamePlural, oldCategory);
             // The counted ask names a container or a proper plural (designer, 2026-10-07: "jars of
             // wild honey, and sea jellies, and bottles of blueberry wine").
             string askName = FlavorlessBundleSlots.AskNameKeyFor(tamper.ItemId) is string nameKey
                 ? Strings.Get(nameKey)
                 : Strings.ItemName(tamper.ItemId);
             string ask = AskPhrases.Ask(tamper.Count, tamper.ItemId, askName, gamePlural, CategoryOf(tamper.ItemId));
-            if (!StartTamperScene(oldName, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
+            if (!StartTamperScene(oldName, oldIsMass, ask, ItemPlurals.AskIsPlural(tamper.Count), ShowMorningReports)) return false;
             Run.PendingSabotageReports.Remove(tamper);
             return true;
         }
