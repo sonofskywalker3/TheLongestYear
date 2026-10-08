@@ -67,5 +67,12 @@ public static class WitnessLines
     public static bool OpensAfterTopic(bool closedBoxWasTopic, bool screenIsFree, bool lineIsNext, bool eventUp, bool sameLocation)
         => closedBoxWasTopic && screenIsFree && lineIsNext && !eventUp && sameLocation;
 
+    /// <summary>The topic's box closed but the topic is still the NPC's top dialogue: vanilla's
+    /// <c>$e</c> ended this talk part way through it and the rest is said on the next talk (Linus's
+    /// Introduction is two talks, live 2026-10-08). The line keeps waiting under the topic and opens
+    /// when the topic's last box closes, so it still comes straight after the whole introduction.</summary>
+    public static bool WaitsForTopicToFinish(bool closedBoxWasTopic, bool topicStillOnTop)
+        => closedBoxWasTopic && topicStillOnTop;
+
     public static IReadOnlyList<string> AllKeys { get; } = new[] { LineKey("Linus"), LineKey("Shane"), WhenLastNight, WhenOtherNight };
 }

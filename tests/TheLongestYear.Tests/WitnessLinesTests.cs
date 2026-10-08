@@ -72,6 +72,19 @@ public class WitnessLinesTests
     public void Otherwise_the_line_waits_for_the_next_talk(bool topic, bool free, bool next, bool eventUp, bool here)
         => Assert.False(WitnessLines.OpensAfterTopic(topic, free, next, eventUp, here));
 
+    // Linus's Introduction is "A stranger?... Hello.#$e#Don't mind me. ..." and $e ends the first
+    // talk there: the topic's box closes unfinished and the rest waits for the next talk (live,
+    // 2026-10-08). The line has to keep waiting behind the topic until the topic itself is done.
+    [Fact]
+    public void A_topic_split_over_two_talks_keeps_the_line_waiting_behind_it()
+        => Assert.True(WitnessLines.WaitsForTopicToFinish(closedBoxWasTopic: true, topicStillOnTop: true));
+
+    [Theory]
+    [InlineData(true, false)]   // the topic is done: open the line now (or give up)
+    [InlineData(false, true)]   // some other box closed
+    public void Otherwise_the_topic_wait_is_over(bool topic, bool stillOnTop)
+        => Assert.False(WitnessLines.WaitsForTopicToFinish(topic, stillOnTop));
+
     [Fact] public void A_line_already_said_is_not_live()
         => Assert.False(WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40, Said = true }, 41));
 
