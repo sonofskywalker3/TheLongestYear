@@ -29,6 +29,27 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|talk|click`; `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
 
+## 0.19.20 - 2026-10-08
+
+3209 tests.
+
+### Changed
+
+- **Items a rare pond product used to date now have their real routes.** The 0.19.19 pond rule left some vanilla items with no route at all. New readers, all from game data or the game's own code: wild trees (Data/WildTrees plus the trees standing in the world: Acorn, Maple Seed and Pine Cone at week 1, Wood at week 1, Sap from chopping oaks), the beach tide pools past the broken bridge (Coral and Sea Urchin, from Beach.cs; week 1 with the 300 Wood bridge), geodes from mine stones (MineShaft.checkStoneForItems: Geode floors 1 to 39, Frozen Geode week 2, Magma Geode week 3, Omni Geode below floor 20 at week 1), and Squid Fest rewards (Pearl for 5 squid on Winter 12, Treasure Chest for 7 squid on Winter 13, both week 14). Coconut and Tom Kha Soup keep week 9 with lower effort. Pools and reachability are unchanged. With SVE and Cornucopia, SVE Birch Seed and Fir Cone get week 1 and Cornucopia Date Palm Seed week 9 from their wild trees.
+
+## 0.19.19 - 2026-10-08
+
+3189 tests.
+
+### Changed
+
+- **A fish pond product too rare to turn up in a run no longer dates an item.** Every Data/FishPondData ProducedItems row used to count as a route whatever its Chance, so SVE's Goldenfish pond (Golden Pumpkin at Chance 0.01) put Golden Pumpkin at week 5 instead of the Spirit's Eve maze in week 12. A row now counts only when its Chance is at least 0.10 on Easy and Normal Item Rarity and 0.05 on Hard and Extreme (Jeff's ruling), read for every pond, vanilla or modded.
+- Vanilla items that lose a pond route (`tly_dumpmodel` before and after, unmodded):
+  - Every step: Treasure Chest week 5 to unknown (13); Nautilus Shell week 5 to 13 (Winter beach forage); Pale Broth week 5 to 6 (the dish); Magma Geode week 8 to unknown (13); Pearl week 16 to unknown (13).
+  - Easy and Normal only: Acorn, Maple Seed, Pine Cone week 5 to unknown (13); Coral week 5 to unknown (13); Sea Urchin week 5 to week 1 (its Spring pin, no longer rejected by the pond floor); Cactus Seeds week 13 to unknown (13, effort 8 to 6).
+  - No pool or reachability changes.
+- With SVE: Golden Pumpkin week 5 to 12 (Spirit's Eve maze) at every step; Slime Egg week 5 to 6 (Slime Egg-Press); Iridium Sprinkler week 5 (Meteor Carp pond) to unknown.
+
 ## 0.19.18 - 2026-10-08
 
 3164 tests. Release of 0.19.11 to 0.19.18.
