@@ -74,7 +74,8 @@ public static class ItemPoolBuilder
         IReadOnlyDictionary<string, RawFishEntry>? fishRows = null,
         IReadOnlyDictionary<string, Season>? festivalSeasons = null,
         SourceReachability? reachability = null,
-        IReadOnlySet<string>? vanillaOnlyIds = null)
+        IReadOnlySet<string>? vanillaOnlyIds = null,
+        LocationWeeks? locationWeeks = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
@@ -103,7 +104,7 @@ public static class ItemPoolBuilder
         }
 
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
-        var (fishPool, crabPotPool) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons);
+        var (fishPool, crabPotPool, unpooledFish) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks);
         var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning, festivalSeasons);
         var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded);
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);
@@ -125,6 +126,8 @@ public static class ItemPoolBuilder
         {
             Crops = cropPool,
             Fish = fishPool,
+            UnpooledFish = unpooledFish,
+            LocationWeeks = locationWeeks,
             CrabPot = crabPotPool,
             Forage = foragePool,
             MonsterDrops = monsterPool,
@@ -407,11 +410,12 @@ public static class ItemPoolBuilder
     /// "Fish". Location fish-spawn tables carry non-fish junk/trash entries (e.g. wood,
     /// stone) alongside real fish, so Vets() alone isn't enough — a type check keeps the
     /// pool type-pure for correct bundle classification.</summary>
-    private static (IReadOnlyList<PoolItem> fish, IReadOnlyList<PoolItem> crabPot) BuildFishPools(
+    private static (IReadOnlyList<PoolItem> fish, IReadOnlyList<PoolItem> crabPot, IReadOnlyList<PoolItem> unpooled) BuildFishPools(
         IReadOnlyList<RawSpawnEntry> fishSpawns, IReadOnlySet<string> trapFishIds,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
         HashSet<string> excluded, BundleGenerationTuning tuning,
-        IReadOnlyDictionary<string, Season>? festivalSeasons)
+        IReadOnlyDictionary<string, Season>? festivalSeasons,
+        LocationWeeks? locationWeeks)
     {
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
@@ -507,7 +511,57 @@ public static class ItemPoolBuilder
             fish.Add(item);
         }
 
-        return (Finish(fish), Finish(crabPot));
+        return (Finish(fish), Finish(crabPot),
+            BuildUnpooledFish(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks, seenIds, marketFish));
+    }
+
+    /// <summary>Rod fish the pool vet leaves out ONLY for their ExcludeFromRandomSale flag, which
+    /// keeps an item out of random shop stock and out of the bundle pools, not off the line. Stardew
+    /// Valley Expanded flags every one of its fish, so none of them had an availability week: a
+    /// cross-mod board asking for a Bull Trout read it as unknown, week 13 (mod-support work,
+    /// 2026-10-08). They are never sampled; the availability model places them from their own spawn
+    /// rows. Only rows in places <paramref name="locationWeeks"/> can date count, and the seasons and
+    /// locations are gathered from those rows alone, so a row in a map no door leads to (SVE's
+    /// Highlands) can neither place the fish nor widen its seasons. Null weeks = none collected
+    /// (tests that build pools by hand, and a failed warp read).</summary>
+    private static IReadOnlyList<PoolItem> BuildUnpooledFish(
+        IReadOnlyList<RawSpawnEntry> fishSpawns, IReadOnlySet<string> trapFishIds,
+        IReadOnlyDictionary<string, RawObjectEntry> objects,
+        HashSet<string> excluded, BundleGenerationTuning tuning,
+        IReadOnlyDictionary<string, Season>? festivalSeasons,
+        LocationWeeks? locationWeeks, IReadOnlySet<string> pooledIds, IReadOnlySet<string> marketFish)
+    {
+        if (locationWeeks == null) return Array.Empty<PoolItem>();
+        var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
+        var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
+        var locationsById = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (RawSpawnEntry spawn in fishSpawns)
+        {
+            if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition)) continue;
+            string bare = Unqualify(spawn.ItemId);
+            string id = Qualify(bare);
+            if (pooledIds.Contains(id) || marketFish.Contains(id) || trapFishIds.Contains(bare)) continue;
+            if (Vets(bare, id, objects, excluded) || !VetsIgnoringRandomSale(bare, id, objects, excluded)) continue;
+            if (!string.Equals(objects[bare].Type, FishType, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!locationWeeks.TryGet(spawn.Location ?? "", out _)) continue;
+
+            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            if (seasons.Count == 0) anySeasonById.Add(id);
+            if (!seasonsById.TryGetValue(id, out List<Season>? list))
+                seasonsById[id] = list = new List<Season>();
+            foreach (Season s in seasons)
+                if (!list.Contains(s)) list.Add(s);
+            if (!locationsById.TryGetValue(id, out List<string>? locs))
+                locationsById[id] = locs = new List<string>();
+            if (!locs.Contains(spawn.Location ?? "")) locs.Add(spawn.Location ?? "");
+        }
+        return Finish(seasonsById.Keys.Select(id =>
+        {
+            List<string> locs = locationsById[id];
+            locs.Sort(StringComparer.Ordinal);
+            return MakeItem(id, objects, tuning,
+                anySeasonById.Contains(id) ? Array.Empty<Season>() : SortedSeasons(seasonsById[id]), locs);
+        }));
     }
 
     private static IReadOnlyList<PoolItem> BuildForagePool(

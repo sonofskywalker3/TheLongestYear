@@ -14,6 +14,7 @@ namespace TheLongestYear.Core.Availability;
 public static class ItemAvailabilityBuilder
 {
     private const int TrapFishEffort = 2;
+    private const string UnpooledFishNote = "out of the bundle pools (ExcludeFromRandomSale), placed from its spawn rows";
 
     public static ItemAvailabilityModel Build(
         ItemPools pools,
@@ -35,6 +36,15 @@ public static class ItemAvailabilityBuilder
         foreach (PoolItem item in pools.CrabPot ?? new List<PoolItem>())
             derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
 
+        // Fish the pools leave out only for ExcludeFromRandomSale (every SVE fish): placed from their
+        // own datable spawn rows, never sampled. A pooled id keeps its pooled derivation.
+        foreach (PoolItem item in pools.UnpooledFish ?? new List<PoolItem>())
+        {
+            if (derived.ContainsKey(item.ItemId) || pools.LocationWeeks == null) continue;
+            ItemAvailability fish = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode, pools.LocationWeeks);
+            derived[item.ItemId] = fish with { Basis = $"{fish.Basis}; {UnpooledFishNote}" };
+        }
+
         foreach (PoolItem item in pools.Metals ?? new List<PoolItem>())
         {
             ItemAvailability? metal = MetalsAvailability.Derive(item, mode);
@@ -55,7 +65,7 @@ public static class ItemAvailabilityBuilder
         }
 
         EffortComposer? composer = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode)
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks)
             : null;
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
 
@@ -90,7 +100,7 @@ public static class ItemAvailabilityBuilder
         // one when keep_kitchen is owned would give the two kitchen states different memoised
         // efforts. The ingredient basis is the model-free pass lookup; dishes used as ingredients
         // are resolved inside DishAskBasis.Build.
-        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode);
+        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks);
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,

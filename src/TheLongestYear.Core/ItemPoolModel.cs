@@ -28,6 +28,21 @@ public sealed record ItemPools
     public IReadOnlyList<PoolItem> Crops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Fish { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> CrabPot { get; init; } = new List<PoolItem>();
+
+    /// <summary>Rod fish kept out of <see cref="Fish"/> only by their ExcludeFromRandomSale flag
+    /// (every Stardew Valley Expanded fish), with the seasons and locations of their datable spawn
+    /// rows. Never sampled: the availability model reads them so a board that asks for one (a
+    /// cross-mod bundle, a custom board with mod items) gets its real week.</summary>
+    public IReadOnlyList<PoolItem> UnpooledFish { get; init; } = new List<PoolItem>();
+
+    /// <summary>When each map can first be reached, walked from the farm through the maps' own
+    /// doors (<see cref="Availability.LocationWeeks"/>). Null = not read (hand-built pools, or the
+    /// read failed): rules fall back to <see cref="Availability.LocationGating"/>'s names alone.</summary>
+    public Availability.LocationWeeks? LocationWeeks { get; init; }
+
+    /// <summary>The earliest week a walkable shop sells each item (<see cref="Availability.ShopWeeks"/>).
+    /// Null = not read: the rules that need it (fruit trees, crop seeds) place nothing from it.</summary>
+    public Availability.ShopWeeks? ShopWeeks { get; init; }
     public IReadOnlyList<PoolItem> Forage { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> MonsterDrops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Metals { get; init; } = new List<PoolItem>();

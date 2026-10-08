@@ -58,6 +58,8 @@ namespace TheLongestYear.Loop
             var crops = new List<RawCropGrowth>();
             var tapItems = new List<RawTapItem>();
             var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
+            var fruitTrees = new List<RawFruitTree>();
+            var objectArtifactSpots = new List<RawArtifactSpot>();
 
             try
             {
@@ -69,6 +71,9 @@ namespace TheLongestYear.Loop
                         o.Type ?? "", o.Category, o.Price, o.ExcludeFromRandomSale,
                         (IReadOnlyList<string>)(o.ContextTags ?? new List<string>()), o.Name ?? "");
                     string geodeId = BundleParsing.NormalizeItemId(kv.Key);
+                    foreach (var chance in o.ArtifactSpotChances ?? new Dictionary<string, float>())
+                        if (!string.IsNullOrEmpty(chance.Key) && chance.Value > 0)
+                            objectArtifactSpots.Add(new RawArtifactSpot(chance.Key, geodeId, chance.Value));
                     if (o.GeodeDropsDefaultItems)
                         geodeDrops.AddRange(GeodeAvailability.DefaultTableDrops(geodeId));
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
@@ -221,7 +226,8 @@ namespace TheLongestYear.Loop
                         .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
                     crops.Add(new RawCropGrowth(
                         BundleParsing.NormalizeItemId(c.HarvestItemId),
-                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons));
+                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons,
+                        BundleParsing.NormalizeItemId(kv.Key)));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
@@ -232,6 +238,17 @@ namespace TheLongestYear.Loop
                         if (tap.ItemId == PreviousOutputTapId || tap.ItemId.Contains(' ')) continue;
                         tapItems.Add(new RawTapItem(kv.Key, BundleParsing.NormalizeItemId(tap.ItemId), tap.DaysUntilReady));
                     }
+                }
+
+                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
+                {
+                    if (kv.Value == null) continue;
+                    var fruit = (kv.Value.Fruit ?? new List<StardewValley.GameData.FruitTrees.FruitTreeFruitData>())
+                        .SelectMany(f => SpawnIds(f?.ItemId, f?.RandomItemId))
+                        .Distinct(StringComparer.Ordinal).ToList();
+                    var treeSeasons = (kv.Value.Seasons ?? new List<StardewValley.Season>())
+                        .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
+                    fruitTrees.Add(new RawFruitTree(kv.Key, fruit, treeSeasons));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
@@ -264,7 +281,7 @@ namespace TheLongestYear.Loop
                 MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
-                CookingChannel = cookingChannel,
+                CookingChannel = cookingChannel, FruitTrees = fruitTrees, ObjectArtifactSpots = objectArtifactSpots,
             };
         }
 
