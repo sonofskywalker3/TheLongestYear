@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.12 - 2026-10-08
+
+3141 tests.
+
+### Fixed (mod support)
+
+- **Stardew Valley Expanded's fish get a real week instead of the unknown week 13.** SVE flags every one of its fish ExcludeFromRandomSale, which keeps an item out of random shop stock and out of TLY's bundle pools; the availability model only placed pooled fish, so a board that asked for a Bull Trout, Minnow or Tadpole (Tech's Cross-Mod Bundles, a TLY Custom board with mod items on) treated it as Winter. Fish the pool leaves out only for that flag are now placed from their own Data/Locations rows and Data/Fish row, never sampled. Bull Trout week 5, Minnow, Tadpole, Starfish and Puppyfish week 1, Radioactive Bass week 7 (the Sewer), and so on. Dishes and fish-pond goods made from them follow (Frog Legs, Big Bark Burger).
+- **A fish is placed only from maps TLY can date.** New `LocationWeeks`: the maps' own warps and door warps, walked one way from the farm, give each map the latest gate on its easiest path (a vanilla gate still dates a map no door leads to, such as the Sewer). A row in a map no door leads to (SVE's Highlands, Junimo Woods, Forbidden Maze) neither places the fish nor widens its seasons, so the Highlands Bass, Gemfish, Fiber Goby, Alligator, Swamp Crab and Diamond Carp stay unknown rather than week 1. Island, Fable Reef and Crimson Badlands fish stay out as before.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is byte-identical (every item, all four difficulty steps, pools, pins, reachability). With SVE installed, some vanilla items gain an SVE fish-pond route (Golden Pumpkin from a Goldenfish pond, week 5).
+
 ## 0.19.11 - 2026-10-08
 
 3129 tests.

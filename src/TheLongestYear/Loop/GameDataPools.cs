@@ -382,12 +382,13 @@ namespace TheLongestYear.Loop
                 reachability = null;
             }
             this.LastReachability = reachability;
+            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
 
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
-                festivalSeasons, reachability, vanillaOnlyIds);
+                festivalSeasons, reachability, vanillaOnlyIds, locationWeeks);
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
@@ -404,6 +405,37 @@ namespace TheLongestYear.Loop
                     _monitor?.Log($"  {reason.Key}: {reason.Value}", LogLevel.Trace);
             }
             return pools;
+        }
+
+        /// <summary>When each loaded map can first be reached: the maps' own warps and door warps
+        /// (GameLocation.doors, the "Warp"/"LockedDoorWarp" tile actions), walked one way from the
+        /// farm (<see cref="LocationWeeks"/>). Its own try/catch, failing to null: with no weeks the
+        /// availability rules that need them place nothing from a modded map, as before.</summary>
+        private LocationWeeks ReadLocationWeeks(BundleGenerationTuning tuning)
+        {
+            try
+            {
+                var links = new List<RawLocationLink>();
+                foreach (GameLocation location in Game1.locations)
+                {
+                    if (location?.Name == null) continue;
+                    foreach (StardewValley.Warp warp in location.warps)
+                        if (!string.IsNullOrEmpty(warp?.TargetName))
+                            links.Add(new RawLocationLink(location.Name, warp.TargetName));
+                    foreach (var door in location.doors.Pairs)
+                        if (!string.IsNullOrEmpty(door.Value))
+                            links.Add(new RawLocationLink(location.Name, door.Value));
+                }
+                LocationWeeks weeks = LocationWeeks.Build(
+                    links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
+                _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors).", LogLevel.Trace);
+                return weeks;
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"Location weeks could not be read ({ex.GetType().Name}: {ex.Message}); no item is placed from a modded map this generation.", LogLevel.Warn);
+                return null;
+            }
         }
 
         /// <summary>Shop ids opened by an "OpenShop" tile action anywhere in this location. This is

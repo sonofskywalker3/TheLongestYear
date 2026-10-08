@@ -14,6 +14,7 @@ namespace TheLongestYear.Core.Availability;
 public static class ItemAvailabilityBuilder
 {
     private const int TrapFishEffort = 2;
+    private const string UnpooledFishNote = "out of the bundle pools (ExcludeFromRandomSale), placed from its spawn rows";
 
     public static ItemAvailabilityModel Build(
         ItemPools pools,
@@ -34,6 +35,15 @@ public static class ItemAvailabilityBuilder
 
         foreach (PoolItem item in pools.CrabPot ?? new List<PoolItem>())
             derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
+
+        // Fish the pools leave out only for ExcludeFromRandomSale (every SVE fish): placed from their
+        // own datable spawn rows, never sampled. A pooled id keeps its pooled derivation.
+        foreach (PoolItem item in pools.UnpooledFish ?? new List<PoolItem>())
+        {
+            if (derived.ContainsKey(item.ItemId) || pools.LocationWeeks == null) continue;
+            ItemAvailability fish = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode, pools.LocationWeeks);
+            derived[item.ItemId] = fish with { Basis = $"{fish.Basis}; {UnpooledFishNote}" };
+        }
 
         foreach (PoolItem item in pools.Metals ?? new List<PoolItem>())
         {
