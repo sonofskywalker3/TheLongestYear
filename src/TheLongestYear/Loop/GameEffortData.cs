@@ -60,6 +60,8 @@ namespace TheLongestYear.Loop
             var cookingChannel = new Dictionary<string, int>(StringComparer.Ordinal);
             var fruitTrees = new List<RawFruitTree>();
             var objectArtifactSpots = new List<RawArtifactSpot>();
+            var wildTrees = new List<RawWildTree>();
+            var wildTreeSpots = new List<RawWildTreeSpot>();
 
             try
             {
@@ -238,7 +240,9 @@ namespace TheLongestYear.Loop
                         if (tap.ItemId == PreviousOutputTapId || tap.ItemId.Contains(' ')) continue;
                         tapItems.Add(new RawTapItem(kv.Key, BundleParsing.NormalizeItemId(tap.ItemId), tap.DaysUntilReady));
                     }
+                    if (kv.Value != null) wildTrees.Add(ReadWildTree(kv.Key, kv.Value));
                 }
+                wildTreeSpots.AddRange(ReadWildTreeSpots());
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
                 {
@@ -282,7 +286,43 @@ namespace TheLongestYear.Loop
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
                 CookingChannel = cookingChannel, FruitTrees = fruitTrees, ObjectArtifactSpots = objectArtifactSpots,
+                WildTrees = wildTrees, WildTreeSpots = wildTreeSpots,
             };
+        }
+
+        /// <summary>A Data/WildTrees entry as WildTreeAvailability reads it. ChopItems rows with a
+        /// Condition are dropped (a condition this reader does not evaluate proves nothing), and so
+        /// are rows only a bush-sized tree yields; a row's Season is kept.</summary>
+        private static RawWildTree ReadWildTree(string treeId, WildTreeData tree)
+        {
+            var drops = new List<RawWildTreeDrop>();
+            foreach (WildTreeChopItemData chop in tree.ChopItems ?? new List<WildTreeChopItemData>())
+            {
+                if (chop == null || !string.IsNullOrWhiteSpace(chop.Condition)) continue;
+                if (chop.MaxSize != null && chop.MaxSize < WildTreeGrowthStage.Tree) continue;
+                Core.Season? season = chop.Season == null ? null : (Core.Season)(int)chop.Season.Value;
+                foreach (string id in SpawnIds(chop.ItemId, chop.RandomItemId))
+                    drops.Add(new RawWildTreeDrop(id, chop.Chance, season));
+            }
+            return new RawWildTree(treeId, tree.SeedItemId, tree.SeedOnShakeChance, tree.SeedOnChopChance, tree.DropWoodOnChop, drops);
+        }
+
+        /// <summary>Every full-grown wild tree standing in the live world (Tree.treeStage or more),
+        /// by type and map: the places WildTreeAvailability dates seeds, wood and chop drops by.</summary>
+        private static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
+        {
+            var seen = new HashSet<(string, string)>();
+            foreach (GameLocation location in Game1.locations)
+            {
+                if (location?.Name == null) continue;
+                foreach (StardewValley.TerrainFeatures.TerrainFeature feature in location.terrainFeatures.Values)
+                {
+                    if (feature is not StardewValley.TerrainFeatures.Tree tree) continue;
+                    if (tree.growthStage.Value < StardewValley.TerrainFeatures.Tree.treeStage || tree.stump.Value) continue;
+                    if (seen.Add((tree.treeType.Value, location.Name)))
+                        yield return new RawWildTreeSpot(tree.treeType.Value, location.Name);
+                }
+            }
         }
 
         private static IReadOnlyList<string> ProduceIds(List<FarmAnimalProduce> produce)

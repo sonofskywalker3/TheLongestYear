@@ -11,10 +11,16 @@ namespace TheLongestYear.Core.Availability;
 /// getRandomItemForThisLevel lays Quartz (80) on any floor, Earth Crystal (86) in area 0, Frozen
 /// Tear (84) in area 40 and Fire Quartz (82) in area 80; Diamond nodes are an area-80 find and
 /// Prismatic Shards come from iridium nodes and mystic stones in the Skull Cavern. A gem that only
-/// comes from geodes is not here; GeodeAvailability handles it.</summary>
+/// comes from geodes is not here; GeodeAvailability handles it.
+///
+/// Geodes themselves drop from any broken mine stone (PC 1.6 decompile, MineShaft.cs
+/// checkStoneForItems, lines 3641 to 3662): 2.2% a stone, the area's own geode (Geode in area 0,
+/// Frozen Geode in 40, Magma Geode in 80), and an Omni Geode at 0.5% a stone below floor 20.</summary>
 public static class MineralNodeAvailability
 {
-    private sealed record NodeRule(int Area, string Note);
+    private sealed record NodeRule(int Area, string Note, int ExtraEffort = 0);
+
+    private const int RareStoneDropStep = 1;
 
     private static readonly IReadOnlyDictionary<string, NodeRule> Rules =
         new Dictionary<string, NodeRule>(StringComparer.Ordinal)
@@ -31,6 +37,10 @@ public static class MineralNodeAvailability
             ["(O)60"] = new(MineAreas.Area80, "Emerald node"),
             ["(O)72"] = new(MineAreas.Area80, "Diamond node"),
             ["(O)74"] = new(MineAreas.SkullCavern, "Prismatic Shard, iridium nodes and mystic stones"),
+            ["(O)535"] = new(MineAreas.Area0, "Geode, mine stones at 2.2%"),
+            ["(O)536"] = new(MineAreas.Area40, "Frozen Geode, mine stones at 2.2%"),
+            ["(O)537"] = new(MineAreas.Area80, "Magma Geode, mine stones at 2.2%"),
+            ["(O)749"] = new(MineAreas.Area10, "Omni Geode, mine stones below floor 20 at 0.5%", RareStoneDropStep),
         };
 
     /// <summary>Null means "not a node item this rule set knows".</summary>
@@ -38,7 +48,7 @@ public static class MineralNodeAvailability
     {
         if (qualifiedId == null || !Rules.TryGetValue(qualifiedId, out NodeRule? rule))
             return null;
-        int effort = MineAreas.Effort(rule.Area);
+        int effort = MineAreas.Effort(rule.Area) + rule.ExtraEffort;
         int week = MineAreas.Week(rule.Area);
         return new ItemEffort(effort,
             $"node, {rule.Note}, {MineAreas.Label(rule.Area)}, week {week}, effort {effort}",
