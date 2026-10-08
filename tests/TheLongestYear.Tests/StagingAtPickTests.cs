@@ -10,8 +10,8 @@ namespace TheLongestYear.Tests;
 /// <summary>Review I1, ruling 2026-10-07: a scene that cannot stage must not loop through the queue.
 /// (a) The staging checks run at pick time: while the thief scene is due, a chest with no tile
 /// beside it to stand on is not filmable, and a Junimo group is filmable only through a chest that
-/// has one. (b) A staging failure that still slips through postpones WITHOUT queuing; only a slot
-/// collision queues.</summary>
+/// has one. (b) Only a slot collision queues; a staging failure lands the strike bare (Jeff,
+/// 2026-10-08, ConflictRuleTests).</summary>
 public class StagingAtPickTests
 {
     private static bool[,] Grid(int w, int h, bool open)
@@ -92,7 +92,6 @@ public class StagingAtPickTests
     public void Only_a_slot_collision_queues_a_postponed_strike()
     {
         Assert.True(StrikeQueue.Queues(PostponeCause.SlotTaken));
-        Assert.False(StrikeQueue.Queues(PostponeCause.CannotStage));
         Assert.False(StrikeQueue.Queues(PostponeCause.NeverStaged));
     }
 

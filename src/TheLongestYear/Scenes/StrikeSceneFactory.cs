@@ -8,13 +8,13 @@ namespace TheLongestYear.Scenes
 {
     /// <summary>Which strike gets which scene (spec 2026-09-21), and whether tonight's strike has
     /// anything for its scene to play against. Asked at pick time: a strike whose scene is due but
-    /// cannot show its pick waits for a later night, effect and scene both.</summary>
+    /// cannot stage or cannot show its pick lands now without it (Jeff, 2026-10-08).</summary>
     internal static class StrikeSceneFactory
     {
         /// <summary>Can tonight's strike be filmed at all? Asked at pick time, before the slot.</summary>
         public static bool CanPlay(PendingStrike strike)
         {
-            if (strike == null) return false;
+            if (strike == null || SceneBreakSwitch.BreaksAtPick(strike.Event)) return false;
             return strike.Event switch
             {
                 DarknessEvent.CropBlight => strike.CropTiles.Count > 0,
@@ -25,10 +25,10 @@ namespace TheLongestYear.Scenes
             };
         }
 
-        /// <summary>Can this kind's scene stage tonight at all (review I1)? Asked by the night's "can
-        /// act" test while the kind's scene is due: a kind whose scene cannot stage cannot act that
-        /// night. The thief's own check is per chest, inside the draw (SpoilagePass).</summary>
-        public static bool CanStage(DarknessEvent e) => e switch
+        /// <summary>Can this kind's scene stage tonight at all? Asked at the pick while the kind's
+        /// scene is due: false lands the strike bare. It never stops the kind from acting. The
+        /// thief's own check is per chest, inside the draw (SpoilagePass).</summary>
+        public static bool CanStage(DarknessEvent e) => !SceneBreakSwitch.BreaksAtPick(e) && e switch
         {
             DarknessEvent.CropBlight => CrowsScene.CanStage(),
             DarknessEvent.ChestBlight => true,

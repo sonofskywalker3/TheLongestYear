@@ -17,8 +17,9 @@ namespace TheLongestYear.Loop
     /// evenly among what the season offers, and reversion and tampering that consult the
     /// obtainability model against the real save by Darkness level. Since 2026-09-21 the night pass
     /// PICKS at day end and the damage lands exactly once afterwards: in the overnight scene, or at
-    /// once when no scene will play by design (<see cref="Pending"/>). A strike whose scene cannot
-    /// have the overnight slot is postponed, effect and scene both (Jeff, 2026-10-07). Blight kills crops (BlightPass)
+    /// once when no scene will play (by design, or because the scene is broken: Jeff, 2026-10-08;
+    /// <see cref="Pending"/>). A strike whose scene cannot have the overnight slot is postponed,
+    /// effect and scene both, and queued (Jeff, 2026-10-07). Blight kills crops (BlightPass)
     /// or empties one chest (SpoilagePass); reversion opens a filled slot; tampering rewrites an
     /// unfilled slot's item and asks ModEntry to rebuild the catalog and requirements. Host only,
     /// single player or master, never on a day 28 or the win night (RunController decides that).</summary>

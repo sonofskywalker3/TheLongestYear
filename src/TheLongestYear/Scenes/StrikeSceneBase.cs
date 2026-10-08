@@ -97,7 +97,8 @@ namespace TheLongestYear.Scenes
         }
 
         /// <summary>Where the scene plays and what it needs. Return false to call the scene off: the
-        /// strike is postponed (never landed without its scene), the night goes on.</summary>
+        /// scene is broken, so the strike lands now without it (Jeff, 2026-10-08: "they miss out on
+        /// the cool scene, but still get hit"), the scene stays due, and the night goes on.</summary>
         protected abstract bool Stage();
 
         /// <summary>The map the scene is showing, so the base can pump it. Null (the default) means
@@ -151,6 +152,20 @@ namespace TheLongestYear.Scenes
         /// changes nothing global does not need it.</summary>
         protected virtual void Cleanup() { }
 
+        /// <summary>The scene never staged (Stage said no, or setUp threw): land tonight's strike now,
+        /// bare. Committed and recorded like any landed strike, at most once, never queued.</summary>
+        private void LandWithoutScene()
+        {
+            try
+            {
+                Strike.LandBare();
+            }
+            catch (Exception ex)
+            {
+                Monitor.Log($"Darkness: tonight's {Strike.Event} threw while it was landing without its scene. The night goes on. {ex}", LogLevel.Error);
+            }
+        }
+
         /// <summary>Land tonight's damage. Safe to call more than once and from anywhere: the strike
         /// itself runs its effect at most once, only once the scene has staged and committed it, and
         /// a strike that throws is logged and swallowed so it can never strand the night.</summary>
@@ -169,11 +184,16 @@ namespace TheLongestYear.Scenes
         /// <inheritdoc />
         public override bool setUp()
         {
+            // setUp has run: a scene handed the slot that never gets here was replaced by another
+            // mod (a conflict, queued by the net); one that gets here and fails is broken.
+            Strike.OnSetUp();
             try
             {
+                if (SceneBreakSwitch.BreaksAtSetUp(Strike.Event))
+                    throw new InvalidOperationException($"debug: the {GetType().Name} scene is broken on purpose (tly_sabotage breakscene).");
                 if (!Stage())
                 {
-                    Monitor.Log($"Darkness: the {GetType().Name} scene found nothing to play against, so tonight's {Strike.Event} is postponed: no effect and no scene.", LogLevel.Info);
+                    Monitor.Log($"Darkness: the {GetType().Name} scene cannot stage, so tonight's {Strike.Event} lands without it.", LogLevel.Info);
                     End(EndedNotStaged, shown: false);
                     return true;
                 }
@@ -186,7 +206,7 @@ namespace TheLongestYear.Scenes
                 Game1.freezeControls = true;
                 _staged = true;
                 // Staged: only now is tonight spent on the strike (the run records it). Anything
-                // that failed above leaves it uncommitted, and it is postponed.
+                // that failed above is a broken scene, and the ending lands the strike bare.
                 Strike.Commit();
                 Monitor.Log($"Darkness: the {GetType().Name} scene takes tonight's overnight slot for {Strike.Event} ({(_skippable ? "skippable" : "not skippable")}).", LogLevel.Info);
                 return false;
@@ -359,7 +379,8 @@ namespace TheLongestYear.Scenes
             {
                 Monitor.Log($"Darkness: the {GetType().Name} scene could not put the world back. {ex}", LogLevel.Error);
             }
-            ApplyStrike();
+            if (_staged) ApplyStrike();
+            else LandWithoutScene();
             Monitor.Log($"Darkness: the {GetType().Name} scene ended ({how}) at tick {Game1.ticks}.", LogLevel.Trace);
             try
             {
@@ -373,7 +394,7 @@ namespace TheLongestYear.Scenes
 
         private void Fail(Exception ex)
         {
-            Monitor.Log($"Darkness: the {GetType().Name} scene failed and was ended. The strike still lands. {ex}", LogLevel.Error);
+            Monitor.Log($"Darkness: the {GetType().Name} scene failed and was ended. The strike still lands{(_staged ? "" : ", without its scene")}. {ex}", LogLevel.Error);
             End(EndedFailed, shown: _staged);
         }
     }

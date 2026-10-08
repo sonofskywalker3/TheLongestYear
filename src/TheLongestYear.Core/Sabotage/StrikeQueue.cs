@@ -6,20 +6,19 @@ namespace TheLongestYear.Core.Sabotage;
 /// <summary>Why a strike was postponed.</summary>
 public enum PostponeCause
 {
-    /// <summary>Something else owns tonight's overnight slot (<see cref="StrikeSlot.Decide"/>).</summary>
+    /// <summary>A conflict: something else owns tonight's overnight slot (<see cref="StrikeSlot.Decide"/>),
+    /// or another mod replaced our scene before its setUp ran.</summary>
     SlotTaken,
 
-    /// <summary>Its scene is due but cannot show tonight's pick (asked at pick time).</summary>
-    CannotStage,
-
-    /// <summary>Settled by the net with its scene never staged: setUp failed or threw, another mod
-    /// replaced the event, a fail or restart night left the slot alone, or no pickFarmEvent ran.</summary>
+    /// <summary>Settled by the net with its scene never handed the slot: a fail or restart night
+    /// left the slot alone, or no pickFarmEvent ran. (A scene that cannot stage is not a postpone
+    /// at all: the strike lands bare, <see cref="StrikeStaging"/>.)</summary>
     NeverStaged,
 }
 
 /// <summary>Strikes waiting for a free night (designer, 2026-10-07: "Queue it for the next free
 /// night"). A strike postponed because another event owned the overnight slot is queued by kind (a
-/// staging failure is not: see <see cref="Queues"/>); nothing about it is kept, so the
+/// broken scene never postpones: it lands bare, <see cref="StrikeStaging"/>); nothing about it is kept, so the
 /// night it fires plans it afresh and fairly. On every later night pass the first queued kind that
 /// can act tonight fires instead of the normal roll and is that night's one strike, with its scene.
 /// It honours everything the kind's own "can act" test does: caps, the spacing between tampers,
@@ -32,9 +31,8 @@ public enum PostponeCause
 /// queued here. Persisted on the run, cleared at the loop reset.</summary>
 public static class StrikeQueue
 {
-    /// <summary>Does a strike postponed for this reason go on the queue? Only a slot collision does
-    /// (review I1, ruling 2026-10-07). A scene that cannot stage would fail the same way again, so
-    /// queuing it would fire it ahead of the roll every night and starve the darkness.</summary>
+    /// <summary>Does a strike postponed for this reason go on the queue? Only a conflict does (Jeff,
+    /// 2026-10-08). A scene that cannot stage is not postponed at all: it lands bare.</summary>
     public static bool Queues(PostponeCause cause) => cause == PostponeCause.SlotTaken;
 
     /// <summary>Queue a postponed strike's kind. A kind already waiting is not queued twice.</summary>

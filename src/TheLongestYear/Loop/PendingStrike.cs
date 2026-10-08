@@ -9,10 +9,11 @@ namespace TheLongestYear.Loop
 {
     /// <summary>Tonight's strike, picked at day end and not yet applied (spec 2026-09-21). The
     /// overnight scene commits it when it stages and applies it at its beat. With no scene by design
-    /// it lands at once. When its scene cannot have the overnight slot, or never stages, it is
-    /// postponed: dropped unapplied and uncommitted, so nothing of it lands (Jeff, 2026-10-07). Apply runs its effect once however often it is
-    /// called, and tells its owner whether the effect landed. In memory only: a strike is always
-    /// applied or postponed before the night's save.</summary>
+    /// it lands at once. When something else owns the overnight slot (a conflict) it is postponed:
+    /// dropped unapplied and uncommitted, so nothing of it lands, and queued. When its scene is
+    /// broken (cannot stage, or setUp throws) it lands at once with no scene (Jeff, 2026-10-08).
+    /// Apply runs its effect once however often it is called, and tells its owner whether the effect
+    /// landed. In memory only: a strike is always applied or postponed before the night's save.</summary>
     internal sealed class PendingStrike
     {
         public DarknessEvent Event { get; }
@@ -100,6 +101,22 @@ namespace TheLongestYear.Loop
             if (newlyCommitted) _onCommitted?.Invoke(this);
             return apply ? RunEffect() : Landed;
         }
+
+        /// <summary>A strike whose scene is broken: commit and land now, with no scene (Jeff,
+        /// 2026-10-08: "they miss out on the cool scene, but still get hit").</summary>
+        public bool LandBare()
+        {
+            bool apply = _life.LandBare(out bool newlyCommitted);
+            if (newlyCommitted) _onCommitted?.Invoke(this);
+            return apply ? RunEffect() : Landed;
+        }
+
+        /// <summary>The pickFarmEvent postfix has handed our scene tonight's overnight slot.</summary>
+        public void OnHandedSlot() => _life.OnHandedSlot();
+
+        /// <summary>Our scene's setUp has begun. A scene handed the slot whose setUp never runs was
+        /// replaced by another mod (a conflict).</summary>
+        public void OnSetUp() => _life.OnSetUp();
 
         /// <summary>Drop it unapplied. False when it already committed (its scene staged).</summary>
         public bool Postpone() => _life.Postpone();

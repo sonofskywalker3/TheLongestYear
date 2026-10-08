@@ -5,9 +5,10 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Jeff, 2026-10-07: "we don't delay scenes without delaying the effect of them". A strike
-/// whose scene cannot have tonight's overnight slot does not land at all: it is postponed, and the
-/// night is as if no strike happened, and it is queued for the next free night (StrikeQueueTests).</summary>
+/// <summary>Jeff, 2026-10-07 and 2026-10-08: a strike whose scene cannot have tonight's overnight
+/// slot (a conflict) does not land at all: it is postponed, the night is as if no strike happened,
+/// and it is queued for the next free night (StrikeQueueTests). A broken scene lands it bare
+/// (ConflictRuleTests).</summary>
 public class StrikeSlotTests
 {
     private static Func<bool> Personal(bool owns) => () => owns;
@@ -64,25 +65,29 @@ public class StrikeSlotTests
     }
 
     [Fact]
-    public void A_scene_that_cannot_stage_never_lands_and_the_net_postpones_it()
+    public void A_scene_that_cannot_stage_lands_bare_and_the_net_has_nothing_left()
     {
-        // Took the slot, then setUp found no ground beside the chest (or threw): the scene's own
-        // ending asks to apply, and must get nothing; the save net then postpones.
+        // Took the slot, then setUp found no ground beside the chest (or threw): the system is
+        // broken, so the strike lands now with no scene (Jeff, 2026-10-08), once.
         var s = new StrikeLifecycle();
+        s.OnHandedSlot();
+        s.OnSetUp();
         Assert.False(s.BeginApply());
-        Assert.Equal(StrikeNetAction.Postpone, s.AtNet());
-        Assert.True(s.Postpone());
-        Assert.False(s.Commit());
+        Assert.True(s.LandBare(out bool newlyCommitted));
+        Assert.True(newlyCommitted);
+        Assert.False(s.Postpone());
         Assert.False(s.BeginApply());
         Assert.Equal(StrikeNetAction.None, s.AtNet());
     }
 
     [Fact]
-    public void Another_mod_replacing_our_scene_after_the_postfix_leaves_it_to_the_net_which_postpones()
+    public void Another_mod_replacing_our_scene_after_the_postfix_is_a_conflict_the_net_queues()
     {
         // pickFarmEvent handed out our scene, but vanilla never set it up: nothing was committed.
         var s = new StrikeLifecycle();
-        Assert.Equal(StrikeNetAction.Postpone, s.AtNet());
+        s.OnHandedSlot();
+        Assert.Equal(StrikeNetAction.Replaced, s.AtNet());
+        Assert.Equal(PostponeCause.SlotTaken, StrikeStaging.CauseAtNet(s.AtNet()));
     }
 
     [Fact]
