@@ -173,41 +173,59 @@ crops would already be gone when the crows land. `NightPlan.Execute` splits in t
 
 When a scene is due, the scene calls Apply at its beat (the crow pecks, the lid opens). When no
 scene is due (its kind already played this loop), Apply runs at once, as today: that strike has no
-scene by design. A due scene that cannot show its pick does not land the strike bare: it is
-postponed (designer, 2026-10-07). **Staging is checked at pick time (review I1, 2026-10-07):** while
-a kind's scene is due, the night's "can act" test asks whether its scene can stage tonight (the
-crows need the Farm, the hall needs Town, the cloud needs the farm on a world map region with a
-base texture; the thief draws only chests and machines he can stand beside, Scene 2), so a kind
-whose scene cannot stage simply cannot act that night. Once the scene has taken the
-overnight slot, a skip, a staging failure or a throw also lands it. Apply is idempotent per night so
-a skip mid-scene cannot double it. The morning report does not change.
+scene by design. Apply is idempotent per night so a skip mid-scene cannot double it. The morning
+report does not change.
 
-**A strike never lands without its scene (Jeff, 2026-10-07: "we don't delay scenes without
-delaying the effect of them, that's stupid").** A strike whose scene is due but cannot have the
-overnight slot is postponed: neither its effect nor its scene happens that night. The run records
-a strike only when it commits (its scene takes the slot, or it lands with no scene by design), so a
-postponed night is a night with no strike: the week's chance does not drop, no cap slot or tamper
-spacing is spent, and the every-loop guarantee still owes the kind.
+**Conflict or broken (Jeff, 2026-10-08: "If there's a CONFLICT and a different scene runs, we push
+back one day. If the SYSTEM is broken and a scene CAN'T run ever, then they miss out on the cool
+scene, but still get hit.").** Two different things can keep a due scene from playing, and they
+are handled differently:
 
-**A strike postponed by a slot collision is queued for the next free night (designer,
-2026-10-07).** Only a collision queues (`StrikeSlot.Decide` gives the slot to something else): a
-staging failure that still slips through (setUp fails or throws, another mod replaces the event, a
-fail or restart night leaves the slot alone) postpones without queuing, because it would fail the
-same way again and, firing ahead of the roll, starve the darkness (review I1). Its kind goes on a
-queue kept on the run (`RunState.QueuedStrikes`, cleared at the loop reset, empty on older saves).
-Nothing about the pick is kept: on the night it fires it is planned afresh and fairly. On every
-later night pass the oldest queued kind that can act tonight fires instead of the normal roll, with
-its scene, as that night's one strike (it records the chance drop, the cap and the spacing like any
-strike). It honours everything the kind's own "can act" test does: caps, the spacing between
-tampers, wards, quiet days, nothing fair to take. A queued kind that cannot act tonight stays queued
-and the night rolls normally. It leaves the queue only when it commits; a night whose slot is taken
-again postpones it and it stays queued. A debug arm still takes precedence; the every-loop guarantee
-waits behind the queue. A guaranteed Winter tamper postponed by a collision keeps its own carry
-instead: it stays owed past week 1, every night until it lands; when it commits it also clears a
-queued Tampering. The order of the night's sources is `NightPrecedence`; the queue is `StrikeQueue`. The nets under the save, the morning and the next night pass follow the
-same rule: a waiting strike lands there only if its scene had the slot; otherwise (for example the
-first night of a save, when vanilla runs no `pickFarmEvent`) it is postponed. Rules:
-`StrikeSlot.Decide`, `StrikeSlot.LandsAtNet`, `StrikeLedger.Record`.
+- **A conflict pushes the strike back.** Another event owns tonight's overnight slot (a Wildcard
+  night_event twist, a `WorldChangeEvent`, a wedding, a birth or other personal farm event, another
+  mod's `farmEventOverride`; see the overnight slot below), or another mod replaces our scene after
+  it was handed the slot, so our `setUp` never runs. The strike is postponed: neither its effect nor
+  its scene happens that night, and nothing is recorded, so the week's chance does not drop, no cap
+  slot or tamper spacing is spent, and the every-loop guarantee still owes the kind. It is queued
+  and fires with its scene on the next free night.
+- **A broken scene lands the strike bare.** The scene cannot run: at the pick its staging check
+  fails (the crows need the Farm map, the hall needs Town, the cloud needs the farm on a world map
+  region with a base texture), or it cannot show tonight's pick, or a check throws; or later its
+  `Stage()` says no, or `setUp` throws before the scene is staged (a missing sprite, texture or map
+  data). The strike's effect lands now, with no scene, and is recorded like any landed strike
+  (chance drop, cap or spacing, `StruckEvents`, the every-loop guarantee, the guaranteed Winter
+  tamper). It is never queued. The scene was not shown, so it stays due for a later strike of that
+  kind. The morning HUD lines are the usual ones; a tamper that landed without its cloud still gets
+  its Junimo scene at the porch, which is a separate scene.
+
+A scene that cannot stage never stops its kind from acting: the night's "can act" test does not ask
+about the scene. The one exception is the thief's draw, which the designer chose separately: while
+his scene is due he draws only chests he can be filmed at (Scene 2). If the chosen chest still
+cannot be staged, the theft lands from that chest with no scene.
+
+The run records a strike only when it commits: its scene stages, or it lands now (no scene by
+design, or bare). Each strike lands exactly once on every path, and nothing lands bare on a
+conflict. The pure rules are `StrikeStaging.AtPick` (wait for the scene, land by design, or land
+bare), `StrikeLifecycle` (handed the slot, setUp ran, committed, applied, postponed) and its
+`AtNet` for the nets under the save, the morning and the next night pass: a scene that staged but
+ended before its beat lands there; a setUp that ran but never staged lands bare; a scene handed the
+slot whose setUp never ran was replaced (a conflict, queued); a strike never handed the slot (a fail
+or restart night, or the first night of a save, when vanilla runs no `pickFarmEvent`) is postponed
+without queuing.
+
+**The queue (designer, 2026-10-07).** Only a conflict queues. Its kind goes on a queue kept on the
+run (`RunState.QueuedStrikes`, cleared at the loop reset, empty on older saves). Nothing about the
+pick is kept: on the night it fires it is planned afresh and fairly. On every later night pass the
+oldest queued kind that can act tonight fires instead of the normal roll, with its scene (or bare,
+if its scene has since broken), as that night's one strike, recorded like any strike. It honours
+everything the kind's own "can act" test does: caps, the spacing between tampers, wards, quiet
+days, nothing fair to take. A queued kind that cannot act tonight stays queued and the night rolls
+normally. It leaves the queue only when it commits; a night whose slot is taken again postpones it
+and it stays queued. A debug arm still takes precedence; the every-loop guarantee waits behind the
+queue. A guaranteed Winter tamper postponed by a conflict keeps its own carry instead: it stays
+owed past week 1, every night until it lands; when it commits it also clears a queued Tampering.
+The order of the night's sources is `NightPrecedence`; the queue is `StrikeQueue`; the slot
+decision is `StrikeSlot.Decide`; the record is `StrikeLedger.Record`.
 
 ### The overnight slot
 
@@ -218,9 +236,9 @@ our `FarmEvent` when a scene is due tonight:
   dropped. They are random and come round again.
 - A wedding, a `WorldChangeEvent` (the Community Center's own repairs, the Joja ones), another
   mod's farm event override, a personal farm event (a birth, a pregnancy question), a Wildcard
-  night_event twist, or any event the patch does not recognise as random wins. The strike is
-  postponed, effect and scene both (see above), and queued: it fires on the next free night with
-  its scene.
+  night_event twist, or any event the patch does not recognise as random wins. That is a conflict:
+  the strike is postponed, effect and scene both (see above), and queued: it fires on the next free
+  night with its scene.
 - Fail nights are already suppressed and stay so. The strike itself never runs on day 28.
 
 Each scene is a class implementing vanilla's `FarmEvent` (`setUp`, `tickUpdate`, `draw`,
@@ -390,7 +408,9 @@ save, and pending witness lines.
 - Live, my automated runs: each scene through `tly_sabotage scene` on a developed throwaway farm,
   screenshots at each beat; the thief in the farmhouse on a married save with a child; the overnight
   slot collision with a forced vanilla event and with a Community Center repair night (the strike
-  is postponed and queued, then fires with its scene on the next free night with nothing armed);
+  is postponed and queued, then fires with its scene on the next free night with nothing armed); a
+  scene broken on purpose (`tly_sabotage breakscene`) at the pick and in setUp lands its strike with
+  no scene, with the usual morning HUD line, and the scene stays due;
   a thief armed with a farm chest and a barn chest while his scene is due takes from the farm chest.
 - Jeff's pass: sleep into each of the four with `tly_sabotage arm`, talk to Linus and Shane the
   morning after and again three days later, and watch the three gate scenes with the new lines.
