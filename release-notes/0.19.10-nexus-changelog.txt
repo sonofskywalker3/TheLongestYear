@@ -1,0 +1,19 @@
+0.19.10 - TLY Custom boards use vanilla items, and Tech's Cross-Mod Bundles rolls a fresh board every loop
+
+Covers everything since 0.19.1.
+
+Changed
+- TLY Custom boards ask only for vanilla items. Other mods' items are left out of what TLY Custom bundles ask for and what they give, so the balance holds whatever else you have installed. A board you already have keeps its bundles until your next loop.
+
+Added
+- New setting: Allow mod items in custom bundles, next to Bundle source in the mod's settings menu (GMCM). On, TLY Custom bundles ask for and give other mods' items the way they used to. It is off on new farms. Saves you already have start with it on, so they carry on the way they were created. It belongs to the save you have loaded, and a change applies at your next loop.
+- With Tech's Cross-Mod Bundles installed, Normal and Remixed roll a new Tech board at each reset instead of handing back the old one. Thanks to PixxiePerfect, who pointed me at it.
+
+Fixed
+- With Tech's Cross-Mod Bundles installed, reloading a save keeps your loop's board, with TLY's difficulty changes, instead of bringing back an older Tech board. This includes the first loop of a new Normal or Remixed game.
+- When a bundle asks for something you can't get this year, TLY swaps it for something you can. That swap now stays put through reloads, instead of a different item turning up each time you load.
+
+Please read this if you play with other mods
+- Turning on Allow mod items in custom bundles, or playing Normal or Remixed with other mods installed, can give you bundles that ask for items that are impossible to get. That will stay true until I start tuning for specific mods. Other mods are not officially supported, but if you report an issue with one, I will look at it.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

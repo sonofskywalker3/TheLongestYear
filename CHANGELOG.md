@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.10 - 2026-10-08
+
+3129 tests. Release of 0.19.2 to 0.19.10 (the live Nexus page was on 0.19.1).
+
+### Docs
+
+- README and the Nexus description: What's New in 0.19.10 covers everything since 0.19.1 (TLY Custom boards vanilla-only by default, the per-save Allow mod items in custom bundles option, a fresh Tech's Cross-Mod Bundles board each loop on Normal and Remixed, the loop's board and repair swaps surviving reloads) and says plainly that turning the option on, or playing Normal or Remixed with other mods, can ask for items that are impossible to get until Jeff tunes for specific mods. Beta line set to 0.19.10. PixxiePerfect added to Thanks.
+- `docs/mod-support-unknowns.md`: the SVE and Cornucopia items TLY can't place yet, saved for the mod-support phase, with a pointer in TODO.md.
+- `release-notes/0.19.10-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.10-backup.md` and `release-notes/nexus-description-0.19.10-backup.bbcode`.
+
 ## 0.19.9 - 2026-10-08
 
 3129 tests.

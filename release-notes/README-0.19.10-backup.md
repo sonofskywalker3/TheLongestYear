@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.10`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.7`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,19 +25,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.10
+## What's New in 0.19.7
 
-**TLY Custom boards ask only for vanilla items.** Other mods' items are left out of what TLY Custom bundles ask for and what they give, so the balance holds whatever else you have installed.
+**TLY Custom boards ask only for vanilla items, unless you allow mod items.** A new setting, **Allow mod items in custom bundles**, sits next to Bundle source in the mod's settings menu (GMCM). Off, TLY Custom bundles leave other mods' items out of what they ask for and what they give, so the balance holds. On, they ask for and give other mods' items the way they always did. It is off on new games. Saves you already have start with it on, so they carry on the way they were created. Like Bundle source, it belongs to the save you have loaded and a change applies at your next loop. Other mods are not officially supported, but I will look at specific issues when you report them. Normal and Remixed keep working with other mods, including other bundle mods (see [Switching bundle source later](#switching-bundle-source-later)).
 
-**New setting: Allow mod items in custom bundles.** It sits next to Bundle source in the mod's settings menu (GMCM). On, TLY Custom bundles ask for and give other mods' items the way they used to. It is off on new farms. Saves you already have start with it on, so they carry on the way they were created. Like Bundle source, it belongs to the save you have loaded and a change applies at your next loop.
-
-**Tech's Cross-Mod Bundles: a fresh board every loop.** With it installed, Normal and Remixed now roll a new Tech board at each reset instead of handing back the old one. Reloading a save keeps your loop's board, with TLY's difficulty changes, instead of bringing back an older Tech board.
-
-**Fixed: a swapped-out item stays swapped.** When a bundle asks for something you can't get this year, TLY swaps it for something you can. That swap now stays put through reloads, instead of a different item turning up each time you load.
-
-**If you play with other mods, please read this.** Turning on Allow mod items in custom bundles, or playing Normal or Remixed with other mods installed, can give you bundles that ask for items that are impossible to get. That will stay true until I start tuning for specific mods. Other mods are not officially supported, but if you report an issue with one, I will look at it.
-
-Thanks to PixxiePerfect, who pointed me at Tech's Cross-Mod Bundles.
+**Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop.** With Tech's Cross-Mod Bundles installed, both Normal and Remixed now ask it for a new board at each reset, so you get a fresh Tech board every loop instead of the same one back (Normal) or the old one mixed with the game's remix (Remixed). Reloading a save no longer brings back an older Tech board either: your loop's board, with TLY's difficulty and reward changes, stays put, and TLY Custom keeps its own board with Tech's mod installed. Like other mods, it is not officially supported, but I will look at specific issues when you report them.
 
 ## 0.19.1
 
@@ -295,7 +287,6 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 - **ggrace67**: weekly goals that ticked without a donation.
 - **victoriatauanem**: a Normal-bundles farm switching to custom bundles at the rewind.
 - **Ninjamaid**: an Ostrich Mayo ask from another mod.
-- **PixxiePerfect**: pointed me at Tech's Cross-Mod Bundles.
 - **Nijah, nyxnyx2234, Bumblewyn, IshoMoogoo and lexihope**: reports that shaped the early balance passes.
 - **supercam19**: the book art, and the fix that refills mine carts and barrels every loop.
 - **cwybabiesucks**: the banner art.
