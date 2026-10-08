@@ -47,8 +47,10 @@ public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOn
 /// <summary>One Data/WildTrees TapItems row: which tree, what item, how many nights.</summary>
 public sealed record RawTapItem(string TreeId, string ItemId, int Days);
 
-/// <summary>One Data/Crops entry reduced to growth facts.</summary>
-public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons)
+/// <summary>One Data/Crops entry reduced to growth facts. <paramref name="SeedItemId"/> is the
+/// entry's key (Data/Crops is keyed by seed), null in hand-built rows.</summary>
+public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons,
+    string? SeedItemId = null)
 {
     public RawCropGrowth(string harvestItemId, int growthDays, bool regrows, bool trellis)
         : this(harvestItemId, growthDays, regrows, trellis, System.Array.Empty<Season>()) { }

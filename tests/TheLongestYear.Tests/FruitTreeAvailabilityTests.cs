@@ -162,3 +162,59 @@ public class ShopWeeksTests
         Assert.Equal(1, week.Week);
     }
 }
+
+/// <summary>Mod-support work, 2026-10-08: SVE's Gold Carrot seed is sold only by the Desert
+/// Trader, yet the crop rule read its seasons (Spring/Summer/Fall, 6 days) alone and placed it as a
+/// week-1 Spring harvest.</summary>
+public class CropSeedShopWeekTests
+{
+    private const string GoldCarrot = "(O)FlashShifter.StardewValleyExpandedCP_Gold_Carrot";
+    private const string GoldCarrotSeed = "(O)FlashShifter.StardewValleyExpandedCP_Gold_Carrot_Seed";
+
+    private static ShopWeeks Shops(params RawShopListing[] listings)
+        => ShopWeeks.Build(listings, new[] { new RawShopPlacement("SeedShop", "SeedShop") },
+            LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town"), new RawLocationLink("Town", "SeedShop") }, _ => false));
+
+    private static readonly RawCropGrowth[] GoldCarrotCrop =
+        { new(GoldCarrot, 6, false, false, new[] { Season.Spring, Season.Summer, Season.Fall }, GoldCarrotSeed) };
+
+    [Fact]
+    public void A_Seed_Sold_Only_In_The_Desert_Waits_For_The_Desert()
+    {
+        ShopWeeks shops = Shops(new RawShopListing(GoldCarrotSeed, "DesertTrade"));
+
+        ItemEffort pacing = CropForageAvailability.DeriveCrop(GoldCarrot, GoldCarrotCrop, WeekMode.Pacing, shops)!;
+        Assert.Equal(AvailabilityWeeks.SkullCavernWeek, pacing.EarliestWeek);
+        Assert.Equal(AvailabilityWeeks.DesertHardWeek, pacing.HardWeek);
+        Assert.Contains("seed sold from week 9", pacing.Basis);
+        ItemEffort extreme = CropForageAvailability.DeriveCrop(GoldCarrot, GoldCarrotCrop, WeekMode.HardAll, shops)!;
+        Assert.Equal(AvailabilityWeeks.DesertExtremeWeek, extreme.HardWeek);
+    }
+
+    [Fact]
+    public void A_Seed_From_Pierre_Or_From_Nowhere_Keeps_The_Season_Arithmetic()
+    {
+        Assert.Equal(1, CropForageAvailability.DeriveCrop(GoldCarrot, GoldCarrotCrop, WeekMode.Pacing,
+            Shops(new RawShopListing(GoldCarrotSeed, "SeedShop")))!.EarliestWeek);
+        Assert.Equal(1, CropForageAvailability.DeriveCrop(GoldCarrot, GoldCarrotCrop, WeekMode.Pacing, Shops())!.EarliestWeek);
+        Assert.Equal(1, CropForageAvailability.DeriveCrop(GoldCarrot, GoldCarrotCrop)!.EarliestWeek);
+    }
+
+    [Fact]
+    public void A_Spring_Crop_Whose_Seed_Arrives_After_Spring_Is_Not_Placed()
+    {
+        var crop = new[] { new RawCropGrowth("(O)Mod_Leek", 6, false, false, new[] { Season.Spring }, "(O)Mod_LeekSeed") };
+        Assert.Null(CropForageAvailability.DeriveCrop("(O)Mod_Leek", crop, WeekMode.Pacing,
+            Shops(new RawShopListing("(O)Mod_LeekSeed", "DesertTrade"))));
+    }
+
+    [Fact]
+    public void A_Ruled_Seed_Source_Row_Wins_Over_The_Shop()
+    {
+        var beet = new[] { new RawCropGrowth("(O)284", 6, false, false, new[] { Season.Fall }, "(O)487") };
+        ItemEffort effort = CropForageAvailability.DeriveCrop("(O)284", beet, WeekMode.Pacing,
+            Shops(new RawShopListing("(O)487", "DesertTrade")))!;
+        Assert.Equal(AvailabilityWeeks.SeedSourceWeeks["(O)284"].Week, effort.EarliestWeek);
+        Assert.DoesNotContain("seed sold", effort.Basis);
+    }
+}

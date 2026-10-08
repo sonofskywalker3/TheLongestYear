@@ -222,7 +222,8 @@ namespace TheLongestYear.Loop
                         .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
                     crops.Add(new RawCropGrowth(
                         BundleParsing.NormalizeItemId(c.HarvestItemId),
-                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons));
+                        (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays > 0, c.IsRaised, seasons,
+                        BundleParsing.NormalizeItemId(kv.Key)));
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))

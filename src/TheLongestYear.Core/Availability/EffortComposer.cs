@@ -97,7 +97,7 @@ public sealed class EffortComposer
             MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops, _mode),
             ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode),
             AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
-            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode),
+            CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode, _shopWeeks),
             CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode, _locationWeeks),
             CropForageAvailability.DeriveSapling(qualifiedId, _saplings),
             TapperAvailability.Derive(qualifiedId, _data),
