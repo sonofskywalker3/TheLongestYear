@@ -342,6 +342,9 @@ namespace TheLongestYear
             helper.Events.Player.Warped += this.OnWarpedForTamperScene;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
+            // A witness line waiting under a first-meeting introduction opens when that box closes.
+            helper.Events.Display.MenuChanged += TheLongestYear.Loop.WitnessIntroPatch.OnMenuChanged;
+            helper.Events.GameLoop.ReturnedToTitle += (_, _) => TheLongestYear.Loop.WitnessIntroPatch.Forget();
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
@@ -526,7 +529,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_lights", "Debug: dump every light source in the current location with its context, colour, alpha, radius and fadeOut, plus the ambient and the lighting thresholds.", this.CmdLights);
             helper.ConsoleCommands.Add("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
-            helper.ConsoleCommands.Add("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | talk <npc> | click. 'talk' opens the NPC's top dialogue the way a conversation does; 'click' clicks an open dialogue box on.", this.CmdWitness);
+            helper.ConsoleCommands.Add("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <Linus|Shane> | fresh <npc>. 'talk' runs the NPC's real checkAction for the player (the player must be in his location and free to move) and logs what opened; 'show' just opens his top dialogue; 'click' pages an open dialogue box on (skipping the typing and the safety timer) and logs what it shows; 'arm' queues his witness line now as if he saw last night's scene; 'fresh' re-arms his first-meeting Introduction (marks him unmet) so the intro-then-line path can be replayed.", this.CmdWitness);
             helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1758,17 +1761,51 @@ namespace TheLongestYear
             {
                 if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox open)
                 {
+                    open.safetyTimer = 0;
+                    open.finishTyping();
                     open.receiveLeftClick(0, 0, false);
-                    this.Monitor.Log($"tly_witness: clicked the dialogue box on; menu now {Game1.activeClickableMenu?.GetType().Name ?? "none"}.", LogLevel.Info);
+                    this.Monitor.Log($"tly_witness: clicked the dialogue box on; {DescribeOpenDialogue()}.", LogLevel.Info);
                 }
-                else this.Monitor.Log("tly_witness: no dialogue box open.", LogLevel.Info);
+                else this.Monitor.Log($"tly_witness: no dialogue box open ({DescribeOpenDialogue()}).", LogLevel.Info);
                 return;
             }
             NPC npc = args.Length > 1 ? Game1.getCharacterFromName(args[1]) : null;
-            if (npc == null) { this.Monitor.Log("Usage: tly_witness list | peek <npc> | talk <npc> | click", LogLevel.Warn); return; }
-            var top = npc.CurrentDialogue.Count > 0 ? npc.CurrentDialogue.Peek() : null;
-            this.Monitor.Log($"tly_witness: {npc.Name} stack={npc.CurrentDialogue.Count} top=[{top?.TranslationKey}] '{top?.getCurrentDialogue()}'", LogLevel.Info);
-            if (verb == "talk") Game1.drawDialogue(npc);
+            if (npc == null) { this.Monitor.Log("Usage: tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <Linus|Shane> | fresh <npc>", LogLevel.Warn); return; }
+            this.Monitor.Log($"tly_witness: {npc.Name} stack={npc.CurrentDialogue.Count}: " + string.Join(" | ",
+                System.Linq.Enumerable.Select(npc.CurrentDialogue, d => $"[{d?.TranslationKey}] '{d?.getCurrentDialogue()}'")), LogLevel.Info);
+            switch (verb)
+            {
+                case "show":
+                    Game1.drawDialogue(npc);
+                    this.Monitor.Log($"tly_witness: {DescribeOpenDialogue()}.", LogLevel.Info);
+                    break;
+                case "talk":
+                    bool sameLocation = Game1.player.currentLocation == npc.currentLocation;
+                    bool acted = npc.checkAction(Game1.player, npc.currentLocation);
+                    this.Monitor.Log($"tly_witness: talked to {npc.Name} (checkAction={acted}, same location={sameLocation}, canMove={Game1.player.CanMove}); {DescribeOpenDialogue()}.", LogLevel.Info);
+                    break;
+                case "arm":
+                    this.Monitor.Log(_witness != null && _witness.ArmForTest(npc.Name)
+                        ? $"tly_witness: {npc.Name}'s line is queued as if he saw last night's scene."
+                        : $"tly_witness: {npc.Name} has no witness line.", LogLevel.Info);
+                    break;
+                case "fresh":
+                    Game1.player.mailReceived.Remove(npc.Name + "_Introduction");
+                    if (!Game1.player.activeDialogueEvents.ContainsKey("Introduction")) Game1.player.activeDialogueEvents.Add("Introduction", 6);
+                    this.Monitor.Log($"tly_witness: {npc.Name}'s Introduction is armed again for the next talk.", LogLevel.Info);
+                    break;
+            }
+        }
+
+        /// <summary>What dialogue box is up, for the tly_witness log.</summary>
+        private static string DescribeOpenDialogue()
+        {
+            if (Game1.activeClickableMenu is not StardewValley.Menus.DialogueBox box)
+                return $"menu now {Game1.activeClickableMenu?.GetType().Name ?? "none"}";
+            Dialogue d = box.characterDialogue;
+            return d == null
+                ? $"an object dialogue box is open: '{box.getCurrentString()}'"
+                : $"{d.speaker?.Name ?? "?"}'s [{d.TranslationKey}] is open: '{box.getCurrentString()}'";
         }
 
         private void CmdEventStep(string command, string[] args)

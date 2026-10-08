@@ -41,5 +41,31 @@ public static class WitnessLines
     public static bool FollowsTopic(bool lineWasQueued, bool lineOnTop, bool topicPushed)
         => lineWasQueued && topicPushed && !lineOnTop;
 
+    /// <summary>Where the line goes when it follows a topic: straight under the topic, which stays
+    /// on top. Takes and returns the NPC's dialogue stack top first, with the line removed from
+    /// wherever it was (cleared stacks simply do not have it).
+    ///
+    /// Why under and not after (2026-10-08, the second pass): the first fix opened the line 200 ms
+    /// after the topic's last page from the topic's <c>onFinish</c>. That fires while the closing
+    /// box is still animating out, so the line was pushed on top of the not-yet-popped topic, and
+    /// <c>DialogueBox.closeDialogue</c> then popped the top of the stack: the line, not the topic.
+    /// Under the topic, vanilla's own pop takes the topic off and leaves the line next.</summary>
+    public static List<T> PlaceUnderTop<T>(IReadOnlyList<T> topFirst, T line) where T : class
+    {
+        var rest = new List<T>();
+        foreach (T d in topFirst)
+            if (!ReferenceEquals(d, line)) rest.Add(d);
+        rest.Insert(rest.Count == 0 ? 0 : 1, line);
+        return rest;
+    }
+
+    /// <summary>When the topic's box has closed, does the line open at once, in the same
+    /// conversation? Only when that box is what just closed, nothing else took the screen
+    /// (vanilla's <c>afterDialogues</c> can open a menu), the line is now the NPC's next dialogue,
+    /// no event is up and the player is still where the NPC is. Otherwise it waits on his stack for
+    /// the next talk, which vanilla shows on its own.</summary>
+    public static bool OpensAfterTopic(bool closedBoxWasTopic, bool screenIsFree, bool lineIsNext, bool eventUp, bool sameLocation)
+        => closedBoxWasTopic && screenIsFree && lineIsNext && !eventUp && sameLocation;
+
     public static IReadOnlyList<string> AllKeys { get; } = new[] { LineKey("Linus"), LineKey("Shane"), WhenLastNight, WhenOtherNight };
 }
