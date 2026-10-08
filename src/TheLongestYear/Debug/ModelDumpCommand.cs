@@ -79,6 +79,11 @@ namespace TheLongestYear.DebugCommands
                 sb.Append("pin\t").Append(pin.Key).Append('\t').Append(VanillaItemIds.All.Contains(pin.Key) ? "v" : "m").Append('\t')
                     .Append(pin.Value).AppendLine();
 
+            if (pools.LocationWeeks != null)
+                foreach (KeyValuePair<string, PlaceWeek> place in pools.LocationWeeks.Reached.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                    sb.Append("place\t").Append(place.Key).Append("\t-\t")
+                        .Append(place.Value.Week).Append('\t').Append(place.Value.Hard).Append('\t').Append(place.Value.Extreme).AppendLine();
+
             if (reachability != null)
                 foreach (KeyValuePair<string, string> reason in reachability.Reasons.OrderBy(kv => kv.Key, StringComparer.Ordinal))
                     sb.Append("unreachable\t").Append(reason.Key).Append('\t').Append(VanillaItemIds.All.Contains(reason.Key) ? "v" : "m").Append('\t')

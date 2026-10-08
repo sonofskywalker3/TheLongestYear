@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.13 - 2026-10-08
+
+3145 tests.
+
+### Fixed (mod support)
+
+- **With Stardew Valley Expanded, Holly, Crocus and Crystal Fruit are Winter forage again, not week 1.** SVE gives its Grampleton Suburbs forage rows for them (and Daffodil, Sweet Pea, Blackberry) with no season. The forage rule read that map by name, found no gate and called it open from Spring 1, so a Spring gate could ask for Holly. Forage rows are now dated by the walked map weeks (`LocationWeeks`, 0.19.12): a row in a map no door leads to does not place the item. With SVE: Holly, Crocus and Crystal Fruit week 13, Sweet Pea week 5, Blackberry week 9, the same as vanilla; Baked Berry Oatmeal follows its Blackberry to week 9.
+- `tly_dumpmodel` also lists every map the walk reached, with its three weeks.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical.
+
 ## 0.19.12 - 2026-10-08
 
 3141 tests.
