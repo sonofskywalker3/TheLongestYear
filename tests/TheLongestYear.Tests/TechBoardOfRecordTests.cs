@@ -190,6 +190,34 @@ public class TechBoardOfRecordTests
         Assert.NotEqual(TechBoardOfRecord.OwnedFields("a/b/c/1/2"), TechBoardOfRecord.OwnedFields("a/b/c/1/3//Name"));
     }
 
+    [Fact]
+    public void New_vanilla_game_with_tech_stores_the_live_board()
+    {
+        var live = VanillaPostPassBoard();
+        Dictionary<string, string>? stored = TechBoardOfRecord.NewGameBoardToStore(
+            isNewSave: true, isHost: true, vanillaSource: true, techLoaded: true, alreadyStored: null, live: live);
+        Assert.Equal(live, stored);
+
+        // A later reload: Tech rewrites the board; the stored loop-1 board goes back.
+        var board = LiveWith(TechRawBoard());
+        Assert.Equal(2, Restore(true, stored, board));
+        Assert.True(EngineManifestCheck.MatchesIgnoringDisplayName(live, board.Read()));
+    }
+
+    [Theory]
+    [InlineData(false, true, true, true)]  // existing save: Tech already rewrote the live board
+    [InlineData(true, false, true, true)]  // farmhand
+    [InlineData(true, true, false, true)]  // TLY Custom stores its own board
+    [InlineData(true, true, true, false)]  // no Tech
+    public void New_game_board_is_not_stored_otherwise(bool isNewSave, bool isHost, bool vanillaSource, bool techLoaded)
+        => Assert.Null(TechBoardOfRecord.NewGameBoardToStore(
+            isNewSave, isHost, vanillaSource, techLoaded, alreadyStored: null, live: VanillaPostPassBoard()));
+
+    [Fact]
+    public void New_game_never_replaces_an_already_stored_board()
+        => Assert.Null(TechBoardOfRecord.NewGameBoardToStore(
+            true, true, true, true, alreadyStored: EngineBoard(), live: VanillaPostPassBoard()));
+
     [Theory]
     [InlineData(true, true)]
     [InlineData(false, false)]

@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.8 - 2026-10-08
+
+3124 tests.
+
+### Fixed
+
+- **Loop 1 of a new Normal or Remixed game with Tech's Cross-Mod Bundles keeps its board across reloads.** 0.19.7 stored the board of record only at a reset, so in the first loop a plain reload let that mod write its saved board back with nothing restoring it (a theme week discount, Adventurer's 99 to 74, came back as 99). The new-game load now stores the live board right after Tech's handler and before TLY's own load-time edits, and the unstackable-ask clamp and the week discount keep it current from then on. Only with Tech's mod loaded, on the host, and never over a board already stored. An existing Normal or Remixed save still in loop 1 with no stored board is not adopted at load (that mod has already rewritten its board by then, so storing it would lock in the wrong board); it picks this up at its next reset. Spec addendum 3 updated.
+
 ## 0.19.7 - 2026-10-08
 
 3118 tests.

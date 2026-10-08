@@ -41,6 +41,20 @@ public static class TechBoardOfRecord
         return ToDictionary(finalBoard);
     }
 
+    /// <summary>Loop 1 of a new Normal or Remixed game: no reset has stored a board yet, so the
+    /// new-game load stores the live board (Tech's handler has already run, nothing of TLY's has
+    /// edited it yet). Null for an existing save (Tech has rewritten its board by load time, so the
+    /// live board is not TLY's; it waits for its next reset), TLY Custom, a farmhand, without Tech,
+    /// or when a board is already stored.</summary>
+    public static Dictionary<string, string>? NewGameBoardToStore(
+        bool isNewSave, bool isHost, bool vanillaSource, bool techLoaded,
+        IReadOnlyDictionary<string, string>? alreadyStored, IReadOnlyDictionary<string, string>? live)
+    {
+        if (!isNewSave || !isHost || !vanillaSource || (alreadyStored != null && alreadyStored.Count > 0))
+            return null;
+        return VanillaBoardToStore(techLoaded, live);
+    }
+
     /// <summary>The entries to write back: every stored key whose live value is missing or differs,
     /// the display-name field ignored on both sides (<see cref="OwnedFields"/>; the
     /// game recomputes it on every read). Empty when there is nothing to do.</summary>
