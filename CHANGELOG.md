@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.15 - 2026-10-08
+
+3161 tests.
+
+### Fixed (mod support)
+
+- **A crop whose seed is first sold late waits for the seed.** The crop rule read Data/Crops seasons and growth only, plus a ruled table for vanilla's festival, cart and Oasis seeds, so SVE's Gold Carrot (seed sold only by the Desert Trader) read as a week-1 Spring harvest. A crop with no ruled row whose seed is first sold after week 1 (`ShopWeeks`) is now planted no earlier than that week, in a season it can still finish in. Gold Carrot: week 9, hard week 6 (Hard), 3 (Extreme), the desert's weeks.
+- With Cornucopia, six crops whose seeds only Sandy sells and whose seasons end before the desert opens in pacing (Agave, Aloe, Bamboo, Blue Agave, Lemongrass, Sugarcane) go from too-early weeks (2 to 6) to not placed. A seed sold from week 1, or by no walkable shop (Mixed Seeds, a mod's own framework), keeps the season arithmetic.
+- Vanilla unchanged: `tly_dumpmodel` before and after on an unmodded game is identical (the ruled seed rows win for Beet, Rhubarb, Starfruit and Cactus Fruit).
+
 ## 0.19.14 - 2026-10-08
 
 3157 tests.
