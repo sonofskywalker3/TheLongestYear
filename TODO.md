@@ -461,8 +461,8 @@ Checked 2026-10-09 against the code and the PC decompile:
 - With Keep Lost Books the count and the lb_<n> / lostBookFound mail survive, so books found in earlier loops
   never come back; books not yet found still drop until all 21 are found, then the spot gives its other item.
   Verified in game at build time (18 found, rewind, still 18); not re-checked live 2026-10-09.
-- Open question for Jeff only if he wants it: making the keep free (no purchase) would cover every player, but
-  it is a balance change (100 JP power becomes default). Not built.
+- RULED (Jeff, 2026-10-09): it stays a bought power. tanky24u's point was that it would be useful to have, not that it
+  should be free. Closed.
 
 ### RELEASED 0.18.72 (2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
 Spec docs/superpowers/specs/2026-09-25-herd-book-design.md, plan docs/superpowers/plans/2026-09-25-herd-book.md.
