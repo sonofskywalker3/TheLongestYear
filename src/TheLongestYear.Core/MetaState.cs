@@ -267,6 +267,19 @@ public sealed class MetaState
     /// FamiliarityRollup. Hearts themselves still reset; this is the only thing that remembers.</summary>
     public Dictionary<string, int> VillagerFamiliarity { get; set; } = new();
 
+    /// <summary>Festival memories (deja-vu phase 2, spec 2026-10-09): the latest record of each
+    /// festival from earlier loops, by festival id. Merged from RunState.FestivalLog at every rewind
+    /// (FestivalMemoryStore.Commit); a skipped festival keeps its older record.</summary>
+    public Dictionary<string, FestivalMemory> FestivalMemories { get; set; } = new();
+
+    /// <summary>Every Flower Dance partner from every earlier loop, oldest first, one per loop. Never
+    /// pruned, so the first loop's partner can still remember the dance in loop five.</summary>
+    public List<BondMemory> DancePartners { get; set; } = new();
+
+    /// <summary>Every Winter Star secret friend (the villager the player gave to) from every earlier
+    /// loop, with the gift and how it went over. Oldest first, never pruned.</summary>
+    public List<BondMemory> WinterStarRecipients { get; set; } = new();
+
     /// <summary>
     /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
     /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").
