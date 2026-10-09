@@ -3255,8 +3255,8 @@ namespace TheLongestYear
                 string names = string.Join(", ", ids.Distinct().Select(id => $"{DisplayName(id)} ({id})"));
                 this.Monitor.Log($"  {req.Name} ({req.Kind}, {ledger.FilledCount(req.BundleIndex)}/{req.NumberOfSlots} filled): needs {count} before {nextSeason}: {names}", LogLevel.Info);
             }
-            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
-            this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.SeasonOrdinal(season)} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State, TheLongestYear.Integration.VaultBundleMap.Count());
+            this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.RequiredPaid(season, TheLongestYear.Integration.VaultBundleMap.Count())} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
             this.Monitor.Log($"tly_gateneeds: {season} day {run.DayOfMonth}: {open} bundle(s) still owed before {nextSeason}, {ledger.Count} slot(s) filled on the board.", LogLevel.Info);
         }
 
@@ -3912,7 +3912,7 @@ namespace TheLongestYear
             }
 
             // Vault: the season ordinal (1 by Spring, 2 by Summer ...), cheapest first.
-            int needVault = VaultRules.SeasonOrdinal(season);
+            int needVault = VaultRules.RequiredPaid(season, TheLongestYear.Integration.VaultBundleMap.Count());
             foreach (int idx in TheLongestYear.Integration.VaultBundleMap.Indices())
             {
                 if (goalsOnly) break;
@@ -3927,7 +3927,7 @@ namespace TheLongestYear
             }
 
             donated = run.DonatedLedger();
-            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State);
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State, TheLongestYear.Integration.VaultBundleMap.Count());
             bool gateOk = BundleGate.IsSatisfied(season, donated, requirements, vaultOk);
             this.Monitor.Log(
                 quarterMode
@@ -4149,8 +4149,8 @@ namespace TheLongestYear
             }
 
             this.Monitor.Log(
-                $"  Vault gate: pay at least 1 money bundle by Spring 28, 2 by Summer, 3 by Fall, 4 by Winter " +
-                $"(cheapest first: {string.Join(", ", VaultLadder())}). Owning '{VaultRules.KeepBusUnlockedId}' satisfies it outright.",
+                $"  Vault gate: pay at least {VaultGateLadder()} " +
+                $"(this board's Vault, cheapest first: {string.Join(", ", TheLongestYear.Integration.VaultBundleMap.PriceLadder())}). Owning '{VaultRules.KeepBusUnlockedId}' satisfies it outright.",
                 LogLevel.Info);
 
             this.Monitor.Log(
@@ -4200,8 +4200,15 @@ namespace TheLongestYear
             }
         }
 
-        private static IEnumerable<string> VaultLadder()
-            => VaultRules.VaultIndices.Select(i => $"{VaultRules.GoldForIndex(i):N0}g");
+        /// <summary>"1 money bundle(s) by Spring 28, 2 by Summer ..." for this board's Vault count
+        /// (an Easy board has three, so Winter asks for three).</summary>
+        private static string VaultGateLadder()
+        {
+            int count = TheLongestYear.Integration.VaultBundleMap.Count();
+            string Need(TheLongestYear.Core.Season s) => VaultRules.RequiredPaid(s, count).ToString();
+            return $"{Need(TheLongestYear.Core.Season.Spring)} money bundle(s) by Spring 28, {Need(TheLongestYear.Core.Season.Summer)} by Summer, " +
+                $"{Need(TheLongestYear.Core.Season.Fall)} by Fall, {Need(TheLongestYear.Core.Season.Winter)} by Winter";
+        }
 
         /// <summary><c>tly_warpgraph [filter]</c>: print every loaded location and its warp targets,
         /// for verifying reachability derivation. Kept permanently as a diagnostic.</summary>

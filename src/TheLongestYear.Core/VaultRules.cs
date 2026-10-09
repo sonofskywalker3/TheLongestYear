@@ -47,15 +47,33 @@ public static class VaultRules
         _ => 0
     };
 
+    /// <summary>The Vault bundles a board has unless the bundle-count dial changed it (Easy 3,
+    /// Hard 5, Extreme 6 on a TLY Custom board; see <see cref="VaultBundleCount"/>).</summary>
+    public const int StandardVaultCount = 4;
+
+    /// <summary>Vault bundles this season's checkpoint asks for on a board with
+    /// <paramref name="vaultCount"/> of them: the season ordinal, but never more than the board has
+    /// (an Easy board has three, so Winter asks for three). A count of 0 or less means unknown and
+    /// asks for the ordinal.</summary>
+    public static int RequiredPaid(Season season, int vaultCount)
+        => vaultCount > 0 ? System.Math.Min(SeasonOrdinal(season), vaultCount) : SeasonOrdinal(season);
+
+    /// <summary>The value the "bus" reach requirement (keep_bus_unlocked, "bus:4") reads: the Vault
+    /// bundles paid this run, except that paying every Vault bundle on a board with fewer than
+    /// <see cref="StandardVaultCount"/> (Easy) counts as the full four, so the gift stays reachable.</summary>
+    public static int BusReachValue(int paid, int vaultCount)
+        => vaultCount > 0 && vaultCount < StandardVaultCount && paid >= vaultCount ? StandardVaultCount : paid;
+
     /// <summary>Number of distinct vault bundles paid this run.</summary>
     public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;
 
     /// <summary>True if the player has satisfied this season's vault gate: owns keep_bus_unlocked,
-    /// or has paid at least <see cref="SeasonOrdinal"/> vault bundles this run (any tiers).</summary>
-    public static bool IsVaultGateSatisfied(Season season, RunState run, MetaState meta)
+    /// or has paid at least <see cref="RequiredPaid"/> vault bundles this run (any tiers).
+    /// <paramref name="vaultCount"/> is the live board's Vault bundle count.</summary>
+    public static bool IsVaultGateSatisfied(Season season, RunState run, MetaState meta, int vaultCount = StandardVaultCount)
     {
         if (meta.HasUpgrade(KeepBusUnlockedId))
             return true;
-        return run.VaultBundlesPaid.Count >= SeasonOrdinal(season);
+        return run.VaultBundlesPaid.Count >= RequiredPaid(season, vaultCount);
     }
 }

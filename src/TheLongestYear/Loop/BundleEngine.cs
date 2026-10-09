@@ -300,22 +300,42 @@ namespace TheLongestYear.Loop
             // BuildRoomPools adds the standard set first and only ever appends widening candidates
             // after it -- so this writes back exactly what the game authored. The Vault's amounts
             // are the one thing scaled, by its own difficulty multiplier.
+            // The bundle-count dial reshapes the Vault too (amendment of 2026-10-09): Easy drops its
+            // priciest bundle here; Hard and Extreme add extras after pass 1, once the themed rooms
+            // have taken their reserved indices, so those indices never move.
+            int vaultDelta = _difficulty.BundleCount?.VaultDelta ?? 0;
+            var vaultKept = new List<BundleSpec>();
+            int vaultInsertAt = -1;
             foreach (string room in PassThroughRooms)
             {
                 if (!pools.TryGetValue(room, out IReadOnlyList<IReadOnlyList<BundleSpec>> positions))
                     continue;
 
-                foreach (IReadOnlyList<BundleSpec> candidates in positions)
-                {
-                    if (candidates.Count == 0)
-                        continue; // already WARN-logged by BuildRoomPools
-                    BundleSpec spec = room == VaultRoomName
+                List<BundleSpec> specs = positions
+                    .Where(candidates => candidates.Count > 0) // an empty one is already WARN-logged by BuildRoomPools
+                    .Select(candidates => room == VaultRoomName
                         ? VaultAmountScaler.Scale(candidates[0], _tuning.VaultAmountMultiplier)
-                        : candidates[0];
+                        : candidates[0])
+                    .ToList();
+                if (room == VaultRoomName && vaultDelta < 0)
+                {
+                    IReadOnlyList<BundleSpec> kept = Core.VaultBundleCount.Kept(specs, vaultDelta);
+                    _monitor?.Log(
+                        $"BundleEngine: bundle count for {VaultRoomName}: {specs.Count} -> {kept.Count} (drops {string.Join(", ", specs.Except(kept).Select(s => s.Name))}).",
+                        LogLevel.Info);
+                    specs = kept.ToList();
+                }
+                foreach (BundleSpec spec in specs)
+                {
                     if (!TryClaimIndex(spec, claimedIndices))
                         continue;
-                    allPicks.Add(Uniquify(spec, usedNameCounts));
+                    BundleSpec added = Uniquify(spec, usedNameCounts);
+                    allPicks.Add(added);
+                    if (room == VaultRoomName)
+                        vaultKept.Add(added);
                 }
+                if (room == VaultRoomName)
+                    vaultInsertAt = allPicks.Count;
             }
 
             // Pass 1: pick and classify. Deterministic room order (ordinal by name) rather than
@@ -390,6 +410,22 @@ namespace TheLongestYear.Loop
                         : null;
                     picked.Add(new PickRecord(pick, match, null) { Recipe = recipe });
                 }
+            }
+
+            // Vault extras (Hard +1, Extreme +2): priced off the board's own priciest Vault bundle,
+            // indexed from the reserved range after every themed room's extras. Inserted right
+            // after the Vault's own bundles so the board reads Vault, Joja, themed rooms as before.
+            if (vaultDelta > 0 && vaultInsertAt >= 0)
+            {
+                IReadOnlyList<BundleSpec> extras = Core.VaultBundleCount.Extras(vaultKept, vaultDelta, reservedIndices.Next);
+                var placed = new List<BundleSpec>();
+                foreach (BundleSpec extra in extras)
+                    if (TryClaimIndex(extra, claimedIndices))
+                        placed.Add(Uniquify(extra, usedNameCounts));
+                allPicks.InsertRange(vaultInsertAt, placed);
+                _monitor?.Log(
+                    $"BundleEngine: bundle count for {VaultRoomName}: {vaultKept.Count} -> {vaultKept.Count + placed.Count} (adds {string.Join(", ", placed.Select(s => $"{s.Index}:{s.Name}"))}).",
+                    LogLevel.Info);
             }
 
             // Pass 2: re-roll, tightest pool first (2026-08-28, no item asked twice across the

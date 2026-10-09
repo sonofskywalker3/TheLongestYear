@@ -72,6 +72,19 @@ namespace TheLongestYear.Integration
             return goldByIndex.Keys.OrderBy(i => goldByIndex[i]).ToList();
         }
 
+        /// <summary>How many Vault bundles this save's board has (4 unless the bundle-count dial
+        /// changed a TLY Custom board: Easy 3, Hard 5, Extreme 6).</summary>
+        public static int Count() => GoldByIndex().Count;
+
+        /// <summary>This save's Vault prices, cheapest first, as the board shows them ("3,125g").</summary>
+        public static IReadOnlyList<string> PriceLadder()
+        {
+            IReadOnlyDictionary<int, int> goldByIndex = GoldByIndex();
+            return goldByIndex.OrderBy(kv => kv.Value).ThenBy(kv => kv.Key)
+                .Select(kv => kv.Value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + "g")
+                .ToList();
+        }
+
         /// <summary>True if <paramref name="index"/> is a vault money bundle on this save.</summary>
         public static bool IsVaultIndex(int index) => GoldByIndex().ContainsKey(index);
 

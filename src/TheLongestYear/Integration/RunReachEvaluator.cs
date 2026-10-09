@@ -76,7 +76,7 @@ namespace TheLongestYear.Integration
                 "house"    => p.HouseUpgradeLevel,
                 "pet"      => p.hasPet() ? 1 : 0,
                 "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
-                "bus"      => _runState?.Invoke()?.VaultBundlesPaid.Count ?? 0,   // 0–4 (deduped on insert)
+                "bus"      => VaultRules.BusReachValue(_runState?.Invoke()?.VaultBundlesPaid.Count ?? 0, VaultBundleMap.Count()), // paid this run; an Easy board's full Vault counts as 4
                 // The run reached Fall 2, the day vanilla opens the board. Read straight from
                 // DaysPlayed, NOT the (patched) IsSpecialOrdersBoardUnlocked. DaysPlayed only drops
                 // back to 1 inside PerformReset, which runs after the perk screen closes, so the
