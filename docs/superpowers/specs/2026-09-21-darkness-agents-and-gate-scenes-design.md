@@ -48,6 +48,28 @@ waking matches every other week-start morning, while the scene waiting would oth
 hub (and the day) from starting until he stepped out. `tly_seasonturn` replays the scene staged at
 the porch when run on the Farm, and moves to the Farm as before from anywhere else.
 
+**Amendment, 2026-10-09 (designer: a Junimo was hidden behind something in a porch scene): the
+Junimos stand only on clear tiles.** The marks were fixed offsets from the door ((0,3), (-2,3),
+(2,3), (-4,4), the pair shifted one right), and the planning shrine is auto-placed on (-2,3): it hid
+the Winter scene's second Junimo whole (the "Junimo under the star statue" in the screenshots was
+the shrine itself, a Junimo holding a star), and the stash on (3,3) stood against the right one.
+Now every porch scene (the three season turns and the tamper scene) reads the Farm round the porch
+when it is staged (`PorchOcclusion`): objects, a big craftable and the tile above it (it is drawn
+two tall), furniture with its sprite's full height, buildings other than the farmhouse with their
+roofs, resource clumps, bushes and the row above them, a grown tree's canopy, a crop, map walls,
+water and Front or AlwaysFront tiles. A Junimo's sprite is 48 pixels, inside its own tile at rest,
+and its hops lift it into the tile above, so a mark needs its tile and the tile above free. The
+choice (`PorchMarks`, first that fits): the scene's own layout; an even row centred on the
+farmer (equal gaps, the same distance either side) on row 3, then row 4, at gaps 2, 3, 1, 4; for
+an even count, the same row half a tile off centre with equal gaps and Junimo 0 under the farmer
+(four Junimos cannot be centred on whole tiles at gap 1); then each mark to its nearest clear tile.
+Never below row 4: at the scene's viewport the speech box covers row 5 (live: a pair moved there
+lost its feet under the box). On a fresh Standard farm (shrine on -2, stash on +3) the pair keeps
+(+1,3) (-1,3), Fall stands at (0,3) (-1,3) (1,3), Winter at (0,3) (1,3) (-1,3) (2,3); with an extra
+chest on (1,3), Summer and the tamper pair stand at (0,3) (-1,3), Fall at (0,3) (-4,3) (4,3), and
+Winter falls back to (0,3) (-1,3) (2,3) (-4,4). The log line `Porch scene: door (x,y), N Junimos
+at ...` gives the tiles.
+
 ### Spring to Summer
 
 The warning scene: the first strike can land that night.
@@ -174,6 +196,16 @@ Winter closer. Core tests for both; `I18nGuardTests` walks the new key.
     Cucumbers"); live, the tamper line had said "all the Super Cucumber". Holly comes in sprigs: "8 sprigs of Holly", "all the Holly".
     The table lives in `AskPhrases`. A plural ask, container phrases included, ends "They remain
     pure." (key `event.darkness.tamper-3-plural`) instead of "It remains pure.".
+    **Amended 2026-10-09 (designer: "Bring us Nautilus Shell instead" should read "Bring us a
+    Nautilus Shell instead").** One countable item takes "a" or "an" (by its first letter: "an"
+    before a vowel letter; no vanilla Object name needs an exception, the one U name, Unmilled
+    Rice, being a mass noun). A mass noun stays bare ("Bring us Clay instead", "Wool", "Hay",
+    "Honey", "Blueberry Wine", "Pumpkin Soup": anything with a container, the bulk-stuff table and
+    the mass-noun names), and so does a name that is already plural ("Hops", "Pickles", "Dried
+    Apples") and a word the game counts in pieces ("Coal", "Wheat"). A fish, shellfish or jelly is
+    counted ("a Pike", "an Oyster", "a Sea Jelly"), and so are Smoked Fish, Baked Fish and Dish O'
+    The Sea ("a Smoked Salmon"). In a language the game does not pluralize, one item stays bare.
+    `AskPhrases.One`; {{new}} is only used by the tamper scene's last line.
   - No purple screen glow under the middle line; the low sound stays.
   It names the item, which the player could not know.
 - New: an overnight scene per kind of strike, in the slot vanilla uses for the fairy and the witch.
@@ -489,6 +521,22 @@ opens at once if nothing else took the screen, no event is up and the player is 
 (`WitnessLines.OpensAfterTopic`); otherwise it waits on his stack and vanilla shows it on the next
 talk. Headless check: `tly_witness fresh <npc>` (marks him unmet), `tly_witness arm <npc>`,
 `tly_witness talk <npc>` (his real `checkAction`), `tly_witness click` to page on.
+
+**Amended 2026-10-09 (designer: "I told you to just leave it, if they haven't talked to the
+villager yet, it can be pushed back a day").** Both follow-up fixes above are removed (the
+`checkForNewCurrentDialogue` patch, the MenuChanged opener, `FollowsTopic`, `PlaceUnderTop`,
+`OpensAfterTopic`, `WaitsForTopicToFinish`). The rule now: on a morning when the player has not
+met the witness yet (never talked to, or his Introduction still owed: the `Introduction` dialogue
+event active and his `<Name>_Introduction` flag missing), the line is not pushed that day, and
+vanilla's introduction plays alone, however many talks it takes (Linus's is two). From the next
+morning the line is offered as before, once. The window: a line held for an introduction gets
+one more day (7 + 1 after the scene), the day he was met; on the other held mornings the player
+did not talk to him at all, so they cost nothing (`WitnessLines.Decide`, `WitnessRecord.
+HeldForIntroduction`). The other unseen conversation topics that clear a stack still clear the
+line for that day; it comes back the next morning while the window lasts. Live check 2026-10-09,
+throwaway Standard farm: never-met Linus with an armed line, first talk "A stranger?... Hello.",
+second talk "Don't mind me. I just live out here alone.", nothing more that day; next morning his
+first talk is the crows line. `tly_witness arm` makes the morning's call at once (Hold or Say).
 
 ### Debug
 

@@ -96,12 +96,31 @@ save and the copy thrown away, so the saves on disk are the untouched mornings.
 | `standard_451180888` | Fall 13 | Night 13: the hall (natural roll 0.181 against Fall's 35%; reversion is the only kind that can act, because the farm has no crops and nothing in a chest). Morning Fall 14, not a festival (Fall: Fair 16, Spirit's Eve 27): "...The Clay is gone from the Construction bundle." (rehearsed). Talk to Shane on 14 ("last night") and later ("the other night"); look at the purple slot in the Construction bundle. Do not plant anything or put items in a chest on Fall 13: then the night's pick can go to the crows or the thief instead, and the forced reversion would fall on night 15 with the Fair on the 16th. |
 | `standard_451181551` | Winter 1 | The Winter porch scene is still owed: it plays the first time he steps onto the Farm (out of the door after picking the theme). Night 1: the guaranteed Winter tamper, the cloud (rehearsed: Super Cucumber in Night Fishing became 4 Walleye; a Night Fishing goal on the Mixed card followed it). Winter 2, not a festival (Ice Festival 8, Night Market 15 to 17, Winter Star 25): step out of the door, the Junimos name the tainted item at the porch, then he is back where he came in. The aura: `tly_sabotage aurachest`. |
 
-**From the 2026-10-08 live run (for Jeff, not decided):**
-- A one-item tamper reads "Bring us Nautilus Shell instead. It remains pure." (count 1 keeps the bare
-  name, per the asks table). Should a single replacement take "a" ("Bring us a Nautilus Shell")?
-- Linus's first meeting is two talks in vanilla (`$e` in his Introduction), so on a farm where he was
-  never met his crows line comes at the end of the SECOND talk. Fine, or should the line follow the
-  first box ("A stranger?... Hello.") instead?
+**From the 2026-10-08 live run: ANSWERED and BUILT (Jeff, 2026-10-09):**
+- A one-item tamper read "Bring us Nautilus Shell instead." ANSWERED: one countable item takes "a"
+  or "an" ("Bring us a Nautilus Shell instead."); mass nouns stay bare ("Bring us Clay instead").
+  BUILT 7eea541 (`AskPhrases.One`, unit tested; {{new}} is only used by that line).
+- Linus's first meeting is two talks, so his crows line came after the second. ANSWERED: "I told
+  you to just leave it, if they haven't talked to the villager yet, it can be pushed back a day."
+  BUILT e13c5dc: on a morning he has not been met the line is held, the introduction plays alone,
+  and the line comes the next morning (a held line's window gains that day). The follow-up machinery
+  of 4060258 and 3225237 is removed. Live check passed 2026-10-09 on a throwaway Standard farm:
+  never-met Linus, line armed: talk 1 "A stranger?... Hello.", talk 2 "Don't mind me. I just live out
+  here alone.", nothing more; next morning (Tent) his first talk is the crows line ("the other night").
+- A Junimo was hidden behind something in a porch scene. BUILT a7fa1c4: every porch scene (season
+  turns and the tamper scene) picks its Junimos' tiles at staging from what is on the Farm
+  (`PorchOcclusion` + `PorchMarks`): a tile and the tile above must be free of anything standing
+  there or drawn over it; the scene's own layout, else an even row centred on the farmer (rows 3 to
+  4), else an even count half a tile off centre with equal gaps, else the nearest clear tiles. The
+  cause: the auto-placed planning shrine (a Junimo statue holding a star) sits on the old (-2,3)
+  mark and hid the Winter scene's second Junimo whole; the Fall screenshot with "one Junimo" was
+  taken before the scene started (HUD up, farmer just out of the door) and that "Junimo" was the
+  shrine statue. Live check passed 2026-10-09 with screenshots: 2, 3 and 4 Junimos with the shrine
+  and stash in place, and again with an extra chest on (1,3); every Junimo fully visible.
+  For Jeff to judge: four Junimos on a fresh Standard farm stand shoulder to shoulder at (0,3) (1,3)
+  (-1,3) (2,3), half a tile right of centre (no centred row of four fits between the shrine and the
+  stash); with an extra chest on (1,3) Winter falls back to (0,3) (-1,3) (2,3) (-4,4) and Fall
+  spreads to (0,3) (-4,3) (4,3).
 - Not reproduced: once, on a throwaway farm driven hard with debug warps and `debug season`, the
   game woke on Winter 15 with `eventUp` stuck on and no event, so the planning hub waited forever; a
   reload cleared it. No TLY code sets `eventUp`; not seen on any real gate pass or on the three farms.
