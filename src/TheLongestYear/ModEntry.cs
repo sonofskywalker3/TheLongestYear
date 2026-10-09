@@ -454,7 +454,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
             helper.ConsoleCommands.Add("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
             helper.ConsoleCommands.Add("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
-            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow [scarecrows=2]] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            helper.ConsoleCommands.Add("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow [scarecrows=2]] [rows=<n>] [here [junimo]] [confirm] | edge | giftbox | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
             helper.ConsoleCommands.Add("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); });
             helper.ConsoleCommands.Add("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
             helper.ConsoleCommands.Add("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
@@ -2970,6 +2970,27 @@ namespace TheLongestYear
                     this.Monitor.Log($"Sabotage fixture: {planted} crop(s) of seed {seed ?? "none (Winter)"} at row {door.Y + 6}, chest at ({chestTile.X},{chestTile.Y}) with 20 Parsnip + 10 Copper Ore ({clearedInFront} tree(s) or bush(es) in front of it cleared), scarecrow {scarecrowAt}.", LogLevel.Info);
                     break;
                 }
+                case "giftbox":
+                {
+                    // Debug: open the farmhouse's starter gift box as the player would (its items go
+                    // to the inventory and the box goes), so a handoff farm's chest count is only what
+                    // the fixture put down: the thief's draw counts a gift box in the farmhouse.
+                    var house = Utility.getHomeOfFarmer(Game1.player);
+                    int opened = 0, items = 0;
+                    foreach (Microsoft.Xna.Framework.Vector2 tile in house.objects.Keys.ToList())
+                    {
+                        if (house.objects[tile] is not StardewValley.Objects.Chest box || !box.giftbox.Value) continue;
+                        foreach (Item item in box.Items.Where(i => i != null).ToList())
+                        {
+                            items += item.Stack;
+                            Game1.player.addItemToInventory(item);
+                        }
+                        house.objects.Remove(tile);
+                        opened++;
+                    }
+                    this.Monitor.Log($"tly_sabotage giftbox: opened {opened} gift box(es) in the farmhouse, {items} item(s) to the inventory.", LogLevel.Info);
+                    break;
+                }
                 case "edge":
                 {
                     // Debug: take the current map's own warp onto the Farm, the same call vanilla
@@ -3026,7 +3047,7 @@ namespace TheLongestYear
                         this.Monitor.Log("tly_sabotage scene: step out onto the Farm first, with no event up.", LogLevel.Warn);
                     break;
                 default:
-                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow [scarecrows=2]] [rows=<n>] [here [junimo]] [confirm] | edge | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]", LogLevel.Info);
+                    this.Monitor.Log("Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow [scarecrows=2]] [rows=<n>] [here [junimo]] [confirm] | edge | giftbox | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]", LogLevel.Info);
                     break;
             }
         }
