@@ -3,6 +3,22 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.35 - 2026-10-09
+
+3553 tests. Covers 0.19.33 to 0.19.35 (not released yet).
+
+### Changed
+
+- **Bundles per room now changes the Vault too (TLY Custom boards only).** Easy drops the most expensive Vault bundle, leaving three (3,125g, 6,250g and 12,500g). Normal keeps the usual four. Hard adds a fifth at twice the price of the most expensive one (62,500g). Extreme adds a fifth and a sixth (62,500g and 100,000g). The bus is repaired once every Vault bundle on your board is paid. The season checkpoints still ask for one Vault bundle by Spring, two by Summer, three by Fall and four by Winter, but never more than your board has, so on Easy three is enough for Winter. Like the rest of the option, it takes effect when a new board is rolled, and a board you keep on a Fail night keeps its Vault.
+
+### Fixed
+
+- **`tly_gatecheck` shows the Vault prices your board really asks for** (3,125g and up on a TLY Custom board), not the game's base prices.
+
+### Added
+
+- Debug command `tly_bundlecount buy` pays a Vault bundle through the Vault page's own button, and `tly_bundlecount close` closes the page.
+
 ## 0.19.32 - 2026-10-09
 
 3523 tests.
