@@ -29,62 +29,71 @@ public class WitnessLinesTests
     public void The_line_is_live_for_seven_days_after_the_scene(int today, bool live)
         => Assert.Equal(live, WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 }, today));
 
-    [Fact] public void A_first_meeting_intro_that_cleared_the_line_is_followed_by_it()
-        => Assert.True(WitnessLines.FollowsTopic(lineWasQueued: true, lineOnTop: false, topicPushed: true));
-
-    [Theory]
-    [InlineData(false, false, true)]  // no line was waiting
-    [InlineData(true, true, true)]    // the line is still the next thing he says
-    [InlineData(true, false, false)]  // nothing new was pushed
-    public void The_line_only_follows_a_dialogue_that_displaced_it(bool queued, bool onTop, bool pushed)
-        => Assert.False(WitnessLines.FollowsTopic(queued, onTop, pushed));
-
-    // The second fix (2026-10-08): the line goes UNDER the intro, because closing the intro's box
-    // pops the top of the stack, and a line pushed on top while the box animated out was popped.
+    // Designer, 2026-10-09: "if they haven't talked to the villager yet, it can be pushed back a
+    // day." A morning when he has not been met holds the line; vanilla's introduction plays alone.
     [Fact]
-    public void A_cleared_stack_gets_the_line_under_the_intro()
+    public void A_morning_before_he_is_met_holds_the_line()
     {
-        string intro = "Introduction", line = "witness";
-        Assert.Equal(new[] { intro, line }, WitnessLines.PlaceUnderTop(new[] { intro }, line));
+        var r = new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 };
+        Assert.Equal(WitnessMorning.Hold, WitnessLines.Decide(r, 41, notMetYet: true));
+        Assert.True(r.HeldForIntroduction);
+        Assert.False(r.Said);
     }
 
     [Fact]
-    public void A_buried_line_moves_up_to_just_under_the_top()
+    public void The_morning_after_he_is_met_says_the_line()
     {
-        string location = "Mountain", other = "older", line = "witness";
-        Assert.Equal(new[] { location, line, other }, WitnessLines.PlaceUnderTop(new[] { location, other, line }, line));
+        var r = new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 };
+        WitnessLines.Decide(r, 41, notMetYet: true);
+        Assert.Equal(WitnessMorning.Say, WitnessLines.Decide(r, 42, notMetYet: false));
     }
 
     [Fact]
-    public void An_empty_stack_just_gets_the_line()
-        => Assert.Equal(new[] { "witness" }, WitnessLines.PlaceUnderTop(new string[0], "witness"));
+    public void A_met_witness_says_it_the_first_morning()
+        => Assert.Equal(WitnessMorning.Say, WitnessLines.Decide(new WitnessRecord { Npc = "Shane", SceneDayOfYear = 40 }, 41, notMetYet: false));
+
+    // Met on the window's last day: the introduction took that day, so the line gets one more.
+    [Fact]
+    public void A_held_line_gets_the_introduction_day_back()
+    {
+        var r = new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 };
+        Assert.Equal(WitnessMorning.Hold, WitnessLines.Decide(r, 47, notMetYet: true));
+        Assert.Equal(WitnessMorning.Say, WitnessLines.Decide(r, 48, notMetYet: false));
+        Assert.True(WitnessLines.IsLive(r, 48));
+        Assert.Equal(WitnessMorning.Drop, WitnessLines.Decide(r, 49, notMetYet: false));
+    }
 
     [Fact]
-    public void The_line_opens_when_the_intro_box_closes_on_a_free_screen()
-        => Assert.True(WitnessLines.OpensAfterTopic(closedBoxWasTopic: true, screenIsFree: true, lineIsNext: true, eventUp: false, sameLocation: true));
+    public void A_line_never_held_ends_after_the_week()
+        => Assert.Equal(WitnessMorning.Drop, WitnessLines.Decide(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 }, 48, notMetYet: false));
 
-    [Theory]
-    [InlineData(false, true, true, false, true)]  // some other box closed
-    [InlineData(true, false, true, false, true)]  // afterDialogues opened a menu
-    [InlineData(true, true, false, false, true)]  // something else is his next line
-    [InlineData(true, true, true, true, true)]    // an event is up
-    [InlineData(true, true, true, false, false)]  // the player left
-    public void Otherwise_the_line_waits_for_the_next_talk(bool topic, bool free, bool next, bool eventUp, bool here)
-        => Assert.False(WitnessLines.OpensAfterTopic(topic, free, next, eventUp, here));
-
-    // Linus's Introduction is "A stranger?... Hello.#$e#Don't mind me. ..." and $e ends the first
-    // talk there: the topic's box closes unfinished and the rest waits for the next talk (live,
-    // 2026-10-08). The line has to keep waiting behind the topic until the topic itself is done.
     [Fact]
-    public void A_topic_split_over_two_talks_keeps_the_line_waiting_behind_it()
-        => Assert.True(WitnessLines.WaitsForTopicToFinish(closedBoxWasTopic: true, topicStillOnTop: true));
+    public void The_window_is_a_week_plus_the_introduction_day()
+    {
+        Assert.Equal(7, WitnessLines.WindowFor(new WitnessRecord()));
+        Assert.Equal(8, WitnessLines.WindowFor(new WitnessRecord { HeldForIntroduction = true }));
+    }
 
-    [Theory]
-    [InlineData(true, false)]   // the topic is done: open the line now (or give up)
-    [InlineData(false, true)]   // some other box closed
-    public void Otherwise_the_topic_wait_is_over(bool topic, bool stillOnTop)
-        => Assert.False(WitnessLines.WaitsForTopicToFinish(topic, stillOnTop));
+    [Fact]
+    public void A_said_line_is_dropped_even_if_he_is_not_met()
+        => Assert.Equal(WitnessMorning.Drop, WitnessLines.Decide(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40, Said = true }, 41, notMetYet: true));
 
+    [Fact]
+    public void A_scene_not_yet_past_waits()
+    {
+        var r = new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40 };
+        Assert.Equal(WitnessMorning.Wait, WitnessLines.Decide(r, 40, notMetYet: true));
+        Assert.False(r.HeldForIntroduction);
+    }
+
+    [Fact]
+    public void The_held_mark_round_trips_with_the_run()
+    {
+        var run = new RunState();
+        run.WitnessLines.Add(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 9, HeldForIntroduction = true });
+        var back = System.Text.Json.JsonSerializer.Deserialize<RunState>(System.Text.Json.JsonSerializer.Serialize(run));
+        Assert.True(back!.WitnessLines[0].HeldForIntroduction);
+    }
     [Fact] public void A_line_already_said_is_not_live()
         => Assert.False(WitnessLines.IsLive(new WitnessRecord { Npc = "Linus", SceneDayOfYear = 40, Said = true }, 41));
 

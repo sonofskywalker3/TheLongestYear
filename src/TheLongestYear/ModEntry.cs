@@ -342,9 +342,6 @@ namespace TheLongestYear
             helper.Events.Player.Warped += this.OnWarpedForFarmArrivalScene;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
-            // A witness line waiting under a first-meeting introduction opens when that box closes.
-            helper.Events.Display.MenuChanged += TheLongestYear.Loop.WitnessIntroPatch.OnMenuChanged;
-            helper.Events.GameLoop.ReturnedToTitle += (_, _) => TheLongestYear.Loop.WitnessIntroPatch.Forget();
             helper.Events.GameLoop.Saving += this.OnSaving;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
@@ -533,7 +530,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             helper.ConsoleCommands.Add("tly_lights", "Debug: dump every light source in the current location with its context, colour, alpha, radius and fadeOut, plus the ambient and the lighting thresholds.", this.CmdLights);
             helper.ConsoleCommands.Add("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
-            helper.ConsoleCommands.Add("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <Linus|Shane> | fresh <npc>. 'talk' runs the NPC's real checkAction for the player (the player must be in his location and free to move) and logs what opened; 'show' just opens his top dialogue; 'click' pages an open dialogue box on (skipping the typing and the safety timer) and logs what it shows; 'arm' queues his witness line now as if he saw last night's scene; 'fresh' re-arms his first-meeting Introduction (marks him unmet) so the intro-then-line path can be replayed.", this.CmdWitness);
+            helper.ConsoleCommands.Add("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <Linus|Shane> | fresh <npc>. 'talk' runs the NPC's real checkAction for the player (the player must be in his location and free to move) and logs what opened; 'show' just opens his top dialogue; 'click' pages an open dialogue box on (skipping the typing and the safety timer) and logs what it shows; 'arm' records his witness line as if he saw last night's scene and makes this morning's call now (queued, or held for a day when he has not been met); 'fresh' re-arms his first-meeting Introduction so the held-for-a-day path can be replayed.", this.CmdWitness);
             helper.ConsoleCommands.Add("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             helper.ConsoleCommands.Add("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
@@ -1773,7 +1770,7 @@ namespace TheLongestYear
             {
                 var records = _meta.Run.WitnessLines ?? new();
                 this.Monitor.Log($"tly_witness: {records.Count} record(s): " + string.Join("; ",
-                    records.ConvertAll(r => $"{r.Npc} scene day {r.SceneDayOfYear} said={r.Said}")), LogLevel.Info);
+                    records.ConvertAll(r => $"{r.Npc} scene day {r.SceneDayOfYear} said={r.Said} held={r.HeldForIntroduction}")), LogLevel.Info);
                 return;
             }
             if (verb == "click")
@@ -1804,8 +1801,9 @@ namespace TheLongestYear
                     this.Monitor.Log($"tly_witness: talked to {npc.Name} (checkAction={acted}, same location={sameLocation}, canMove={Game1.player.CanMove}); {DescribeOpenDialogue()}.", LogLevel.Info);
                     break;
                 case "arm":
-                    this.Monitor.Log(_witness != null && _witness.ArmForTest(npc.Name)
-                        ? $"tly_witness: {npc.Name}'s line is queued as if he saw last night's scene."
+                    string call = _witness?.ArmForTest(npc.Name);
+                    this.Monitor.Log(call != null
+                        ? $"tly_witness: {npc.Name}'s line is recorded as if he saw last night's scene; this morning's call: {call}."
                         : $"tly_witness: {npc.Name} has no witness line.", LogLevel.Info);
                     break;
                 case "fresh":

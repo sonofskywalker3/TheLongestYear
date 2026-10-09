@@ -7,6 +7,23 @@ public sealed class WitnessRecord
     public string Npc { get; set; } = "";
     public int SceneDayOfYear { get; set; }
     public bool Said { get; set; }
+
+    /// <summary>The line was held back on a morning when the player had not met him yet
+    /// (<see cref="WitnessLines.Decide"/>): the window gains the day the introduction took.</summary>
+    public bool HeldForIntroduction { get; set; }
+}
+
+/// <summary>What a morning does with one witness line.</summary>
+public enum WitnessMorning
+{
+    /// <summary>Said, or its window is over: forget it.</summary>
+    Drop,
+    /// <summary>The scene has not happened yet by the calendar: keep it, say nothing.</summary>
+    Wait,
+    /// <summary>He has not been met: vanilla's introduction plays alone today, the line waits a day.</summary>
+    Hold,
+    /// <summary>Put the line on top of his dialogue for today.</summary>
+    Say,
 }
 
 /// <summary>A villager who saw a strike scene says so once, the next time the player talks to
@@ -14,6 +31,10 @@ public sealed class WitnessRecord
 public static class WitnessLines
 {
     public const int WindowDays = 7;
+
+    /// <summary>The day the introduction took, added to the window of a line held for it.</summary>
+    public const int IntroductionDays = 1;
+
     public const string WhenLastNight = "dialogue.witness.when-last-night";
     public const string WhenOtherNight = "dialogue.witness.when-other-night";
 
@@ -28,51 +49,33 @@ public static class WitnessLines
 
     public static string WhenKey(int sceneDay, int today) => today - sceneDay <= 1 ? WhenLastNight : WhenOtherNight;
 
+    /// <summary>How many days after the scene the line can still be said: a week, plus the day of
+    /// the introduction when the line was held for one.</summary>
+    public static int WindowFor(WitnessRecord record)
+        => WindowDays + (record != null && record.HeldForIntroduction ? IntroductionDays : 0);
+
     public static bool IsLive(WitnessRecord record, int today)
-        => record != null && !record.Said && today > record.SceneDayOfYear && today - record.SceneDayOfYear <= WindowDays;
+        => record != null && !record.Said && today > record.SceneDayOfYear && today - record.SceneDayOfYear <= WindowFor(record);
 
-    /// <summary>Does the witness line follow the NPC's topic dialogue in the same conversation
-    /// (designer, 2026-10-08)? On a first meeting vanilla clears the NPC's dialogue stack to push
-    /// its Introduction (any unseen conversation topic does the same), which threw the line away:
-    /// Linus played his introduction and kept the line for a later talk. A location line pushed on
-    /// top of it would likewise put it off to a second talk. When the line was queued, vanilla just
-    /// pushed a dialogue and the line is no longer on top (cleared away or buried), it is spoken
-    /// right after that dialogue ends, in the same conversation.</summary>
-    public static bool FollowsTopic(bool lineWasQueued, bool lineOnTop, bool topicPushed)
-        => lineWasQueued && topicPushed && !lineOnTop;
-
-    /// <summary>Where the line goes when it follows a topic: straight under the topic, which stays
-    /// on top. Takes and returns the NPC's dialogue stack top first, with the line removed from
-    /// wherever it was (cleared stacks simply do not have it).
-    ///
-    /// Why under and not after (2026-10-08, the second pass): the first fix opened the line 200 ms
-    /// after the topic's last page from the topic's <c>onFinish</c>. That fires while the closing
-    /// box is still animating out, so the line was pushed on top of the not-yet-popped topic, and
-    /// <c>DialogueBox.closeDialogue</c> then popped the top of the stack: the line, not the topic.
-    /// Under the topic, vanilla's own pop takes the topic off and leaves the line next.</summary>
-    public static List<T> PlaceUnderTop<T>(IReadOnlyList<T> topFirst, T line) where T : class
+    /// <summary>The morning's call for one line (designer, 2026-10-09: "if they haven't talked to
+    /// the villager yet, it can be pushed back a day"). On a morning when the player has not met
+    /// the witness yet (<paramref name="notMetYet"/>: vanilla would play his first-meeting
+    /// Introduction, which clears his dialogue and would throw the line away anyway), the line is
+    /// held: the introduction plays alone, whole, however many talks it takes, and the line is
+    /// offered from the next morning. A held line's window gains one day
+    /// (<see cref="IntroductionDays"/>), the day he was met; every other held morning he was not
+    /// talked to at all, so it cost nothing. Marks the record held.</summary>
+    public static WitnessMorning Decide(WitnessRecord record, int today, bool notMetYet)
     {
-        var rest = new List<T>();
-        foreach (T d in topFirst)
-            if (!ReferenceEquals(d, line)) rest.Add(d);
-        rest.Insert(rest.Count == 0 ? 0 : 1, line);
-        return rest;
+        if (record == null || record.Said || today - record.SceneDayOfYear > WindowFor(record)) return WitnessMorning.Drop;
+        if (today <= record.SceneDayOfYear) return WitnessMorning.Wait;
+        if (notMetYet)
+        {
+            record.HeldForIntroduction = true;
+            return WitnessMorning.Hold;
+        }
+        return WitnessMorning.Say;
     }
-
-    /// <summary>When the topic's box has closed, does the line open at once, in the same
-    /// conversation? Only when that box is what just closed, nothing else took the screen
-    /// (vanilla's <c>afterDialogues</c> can open a menu), the line is now the NPC's next dialogue,
-    /// no event is up and the player is still where the NPC is. Otherwise it waits on his stack for
-    /// the next talk, which vanilla shows on its own.</summary>
-    public static bool OpensAfterTopic(bool closedBoxWasTopic, bool screenIsFree, bool lineIsNext, bool eventUp, bool sameLocation)
-        => closedBoxWasTopic && screenIsFree && lineIsNext && !eventUp && sameLocation;
-
-    /// <summary>The topic's box closed but the topic is still the NPC's top dialogue: vanilla's
-    /// <c>$e</c> ended this talk part way through it and the rest is said on the next talk (Linus's
-    /// Introduction is two talks, live 2026-10-08). The line keeps waiting under the topic and opens
-    /// when the topic's last box closes, so it still comes straight after the whole introduction.</summary>
-    public static bool WaitsForTopicToFinish(bool closedBoxWasTopic, bool topicStillOnTop)
-        => closedBoxWasTopic && topicStillOnTop;
 
     public static IReadOnlyList<string> AllKeys { get; } = new[] { LineKey("Linus"), LineKey("Shane"), WhenLastNight, WhenOtherNight };
 }
