@@ -15,7 +15,7 @@ namespace TheLongestYear.DebugCommands
         public const string Name = "tly_festmem";
         public const string Description =
             "Debug: festival memories (deja-vu phase 2). Usage: tly_festmem [status] | set <festival> <outcome> [item-or-npc] [score] | " +
-            "partner <npc> [run] | recipient <npc> <item> <outcome> [run] | clear [festival|partners|recipients|heard] | commit | force <festival|all|off> | talk <npc> | start | click";
+            "partner <npc> [run] | recipient <npc> <item> <outcome> [run] | clear [festival|partners|recipients|heard] | commit | force <festival|all|off> | talk <npc> | start | click | pot | give <item> [quality] | score <n>";
 
         public static void Run(IMonitor monitor, MetaState meta, Func<RunState> runProvider, GameplayConfig config, string[] args)
         {
@@ -63,6 +63,14 @@ namespace TheLongestYear.DebugCommands
                     case "talk" when args.Length >= 2: Talk(monitor, args[1]); break;
                     case "start": Start(monitor); break;
                     case "click": Click(monitor); break;
+                    case "pot": Pot(monitor); break;
+                    case "give" when args.Length >= 2:
+                        Give(monitor, args[1], args.Length >= 3 && int.TryParse(args[2], out int quality) ? quality : 0);
+                        break;
+                    case "score" when args.Length >= 2 && int.TryParse(args[1], out int festivalScore):
+                        Game1.player.festivalScore = festivalScore;
+                        monitor.Log($"{Name} score: festivalScore = {festivalScore} (eggs or fish found).", LogLevel.Info);
+                        break;
                     case "force" when args.Length >= 2:
                         FestivalMemoryContext.ForceFestival = args[1] == "off" ? null : args[1];
                         monitor.Log($"{Name}: force = {FestivalMemoryContext.ForceFestival ?? "off"} (every roll hits, budget ignored; speaker guards kept).", LogLevel.Info);
@@ -109,6 +117,50 @@ namespace TheLongestYear.DebugCommands
                 monitor.Log($"{Name} click: \"{before}\"", LogLevel.Info);
             }
             else monitor.Log($"{Name} click: no dialogue box (menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, command {Game1.CurrentEvent?.CurrentCommand}: {CurrentCommand()}).", LogLevel.Info);
+        }
+
+        private const string LuauSoupAction = "LuauSoup";
+
+        /// <summary>Act on the Luau soup pot tile (the festival map's "Action LuauSoup"), the path a click on
+        /// the pot takes; vanilla opens its ingredient menu (Event.cs 11915).</summary>
+        private static void Pot(IMonitor monitor)
+        {
+            Event ev = Game1.CurrentEvent;
+            GameLocation here = Game1.currentLocation;
+            var layer = here?.map?.GetLayer("Buildings");
+            if (ev == null || !ev.isFestival || layer == null) { monitor.Log($"{Name} pot: not at a festival.", LogLevel.Warn); return; }
+            for (int x = 0; x < layer.LayerWidth; x++)
+                for (int y = 0; y < layer.LayerHeight; y++)
+                {
+                    string action = here.doesTileHaveProperty(x, y, "Action", "Buildings");
+                    if (action == null || !action.StartsWith(LuauSoupAction, StringComparison.Ordinal)) continue;
+                    bool handled = ev.checkAction(new xTile.Dimensions.Location(x, y), Game1.viewport, Game1.player);
+                    monitor.Log($"{Name} pot: soup pot at ({x},{y}), handled={handled}, menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}.", LogLevel.Info);
+                    return;
+                }
+            monitor.Log($"{Name} pot: no LuauSoup tile on {here.Name}.", LogLevel.Warn);
+        }
+
+        /// <summary>Pick an item in the open item menu (the Luau pot, the secret gift): puts the item in the
+        /// inventory if missing, then calls the menu's own click callback with it, as a click on it does.</summary>
+        private static void Give(IMonitor monitor, string qualifiedId, int quality)
+        {
+            if (Game1.activeClickableMenu is not StardewValley.Menus.ItemGrabMenu menu || menu.behaviorFunction == null)
+            {
+                monitor.Log($"{Name} give: no item menu open (menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}).", LogLevel.Warn);
+                return;
+            }
+            Item item = Game1.player.Items.FirstOrDefault(i => i?.QualifiedItemId == qualifiedId && i.Quality == quality);
+            if (item == null)
+            {
+                item = ItemRegistry.Create(qualifiedId, 1, quality);
+                Game1.player.addItemToInventory(item);
+                item = Game1.player.Items.FirstOrDefault(i => i?.QualifiedItemId == qualifiedId && i.Quality == quality) ?? item;
+            }
+            Game1.player.removeItemFromInventory(item);
+            menu.behaviorFunction(item, Game1.player);
+            string shown = (Game1.activeClickableMenu as StardewValley.Menus.DialogueBox)?.getCurrentString();
+            monitor.Log($"{Name} give: {item.QualifiedItemId} q{item.Quality} ({item.DisplayName}) given; box shows \"{shown ?? "-"}\".", LogLevel.Info);
         }
 
         private static string CurrentCommand()

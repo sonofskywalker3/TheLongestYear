@@ -94,7 +94,7 @@ daysSinceLastLay, produce days with Busy Coop / Busy Barn, friendship, happiness
 current map: Truffle Hog), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
 Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the percentage reads high), `pets`
 (Data/Pets as loaded: Loyal Pet), `incubate` (an Egg into the first empty incubator: Fast Hatch), `grow`, `feed`,
-`sethappy <n>`, `setfriend <n>`, `births <n>` (runs the barn-birth roll n times and counts births by parent: Growing Herd; compare before and after buying), `birthnight` (tonight's farm event is a certain barn birth), `doors` (opens every animal door), `truffles` (truffles found and on the farm, pigs outdoors: Truffle Hog over a real day on the farm), `enter coop|barn [i]` (warps inside; a ready incubator hatches on entry), `incubators`, `grow new|<name>`, `revoke <id>` (debug un-own, for a control run). `tly_dismiss` closes the birth or hatch dialogue and names a NamingMenu through its own Enter path. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
+`sethappy <n>`, `setfriend <n>`, `births <n>` (runs the barn-birth roll n times and counts births by parent: Growing Herd; compare before and after buying), `birthnight` (tonight's farm event is a certain barn birth), `doors` (opens every animal door), `truffles` (truffles found and on the farm, pigs outdoors: Truffle Hog over a real day on the farm), `enter coop|barn [i]` (warps inside; a ready incubator hatches on entry), `incubators`, `grow new|<name>`, `revoke <id>` (debug un-own, for a control run). `pet` (pets every pet once through Pet.checkAction, the click path; vanilla rolls the present on the day's first petting and drops it beside the pet, so the line lists the items lying there before and after: Loyal Pet). `tly_dismiss` closes the birth or hatch dialogue and names a NamingMenu through its own Enter path. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
 with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
 
 **Bundles per room (2026-10-09).** `tly_bundlecount` lists the live bundles per room and says whether the CC's own
@@ -105,7 +105,10 @@ room lookup knows every bundle (a missing one throws KeyNotFound in `checkForMis
 [cheapest|<index>]` in a LATER batch pays that bundle through the page's own purchase button (gives the farmer the
 gold first) and logs the price, the gold taken and whether ccVault was queued; TLY's observer logs `Vault bundle N
 paid` on the next tick. The page stays open so the observer sees it: send `tly_bundlecount close` (closes any menu
-without its exit action, so no restore cutscene) when done.
+without its exit action, so no restore cutscene) when done. After the purchase that finishes the room, `tly_bundlecount exit` closes the page with
+vanilla's own exit action instead (the Vault restore cutscene), so the bus repair follows that night as in play.
+`tly_bundlecount bus` logs Keep Bus Unlocked's reach with each path on its own (every Vault bundle on the board paid
+this run; the Vault room repaired: area flag or the ccVault mail) and the live result.
 
 **Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
 with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
@@ -177,3 +180,12 @@ buys any boost, `tly_boostexpire` forces the boosts' day-start pass.
 - The hub can show a single card (`offer: Foraging`) when only one theme can ask for two goals;
   the script handles it since 2026-08-28.
 
+## Festival memories (`tly_festmem`)
+
+Besides `status`, `set`, `partner`, `recipient`, `clear`, `commit` and `force`, these drive a festival headlessly
+(date with `debug season`/`tly_setday` and a sleep, then `debug time 900` and `debug warp <map>` enters it):
+`talk <npc>` (the festival's own checkAction on that villager), `start` (the host's "yes"), `click` (one click on
+the open dialogue box), `pot` (acts on the Luau soup pot tile, which opens vanilla's ingredient menu), `give <item>
+[quality]` (picks that item in the open item menu through the menu's own callback: the Luau pot or the secret gift
+after `talk <secret friend>` and `tly_answer 0`), and `score <n>` (sets the eggs or fish found, e.g. 9 wins the egg
+hunt).

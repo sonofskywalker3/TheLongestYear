@@ -7,6 +7,7 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Menus;
 using TheLongestYear.Core;
+using TheLongestYear.Loop;
 
 namespace TheLongestYear.DebugCommands
 {
@@ -21,7 +22,7 @@ namespace TheLongestYear.DebugCommands
     internal static class BundleCountDebugCommand
     {
         public const string Usage =
-            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | close | missed | buy <vault index|cheapest>]. No args lists bundles per room.";
+            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | close | exit | missed | buy <vault index|cheapest> | bus]. No args lists bundles per room.";
 
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
@@ -55,6 +56,12 @@ namespace TheLongestYear.DebugCommands
                     return;
                 case "close":
                     Close(monitor);
+                    return;
+                case "exit":
+                    Exit(monitor);
+                    return;
+                case "bus":
+                    Bus(monitor, cc);
                     return;
                 default:
                     List(monitor, cc);
@@ -123,14 +130,18 @@ namespace TheLongestYear.DebugCommands
                 monitor.Log("tly_bundlecount buy: the Vault page has no purchase button.", LogLevel.Error);
                 return;
             }
+            var exitBefore = note.exitFunction;
             note.receiveLeftClick(note.purchaseButton.bounds.Center.X, note.purchaseButton.bounds.Center.Y);
             // The page stays open so TLY's donation observer sees the bag complete on its next tick,
-            // as it would for a player; send "close" in a later batch. No restore cutscene on exit.
-            note.exitFunction = null;
+            // as it would for a player; send "close" (no restore cutscene) or "exit" (vanilla's exit,
+            // which runs the restore cutscene when this purchase finished the room) in a later batch.
+            bool roomDone = note.exitFunction != exitBefore;
+            if (!roomDone) note.exitFunction = null;
             monitor.Log(
                 $"tly_bundlecount buy: {bundle.bundleIndex}:{bundle.name} price {price:N0}g, gold {before:N0} -> {Game1.player.Money:N0}, " +
                 $"paid {cc.bundles[bundle.bundleIndex][0]}, reward flag {cc.bundleRewards[bundle.bundleIndex]}, " +
-                $"ccVault queued {Game1.player.mailForTomorrow.Any(m => m.StartsWith("ccVault"))}.",
+                $"ccVault queued {Game1.player.mailForTomorrow.Any(m => m.StartsWith("ccVault"))}" +
+                (roomDone ? "; the room is complete, \"exit\" runs vanilla's restore cutscene." : "."),
                 LogLevel.Info);
         }
 
@@ -144,6 +155,34 @@ namespace TheLongestYear.DebugCommands
                 menu.exitThisMenu(playSound: false);
             }
             monitor.Log("tly_bundlecount: menu closed.", LogLevel.Info);
+        }
+
+        /// <summary>Closes the open page WITH its exit action, as the player closing it does: after the
+        /// last bundle of a room that is vanilla's restore cutscene (JunimoNoteMenu.restoreAreaOnExit).</summary>
+        private static void Exit(IMonitor monitor)
+        {
+            if (Game1.activeClickableMenu is not IClickableMenu menu) { monitor.Log("tly_bundlecount exit: no menu open.", LogLevel.Info); return; }
+            bool hasExit = menu.exitFunction != null;
+            menu.exitThisMenu(playSound: false);
+            monitor.Log($"tly_bundlecount exit: {menu.GetType().Name} closed with its exit action ({(hasExit ? "restore cutscene queued" : "none")}).", LogLevel.Info);
+        }
+
+        /// <summary>Keep Bus Unlocked's reach, each path on its own: every Vault bundle on this board paid
+        /// this run, and the Vault room repaired (area complete or the ccVault mail), then the live check.</summary>
+        private static void Bus(IMonitor monitor, CommunityCenter cc)
+        {
+            var paid = Integration.RunReachEvaluator.PaidThisRun();
+            int[] board = Integration.VaultBundleMap.Indices().ToArray();
+            bool roomRepaired = Integration.RunReachEvaluator.VaultRoomRepaired();
+            bool paidPath = VaultRules.IsBusRepaired(paid, board, vaultRoomComplete: false);
+            bool roomPath = VaultRules.IsBusRepaired(System.Array.Empty<int>(), board, roomRepaired);
+            bool areaFlag = cc.areasComplete.Count > CommunityCenter.AREA_Vault && cc.areasComplete[CommunityCenter.AREA_Vault];
+            monitor.Log(
+                $"tly_bundlecount bus: board Vault [{string.Join(", ", board)}], paid this run [{string.Join(", ", paid)}]; " +
+                $"every-bundle-paid path {paidPath}; room-repaired path {roomPath} (areasComplete[Vault] {areaFlag}, " +
+                $"ccVault received {Game1.MasterPlayer.mailReceived.Contains("ccVault")}, ccVault tomorrow {Game1.player.mailForTomorrow.Any(m => m.StartsWith("ccVault"))}); " +
+                $"Keep Bus Unlocked reach met {Integration.RunReachEvaluator.Meets(VaultRules.BusReachMetric)}, owned {UpgradeChecker.HasUpgrade?.Invoke(VaultRules.KeepBusUnlockedId) == true}.",
+                LogLevel.Info);
         }
 
         private static void Missed(IMonitor monitor, CommunityCenter cc)
