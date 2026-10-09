@@ -5,7 +5,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## 0.19.22 - 2026-10-09
 
-3241 tests.
+3235 tests.
 
 ### Fixed
 

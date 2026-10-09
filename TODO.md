@@ -349,10 +349,14 @@ changelog all set via Chrome. Still to do:
   Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
 - DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
 
-### BUG (found 2026-09-25 in a Herd Book live test, pre-existing): a kept building can move to another building's spot
+### FIXED 0.19.22 (0b354a2, 2026-10-09, not released yet): a kept building can move to another building's spot
 With a kept Big Coop at (52,20) and a second plain Coop built at (60,27), the rewind placed the kept Big Coop at
-(60,27). SnapshotKeptBuildingSpots (WorldResetService) likely records the first building of the family it finds,
-not the kept (highest) one. Only bites players with two buildings of one family. Not fixed yet.
+(60,27). Root cause: SnapshotKeptBuildingSpots (WorldResetService) wrote every building of a family into the same
+key, so the LAST one in the farm's list won. Reproduced live on 0.19.21 (kept Big Coop came back on the second
+Coop's (60,28), kept Silo on the second Silo's (36,28)). Fix: KeptBuildingSpotPicker (Core) picks the highest
+tier, then the building on the last remembered spot, then the first built; covers coop, barn, silo and the
+greenhouse (the fish pond has its own most-fish pick; sheds are not a keep). Verified live on 0.19.22: both kept
+buildings came back on their own spots.
 
 ### RELEASED 0.18.72 (2026-09-25): Gift of the Junimos room keeps (tanky24u, Nexus bugs, 24 Sep)
 Keep Greenhouse / Quarry Bridge / Glittering Boulder / Minecarts were never buyable: RunReachRequirement.Parse
