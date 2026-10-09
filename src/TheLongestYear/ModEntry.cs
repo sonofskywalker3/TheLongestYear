@@ -381,6 +381,10 @@ namespace TheLongestYear
             // the patch classes ourselves and isolate each one so a single failure logs +
             // continues instead of cratering the whole pass.
             var harmony = new Harmony(this.ModManifest.UniqueID);
+            // Snow day animals: other mods' helpers the transpilers found get hooked once every
+            // mod's Entry has patched (see WildcardAnimalPatch).
+            TheLongestYear.Loop.WildcardAnimalPatch.Monitor = this.Monitor;
+            helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
             int patched = 0, failed = 0;
             foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
             {

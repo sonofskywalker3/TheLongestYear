@@ -1,0 +1,12 @@
+0.19.21 - No Harmony error with ExtraAnimalConfig, and rare pond products no longer date items
+
+Covers everything since 0.19.18.
+
+Fixed
+- With ExtraAnimalConfig or a similar animal mod installed, TLY no longer shows a red "Harmony patch failed" error when the game starts. On a Wildcard snow day your animals still stay inside, and the other mod's animal settings keep working. Thanks to pitytheviolins for the report.
+- A fish pond product with only a tiny chance no longer decides the earliest week an item can be asked for. With Stardew Valley Expanded, Golden Pumpkin was put at week 5; it now waits for the Spirit's Eve maze in week 12. A pond product counts only when it turns up often enough to get in a run.
+
+Changed
+- Items that had only a rare pond product as their route now get their real ones: seeds from wild trees, Coral and Sea Urchins from the tide pools past the beach bridge, geodes from the mines, and the Pearl and Treasure Chest from the Squid Fest.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
