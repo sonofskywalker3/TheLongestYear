@@ -21,7 +21,8 @@ reload (log only, game minimized). `tly_gatecheck` now reads the board's real Va
   `CommunityCenter.isBundleComplete`, which is never true for a paid Vault bundle (vanilla only sets slot 0 of its
   3-slot array). It now reads slot 0 (`VaultRules.IsMoneyBundlePaid`); the per-index ledger keeps it from paying
   JP twice alongside the live observer.
-- [ ] Release: README + Nexus What's New (the Bundles per room line says the Vault never changes; update it).
+- [ ] Release: README + Nexus What's New. Feature text (Features, Difficulty) already updated in 9a7bb21 for Bundles
+  per room and the Vault, animal powers and festival memories; only What's New is left.
 ### BUILT, NOT RELEASED (0.19.24 to 0.19.30, 2026-10-09): animal powers and the Animals tab
 Spec `docs/superpowers/specs/2026-10-09-animal-powers-design.md` (Jeff's rulings of 2026-10-09), plan
 `docs/superpowers/plans/2026-10-09-animal-powers.md`. All twelve powers built (Busy Barnyard split into a coop and a
