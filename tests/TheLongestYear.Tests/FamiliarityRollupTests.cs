@@ -27,4 +27,15 @@ public class FamiliarityRollupTests
             FamiliarityRollup.Apply(meta, new[] { new VillagerDaySignals("Pierre", true, 0, 0) });
         Assert.Equal(5, meta.VillagerFamiliarity["Pierre"]);
     }
+
+    [Fact]
+    public void Festival_bonuses_dance_10_and_winter_star_gift_3()
+    {
+        var meta = new MetaState();
+        meta.VillagerFamiliarity["Penny"] = 4;
+        Assert.Equal(14, FamiliarityRollup.AddBonus(meta, "Penny", FamiliarityRollup.DancePartnerPoints));
+        Assert.Equal(3, FamiliarityRollup.AddBonus(meta, "Gus", FamiliarityRollup.WinterStarGiftPoints));
+        Assert.Equal(0, FamiliarityRollup.AddBonus(meta, "", 10));
+        Assert.Equal(2, meta.VillagerFamiliarity.Count);
+    }
 }
