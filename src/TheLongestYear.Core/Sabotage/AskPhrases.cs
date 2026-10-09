@@ -7,7 +7,7 @@ namespace TheLongestYear.Core.Sabotage
     /// wild honey, and sea jellies, and bottles of blueberry wine"). For more than one:
     /// a liquid or spread names its container ("3 bottles of Blueberry Wine"), a countable thing
     /// takes its plural ("3 Sea Jellies"), and bulk stuff with no container stays bare ("3 Clay").
-    /// One is always the bare name.
+    /// One takes an article when it is counted (<see cref="One"/>).
     ///
     /// Keyed on the item's base id, not its name, so a flavoured good finds its container whatever
     /// the flavour ("3 jars of Pickled Beets"); the container goes before the full display name.
@@ -185,13 +185,50 @@ namespace TheLongestYear.Core.Sabotage
             return $"1 {name}";
         }
 
-        /// <summary>The ask: the bare <paramref name="name"/> for one, otherwise the count and a
+        /// <summary>Counted goods in <see cref="SameInThePlural"/>: one of them takes an article ("a
+        /// Smoked Salmon", "a Baked Fish"). The rest of that table is bulk stuff, or already plural
+        /// (Cookies), and stays bare.</summary>
+        private static readonly HashSet<string> SameWordButCounted = new(StringComparer.Ordinal)
+        {
+            "(O)SmokedFish", "(O)198", "(O)242",
+        };
+
+        /// <summary>The ask for a single item (designer, 2026-10-09: "Bring us a Nautilus Shell
+        /// instead."): a countable thing takes "a" or "an"; a mass noun stays bare ("Bring us Clay
+        /// instead", "Wool", "Honey"), and so does a liquid or spread with a container ("Blueberry
+        /// Wine"), a name that is already plural ("Hops", "Pickles", "Dried Apples") and a word the
+        /// game counts in pieces ("lumps of Coal", "bushels of Wheat"). A fish, a shellfish and a
+        /// jellyfish are counted ("a Pike", "an Oyster", "a Sea Jelly"). The article follows the
+        /// first letter: "an" before a vowel letter. No vanilla Object name breaks that rule (none
+        /// starts with a "you" sound U or a silent H; Unmilled Rice is a mass noun and stays bare).</summary>
+        public static string One(string itemId, string name, Func<string, string> gamePlural, int category = NoCategory)
+        {
+            if (string.IsNullOrEmpty(name) || gamePlural == null) return name;
+            string id = BundleParsing.NormalizeItemId(itemId ?? "");
+            if (Containers.ContainsKey(id)) return name;
+            if (SameWordButCounted.Contains(id)) return WithArticle(name);
+            if (SameInThePlural.Contains(id)) return name;
+            if (Countable.Contains(id) || category == FlavoredSlotRules.FishCategory) return WithArticle(name);
+            if (ItemPlurals.IsMassName(name)) return name;
+            // The game leaves it alone (already plural, or a language it does not pluralize), or
+            // counts it in pieces ("lumps of Coal"): no article.
+            string plural = gamePlural(name);
+            if (plural == name || plural.Contains(" of ")) return name;
+            return WithArticle(name);
+        }
+
+        /// <summary>"a" or "an" before the name, by its first letter.</summary>
+        public static string WithArticle(string name)
+            => string.IsNullOrEmpty(name) ? name : ("AEIOUaeiou".IndexOf(name[0]) >= 0 ? "an " : "a ") + name;
+
+        /// <summary>The ask: <see cref="One"/> for one, otherwise the count and a
         /// container phrase, plural or bare word. <paramref name="gamePlural"/> is the game's own
         /// pluralizer (Lexicon.makePlural); null leaves the name unpluralised. <paramref name="category"/> is
         /// the item's Object category, which tells a fish (it keeps the same word).</summary>
         public static string Ask(int count, string itemId, string name, Func<string, string> gamePlural, int category = NoCategory)
         {
-            if (count <= 1 || string.IsNullOrEmpty(name)) return name;
+            if (string.IsNullOrEmpty(name)) return name;
+            if (count <= 1) return One(itemId, name, gamePlural, category);
             string id = BundleParsing.NormalizeItemId(itemId ?? "");
             if (Containers.TryGetValue(id, out string? container)) return $"{count} {container} of {name}";
             if (SameInThePlural.Contains(id)) return $"{count} {name}";

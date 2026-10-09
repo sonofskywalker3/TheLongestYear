@@ -38,6 +38,10 @@ namespace TheLongestYear.Core.Sabotage
             return CountedPlural(name, gamePlural);
         }
 
+        /// <summary>Is this name a mass noun by the name rules ("Beer", "Blueberry Jelly")?</summary>
+        public static bool IsMassName(string name)
+            => !string.IsNullOrEmpty(name) && (MassNouns.Contains(name) || MassNouns.Contains(LastWord(name)));
+
         /// <summary>The plural of a name known to be countable, with no mass-noun check: the game's
         /// plural, a vowel before the final y taking a plain s. <see cref="AskPhrases"/> uses it for
         /// the jellyfish ("Sea Jellies"), whose last word the mass-noun list would otherwise catch.</summary>

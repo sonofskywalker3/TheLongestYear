@@ -150,16 +150,74 @@ public class AskPhrasesTests
     public void Holly_comes_in_sprigs()
         => Assert.Equal("8 sprigs of Holly", Ask(8, "(O)283", "Holly"));
 
+    // Designer, 2026-10-09: "Bring us a Nautilus Shell instead." One countable thing takes "a" or
+    // "an"; a mass noun stays bare ("Bring us Clay instead").
     [Theory]
-    [InlineData("(O)346", "Beer")]
-    [InlineData("(O)340", "Wild Honey")]
-    [InlineData("(O)SeaJelly", "Sea Jelly")]
-    [InlineData("(O)24", "Parsnip")]
-    public void A_count_of_one_is_the_bare_name(string id, string name)
+    [InlineData("(O)392", "Nautilus Shell", "a Nautilus Shell")]
+    [InlineData("(O)24", "Parsnip", "a Parsnip")]
+    [InlineData("(O)613", "Apple", "an Apple")]
+    [InlineData("(O)454", "Ancient Fruit", "an Ancient Fruit")]
+    [InlineData("(O)176", "Egg", "an Egg")]
+    [InlineData("(O)337", "Iridium Bar", "an Iridium Bar")]
+    [InlineData("(O)SeaJelly", "Sea Jelly", "a Sea Jelly")]
+    [InlineData("(O)SmokedFish", "Smoked Salmon", "a Smoked Salmon")]
+    [InlineData("(O)198", "Baked Fish", "a Baked Fish")]
+    [InlineData("(O)233", "Ice Cream", "an Ice Cream")]
+    [InlineData("(O)Modder.Garden_Turnip", "Turnip", "a Turnip")]
+    public void One_countable_thing_takes_an_article(string id, string name, string ask)
     {
-        Assert.Equal(name, Ask(1, id, name));
-        Assert.Equal(name, Ask(0, id, name));
+        Assert.Equal(ask, Ask(1, id, name));
+        Assert.Equal(ask, Ask(0, id, name));
     }
+
+    [Theory]
+    [InlineData("(O)144", "Pike", "a Pike")]
+    [InlineData("(O)723", "Oyster", "an Oyster")]
+    [InlineData("(O)705", "Albacore", "an Albacore")]
+    [InlineData("(O)132", "Bream", "a Bream")]
+    [InlineData("(O)720", "Shrimp", "a Shrimp")]
+    public void One_fish_takes_an_article(string id, string name, string ask)
+        => Assert.Equal(ask, AskPhrases.Ask(1, id, name, ItemPluralsTests.VanillaPlural, FlavoredSlotRules.FishCategory));
+
+    [Theory]
+    [InlineData("(O)330", "Clay")]            // the game leaves it alone
+    [InlineData("(O)440", "Wool")]
+    [InlineData("(O)178", "Hay")]
+    [InlineData("(O)388", "Wood")]
+    [InlineData("(O)378", "Copper Ore")]
+    [InlineData("(O)340", "Honey")]
+    [InlineData("(O)340", "Wild Honey")]
+    [InlineData("(O)346", "Beer")]
+    [InlineData("(O)348", "Blueberry Wine")]
+    [InlineData("(O)344", "Blueberry Jelly")]
+    [InlineData("(O)236", "Pumpkin Soup")]
+    [InlineData("(O)271", "Unmilled Rice")]   // the one vanilla U name; a mass noun
+    [InlineData("(O)382", "Coal")]            // "lumps of Coal"
+    [InlineData("(O)262", "Wheat")]           // "bushels of Wheat"
+    [InlineData("(O)304", "Hops")]            // already plural
+    [InlineData("(O)342", "Pickles")]
+    [InlineData("(O)223", "Cookies")]
+    [InlineData("(O)DriedFruit", "Dried Apples")]
+    [InlineData("(O)Raisins", "Raisins")]
+    [InlineData("(O)Modder.Cellar_CherryWine", "Cherry Wine")]
+    public void One_of_a_mass_noun_stays_bare(string id, string name)
+        => Assert.Equal(name, Ask(1, id, name));
+
+    [Fact]
+    public void One_with_no_pluralizer_stays_bare()
+        => Assert.Equal("Parsnip", AskPhrases.Ask(1, "(O)24", "Parsnip", null!));
+
+    [Fact]
+    public void One_in_a_language_the_game_does_not_pluralize_stays_bare()
+        => Assert.Equal("Pastinaca", AskPhrases.Ask(1, "(O)24", "Pastinaca", w => w));
+
+    [Theory]
+    [InlineData("Nautilus Shell", "a Nautilus Shell")]
+    [InlineData("Omni Geode", "an Omni Geode")]
+    [InlineData("Ostrich Egg", "an Ostrich Egg")]
+    [InlineData("Halibut", "a Halibut")]
+    public void The_article_follows_the_first_letter(string name, string expected)
+        => Assert.Equal(expected, AskPhrases.WithArticle(name));
 
     [Fact]
     public void A_bare_id_finds_its_container()
