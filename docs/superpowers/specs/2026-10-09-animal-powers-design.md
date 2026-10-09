@@ -400,3 +400,93 @@ advantage, which is the point of a power, but:
 
 Half hay and large products more often (dropped by Jeff). Silo hay keep and a second coop/barn keep (TODO
 "IDEAS, NOT BUILT", separate spec). Multiplayer. Android.
+
+## Round 2 (Jeff's feedback, 2026-10-09)
+
+### Renames (i18n only, save ids unchanged; 0.19.28)
+
+Fine Feathers is **Molting Season** (`animal_duck_feathers`), Truffle Nose is **Truffle Hog**
+(`animal_truffle_double`), Busy Barnyard: Coop / Barn are **Busy Coop** (`animal_fast_produce_coop`) and **Busy Barn**
+(`animal_fast_produce_barn`). The body above keeps the old names as the history of the design.
+
+### Quick Growth measured live (throwaway farm, every vanilla farm animal)
+
+How age works (FarmAnimal.dayUpdate, FarmAnimal.cs:984): every fed night `age++`, and the night `age == DaysToMature - 1`
+calls `growFully`. An animal is a baby while `age < DaysToMature`, so a new animal (Marnie, an incubator, a barn
+birth; all start at age 0) is an adult after DaysToMature fed nights. Age keeps counting after that. Quick Growth adds
+one more step each fed night, so it is DaysToMature / 2 rounded up. Measured with `tly_animalpowers` each morning
+(control set first, then a second set after buying the power):
+
+| Animal | DaysToMature | Vanilla, nights to adult | Quick Growth | Saved |
+|---|---|---|---|---|
+| White / Brown / Blue / Void / Golden Chicken | 3 | 3 | 2 | 1 |
+| Duck | 5 | 5 | 3 | 2 |
+| Rabbit | 6 | 6 | 3 | 3 |
+| Dinosaur | 0 | 0 (adult on arrival) | 0 | 0 |
+| White / Brown Cow | 5 | 5 | 3 | 2 |
+| Goat | 5 | 5 | 3 | 2 |
+| Sheep | 4 | 4 | 2 | 2 |
+| Pig | 10 | 10 | 5 | 5 |
+| Ostrich | 7 | 7 | 4 | 3 |
+
+It buys one day for chickens, two for most animals, five for a pig. Proposed stronger versions (not built, Jeff picks):
+
+- **(a) Grow up overnight:** every baby is an adult after its first fed night. Chickens save 2, pigs 9. Simplest
+  line ("Baby animals grow up overnight."). A bought or hatched animal produces from its second morning, which makes
+  Marnie's babies nearly as good as adults and pairs hard with Growing Herd and Fast Hatch. Suggest 500 JP.
+- **(b) Cap at 2 nights:** half the time, but never more than 2 nights. Chickens and sheep unchanged (2), the rest 2.
+  Keeps a short wait so a baby is still a baby. Same price.
+- **(c) Two tiers:** Quick Growth I as built (half, 350 JP), Quick Growth II overnight (option a, +400 JP).
+
+None of these touches Data/FarmAnimals or the effort model, so no bundle changes (contract: powers only make things
+easier). Products arrive earlier, which is the point.
+
+### Horse Flute needs Keep Horse (confirmed from code)
+
+The row has `PrerequisiteId early_horse` (UpgradeCatalogAnimals), and the loop-start grant is
+`AnimalPowers.GrantsHorseFlute = has(early_horse) && has(horse_flute)` (RunBaselineBuilder, unit-tested). Keep Horse
+(HorseCarryoverService) snapshots the stable's tile, horse name and hat before the reset and rebuilds the stable,
+owned by the player, right after it, before FarmerReset hands out the flute, so the flute works on day 1. If the
+player never built a stable (or tore it down) there is nothing to restore and the flute shows vanilla's "no horse"
+line until a stable is built.
+
+### Power 13: Growing Herd, barn animals give birth more often (built, 0.19.29)
+
+- **Vanilla (1.6):** a barn birth is a night event. `Utility.pickPersonalFarmEvent` runs on nights with no other farm
+  event and returns `QuestionEvent(2)` on a coin flip (the other half is the dogs sound). `QuestionEvent.setUp` case 2
+  (QuestionEvent.cs:51) walks the player's buildings; the first building that allows pregnancy (Data/Buildings
+  `AllowAnimalPregnancy`: **Big Barn and Deluxe Barn only**, not the plain Barn), is **not full**, and passes
+  `Game1.random < animalsThatLiveHere x 0.0055` picks one animal living there at random. The birth happens only if
+  that animal is an adult, `allowReproduction` is on, and its species can get pregnant (`CanGetPregnant`: cows, goat,
+  sheep, pig; not ostrich, no coop animal). Then the "gave birth" dialogue and a NamingMenu, and
+  `AnimalHouse.addNewHatchedAnimal` adopts a baby of the parent's type (so Warm Welcome applies). A Big Barn of 7
+  adults: about 1.9% a night, two births a loop.
+- **Effect:** the per-barn roll is **4x** (`animals x 0.022`), and the parent is drawn only from animals that can
+  give birth, so a baby or an ostrich no longer wastes the night. The coin flip and the dogs night stay vanilla. The
+  full-barn rule stays (births stop when the barn is full).
+- **Hook:** prefix on `QuestionEvent.setUp` (`GrowingHerdPatch`), only for case 2 and only when owned: the same walk
+  with the new chance and parent pick, then vanilla's own success path (dialogue, `animal` field, messagePause).
+  Vanilla's roll runs when the power is not owned, on a rewind night (FarmEventSuppressionPatch's test) and if the
+  prefix throws.
+- **Price:** 400 JP (Truffle Hog's band; a birth is a free barn animal, 750 to 8,000g). **Gate:**
+  `RunReachRequirement building:Big Barn` (a Deluxe Barn counts).
+- **Text:** "Growing Herd" / "Cows, goats, sheep and pigs give birth more often." (placeholder for Jeff).
+- **Pure rules + tests:** `AnimalPowers.BirthChance`, `AnimalPowers.CanGiveBirth`, catalog row (AnimalPowersTests).
+- **Live (2026-10-09):** `tly_animalpowers births 5000` on a Deluxe Barn of 7 (5 adults that can breed, an ostrich,
+  a calf): vanilla 140 births (2.80%), with Growing Herd 820 (16.40%), about 5.9x. A real night forced with
+  `tly_animalpowers birthnight`: "animal_more_births: Trellu (Pig) gives birth tonight", the dialogue and NamingMenu
+  closed by `tly_dismiss`, and "Warm Welcome: Zutsabell (Pig) arrives with friendship 400". A vanilla birth happened
+  on its own earlier the same run (control, Bukell the White Cow).
+
+### Live checks of Truffle Hog and hatching (2026-10-09)
+
+- **Truffle Hog, real pigs outdoors:** 12 pigs at 1000 friendship, doors open, a full day on the farm each.
+  Control day (power revoked with `tly_animalpowers revoke`): 19 truffles from 19 digs, no doubles. Power day: 34
+  truffles from 29 digs, 5 doubled (17%, the roll is 25%; small sample), each logged "animal_truffle_double: <pig>
+  dug up a second truffle".
+- **Incubator hatch with Warm Welcome II:** entering the coop played vanilla's hatch event; `tly_dismiss` closed the
+  message and named the chick through the NamingMenu's own Enter path: "Warm Welcome: Mep (White Chicken) arrives with
+  friendship 400 (was 0)", age 0/3.
+- **Fast Hatch:** "animal_fast_hatch: Incubator ready in 4500 min (was 9000)" (vanilla 9000 shown by the control egg).
+  With that week's machines_slow liability stacked (x1.25): 5630 minutes, egg in on Spring 16 at 8am, ready the
+  morning of Spring 20, hatched on entry. Without the liability 4500 minutes is about 3 days against vanilla's 6.25.

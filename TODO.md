@@ -6,20 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
-### BUILT, NOT RELEASED (0.19.24 to 0.19.27, 2026-10-09): animal powers and the Animals tab
+### BUILT, NOT RELEASED (0.19.24 to 0.19.30, 2026-10-09): animal powers and the Animals tab
 Spec `docs/superpowers/specs/2026-10-09-animal-powers-design.md` (Jeff's rulings of 2026-10-09), plan
 `docs/superpowers/plans/2026-10-09-animal-powers.md`. All twelve powers built (Busy Barnyard split into a coop and a
-barn row), the animal keeps moved to the new Animals tab (Coop/Barn chains and Keep Silo too; Fish Pond stays in
+barn row; Growing Herd added in round 2), the animal keeps moved to the new Animals tab (Coop/Barn chains and Keep Silo too; Fish Pond stays in
 Buildings). Live-checked on a throwaway farm 2026-10-09 with `tly_animalpowers` (see the 0.19.27 changelog).
 Still open:
 - [ ] Not seen live: a pet actually dropping a present with Loyal Pet (only the Data/Pets edit was read back:
-  GiftChance 0.4, thresholds 600 for Cat, Dog and Turtle), an incubator egg hatching with Warm Welcome (same
-  adoptAnimal path as Marnie's and "Start with", both checked), Fast Hatch with Coopmaster.
+  GiftChance 0.4, thresholds 600 for Cat, Dog and Turtle), Fast Hatch with Coopmaster. Seen live in round 2: an
+  incubator hatch and a Growing Herd birth with Warm Welcome II (friendship 400), Truffle Hog with real pigs over a
+  day (spec, "Round 2").
+- [ ] Jeff: Quick Growth only saves 1 to 5 nights (table in the spec, "Round 2"). Pick a stronger version: (a) grow
+  up overnight, (b) cap at 2 nights, (c) a second tier. Not built.
+- [ ] Jeff: Growing Herd (power 13, 400 JP, Big Barn gate, 4x the birth roll): name, text and number are placeholders.
 - [x] Jeff renamed (2026-10-09, 0.19.28): Fine Feathers is Molting Season, Truffle Nose is Truffle Hog, Busy Barnyard:
   Coop / Barn are Busy Coop / Busy Barn. Save ids unchanged.
-- [ ] Jeff: once Swift Horse is owned the green "Keep Horse" owned row no longer shows (the menu shows only the top
-  row of a chain, and Swift Horse and Horse Flute both chain from Keep Horse). Same as Keep Coop today. Fine, or
-  should Keep Horse always show?
+- [x] Jeff (2026-10-09): Keep Horse hiding once Swift Horse or Horse Flute is bought is fine, leave it.
 - [ ] Merge into `story`: story adds its own UpgradeCategory (Wards); the enum will conflict, keep both entries.
 - [ ] Release: README + Nexus What's New.
 
