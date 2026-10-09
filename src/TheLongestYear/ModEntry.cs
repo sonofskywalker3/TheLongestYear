@@ -356,6 +356,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
+            helper.ConsoleCommands.Add("tly_bundlecount", TheLongestYear.DebugCommands.BundleCountDebugCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, a));
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -2845,6 +2847,7 @@ namespace TheLongestYear
                 case "tly_openshrine": this.CmdOpenShrine(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
+                case "tly_bundlecount": TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_ordersboard": TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
