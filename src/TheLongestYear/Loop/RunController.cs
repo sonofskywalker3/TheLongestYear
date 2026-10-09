@@ -830,6 +830,13 @@ namespace TheLongestYear.Loop
                     "keeping the previous requirement manifest.",
                     LogLevel.Warn);
             _reset.ProfessionPicker.DrainOnDayStart();
+            // Festival memories: this loop's festivals become the next loop's half-memories. Every
+            // rewind path comes through here; BeginNewRun clears the log right after.
+            int festivals = Run.FestivalLog?.Count ?? 0;
+            FestivalMemoryStore.Commit(_store.State, Run);
+            _monitor.Log($"FinalizeReset ({reason}): festival memories committed ({festivals} festival(s) this loop, " +
+                $"{_store.State.DancePartners.Count} dance partner(s), {_store.State.WinterStarRecipients.Count} secret friend(s) kept).",
+                LogLevel.Info);
             Run.BeginNewRun(NewSeed());
             ActiveEffectsProvider.Clear();
             _wildcard?.OnReset();

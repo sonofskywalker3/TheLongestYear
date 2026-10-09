@@ -195,6 +195,8 @@ namespace TheLongestYear
             // (TLY's board has to win over the one it writes at load), normal otherwise.
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedNormal;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedLate;
+            // Festival memories: the golden pumpkin is seen as it lands in the inventory (no chest patch).
+            helper.Events.Player.InventoryChanged += TheLongestYear.Loop.FestivalMemoryRecorder.OnInventoryChanged;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             helper.Events.GameLoop.Saving += this.OnSaving;
@@ -353,6 +355,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|plan|donate) exactly as the statue does, so every tab's rows build and draw headlessly. Donate shows only on weeks with shrine goals. Usage: tly_openshrine [active|boosts|plan|donate]", this.CmdOpenShrine);
             helper.ConsoleCommands.Add("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             helper.ConsoleCommands.Add("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.FestivalMemoryCommand.Name, TheLongestYear.DebugCommands.FestivalMemoryCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.FestivalMemoryCommand.Run(this.Monitor, _meta?.State, () => _meta?.Run, _config, a));
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
@@ -663,6 +667,8 @@ namespace TheLongestYear
             TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
             TheLongestYear.Loop.AnimalDoubleProductPatch.Connect(() => _meta.Run);
             TheLongestYear.Loop.DejaVuDialoguePatch.Connect(_meta.State, () => _meta.Run, _config, this.Monitor,
+                () => this.Helper.Translation.GetTranslations().Select(t => t.Key).ToList());
+            TheLongestYear.Loop.FestivalMemoryContext.Connect(_meta.State, () => _meta.Run, _config, this.Monitor,
                 () => this.Helper.Translation.GetTranslations().Select(t => t.Key).ToList());
             PatchLog.Connect(this.Monitor);
             // Computed once and shared by both the reset service (owned-bundle engine seed-time
@@ -2485,6 +2491,12 @@ namespace TheLongestYear
                 tooltip: () => Strings.Get("gmcm.dejavu.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableDejaVuFestivalMemories,
+                setValue: v => _config.EnableDejaVuFestivalMemories = v,
+                name: () => Strings.Get("gmcm.festmem.name"),
+                tooltip: () => Strings.Get("gmcm.festmem.tooltip"));
+
+            gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.EnableNonObjectDonations,
                 setValue: v => _config.EnableNonObjectDonations = v,
                 name: () => Strings.Get("gmcm.non-object.name"),
@@ -2841,6 +2853,8 @@ namespace TheLongestYear
                 case "tly_spawnprobe": TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, args); break;
                 case "tly_minesweep": TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, args); break;
                 case "tly_dejavu": this.CmdDejaVu(command, args); break;
+                case TheLongestYear.DebugCommands.FestivalMemoryCommand.Name:
+                    TheLongestYear.DebugCommands.FestivalMemoryCommand.Run(this.Monitor, _meta?.State, () => _meta?.Run, _config, args); break;
                 case "tly_payvault": this.CmdPayVault(command, args); break;
                 case "tly_hold": this.CmdHold(command, args); break;
                 case "tly_difficulty": this.CmdDifficulty(command, args); break;

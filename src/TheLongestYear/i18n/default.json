@@ -875,6 +875,8 @@
     // -- deja-vu festival memories (phase 2, spec 2026-10-09; 72 lines approved by Jeff 2026-10-09) --
     // Keys festmem.<memory>.<npc lower-case>.<n>; "default" is the fallback pool. ".after." lines play
     // right after the festival's result (egg hunt, soup, grange, ice fishing, secret gift).
+    "gmcm.festmem.name": "Festival memories",
+    "gmcm.festmem.tooltip": "From the second loop, villagers at a festival sometimes half-remember what you did there last time. One per festival per loop, no gameplay effect. Needs deja-vu dialogue on. Off = never.",
     "festmem.egghunt.won.default.1": "I remember you winning before, but that can't be right.",
     "festmem.egghunt.won.abigail.1": "I could swear you beat me at this once. You weren't even here last year.",
     "festmem.egghunt.won.abigail.after.1": "You beat me again? Wait, this is your first year.",
