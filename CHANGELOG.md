@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.22 - 2026-10-09
+
+3241 tests.
+
+### Fixed
+
+- **A kept building no longer jumps onto your other building's spot.** With two buildings of one kind (say your kept Big Coop plus a second Coop you built later, or two Silos), the rewind put the kept one back where the newer one stood. Now it comes back where it was: the bigger building wins, and between two of the same size it's the one the last rewind put back (or the first one you built). Checked live: a kept Big Coop at (52,20) and Silo at (44,20), with a second Coop at (60,28) and Silo at (36,28), both came back on their own spots.
+
 ## 0.19.21 - 2026-10-09
 
 3229 tests. Release of 0.19.19 to 0.19.21.
