@@ -12,6 +12,15 @@ public static class MachineReadyTime
     private const int RoundTo = 10;
     private const int Floor = 10;
 
+    /// <summary>The factor a just-loaded machine's time is scaled by: the Artisan theme / Full Steam
+    /// (0.75 per stack, compounding) or, without them, the Spelunking liability (1.25); times Fast
+    /// Hatch's 0.5 for an incubator when owned (spec 2026-10-09). 1.0 means leave it alone.</summary>
+    public static double Factor(int fastStacks, bool slow, bool incubatorHalf)
+    {
+        double factor = fastStacks > 0 ? Math.Pow(FastFactor, fastStacks) : slow ? SlowFactor : 1.0;
+        return incubatorHalf ? factor * AnimalPowers.IncubatorFactor : factor;
+    }
+
     public static int Scale(int minutes, double factor)
     {
         if (minutes <= 0) return minutes;
