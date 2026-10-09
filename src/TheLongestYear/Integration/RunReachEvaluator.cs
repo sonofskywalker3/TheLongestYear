@@ -118,14 +118,16 @@ namespace TheLongestYear.Integration
             var slots = Game1.netWorldState?.Value?.Bundles?.FieldDict;
             if (data == null || slots == null) return false;
             string prefix = RoomName(key) + "/";
+            var slotsByIndex = cc.bundlesDict();
             bool any = false;
             foreach (string bundleKey in data.Keys)
             {
                 if (!bundleKey.StartsWith(prefix, System.StringComparison.Ordinal)) continue;
                 if (!int.TryParse(bundleKey.Substring(prefix.Length), out int index)) continue;
-                if (!slots.ContainsKey(index)) return false;
+                if (!slots.ContainsKey(index) || !slotsByIndex.TryGetValue(index, out bool[] bundleSlots)) return false;
                 any = true;
-                if (!cc.isBundleComplete(index)) return false;
+                // A paid Vault bundle sets only slot 0, so isBundleComplete never sees it (VaultRules).
+                if (!VaultRules.IsRoomBundleDone(RoomName(key), cc.isBundleComplete(index), bundleSlots)) return false;
             }
             return any;
         }
