@@ -34,6 +34,7 @@ public sealed class DifficultySettings
         StartingGold = step;
         CartSlots = step;
         HoldPrices = step;
+        BundleCount = step;
     }
 
     // ---- Ask-side: baked into the board when it is generated ----
@@ -72,6 +73,11 @@ public sealed class DifficultySettings
     /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
+    /// <summary>How many bundles each themed room of a TLY Custom board holds: Easy one or two
+    /// fewer, Hard one or two more, Extreme 9 (<see cref="BundleCountRule"/>). Never applies to a
+    /// Normal or Remixed board, the Vault or The Missing Bundle. Spec 2026-10-09-bundle-count-dial.</summary>
+    public DifficultyStep BundleCount { get; set; } = DifficultyStep.Normal;
+
     // A tenth dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
     // config.json files that still carry it load fine; SMAPI skips the unknown key.
 
@@ -83,7 +89,8 @@ public sealed class DifficultySettings
            && ShrinePrices == DifficultyStep.Normal
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
-           && HoldPrices == DifficultyStep.Normal;
+           && HoldPrices == DifficultyStep.Normal
+           && BundleCount == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -108,5 +115,6 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
+        BundleCount = BundleCount,
     };
 }
