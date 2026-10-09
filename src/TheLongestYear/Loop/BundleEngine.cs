@@ -673,12 +673,11 @@ namespace TheLongestYear.Loop
 
             // SetBundleData is MERGE/ADDITIVE, not a replace (NetWorldState.cs: SetBundleData ->
             // netBundleData.CopyFrom(data), and NetDictionary.CopyFrom only upserts keys present
-            // in `data` -- it never removes a key that isn't). That's safe here without an
-            // explicit clear because Generate() always emits exactly one entry per room-position
-            // spanning EVERY position VanillaBundlePool.BuildRoomPools() found this call -- the
-            // same fixed vanilla-defined position count every time -- so newData's key space is
-            // always the complete key space; there is no shrinking room that could leave a stale
-            // key behind.
+            // in `data` -- it never removes a key that isn't). Since the bundle-count dial (spec
+            // 2026-10-09) a room can hold fewer bundles than the last board or the game's defaults,
+            // so the keys this board no longer has are removed first. With the dial at Normal on a
+            // vanilla game the key space is the same every loop and this removes nothing.
+            BundleKeySync.RemoveStaleKeys(newData, monitor);
             Game1.netWorldState.Value.SetBundleData(newData);
 
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
@@ -698,6 +697,9 @@ namespace TheLongestYear.Loop
                 for (int i = 0; i < cc.areasComplete.Count; i++)
                     cc.areasComplete[i] = false;
 
+                // The CC's bundle-to-room lookups were built from whatever board it was
+                // constructed with; an extra bundle's reserved index is not in them.
+                BundleKeySync.RefreshCommunityCenter(monitor);
                 cc.MakeMapModifications(force: true);
             }
 
