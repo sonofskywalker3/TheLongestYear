@@ -154,6 +154,9 @@ namespace TheLongestYear.Loop
             // reset, and the JP / price / cart / hold reads for the whole loop -- reads the stamp,
             // which is what makes a GMCM change take effect at the NEXT reset rather than
             // mid-season. Stamped before the board is built, because the board is built from it.
+            // The bundle-count rule the outgoing board was built with: a held board keeps it (see
+            // BundleCountStamp, applied once the hold is known below).
+            TheLongestYear.Core.BundleCountRule previousBundleCount = _meta.Difficulty?.BundleCount;
             _meta.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
             if (!_meta.Difficulty.Steps.IsAllNormal())
                 _monitor.Log(
@@ -670,6 +673,8 @@ namespace TheLongestYear.Loop
             bool holdingBoard = vanillaBoard ? heldVanillaBoard != null : _meta.ConsecutiveHolds > 0;
             if (!holdingBoard)
                 _meta.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
+            // Bundle-count dial (Jeff, 2026-10-09): a held board keeps its count.
+            TheLongestYear.Core.BundleCountStamp.ForReset(_meta.Difficulty, previousBundleCount, holdingBoard);
 
             if (vanillaBoard)
             {
