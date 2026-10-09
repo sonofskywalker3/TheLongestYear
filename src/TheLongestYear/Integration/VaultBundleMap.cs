@@ -9,8 +9,8 @@ namespace TheLongestYear.Integration
     /// <summary>
     /// Resolves THIS save's actual Vault (bus-repair) money-bundle indices and their gold values from
     /// the live <see cref="Game1.netWorldState"/> bundle data, instead of assuming the vanilla
-    /// non-remixed layout (34–37). Remixed-bundle saves renumber every room, so the vault bundles can
-    /// land at e.g. 23–26 — and the old hardcoded <see cref="VaultRules"/> indices then misclassify a
+    /// non-remixed layout (23–26). Remixed-bundle saves and bundle mods can renumber the room, so the vault bundles can
+    /// land elsewhere, and the old hardcoded <see cref="VaultRules"/> indices then misclassify a
     /// real vault payment as a normal bundle completion, so <see cref="RunState.VaultBundlesPaid"/>
     /// never fills and the season gate can't be met (beta report: remixed save, vault gate stuck).
     ///
@@ -24,7 +24,7 @@ namespace TheLongestYear.Integration
         private const string MoneyIngredientId = "-1";
 
         /// <summary>Map of vault bundle index → required gold for this save, derived from live bundle
-        /// data. Falls back to the vanilla 34–37 layout when the data has no Vault room.</summary>
+        /// data. Falls back to the vanilla 23–26 layout when the data has no Vault room.</summary>
         private static IReadOnlyDictionary<int, int> GoldByIndex()
         {
             var data = Game1.netWorldState?.Value?.BundleData;

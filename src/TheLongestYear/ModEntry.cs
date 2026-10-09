@@ -5472,7 +5472,7 @@ namespace TheLongestYear
             }
             else if (System.Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.Season s))
             {
-                // Resolve against THIS save's actual vault indices (remix-aware), not the vanilla 34–37.
+                // Resolve against THIS save's actual vault indices (remix-aware), not the vanilla 23–26.
                 bundleIndex = TheLongestYear.Integration.VaultBundleMap.IndexForSeason(s);
                 if (bundleIndex < 0)
                 {

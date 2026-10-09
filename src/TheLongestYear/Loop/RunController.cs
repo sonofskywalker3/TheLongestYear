@@ -228,7 +228,7 @@ namespace TheLongestYear.Loop
             _monitor.Log($"Run {Run.RunNumber} ready (seed {Run.Seed}). {DescribeWeek()}", LogLevel.Info);
 
             // Diagnostic: surface this save's resolved Vault (bus-repair) bundle indices + gold so a
-            // remixed-bundle save's renumbered vault room (e.g. 23-26 instead of the vanilla 34-37)
+            // remixed-bundle save's renumbered vault room (any indices, not only the vanilla 23-26)
             // is visible in the log. Confirms VaultBundleMap derived the right indices from live
             // bundle data without needing a vault-payment playtest.
             var vaultParts = new System.Collections.Generic.List<string>();
