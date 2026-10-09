@@ -46,10 +46,18 @@ public class PorchMarksTests
 
     // Live, 2026-10-09 (fresh Standard farm): with the shrine at -2 and the stash at +3 no even row
     // fits four (row 3 at gap 2 hits the stash, at gap 4 the shrine; row 4 stands under them), so
-    // they stand shoulder to shoulder half a tile off centre, Junimo 0 under the farmer.
+    // they stand as a triangle: three across under the farmer and the fourth one row lower, centred
+    // under him (designer, 2026-10-09, over the half-tile-off-centre row).
     [Fact]
-    public void Four_with_the_usual_fixtures_stand_shoulder_to_shoulder()
-        => Assert.Equal(new[] { T(0, 3), T(1, 3), T(-1, 3), T(2, 3) }, Choose(4, UsualFixtures));
+    public void Four_with_the_usual_fixtures_stand_as_a_triangle()
+        => Assert.Equal(new[] { T(0, 3), T(-1, 3), T(1, 3), T(0, 4) }, Choose(4, UsualFixtures));
+
+    [Fact]
+    public void The_triangle_is_only_for_four()
+    {
+        Assert.Null(PorchMarks.Triangle(3, 1));
+        Assert.Equal(new[] { (0, 3), (-2, 3), (2, 3), (0, 4) }, PorchMarks.Triangle(4, 2));
+    }
 
     [Fact]
     public void A_free_lower_row_is_used_before_going_off_centre()

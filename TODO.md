@@ -117,9 +117,8 @@ save and the copy thrown away, so the saves on disk are the untouched mornings.
   taken before the scene started (HUD up, farmer just out of the door) and that "Junimo" was the
   shrine statue. Live check passed 2026-10-09 with screenshots: 2, 3 and 4 Junimos with the shrine
   and stash in place, and again with an extra chest on (1,3); every Junimo fully visible.
-  For Jeff to judge: four Junimos on a fresh Standard farm stand shoulder to shoulder at (0,3) (1,3)
-  (-1,3) (2,3), half a tile right of centre (no centred row of four fits between the shrine and the
-  stash); with an extra chest on (1,3) Winter falls back to (0,3) (-1,3) (2,3) (-4,4) and Fall
+  Jeff's ruling 2026-10-09: four Junimos that fit no even row stand as a triangle, (0,3) (-1,3)
+  (1,3) under him and (0,4) below (unit-tested; not yet seen live). Was: half a tile right of centre; with an extra chest on (1,3) Winter falls back to (0,3) (-1,3) (2,3) (-4,4) and Fall
   spreads to (0,3) (-4,3) (4,3).
 - Not reproduced: once, on a throwaway farm driven hard with debug warps and `debug season`, the
   game woke on Winter 15 with `eventUp` stuck on and no event, so the planning hub waited forever; a

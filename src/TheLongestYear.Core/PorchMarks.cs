@@ -19,7 +19,7 @@ namespace TheLongestYear.Core;
 /// The choice, first that fits: the scene's own layout; then an even row centred on the farmer
 /// (equal spacing, the same distance either side; designer, picky about it), trying the rows
 /// below the porch nearest first and, in each row, a two-tile gap, three, one, then four; then,
-/// when no even row fits, an even count's row half a tile off centre (equal gaps, Junimo 0 still under
+/// for four Junimos, a triangle (three across under the farmer, one below him); then an even count's row half a tile off centre (equal gaps, Junimo 0 still under
 /// the farmer); and only then each mark of the scene's layout moves to the nearest clear tile.</summary>
 public static class PorchMarks
 {
@@ -68,6 +68,13 @@ public static class PorchMarks
                 IReadOnlyList<(int X, int Y)> even = EvenRow(count, row, gap);
                 if (even != null && AllClear(even, doorX, doorY, blocked)) return Absolute(even, doorX, doorY);
             }
+        // Four Junimos that fit no even row: three across under the farmer and the fourth one row
+        // lower, centred under him; symmetric on him with nothing moved (designer, 2026-10-09).
+        foreach (int gap in TriangleGaps)
+        {
+            IReadOnlyList<(int X, int Y)> triangle = Triangle(count, gap);
+            if (triangle != null && AllClear(triangle, doorX, doorY, blocked)) return Absolute(triangle, doorX, doorY);
+        }
         // Four Junimos cannot stand centred shoulder to shoulder on whole tiles: an even count with
         // an odd gap stands half a tile off centre, Junimo 0 still under the farmer.
         for (int row = FirstRow; row <= LastRow; row++)
@@ -78,6 +85,19 @@ public static class PorchMarks
                     if (near != null && AllClear(near, doorX, doorY, blocked)) return Absolute(near, doorX, doorY);
                 }
         return Nearest(layout, doorX, doorY, blocked);
+    }
+
+    /// <summary>The gaps the four-Junimo triangle tries, in order.</summary>
+    private static readonly int[] TriangleGaps = { 1, 2 };
+
+    /// <summary>Four Junimos as a triangle: Junimo 0 under the farmer on the first row, 1 and 2
+    /// <paramref name="gap"/> to his left and right, 3 one row lower under him. Null for any other
+    /// count.</summary>
+    public static IReadOnlyList<(int X, int Y)> Triangle(int count, int gap)
+    {
+        const int TriangleCount = 4;
+        if (count != TriangleCount || gap <= 0) return null;
+        return new[] { (0, FirstRow), (-gap, FirstRow), (gap, FirstRow), (0, FirstRow + 1) };
     }
 
     /// <summary>The odd gaps a near-even row tries, in order.</summary>
