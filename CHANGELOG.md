@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.41 - 2026-10-09
+
+### Added
+
+- Debug: `tly_animalpowers pet [friendship]`, `count` and `add <type> <n> [x y]` for headless animal power checks.
+
 ## 0.19.40 - 2026-10-09
 
 3571 tests.

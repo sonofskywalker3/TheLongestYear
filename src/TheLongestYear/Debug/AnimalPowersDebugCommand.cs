@@ -19,7 +19,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_animalpowers";
         public const string Description =
-            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | pet | incubate | incubators | grow [new|<name>] | revoke <id> | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
+            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | pet [friendship] | count | add <type> <n> [buildingX buildingY] | incubate | incubators | grow [new|<name>] | revoke <id> | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
 
         private const int DefaultSamples = 200;
         private const string RegularEggQid = "(O)176";
@@ -38,7 +38,11 @@ namespace TheLongestYear.DebugCommands
                     case "dig": Dig(monitor, Count(args, 1)); break;
                     case "speed": Speed(monitor, meta); break;
                     case "pets": Pets(monitor); break;
-                    case "pet": PetAll(monitor); break;
+                    case "pet": PetAll(monitor, args.Length >= 2 && int.TryParse(args[1], out int petFriendship) ? petFriendship : -1); break;
+                    case "count": CountAnimals(monitor); break;
+                    case "add" when args.Length >= 3 && int.TryParse(args[2], out int addCount):
+                        AddAnimals(monitor, args[1].Replace('_', ' '), addCount, args.Length >= 5 && int.TryParse(args[3], out int bx) && int.TryParse(args[4], out int by) ? new Microsoft.Xna.Framework.Point(bx, by) : null);
+                        break;
                     case "incubate": Incubate(monitor); break;
                     case "grow":
                     {
@@ -195,13 +199,14 @@ namespace TheLongestYear.DebugCommands
         /// rolls the pet's present on the day's first petting (Pet.cs 650) and drops it as debris beside the
         /// pet. Logs the items lying on the pet's map before and after (a second call the same day does not
         /// pet again, it only re-reads them).</summary>
-        private static void PetAll(IMonitor monitor)
+        private static void PetAll(IMonitor monitor, int friendship)
         {
             var pets = Game1.getFarm().characters.OfType<Pet>().Concat(Utility.getHomeOfFarmer(Game1.player).characters.OfType<Pet>()).ToList();
             if (pets.Count == 0) { monitor.Log($"{Name} pet: no pet.", LogLevel.Warn); return; }
             foreach (Pet pet in pets)
             {
                 GameLocation where = pet.currentLocation;
+                if (friendship >= 0) pet.friendshipTowardFarmer.Value = Math.Clamp(friendship, 0, 1000);
                 string before = DebrisItems(where);
                 bool handled = pet.checkAction(Game1.player, where);
                 PetData data = pet.GetPetData();
@@ -210,6 +215,37 @@ namespace TheLongestYear.DebugCommands
                             $"{(data?.Gifts?.Count > 0 ? data.Gifts.Min(g => g.MinimumFriendshipThreshold) : -1)}, day {Game1.Date.TotalDays}; " +
                             $"items lying here before [{before}] after [{DebrisItems(where)}].", LogLevel.Info);
             }
+        }
+
+        /// <summary>Growing Herd over real nights: animals per coop and barn, and the farm total.</summary>
+        private static void CountAnimals(IMonitor monitor)
+        {
+            var parts = new List<string>();
+            int total = 0;
+            foreach (Building b in Game1.getFarm().buildings)
+                if (b.GetIndoors() is AnimalHouse h)
+                {
+                    parts.Add($"{b.buildingType.Value}({b.tileX.Value},{b.tileY.Value}) {h.animalsThatLiveHere.Count}/{h.animalLimit.Value}");
+                    total += h.animalsThatLiveHere.Count;
+                }
+            monitor.Log($"{Name} count: day {Game1.stats.DaysPlayed}, {total} animal(s): {string.Join(", ", parts)}; Growing Herd owned {UpgradeChecker.HasUpgrade?.Invoke(AnimalPowers.GrowingHerd) == true}.", LogLevel.Info);
+        }
+
+        /// <summary>Adopts n new animals of a type into the building at that tile (the building's own
+        /// adoptAnimal, as Marnie's menu does), or into the first one with room. Spaces in the type as '_'.</summary>
+        private static void AddAnimals(IMonitor monitor, string type, int n, Microsoft.Xna.Framework.Point? at)
+        {
+            int added = 0;
+            for (int i = 0; i < n; i++)
+            {
+                Building home = Game1.getFarm().buildings.FirstOrDefault(b => b.GetIndoors() is AnimalHouse h && !h.isFull()
+                    && (at == null ? new FarmAnimal(type, 0, 0).CanLiveIn(b) : b.tileX.Value == at.Value.X && b.tileY.Value == at.Value.Y));
+                if (home == null) break;
+                var animal = new FarmAnimal(type, (long)Utility.RandomLong(), Game1.player.UniqueMultiplayerID);
+                ((AnimalHouse)home.GetIndoors()).adoptAnimal(animal);
+                added++;
+            }
+            monitor.Log($"{Name} add: {added} of {n} {type} adopted{(at != null ? $" into the building at ({at.Value.X},{at.Value.Y})" : "")}.", LogLevel.Info);
         }
 
         private static string DebrisItems(GameLocation where)
