@@ -368,11 +368,11 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
-    public void Keep_bus_unlocked_requires_all_four_vault_bundles()
+    public void Keep_bus_unlocked_requires_the_bus_repaired()
     {
         UpgradeDefinition? def = UpgradeCatalog.TryGet(VaultRules.KeepBusUnlockedId);
         Assert.NotNull(def);
-        Assert.Equal("bus:4", def!.RunReachRequirement);
+        Assert.Equal(VaultRules.BusReachMetric, def!.RunReachRequirement);
     }
 
     [Fact]

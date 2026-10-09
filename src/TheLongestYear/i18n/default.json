@@ -698,7 +698,7 @@
     "reach.house": "unlocked at house upgrade {{value}}",
     "reach.pet": "unlocked once you have a pet",
     "reach.shortcuts": "unlocked with Robin's shortcuts",
-    "reach.bus": "unlocked with {{value}} vault bundles paid",
+    "reach.bus": "unlocked once every Vault bundle is paid",
     "reach.room": "unlocked once that room is complete",
     "reach.special_orders": "unlocked once the Special Orders board opens (Fall 2)",
     "gmcm.auto-detect.tooltip": "Re-fire any mod cutscene that grants a recipe / mail flag / quest each loop, so wiped mod unlocks (e.g. SVE's guild) can be regained. Off = only vanilla furnace/cave scenes replay. Takes effect on next save load.",

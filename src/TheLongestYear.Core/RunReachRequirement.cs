@@ -31,7 +31,8 @@ public sealed class RunReachRequirement
         string[] parts = raw.Split(':');
         // Bare-flag form: a metric that is itself a yes/no (the evaluator supplies 0/1).
         if (parts.Length == 1
-            && (parts[0] == WalletKeepTable.StardropMinesMetric || parts[0] == SpecialOrdersBoardKeep.ReachMetric))
+            && (parts[0] == WalletKeepTable.StardropMinesMetric || parts[0] == SpecialOrdersBoardKeep.ReachMetric
+                || parts[0] == VaultRules.BusReachMetric))
             return new RunReachRequirement(parts[0], null, 1);
         // Keyed-flag form for metrics whose value is a name, not a number (the evaluator
         // supplies 0/1): scythe:golden, building:Coop, book:Book_Speed, mail:HasSkullKey,

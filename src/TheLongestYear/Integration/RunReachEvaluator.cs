@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Tools;
@@ -76,7 +77,11 @@ namespace TheLongestYear.Integration
                 "house"    => p.HouseUpgradeLevel,
                 "pet"      => p.hasPet() ? 1 : 0,
                 "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
-                "bus"      => VaultRules.BusReachValue(_runState?.Invoke()?.VaultBundlesPaid.Count ?? 0, VaultBundleMap.Count()), // paid this run; an Easy board's full Vault counts as 4
+                // Keep Bus Unlocked (Jeff, 2026-10-09): every Vault bundle on this board paid this
+                // run, or the Vault room repaired, whichever comes first.
+                VaultRules.BusReachMetric => VaultRules.IsBusRepaired(
+                    _runState?.Invoke()?.VaultBundlesPaid ?? new System.Collections.Generic.List<int>(),
+                    VaultBundleMap.Indices().ToArray(), VaultRoomRepaired()) ? 1 : 0,
                 // The run reached Fall 2, the day vanilla opens the board. Read straight from
                 // DaysPlayed, NOT the (patched) IsSpecialOrdersBoardUnlocked. DaysPlayed only drops
                 // back to 1 inside PerformReset, which runs after the perk screen closes, so the
@@ -119,6 +124,19 @@ namespace TheLongestYear.Integration
                 if (!cc.isBundleComplete(index)) return false;
             }
             return any;
+        }
+
+        private const string VaultRepairedMail = "ccVault";
+
+        /// <summary>The Vault room counts as repaired once vanilla marks the area complete or sends
+        /// its completion mail (the bus repair).</summary>
+        private static bool VaultRoomRepaired()
+        {
+            if (Game1.getLocationFromName("CommunityCenter") is StardewValley.Locations.CommunityCenter cc
+                && cc.areasComplete.Count > StardewValley.Locations.CommunityCenter.AREA_Vault
+                && cc.areasComplete[StardewValley.Locations.CommunityCenter.AREA_Vault])
+                return true;
+            return Game1.MasterPlayer?.mailReceived.Contains(VaultRepairedMail) == true;
         }
 
         /// <summary>Some wallet getters read Game1.MasterPlayer (HasRustyKey, HasSkullKey, the Dwarvish

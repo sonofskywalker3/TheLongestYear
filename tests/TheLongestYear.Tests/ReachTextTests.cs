@@ -12,6 +12,7 @@ public class ReachTextTests
     [InlineData("building:Stable", "unlocked once it's built")]
     [InlineData("mine:40", "unlocked at floor 40")]
     [InlineData("tool:watering_can:2", "unlocked with a Steel Watering Can")]
+    [InlineData("bus", "unlocked once every Vault bundle is paid")]
     public void Describe_names_the_requirement_in_words(string requirement, string contains)
         => Assert.Contains(contains, ReachText.Describe(requirement));
 
