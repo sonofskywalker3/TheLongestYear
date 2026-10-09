@@ -36,7 +36,9 @@ spawn groups, custom machines, shops, events, quests). Order, so nobody is asked
    hand (a pull request where the repo is open and the author is fine with it; Tech's Cross-Mod Bundles is
    no-AI, so never a PR there).
 
-### BUILT 0.18.144 (Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
+### RELEASED 0.18.144 (2026-10-05; Nerlana, Nexus posts, 2026-10-03): wrong-water fish in Lake and Specialty Fish
+Left (audit 2026-10-09): the in-game board check below was never recorded; no reply to Nerlana is recorded here
+(check the thread before drafting one).
 "My lake fish bundle asks for catfish and woodskip which are not actually lake fish and specialty
 fish asked for herring." A fish bundle took its water from every place ANY of its vanilla fish bites:
 Carp also bites in the Secret Woods pond and the Sewer, so Lake Fish counted the Woods as lake and
@@ -55,7 +57,9 @@ Field Research's fish part. Pools after: Lake 12, River 19, Ocean 18, Specialty 
 2026-10-05: Specialty Fish holds at most one Night Market fish (Midnight Squid, Spook Fish, Blobfish,
 Octopus count), the same cap Night Fishing has; a test board had asked for all three Submarine fish. Not checked in game yet (tly_genbundles). Reply to Nerlana after it ships.
 
-### BUILT (elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
+### RELEASED 0.18.144 (2026-10-05; elaineofshalott, Nexus posts, 2026-10-04): Keep Special Orders Board
+Left (audit 2026-10-09): the in-game checks listed at the end were never recorded as run; no reply to
+elaineofshalott is recorded here (check the thread before drafting one).
 Shipped in 0.18.144. New Buildings keep, flat 1,500 JP (not on
 the Gifts ladder): the Special Orders board outside Mayor Lewis's house is open from Spring 1 of every loop with
 its normal weekly orders. Unlocks once a run reached Fall 2, the day vanilla opens the board (reach
@@ -76,7 +80,9 @@ same without the keep (board down, no town order carried, completed list has no 
 perk screen shows the row as buyable and a Summer-fail one shows it Locked. Reply to elaineofshalott
 after it ships.
 
-### BUILT 0.18.140 (Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+### RELEASED 0.18.144 (built 0.18.140, 95e7d26; Jeff, 2026-10-02, from elaineofshalott): Extreme opens the desert in Spring week 3
+Left (audit 2026-10-09): no reply to elaineofshalott is recorded here. The "Not moved" items at the end are still
+not moved.
 elaineofshalott asked for Rhubarb on the harder difficulties only (gmastern1's thread, Nexus posts).
 Jeff's ruling: Hard stays as it is (desert early date Summer week 2). Extreme (Item rarity on Extreme)
 calls the bus repaired by Spring week 3, so Spring Crops can ask for Rhubarb and desert items reach
@@ -90,13 +96,16 @@ iridium, Prismatic Shard and Skull Cavern drops gate in Summer. Hard, Normal and
 Not moved: artisan goods and dishes made from desert items (no rule derives their hard week yet),
 Sandy's friendship recipes (pacing only).
 
-### BUILT 0.18.141 (gmastern1, Nexus posts, 2026-10-02): X in the recipe picker skipped the book
+### RELEASED 0.18.144 (built 0.18.141, c1139fe; gmastern1, Nexus posts, 2026-10-02): X in the recipe picker skipped the book
+Left (audit 2026-10-09): 0.18.142 added the headless check `tly_booktest`, but no run of it is recorded; no reply
+to gmastern1 about this fix is recorded here.
 Picking a recipe to bank at the end of a run, then pressing X on the recipe list, closed the whole
 Cookbook/Craftbook and started the run. Now X, Escape and controller B on the recipe list step back
 to the slot list; from the slot list they close the book as before. Both books. Not checked in game
 yet. Reply to gmastern1 after it ships.
 
-### BUILT 0.18.143 (sigyn2002, Nexus bugs, 2026-10-03): crop fairy left wild seeds as crops
+### RELEASED 0.18.144 (built 0.18.143, 99e0582; sigyn2002, Nexus bugs, 2026-10-03): crop fairy left wild seeds as crops
+Left (audit 2026-10-09): no reply to sigyn2002 or bug status flip is recorded here (check the bugs tab).
 The crop fairy grew wild seeds (Spring/Summer/Fall/Winter Seeds) to ready without turning them into
 forage: they kept a mid-growth sprite and all harvested as normal-quality Wild Horseradish (the
 placeholder harvest). Vanilla bug too, reproduced on a game with no TLY: vanilla only converts wild
@@ -104,7 +113,11 @@ seeds in the overnight crop update, and the fairy comes after it. Now any full g
 a wild seed crop into random seasonal forage on the spot, same as the overnight update. A stuck crop
 already in a save converts the next night if left unpicked. Reply to sigyn2002 after it ships.
 
-### IDEA (Jeff, 2026-10-02): Extreme ramps up with every loop
+### IDEA, NOT STARTED (Jeff, 2026-10-02): Extreme ramps up with every loop
+Audit 2026-10-09: nothing of the ramp is built. No spec or plan exists, and no code reads the loop count for
+difficulty (only BundleHold, DejaVuRules and the run bookkeeping read it). The one Extreme change made the same day
+is separate and fixed, not per loop: 0.18.140 moves the desert to Spring week 3 on Extreme (released 0.18.144).
+Left: brainstorm and spec, then build.
 On Extreme, each reroll gets harder the more loops a player has run. Loop 1 boards should be
 impossible on the first try but beatable by about loop 3; once a player reaches loop 3 the board
 starts asking for things that are impossible until about loop 5, and so on. Jeff's reasoning: with
@@ -113,7 +126,9 @@ enough loops anything is possible at any time, and Extreme should reflect that. 
 Keep Seeds/Tools, the Junimo stash and books carry power forward), which dates move per loop, and
 whether the ramp is per save or resets when a season is cleared.
 
-### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; waiting on player logs
+### RELEASED 0.18.139 (2026-10-02): season crop gates and Ginger Island fish; DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09)
+Both gmastern1 and paigefromabook were asked for a SMAPI log on 2026-10-02; nothing came back. The last bullet
+(merge master into `story`) is done: master has been merged into `story` since (e.g. 8197880, master 0.19.20).
 - **gmastern1 (Nexus posts):** Spring Crops showed complete in Winter without Rhubarb. Released code
   cannot complete an unfilled bundle or swap Rhubarb on load, and a Spring Crops needing all 4 with
   Rhubarb could not pass Spring 28, so his was most likely 3-required (Easy or pick-3-of-4). Real
@@ -128,7 +143,9 @@ whether the ramp is per save or resets when a season is cleared.
 - Open: merge master into `story` hits real conflicts (BundleEngine, WorldResetService, ModEntry,
   i18n/default.json); aborted, needs its own task.
 
-### BUILT 0.18.135 (sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty
+### RELEASED 0.18.135 (2026-10-02; sarahwinchester97, Nexus posts, 2026-10-01): stashed dresser came back empty, DONE
+Closed out: released, and the note to sarahwinchester97 was posted 2026-10-02 (see the 0.18.139 entry), which
+covers the "reply now due" line at the end.
 Spec 2026-10-01-stash-nesting-farm-decor-worn-gear-design (with Addendum 1 and 2), plan of the
 same date. The stash keeps a container's hats, shirts, pants, furniture and wallpaper; anything
 else inside is refused at deposit. Stashed items keep dye, boot tailoring, Combined Ring rings,
@@ -163,7 +180,9 @@ decorations, no furniture), Keep Worn Gear (Loadout, 1,000 JP), Keep Farmhouse F
 - Reply to sarahwinchester97 now due (bug-reply-after-fix); draft goes to Jeff first. Her current
   dresser is gone; the rescue covers only saves where it is still in the stash.
 
-### BUILT 0.18.99 (elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+### RELEASED 0.18.118 (2026-09-30; built 0.18.99 to 0.18.113; elaineofshalott, Nexus posts, 2026-09-30): Sticky bundle asked for one Acorn
+Left (audit 2026-10-09): only the "Open leftovers" of 0.18.113 (Home Cook's egg/milk category asks and Treasure
+Chest amounts have no quantity rule; 9 to 23 dishes stay x1). Reply posted.
 Jeff replied 2026-09-30 guessing a production-chain leak. It was not a leak: the Sticky recipe
 (since 0.16.116) re-rolled from "Sap or resource", the whole Resource bucket plus TapperGoods (which
 adds Acorn, Maple Seed, Pine Cone, Moss, Hardwood). Jeff 2026-09-30: "anything in the game that is
@@ -188,8 +207,11 @@ Miner's Treat. tly_itemmodel: all 12 placed (Maple Bar effort 7, via Sneak Peek)
   asks and Treasure Chest amounts have no rule, 9 to 23 dishes stay x1.
 - RELEASED 0.18.118 (2026-09-30). Follow-up reply to elaineofshalott POSTED on Nexus posts 2026-09-30.
 
-### MULTIPLAYER backlog (for when Jeff takes on multiplayer support)
+### MULTIPLAYER backlog, NOT STARTED (for when Jeff takes on multiplayer support)
 Not supported today. Collected here so the multiplayer pass starts from a list. Not fixing now.
+Audit 2026-10-09: none of the three user5726212 items below is fixed. The only multiplayer decisions taken since
+are host-only menus: the statue's Boosts tab, and the Donate tab added with the Randomizer (c47af60, 0.19.0).
+The `farmhandData` leak (own entry further down) is also still open.
 - **user5726212 (Nexus posts, 2026-09-29), local co-op.** Jeff replied 2026-09-30 (filed, not planned yet).
   - **A farmhand joining re-offers the weekly theme pick**, and that pick changes the Season Goals book
     but not the Community Center, so the two disagree. The week's theme state is probably being
@@ -203,8 +225,15 @@ Not supported today. Collected here so the multiplayer pass starts from a list. 
   "Multiplayer: decide"), netWorldState `farmhandData` leaking across the rewind (own item below),
   multiplayer feature ask from CausticOptimist.
 
-### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29)
+### Nijah follow-up + Dummy Dog Ben's stream (2026-09-29): all RELEASED (0.18.84 / 0.18.98) except one debug-only bug
 Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is contacting him. Mods: no content mods.
+Audit 2026-10-09: every fix below shipped in 0.18.84 or 0.18.98 (the BUILT 0.18.85 to 0.18.89 items are in
+0.18.98 too); Ben is credited in the README, the Nexus description and Thanks (ae8a508). Nijah's randomizer answers
+fed the Randomizer, released 0.19.0. What is left:
+- The debug-only `tly_reset` / PendingDay28 bug below: still not fixed (`RunState.BeginNewRun` does not clear
+  PendingDay28). Real resets are not affected.
+- Not seen in game: tooltip wrapping by hover, the petless-farm Marnie visit, the Year 1 checkbox tooltip text
+  (Jeff may reword its placeholder).
 - **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
   Cauliflower, Blue Jazz in Spring week 1). Fixed in BundleRequirement; in-game tly_goals re-checked.
 - **RELEASED 0.18.84 (2026-09-29): tooltips ran off screen** (Sneak Peek, per Jeff watching the stream). HoverText.Draw wraps all four menus. Not
@@ -251,7 +280,7 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 - Nijah's randomizer answers: rerolls keep item balancing but want variety between rolls; buff/drawback
   pairs could be random as long as a pair never hits the same skill. Feeds the randomizer spec.
 
-### BUG (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
+### RELEASED 0.18.81 (2026-09-28), replied (Ninjamaid, Nexus posts, 2026-09-28): Ostrich Mayo on an Extreme board
 Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + Ostrich Egg.
 - **RELEASED 0.18.81 (2026-09-28).** Reachability now reads machine rules and farm animals. In-game check with
   the mod: kept-off list went from 2 items to 4 (+ Ostrich Egg, + Ostrich Mayo), nothing else.
@@ -259,7 +288,9 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
   gives an unbuyable animal a fixed step, not "unplaced"). Harmless now that reachability drops it.
 - Follow-up reply POSTED on Nexus 2026-09-29.
 
-### BUG (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind
+### RELEASED 0.18.81 (victoriatauanem, Nexus posts, 2026-09-28): Normal bundles turned into custom bundles at the rewind; DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09)
+The fix shipped; she was asked on 2026-09-29 whether the farm started with TLY and has not answered. The "other
+possible cause" below stays unfixed and unconfirmed until she does.
 "I was playing with normal bundles, but when I reset the year, I got random custom bundles instead." No log.
 - **RELEASED 0.18.81 (2026-09-28).** Cause: the new-game pick was mirrored into config.json and every reset read
   config.json, so any later TLY Custom new game flipped older Normal saves. Fix: MetaState.ChosenBundleSource
@@ -271,8 +302,14 @@ Modded item from Blue Eggs and Golden Mayo (Nexus 20266): Mayonnaise Machine + O
   save started with TLY installed.
 - Reply POSTED on Nexus 2026-09-29: fix explained, asked about other saves and whether the farm started with TLY. Waiting on the answer.
 
-### BUG + IDEAS (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
+### RELEASED: reroll fix 0.18.79, the whole Randomizer 0.19.0 (2026-10-07) (Nijah, Nexus posts, 2026-09-28): theme reroll repeats; randomizer settings section
 Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply POSTED on Nexus 2026-09-28.
+Audit 2026-10-09: all three points are answered by shipped code. The reroll repeat was fixed in 0.18.79; "theme
+items never change" became the Random theme items option and "decouple buff/debuff pairs" the Random pairings
+option, both in the 0.19.0 Randomizer, which also shipped every other option in the section below (Theme rerolls
+Off / Costs JP / Free, random multiplier, mystery card, double week, wildcard days, shrine donations, random bundle
+rewards, random cart days). Its CHANGELOG credits Nijah. The "NOT scheduled: target 1.1" line below is out of date:
+it shipped on master as 0.19.0. Left: no message telling Nijah the Randomizer is out is recorded here.
 - **RELEASED 0.18.79 (2026-09-28, with Keep Fish Pond): reroll shows the same pair.** Cause: a reroll shuffles only the
   themes that qualify (not picked this month, 2+ askable goals). A week with exactly 2 qualifiers (late
   month, thin activity themes) can only ever show that one pair. Fix, reroll path only: keep the
@@ -285,9 +322,10 @@ Nijah turned on the (off-by-default) Re-roll Themes switch. Three points; reply 
 - **Decouple buff/debuff pairs.** Pairings are hard coded (ThemeModifiers). Asked Nijah why: randomization
   or something else.
 
-#### RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
-SPEC WRITTEN on branch `randomizer`: `docs/superpowers/specs/2026-09-28-randomizer-design.md`. NOT
-scheduled: target 1.1, after the story release, while players wait for Year 2 (2.0). The notes below
+#### RELEASED 0.19.0 (2026-10-07): RANDOMIZER settings section (Jeff, 2026-09-28): all off by default, trade balance for variety
+Spec `docs/superpowers/specs/2026-09-28-randomizer-design.md`, plans `docs/superpowers/plans/2026-10-06-randomizer-0.19.md`
+and `...-randomizer-0.19-part2.md`. (Was: "NOT scheduled: target 1.1, after the story release"; it was built and
+released on master instead.) Every bullet below shipped except the rejected random starting kit. The notes below
 are the brainstorm; the spec is the source of truth.
 - **Random theme items**: drop the gate-first ordering and effort weighting. Keep the "obtainable by this
   week" rule so no goal is impossible.
@@ -320,7 +358,10 @@ are the brainstorm; the spec is the source of truth.
   down instead, same size and slot.
 - REJECTED: random starting kit.
 
-### REQUEST (elaineofshalott, Nexus posts, 2026-09-27): keep fish ponds into the next loop
+### RELEASED 0.18.79 (2026-09-28): Keep Fish Pond (elaineofshalott, Nexus posts, 2026-09-27: keep fish ponds into the next loop)
+Audit 2026-10-09: her ask (the empty pond) is fully met. The only open point is Jeff's own undecided idea of a
+stocked pond / keep-a-fish power; nothing of it is built, and she said fish are fine in a Junimo Stash slot. With
+several ponds the one with the most fish is the one kept (FishPondKeep.PickKeptPond). No other work left.
 Jeff asked her back on Nexus (2026-09-27): rebuild cost only, or the fish too? Is Roe / Aged Roe / Caviar hard to get
 in time? HOLD the 0.18.77 release until she answers; her reason decides empty vs stocked.
 Sarahwinchester97's "more than one pet?" answered the same day (Keep Pet brings every pet back).
@@ -340,13 +381,13 @@ Fixed in 0.18.74, shipped in 0.18.76 (GitHub, Nexus file, version, description, 
 - 0.18.76: TLY reads item-query shop and spawn lines (ALL_ITEMS + PerItemCondition, as Cornucopia writes
   them) for every mod, and year-2 locks close a route. Spring Rose and the other rare Cornucopia flowers are
   kept off the board, verified live.
-- Dye bundle color-tag cleanup is still on the list (Jeff replied 2026-09-25).
+- Dye bundle color-tag cleanup: done in 0.18.85 to 0.18.88 (vanilla Dye items plus grown and gathered things,
+  colours from the game's dye-pot shade groups), released 0.18.98.
 
 ### RELEASED 0.18.58 (2026-09-25): restart the year, season pity removed, Rare Fish text
 GitHub release v0.18.58, Nexus file (CI), version field, description (README and bbcode now identical) and
 changelog all set via Chrome. Still to do:
-- Retake `release-notes/settings-difficulty.png` (README only; still shows the Season pity dial, ten dials).
-  Needs the game's settings menu open, so it needs Jeff's OK to drive the desktop.
+- DONE 2026-09-25 (bb175e6): retook `release-notes/settings-difficulty.png` (nine dials, Hold prices).
 - DONE 2026-09-25: told tanky24u (Nexus posts) the restart and the Rare Fish text shipped, lore books later.
 
 ### FIXED 0.19.22 (0b354a2, 2026-10-09, not released yet): a kept building can move to another building's spot
@@ -362,13 +403,19 @@ buildings came back on their own spots.
 Keep Greenhouse / Quarry Bridge / Glittering Boulder / Minecarts were never buyable: RunReachRequirement.Parse
 did not know the "room:" keyed flag, so the gate always failed (00ac8e5). Replied to tanky24u and marked Fixed in 0.18.72 (2026-09-25).
 
-### IDEAS (Jeff, 2026-09-25): more animal powers
+### IDEAS, NOT BUILT (Jeff, 2026-09-25): more animal powers
+Audit 2026-10-09: neither idea below is built (no hay or second-building row in UpgradeCatalog). The animal powers
+that did ship around them: the Herd Book (0.18.72, kept animals with hearts), the ten "start with a" keeps made
+buyable (0.18.72), Keep Fish Pond (0.18.79). 0.19.22 fixed the kept building jumping to a second building's spot,
+which a second-coop keep would build on.
 - **Silo keeps X hay:** Keep Silo (150 JP) brings the silo back empty. A power that carries some hay across a rewind
   (tiers, e.g. 60 / 120 / 240) would feed Herd Book animals in a winter-length run. Needs a spec.
 - **Keep a second coop / barn:** only matters for "start with a" room. The full Herd Book fits one Deluxe of each
   (9 + 9 of 12), and start_* animals take what is left. Raise if players ask.
 
-### STORY MERGE NOTE (2026-09-24): voluntary restart must clear the Year 2 wall
+### DONE on `story` (checked 2026-10-09): voluntary restart must clear the Year 2 wall
+`VoluntaryRestart.ClearWonRun` on `story` also sets `Year2WallArmed = false`, called from the Restart branch in
+RunController. Nothing to do on master. Original note:
 When master is next merged into `story`, the `Day28Branch.Restart` case in `RunController.OnCutsceneEnded`
 must also clear `MetaState.Year2WallArmed` (spec: a restart after Keep playing works like "Start a new loop").
 Master has no such field, so nothing does it yet.
@@ -427,8 +474,10 @@ never buyable (gate never met); Ostrich now lives in a Barn.
 Jeff (2026-09-25, option C): Herd Book purchases count only Herd Book slots against kept room; start_* purchases
 count both; Herd Book animals move in first on a rewind, start_* animals get what is left (0.18.70). Also: the remove prompt says "won't come back next loop
 unless you put it back in", which is wrong for an animal no longer on the farm (removing it loses it).
-Later (all three books): Escape/B in the picker should go back to the slot list, not close the book; picker
-scroll sound.
+Later (all three books): Escape/B in the picker should go back to the slot list, not close the book (DONE for the
+Cookbook and Craftbook in 0.18.141, released 0.18.144; not checked for the Herd Book picker); picker scroll sound
+(not done).
+Still open (audit 2026-10-09): the remove prompt text above is unchanged in i18n (`menu.herdbook.remove-confirm`).
 Original notes:
 Ask: an upgrade to keep an animal on rewind, like Keep Pet and the building keeps. Jeff: "I'll do it, just
 not excited about it at the moment." His open questions: one keep per animal ("keep 1 duck, X JP") or one
@@ -463,7 +512,7 @@ rod always works as if it has a Curiosity Lure." Jeff already told him it is fix
 - **Artichoke odds question (0.18.46, shipped 0.18.47).** Year-Two Seeds is Spring and Summer only. 0.18.46
   edited the wrong description (Pierre's year-2 seeds upgrade); both texts corrected in 0.18.50.
 
-### FIXED 0.18.27 (2026-09-17, on master, pushed, NOT released): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
+### RELEASED 0.18.28 (2026-09-17; fixed 0.18.27): a repeat festival visit trapped the player (asteriaths, Nexus post 17 Sep)
 Jeff: "figure out the already danced flag, clear it if we're not, and if they don't dance with anyone they need to
 be able to leave." Findings from the PC decompile: vanilla has NO persistent "already danced" flag. The partner
 lives in `Farmer.dancePartner`, set when an NPC accepts (spouse, or 4 hearts and not married, +250 friendship)
@@ -478,7 +527,7 @@ The partner is deliberately NOT cleared on re-entry: clearing it would let the p
 friendship on every re-entry. Say the word if you want it cleared anyway (with the bonus guarded).
 Debug: `tly_festival mainevent` answers the host headlessly. Live-checked on the Rodger save: dance played, re-entered, "offering to leave" logged, Yes ended the festival, player back on the Farm.
 
-### FIXED 0.18.26 (2026-09-17, on master, pushed, NOT released): every class of unplaceable item kept out of Dye and the by-kind buckets
+### RELEASED 0.18.28 (2026-09-17; fixed 0.18.26): every class of unplaceable item kept out of Dye and the by-kind buckets
 Jeff: "why not fix ALL classes for the dye bundle the same way?" Dye and the by-kind buckets (Gem, Resource,
 Egg, Milk, AnimalProduct, Artifact, Mineral, ArtisanGood, MonsterLoot) walk every vetted object, so each leak
 (Extended Family fish, island dishes, Golden Egg, the walnut book) was being banned one id at a time. Both now
@@ -486,7 +535,7 @@ go through the existing `Placeable` filter (`model.IsPlaced`) that Chef's and Ch
 exempt (hats and weapons have no model row). The id bans stay as belt and braces. Live: five boards rolled
 deterministically on 0.18.26, `tly_gatecheck` no impossible gates.
 
-### FIXED 0.18.24 (2026-09-17, on master, pushed, NOT released): Dye asked for the Queen of Sauce Cookbook (SilviaVA, Nexus post 17 Sep)
+### RELEASED 0.18.28 (2026-09-17; fixed 0.18.24): Dye asked for the Queen of Sauce Cookbook (SilviaVA, Nexus post 17 Sep)
 Jeff replied on the 17th promising a patch. Cause: the Book pool is filtered to `AvailabilityWeeks.BookWeeks`
 (year-1 routes), but the colour index that feeds the Dye recipe walked every vetted object, and every book
 carries a colour tag, so the walnut-gated, Volcano, year-2 and drop-only books came back in through Dye
@@ -496,12 +545,12 @@ the builder; the real Data/Objects export (patch export, 2026-09-17) confirms ev
 -102 or -103, so the guard covers all of them. Released in 0.18.28; SilviaVA replied 17 Sep (out now).
 
 ### Sweep 2026-09-17 (Nexus bugs + posts x4 mods, Reddit x4, GitHub x4): one new post, no bugs-tab reports
-- **asteriaths, TLY Nexus post 17 Sep, NO REPLY YET:** went to the Flower Dance a second time the same day,
+- **asteriaths, TLY Nexus post 17 Sep (replied 17 Sep):** went to the Flower Dance a second time the same day,
   could not dance with Shane again and found no way out (no-clipped). Fixed in 0.18.27, released in 0.18.28, replied 17 Sep.
 - FayGabi (17 Sep) thanked Jeff for his answer; nothing owed. Everything else was answered by Jeff on the 16th
   and 17th. Other mods: nothing new. Reddit: nothing since 14 Sep. GitHub: no issues on any repo.
 
-### BUILT 0.18.17 to 0.18.23 (2026-09-17, on master, pushed, NOT released): Cookbook and Craftbook slots work like the stash
+### RELEASED 0.18.28 (2026-09-17; built 0.18.17 to 0.18.23): Cookbook and Craftbook slots work like the stash
 Jeff picked option 1 first (three tiers, grandfather the overflow), then added the fourth tier from option 2 at 1200 JP
 (2026-09-17 midday), so the ceiling is back at 20. Was: NEXT ON MASTER, release before the story update.
 `UpgradeCatalog.CookbookSlotCount` / `CraftbookSlotCount` are now 4 + tier * 4 (`BookBaseSlots`,
@@ -544,7 +593,7 @@ Either way: GMCM and shop descriptions (`upgrade.cookbook_N.desc`, `upgrade.craf
 new totals, the Bundle Log is unchanged, prices stay unless Jeff says otherwise, and the story branch
 merges master in afterwards so the opening scene can rely on the free slots.
 
-### Sweep 2026-09-16 (Nexus bugs + posts, Reddit x4, GitHub x4): nothing waiting on a reply
+### Sweep 2026-09-16 (Nexus bugs + posts, Reddit x4, GitHub x4): nothing waiting on a reply; open: ThirteenRedCats bundle-count dial (parked), erhatch731 (DORMANT)
 
 Everything reported between 0.18.1 and 0.18.11 was fixed and answered by Jeff on 15 Sep (see
 CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest first:
@@ -563,7 +612,7 @@ CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest fi
   so Easy and Normal can always satisfy every requirement. Log this as the player voice behind the
   "every ask must have a route on the difficulty it rolls at" rule; Hard and Extreme remain allowed
   to be lean.
-- **WATCH (erhatch731, Nexus post 16 Sep):** Qi Fruit turned up in a randomised bundle. Jeff asked
+- **DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09). WATCH (erhatch731, Nexus post 16 Sep):** Qi Fruit turned up in a randomised bundle. Jeff asked
   for the mod version (Qi Fruit has been vetted since 0.12.16, so an old build is the likely story).
   No reply yet. If the version is 0.18.x, that is a real leak in the exclusion list and needs a repro.
 - **CLOSED, not ours (Beasley, 15 to 16 Sep):** mines opened to floor 100 on a fresh save. Reporter
@@ -571,12 +620,14 @@ CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest fi
 - **DOC DRIFT, fixed this sweep:** README beta banner said 0.18.4 while the Nexus banner said
   0.18.11. STATUS.md was last written at 0.18.1.
 
-Other channels: Android Consolizer bug 1127706 (can't install 4.0.2) is still Needs more info with
+Other channels (DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09). for AC 1127706): Android Consolizer bug 1127706 (can't install 4.0.2) is still Needs more info with
 Jeff's 9 Sep question as the last word; its posts tab has nothing newer than the Estallking request
 already logged below. Cart Catalog and Nap Time are silent. All four Reddit threads and all four
 GitHub repos have nothing new since 8 Sep.
 
-### TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit — measure real yields in game, clamp requirement rolls off the measured average
+### SHIPPED 0.16.178 (forage clamp) and 0.17.0 (quantity bands); was TOP PRIORITY (Jeff, 2026-08-30): quantity-realism audit: measure real yields in game, clamp requirement rolls off the measured average
+Audit 2026-10-09: done; what is still open lives in the two entries below (0.17.0 leftovers, follow-ups A to E).
+The "Reply owed" to Nijah at the end: 0.16.178's changelog credits her, but no reply is recorded in this repo.
 
 #### RULING (Jeff, 2026-08-30) — the numbers and the bands
 
@@ -669,6 +720,8 @@ Open after the release, from the Codex review and the sweeps (test-output/boards
   banded. **SETTLED by Jeff 2026-09-16: this is how it should be. Do not bring it up again.**
 - Spot-check the modelled fish, crab pot and mine bases with a real rod / pots / pickaxe on the
   throwaway save before trusting them further (the forage table is the only MEASURED one).
+  Audit 2026-10-09: closed. Crab pots measured and kept (D), fish model kept by Jeff's ruling (E), mine and
+  monster bases moved to the measured sweep in 0.18.16 (a33365b).
 - Winter Foraging has a five-item pool, so its items land on every board; Summer/Fall pools are
   nearly as tight. Pool size, not the roll.
 
@@ -680,7 +733,7 @@ Every domain now rolls basis x band by step (`AskBands`, `QuantityAskPass`, base
 spot check of the modelled crab pot numbers, E as an in-game spot check of the modelled fish
 numbers. Everything else in this block is superseded.
 
-### Follow-ups to the quantity clamp (2026-08-30), triaged by Jeff 2026-09-16: A and B PARKED, Morel CLOSED, D RUN 2026-09-16, E needs a tool
+### Follow-ups to the quantity clamp (2026-08-30): A and B PARKED, Morel CLOSED, D CLOSED, E DONE (mine bases moved to the measured sweep in 0.18.16, a33365b; fish model kept); C's Secret Woods half, the per-map sweep and the tly_forageyield keep/retire call still open
 
 Shipped so far: `ForageAskLimits` (v0.16.172), wild-seed exemption (v0.16.174), desert gating
 (v0.16.175). Measured data: `docs/superpowers/notes/forage-sweep-results.csv` (3 full-year runs,
@@ -759,7 +812,7 @@ Original notes:
 **Also still open from the same sweep:** the Mystic Tree item below, and `tly_forageyield`
 (v0.16.170) is now superseded by measured data for forage - keep or retire it deliberately.
 
-### FIXED 0.16.176: Extended Family fish could be asked for (Nexus bug, spenderg, 30 Aug)
+### RELEASED 0.16.178 (2026-08-31; fixed 0.16.176): Extended Family fish could be asked for (Nexus bug, spenderg, 30 Aug)
 
 "My river fish bundle requires ms. Angler which can only be caught during a post community center
 Qi quest." All five Extended Family fish (898-902) carry `ExcludeFromRandomSale=false` in
@@ -772,9 +825,10 @@ forage pool (Qi Beans ride DROP_QI_BEANS) and the quality-eligible set. Clause-a
 vanilla writes the PARENT legendaries as NEGATED rows of the same query, so a substring match would
 have deleted Legend, Crimsonfish, Angler, Glacierfish and Mutant Carp outright.
 
-**Reply to spenderg still owed** once this ships (draft goes to Jeff in chat first).
+**Reply to spenderg still owed** once this ships (draft goes to Jeff in chat first). Audit 2026-10-09: shipped in
+0.16.178, whose changelog credits spenderg; no reply is recorded in this repo.
 
-### BUILT 2026-08-29 (0.16.164, local): "Gifts of the Junimos", keep the CC room rewards. Five rows in their own category (greenhouse put back where the player moved it, quarry bridge, boulder, minecarts, bus), reach = that room completed this loop, ladder 1,000 to 5,000 (`GiftLadder`), completion mail restored at reset only. Correction to the original note: the Crafts Room reward is the QUARRY bridge (Mountain), not the beach bridge. Original brief below.
+### RELEASED 0.16.167 (2026-08-29; built 0.16.164): "Gifts of the Junimos", keep the CC room rewards. Five rows in their own category (greenhouse put back where the player moved it, quarry bridge, boulder, minecarts, bus), reach = that room completed this loop, ladder 1,000 to 5,000 (`GiftLadder`), completion mail restored at reset only. Correction to the original note: the Crafts Room reward is the QUARRY bridge (Mountain), not the beach bridge. Original brief below.
 
 #### Original brief
 
@@ -819,7 +873,7 @@ any explanation; technical detail short and in the player's words.** See the wor
 
 RELEASED 0.16.167 (2026-08-29): everything from 0.16.18 to 0.16.167 is public. Bug replies POSTED 2026-08-30 (Jeff approved each): gazumbrado bus (Fixed), gazumbrado CC-complete 1125215 (Fixed), Bumblewyn stash (Fixed), ChaoticMindset festival (Not a bug), impossible-items 1122358 (Fixed), nyxnyx2234 posts follow-up. Bugs tab is clear.
 
-### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): two real new bugs, one retracted
+### 10th sweep (2026-08-29 afternoon, Nexus bugs + posts + Reddit): CLOSED, both bugs fixed and released in 0.16.167, replies posted 2026-08-30
 
 - **NEW, unfixed: "Bus Unlock not working" (Nexus bug, gazumbrado, 29 Aug 01:26, 0.16.17).** Spent
   1,500 JP on `keep_bus_unlocked`; the only effect was the vault gate reading satisfied. The desert
@@ -849,9 +903,9 @@ RELEASED 0.16.167 (2026-08-29): everything from 0.16.18 to 0.16.167 is public. B
   bundles), already answered; fixed on master in 0.16.26 to 0.16.30, unreleased. Nothing else new
   since the 9th sweep. Reddit thread: no comments from anyone but Jeff since July.
 
-### BUILT 2026-08-29 (0.16.135 to 0.16.144, local, not released): per-slot ledger mirrored from the CC board
+### RELEASED 0.16.167 (2026-08-29; built 0.16.135 to 0.16.144): per-slot ledger mirrored from the CC board
 
-Spec `docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan `docs/superpowers/plans/2026-08-29-per-slot-ledger.md`. The ledger is per slot and re-read from the board on load, before the Season Goals page and before the gate; `tly_gateneeds` prints what the gate still wants. Live-checked over the bridge (fresh board, Hardwood credited to one bundle, gate passed at Spring 28); the shared-item case is unit-tested only because the custom board never asks an item twice. Jeff still owes the Season Goals page a look. Original report kept below.
+Spec `docs/superpowers/specs/2026-08-29-per-slot-ledger-design.md`, plan `docs/superpowers/plans/2026-08-29-per-slot-ledger.md`. Only open point: Jeff's look at the Season Goals page (no record that it happened). The ledger is per slot and re-read from the board on load, before the Season Goals page and before the gate; `tly_gateneeds` prints what the gate still wants. Live-checked over the bridge (fresh board, Hardwood credited to one bundle, gate passed at Spring 28); the shared-item case is unit-tested only because the custom board never asks an item twice. Jeff still owes the Season Goals page a look. Original report kept below.
 
 #### Original: #1 PRIORITY (Jeff 2026-08-28): season goals and the gate credit an item to EVERY bundle that lists it (found live on emmalution's stream, v0.16.17, still true at 0.16.71)
 
@@ -895,7 +949,17 @@ the same `MissingForSeason` the Season Goals page uses: count still needed befor
 and the ingredient ids. As of v0.16.17 nothing prints gate progress: `tly_runstate` shows only
 `donated=<count>`, `tly_gatecheck` is an obtainability audit.
 
-### 2026-08-28 brainstorm batch (Jeff, approved for TODO, not scheduled)
+### 2026-08-28 brainstorm batch (Jeff): mostly RELEASED in 0.16.167; open: class rename, Night Owl, Backpack Organizer, two stubs (status line below)
+Audit 2026-10-09, item by item:
+- Vocabulary: the docs now say "upgrade menu" for the rewind buy menu (memory tly-shrine-terminology), but the
+  class rename never happened: `JunimoShrineMenu` / `OpenShrineShop` still exist. Left: the rename, if still wanted.
+- Keep Horse needs a stable: FIXED 0.16.155, released 0.16.167.
+- Locked upgrades section on the planning board: BUILT with the shrine tabs (Plan tab, `shrine.plan.locked`),
+  released 0.16.167.
+- Better Start / trigger actions: FIXED 0.16.154 (path b plus the GMCM toggle), released 0.16.167.
+- Shrine tabs + JP Boosts: released 0.16.167. Crash Course and Elevator Pass are in the boost roster. Night Owl and
+  Backpack Organizer were deferred by the spike and are still not built (Jeff to rule).
+- STUB daily luck and themes; STUB chosen drawbacks ("deal with the devil"): not designed, not built.
 
 **Vocabulary correction, repo-wide (docs, code comments, i18n, TODO/STATUS, specs).** The
 **shrine** is the Junimo statue outside the farmhouse; walking up to it opens the planning board
@@ -1073,7 +1137,7 @@ liability for a duration; no JP involved. (3) **Mr. Qi** challenges, which are c
 "take a handicap for a reward", but he is late-game and Ginger Island gated. Recommendation to
 discuss: (1) for JP, (2) for gold, keeping the currencies tied to their factions.
 
-### BUILT 2026-08-27 (0.16.19 to 0.16.25, pushed, NOT released), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
+### RELEASED 0.16.167 (2026-08-29; built 0.16.19 to 0.16.25), LIVE SMOKE PASSED: keep wallet items and Stardrops with a JP purchase
 
 Built the same night from the approved spec `docs/superpowers/specs/2026-08-27-keep-wallet-stardrops-design.md`
 and plan `docs/superpowers/plans/2026-08-27-keep-wallet-stardrops.md`: `WalletKeepTable` (18 rows,
@@ -1104,7 +1168,7 @@ Open design points for the brainstorm: pricing bands (a Skull Key or a Stardrop 
 Bear's Knowledge), whether Stardrops are one row each or a tiered chain, and whether the Skull Key
 keep should also unlock the Skull Cavern door tile state.
 
-### PARKED (Jeff 2026-09-16: "SVE can wait"): SVE board audit (found 2026-08-27 during the 0.16.17 release smoke). The manifest-mismatch half was fixed in 0.16.158; only the ExcludedLocationMarkers ruling is left.
+### PARKED, still (checked 2026-10-09) (Jeff 2026-09-16: "SVE can wait"): SVE board audit (found 2026-08-27 during the 0.16.17 release smoke). The manifest-mismatch half was fixed in 0.16.158; only the ExcludedLocationMarkers ruling is left.
 
 Smoked once with Stardew Valley Expanded enabled on the throwaway save (`tly_reset` + `tly_genbundles`):
 pools grew (crops 43 -> 47, fish 52 -> 54, saplings 6 -> 9, tapper 1 -> 10, cooking 78 -> 92, artisan
@@ -1358,7 +1422,7 @@ confirmed in the log. Also unverified live: the weekly-goal deposit rule (Core-t
 proving it in-game needs an n-of-m bundle finished with other items, which is a long grind.
 
 
-### Triage of the 2026-08-26 YouTube + Nexus findings (code-checked, no game run)
+### Triage of the 2026-08-26 YouTube + Nexus findings: CLOSED, items 1 and 3 shipped in 0.14.0, 2 is in the README FAQ, 4 not a bug
 
 **1. Weekly theme goals tick for items you never donated - REAL, SHIPPED in 0.14.0 (option a: a goal needs a real donation).**
 @ggrace67 is right. `WeeklyThemeQuestService.IsSlotComplete` reads vanilla's per-ingredient bools
@@ -1443,7 +1507,7 @@ watchdog drain). The reset chain is keep/reshuffle -> perk buy -> weekly focus, 
 exactly that nested case. 0.13.0 inserted the pity offer into the same chain, which could make it worse
 or accidentally mask it. Reproduce on the Rodger save first, then check the reset question chain.
 
-### NEW (2026-08-26 sweep) - a streamer picked the mod up: emmalution (82.7K subs)
+### NOTES (2026-08-26 sweep): a streamer picked the mod up: emmalution (82.7K subs); the bug signals below were handled (triage entry above, difficulty dials 0.16.0); the perfection variant and red-cabbage RNG are design notes only
 
 Found via the r/StardewValley thread (Thrippalan, 26 Aug). **emmalution** is running TLY as a full
 challenge series, credited and linked to the Nexus page in every description ("The main mod is called
@@ -1564,7 +1628,7 @@ Nexus posts (102 total; the sweep's 28-vs-31 page-1 count is pagination, not del
 
 Reddit: 63 comments, newest 21 Aug, no other threads. AC / Nap Time / Cart Catalog: quiet.
 
-### Season pity: MERGED to master as v0.12.19 (2026-08-25), unreleased, live smoke PASSED
+### Season pity: RELEASED 0.13.0 (2026-08-25), later REMOVED in 0.18.58 (replaced by the Returns boosts and the restart)
 
 **Smoke 2026-08-25 (deployed 0.12.19, Rodger throwaway save, screenshots `test-output/pity-*.png`):**
 
@@ -1624,7 +1688,7 @@ Ideas to discuss before building it:
   season bundle slots, not at a one-week target. lexihope read "68 daffodils" as something to
   gather in a single week when it was actually the season-slot ask.
 
-### 🔧 FIXED ON MASTER (unreleased) — 7th sweep (2026-08-24): all 4 bugs root-caused + fixed same day
+### RELEASED 0.12.16 (2026-08-24): 7th sweep (2026-08-24): all 4 bugs root-caused + fixed same day
 *Sweep `AndroidConsolizer/release-notes/forum-sweeps/2026-08-24-15-09_*`. Sweep script is now
 profile-free (public pages only); bug bodies + private bugs read via Claude-in-Chrome on the
 regular browser. Reddit unchanged (63). Nap Time / Cart Catalog quiet.*
@@ -1638,7 +1702,7 @@ more info); 1113831 Day-3 crash = 1 reply (ours), last 21 Aug 10:49.
 **1117543 CLOSED 2026-08-24 14:14 as Not a bug** (Jeff: "yes") — reply posted via Claude-in-Chrome
 (ALSOFT 0x88890004 = Windows audio-device loss; reopen if a full log shows otherwise). Gotcha: a reply
 form left open for a long time POSTs 401 ("Something went wrong saving your reply") — reload the page
-and re-expand before submitting. Only 1113831 remains open (Needs more info, silent since 5 Aug).
+and re-expand before submitting. Only 1113831 remains open (Needs more info, silent since 5 Aug). DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09).
 
 - **1122358 — Engine bundles roll CC-gated / impossible items** (SincerelyZoey + IshoMoogoo,
   23 Aug, 0.12.11): pineapple, Qi Fruit, taro root, void salmon, silver/gold-quality algae
@@ -1750,7 +1814,7 @@ silently drops a bug-reply submit fired within ~30 s of the previous one — cli
 1113831 "Day 3 1st year crash" (5 Aug — hard crash a few seconds after accepting Emily's Wild Horseradish help-wanted
 post, no error log). **Both replied 2026-08-21 + set "Needs more info"** (asked for smapi.io log links; crash report also asked to retest on 0.12.0-beta.1 + offer a save). The mute log excerpt ends in `[ALSOFT] (EE) Failed to get padding: 0x88890004` = OpenAL lost the audio device (AUDCLNT_E_DEVICE_INVALIDATED) — Windows audio, not TLY; mark not-a-bug once the full log confirms.*
 
-### ✅ SMOKED 2026-08-21 — v0.12.1 on master (unreleased): TLY Custom dropdown eyeballed + full loop-reset smoke PASSED
+### ✅ RELEASED 0.12.11 (2026-08-21; smoked 2026-08-21 on v0.12.1): TLY Custom dropdown eyeballed + full loop-reset smoke PASSED
 *v0.12.1 = new-game Advanced Options "Community Center Bundles" dropdown shows a single **TLY Custom** entry (+tooltip) while the mod is enabled (`BundleOptionPatch`, user ruling 2026-08-21: replace rather than remove). **Eyeballed 2026-08-21 on the deployed 0.12.1 build** (the Mods folder had still held the beta.1 release DLL — redeployed via `tools/deploy.ps1` first): the row shows only "TLY Custom", the tooltip renders on both the label and the box, the other AGO rows are untouched, and a brand-new farm starts normally (Lewis intro, `BundleEngine: wrote 31 bundles`, stash + shrine placed, `TLY_Intro` letter). No change to `BundleOptionPatch` needed.*
 
 **Feedback sweep 2026-08-21 16:45** (`forum-sweeps/2026-08-21-16-45_*`): nothing new since the 12:00 sweep except our own replies — TLY posts 26→30 (all four = sonofskywalker3 replies), Reddit 61→63 (our Cart-Stall answer + Thrippalan's thanks: "figured out it was intentional… Great mod", now in Fall), AC/Nap Time/Cart Catalog unchanged. Both PRIVATE bugs still at 1 reply (ours), status **Needs more info**, no log/save delivered: 1117543 muting (IshoMoogoo) — leave until a full log confirms the `[ALSOFT] 0x88890004` device loss; 1113831 Day-3 crash (iWriteSins, full text: fishing at the town lake Spring 3 after passing out the night before; "doesn't crash until I take [Emily's Wild Horseradish help-wanted] request. It crashes a few seconds after, completely closing SMAPI / no crash report") — investigate `RatProblemQuestPatch` / `OnboardingMailService` / weekly-theme quest service only once a log or save arrives.
@@ -2065,7 +2129,7 @@ never `GetActualCapacity`). Actual fix (v0.11.35): stamp BC's supported per-ches
 on the stash at placement — `furyx639.BetterChests/{ResizeChest,StashToChest,AutoOrganize,
 CarryChest}` = `"Disabled"` (same keys BC's configure-chest UI writes; also stops BC bulk-stash
 dumping into the stash and carry-away). Screenshot-verified: 4-slot grid with BC active.
-Inert without BC. Ask VeggieGirl43 to retest on the release that ships 0.11.35.
+Inert without BC. Ask VeggieGirl43 to retest on the release that ships 0.11.35. (Shipped long since; the retest never came back. DORMANT: waiting on the player; do not raise again unless they respond (Jeff, 2026-10-09).)
 
 ### ✅ FIXED v0.11.39 (2026-07-10) — Unlimited Storage (BC's successor) inflated the stash GRID
 Cross-check with LeFauxMatt's live successor, Unlimited Storage 1.2.0 (Nexus 30323): its
@@ -2119,7 +2183,7 @@ philosophy, implement the wipes, and this class of leak is closed permanently in
 reactively. Pairs with the 0.11.38 StatResetRules wipe-by-default flip (same philosophy:
 enumerate the exemptions, not the leaks).
 
-### netWorldState `farmhandData` would leak if TLY ever went multiplayer
+### OPEN, multiplayer only (part of the MULTIPLAYER backlog): netWorldState `farmhandData` would leak if TLY ever went multiplayer
 
 Carried out of the 2026-08-26 audit rather than dropped. `farmhandData` is ruled KEEP today purely
 because it is empty in single-player, which is all TLY supports. It stores whole `Farmer` objects,
@@ -2371,7 +2435,11 @@ exercises the real path. **Refactor — do it AFTER the v0.10.0 release** (no re
   fires unpurchased; the report was the day-1 junimo-notes-unlock gate (fixed alongside the bulletin
   board, v0.9.5). khauser played extensively on later versions (07-08 Jun) without re-reporting it.
 
-### 📣 Community feedback triage (beta, 2026-06-06) — ideas/inspiration (replies are the user's)
+### 📣 Community feedback triage (beta, 2026-06-06): ideas/inspiration (replies are the user's); audit 2026-10-09: open as ideas only (status line below)
+Audit 2026-10-09: early difficulty is answered by the difficulty dials (0.16.0) and the quantity work (0.16.178,
+0.17.0); the Cart is capped (`LimitTravelingCartStock`, 0.11.101); NPCs stay out of the CC (0.9.21), so the
+NPC-in-CC dialogue is moot; the opening-cutscene Junimos belong to the story work on `story`. Still open: a written
+compat stance for large-CC mods (ErraticPixel). The rest is reference only.
 *Mined from the r/StardewValley beta thread (1txuhfb) + Nexus mod 47192 posts.
 **Replies are the user's to write** — idea/inspiration capture with attribution only.
 Already-captured elsewhere: u/dcempire's "give the CC purpose after completion" → `mod-ideas.md` #3;
@@ -2397,7 +2465,7 @@ déjà-vu → the [1.0.0] entry below. Remaining items:*
 - **Community art offer.** *triangulummortis (Nexus)*: offered a drawn banner / fan art; connected via
   Discord (Sonofskywalker3). No action needed beyond the user's own follow-up.
 
-### ☆ TODO: brainstorm + write the "one-continuous-save trilogy architecture" spec
+### ☆ NOT STARTED (checked 2026-10-09: no trilogy spec in docs/): brainstorm + write the "one-continuous-save trilogy architecture" spec
 *Captured 2026-06-06. User decision: TLY1/2/3 all run **continuously on one save** (one evolving
 campaign, not three independent runs/mods). This is a SEPARATE design from the story/cutscene pass —
 needs its own brainstorm → spec. **User explicitly asked to be reminded to do this — surface it; don't
@@ -2409,7 +2477,7 @@ let it slip.*** Scope to cover:
 - Companion to the story brainstorm notes at
   `docs/superpowers/notes/2026-06-06-story-cutscene-brainstorm-notes.md`.
 
-### ★ NEXT NON-BUG-FIX UPGRADE: animated loop cutscene + real ending cutscene
+### ★ IN PROGRESS on branch `story` (The Longest Year story line, ships once when Jeff says): animated loop cutscene + real ending cutscene
 *Captured 2026-06-05. User-flagged as the priority once bug fixes are clear —
 the next feature upgrade, not a polish afterthought.*
 
@@ -2449,7 +2517,7 @@ the key. `FarmerReset` now clears active/previous dialogue events and re-seeds t
 **Must be confirmed live before the déjà-vu dialogue work below starts** (Jeff's ruling): both
 systems write the same NPC dialogue slot.
 
-### [1.0.0] Déjà-vu villager dialogue — meta tracks (but doesn't preserve) relationships
+### Déjà-vu villager dialogue: phase 1 RELEASED 0.16.17; phase 2 (festival memories) NOT spec'd
 
 **2026-08-27: BUILT (0.16.13 to 0.16.17), live-smoked, and RELEASED in 0.16.17** (table in STATUS.md;
 spec `docs/superpowers/specs/2026-08-27-deja-vu-dialogue-design.md`, lines approved by Jeff in
@@ -2501,7 +2569,7 @@ Design seeds (needs a real spec):
   (mild "have we met?" → warmer "I trust you for some reason").
 - Keep it mysterious — never explain the loop in these lines; that's the intro/Junimo's job.
 
-### Win screen → JP shrine transition is jarring (defer to the real 1.0 ending)
+### Win screen → upgrade menu transition is jarring (deferred to the real ending, which is being built on `story`)
 Playtest 2026-06-05: dismissing the 0.9 `VictoryMenu` cuts straight into the
 JP shrine store with no easing — visually abrupt. **Deliberately deferred** —
 the 0.9 win screen is a placeholder; the elaborate payoff cutscene is a 1.0
@@ -2509,7 +2577,7 @@ item (see `VictoryMenu` class comment). Fold the transition polish into that
 real-ending work rather than patching the placeholder. No fix needed for the
 0.9.x beta.
 
-### Small playtest carryovers (from STATUS.md)
+### Small playtest carryovers (from STATUS.md): all CLOSED 2026-05-29
 Picked up during the 2026-05-29 audit; STATUS.md was stale (last update
 2026-05-27) so these were drifting:
 
@@ -2592,7 +2660,7 @@ Status: spec'd, not planned. Tagged as v1.x polish (the auto-reset isn't a
 blocker — the player can manually save before the auto-reset hits if they
 want to keep their post-win state preserved on a backup save).
 
-### ~~Co-opted day-1 intro cutscene (replaces vanilla 191393)~~ — SHIPPED 2026-05-30 as `85b029b`, PENDING PLAYTEST
+### ~~Co-opted day-1 intro cutscene (replaces vanilla 191393)~~ SHIPPED 2026-05-30 as `85b029b` (released since 0.10.0; the story rewrite of the opening lives on `story`)
 Shipped this session: `tly_intro_porch` (Lewis on the Farm porch, Joja
 threat + Winter 28 deadline + landmark protection + hands over key) and
 `tly_intro_cc` (Junimo loop-explainer inside the CC), injected via
