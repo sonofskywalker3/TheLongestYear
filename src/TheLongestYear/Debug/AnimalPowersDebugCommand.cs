@@ -19,7 +19,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_animalpowers";
         public const string Description =
-            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | grow | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
+            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | incubators | grow [new|<name>] | revoke <id> | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
 
         private const int DefaultSamples = 200;
         private const string RegularEggQid = "(O)176";
@@ -40,9 +40,24 @@ namespace TheLongestYear.DebugCommands
                     case "pets": Pets(monitor); break;
                     case "incubate": Incubate(monitor); break;
                     case "grow":
-                        foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) a.growFully(new Random(1));
-                        monitor.Log($"{Name}: every farm animal grown up.", LogLevel.Info);
+                    {
+                        // grow: every animal; grow new: only animals that arrived today; grow <name>: that animal.
+                        string which = args.Length >= 2 ? args[1] : null;
+                        int grown = 0;
+                        foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals())
+                        {
+                            if (which == "new" ? a.daysOwned.Value >= 0 : which != null && a.Name != which) continue;
+                            a.growFully(new Random(1));
+                            grown++;
+                        }
+                        monitor.Log($"{Name}: {grown} farm animal(s) grown up ({which ?? "all"}).", LogLevel.Info);
                         break;
+                    }
+                    case "revoke" when args.Length >= 2:
+                        // Debug only: un-own a power so a control run can follow a run with it.
+                        monitor.Log($"{Name}: revoke {args[1]}: {(meta.OwnedUpgrades.Remove(args[1]) ? "removed" : "was not owned")}.", LogLevel.Info);
+                        break;
+                    case "incubators": Incubators(monitor); break;
                     case "feed":
                         foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) { a.fullness.Value = 255; a.happiness.Value = 255; }
                         monitor.Log($"{Name}: every farm animal fed and content (fullness 255, happiness 255).", LogLevel.Info);
@@ -248,6 +263,17 @@ namespace TheLongestYear.DebugCommands
             monitor.Log($"{Name}: warping into {houses[index].buildingType.Value} at ({x},{y}).", LogLevel.Info);
         }
 
+        /// <summary>Fast Hatch: every incubator's egg and minutes left.</summary>
+        private static void Incubators(IMonitor monitor)
+        {
+            foreach (Building b in Game1.getFarm().buildings)
+                if (b.GetIndoors() is AnimalHouse house)
+                    foreach (StardewValley.Object o in house.objects.Values)
+                        if (o.bigCraftable.Value && o.GetMachineData()?.IsIncubator == true)
+                            monitor.Log($"{Name}: {o.Name} in {b.buildingType.Value} ({b.tileX.Value},{b.tileY.Value}): " +
+                                        $"egg {o.heldObject.Value?.QualifiedItemId ?? "none"}, MinutesUntilReady {o.MinutesUntilReady}, " +
+                                        $"ready {o.heldObject.Value != null && o.MinutesUntilReady <= 0}, time {Game1.timeOfDay}.", LogLevel.Info);
+        }
         /// <summary>Drops an Egg into the first empty incubator in any coop through the machine's own
         /// drop-in path (the one a click takes); MachineSpeedPatch logs the time it set.</summary>
         private static void Incubate(IMonitor monitor)
