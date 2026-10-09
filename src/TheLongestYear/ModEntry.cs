@@ -378,6 +378,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_openherdbook",
                 "Open the Herd Book menu directly (debug).",
                 this.CmdOpenHerdBook);
+            helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.AnimalPowersDebugCommand.Name, TheLongestYear.DebugCommands.AnimalPowersDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.AnimalPowersDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.HerdBookDebugCommand.Name, TheLongestYear.DebugCommands.HerdBookDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
             helper.ConsoleCommands.Add("tly_activeeffects",
@@ -2860,6 +2862,7 @@ namespace TheLongestYear
                 case "tly_opencraftbook": this.CmdOpenCraftbook(command, args); break;
                 case "tly_openherdbook":  this.CmdOpenHerdBook(command, args); break;
                 case "tly_herdbook": TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, args); break;
+                case "tly_animalpowers": TheLongestYear.DebugCommands.AnimalPowersDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case "tly_bankrecipes": TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, args); break;
                 case TheLongestYear.DebugCommands.RarityStepCommand.Name:
                     TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
