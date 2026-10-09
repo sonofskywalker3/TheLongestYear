@@ -3,23 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased (branch deja-vu-festivals)
+## 0.19.31 - 2026-10-09
+
+3520 tests. Covers 0.19.24 to 0.19.31 (not released yet).
 
 ### Added
 
-- **Festival memories.** From the second loop, villagers at a festival sometimes half-remember what you did there in an earlier loop: the egg hunt you won or lost, the soup you made, your grange display, the ice fishing contest, the golden pumpkin, or that you came at all. Each villager at the festival has a 20% chance to carry one; the first you hear is that festival's memory for the loop, and the rest go quiet.
+- **A new difficulty option, Bundles per room (TLY Custom boards only).** Easy gives each Community Center room one or two fewer bundles, never below 2. Normal is the usual count. Hard adds one or two. Extreme fills every room to 9. Extra bundles come from the same pool as the rest, are due in their own season and pay JP like any other. The Vault and the Missing Bundle never change, and Normal and Remixed boards stay as they are. It takes effect when a new board is rolled; a board you keep on a Fail night keeps its count. Thanks to ThirteenRedCats for the idea.
+- **Festival memories.** From the second loop, villagers at a festival sometimes half-remember what you did there in an earlier loop: the egg hunt you won or lost, the soup you made, your grange display, the ice fishing contest, the golden pumpkin, or that you came at all. Each villager at the festival has a 20% chance to carry one; the first you hear is that festival's memory for the loop, and the rest go quiet. Thanks to u/Gribbleby, whose idea the half-remembering town was.
   - **Win the egg hunt and someone will remember it** at the next Egg Festival.
   - **Dance partners and secret friends never forget.** Everyone you have danced with, in any loop, has a 50% chance to remember it when you ask again or when you dance with someone else. Everyone you have given a secret gift to may remember it at the Feast of the Winter Star, and so might this year's secret friend after you give your gift.
   - **Some memories come right after the result**: Abigail after the egg hunt, Gus after the Governor tastes the soup, Pierre after the grange judging, Willy after the ice fishing.
   - Dancing with someone and the secret gift now count toward how well the town remembers you.
   - No gameplay effect. Toggle "Festival memories" in Features (needs deja-vu dialogue on).
-- Debug command `tly_festmem` (status, set, partner, recipient, clear, commit, force).
-
-## Unreleased (branch bundle-count-dial)
-
-### Added
-
-- **A new difficulty option, Bundles per room (TLY Custom boards only).** Easy gives each Community Center room one or two fewer bundles, never below 2. Normal is the usual count. Hard adds one or two. Extreme fills every room to 9. Extra bundles come from the same pool as the rest, are due in their own season and pay JP like any other. The Vault and the Missing Bundle never change, and Normal and Remixed boards stay as they are. It takes effect when a new board is rolled; a board you keep on a Fail night keeps its count. Thanks to ThirteenRedCats for the idea.
+- Debug commands `tly_bundlecount` (bundles per room, open a room page, set the dial) and `tly_festmem` (status, set, partner, recipient, clear, commit, force, talk, start, click).
 
 ### Fixed
 
@@ -27,7 +24,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## 0.19.30 - 2026-10-09
 
-3344 tests. Covers 0.19.24 to 0.19.30 (not released yet).
+3344 tests.
 
 ### Added
 
