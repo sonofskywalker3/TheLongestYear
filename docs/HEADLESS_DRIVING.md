@@ -94,7 +94,7 @@ daysSinceLastLay, produce days with Busy Coop / Busy Barn, friendship, happiness
 current map: Truffle Hog), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
 Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the percentage reads high), `pets`
 (Data/Pets as loaded: Loyal Pet), `incubate` (an Egg into the first empty incubator: Fast Hatch), `grow`, `feed`,
-`sethappy <n>`. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
+`sethappy <n>`, `setfriend <n>`, `births <n>` (runs the barn-birth roll n times and counts births by parent: Growing Herd; compare before and after buying), `birthnight` (tonight's farm event is a certain barn birth), `doors` (opens every animal door), `truffles` (truffles found and on the farm, pigs outdoors: Truffle Hog over a real day on the farm), `enter coop|barn [i]` (warps inside; a ready incubator hatches on entry), `incubators`, `grow new|<name>`, `revoke <id>` (debug un-own, for a control run). `tly_dismiss` closes the birth or hatch dialogue and names a NamingMenu through its own Enter path. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
 with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
 
 **Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
