@@ -13,10 +13,12 @@ namespace TheLongestYear.UI
         private const int MaxWidth = 600;
         private const int ScreenMargin = 64;
 
-        public static void Draw(SpriteBatch b, string text)
+        /// <param name="overrideX">Box position instead of the mouse (-1: follow the mouse), used by debug screenshots.</param>
+        public static void Draw(SpriteBatch b, string text, int overrideX = -1, int overrideY = -1)
         {
             int width = System.Math.Min(MaxWidth, Game1.uiViewport.Width - ScreenMargin);
-            IClickableMenu.drawHoverText(b, Game1.parseText(text, Game1.smallFont, width), Game1.smallFont);
+            IClickableMenu.drawHoverText(b, Game1.parseText(text, Game1.smallFont, width), Game1.smallFont,
+                overrideX: overrideX, overrideY: overrideY);
         }
     }
 }

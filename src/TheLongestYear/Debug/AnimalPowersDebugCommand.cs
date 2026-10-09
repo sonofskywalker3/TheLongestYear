@@ -18,7 +18,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_animalpowers";
         public const string Description =
-            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | sethappy <0-255>";
+            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | grow | feed | sethappy <0-255>";
 
         private const int DefaultSamples = 200;
         private const string RegularEggQid = "(O)176";
@@ -38,6 +38,14 @@ namespace TheLongestYear.DebugCommands
                     case "speed": Speed(monitor, meta); break;
                     case "pets": Pets(monitor); break;
                     case "incubate": Incubate(monitor); break;
+                    case "grow":
+                        foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) a.growFully(new Random(1));
+                        monitor.Log($"{Name}: every farm animal grown up.", LogLevel.Info);
+                        break;
+                    case "feed":
+                        foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) { a.fullness.Value = 255; a.happiness.Value = 255; }
+                        monitor.Log($"{Name}: every farm animal fed and content (fullness 255, happiness 255).", LogLevel.Info);
+                        break;
                     case "sethappy" when args.Length >= 2 && int.TryParse(args[1], out int h):
                         foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) a.happiness.Value = (byte)Math.Clamp(h, 0, 255);
                         monitor.Log($"{Name}: every farm animal's happiness set to {h}.", LogLevel.Info);
@@ -91,21 +99,25 @@ namespace TheLongestYear.DebugCommands
         }
 
         /// <summary>n throwaway pigs (distinct ids) each dig one truffle beside the farmer through the
-        /// patched DigUpProduce; reports the TrufflesFound delta.</summary>
+        /// patched DigUpProduce on the current map; tallies the TrufflesFound delta of each dig.</summary>
         private static void Dig(IMonitor monitor, int n)
         {
             GameLocation here = Game1.player.currentLocation;
-            uint before = Game1.stats.TrufflesFound;
+            var perDig = new int[4];
             for (int i = 0; i < n; i++)
             {
                 var pig = new FarmAnimal(AnimalPowers.PigType, (long)Utility.RandomLong(), Game1.player.UniqueMultiplayerID);
                 pig.growFully(new Random(i));
                 pig.currentLocation = here;
-                pig.Position = Game1.player.Position;
+                // Spread the pigs over the farm (20 x 10 grid from tile 8,8) so spawnObjectAround finds open ground.
+                pig.Position = new Microsoft.Xna.Framework.Vector2(8 + i % 20 * 3, 8 + i / 20 % 10 * 5) * Game1.tileSize;
+                uint before = Game1.stats.TrufflesFound;
                 pig.DigUpProduce(here, ItemRegistry.Create<StardewValley.Object>(AnimalPowers.TruffleQid));
+                perDig[Math.Min(3, (int)(Game1.stats.TrufflesFound - before))]++;
             }
-            uint found = Game1.stats.TrufflesFound - before;
-            monitor.Log($"{Name}: dig x{n}: TrufflesFound +{found} ({found - n} extra over one per dig, {100.0 * (found - (double)n) / n:F1}%).", LogLevel.Info);
+            int found = perDig[1] + perDig[2];
+            monitor.Log($"{Name}: dig x{n}: no truffle {perDig[0]}, one {perDig[1]}, two {perDig[2]}, more {perDig[3]}; " +
+                        $"doubled {(found == 0 ? 0 : 100.0 * perDig[2] / found):F1}% of digs that found one.", LogLevel.Info);
         }
 
         private static void Speed(IMonitor monitor, MetaState meta)

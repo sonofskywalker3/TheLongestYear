@@ -5270,6 +5270,12 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _launcher?.OpenShrineShop();
+            // Debug: tly_openshop <tab> [hoverRow] [scroll] shows a tab (for headless screenshots).
+            if (args.Length >= 1 && Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shop
+                && System.Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.UpgradeCategory tab))
+                shop.DebugShow(tab,
+                    args.Length >= 2 && int.TryParse(args[1], out int hover) ? hover : -1,
+                    args.Length >= 3 && int.TryParse(args[2], out int scroll) ? scroll : 0);
         }
 
         private void CmdListUpgrades(string command, string[] args)
