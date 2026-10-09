@@ -117,6 +117,9 @@ public class I18nGuardTests
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
+            // festmem.* is resolved from the key set at runtime too (FestivalMemoryLines).
+            foreach (string key in FestivalMemoryLines.AllKeys(map.Keys.ToList()))
+                _ = Strings.Get(key);
             // reach.* keys are built from the reach metric (ReachText.Describe); walk every catalog requirement.
             foreach (var def in UpgradeCatalog.All)
                 _ = ReachText.Describe(def.RunReachRequirement);
@@ -219,7 +222,7 @@ public class I18nGuardTests
     /// already asserts no "{{" survives in resolved catalog output, which is strictly stronger proof
     /// for that family than a per-key token match here would be.</summary>
     private static readonly string[] ExcludedTokenFamilies =
-        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach." };   // reach.*: ReachText builds the key from the metric (ReachTextTests covers it)
+        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "festmem." };   // reach.*: ReachText builds the key from the metric (ReachTextTests covers it); festmem.*: FestivalMemoryLines picks the key from the key set and drops a line with an unfilled token (FestivalMemoryLinesTests covers it)
 
     /// <summary>
     /// For every default.json value containing a <c>{{token}}</c> placeholder (outside the
