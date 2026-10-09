@@ -23,6 +23,8 @@ public class UpgradeCatalogTests
     [InlineData(UpgradeCategory.Foresight)]
     [InlineData(UpgradeCategory.Stash)]
     [InlineData(UpgradeCategory.Buildings)]
+    [InlineData(UpgradeCategory.Gifts)]
+    [InlineData(UpgradeCategory.Animals)]
     public void Every_category_has_at_least_one_entry(UpgradeCategory category)
         => Assert.NotEmpty(UpgradeCatalog.ByCategory(category));
 
@@ -50,12 +52,12 @@ public class UpgradeCatalogTests
     }
 
     [Fact]
-    public void Keep_silo_is_a_buildings_keep_gated_on_building_a_silo()
+    public void Keep_silo_is_an_animals_keep_gated_on_building_a_silo()
     {
         // khauser13 + Dusklight7 (2026-07): the silo was missing from the keep-building options.
         var silo = UpgradeCatalog.All.SingleOrDefault(u => u.Id == "keep_silo");
         Assert.NotNull(silo);
-        Assert.Equal(UpgradeCategory.Buildings, silo!.Category);
+        Assert.Equal(UpgradeCategory.Animals, silo!.Category);
         Assert.Equal("building:Silo", silo.RunReachRequirement);
         Assert.Null(silo.PrerequisiteId);
     }
@@ -427,7 +429,7 @@ public class UpgradeCatalogTests
     {
         var def = UpgradeCatalog.TryGet(id);
         Assert.NotNull(def);
-        Assert.Equal(UpgradeCategory.Carryover, def!.Category);
+        Assert.Equal(UpgradeCategory.Animals, def!.Category);
         Assert.Equal(cost, def.Cost);
         Assert.Equal(prereq, def.PrerequisiteId);
         Assert.Null(def.MetaRequirement);

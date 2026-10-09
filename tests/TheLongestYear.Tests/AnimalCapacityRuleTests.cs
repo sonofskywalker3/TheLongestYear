@@ -240,13 +240,13 @@ public class AnimalCapacityRuleTests
         MetaState meta = Owning("keep_coop", "herdbook_1");
         UpgradeDefinition tier2 = UpgradeCatalog.TryGet("herdbook_2")!;
         Assert.False(KeepShopFilter.IsBuyable(tier2, meta, _ => true));
-        Assert.Contains(tier2, KeepShopFilter.RoomBlockedInCategory(UpgradeCategory.Carryover, meta, _ => true));
+        Assert.Contains(tier2, KeepShopFilter.RoomBlockedInCategory(UpgradeCategory.Animals, meta, _ => true));
         // The owned tier below still shows as the owned leaf.
         Assert.Contains(UpgradeCatalog.TryGet("herdbook_1")!,
-            KeepShopFilter.OwnedLeavesInCategory(UpgradeCategory.Carryover, meta, _ => true));
+            KeepShopFilter.OwnedLeavesInCategory(UpgradeCategory.Animals, meta, _ => true));
 
         meta.OwnedUpgrades.Add("keep_barn");
         Assert.True(KeepShopFilter.IsBuyable(tier2, meta, _ => true));
-        Assert.DoesNotContain(tier2, KeepShopFilter.RoomBlockedInCategory(UpgradeCategory.Carryover, meta, _ => true));
+        Assert.DoesNotContain(tier2, KeepShopFilter.RoomBlockedInCategory(UpgradeCategory.Animals, meta, _ => true));
     }
 }

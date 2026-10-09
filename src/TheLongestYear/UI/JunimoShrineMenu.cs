@@ -30,7 +30,7 @@ namespace TheLongestYear.UI
         private const int RowSpacing = 8;
         private const int PanelPadding = 32;
 
-        private const int TabIdBase = 6100;          // 6100..6105 for 6 tabs
+        private const int TabIdBase = 6100;          // one id per UpgradeCategory (9 tabs: 6100..6108)
         private const int RowIdBase = 7000;          // one id per visible row slot
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
