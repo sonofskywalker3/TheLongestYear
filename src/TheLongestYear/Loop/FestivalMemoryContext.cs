@@ -109,6 +109,18 @@ namespace TheLongestYear.Loop
 
         public static bool IsMemoryOf(Dialogue d, string festival) => d?.TranslationKey == KeyPrefix + festival;
 
+        /// <summary>Add a page to the dialogue on top of the villager's stack (the one the open box is
+        /// showing). The old last line is marked as continued, or the box closes after it and the new page
+        /// is never shown (DialoguePaging).</summary>
+        public static void AppendPage(NPC npc, string text)
+        {
+            Dialogue d = npc.CurrentDialogue.Peek();
+            int marker = DialoguePaging.MarkerIndex(d.currentDialogueIndex, d.dialogues.Count);
+            if (marker == DialoguePaging.SetLiveFlag) d.isCurrentStringContinuedOnNextScreen = true;
+            else d.dialogues[marker].Text += DialoguePaging.ContinueMarker;
+            d.dialogues.Add(new DialogueLine(text));
+        }
+
         /// <summary>Put a memory on top of the villager's stack, so it plays on the next talk and the
         /// festival line after it. One memory per villager.</summary>
         public static bool Push(NPC npc, string festival, string text)

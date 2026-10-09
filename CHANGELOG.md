@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.32 - 2026-10-09
+
+3523 tests.
+
+### Fixed
+
+- **A dance partner's festival memory now actually shows.** When someone you'd danced with in an earlier loop said yes again, the memory was added as a second page of her answer, but the box closed after the first page, so you never saw it. The same applied to your secret friend's memory at the Feast of the Winter Star. Both now show as the next page.
+
 ## 0.19.31 - 2026-10-09
 
 3520 tests. Covers 0.19.24 to 0.19.31 (not released yet).

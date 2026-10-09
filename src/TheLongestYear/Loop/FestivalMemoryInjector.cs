@@ -111,7 +111,7 @@ namespace TheLongestYear.Loop
                 string text = FestivalMemoryContext.Line(run, festival, FestivalMemoryKeys.DanceAgain, partner.Name, false);
                 if (text != null)
                 {
-                    partner.CurrentDialogue.Peek().dialogues.Add(new DialogueLine(text));
+                    FestivalMemoryContext.AppendPage(partner, text);
                     FestivalMemoryContext.Spend(ev, festival, partner, $"{partner.Name} dance.again \"{text}\"");
                 }
             }
@@ -240,7 +240,7 @@ namespace TheLongestYear.Loop
                     FestivalMemoryContext.IsForced(festival))) return;
             string text = FestivalMemoryContext.Line(run, festival, FestivalMemoryKeys.WinterStarAgain, recipient.Name, true);
             if (text == null) return;
-            recipient.CurrentDialogue.Peek().dialogues.Add(new DialogueLine(text));
+            FestivalMemoryContext.AppendPage(recipient, text);
             FestivalMemoryContext.Spend(ev, festival, recipient, $"{recipient.Name} winterstar.again \"{text}\"");
         }
     }
