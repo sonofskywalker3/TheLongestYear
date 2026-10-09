@@ -97,6 +97,12 @@ Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the pe
 `sethappy <n>`. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
 with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
 
+**Bundles per room (2026-10-09).** `tly_bundlecount` lists the live bundles per room and says whether the CC's own
+room lookup knows every bundle (a missing one throws KeyNotFound in `checkForMissedRewards`). `tly_bundlecount set
+<step>` sets the dial in memory only (config.json untouched; the next new board uses it), `tly_bundlecount open
+<area 0-5>` opens that room's page and logs each bag and its spot, `tly_bundlecount missed` runs
+`checkForMissedRewards` and logs whether it threw.
+
 **Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
 with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
 text.

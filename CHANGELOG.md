@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased (branch bundle-count-dial)
+
+### Added
+
+- **A new difficulty option, Bundles per room (TLY Custom boards only).** Easy gives each Community Center room one or two fewer bundles, never below 2. Normal is the usual count. Hard adds one or two. Extreme fills every room to 9. Extra bundles come from the same pool as the rest, are due in their own season and pay JP like any other. The Vault and the Missing Bundle never change, and Normal and Remixed boards stay as they are. It takes effect when a new board is rolled; a board you keep on a Fail night keeps its count. Thanks to ThirteenRedCats for the idea.
+
+### Fixed
+
+- **The Vault's fallback bundle numbers match the game again (23 to 26).** Only used when a save's board has no Vault room, so nobody should have noticed.
+
 ## 0.19.27 - 2026-10-09
 
 3333 tests. Covers 0.19.24 to 0.19.27 (not released yet).
