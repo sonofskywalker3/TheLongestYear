@@ -42,7 +42,8 @@ namespace TheLongestYear.Integration
             bool skippable = SeasonTurn.IsSkippable(kind, _meta.State.SeasonTurnsSeen);
             bool rewound = _meta.State.CompletedResets > 0;
             _monitor.Log($"Season turn: starting {kind} (junimos={SeasonTurn.JunimoCount(kind)}, skippable={skippable}, rewound={rewound}, door={door.X},{door.Y}, in {loc.Name}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, door.X, door.Y, skippable, rewound), null, SeasonTurnEventKeys.EventId));
+            var marks = Marks(door.X, door.Y, SeasonTurn.JunimoCount(kind));
+            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, door.X, door.Y, skippable, rewound, marks), null, SeasonTurnEventKeys.EventId));
             _meta.State.SeasonTurnsSeen.Add(SeasonTurn.SeenName(kind));
             _onComplete = onComplete;
             _running = true;
@@ -65,7 +66,8 @@ namespace TheLongestYear.Integration
             bool skippable = SeasonTurn.IsSkippable(kind, _meta.State.SeasonTurnsSeen);
             bool rewound = _meta.State.CompletedResets > 0;
             _monitor.Log($"Season turn: starting {kind} at the porch ({porchX},{porchY}) on arrival (junimos={SeasonTurn.JunimoCount(kind)}, skippable={skippable}, rewound={rewound}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after.", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, porchX, porchY - PorchStepDown, skippable, rewound, (arrived.X, arrived.Y, facing)), null, SeasonTurnEventKeys.EventId));
+            var marks = Marks(porchX, porchY - PorchStepDown, SeasonTurn.JunimoCount(kind));
+            loc.startEvent(new Event(SeasonTurnEventInjector.Build(kind, porchX, porchY - PorchStepDown, skippable, rewound, marks, (arrived.X, arrived.Y, facing)), null, SeasonTurnEventKeys.EventId));
             _reportReturn = true;
             // Black from this very frame: the arrival is not seen before the porch is.
             EndingEventCommands.HoldBlack();
@@ -96,7 +98,8 @@ namespace TheLongestYear.Integration
             int facing = Game1.player.FacingDirection;
             bool skippable = _meta.State.SeasonTurnsSeen.Contains(TamperSeenName);
             _monitor.Log($"Darkness: starting the board-changed scene at the porch ({porchX},{porchY}); the farmer arrived at ({arrived.X},{arrived.Y}) facing {facing} and goes back there after ({oldItemName} -> {newItemName}, skippable={skippable}).", LogLevel.Info);
-            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, arrived.X, arrived.Y, facing, oldItemName, oldIsMass, newItemName, newIsPlural, skippable), null, SeasonTurnEventKeys.EventId));
+            var marks = Marks(porchX, porchY - PorchStepDown, SeasonTurnEventInjector.TamperJunimoCount);
+            loc.startEvent(new Event(SeasonTurnEventInjector.BuildTamper(porchX, porchY, arrived.X, arrived.Y, facing, oldItemName, oldIsMass, newItemName, newIsPlural, skippable, marks), null, SeasonTurnEventKeys.EventId));
             _reportReturn = true;
             // Black from this very frame: the arrival is not seen before the porch is.
             EndingEventCommands.HoldBlack();
@@ -108,6 +111,15 @@ namespace TheLongestYear.Integration
         }
 
         public const string TamperSeenName = "DarknessTamper";
+
+        /// <summary>The Junimos' tiles round this door, clear of anything that would hide one
+        /// (<see cref="PorchOcclusion"/>, <see cref="PorchMarks"/>), logged so a scene can be checked.</summary>
+        private System.Collections.Generic.IReadOnlyList<(int X, int Y)> Marks(int doorX, int doorY, int count)
+        {
+            var marks = PorchOcclusion.MarksFor(doorX, doorY, count);
+            _monitor.Log($"Porch scene: door ({doorX},{doorY}), {count} Junimos at " + string.Join(" ", System.Linq.Enumerable.Select(marks, m => $"({m.X},{m.Y})")) + $" (offsets " + string.Join(" ", System.Linq.Enumerable.Select(marks, m => $"({m.X - doorX},{m.Y - doorY})")) + ").", LogLevel.Info);
+            return marks;
+        }
 
         /// <summary>The porch step the tamper scene is staged on: where the farmhouse's own warps
         /// onto the Farm put the farmer (the house's real door data, so every farm type and a moved
