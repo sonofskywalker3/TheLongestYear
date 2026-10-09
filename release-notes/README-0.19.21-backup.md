@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.21`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.18`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,15 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.21
-
-**Fixed: no more red Harmony error at startup with ExtraAnimalConfig.** With ExtraAnimalConfig or a similar animal mod installed, the game showed a red "Harmony patch failed" error from TLY when it started. That error is gone. On a Wildcard snow day your animals still stay inside, and the other mod's animal settings keep working. Thanks to pitytheviolins for the report.
-
-**Rare fish pond products no longer decide when an item shows up.** TLY works out the earliest week you can get each item, and a fish pond product with only a tiny chance used to count. With Stardew Valley Expanded, that put Golden Pumpkin in week 5, when the real way to get it is the Spirit's Eve maze in week 12. A pond product now counts only when it turns up often enough to get in a run.
-
-**Real routes for the items those ponds used to cover.** Some items had only a rare pond product as their route, so TLY now reads where they really come from: seeds from wild trees, Coral and Sea Urchins from the tide pools past the beach bridge, geodes from the mines, and the Pearl and Treasure Chest from the Squid Fest. They are asked for in the weeks you can actually get them.
-
-## 0.19.18
+## What's New in 0.19.18
 
 **TLY Custom boards ask only for vanilla items.** Other mods' items are left out of what TLY Custom bundles ask for and what they give, so the balance holds whatever else you have installed.
 
@@ -297,7 +289,7 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 - **RiseiJaku**: Zoom Level and UI Scale surviving the rewind.
 - **goblinslayer66666**: the Difficulty setting reaching Hard and Extreme.
 - **gmastern1**: quitting after a failed season skipping the rewind.
-- **pitytheviolins**: bundles asking for a dish from another mod's shop, and a Harmony error at startup with ExtraAnimalConfig.
+- **pitytheviolins**: bundles asking for a dish from another mod's shop.
 - **Tottelotta123**: Garlic Cultivation and its price.
 - **khauser13**: egg colors in the quest log, and the Advanced Options screenshot.
 - **ggrace67**: weekly goals that ticked without a donation.

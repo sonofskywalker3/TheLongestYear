@@ -5,7 +5,12 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ## 0.19.21 - 2026-10-09
 
-3229 tests.
+3229 tests. Release of 0.19.19 to 0.19.21.
+
+### Docs
+
+- README and the Nexus description: a new What's New in 0.19.21 (the Harmony error with ExtraAnimalConfig, rare pond products no longer dating items, and the real routes for the items they used to date). The 0.19.18 What's New stays below it as its own 0.19.18 section, the way 0.19.1 and 0.19.0 do. Beta line set to 0.19.21; pitytheviolins' Thanks entry names the Harmony report.
+- `release-notes/0.19.21-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.21-backup.md` and `release-notes/nexus-description-0.19.21-backup.bbcode`.
 
 ### Fixed
 
