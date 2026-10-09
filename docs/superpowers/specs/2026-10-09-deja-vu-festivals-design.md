@@ -79,6 +79,30 @@ Decisions made here to fit the rulings (flagged for Jeff in "Open questions"):
 - **Egg Festival lines are not approved.** Two drafts were rejected ("suck", "worse"). Current direction
   under review: the memory leaks out as advice for today, then the speaker catches himself (the pattern of
   Jeff's Luau lines). Any line naming a spot must match a real egg spot on the festival map.
+- **Lines look back, never forward (Jeff, 2026-10-09, after the second Egg rejection).** "they don't
+  read like deja vu or memories, they read like prophesies... they need to be talking about the past
+  (weren't you here last year? or I remember you winning before, but that can't be right) or saying how
+  this feels familiar, (You beat me again? wait...this is your first year...) same goes for all
+  festivals." Every line in the lines file was rewritten to this rule (72 lines). This replaces the
+  "advice for today" direction above.
+
+### Post-result moments (note added with the look-back rewrite, not yet designed)
+
+Some lines only make sense right after a result, because the familiar feeling comes from the result
+itself ("You beat me again? Wait, this is your first year."). These are pushed after the result instead
+of before the contest, so the "Pre-contest only" pull below does not remove them. Each needs a hook at
+that moment and only plays if the result matches:
+
+| Festival | Moment | Lines |
+|---|---|---|
+| Egg Festival | after the egg hunt winner is announced (`eggHuntWinner`) | Abigail, player won (`egghunt.won`); Abigail, Abigail won (`egghunt.lost`) |
+| Luau | after the Governor tastes the soup (`governorTaste`) | Gus, bad again (`luau.bad`); Gus, good again (`luau.good`) |
+| Fair | after the grange judging (`interpretGrangeResults`, after it resets every actor's dialogue) | Pierre, player won (`fair.won`); Pierre, player lost (`fair.lost`) |
+| Festival of Ice | after the ice fishing winner (`iceFishingWinner`) | Willy, player won (`icefish.won`) |
+| Winter Star | after the player gives the secret gift (`chooseSecretSantaGift`) | the `winterstar.again` fallback, from this year's secret friend |
+
+Open for the build: whether a post-result line rolls separately or rides on the same roll as that
+speaker's "before" line, and whether hearing a "before" line spends the post-result one.
 
 ## Non-goals
 
@@ -398,7 +422,7 @@ key set like `DejaVuLines`, so adding a line is a JSON edit. Tokens, filled at s
   null, which drops the line);
 - `{{partner}}` (NEW, `dance.other` only): this loop's dance partner's display name.
 
-The full draft, 80 lines, is in `2026-10-09-deja-vu-festival-lines.md`.
+The full draft, 72 lines (rewritten to look back, see round 2 rulings), is in `2026-10-09-deja-vu-festival-lines.md`.
 
 ## Familiarity
 

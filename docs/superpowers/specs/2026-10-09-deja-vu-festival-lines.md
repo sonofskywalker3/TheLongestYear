@@ -1,247 +1,237 @@
 # Deja-vu festival memory lines (draft for Jeff's review)
 
 Companion to `2026-10-09-deja-vu-festivals-design.md`. Each memory is something the player did at a
-festival in an earlier loop. The speaker cannot remember it, only half-feel it. "Festival day" lines
-are pushed onto the villager's festival dialogue and play before the contest or main event; "lead-up"
-lines play in ordinary dialogue in the week before the festival. `{{item}}` is the item's in-game name
-and `{{partner}}` is this loop's dance partner, both filled in at runtime. Jeff's own lines are used
-verbatim. Status: DRAFT, not coded.
+festival in an earlier loop. The speaker cannot place it. He or she half-remembers it, or the moment
+feels familiar. `{{item}}` is the item's in-game name and `{{partner}}` is this loop's dance partner,
+both filled in at runtime. Status: DRAFT, not coded.
 
-**Updated 2026-10-09 for Jeff's rulings.** Who can speak:
+**Rewritten 2026-10-09 for Jeff's rule:** "they don't read like deja vu or memories, they read like
+prophesies, which isn't the goal at all. they're talking about present or future, they need to be
+talking about the past (weren't you here last year? or I remember you winning before, but that can't
+be right) or saying how this feels familiar, (You beat me again? wait...this is your first year...)
+same goes for all festivals, get it?"
 
-- Ordinary memories: any villager at familiarity 60 and up (phase 1's tier 1), 20% each.
-- Bond memories (every past dance partner and every past Winter Star recipient, from any loop):
-  50% each, no familiarity needed.
-- After an egg hunt win: guaranteed at the next Egg Festival, from whichever eligible villager the
-  player talks to first.
-- One memory per festival per loop. The first one heard silences the rest.
+So every line looks back. Either the speaker remembers something from "last year" and then notices it
+can't be true, or something happening right now feels like it has happened before. No hunches, no
+predictions, no advice about today. Jeff's own lines stay word for word.
 
-Fallback lines go to any eligible villager without a line of his or her own for that memory.
+Also per round 2 of Jeff's rulings: festival day only (no lead-up week), no friendship gate, and the
+Winter Star words are the game's own ("secret gift exchange", "secret friend", "secret gift-giver").
 
-Marks: **[NEW]** added in this pass, **[CHANGED]** reworded or moved in this pass. Unmarked lines are
-unchanged from the first draft.
+**When:** "Before" lines play the first time the player talks to that villager at the festival, before
+the contest or main event. "After" lines play when the player talks to that villager after a result
+(the egg hunt winner, the soup tasting, the grange judging, the ice fishing winner, the secret gift).
+Those need a new hook. See "Post-result moments" in the design spec.
 
-## Egg Festival (festival day, before the hunt)
+Marks: **[JEFF]** Jeff's line, verbatim. **[REWRITTEN]** an earlier draft line rewritten to look back.
+**[NEW]** added in this pass.
+
+## Egg Festival
 
 Won the egg hunt last time (`egghunt.won`). Guaranteed the first loop after a win.
 
-| Speaker | Line |
-|---|---|
-| Fallback | I've got a hunch you'll win the egg hunt today. |
-| Abigail | I have this feeling I'm not winning the egg hunt this year. |
-| Vincent | I think you're going to find all the eggs! |
-| Jas | Are you good at finding eggs? I think you are. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[JEFF]** | Before the hunt | I remember you winning before, but that can't be right. |
+| Abigail **[REWRITTEN]** | Before the hunt | I could swear you beat me at this once. You weren't even here last year. |
+| Abigail **[JEFF]** | After the hunt, player won | You beat me again? Wait, this is your first year. |
+| Vincent **[REWRITTEN]** | Before the hunt | Hey, you found the most eggs last time! Wait, were you here last time? |
+| Jas **[REWRITTEN]** | Before the hunt | I think I saw you win the egg hunt once. Was that a dream? |
 
 Lost the egg hunt last time (`egghunt.lost`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | Don't feel bad if Abigail wins. I just have a feeling she will. |
-| Abigail | Something tells me I'm beating you today. Don't ask how I know. |
-| Vincent | I think Abigail wins. She always wins. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the hunt | I remember Abigail beating you at this. But you weren't here last year. |
+| Abigail **[REWRITTEN]** | Before the hunt | Didn't I already beat you at this? Huh. Must have been someone else. |
+| Abigail **[NEW]** | After the hunt, Abigail won | Beat you again. Wait, again? We've never done this before. |
+| Vincent **[REWRITTEN]** | Before the hunt | Abigail beat you last time. Wait, were you even here? |
 
-## Flower Dance
+## Flower Dance (festival day)
 
-### Lead-up week
+The old lead-up week lines (`dance.partner`) are gone. Their best ideas moved into the two tables below.
 
 Came to the dance last time (`dance.attended`, anyone who was never your partner)
 
-| Speaker | Line |
-|---|---|
-| Fallback | Did you come to town for the dance last year? |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[JEFF]** | Any time | Did you come to town for the dance last year? |
 
-Danced with this villager in any earlier loop (`dance.partner`, only past partners speak it)
-
-| Speaker | Line |
-|---|---|
-| Fallback **[NEW]** | I swear we've danced before, but this is your first time right? |
-| Abigail | I had a dream I went to the Flower Dance with you. Weird, right? |
-| Alex | For some reason I keep picturing you at the Flower Dance. With me. |
-| Elliott | I keep imagining the Flower Dance with you as my partner. I can't think where the idea came from. |
-| Emily | I keep seeing us dancing together in my dreams. The Flower Dance, I think. |
-| Haley | I already know what I'm wearing to the dance. For some reason I think you've seen it. |
-| Harvey | Odd. I keep remembering a dance with you. I don't think we've ever danced. |
-| Leah | I keep thinking I already know how you dance. That doesn't make any sense. |
-| Maru | I keep remembering dancing with you. I'd remember if that had happened. I think. |
-| Penny | I've been thinking about the Flower Dance. I keep picturing you there with me. |
-| Sam | Dude, I swear we danced together once. Was that a dream? |
-| Sebastian | I hate dancing. But I keep thinking I'd go if it was with you. |
-| Shane | Don't laugh. I keep thinking I danced with you once. I don't dance. |
-
-### Festival day, a past partner says yes again (`dance.again`) [NEW]
-
-Plays as a second page right after the villager's own "yes" line, so none of these says yes itself.
-
-| Speaker | Line |
-|---|---|
-| Fallback **[NEW]** | I swear we've danced before, but this is your first time right? |
-| Abigail **[NEW]** | This is going to sound weird, but I think we've done this before. |
-| Alex **[NEW]** | Funny. I feel like I've said yes to you before. |
-| Elliott **[NEW]** | How strange. I feel as though we've shared this dance already. |
-| Emily **[NEW]** | I think we've danced together before. Maybe in another life. |
-| Haley **[NEW]** | Try not to step on my dress. I feel like you did that once. |
-| Harvey **[NEW]** | Odd. I could swear you've asked me this before. |
-| Leah **[NEW]** | I think I already know you're a good dancer. I don't know how. |
-| Maru **[NEW]** | I have the strongest feeling we've done this before. That's not possible. |
-| Penny **[NEW]** | I feel like you've asked me this before. Sorry, that's silly. |
-| Sam **[NEW]** | Wait, haven't we done this before? I swear we have. |
-| Sebastian **[NEW]** | I feel like I've already done this with you. Weird. |
-| Shane **[NEW]** | I feel like I already danced with you once. Don't ask. |
-
-### Festival day, a past partner sees you ask someone else (`dance.other`) [NEW]
-
-Plays when the player talks to a past partner after already having a partner this year.
-
-| Speaker | Line |
-|---|---|
-| Fallback **[NEW]** | You're dancing with {{partner}}? I thought you'd ask me. I don't know why. |
-| Abigail **[NEW]** | Huh. I had a feeling you'd ask me this year. |
-| Alex **[NEW]** | {{partner}}, huh? I figured you'd ask me. No idea why. |
-| Elliott **[NEW]** | I confess I half expected you to ask me. I can't say why. |
-| Emily **[NEW]** | I was so sure you'd ask me! My intuition must be off today. |
-| Haley **[NEW]** | You asked {{partner}}? I was sure it'd be me. |
-| Harvey **[NEW]** | Oh, you asked {{partner}}. I don't know why I thought it would be me. |
-| Leah **[NEW]** | Have fun with {{partner}}. I had a feeling you'd ask me. |
-| Maru **[NEW]** | I was sure you'd ask me. I'm usually better at predictions. |
-| Penny **[NEW]** | Oh, you're dancing with {{partner}}. I thought you might ask me. |
-| Sam **[NEW]** | Dude, I was sure you'd ask me. Weird. |
-| Sebastian **[NEW]** | I was sure you'd ask me. Not that I wanted to dance. |
-| Shane **[NEW]** | Thought you'd ask me. Good thing you didn't. I don't dance. |
-
-## Luau (festival day, before you add to the soup)
-
-Put a bad or toxic ingredient in the pot last time (`luau.bad`)
-
-| Speaker | Line |
-|---|---|
-| Fallback | Just don't put {{item}} in the pot this year. Wait... why did I think that? |
-| Gus | Do me a favor and keep {{item}} out of the pot. Don't ask me why. |
-| Pierre | If you're thinking of adding {{item}} to the soup, don't. I can't tell you how I know. |
-| Marnie | Oh, not {{item}} in the soup, dear. I'm not sure why I said that. |
-
-Put a good or best ingredient in the pot last time (`luau.good`)
-
-| Speaker | Line |
-|---|---|
-| Fallback | For some reason I think {{item}} would be amazing if you have any. |
-| Gus | Funny. I keep tasting {{item}} in that soup, and nobody's put it in yet. |
-| Jodi | I have a feeling {{item}} is just what that pot needs. |
-| Pierre | {{item}} would go great in the soup. I just know it. |
-
-Put Lewis's shorts in the pot last time (`luau.shorts`)
+A past partner says yes again (`dance.again`). Plays as a second page right after the villager's own
+"yes" line, so none of these says yes itself.
 
 | Speaker | When | Line |
 |---|---|---|
-| Lewis | Lead-up week | I've had the strangest urge to check my dresser all week. |
-| Marnie | Festival day | I keep worrying something embarrassing is going to end up in that pot. Something purple. |
+| Fallback **[JEFF]** | After yes | I swear we've danced before, but this is your first time right? |
+| Abigail **[REWRITTEN]** | After yes | Okay, this is weird. I feel like you've asked me this before. |
+| Alex **[REWRITTEN]** | After yes | Funny. I could swear I've said yes to you before. |
+| Elliott **[REWRITTEN]** | After yes | How strange. I feel as though we've shared this dance already, some other spring. |
+| Emily **[REWRITTEN]** | After yes | I know this dance. I think we've done it together before. Maybe in another life. |
+| Haley **[REWRITTEN]** | After yes | Didn't you step on my dress last time? Wait. There wasn't a last time. |
+| Harvey **[REWRITTEN]** | After yes | Odd. I could swear you've asked me this before. I'd remember, surely. |
+| Leah **[REWRITTEN]** | After yes | Funny. I feel like I already know how you dance. I've never seen you dance. |
+| Maru **[REWRITTEN]** | After yes | I have the strongest feeling we've done this before. I don't see how. |
+| Penny **[REWRITTEN]** | After yes | Have you asked me this before? Sorry. It just feels like you have. |
+| Sam **[REWRITTEN]** | After yes | Wait, haven't we done this before? Dude, I swear we have. |
+| Sebastian **[REWRITTEN]** | After yes | Weird. This feels like a rerun. |
+| Shane **[REWRITTEN]** | After yes | Don't laugh. I think I danced with you once. I don't dance. |
+
+A past partner sees you dancing with someone else (`dance.other`). Plays when the player talks to a past
+partner after already having a partner this year.
+
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | After you have a partner | You're going with {{partner}}? I could have sworn we danced together last year. |
+| Abigail **[REWRITTEN]** | After you have a partner | {{partner}}, huh? Weird. I remember dancing with you. That didn't happen, right? |
+| Alex **[REWRITTEN]** | After you have a partner | {{partner}}? Huh. I remember you asking me last year. You weren't here last year. |
+| Elliott **[REWRITTEN]** | After you have a partner | {{partner}}, then. Odd. I have a memory of dancing with you, and it can't be real. |
+| Emily **[REWRITTEN]** | After you have a partner | Have fun with {{partner}}! It's funny, I remember us dancing. It must have been a dream. |
+| Haley **[REWRITTEN]** | After you have a partner | You're taking {{partner}}? You took me last time. Wait, what last time? |
+| Harvey **[REWRITTEN]** | After you have a partner | Oh, {{partner}}. Of course. Odd, I remember dancing with you. I must be mixing something up. |
+| Leah **[REWRITTEN]** | After you have a partner | Have fun with {{partner}}. Strange. I keep remembering you dancing with me. |
+| Maru **[REWRITTEN]** | After you have a partner | {{partner}}? I have a memory of dancing with you. I can't place when that was. |
+| Penny **[REWRITTEN]** | After you have a partner | Oh, you're dancing with {{partner}}. Sorry, I thought we'd danced before. I must be confused. |
+| Sam **[REWRITTEN]** | After you have a partner | Dude, {{partner}}? I swear you were my partner last time. Wait, you weren't even here. |
+| Sebastian **[REWRITTEN]** | After you have a partner | Fine by me. Weird, though. I remember you dancing with me. |
+| Shane **[REWRITTEN]** | After you have a partner | Thought you danced with me once. Guess not. Good. I don't dance. |
+
+## Luau (festival day)
+
+Put a bad or toxic ingredient in the pot last time (`luau.bad`)
+
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[JEFF]** | Before the soup | Just don't put {{item}} in the pot this year. Wait... why did I think that? |
+| Gus **[REWRITTEN]** | Before the soup | Didn't you put {{item}} in my soup once? I remember the Governor's face. You've never been to a Luau. |
+| Gus **[NEW]** | After the tasting, bad again | That's twice you've done that to the Governor. Hang on. This is your first Luau. |
+| Pierre **[REWRITTEN]** | Before the soup | Weren't you the one who put {{item}} in the soup last year? No, you only just moved here. |
+| Marnie **[REWRITTEN]** | Before the soup | I remember someone putting {{item}} in the soup. I thought it was you, dear. That can't be right. |
+
+Put a good or best ingredient in the pot last time (`luau.good`)
+
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[JEFF]** | Before the soup | For some reason I think {{item}} would be amazing if you have any. |
+| Gus **[REWRITTEN]** | Before the soup | Your {{item}} was the best thing in that pot last year. Hang on. You weren't here last year. |
+| Gus **[NEW]** | After the tasting, good again | The Governor loved yours again. Again? Funny. This is your first Luau. |
+| Jodi **[REWRITTEN]** | Before the soup | I remember the Governor loving your {{item}}. Isn't that funny? You've never been to a Luau. |
+| Pierre **[REWRITTEN]** | Before the soup | I remember the Governor raving about some {{item}} you brought. Funny. I could have sworn it came from my shop. |
+
+Put Lewis's shorts in the pot last time (`luau.shorts`). Lewis's lead-up line is dropped (no lead-up
+week, and he is the host on the day).
+
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[NEW]** | Before the soup | Didn't something purple end up in the soup last year? I can't remember whose it was. |
+| Marnie **[REWRITTEN]** | Before the soup | I remember something purple in that pot. And Lewis going very red. I don't know where that came from. |
 
 ## Dance of the Moonlight Jellies (festival day)
 
 Came to watch the jellies last time (`jellies.attended`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | I feel like we've watched the jellies together before. |
-| Willy | I could swear I've stood on this dock with ye before. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[JEFF]** | Any time | Weren't you here last year? |
+| Willy **[REWRITTEN]** | Any time | I'd swear ye stood on this dock with me last year. But ye only came to town this spring. |
 
-## Stardew Valley Fair (festival day, before the judging)
+## Stardew Valley Fair (festival day)
 
 Grange display took first place last time (`fair.won`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | Something tells me you're the one to beat at the judging. |
-| Pierre | I've got a bad feeling about the grange judging. About you, specifically. |
-| Marnie | I think your display is going to win, dear. Call it a hunch. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the judging | Didn't your display take first place last year? I could swear it did. |
+| Pierre **[REWRITTEN]** | Before the judging | You beat my display once. I know you did. I just can't remember when. |
+| Pierre **[NEW]** | After the judging, player won | First place again? Wait. You've never entered before. |
+| Marnie **[REWRITTEN]** | Before the judging | I remember your display winning, dear. But this is your first fair, isn't it? |
 
 Grange display placed second or lower last time (`fair.lost`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | I have a feeling Pierre's going to win the judging. |
-| Pierre | I've got a good feeling about my display this year. Better than yours, I bet. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the judging | I remember Pierre winning the grange last year. Were you here for that? |
+| Pierre **[REWRITTEN]** | Before the judging | I've beaten your display before. I'm sure of it. Don't ask me when. |
+| Pierre **[NEW]** | After the judging, Pierre won | Beat you again. Funny. I've never beaten you before. |
 
 Put Lewis's shorts in the grange display last time (`fair.shorts`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | I keep thinking something embarrassing turns up at the judging. Isn't that strange? |
-| Marnie | If you see anything purple in a display, tell Lewis. I don't know why I said that. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the judging | Didn't someone put something embarrassing in a display last year? I can't place it. |
+| Marnie **[REWRITTEN]** | Before the judging | I remember Lewis's face at the judging. Something purple. I don't know why I remember that. |
 
 ## Spirit's Eve (festival day)
 
 Found the golden pumpkin last time (`spirits.pumpkin`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | I've got a feeling you know your way around the maze already. |
-| Vincent | I bet you know where the treasure is. You look like you know. |
-| Jas | Are you going in the maze? I think you're good at it. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Any time | Didn't I see you come out of the maze with the golden pumpkin? You've never even been in it. |
+| Vincent **[REWRITTEN]** | Any time | You found the gold pumpkin last time! Didn't you? |
+| Jas **[REWRITTEN]** | Any time | I think you found the treasure in the maze once. Was I dreaming? |
 
-## Festival of Ice (festival day, before the contest)
+## Festival of Ice (festival day)
 
 Won the ice fishing contest last time (`icefish.won`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | I think you're going to win the fishing contest. Just a feeling. |
-| Willy | Somethin' tells me ye'll pull the most fish today. |
-| Pam | I've got money on you for the fishing. Don't know why. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the contest | Didn't you win the fishing contest last winter? You weren't here last winter. |
+| Willy **[REWRITTEN]** | Before the contest | I'd swear I've seen ye pull the most fish out of this ice. Can't have been, though. |
+| Willy **[NEW]** | After the contest, player won | The most fish again? Hold on. This is yer first winter here. |
+| Pam **[REWRITTEN]** | Before the contest | Didn't I win money on you at this last year? Huh. Must've been somebody else. |
 
 Lost the ice fishing contest last time (`icefish.lost`)
 
-| Speaker | Line |
-|---|---|
-| Fallback | Something tells me the fishing contest isn't your day. |
-| Willy | Keep yer line still out there today. I've a feelin' ye need tellin'. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | Before the contest | Didn't you come up short at the fishing contest last year? Huh. You weren't here. |
+| Willy **[REWRITTEN]** | Before the contest | I'd swear I watched ye lose this contest once. Can't be. Ye only came this spring. |
 
-## Night Market (lead-up week)
+## Night Market (dropped)
 
-Went to the Night Market last time (`nightmarket.attended`)
+Both lines were lead-up week only, and the Night Market has no festival actors to carry a festival-day
+line, so `nightmarket.attended` has no lines this pass.
 
-| Speaker | Line |
-|---|---|
-| Fallback | Feels like I've seen you at the Night Market before. Have you been? |
-| Willy | The Night Market's comin' up. Feels like I already saw ye there. |
+## Feast of the Winter Star (festival day)
 
-## Feast of the Winter Star
+Only villagers the player was secret friend to in an earlier loop speak these. Any past recipient from
+any loop can speak them, using the latest gift the player gave him or her.
 
-Only villagers you were Secret Santa for in an earlier loop speak these. **[CHANGED]** The first draft
-used last loop's recipient only; now any past recipient from any loop can speak them, using the
-latest gift you gave him or her.
+This year's secret friend again (`winterstar.again`). Talking to him or her opens the gift prompt first,
+so this plays after the player gives the gift.
 
-### Lead-up week
+| Speaker | When | Line |
+|---|---|---|
+| Fallback **[REWRITTEN]** | After the secret gift | Were you my secret gift-giver last year too? No, that can't be right. You weren't here. |
 
-You're his or her Secret Santa again this loop, after you've read Lewis's letter (`winterstar.again`)
-[NEW]
+A past secret friend who isn't this year's (`winterstar.seen`). The lead-up `winterstar.liked` and
+`winterstar.disliked` lines move here: the latest gift picks the pool, and a neutral latest gift uses the
+plain line.
 
-| Speaker | Line |
-|---|---|
-| Fallback **[NEW]** | I have a funny feeling you're my Secret Santa this year. |
-
-Gave this villager a gift he or she loved or liked (`winterstar.liked`)
-
-| Speaker | Line |
-|---|---|
-| Fallback | I have a feeling someone's going to give me {{item}} this year. I hope so. |
-
-Gave this villager a gift he or she disliked or hated (`winterstar.disliked`)
-
-| Speaker | Line |
-|---|---|
-| Fallback | For some reason I really hope nobody gives me {{item}} this year. |
-
-### Festival day, a past recipient who isn't this year's (`winterstar.seen`) [NEW]
-
-| Speaker | Line |
-|---|---|
-| Fallback **[NEW]** | Did you give me a present once? I keep thinking you did. |
+| Speaker | When | Line |
+|---|---|---|
+| Fallback, latest gift neutral **[REWRITTEN]** | Any time | Did you give me a present once? I could swear you did. |
+| Fallback, latest gift loved or liked **[REWRITTEN]** | Any time | I remember you giving me {{item}} once. I loved it. But we've never swapped gifts. |
+| Fallback, latest gift disliked or hated **[REWRITTEN]** | Any time | I have this memory of you giving me {{item}}. I didn't like it much. Strange, since you never have. |
 
 ## Count
 
-80 lines: 20 fallback lines and 60 per-villager lines. 29 are new in this pass (both new Flower Dance
-tables, the `dance.partner` fallback, `winterstar.again`, `winterstar.seen`), none reworded. Jeff's
-four lines are used verbatim; "I swear we've danced before, but this is your first time right?" is
-used twice, as the `dance.partner` and `dance.again` fallback, so mod-added partners get it in the
-lead-up and at the dance. "Wait... why did I think that?" keeps its ellipsis because it is Jeff's; no
-other line uses one.
+72 lines: 19 fallback lines and 53 per-villager lines. 7 are Jeff's, 7 are new (six post-result lines
+and the `luau.shorts` fallback), and 58 are rewritten. "I swear we've danced before, but this is your
+first time right?" is now used once, as the `dance.again` fallback. Cut in this pass: all 12 per-villager `dance.partner` lead-up lines
+(ideas folded into `dance.again` and `dance.other`), Lewis's `luau.shorts` lead-up line, both Night
+Market lines, and the separate `winterstar.liked` / `winterstar.disliked` lead-up pools (now the gift
+variants of `winterstar.seen`).
+
+"Wait... why did I think that?" keeps its ellipsis because it is Jeff's. No other line uses one.
+
+Post-result lines (need the new hook, see the design spec):
+
+- Egg Festival: Abigail after the hunt, player won (`egghunt.won`), Abigail after the hunt, Abigail won
+  (`egghunt.lost`).
+- Luau: Gus after the tasting, bad again (`luau.bad`), Gus after the tasting, good again (`luau.good`).
+- Fair: Pierre after the judging, player won (`fair.won`), Pierre after the judging, Pierre won
+  (`fair.lost`).
+- Festival of Ice: Willy after the contest, player won (`icefish.won`).
+- Winter Star: the `winterstar.again` fallback, after the secret gift.
