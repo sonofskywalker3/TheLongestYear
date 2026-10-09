@@ -222,6 +222,14 @@ public sealed class RunState
     /// <summary>Deja-vu dialogue: days-played stamp of the last line anywhere in town (-1 = none).</summary>
     public int DejaVuLastDay { get; set; } = -1;
 
+    /// <summary>Festival memories (deja-vu phase 2): what the player did at each festival THIS loop,
+    /// by festival id. Merged into MetaState.FestivalMemories at the rewind and never read as a memory
+    /// before then, so a line is always about an earlier loop.</summary>
+    public Dictionary<string, FestivalMemory> FestivalLog { get; set; } = new();
+
+    /// <summary>Festival memories: festivals whose one memory for this loop has been heard.</summary>
+    public List<string> FestivalMemoryHeard { get; set; } = new();
+
     /// <summary>Deja-vu rollup: Farmer.eventsSeen as of the last rollup, so tonight's new heart
     /// events can be counted by difference.</summary>
     public List<string> EventsSeenAtDayStart { get; set; } = new();
@@ -526,5 +534,8 @@ public sealed class RunState
         // Deja-vu caps are per loop. The weekly stamp is a DaysPlayed value, which the rewind puts
         // back to 1, so a kept stamp would block every line until the new loop passed the old one.
         DejaVuRules.ResetForNewLoop(this);
+        // Festival memories: this loop's log was committed to meta just before (FinalizeReset).
+        (FestivalLog ??= new()).Clear();
+        (FestivalMemoryHeard ??= new()).Clear();
     }
 }
