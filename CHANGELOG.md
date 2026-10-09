@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.38 - 2026-10-09
+
+3567 tests.
+
+### Fixed
+
+- **A Vault payment the mod missed is now picked up overnight.** The nightly check that catches Vault bundles paid but not recorded (for example, paid on an older mod version) never saw any paid Vault bundle, so it did nothing. It now finds them and gives their JP, once per bundle; a payment already counted when you made it is never paid twice.
+
 ## 0.19.37 - 2026-10-09
 
 3559 tests.

@@ -80,6 +80,32 @@ public static class VaultRules
         return true;
     }
 
+    /// <summary>True when a Vault (money) bundle's slot array, as stored in
+    /// <c>NetWorldState.Bundles</c>, records the purchase. Vanilla sizes each array to the
+    /// ingredient field's word count (3 per ingredient, so 3 for a money bundle) but its purchase
+    /// button sets only slot 0 (JunimoNoteMenu.receiveLeftClick:
+    /// <c>bundles.FieldDict[index][0] = true</c>), and the menu reads ingredient i from slot i.
+    /// So slots 1 and 2 stay false forever, and <c>CommunityCenter.isBundleComplete</c>, which
+    /// wants every slot true, never reports a paid Vault bundle. Slot 0 is the paid flag.
+    /// (<c>bundleRewards</c> is no use either: it goes back to false once the reward is
+    /// collected.)</summary>
+    public static bool IsMoneyBundlePaid(IReadOnlyList<bool>? slots)
+        => slots != null && slots.Count > 0 && slots[0];
+
+    /// <summary>The Vault bundles of this board (<paramref name="vaultIndices"/>) that the board's
+    /// slot state (<paramref name="slotsByIndex"/>) records as paid, in board order. An index
+    /// missing from the slot state is skipped.</summary>
+    public static List<int> PaidOnBoard(IEnumerable<int> vaultIndices, IReadOnlyDictionary<int, bool[]> slotsByIndex)
+    {
+        var paid = new List<int>();
+        if (vaultIndices == null || slotsByIndex == null)
+            return paid;
+        foreach (int index in vaultIndices)
+            if (slotsByIndex.TryGetValue(index, out bool[]? slots) && IsMoneyBundlePaid(slots))
+                paid.Add(index);
+        return paid;
+    }
+
     /// <summary>Number of distinct vault bundles paid this run.</summary>
     public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;
 
