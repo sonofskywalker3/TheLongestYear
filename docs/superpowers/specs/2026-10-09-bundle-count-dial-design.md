@@ -112,3 +112,52 @@ Unit: the rule table and floors/caps, the planner (fewer, more, unique names, cr
 short pool), reserved index allocation, stale-key finding, held-board carry, resolver and settings
 plumbing, Normal = no change. Live: each step across a rewind on a throwaway farm, room pages
 screenshotted, a reload in between, no KeyNotFound in the log.
+
+## Amendment 2026-10-09: the Vault joins the dial
+
+Jeff, 2026-10-09: "We need to change the vault. for easy drop the highest cost bundle, for hard add 1 more that's
+double the current highest cost, and for extreme add another beyond that with another like x1.5-1.75 of the hard
+bundle". This replaces "The Vault ... not affected" in ruling 2 and in Out of scope.
+
+**Where.** TLY Custom (engine) boards only. The engine already owns the Vault on those boards (it writes the four
+money bundles back with `VaultAmountMultiplier`, default 1.25, applied by `VaultAmountScaler`). Normal and Remixed
+boards keep vanilla's Vault, as they keep every other room.
+
+**The rule.** `BundleCountRule.VaultDelta`, stamped with the rest of the rule: Easy -1, Normal 0, Hard +1,
+Extreme +2. A rule stamped before this amendment has 0, so a board in flight keeps four Vault bundles, and a held
+board carries its whole rule (Vault included) as before. `VaultBundleCount` (Core, pure):
+
+- **Kept:** a negative delta drops the priciest bundle(s), never below one.
+- **Extras:** the first costs 2x the board's priciest Vault bundle, each next one 1.6x the one before (inside
+  Jeff's 1.5 to 1.75), rounded to the nearest 500g. They copy the priciest bundle's reward and layout, take their
+  own bag tints (5 and 6) and an index from the reserved range.
+- **Prices are the board's own, after the multiplier**, so the ratios hold whatever the multiplier is:
+
+| Step | Vanilla base prices | The board at the default +25% |
+|---|---|---|
+| Easy | 2,500 / 5,000 / 10,000 | 3,125 / 6,250 / 12,500 |
+| Normal | 2,500 / 5,000 / 10,000 / 25,000 | 3,125 / 6,250 / 12,500 / 31,250 |
+| Hard | + 50,000 | + 62,500 |
+| Extreme | + 50,000 + 80,000 | + 62,500 + 100,000 |
+
+**Indices.** The Vault extras are numbered after every themed room's extras (the engine allocates them once pass 1
+is done), so the themed rooms' reserved indices never move. Easy's dropped bundle (Vault/26 on vanilla data) is
+removed by the stale-key sync at the write and again on every load, like any dropped bundle.
+
+**The season gate.** The Vault gate asks for the season ordinal (1 by Spring ... 4 by Winter) but never more than
+the board has (`VaultRules.RequiredPaid`): an Easy board asks for 3 by Winter. Hard and Extreme still ask for 4 by
+Winter; the extra bundles are needed only to finish the room (the bus). The keep_bus_unlocked reach ("bus:4")
+counts an Easy board's full Vault (all 3 paid) as 4 (`VaultRules.BusReachValue`); on Hard and Extreme it still
+unlocks at 4 paid, as before.
+
+**Diagnostics.** `tly_gatecheck` prints this board's Vault prices and per-season counts from the live board
+(`VaultBundleMap.PriceLadder`), not the vanilla 2,500 / 5,000 / 10,000 / 25,000 constants it used to print.
+`tly_bundlecount buy [index|cheapest]` pays a Vault bundle through the page's own purchase button (open the page
+in one batch, buy in the next, `close` after).
+
+**Live check (2026-10-09, throwaway farm, game minimized, log only).** Each step across a `tly_reset` and a reload:
+Easy 3 bags (3,125 / 6,250 / 12,500g), Normal 4, Hard 5 (+62,500g at 9008), Extreme 6 (+62,500g and 100,000g at
+9019 and 9020). The Vault page drew every bag at its own spot; `checkForMissedRewards` clean; the CC lookup knew
+every bundle. Paying through the purchase button took the gold, TLY recorded each payment and its JP, and the room
+completed (ccVault queued, room JP paid) only on the last bundle: the 3rd on Easy, 4th on Normal, 5th on Hard,
+6th on Extreme.

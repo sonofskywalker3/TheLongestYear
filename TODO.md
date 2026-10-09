@@ -6,6 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT, NOT RELEASED (0.19.33 to 0.19.35, 2026-10-09): the Vault joins Bundles per room
+Jeff, 2026-10-09: Easy drops the priciest Vault bundle, Hard adds one at 2x the priciest, Extreme a second at 1.6x
+that. TLY Custom boards only, on the board's scaled prices: Easy 3,125 / 6,250 / 12,500g; Normal adds 31,250g; Hard
+adds 62,500g; Extreme adds 62,500g and 100,000g. Spec amendment in
+`docs/superpowers/specs/2026-10-09-bundle-count-dial-design.md`. Live-checked each step across a rewind and a
+reload (log only, game minimized). `tly_gatecheck` now reads the board's real Vault prices.
+- [ ] Jeff: my calls, say if any is wrong. (1) The season gate never asks for more Vault bundles than the board has,
+  so Easy asks for 3 by Winter (otherwise Winter could not be passed). Hard and Extreme still ask for 4 by Winter;
+  the extras only finish the room (the bus). (2) Keep Bus Unlocked's reach ("4 vault bundles paid") counts an Easy
+  board's full Vault as 4; on Hard and Extreme it still unlocks at 4 paid, before the bus is fixed. (3) The extra
+  bundles give the same reward as the priciest Vault bundle (a Crystalarium on vanilla data), with bag tints 5 and 6.
+- [ ] Not fixed, found on the way: `VaultPaymentSync.Reconcile` (the backstop for payments the observer missed)
+  checks `CommunityCenter.isBundleComplete`, which is never true for a paid Vault bundle (vanilla only sets slot 0
+  of its 3-slot array). The live observer path works, so nothing is lost in normal play; the backstop is dead code
+  for the Vault. Pre-existing, unrelated to the dial.
+- [ ] Release: README + Nexus What's New (the Bundles per room line says the Vault never changes; update it).
 ### BUILT, NOT RELEASED (0.19.24 to 0.19.30, 2026-10-09): animal powers and the Animals tab
 Spec `docs/superpowers/specs/2026-10-09-animal-powers-design.md` (Jeff's rulings of 2026-10-09), plan
 `docs/superpowers/plans/2026-10-09-animal-powers.md`. All twelve powers built (Busy Barnyard split into a coop and a

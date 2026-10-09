@@ -100,8 +100,12 @@ with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
 **Bundles per room (2026-10-09).** `tly_bundlecount` lists the live bundles per room and says whether the CC's own
 room lookup knows every bundle (a missing one throws KeyNotFound in `checkForMissedRewards`). `tly_bundlecount set
 <step>` sets the dial in memory only (config.json untouched; the next new board uses it), `tly_bundlecount open
-<area 0-5>` opens that room's page and logs each bag and its spot, `tly_bundlecount missed` runs
-`checkForMissedRewards` and logs whether it threw.
+<area 0-5>` opens that room's page and logs each bag and its spot (the Vault is area 4), `tly_bundlecount missed` runs
+`checkForMissedRewards` and logs whether it threw. `tly_bundlecount buy` opens the Vault page; `tly_bundlecount buy
+[cheapest|<index>]` in a LATER batch pays that bundle through the page's own purchase button (gives the farmer the
+gold first) and logs the price, the gold taken and whether ccVault was queued; TLY's observer logs `Vault bundle N
+paid` on the next tick. The page stays open so the observer sees it: send `tly_bundlecount close` (closes any menu
+without its exit action, so no restore cutscene) when done.
 
 **Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
 with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
