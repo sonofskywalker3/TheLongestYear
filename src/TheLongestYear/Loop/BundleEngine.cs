@@ -129,6 +129,11 @@ namespace TheLongestYear.Loop
         /// the slot roll of a board generated before it existed.</summary>
         private const int FishAskSalt = 0x5F15;
 
+        /// <summary>Salt for the bundle-count dial's per-room roll (how many, which to drop, which
+        /// to add), so it cannot move any stream that existed before it.</summary>
+        private const int BundleCountSalt = 0x0BC7;
+        private const int BundleCountSaltPrime = 4243;
+
         /// <summary>Salt for the board-level legendary allowance roll (LegendaryFishRules.BoardAllowance).</summary>
         private const int LegendarySalt = 0x1E6D;
 
@@ -321,6 +326,11 @@ namespace TheLongestYear.Loop
             // domain the engine does not re-roll) seed the board-wide "asked" set here.
             var picked = new List<PickRecord>();
             var asked = new HashSet<string>(StringComparer.Ordinal);
+            // Bundle-count dial (spec 2026-10-09-bundle-count-dial): extra bundles take indices
+            // from a reserved range, skipping every index any room pool already uses. Rooms are
+            // walked in ordinal order below, so the same seed and pools give the same indices.
+            var reservedIndices = new Core.ReservedBundleIndices(
+                pools.Values.SelectMany(positions => positions).SelectMany(candidates => candidates).Select(c => c.Index));
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry
                      in pools.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             {
@@ -331,6 +341,7 @@ namespace TheLongestYear.Loop
                     ? WithoutHelpers(roomEntry.Value)
                     : roomEntry.Value;
                 IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(positions, seed, roomEntry.Key);
+                picks = ApplyBundleCount(roomEntry.Key, picks, positions, seed, reservedIndices);
                 foreach (BundleSpec pick in picks)
                 {
                     if (!TryClaimIndex(pick, claimedIndices))
@@ -492,6 +503,34 @@ namespace TheLongestYear.Loop
             return new GeneratedBundleSet(rewarded, flavors);
         }
 
+        /// <summary>The bundle-count dial for one room: drops or adds bundles to reach the room's
+        /// target count (<see cref="Core.BundleCountRule"/>, <see cref="Core.RoomBundleCountPlanner"/>).
+        /// A profile stamped before the dial existed has no rule and keeps every pick. Rolls from
+        /// its own per-room stream, so the picks and every other stream stay where they were.</summary>
+        private IReadOnlyList<BundleSpec> ApplyBundleCount(
+            string room, IReadOnlyList<BundleSpec> picks, IReadOnlyList<IReadOnlyList<BundleSpec>> positions,
+            int seed, Core.ReservedBundleIndices reservedIndices)
+        {
+            if (_difficulty.BundleCount is not Core.BundleCountRule rule)
+                return picks;
+
+            var countRng = new Random(seed ^ BundleCountSalt ^ unchecked(StableAuthoredSalt(room) * BundleCountSaltPrime));
+            int target = rule.Target(picks.Count, countRng);
+            if (target == picks.Count)
+                return picks;
+
+            IReadOnlyList<BundleSpec> planned = Core.RoomBundleCountPlanner.Plan(
+                picks, positions, target, countRng, reservedIndices.Next, out int shortfall);
+            _monitor?.Log(
+                $"BundleEngine: bundle count for {room}: {picks.Count} -> {planned.Count} (target {target}).",
+                LogLevel.Info);
+            if (shortfall > 0)
+                _monitor?.Log(
+                    $"BundleEngine: {room} only has {planned.Count} different bundles to offer, {shortfall} short of the {target} the bundle-count dial asks for.",
+                    LogLevel.Info);
+            return planned;
+        }
+
         /// <summary>Randomizer reward pool: every reward vanilla's standard and remixed bundles
         /// can give, from every room except the Abandoned Joja Mart (the Vault's item rewards are
         /// included). Shared by the Engine board and the Vanilla/Remixed reset pass so
@@ -634,13 +673,16 @@ namespace TheLongestYear.Loop
 
             // SetBundleData is MERGE/ADDITIVE, not a replace (NetWorldState.cs: SetBundleData ->
             // netBundleData.CopyFrom(data), and NetDictionary.CopyFrom only upserts keys present
-            // in `data` -- it never removes a key that isn't). That's safe here without an
-            // explicit clear because Generate() always emits exactly one entry per room-position
-            // spanning EVERY position VanillaBundlePool.BuildRoomPools() found this call -- the
-            // same fixed vanilla-defined position count every time -- so newData's key space is
-            // always the complete key space; there is no shrinking room that could leave a stale
-            // key behind.
+            // in `data` -- it never removes a key that isn't). Since the bundle-count dial (spec
+            // 2026-10-09) a room can hold fewer bundles than the last board or the game's defaults,
+            // so the keys this board no longer has are removed first. With the dial at Normal on a
+            // vanilla game the key space is the same every loop and this removes nothing.
+            BundleKeySync.RemoveStaleKeys(newData, monitor);
             Game1.netWorldState.Value.SetBundleData(newData);
+            // The CC's bundle-to-room lookups were built from whatever board it was constructed
+            // with; an extra bundle's reserved index is not in them. Before the map pass below,
+            // which reads them to decide where a note shows.
+            BundleKeySync.RefreshCommunityCenter(monitor);
 
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
             if (cc != null && cc.Map != null)

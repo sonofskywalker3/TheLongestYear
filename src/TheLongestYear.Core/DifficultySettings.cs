@@ -1,8 +1,8 @@
 namespace TheLongestYear.Core;
 
-/// <summary>The nine configured difficulty modifiers, serialized into
+/// <summary>The ten configured difficulty modifiers, serialized into
 /// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
-/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all nine, and a dial edited
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
@@ -21,7 +21,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all nine dials to one level.</summary>
+    /// <summary>Set the lever and all ten dials to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;
@@ -34,6 +34,7 @@ public sealed class DifficultySettings
         StartingGold = step;
         CartSlots = step;
         HoldPrices = step;
+        BundleCount = step;
     }
 
     // ---- Ask-side: baked into the board when it is generated ----
@@ -72,6 +73,11 @@ public sealed class DifficultySettings
     /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
+    /// <summary>How many bundles each themed room of a TLY Custom board holds: Easy one or two
+    /// fewer, Hard one or two more, Extreme 9 (<see cref="BundleCountRule"/>). Never applies to a
+    /// Normal or Remixed board, the Vault or The Missing Bundle. Spec 2026-10-09-bundle-count-dial.</summary>
+    public DifficultyStep BundleCount { get; set; } = DifficultyStep.Normal;
+
     // A tenth dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
     // config.json files that still carry it load fine; SMAPI skips the unknown key.
 
@@ -83,7 +89,8 @@ public sealed class DifficultySettings
            && ShrinePrices == DifficultyStep.Normal
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
-           && HoldPrices == DifficultyStep.Normal;
+           && HoldPrices == DifficultyStep.Normal
+           && BundleCount == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -108,5 +115,6 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
+        BundleCount = BundleCount,
     };
 }

@@ -767,6 +767,8 @@
     "gmcm.difficulty.cart-slots.tooltip": "How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is EMPTY until you buy Cart Stall I. Does nothing if the Traveling Cart limit is turned off.",
     "gmcm.difficulty.hold-prices.name": "Hold prices",
     "gmcm.difficulty.hold-prices.tooltip": "Scales the JP price of keeping your bundle board on a Fail night. The first hold stays free at every step: this makes repeat holds expensive, it does not tax your first mistake.",
+    "gmcm.difficulty.bundle-count.name": "Bundles per room (TLY Custom only)",
+    "gmcm.difficulty.bundle-count.tooltip": "How many bundles each Community Center room has. Easy has one or two fewer, never below 2. Normal is the usual count. Hard has one or two more. Extreme fills every room to 9. Extra bundles come from the same pool as the rest and are due in their own season. The Vault and the Missing Bundle never change. Takes effect when a new board is rolled, so a board you keep on a Fail night keeps its count. Does nothing on vanilla Standard or Remixed boards.",
 
     // -- day-1 intro event (Lewis porch scene + Junimo CC scene) -----------------------
     "intro.skip-notice": "Skip intro is on. The Longest Year opens with a short scene that explains the loop and what to do first. I recommend watching it the first time you play the mod. Turn Skip intro off to see it.",

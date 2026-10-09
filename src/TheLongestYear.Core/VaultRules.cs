@@ -8,8 +8,10 @@ namespace TheLongestYear.Core;
 /// Summer 2, Fall 3, Winter 4). Paying all four in Spring pre-satisfies every season. The
 /// keep_bus_unlocked Buildings upgrade short-circuits the gate (bus stays restored across runs).
 ///
-/// Canonical NON-REMIXED indices (Data/Bundles "Vault/N"):
-///   34 = 2,500g · 35 = 5,000g · 36 = 10,000g · 37 = 25,000g  (42,500g total)
+/// Canonical NON-REMIXED indices (Data/Bundles "Vault/N", unmodded 1.6.15):
+///   23 = 2,500g · 24 = 5,000g · 25 = 10,000g · 26 = 25,000g  (42,500g total)
+/// (These were 34 to 37 until 2026-10-09, a pre-1.6 numbering; VaultRulesTests now checks them
+/// against VanillaBundleBoard.Standard.)
 /// Remixed-bundle saves renumber these, so the live indices/gold are resolved at runtime from the
 /// save's own bundle data by <c>TheLongestYear.Integration.VaultBundleMap</c>; the constants below
 /// are the canonical layout + the fallback that map uses when bundle data is unavailable. The gate
@@ -20,10 +22,10 @@ public static class VaultRules
     /// <summary>Upgrade id that, when owned, satisfies the vault gate every season.</summary>
     public const string KeepBusUnlockedId = "keep_bus_unlocked";
 
-    public const int Vault2500   = 34;
-    public const int Vault5000   = 35;
-    public const int Vault10000  = 36;
-    public const int Vault25000  = 37;
+    public const int Vault2500   = 23;
+    public const int Vault5000   = 24;
+    public const int Vault10000  = 25;
+    public const int Vault25000  = 26;
 
     /// <summary>The four vanilla vault bundle indices, low tier to high.</summary>
     public static readonly int[] VaultIndices = { Vault2500, Vault5000, Vault10000, Vault25000 };

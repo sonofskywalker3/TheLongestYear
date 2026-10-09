@@ -617,7 +617,7 @@ merges master in afterwards so the opening scene can rely on the free slots.
 Everything reported between 0.18.1 and 0.18.11 was fixed and answered by Jeff on 15 Sep (see
 CHANGELOG 0.18.4, 0.18.10, 0.18.11). What is left over from the round, newest first:
 
-- **FUTURE FEATURE, parked by Jeff 2026-09-16 ("if I'm looking for something to add"). He said yes
+- **BUILT on branch `bundle-count-dial` (2026-10-09, spec `docs/superpowers/specs/2026-10-09-bundle-count-dial-design.md`); merge and release still owed, then credit ThirteenRedCats on Nexus.** Original note: **FUTURE FEATURE, parked by Jeff 2026-09-16 ("if I'm looking for something to add"). He said yes
   on Nexus and promised credit (ThirteenRedCats, Nexus post 16 Sep): a difficulty dial for the
   NUMBER of bundles per board.** Normal = the standard count, Easy = one or
   two fewer per board, Hard = one or two more, Extreme = every possible bundle. Jeff's reply: "if the

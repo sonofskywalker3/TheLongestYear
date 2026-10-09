@@ -51,6 +51,11 @@ public sealed class DifficultyProfile
     public double EffectiveWeeklyGoalStackDiscount()
         => WeeklyGoalStackDiscount ?? DifficultyResolver.WeeklyGoalDiscountFor(Steps?.StackSize ?? DifficultyStep.Normal);
 
+    /// <summary>How many bundles each themed room of a TLY Custom board holds. Null on a profile
+    /// stamped before the dial existed: such a board keeps every room exactly as it was, so its
+    /// load-time re-derivation is unchanged.</summary>
+    public BundleCountRule? BundleCount { get; set; }
+
     // ---- Economy (read live from the stamp) ----
 
     /// <summary>Multiplier on every Junimo Point award.</summary>
