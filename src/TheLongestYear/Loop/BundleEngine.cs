@@ -129,6 +129,11 @@ namespace TheLongestYear.Loop
         /// the slot roll of a board generated before it existed.</summary>
         private const int FishAskSalt = 0x5F15;
 
+        /// <summary>Salt for the bundle-count dial's per-room roll (how many, which to drop, which
+        /// to add), so it cannot move any stream that existed before it.</summary>
+        private const int BundleCountSalt = 0x0BC7;
+        private const int BundleCountSaltPrime = 4243;
+
         /// <summary>Salt for the board-level legendary allowance roll (LegendaryFishRules.BoardAllowance).</summary>
         private const int LegendarySalt = 0x1E6D;
 
@@ -321,6 +326,11 @@ namespace TheLongestYear.Loop
             // domain the engine does not re-roll) seed the board-wide "asked" set here.
             var picked = new List<PickRecord>();
             var asked = new HashSet<string>(StringComparer.Ordinal);
+            // Bundle-count dial (spec 2026-10-09-bundle-count-dial): extra bundles take indices
+            // from a reserved range, skipping every index any room pool already uses. Rooms are
+            // walked in ordinal order below, so the same seed and pools give the same indices.
+            var reservedIndices = new Core.ReservedBundleIndices(
+                pools.Values.SelectMany(positions => positions).SelectMany(candidates => candidates).Select(c => c.Index));
             foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomEntry
                      in pools.OrderBy(kv => kv.Key, StringComparer.Ordinal))
             {
@@ -331,6 +341,7 @@ namespace TheLongestYear.Loop
                     ? WithoutHelpers(roomEntry.Value)
                     : roomEntry.Value;
                 IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(positions, seed, roomEntry.Key);
+                picks = ApplyBundleCount(roomEntry.Key, picks, positions, seed, reservedIndices);
                 foreach (BundleSpec pick in picks)
                 {
                     if (!TryClaimIndex(pick, claimedIndices))
@@ -490,6 +501,34 @@ namespace TheLongestYear.Loop
                 $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
                 LogLevel.Info);
             return new GeneratedBundleSet(rewarded, flavors);
+        }
+
+        /// <summary>The bundle-count dial for one room: drops or adds bundles to reach the room's
+        /// target count (<see cref="Core.BundleCountRule"/>, <see cref="Core.RoomBundleCountPlanner"/>).
+        /// A profile stamped before the dial existed has no rule and keeps every pick. Rolls from
+        /// its own per-room stream, so the picks and every other stream stay where they were.</summary>
+        private IReadOnlyList<BundleSpec> ApplyBundleCount(
+            string room, IReadOnlyList<BundleSpec> picks, IReadOnlyList<IReadOnlyList<BundleSpec>> positions,
+            int seed, Core.ReservedBundleIndices reservedIndices)
+        {
+            if (_difficulty.BundleCount is not Core.BundleCountRule rule)
+                return picks;
+
+            var countRng = new Random(seed ^ BundleCountSalt ^ unchecked(StableAuthoredSalt(room) * BundleCountSaltPrime));
+            int target = rule.Target(picks.Count, countRng);
+            if (target == picks.Count)
+                return picks;
+
+            IReadOnlyList<BundleSpec> planned = Core.RoomBundleCountPlanner.Plan(
+                picks, positions, target, countRng, reservedIndices.Next, out int shortfall);
+            _monitor?.Log(
+                $"BundleEngine: bundle count for {room}: {picks.Count} -> {planned.Count} (target {target}).",
+                LogLevel.Info);
+            if (shortfall > 0)
+                _monitor?.Log(
+                    $"BundleEngine: {room} only has {planned.Count} different bundles to offer, {shortfall} short of the {target} the bundle-count dial asks for.",
+                    LogLevel.Info);
+            return planned;
         }
 
         /// <summary>Randomizer reward pool: every reward vanilla's standard and remixed bundles
