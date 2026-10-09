@@ -679,6 +679,10 @@ namespace TheLongestYear.Loop
             // vanilla game the key space is the same every loop and this removes nothing.
             BundleKeySync.RemoveStaleKeys(newData, monitor);
             Game1.netWorldState.Value.SetBundleData(newData);
+            // The CC's bundle-to-room lookups were built from whatever board it was constructed
+            // with; an extra bundle's reserved index is not in them. Before the map pass below,
+            // which reads them to decide where a note shows.
+            BundleKeySync.RefreshCommunityCenter(monitor);
 
             CommunityCenter cc = Game1.getLocationFromName("CommunityCenter") as CommunityCenter;
             if (cc != null && cc.Map != null)
@@ -697,9 +701,6 @@ namespace TheLongestYear.Loop
                 for (int i = 0; i < cc.areasComplete.Count; i++)
                     cc.areasComplete[i] = false;
 
-                // The CC's bundle-to-room lookups were built from whatever board it was
-                // constructed with; an extra bundle's reserved index is not in them.
-                BundleKeySync.RefreshCommunityCenter(monitor);
                 cc.MakeMapModifications(force: true);
             }
 
