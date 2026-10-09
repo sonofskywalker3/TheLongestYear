@@ -68,6 +68,7 @@ namespace TheLongestYear
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
         private TheLongestYear.Loop.PastSeasonSpawnsService _pastSeasonSpawns;
+        private TheLongestYear.Loop.AnimalPowersService _animalPowers;
         private TheLongestYear.Loop.SneakPeekChannelService _sneakPeekChannel;
 
         /// <summary>Whether the Sneak Peek Boost was active at the last cache check. The Wednesday
@@ -183,6 +184,10 @@ namespace TheLongestYear
             // Spring/Summer/Fall Returns: Data/Locations copies of a past season's fish and forage.
             _pastSeasonSpawns = new TheLongestYear.Loop.PastSeasonSpawnsService(this.Monitor, helper);
             helper.Events.Content.AssetRequested += _pastSeasonSpawns.OnAssetRequested;
+            // Animal powers (spec 2026-10-09): Morning Rounds at day start, Loyal Pet's Data/Pets edit.
+            _animalPowers = new TheLongestYear.Loop.AnimalPowersService(this.Monitor, helper);
+            helper.Events.Content.AssetRequested += _animalPowers.OnAssetRequested;
+            helper.Events.GameLoop.DayStarted += _animalPowers.OnDayStarted;
             // Sneak Peek: relabel the Wednesday TV channel while the Boost has taken the rerun slot.
             _sneakPeekChannel = new TheLongestYear.Loop.SneakPeekChannelService(this.Monitor);
             helper.Events.Content.AssetRequested += _sneakPeekChannel.OnAssetRequested;
@@ -604,6 +609,7 @@ namespace TheLongestYear
                 && TheLongestYear.Core.DejaVuRules.RepairStaleCaps(_meta.Run, (int)Game1.stats.DaysPlayed))
                 this.Monitor.Log("Deja-vu: cleared caps left over from an earlier loop.", LogLevel.Info);
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            _animalPowers.RefreshPets("save load");
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = day => TheLongestYear.Core.PastSeasonBoosts.Active(_meta.Run, day);
             _pastSeasonSpawns.Refresh(TodayDayOfYear());
@@ -837,6 +843,8 @@ namespace TheLongestYear
             {
                 if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
                     this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+                if (id == TheLongestYear.Core.AnimalPowers.LoyalPet)
+                    _animalPowers.RefreshPets("bought");
             };
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
@@ -929,6 +937,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.WildcardDayService.NightRun = null;
             TheLongestYear.Loop.RockslidePatch.Forget();
             TheLongestYear.Loop.UpgradeChecker.HasUpgrade = null;
+            _animalPowers?.RefreshPets("title");
             TheLongestYear.Loop.BoostChecker.YearTwoSeedsActive = null;
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = null;
             TheLongestYear.Loop.BoostChecker.SneakPeekActive = null;

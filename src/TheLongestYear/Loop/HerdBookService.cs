@@ -146,7 +146,10 @@ namespace TheLongestYear.Loop
                 FarmAnimal animal = Rebuild(a.Entry, monitor);
                 if (animal == null) continue;
                 animal.home = home;
-                ((AnimalHouse)home.GetIndoors()).adoptAnimal(animal);
+                // Warm Welcome skips a restore: the animal brings its own hearts (spec 2026-10-09).
+                AnimalArrivalPatch.Restoring = true;
+                try { ((AnimalHouse)home.GetIndoors()).adoptAnimal(animal); }
+                finally { AnimalArrivalPatch.Restoring = false; }
                 if (animal.myID.Value != a.Entry.AnimalId)
                 {
                     int index = meta.HerdBook.FindIndex(e => e.SlotIndex == a.Entry.SlotIndex);

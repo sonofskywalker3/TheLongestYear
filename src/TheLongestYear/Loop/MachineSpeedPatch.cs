@@ -1,12 +1,15 @@
+using System.Linq;
 using HarmonyLib;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Artisan bonus (machines_fast) and Spelunking liability (machines_slow). Postfix
-    /// on Object.OutputMachine (decompile Object.cs:2481), which is where MinutesUntilReady is set
-    /// for every data-driven machine (kegs, jars, casks, bee houses, tappers, smokers). Scales the
-    /// queued time by 0.75 or 1.25, rounded to 10 minutes, floor 10 (MachineReadyTime).</summary>
+    /// <summary>Artisan bonus (machines_fast), Spelunking liability (machines_slow) and Fast Hatch
+    /// (animal_fast_hatch, spec 2026-10-09 power 8). Postfix on Object.OutputMachine (decompile
+    /// Object.cs:2481), which is where MinutesUntilReady is set for every data-driven machine (kegs,
+    /// jars, casks, bee houses, tappers, smokers, incubators). Scales the queued time by
+    /// MachineReadyTime.Factor, rounded to 10 minutes, floor 10. For an incubator the time was already
+    /// set by OutputIncubator and Coopmaster's x0.5, so Fast Hatch multiplies on top of both.</summary>
     [HarmonyPatch(typeof(StardewValley.Object), nameof(StardewValley.Object.OutputMachine))]
     internal static class MachineSpeedPatch
     {
@@ -19,19 +22,18 @@ namespace TheLongestYear.Loop
             int before = __instance.MinutesUntilReady;
             if (before <= 0) return;
 
-            double factor;
-            string effect;
             int fastStacks = ActiveEffectsProvider.BonusStacks(BonusId);
-            if (fastStacks > 0)
-            {
-                // 25% sooner per stack (Artisan theme + Full Steam boost), compounding.
-                factor = System.Math.Pow(MachineReadyTime.FastFactor, fastStacks);
-                effect = BonusId;
-            }
-            else if (ActiveEffectsProvider.ActiveLiability(LiabilityId)) { factor = MachineReadyTime.SlowFactor; effect = LiabilityId; }
-            else return;
+            bool slow = fastStacks == 0 && ActiveEffectsProvider.ActiveLiability(LiabilityId);
+            bool fastHatch = UpgradeChecker.HasUpgrade != null && UpgradeChecker.HasUpgrade(AnimalPowers.FastHatch)
+                && __instance.GetMachineData()?.IsIncubator == true;
+            double factor = MachineReadyTime.Factor(fastStacks, slow, fastHatch);
+            if (factor == 1.0) return;
 
             __instance.MinutesUntilReady = MachineReadyTime.Scale(before, factor);
+            string effect = string.Join("+", new[]
+            {
+                fastStacks > 0 ? BonusId : null, slow ? LiabilityId : null, fastHatch ? AnimalPowers.FastHatch : null,
+            }.Where(s => s != null));
             PatchLog.Info($"{effect}: {__instance.Name} ready in {__instance.MinutesUntilReady} min (was {before}).");
         }
     }

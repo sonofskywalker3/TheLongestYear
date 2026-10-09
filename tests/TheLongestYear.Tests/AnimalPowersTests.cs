@@ -194,6 +194,16 @@ public class AnimalPowersTests
         Assert.False(AnimalPowers.GrantsHorseFlute(Owning("early_horse")));
     }
 
+    [Fact]
+    public void Baseline_grants_the_flute_only_with_keep_horse_and_the_row()
+    {
+        var both = new MetaState { OwnedUpgrades = { "early_horse", AnimalPowers.HorseFlute } };
+        Assert.True(RunBaselineBuilder.Build(both, new RunState(), PlayerSnapshot.Empty, 500).GrantHorseFlute);
+        var fluteOnly = new MetaState { OwnedUpgrades = { AnimalPowers.HorseFlute } };
+        Assert.False(RunBaselineBuilder.Build(fluteOnly, new RunState(), PlayerSnapshot.Empty, 500).GrantHorseFlute);
+        Assert.False(RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500).GrantHorseFlute);
+    }
+
     // --- Fast Hatch -----------------------------------------------------------------
 
     [Theory]

@@ -64,6 +64,22 @@ Decisions made here to fit the rulings (flagged for Jeff in "Open questions"):
 - The draft's "one festival memory per villager per loop" cap is dropped. The per-festival budget is
   the only cap.
 
+## Jeff's rulings, round 2 (2026-10-09). These override anything below that disagrees.
+
+- **No lead-up week.** Festival memories only happen at the festival itself. Every lead-up-week line,
+  roll and window below is cut; the Winter Star "you're my secret gift-giver" line and Lewis's lines
+  move to the festival day or are dropped.
+- **No friendship gate at festivals.** Festival memories ignore familiarity entirely: any villager at
+  the festival can roll (20%, or 50% for past dance partners and past secret gift recipients). Phase 1's
+  threshold still applies to phase 1's daily lines only. (Jeff: "for festivals don't take any friendship
+  into account".)
+- **Use the game's own words.** The Feast of the Winter Star exchange is the "secret gift exchange"; the
+  person you give to is your "secret friend"; the one who gives to you is your "secret gift-giver". Never
+  "Secret Santa" in player-facing text.
+- **Egg Festival lines are not approved.** Two drafts were rejected ("suck", "worse"). Current direction
+  under review: the memory leaks out as advice for today, then the speaker catches himself (the pattern of
+  Jeff's Luau lines). Any line naming a spot must match a real egg spot on the festival map.
+
 ## Non-goals
 
 - No mechanical effect. A memory line never changes a festival outcome, a price, a friendship value

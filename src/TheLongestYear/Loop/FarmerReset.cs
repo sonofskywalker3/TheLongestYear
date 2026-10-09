@@ -159,6 +159,10 @@ namespace TheLongestYear.Loop
             EnsureBasicTools(p, skipBasicScythe: baseline.GrantGoldenScythe);
             if (baseline.GrantGoldenScythe)
                 GrantGoldenScythe(p);
+            // Horse Flute power (spec 2026-10-09): Keep Horse rebuilds the stable owned by the player
+            // before this runs, so the flute works from the first morning.
+            if (baseline.GrantHorseFlute)
+                GrantHorseFlute(p, _monitor);
 
             // Re-grant kept tool tiers: bump each basic tool's UpgradeLevel to the kept tier
             // (capped at the in-run peak by the baseline builder). Tools with no kept tier stay
@@ -404,6 +408,19 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>Add the Golden Scythe (W)53 into the first empty slot if not already held.</summary>
+        private static void GrantHorseFlute(Farmer p, IMonitor monitor)
+        {
+            foreach (Item held in p.Items)
+                if (held != null && held.QualifiedItemId == AnimalPowers.HorseFluteQid)
+                    return;
+            Item flute = StardewValley.ItemRegistry.Create(AnimalPowers.HorseFluteQid);
+            bool added = p.addItemToInventoryBool(flute);
+            monitor.Log(added
+                    ? "Reset: Horse Flute power, a Horse Flute is in the backpack."
+                    : "Reset: Horse Flute power, the backpack is full, no flute this loop.",
+                added ? LogLevel.Info : LogLevel.Warn);
+        }
+
         private static void GrantGoldenScythe(Farmer p)
         {
             const string goldenScytheQid = "(W)53";
