@@ -165,9 +165,10 @@ namespace TheLongestYear.UI
             // ingredient row to fall out of _requirements. Add it as its own list row (it used to be
             // a thin pinned banner, inconsistent with the bundle rows). An unmet vault sits at the
             // top as an active obligation; once met it sinks to the bottom with completed bundles.
-            bool vaultMet = VaultRules.IsVaultGateSatisfied(_season, _run, _meta);
+            int vaultCount = TheLongestYear.Integration.VaultBundleMap.Count();
+            bool vaultMet = VaultRules.IsVaultGateSatisfied(_season, _run, _meta, vaultCount);
             BundleEntry vaultEntry = BundleEntry.Vault(
-                VaultRules.PaidCount(_run), VaultRules.SeasonOrdinal(_season), vaultMet);
+                VaultRules.PaidCount(_run), VaultRules.RequiredPaid(_season, vaultCount), vaultMet);
             if (vaultMet)
                 _entries.Add(vaultEntry);
             else
