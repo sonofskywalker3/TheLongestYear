@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.21 - 2026-10-09
+
+3229 tests.
+
+### Fixed
+
+- **No more red "Harmony patch failed" error at launch with ExtraAnimalConfig.** ExtraAnimalConfig (and mods like it) rewrites the same animal code TLY uses for the Wildcard snow day, and TLY gave up with an error. Now TLY works through the other mod's own winter check, so on the snow day animals still stay in the barn and act like it's Winter, and the other mod's animal settings keep working. If TLY ever can't find a way in, it leaves that part to the other mod and writes one quiet line to the log instead of an error.
+
 ## 0.19.20 - 2026-10-08
 
 3209 tests.

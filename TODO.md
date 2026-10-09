@@ -6,6 +6,20 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT 0.19.21 (pitytheviolins, Nexus posts, 2026-10-09): "harmony error" at startup
+Her log (TLY 0.19.1, 117 mods, https://smapi.io/log/9a32eecc3a0444fc8dca67acc8dde96b): `Harmony patch
+'TheLongestYear.Loop.WildcardAnimalPatch' failed to apply ... FarmAnimal::updateWhenNotCurrentLocation`, then
+"84 patch class(es) applied, 1 failed". Cause: ExtraAnimalConfig 1.9.15 (selph) swaps every `IsWinterHere()` in
+FarmAnimal.updateWhenNotCurrentLocation, updatePerTenMinutes and behaviors for its own
+`AnimalUtils.AnimalAffectedByWinter`, so the Wildcard snow-day transpiler found no anchor and threw, which also
+dropped the updatePerTenMinutes patch. Reproduced live with a scratch mod copying EAC's transpiler (same ERROR).
+Fix: one patch class per method, the transpiler runs last and never throws, and it follows calls into other mods'
+code (up to 3 deep): any helper there that asks `IsWinterHere()` gets the snow-day swap at GameLaunched (EAC's
+AnimalAffectedByWinter; Better Pigs' weather helpers). Nothing hookable: one Info line naming the other mod, no
+error. Verified live: no error, the hooked helper answers Winter on a Spring snow day and not after clearing it;
+without the other mod the direct patch still applies (1 and 2 checks swapped).
+- [ ] Reply to pitytheviolins on Nexus posts after the release ships.
+
 ### PARKED (Jeff, 2026-10-08): modded items TLY can't place yet, for the mod-support phase
 SVE + Cornucopia items the model can't place, questionable placements and engine gaps: see `docs/mod-support-unknowns.md`.
 
