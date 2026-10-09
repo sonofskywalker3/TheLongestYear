@@ -234,7 +234,7 @@ Commands:
   ask for, which are never tampered.
 - `tly_sabotage aurachest` opens a loose chest with every tainted item (and an untainted flavour
   beside a flavoured one) to look at the dark aura.
-- `tly_witness list | peek <npc> | talk <npc> | click` reads and plays the Linus / Shane line.
+- `tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <npc> | fresh <npc>` reads and plays the Linus / Shane line. `arm` records a line as if he saw last night's scene and makes the morning's call at once: `Hold` when he has not been met (the line waits a day), else `Say`. `fresh` re-arms his Introduction.
 
 The overnight slot (see the night order above): our scene replaces a random vanilla night event
 (fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
