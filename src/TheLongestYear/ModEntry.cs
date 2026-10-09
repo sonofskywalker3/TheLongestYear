@@ -325,7 +325,7 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add(TheLongestYear.DebugCommands.ModelDumpCommand.Name, TheLongestYear.DebugCommands.ModelDumpCommand.Description,
                 (c, a) => this.CmdDumpModel(a));
             helper.ConsoleCommands.Add("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
-            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the nine configured difficulty steps, the nine this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
+            helper.ConsoleCommands.Add("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             helper.ConsoleCommands.Add("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             helper.ConsoleCommands.Add("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             helper.ConsoleCommands.Add("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
@@ -356,6 +356,8 @@ namespace TheLongestYear
             helper.ConsoleCommands.Add("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             helper.ConsoleCommands.Add("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
+            helper.ConsoleCommands.Add("tly_bundlecount", TheLongestYear.DebugCommands.BundleCountDebugCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, a));
             helper.ConsoleCommands.Add("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             helper.ConsoleCommands.Add("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -586,6 +588,12 @@ namespace TheLongestYear
                 IsTechCrossModBundlesLoaded(), Context.IsMainPlayer, _meta.State.WrittenBoard,
                 new TheLongestYear.Loop.LiveBundleBoard(),
                 message => this.Monitor.Log(message, LogLevel.Info));
+            // A TLY Custom board whose rooms are not the game's default size (the bundle-count
+            // dial, spec 2026-10-09): the load put Data/Bundles' default keys back and built the
+            // CC's room lookups from them. Drop the bundles this board does not have and refresh
+            // the lookups, before anything below repairs, classifies or reads the board.
+            if (!BundleSourceNames.IsVanilla(_meta.State.BundleSource))
+                TheLongestYear.Loop.BundleKeySync.SyncToStoredBoard(_meta.State.WrittenBoard, this.Monitor);
             // Loop 1 of a new Normal/Remixed game has no reset to store its board, so store it here,
             // on the new-game load, after Tech's handler and before TLY's own load-time edits (the
             // unstackable clamp and later the week discount mirror into it from here on). An
@@ -2515,10 +2523,10 @@ namespace TheLongestYear
                 min: 0, max: 5000, interval: 100);
 
             // ---- Difficulty modifiers (spec 2026-08-26) ----
-            // Nine independent dials. Everything defaults to Normal, which is the shipping balance,
+            // Ten independent dials. Everything defaults to Normal, which is the shipping balance,
             // and a change lands at the NEXT reset because WorldResetService stamps the resolved
             // profile onto the save and every consumer reads that stamp. The overall lever above
-            // them only sets all nine at once (DifficultyLever); nothing reads it for gameplay.
+            // them only sets all ten at once (DifficultyLever); nothing reads it for gameplay.
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.difficulty.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.difficulty.blurb"));
 
@@ -2585,6 +2593,10 @@ namespace TheLongestYear
                 () => _config.Difficulty.HoldPrices, v => _config.Difficulty.HoldPrices = v,
                 () => Strings.Get("gmcm.difficulty.hold-prices.name"),
                 () => Strings.Get("gmcm.difficulty.hold-prices.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.BundleCount, v => _config.Difficulty.BundleCount = v,
+                () => Strings.Get("gmcm.difficulty.bundle-count.name"),
+                () => Strings.Get("gmcm.difficulty.bundle-count.tooltip"));
 
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.randomizer.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.randomizer.blurb"));
@@ -2845,6 +2857,7 @@ namespace TheLongestYear
                 case "tly_openshrine": this.CmdOpenShrine(command, args); break;
                 case "tly_tv": this.CmdTv(command, args); break;
                 case "tly_readbook": this.CmdReadBook(command, args); break;
+                case "tly_bundlecount": TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, args); break;
                 case "tly_wallet": TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, args); break;
                 case "tly_ordersboard": TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, args); break;
                 case "tly_cropprobe": TheLongestYear.DebugCommands.CropProbeCommand.Run(this.Monitor, args); break;
@@ -4497,6 +4510,7 @@ namespace TheLongestYear
             LogStep("starting gold", configured.StartingGold, live.Steps.StartingGold);
             LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
             LogStep("hold prices", configured.HoldPrices, live.Steps.HoldPrices);
+            LogStep("bundles per room", configured.BundleCount, live.Steps.BundleCount);
 
             this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
             this.Monitor.Log(
@@ -4512,7 +4526,7 @@ namespace TheLongestYear
 
             this.Monitor.Log(
                 $"  Board source: {_meta?.State?.BundleSource ?? BundleSourceNames.Engine}. " +
-                "Item rarity applies to Engine (TLY Custom) boards only; stack size, quality asks and " +
+                "Item rarity and bundles per room apply to Engine (TLY Custom) boards only; stack size, quality asks and " +
                 "required slots apply to vanilla boards too.",
                 LogLevel.Info);
 
@@ -5482,7 +5496,7 @@ namespace TheLongestYear
             }
             else if (System.Enum.TryParse(args[0], ignoreCase: true, out TheLongestYear.Core.Season s))
             {
-                // Resolve against THIS save's actual vault indices (remix-aware), not the vanilla 34–37.
+                // Resolve against THIS save's actual vault indices (remix-aware), not the vanilla 23–26.
                 bundleIndex = TheLongestYear.Integration.VaultBundleMap.IndexForSeason(s);
                 if (bundleIndex < 0)
                 {
