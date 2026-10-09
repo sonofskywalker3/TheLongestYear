@@ -3,6 +3,18 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased (branch deja-vu-festivals)
+
+### Added
+
+- **Festival memories.** From the second loop, villagers at a festival sometimes half-remember what you did there in an earlier loop: the egg hunt you won or lost, the soup you made, your grange display, the ice fishing contest, the golden pumpkin, or that you came at all. Each villager at the festival has a 20% chance to carry one; the first you hear is that festival's memory for the loop, and the rest go quiet.
+  - **Win the egg hunt and someone will remember it** at the next Egg Festival.
+  - **Dance partners and secret friends never forget.** Everyone you have danced with, in any loop, has a 50% chance to remember it when you ask again or when you dance with someone else. Everyone you have given a secret gift to may remember it at the Feast of the Winter Star, and so might this year's secret friend after you give your gift.
+  - **Some memories come right after the result**: Abigail after the egg hunt, Gus after the Governor tastes the soup, Pierre after the grange judging, Willy after the ice fishing.
+  - Dancing with someone and the secret gift now count toward how well the town remembers you.
+  - No gameplay effect. Toggle "Festival memories" in Features (needs deja-vu dialogue on).
+- Debug command `tly_festmem` (status, set, partner, recipient, clear, commit, force).
+
 ## 0.19.27 - 2026-10-09
 
 3333 tests. Covers 0.19.24 to 0.19.27 (not released yet).
