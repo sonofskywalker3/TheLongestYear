@@ -15,10 +15,10 @@ aims to follow [Semantic Versioning](https://semver.org/).
   - **Quick Growth:** baby animals grow up in half the time (a chicken in 2 days instead of 3, a pig in 5 instead of 10).
   - **Fast Hatch:** eggs in an incubator hatch in half the time.
   - **Snug Barn:** on rainy and Winter days (and the snow day) your animals stay happy indoors in the evening.
-  - **Busy Barnyard: Coop and Busy Barnyard: Barn:** ducks lay every day and rabbits every 2 days; goats and sheep produce every day.
-  - **Fine Feathers:** ducks have an extra 25% chance to leave a Duck Feather instead of an egg, at any heart level. Shows up once you've owned a duck.
+  - **Busy Coop and Busy Barn:** ducks lay every day and rabbits every 2 days; goats and sheep produce every day.
+  - **Molting Season:** ducks have an extra 25% chance to leave a Duck Feather instead of an egg, at any heart level. Shows up once you've owned a duck.
   - **Lucky Rabbits:** rabbits always leave a Rabbit's Foot instead of Wool. Shows up once you've owned a rabbit.
-  - **Truffle Nose:** each truffle a pig digs up has a 25% chance to be two. Shows up once you've owned a pig.
+  - **Truffle Hog:** each truffle a pig digs up has a 25% chance to be two. Shows up once you've owned a pig.
   - **Swift Horse:** your horse runs about 10% faster. Needs Keep Horse.
   - **Horse Flute:** start every loop with a Horse Flute. Needs Keep Horse.
   - **Loyal Pet:** your pet brings presents twice as often, starting at 3 hearts instead of 5.

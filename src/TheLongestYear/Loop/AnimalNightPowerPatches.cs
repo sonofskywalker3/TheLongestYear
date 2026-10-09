@@ -6,7 +6,7 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Busy Barnyard (spec 2026-10-09 power 3, split into a coop and a barn row by Ruling 2).
+    /// <summary>Busy Coop and Busy Barn, formerly Busy Barnyard (spec 2026-10-09 power 3, split into a coop and a barn row by Ruling 2).
     /// Vanilla's produce test in FarmAnimal.dayUpdate (FarmAnimal.cs:1005) is
     /// <c>daysSinceLastLay >= DaysToProduce - produceSpeedBonus</c>. The prefix adds
     /// <c>DaysToProduce - target</c> to daysSinceLastLay so the test passes at the target; the postfix
@@ -41,7 +41,7 @@ namespace TheLongestYear.Loop
             if (__state <= 0 || __instance == null) return;
             if (__instance.daysSinceLastLay.Value == 0)
             {
-                PatchLog.Trace($"Busy Barnyard: {__instance.displayName} ({__instance.type.Value}) produced tonight " +
+                PatchLog.Trace($"Busy Coop/Barn: {__instance.displayName} ({__instance.type.Value}) produced tonight " +
                                $"(produce {__instance.currentProduce.Value ?? "dropped overnight"}).");
                 return;
             }

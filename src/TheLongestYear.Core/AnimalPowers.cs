@@ -31,9 +31,9 @@ public static class AnimalPowers
     public const int WarmWelcomeTiers = 3;
     public const int FriendshipPerHeart = 200;
 
-    /// <summary>Fine Feathers: extra chance a duck's egg is a Duck Feather instead (Ruling 5).</summary>
+    /// <summary>Molting Season: extra chance a duck's egg is a Duck Feather instead (Ruling 5).</summary>
     public const double FineFeatherChance = 0.25;
-    /// <summary>Truffle Nose: chance a dug truffle comes with a second one (Ruling 5).</summary>
+    /// <summary>Truffle Hog: chance a dug truffle comes with a second one (Ruling 5).</summary>
     public const double TruffleDoubleChance = 0.25;
     /// <summary>Swift Horse: added to the riding speed sum (9.6 base, so about +10%, Ruling 5).</summary>
     public const double SwiftHorseSpeed = 1.0;
@@ -66,7 +66,7 @@ public static class AnimalPowers
         SwiftHorse, HorseFlute, LoyalPet,
     };
 
-    /// <summary>Busy Barnyard targets (Ruling 2): which row speeds which animal type, and to how many days.</summary>
+    /// <summary>Busy Coop / Busy Barn targets (Ruling 2, renamed from Busy Barnyard): which row speeds which animal type, and to how many days.</summary>
     private static readonly IReadOnlyDictionary<string, (string Row, int Days)> ProduceTargets =
         new Dictionary<string, (string, int)>(StringComparer.Ordinal)
         {
@@ -76,7 +76,7 @@ public static class AnimalPowers
             [SheepType] = (BusyBarn, 1),
         };
 
-    /// <summary>The produce interval Busy Barnyard gives this animal type, or null when no owned row covers it.</summary>
+    /// <summary>The produce interval Busy Coop / Busy Barn give this animal type, or null when no owned row covers it.</summary>
     public static int? ProduceTarget(string? animalType, Func<string, bool> has)
     {
         if (animalType == null || !ProduceTargets.TryGetValue(animalType, out var t)) return null;

@@ -5,7 +5,7 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Truffle Nose (spec 2026-10-09 power 4): a pig's dig that turned up a truffle has a 25%
+    /// <summary>Truffle Hog (spec 2026-10-09 power 4): a pig's dig that turned up a truffle has a 25%
     /// chance to turn up a second one. FarmAnimal.DigUpProduce (FarmAnimal.cs:1658) counts
     /// <c>Game1.stats.TrufflesFound</c> only when the truffle actually spawned (not a Truffle Crab, not a
     /// failed spawn), so the prefix records it and the postfix acts only when it went up. Separate from

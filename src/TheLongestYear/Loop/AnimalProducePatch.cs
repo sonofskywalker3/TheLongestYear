@@ -5,17 +5,17 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
-    /// <summary>Lucky Rabbits and Fine Feathers (spec 2026-10-09, powers 1 and 2). Postfix on
+    /// <summary>Lucky Rabbits and Molting Season (spec 2026-10-09, powers 1 and 2). Postfix on
     /// FarmAnimal.GetProduceID (decompile FarmAnimal.cs:880), the regular-produce pick used by
     /// dayUpdate and growFully. The deluxe pick (deluxe: true) is left alone, so vanilla's own deluxe
     /// roll still runs after this. Data/FarmAnimals is never edited (the effort model reads it).
     ///  - Lucky Rabbits: a Rabbit's regular pick becomes its deluxe pick (Rabbit's Foot), through
     ///    GetProduceID(r, true) so data conditions still apply.
-    ///  - Fine Feathers: a Duck's Duck Egg becomes a Duck Feather on a seeded 25% roll, no heart gate.</summary>
+    ///  - Molting Season: a Duck's Duck Egg becomes a Duck Feather on a seeded 25% roll, no heart gate.</summary>
     [HarmonyPatch(typeof(FarmAnimal), nameof(FarmAnimal.GetProduceID))]
     internal static class AnimalProducePatch
     {
-        /// <summary>Salt for Fine Feathers' roll so it never lines up with another seeded roll.</summary>
+        /// <summary>Salt for Molting Season' roll so it never lines up with another seeded roll.</summary>
         private const int FeatherSalt = 4421;
 
         private static void Postfix(FarmAnimal __instance, Random r, bool deluxe, ref string __result)

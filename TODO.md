@@ -15,7 +15,8 @@ Still open:
 - [ ] Not seen live: a pet actually dropping a present with Loyal Pet (only the Data/Pets edit was read back:
   GiftChance 0.4, thresholds 600 for Cat, Dog and Turtle), an incubator egg hatching with Warm Welcome (same
   adoptAnimal path as Marnie's and "Start with", both checked), Fast Hatch with Coopmaster.
-- [ ] Jeff: names are placeholders (Lucky Rabbits, Fine Feathers, Busy Barnyard: Coop / Barn, Truffle Nose and the rest).
+- [x] Jeff renamed (2026-10-09, 0.19.28): Fine Feathers is Molting Season, Truffle Nose is Truffle Hog, Busy Barnyard:
+  Coop / Barn are Busy Coop / Busy Barn. Save ids unchanged.
 - [ ] Jeff: once Swift Horse is owned the green "Keep Horse" owned row no longer shows (the menu shows only the top
   row of a chain, and Swift Horse and Horse Flute both chain from Keep Horse). Same as Keep Coop today. Fine, or
   should Keep Horse always show?

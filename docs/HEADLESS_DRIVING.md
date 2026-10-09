@@ -89,9 +89,9 @@ plays the opening on a type, prints the farmer's porch tile and ends the event w
 Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
 
 **Animal powers (2026-10-09).** `tly_animalpowers` lists the owned powers and every farm animal (age, daysOwned,
-daysSinceLastLay, produce days with Busy Barnyard, friendship, happiness, wasAutoPet). Subcommands: `produce <type>
-<n>` (GetProduceID on n throwaway adults: Lucky Rabbits, Fine Feathers), `dig <n>` (n throwaway pigs dig on the
-current map: Truffle Nose), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
+daysSinceLastLay, produce days with Busy Coop / Busy Barn, friendship, happiness, wasAutoPet). Subcommands: `produce <type>
+<n>` (GetProduceID on n throwaway adults: Lucky Rabbits, Molting Season), `dig <n>` (n throwaway pigs dig on the
+current map: Truffle Hog), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
 Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the percentage reads high), `pets`
 (Data/Pets as loaded: Loyal Pet), `incubate` (an Egg into the first empty incubator: Fast Hatch), `grow`, `feed`,
 `sethappy <n>`. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
