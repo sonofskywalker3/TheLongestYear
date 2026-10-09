@@ -123,11 +123,7 @@ public static class UpgradeCatalog
         new UpgradeDefinition("craftbook_3", UpgradeCategory.Carryover, 700, "craftbook_2"),
         new UpgradeDefinition("craftbook_4", UpgradeCategory.Carryover, 1200, "craftbook_3"),
 
-        // Efficiency. Keep Horse is pure carry-over (HorseCarryoverService), so it is only worth
-        // offering once this run has a stable to carry (TODO 2026-08-28: 450 JP for nothing
-        // otherwise; it was the one "keep a thing" row with no reach requirement).
-        new UpgradeDefinition("early_horse", UpgradeCategory.Efficiency, 450,
-            metaRequirement: null, runReachRequirement: "building:Stable"),
+        // (Keep Horse moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
         // Shop Discount — 5-tier chain (2026-05-29 rebalance: was single-tier 5%, now
         // 5/10/15/20/25%. Renamed from shop_discount_5 → shop_discount_1..5; the prior
@@ -260,26 +256,7 @@ public static class UpgradeCatalog
         new UpgradeDefinition("stash_2", UpgradeCategory.Stash, 675, "stash_1"),
         new UpgradeDefinition("stash_3", UpgradeCategory.Stash, 1200, "stash_2"),
 
-        // Buildings — Keep [X] chain. Effects (actually pre-build the structure on run start)
-        // are deferred to a later plan; here we only record the entitlement.
-        // Coop chain: ~5 runs to bank Keep Coop, more to upgrade.
-        new UpgradeDefinition("keep_coop", UpgradeCategory.Buildings, 600,
-            metaRequirement: null, runReachRequirement: "building:Coop"),
-        new UpgradeDefinition("keep_big_coop", UpgradeCategory.Buildings, 1200, "keep_coop",
-            metaRequirement: null, runReachRequirement: "building:Big Coop"),
-        new UpgradeDefinition("keep_deluxe_coop", UpgradeCategory.Buildings, 2000, "keep_big_coop",
-            metaRequirement: null, runReachRequirement: "building:Deluxe Coop"),
-        new UpgradeDefinition("keep_barn", UpgradeCategory.Buildings, 600,
-            metaRequirement: null, runReachRequirement: "building:Barn"),
-        new UpgradeDefinition("keep_big_barn", UpgradeCategory.Buildings, 1200, "keep_barn",
-            metaRequirement: null, runReachRequirement: "building:Big Barn"),
-        new UpgradeDefinition("keep_deluxe_barn", UpgradeCategory.Buildings, 2000, "keep_big_barn",
-            metaRequirement: null, runReachRequirement: "building:Deluxe Barn"),
-        // Silo — requested twice (khauser13 2026-06-11 + Dusklight7 2026-07-05): cheap in vanilla,
-        // but its absence from the keep-building options read as an oversight. Priced well below
-        // the Coop/Barn keeps to match its vanilla cost (100g + stones vs. thousands).
-        new UpgradeDefinition("keep_silo", UpgradeCategory.Buildings, 150,
-            metaRequirement: null, runReachRequirement: "building:Silo"),
+        // (The Coop / Barn chains and Keep Silo moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
         // Fish Pond (elaineofshalott, Nexus 2026-09-27; Jeff: one pond, back EMPTY). Priced off the
         // coop ladder (4,000g coop = 600 JP, 10,000g big coop = 1,200 JP; the pond is 5,000g).
         new UpgradeDefinition(FishPondKeep.UpgradeId, UpgradeCategory.Buildings, 750,
@@ -297,14 +274,7 @@ public static class UpgradeCatalog
         new UpgradeDefinition(SpecialOrdersBoardKeep.UpgradeId, UpgradeCategory.Buildings, SpecialOrdersBoardKeep.Cost,
             metaRequirement: null, runReachRequirement: SpecialOrdersBoardKeep.ReachMetric),
 
-        // Keep Pet — preserves the player's pet (kind, breed, name, friendship hearts)
-        // across loops. 2026-05-29 spec: sentimental upgrade, not progression-gating —
-        // pets don't produce anything you'd ship or donate, so the cost reflects "mostly
-        // for feelings" rather than the typical Keep upgrade premium. Barn/coop animals
-        // explicitly do NOT carry hearts across loops (see PetCarryoverService remarks).
-        // 50 JP (Jeff, 2026-09-29; was 75): cheap enough for a first-loop buy.
-        new UpgradeDefinition("keep_pet", UpgradeCategory.Buildings, 50,
-            metaRequirement: null, runReachRequirement: "pet:1"),
+        // (Keep Pet moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
         // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)
         // back on the same tiles. Above Keep Pet: paths give a speed boost and the layout saves clearing.
@@ -333,29 +303,10 @@ public static class UpgradeCatalog
             metaRequirement: null, runReachRequirement: "room:BoilerRoom"),
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: "bus:4"),
-
-        // Buildings — Start with [animal]. Requires both the housing upgrade AND ever having
-        // owned the species across previous runs (tracked in MetaState.AnimalSpeciesEverOwned).
-        // Coop birds:
-        new UpgradeDefinition("start_chicken", UpgradeCategory.Buildings, 400, "keep_coop", "species:Chicken"),
-        new UpgradeDefinition("start_void_chicken", UpgradeCategory.Buildings, 600, "keep_coop", "species:VoidChicken"),
-        new UpgradeDefinition("start_duck", UpgradeCategory.Buildings, 500, "keep_big_coop", "species:Duck"),
-        new UpgradeDefinition("start_dinosaur", UpgradeCategory.Buildings, 900, "keep_big_coop", "species:Dinosaur"),
-        new UpgradeDefinition("start_rabbit", UpgradeCategory.Buildings, 700, "keep_deluxe_coop", "species:Rabbit"),
-        // Barn animals:
-        new UpgradeDefinition("start_cow", UpgradeCategory.Buildings, 400, "keep_barn", "species:Cow"),
-        new UpgradeDefinition("start_goat", UpgradeCategory.Buildings, 500, "keep_big_barn", "species:Goat"),
-        new UpgradeDefinition("start_sheep", UpgradeCategory.Buildings, 600, "keep_deluxe_barn", "species:Sheep"),
-        new UpgradeDefinition("start_pig", UpgradeCategory.Buildings, 700, "keep_deluxe_barn", "species:Pig"),
-        // Ostriches live in barns (Data/FarmAnimals House "Barn"); this row used to sit in the coop
-        // chain and put the ostrich in a Deluxe Coop (fixed with the Herd Book, 2026-09-25).
-        new UpgradeDefinition("start_ostrich", UpgradeCategory.Buildings, 1500, "keep_barn", "species:Ostrich"),
         };
-        // Herd Book (spec 2026-09-25): a chain like the Cookbook's, no building gate. A slot whose
-        // building keep is not owned yet just waits (the menu says so).
-        for (int tier = 1; tier <= HerdBookMaxTier; tier++)
-            entries.Add(new UpgradeDefinition($"{HerdBookPrefix}{tier}", UpgradeCategory.Carryover,
-                HerdBookCosts[tier - 1], tier == 1 ? null : $"{HerdBookPrefix}{tier - 1}"));
+        // Animals tab (spec 2026-10-09): the animal powers, then the moved animal keeps (Keep Pet,
+        // Keep Horse, Coop / Barn / Silo, Start with, Herd Book), ids and prices unchanged.
+        entries.AddRange(AnimalUpgradeRows.Build(HerdBookCosts));
         entries.AddRange(UpgradeCatalogGenerators.LoadoutToolKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverSkillLevelKeeps());
         entries.AddRange(UpgradeCatalogGenerators.CarryoverMineElevatorKeeps());

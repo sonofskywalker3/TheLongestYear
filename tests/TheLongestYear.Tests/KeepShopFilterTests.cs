@@ -52,12 +52,12 @@ public class KeepShopFilterTests
     {
         var meta = new MetaState();
         var withoutStable = KeepShopFilter
-            .BuyableInCategory(UpgradeCategory.Efficiency, meta, _ => false)   // reach always false
+            .BuyableInCategory(UpgradeCategory.Animals, meta, _ => false)   // reach always false
             .Select(d => d.Id).ToList();
         Assert.DoesNotContain("early_horse", withoutStable);
 
         var withStable = KeepShopFilter
-            .BuyableInCategory(UpgradeCategory.Efficiency, meta,
+            .BuyableInCategory(UpgradeCategory.Animals, meta,
                 r => r == "building:Stable")
             .Select(d => d.Id).ToList();
         Assert.Contains("early_horse", withStable);
@@ -120,13 +120,13 @@ public class KeepShopFilterTests
     public void Owned_standalone_with_no_successor_is_always_a_leaf()
     {
         var meta = new MetaState();
-        meta.OwnedUpgrades.Add("early_horse");
+        meta.OwnedUpgrades.Add("keep_silo");
 
         var leaves = KeepShopFilter
-            .OwnedLeavesInCategory(UpgradeCategory.Efficiency, meta, _ => true)
+            .OwnedLeavesInCategory(UpgradeCategory.Animals, meta, _ => true)
             .Select(d => d.Id).ToList();
 
-        Assert.Contains("early_horse", leaves);
+        Assert.Contains("keep_silo", leaves);
     }
 
     [Fact]
