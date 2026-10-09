@@ -400,12 +400,22 @@ Jeff's answers (2026-09-24):
 Spec: `docs/superpowers/specs/2026-09-24-voluntary-restart-design.md` (approved 2026-09-24). Plan in progress.
 Jeff told tanky24u on Nexus (24 Sep): "Restart from the Junimo shrine is a good idea, I'll be making that one."
 
-### RELEASED 0.18.98: Keep Lost Books, 100 JP (Jeff 2026-09-29). tanky24u told 2026-09-29.
-### PROMISED (Jeff to tanky24u, Nexus posts, 24 Sep): artifact spots stop dropping lore books already found
-Ask: once a Lost Book (library lore book) has been found, take it out of the artifact-spot loot pool, since
-10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles. Jeff: "That's a great
-point, I'll be happy to add that in." Needs a look at how vanilla picks the Lost Book drop and whether the
-rewind wipes the "books found" count (if it does, the pool refills every loop, which is the complaint).
+### RELEASED 0.18.98 (built 0.18.92, b5a75cf): promise to tanky24u met as the Keep Lost Books power, 100 JP. tanky24u told 2026-09-29.
+Ask (tanky24u, Nexus posts, 24 Sep): once a Lost Book (library lore book) has been found, take it out of the
+artifact-spot loot pool, since 10+ lore books slow down hunting Ancient Dolls, Anchors, Glass Shards for bundles.
+Jeff: "That's a great point, I'll be happy to add that in." Jeff then chose a Carryover power over a free change.
+Checked 2026-10-09 against the code and the PC decompile:
+- Vanilla never re-drops a found book inside one loop: every Lost Book drop is the next book. Artifact spots
+  (ItemQueryResolver LOST_BOOK_OR_ITEM), fishing chests (FishingRod) and the mines (MineShaft) only give one
+  while NetWorldState.LostBooksFound is under 21, and finding one adds 1 (Farmer.foundArtifact).
+- Without the power the rewind sets LostBooksFound to 0 (WorldResetService step 1c, Jeff's 2026-07-10 full-reset
+  ruling) and FarmerReset clears the lb_<n> read markers, so all 21 books drop again every loop. That is the
+  original complaint, still true for players who have not bought it.
+- With Keep Lost Books the count and the lb_<n> / lostBookFound mail survive, so books found in earlier loops
+  never come back; books not yet found still drop until all 21 are found, then the spot gives its other item.
+  Verified in game at build time (18 found, rewind, still 18); not re-checked live 2026-10-09.
+- Open question for Jeff only if he wants it: making the keep free (no purchase) would cover every player, but
+  it is a balance change (100 JP power becomes default). Not built.
 
 ### RELEASED 0.18.72 (2026-09-25): the Herd Book (keep barn/coop animals across a rewind)
 Spec docs/superpowers/specs/2026-09-25-herd-book-design.md, plan docs/superpowers/plans/2026-09-25-herd-book.md.
