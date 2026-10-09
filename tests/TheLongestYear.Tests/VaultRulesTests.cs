@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -22,12 +24,28 @@ public class VaultRulesTests
         => Assert.Equal(gold, VaultRules.GoldForIndex(index));
 
     [Theory]
-    [InlineData(34, true)]
-    [InlineData(37, true)]
-    [InlineData(33, false)]
-    [InlineData(38, false)]
-    public void IsVaultIndex_only_true_for_34_to_37(int index, bool expected)
+    [InlineData(23, true)]
+    [InlineData(26, true)]
+    [InlineData(22, false)]
+    [InlineData(27, false)]
+    public void IsVaultIndex_only_true_for_23_to_26(int index, bool expected)
         => Assert.Equal(expected, VaultRules.IsVaultIndex(index));
+
+    /// <summary>The fallback layout is the unmodded 1.6.15 board's own Vault keys and prices
+    /// (VanillaBundleBoard.Generated.cs), not the pre-1.6 34 to 37 numbering.</summary>
+    [Fact]
+    public void Fallback_indices_match_the_vanilla_board()
+    {
+        var vanillaVault = VanillaBundleBoard.Standard
+            .Where(kv => kv.Key.StartsWith("Vault/", StringComparison.Ordinal))
+            .ToDictionary(
+                kv => int.Parse(kv.Key.Split('/')[1]),
+                kv => int.Parse(kv.Value.Split('/')[2].Split(' ')[1]));
+
+        Assert.Equal(vanillaVault.Keys.OrderBy(i => i), VaultRules.VaultIndices);
+        foreach (var (index, gold) in vanillaVault)
+            Assert.Equal(gold, VaultRules.GoldForIndex(index));
+    }
 
     [Fact]
     public void Gate_needs_count_at_least_season_ordinal()
