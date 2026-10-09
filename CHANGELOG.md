@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.36 - 2026-10-09
+
+3552 tests.
+
+### Changed
+
+- **Quick Growth now makes baby animals grow up overnight** (was: half the time). Any baby animal you buy, hatch or get from a barn birth is an adult after its first night with food. It costs 400 JP (was 350). If you already own it, you keep it.
 ## 0.19.35 - 2026-10-09
 
 3553 tests. Covers 0.19.33 to 0.19.35 (not released yet).

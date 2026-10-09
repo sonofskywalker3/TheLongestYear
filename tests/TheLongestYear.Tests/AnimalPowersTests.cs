@@ -23,7 +23,7 @@ public class AnimalPowersTests
     [InlineData("animal_warm_welcome_1", 200, null, null, null)]
     [InlineData("animal_warm_welcome_2", 450, "animal_warm_welcome_1", null, null)]
     [InlineData("animal_warm_welcome_3", 800, "animal_warm_welcome_2", null, null)]
-    [InlineData(AnimalPowers.QuickGrowth, 350, null, null, null)]
+    [InlineData(AnimalPowers.QuickGrowth, 400, null, null, null)]
     [InlineData(AnimalPowers.FastHatch, 200, null, null, null)]
     [InlineData(AnimalPowers.SnugBarn, 250, null, null, null)]
     [InlineData(AnimalPowers.BusyCoop, 600, null, null, null)]
@@ -104,25 +104,25 @@ public class AnimalPowersTests
 
     // --- Quick Growth ---------------------------------------------------------------
 
+    // Jeff, 2026-10-09: "just 1 quick growth, 400 JP". One fed night makes any baby an adult.
     [Theory]
-    [InlineData(3, 2)]
-    [InlineData(4, 2)]
-    [InlineData(5, 3)]
-    [InlineData(6, 3)]
-    [InlineData(7, 4)]
-    [InlineData(10, 5)]
-    [InlineData(0, 0)]
+    [InlineData(3, 1)]   // chicken, duck
+    [InlineData(4, 1)]
+    [InlineData(5, 1)]   // cow, goat
+    [InlineData(10, 1)] // pig
+    [InlineData(12, 1)] // ostrich
     [InlineData(1, 1)]
-    public void Quick_growth_halves_the_nights_rounded_up(int daysToMature, int nights)
+    [InlineData(0, 0)]   // Dinosaur: born adult
+    public void Quick_growth_grows_any_baby_up_in_one_fed_night(int daysToMature, int nights)
         => Assert.Equal(nights, AnimalPowers.QuickGrowthNights(daysToMature));
 
     [Theory]
-    [InlineData(0, 1, 3, QuickGrowthStep.AgeOneDay)]   // vanilla stepped 0 -> 1, one more day
-    [InlineData(1, 2, 3, QuickGrowthStep.GrowFully)]   // vanilla stepped to DTM-1: grow it now
+    [InlineData(0, 1, 3, QuickGrowthStep.GrowFully)]   // a new baby aged on a fed night: adult now
+    [InlineData(1, 2, 3, QuickGrowthStep.GrowFully)]
+    [InlineData(7, 8, 10, QuickGrowthStep.GrowFully)]
+    [InlineData(0, 1, 10, QuickGrowthStep.GrowFully)]  // a newborn pig too
     [InlineData(2, 3, 3, QuickGrowthStep.None)]        // vanilla already grew it
     [InlineData(0, 0, 3, QuickGrowthStep.None)]        // unfed night: age did not move
-    [InlineData(4, 5, 10, QuickGrowthStep.AgeOneDay)]
-    [InlineData(7, 8, 10, QuickGrowthStep.AgeOneDay)]  // 8 -> 9 = DTM-1; vanilla grows it next night
     [InlineData(5, 5, 0, QuickGrowthStep.None)]        // adult (Dinosaur DTM 0)
     public void Quick_growth_extra_step(int ageBefore, int ageAfterVanilla, int daysToMature, QuickGrowthStep expected)
         => Assert.Equal(expected, AnimalPowers.QuickGrowthExtraStep(ageBefore, ageAfterVanilla, daysToMature));

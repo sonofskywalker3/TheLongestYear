@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace TheLongestYear.Core;
 
 /// <summary>What the next step of a baby animal's night is under Quick Growth.</summary>
-public enum QuickGrowthStep { None, AgeOneDay, GrowFully }
+public enum QuickGrowthStep { None, GrowFully }
 
 /// <summary>
 /// The animal powers' ids, numbers and pure rules (spec 2026-10-09 and its Rulings). The game-side
@@ -98,16 +98,17 @@ public static class AnimalPowers
         return target == null ? 0 : Math.Max(0, daysToProduce - target.Value);
     }
 
-    /// <summary>Quick Growth's extra step for a night: vanilla moved the age from
-    /// <paramref name="ageBefore"/> to <paramref name="ageAfterVanilla"/>; a baby that aged takes one more
-    /// step the same way vanilla does (grow fully on the last baby day, else one day older).</summary>
+    /// <summary>Quick Growth (Jeff, 2026-10-09: "just 1 quick growth, 400 JP"): vanilla moved the age
+    /// from <paramref name="ageBefore"/> to <paramref name="ageAfterVanilla"/>; a baby that aged tonight
+    /// (a fed night) and is still a baby grows up now. Bought, hatched or born alike.</summary>
     public static QuickGrowthStep QuickGrowthExtraStep(int ageBefore, int ageAfterVanilla, int daysToMature)
     {
         if (ageAfterVanilla <= ageBefore || ageAfterVanilla >= daysToMature) return QuickGrowthStep.None;
-        return ageAfterVanilla == daysToMature - 1 ? QuickGrowthStep.GrowFully : QuickGrowthStep.AgeOneDay;
+        return QuickGrowthStep.GrowFully;
     }
 
-    /// <summary>Fed nights from birth to adult under Quick Growth (vanilla's step plus the extra one).</summary>
+    /// <summary>Fed nights from birth to adult under Quick Growth: one for any baby, none for an animal
+    /// born adult (the Dinosaur).</summary>
     public static int QuickGrowthNights(int daysToMature)
     {
         int age = 0, nights = 0;
@@ -116,11 +117,8 @@ public static class AnimalPowers
             nights++;
             int before = age;
             age = age == daysToMature - 1 ? daysToMature : age + 1;
-            switch (QuickGrowthExtraStep(before, age, daysToMature))
-            {
-                case QuickGrowthStep.GrowFully: age = daysToMature; break;
-                case QuickGrowthStep.AgeOneDay: age++; break;
-            }
+            if (QuickGrowthExtraStep(before, age, daysToMature) == QuickGrowthStep.GrowFully)
+                age = daysToMature;
         }
         return nights;
     }

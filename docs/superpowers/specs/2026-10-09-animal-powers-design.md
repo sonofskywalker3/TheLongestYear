@@ -319,7 +319,7 @@ Names for 1 to 4 are proposals (Jeff named 5 to 12).
 | 4 | Truffle Nose (`animal_truffle_double`) | 25% a dug truffle is two | 400 | species:Pig |
 | 5 | Swift Horse (`horse_swift`) | +1.0 riding speed (about +10%) | 300 | Keep Horse |
 | 6 | Horse Flute (`horse_flute`) | Horse Flute in the pack every loop start | 350 | Keep Horse |
-| 7 | Quick Growth (`animal_quick_growth`) | days to adult halved, rounded up | 350 | none |
+| 7 | Quick Growth (`animal_quick_growth`) | babies grow up overnight (amended 2026-10-09; was halved) | 400 | none |
 | 8 | Fast Hatch (`animal_fast_hatch`) | incubator time x0.5 | 200 | none |
 | 9 | Warm Welcome I/II/III (`animal_warm_welcome_1..3`) | new animals start at 200 / 400 / 600 friendship | 200 / 450 / 800 | chain |
 | 10 | Morning Rounds (`animal_morning_rounds`) | Auto-Petter on every animal each morning | 600 | a Coop or Barn this run |
@@ -490,3 +490,17 @@ line until a stable is built.
 - **Fast Hatch:** "animal_fast_hatch: Incubator ready in 4500 min (was 9000)" (vanilla 9000 shown by the control egg).
   With that week's machines_slow liability stacked (x1.25): 5630 minutes, egg in on Spring 16 at 8am, ready the
   morning of Spring 20, hatched on entry. Without the liability 4500 minutes is about 3 days against vanilla's 6.25.
+
+### Amendment 2026-10-09: Quick Growth is one row, overnight, 400 JP
+
+Jeff, 2026-10-09: "just 1 quick growth, 400 JP". Option (a) above, as a single row with the same id
+(`animal_quick_growth`), price 350 to 400 JP, no gate. Tooltip: "Baby animals grow up overnight."
+
+- **Effect:** any baby farm animal (bought, hatched or born) that ages on a fed night becomes an adult that night.
+  The Dinosaur is born adult and is untouched. An unfed night still does not age a baby, so it does not grow up.
+- **Hook:** the same `QuickGrowthPatch` postfix on `FarmAnimal.dayUpdate`: when vanilla aged the animal tonight and it
+  is still a baby, it calls vanilla's own `growFully`. `QuickGrowthStep` is now `None` or `GrowFully`;
+  `QuickGrowthNights` is 1 for every baby animal and 0 for the Dinosaur.
+- **Live check (throwaway farm, game minimized, log only):** power bought, a new White Chicken (age 0/3) and a new Pig
+  (age 0/10) fed, one `debug sleep`: the log reads `animal_quick_growth: ... (White Chicken) grew up (age 3)` and
+  `... (Pig) grew up (age 10)`, and `tly_animalpowers list` shows 3/3 and 10/10 the next morning.

@@ -32,8 +32,8 @@ Still open:
   GiftChance 0.4, thresholds 600 for Cat, Dog and Turtle), Fast Hatch with Coopmaster. Seen live in round 2: an
   incubator hatch and a Growing Herd birth with Warm Welcome II (friendship 400), Truffle Hog with real pigs over a
   day (spec, "Round 2").
-- [ ] Jeff: Quick Growth only saves 1 to 5 nights (table in the spec, "Round 2"). Pick a stronger version: (a) grow
-  up overnight, (b) cap at 2 nights, (c) a second tier. Not built.
+- [x] Jeff (2026-10-09): "just 1 quick growth, 400 JP". Built in 0.19.36: one row, any baby grows up after one fed
+  night, 400 JP (was 350). Live-checked: a new chicken and a new pig were adults after one fed night.
 - [ ] Jeff: Growing Herd (power 13, 400 JP, Big Barn gate, 4x the birth roll): name, text and number are placeholders.
 - [x] Jeff renamed (2026-10-09, 0.19.28): Fine Feathers is Molting Season, Truffle Nose is Truffle Hog, Busy Barnyard:
   Coop / Barn are Busy Coop / Busy Barn. Save ids unchanged.

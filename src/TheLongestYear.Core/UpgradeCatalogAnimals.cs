@@ -30,7 +30,7 @@ public static class AnimalUpgradeRows
         for (int tier = 1; tier <= AnimalPowers.WarmWelcomeTiers; tier++)
             yield return new UpgradeDefinition(AnimalPowers.WarmWelcomePrefix + tier, UpgradeCategory.Animals,
                 WarmWelcomeCosts[tier - 1], tier == 1 ? null : AnimalPowers.WarmWelcomePrefix + (tier - 1));
-        yield return new UpgradeDefinition(AnimalPowers.QuickGrowth, UpgradeCategory.Animals, 350);
+        yield return new UpgradeDefinition(AnimalPowers.QuickGrowth, UpgradeCategory.Animals, 400);
         yield return new UpgradeDefinition(AnimalPowers.FastHatch, UpgradeCategory.Animals, 200);
         // Growing Herd (round 2, 2026-10-09): only a Big or Deluxe Barn allows births (Data/Buildings
         // AllowAnimalPregnancy), and a Deluxe Barn counts as reaching a Big Barn.
