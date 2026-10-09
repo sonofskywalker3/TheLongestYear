@@ -158,4 +158,19 @@ public class VaultRulesTests
         // A second reconcile the same day adds nothing.
         Assert.Equal(0, VaultRules.PaidOnBoard(new[] { 23, 24, 25, 26 }, slots).Count(i => run.TryMarkVaultBundlePaid(i)));
     }
+
+    [Fact]
+    public void A_paid_vault_bundle_counts_as_done_on_the_board()
+        // Live 2026-10-09: all six Extreme Vault bundles paid, isBundleComplete false for each.
+        => Assert.True(VaultRules.IsRoomBundleDone("Vault", vanillaComplete: false, new[] { true, false, false }));
+
+    [Fact]
+    public void An_unpaid_vault_bundle_is_not_done_whatever_vanilla_says()
+        => Assert.False(VaultRules.IsRoomBundleDone("Vault", vanillaComplete: true, new[] { false, false, false }));
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Other_rooms_follow_vanilla(bool vanillaComplete)
+        => Assert.Equal(vanillaComplete, VaultRules.IsRoomBundleDone("Pantry", vanillaComplete, new[] { true, false, false }));
 }

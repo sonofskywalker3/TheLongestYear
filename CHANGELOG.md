@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.40 - 2026-10-09
+
+3571 tests.
+
+### Fixed
+
+- **A paid Vault room now counts as done when the mod checks the Community Center room by room.** That check asked the game whether each Vault bundle was complete, and the game never says so for a bundle bought with gold, so the Vault always read as open (`tly_runstate` showed `Vault=OPEN` with every Vault bundle paid). It decided whether the Community Center counts as finished before the hall itself is restored. It now reads the purchase flag the Vault page sets.
+
+## 0.19.39 - 2026-10-09
+
+### Added
+
+- Debug commands for headless live checks: `tly_festmem pot`, `give` and `score` (the Luau pot, the secret gift, the egg hunt score), `tly_animalpowers pet` (pets every pet the way a click does), `tly_bundlecount bus` (Keep Bus Unlocked's reach, path by path) and `tly_bundlecount exit` (closes the Vault page with the game's own restore cutscene).
+
 ## 0.19.38 - 2026-10-09
 
 3567 tests.

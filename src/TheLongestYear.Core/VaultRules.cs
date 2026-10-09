@@ -92,6 +92,16 @@ public static class VaultRules
     public static bool IsMoneyBundlePaid(IReadOnlyList<bool>? slots)
         => slots != null && slots.Count > 0 && slots[0];
 
+    /// <summary>Data/Bundles room name of the Vault.</summary>
+    public const string VaultRoomName = "Vault";
+
+    /// <summary>Whether one bundle of a room counts as done on the board. A Vault bundle is a money
+    /// bundle: only slot 0 records its purchase (<see cref="IsMoneyBundlePaid"/>), so vanilla's
+    /// isBundleComplete (<paramref name="vanillaComplete"/>) never sees it. Every other room's bundle
+    /// is done when vanilla says so.</summary>
+    public static bool IsRoomBundleDone(string? roomName, bool vanillaComplete, IReadOnlyList<bool>? slots)
+        => roomName == VaultRoomName ? IsMoneyBundlePaid(slots) : vanillaComplete;
+
     /// <summary>The Vault bundles of this board (<paramref name="vaultIndices"/>) that the board's
     /// slot state (<paramref name="slotsByIndex"/>) records as paid, in board order. An index
     /// missing from the slot state is skipped.</summary>
