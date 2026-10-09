@@ -36,6 +36,19 @@ aims to follow [Semantic Versioning](https://semver.org/).
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|show|talk|click|arm|fresh` (`talk` runs a real conversation, `fresh` makes a villager unmet again); `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
 
+## 0.19.21 - 2026-10-09
+
+3229 tests. Release of 0.19.19 to 0.19.21.
+
+### Docs
+
+- README and the Nexus description: a new What's New in 0.19.21 (the Harmony error with ExtraAnimalConfig, rare pond products no longer dating items, and the real routes for the items they used to date). The 0.19.18 What's New stays below it as its own 0.19.18 section, the way 0.19.1 and 0.19.0 do. Beta line set to 0.19.21; pitytheviolins' Thanks entry names the Harmony report.
+- `release-notes/0.19.21-nexus-changelog.txt`; README and description backups as `release-notes/README-0.19.21-backup.md` and `release-notes/nexus-description-0.19.21-backup.bbcode`.
+
+### Fixed
+
+- **No more red "Harmony patch failed" error at launch with ExtraAnimalConfig.** ExtraAnimalConfig (and mods like it) rewrites the same animal code TLY uses for the Wildcard snow day, and TLY gave up with an error. Now TLY works through the other mod's own winter check, so on the snow day animals still stay in the barn and act like it's Winter, and the other mod's animal settings keep working. If TLY ever can't find a way in, it leaves that part to the other mod and writes one quiet line to the log instead of an error.
+
 ## 0.19.20 - 2026-10-08
 
 3209 tests.
