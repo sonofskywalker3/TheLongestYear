@@ -34,6 +34,7 @@ public class AnimalPowersTests
     [InlineData(AnimalPowers.SwiftHorse, 300, "early_horse", null, null)]
     [InlineData(AnimalPowers.HorseFlute, 350, "early_horse", null, null)]
     [InlineData(AnimalPowers.LoyalPet, 150, null, null, "pet:1")]
+    [InlineData(AnimalPowers.GrowingHerd, 400, null, null, "building:Big Barn")]
     public void Power_rows_have_the_ruled_price_and_gate(string id, long cost, string? prereq, string? meta, string? reach)
     {
         UpgradeDefinition def = UpgradeCatalog.TryGet(id)!;
@@ -58,8 +59,8 @@ public class AnimalPowersTests
     }
 
     [Fact]
-    public void All_ids_lists_fifteen_rows()
-        => Assert.Equal(15, AnimalPowers.AllIds.Distinct().Count());
+    public void All_ids_lists_sixteen_rows()
+        => Assert.Equal(16, AnimalPowers.AllIds.Distinct().Count());
 
     // --- Busy Barnyard --------------------------------------------------------------
 
@@ -215,4 +216,26 @@ public class AnimalPowersTests
     [InlineData(0, true, false, 1.25)]
     public void Machine_factor_multiplies_theme_and_fast_hatch(int fastStacks, bool slow, bool incubatorHalf, double factor)
         => Assert.Equal(factor, MachineReadyTime.Factor(fastStacks, slow, incubatorHalf), 6);
+    // --- Growing Herd ---------------------------------------------------------------
+
+    [Theory]
+    [InlineData(0, 0.0)]
+    [InlineData(1, 0.022)]
+    [InlineData(7, 0.154)]
+    [InlineData(11, 0.242)]
+    [InlineData(100, 1.0)]   // capped
+    public void Birth_chance_is_four_times_vanillas_per_animal_roll(int animals, double chance)
+        => Assert.Equal(chance, AnimalPowers.BirthChance(animals), 6);
+
+    [Fact]
+    public void Birth_chance_is_vanilla_times_the_factor()
+        => Assert.Equal(7 * AnimalPowers.VanillaBirthChancePerAnimal * 4, AnimalPowers.BirthChance(7), 9);
+
+    [Theory]
+    [InlineData(false, true, true, true)]
+    [InlineData(true, true, true, false)]    // a baby
+    [InlineData(false, false, true, false)]  // the player switched reproduction off
+    [InlineData(false, true, false, false)]  // a species that never gets pregnant (ostrich)
+    public void Only_adults_allowed_to_breed_of_a_pregnant_species_give_birth(bool baby, bool allow, bool canPregnant, bool expected)
+        => Assert.Equal(expected, AnimalPowers.CanGiveBirth(baby, allow, canPregnant));
 }

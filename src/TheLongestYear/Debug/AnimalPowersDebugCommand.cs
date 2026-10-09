@@ -5,6 +5,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Characters;
+using StardewValley.Events;
 using StardewValley.GameData.FarmAnimals;
 using StardewValley.GameData.Pets;
 using TheLongestYear.Core;
@@ -18,7 +19,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_animalpowers";
         public const string Description =
-            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | grow | feed | sethappy <0-255>";
+            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | grow | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
 
         private const int DefaultSamples = 200;
         private const string RegularEggQid = "(O)176";
@@ -50,6 +51,19 @@ namespace TheLongestYear.DebugCommands
                         foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) a.happiness.Value = (byte)Math.Clamp(h, 0, 255);
                         monitor.Log($"{Name}: every farm animal's happiness set to {h}.", LogLevel.Info);
                         break;
+                    case "setfriend" when args.Length >= 2 && int.TryParse(args[1], out int f):
+                        foreach (FarmAnimal a in Game1.getFarm().getAllFarmAnimals()) a.friendshipTowardFarmer.Value = Math.Clamp(f, 0, 1000);
+                        monitor.Log($"{Name}: every farm animal's friendship set to {f}.", LogLevel.Info);
+                        break;
+                    case "births": Births(monitor, meta, Count(args, 1)); break;
+                    case "birthnight":
+                        GrowingHerdPatch.ForceNextBirth = true;
+                        Game1.farmEventOverride = new QuestionEvent(QuestionEvent.barnBirth);
+                        monitor.Log($"{Name}: tonight's farm event is a barn birth with a certain roll (sleep now).", LogLevel.Info);
+                        break;
+                    case "doors": Doors(monitor); break;
+                    case "truffles": Truffles(monitor); break;
+                    case "enter" when args.Length >= 2: Enter(monitor, args[1], args.Length >= 3 && int.TryParse(args[2], out int i) ? i : 0); break;
                     default: monitor.Log(Description, LogLevel.Warn); break;
                 }
             }
@@ -159,6 +173,79 @@ namespace TheLongestYear.DebugCommands
             }
             foreach (Pet pet in Game1.getFarm().characters.OfType<Pet>().Concat(Utility.getHomeOfFarmer(Game1.player).characters.OfType<Pet>()))
                 monitor.Log($"{Name}: {pet.Name} ({pet.petType.Value}) friendship {pet.friendshipTowardFarmer.Value}.", LogLevel.Info);
+        }
+
+        /// <summary>Growing Herd: runs the (patched) barn-birth setUp n times and counts the nights that would
+        /// have had a birth, by parent type. Each success's birth dialogue is closed at once; no animal is born.
+        /// Compare a run before buying the power with one after.</summary>
+        private static void Births(IMonitor monitor, MetaState meta, int n)
+        {
+            var byType = new Dictionary<string, int>();
+            int births = 0;
+            for (int i = 0; i < n; i++)
+            {
+                var ev = new QuestionEvent(QuestionEvent.barnBirth);
+                bool none = ev.setUp();
+                if (!none && ev.animal != null)
+                {
+                    births++;
+                    string type = ev.animal.type.Value;
+                    byType[type] = byType.TryGetValue(type, out int c) ? c + 1 : 1;
+                }
+                if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox) Game1.activeClickableMenu = null;
+                Game1.dialogueUp = false;
+                Game1.messagePause = false;
+            }
+            var barns = new List<string>();
+            foreach (Building b in Game1.getFarm().buildings)
+                if (b.AllowsAnimalPregnancy() && b.GetIndoors() is AnimalHouse h)
+                    barns.Add($"{b.buildingType.Value} {h.animalsThatLiveHere.Count}/{h.animalLimit.Value}");
+            monitor.Log($"{Name}: births x{n} (Growing Herd owned {meta.HasUpgrade(AnimalPowers.GrowingHerd)}): {births} " +
+                        $"({100.0 * births / n:F2}% of barn-birth nights; vanilla only rolls on half the quiet nights). By parent: " +
+                        $"{string.Join(", ", byType.Select(kv => $"{kv.Key}={kv.Value}").DefaultIfEmpty("none"))}. Barns: {string.Join(", ", barns)}.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Opens every closed coop and barn animal door through the building's own toggle.</summary>
+        private static void Doors(IMonitor monitor)
+        {
+            int opened = 0;
+            foreach (Building b in Game1.getFarm().buildings)
+                if (b.GetIndoors() is AnimalHouse && !b.animalDoorOpen.Value)
+                {
+                    b.ToggleAnimalDoor(Game1.player);
+                    opened++;
+                }
+            monitor.Log($"{Name}: opened {opened} animal door(s).", LogLevel.Info);
+        }
+
+        /// <summary>Truffle Hog: the truffles-found stat, truffles lying on the farm, and the pigs outdoors.</summary>
+        private static void Truffles(IMonitor monitor)
+        {
+            Farm farm = Game1.getFarm();
+            int onGround = farm.objects.Values.Count(o => o.QualifiedItemId == AnimalPowers.TruffleQid);
+            var pigs = farm.getAllFarmAnimals().Where(a => a.type.Value == AnimalPowers.PigType).ToList();
+            int outside = pigs.Count(a => a.currentLocation == farm);
+            int withProduce = pigs.Count(a => a.currentProduce.Value != null);
+            monitor.Log($"{Name}: TrufflesFound {Game1.stats.TrufflesFound}, truffles on the farm {onGround}, pigs {pigs.Count} " +
+                        $"(outdoors {outside}, still holding a truffle {withProduce}), time {Game1.timeOfDay}, raining {farm.IsRainingHere()}, " +
+                        $"Truffle Hog owned {UpgradeChecker.HasUpgrade?.Invoke(AnimalPowers.TruffleNose) == true}.",
+                LogLevel.Info);
+        }
+
+        /// <summary>Warps the farmer into the index-th coop or barn, one tile inside its door (entering a
+        /// coop is what starts vanilla's hatch event for a ready incubator).</summary>
+        private static void Enter(IMonitor monitor, string kind, int index)
+        {
+            var houses = Game1.getFarm().buildings
+                .Where(b => b.GetIndoors() is AnimalHouse && b.buildingType.Value.Contains(kind, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (index < 0 || index >= houses.Count) { monitor.Log($"{Name}: no {kind} number {index} ({houses.Count} found).", LogLevel.Warn); return; }
+            GameLocation indoors = houses[index].GetIndoors();
+            var door = indoors.warps.FirstOrDefault();
+            int x = door?.X ?? 3, y = (door?.Y ?? 10) - 1;
+            Game1.warpFarmer(indoors.NameOrUniqueName, x, y, 0);
+            monitor.Log($"{Name}: warping into {houses[index].buildingType.Value} at ({x},{y}).", LogLevel.Info);
         }
 
         /// <summary>Drops an Egg into the first empty incubator in any coop through the machine's own

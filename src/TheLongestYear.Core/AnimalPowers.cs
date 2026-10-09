@@ -26,6 +26,7 @@ public static class AnimalPowers
     public const string MorningRounds = "animal_morning_rounds";
     public const string SnugBarn = "animal_snug_barn";
     public const string LoyalPet = "pet_loyal";
+    public const string GrowingHerd = "animal_more_births";
     public const string KeepHorse = "early_horse";
 
     public const int WarmWelcomeTiers = 3;
@@ -43,6 +44,12 @@ public static class AnimalPowers
     /// (vanilla 1000, here 3 hearts), Ruling 5.</summary>
     public const float PetGiftChance = 0.4f;
     public const int PetGiftFriendship = 600;
+
+    /// <summary>Vanilla's overnight barn birth (QuestionEvent.setUp case 2): a Big or Deluxe Barn that is not full
+    /// rolls <c>animals living there x 0.0055</c>, then picks one of them at random.</summary>
+    public const double VanillaBirthChancePerAnimal = 0.0055;
+    /// <summary>Growing Herd (spec 2026-10-09, round 2): the per-animal birth chance times this.</summary>
+    public const double BirthChanceFactor = 4.0;
 
     /// <summary>Vanilla's diagonal walking factor (Farmer.getMovementSpeed).</summary>
     private const float DiagonalFactor = 0.707f;
@@ -63,7 +70,7 @@ public static class AnimalPowers
     {
         MorningRounds, WarmWelcomePrefix + 1, WarmWelcomePrefix + 2, WarmWelcomePrefix + 3,
         QuickGrowth, FastHatch, SnugBarn, BusyCoop, BusyBarn, FineFeathers, LuckyRabbits, TruffleNose,
-        SwiftHorse, HorseFlute, LoyalPet,
+        SwiftHorse, HorseFlute, LoyalPet, GrowingHerd,
     };
 
     /// <summary>Busy Coop / Busy Barn targets (Ruling 2, renamed from Busy Barnyard): which row speeds which animal type, and to how many days.</summary>
@@ -138,6 +145,17 @@ public static class AnimalPowers
     /// <summary>Swift Horse's addition to getMovementSpeed, scaled like vanilla's riding sum.</summary>
     public static double SwiftHorseBonus(float movementMultiplier, int elapsedMs, bool diagonal)
         => SwiftHorseSpeed * movementMultiplier * elapsedMs * (diagonal ? DiagonalFactor : 1f);
+
+    /// <summary>Growing Herd: one barn's birth roll for the night, vanilla's per-animal chance times
+    /// <see cref="BirthChanceFactor"/>, at most 1.</summary>
+    public static double BirthChance(int animalsLivingThere)
+        => Math.Clamp(animalsLivingThere * VanillaBirthChancePerAnimal * BirthChanceFactor, 0.0, 1.0);
+
+    /// <summary>The animals a birth can come from: vanilla's own test (adult, reproduction allowed, a species
+    /// that can get pregnant). Vanilla picks any animal in the barn and wastes the night on a baby; Growing Herd
+    /// picks only from these.</summary>
+    public static bool CanGiveBirth(bool isBaby, bool allowReproduction, bool canGetPregnant)
+        => !isBaby && allowReproduction && canGetPregnant;
 
     public static float GiftChance(float vanilla) => Math.Max(vanilla, PetGiftChance);
 

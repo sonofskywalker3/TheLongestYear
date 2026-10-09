@@ -32,6 +32,10 @@ public static class AnimalUpgradeRows
                 WarmWelcomeCosts[tier - 1], tier == 1 ? null : AnimalPowers.WarmWelcomePrefix + (tier - 1));
         yield return new UpgradeDefinition(AnimalPowers.QuickGrowth, UpgradeCategory.Animals, 350);
         yield return new UpgradeDefinition(AnimalPowers.FastHatch, UpgradeCategory.Animals, 200);
+        // Growing Herd (round 2, 2026-10-09): only a Big or Deluxe Barn allows births (Data/Buildings
+        // AllowAnimalPregnancy), and a Deluxe Barn counts as reaching a Big Barn.
+        yield return new UpgradeDefinition(AnimalPowers.GrowingHerd, UpgradeCategory.Animals, 400,
+            metaRequirement: null, runReachRequirement: "building:Big Barn");
         yield return new UpgradeDefinition(AnimalPowers.SnugBarn, UpgradeCategory.Animals, 250);
         // Busy Coop and Busy Barn (Ruling 1: permanent, no bundle compensation of any kind).
         yield return new UpgradeDefinition(AnimalPowers.BusyCoop, UpgradeCategory.Animals, 600);

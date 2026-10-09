@@ -1975,6 +1975,16 @@ namespace TheLongestYear
                 this.Monitor.Log($"tly_dismiss: {name} closed (dialogueUp={Game1.dialogueUp}).", LogLevel.Info);
                 return;
             }
+            // A NamingMenu (incubator hatch, barn birth, a new horse) names through its own Enter path, so the
+            // callback (AnimalHouse.addNewHatchedAnimal for an animal) runs exactly as a typed name would.
+            if (menu is StardewValley.Menus.NamingMenu naming)
+            {
+                if (string.IsNullOrWhiteSpace(naming.textBox.Text)) naming.textBox.Text = "Tester";
+                string chosen = naming.textBox.Text;
+                naming.textBoxEnter(naming.textBox);
+                this.Monitor.Log($"tly_dismiss: {name} named '{chosen}'.", LogLevel.Info);
+                return;
+            }
             menu.exitThisMenu(playSound: false);
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
         }
