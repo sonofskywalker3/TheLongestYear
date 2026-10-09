@@ -49,6 +49,10 @@ namespace TheLongestYear.Integration
             DebugLog(sb.ToString());
         }
 
+        /// <summary>The Vault bundles TLY recorded as paid this run (debug readout of the bus reach).</summary>
+        internal static System.Collections.Generic.List<int> PaidThisRun()
+            => _runState?.Invoke()?.VaultBundlesPaid?.ToList() ?? new System.Collections.Generic.List<int>();
+
         /// <summary>Null/empty requirement ⇒ always met (non-reach upgrades). Unknown metric ⇒ false.</summary>
         public static bool Meets(string requirement)
         {
@@ -130,7 +134,7 @@ namespace TheLongestYear.Integration
 
         /// <summary>The Vault room counts as repaired once vanilla marks the area complete or sends
         /// its completion mail (the bus repair).</summary>
-        private static bool VaultRoomRepaired()
+        internal static bool VaultRoomRepaired()
         {
             if (Game1.getLocationFromName("CommunityCenter") is StardewValley.Locations.CommunityCenter cc
                 && cc.areasComplete.Count > StardewValley.Locations.CommunityCenter.AREA_Vault

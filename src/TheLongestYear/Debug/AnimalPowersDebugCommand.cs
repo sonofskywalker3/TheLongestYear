@@ -19,7 +19,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_animalpowers";
         public const string Description =
-            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | incubate | incubators | grow [new|<name>] | revoke <id> | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
+            "Debug: animal powers. Usage: tly_animalpowers [list] | produce <type> <n> | dig <n> | speed | pets | pet | incubate | incubators | grow [new|<name>] | revoke <id> | feed | sethappy <0-255> | setfriend <0-1000> | births <n> | birthnight | doors | truffles | enter <coop|barn> [index]";
 
         private const int DefaultSamples = 200;
         private const string RegularEggQid = "(O)176";
@@ -38,6 +38,7 @@ namespace TheLongestYear.DebugCommands
                     case "dig": Dig(monitor, Count(args, 1)); break;
                     case "speed": Speed(monitor, meta); break;
                     case "pets": Pets(monitor); break;
+                    case "pet": PetAll(monitor); break;
                     case "incubate": Incubate(monitor); break;
                     case "grow":
                     {
@@ -189,6 +190,30 @@ namespace TheLongestYear.DebugCommands
             foreach (Pet pet in Game1.getFarm().characters.OfType<Pet>().Concat(Utility.getHomeOfFarmer(Game1.player).characters.OfType<Pet>()))
                 monitor.Log($"{Name}: {pet.Name} ({pet.petType.Value}) friendship {pet.friendshipTowardFarmer.Value}.", LogLevel.Info);
         }
+
+        /// <summary>Loyal Pet: pets every pet once through Pet.checkAction, the path a click takes. Vanilla
+        /// rolls the pet's present on the day's first petting (Pet.cs 650) and drops it as debris beside the
+        /// pet. Logs the items lying on the pet's map before and after (a second call the same day does not
+        /// pet again, it only re-reads them).</summary>
+        private static void PetAll(IMonitor monitor)
+        {
+            var pets = Game1.getFarm().characters.OfType<Pet>().Concat(Utility.getHomeOfFarmer(Game1.player).characters.OfType<Pet>()).ToList();
+            if (pets.Count == 0) { monitor.Log($"{Name} pet: no pet.", LogLevel.Warn); return; }
+            foreach (Pet pet in pets)
+            {
+                GameLocation where = pet.currentLocation;
+                string before = DebrisItems(where);
+                bool handled = pet.checkAction(Game1.player, where);
+                PetData data = pet.GetPetData();
+                monitor.Log($"{Name} pet: {pet.Name} ({pet.petType.Value}) on {where?.Name}: handled={handled}, friendship {pet.friendshipTowardFarmer.Value}, " +
+                            $"timesPet {pet.timesPet.Value}, GiftChance {data?.GiftChance}, lowest gift threshold " +
+                            $"{(data?.Gifts?.Count > 0 ? data.Gifts.Min(g => g.MinimumFriendshipThreshold) : -1)}, day {Game1.Date.TotalDays}; " +
+                            $"items lying here before [{before}] after [{DebrisItems(where)}].", LogLevel.Info);
+            }
+        }
+
+        private static string DebrisItems(GameLocation where)
+            => where == null ? "" : string.Join(", ", where.debris.Where(d => d.item != null).Select(d => d.item.QualifiedItemId));
 
         /// <summary>Growing Herd: runs the (patched) barn-birth setUp n times and counts the nights that would
         /// have had a birth, by parent type. Each success's birth dialogue is closed at once; no animal is born.
