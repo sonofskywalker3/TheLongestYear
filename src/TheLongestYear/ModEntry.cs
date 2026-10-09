@@ -598,6 +598,11 @@ namespace TheLongestYear
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
+            // Saves from before 0.19.23 kept the deja-vu caps across rewinds; drop a stamp left
+            // over from an earlier loop so the villager lines can come back on this one.
+            if (Game1.stats != null
+                && TheLongestYear.Core.DejaVuRules.RepairStaleCaps(_meta.Run, (int)Game1.stats.DaysPlayed))
+                this.Monitor.Log("Deja-vu: cleared caps left over from an earlier loop.", LogLevel.Info);
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = day => TheLongestYear.Core.PastSeasonBoosts.Active(_meta.Run, day);

@@ -70,4 +70,40 @@ public class DejaVuRulesTests
         Assert.Equal(0, DejaVuRules.TryPick(Meta(1, "Pierre", 200), new RunState(), "Pierre", 30, cfg, _ => 0, force: false));
         Assert.Equal(0, DejaVuRules.TryPick(Meta(1, "Pierre", 200), new RunState(), "Pierre", 30, cfg, _ => 0, force: true));
     }
+    [Fact]
+    public void BeginNewRun_clears_the_per_loop_caps()
+    {
+        var run = new RunState { DejaVuLastDay = 50 };
+        run.DejaVuShownTo.Add("Pierre");
+        run.BeginNewRun(seed: 1);
+        Assert.Empty(run.DejaVuShownTo);
+        Assert.Equal(-1, run.DejaVuLastDay);
+        // Loop 2, day 3: Pierre can speak again and the old stamp no longer blocks the week.
+        Assert.True(DejaVuRules.IsEligible(Meta(1, "Pierre", 100), run, "Pierre", 3, 60));
+    }
+
+    [Fact]
+    public void Stale_stamp_from_an_earlier_loop_is_cleared_on_load()
+    {
+        var run = new RunState { DejaVuLastDay = 50 };
+        run.DejaVuShownTo.Add("Pierre");
+        Assert.False(DejaVuRules.IsEligible(Meta(1, "Haley", 100), run, "Haley", 3, 60));   // the bug
+        Assert.True(DejaVuRules.RepairStaleCaps(run, daysPlayed: 3));
+        Assert.Empty(run.DejaVuShownTo);
+        Assert.Equal(-1, run.DejaVuLastDay);
+        Assert.True(DejaVuRules.IsEligible(Meta(1, "Pierre", 100), run, "Pierre", 3, 60));
+    }
+
+    [Theory]
+    [InlineData(-1, 3)]   // no line yet
+    [InlineData(3, 3)]    // a line today
+    [InlineData(2, 10)]   // a line earlier this loop
+    public void Current_loop_caps_survive_the_load_repair(int lastDay, int today)
+    {
+        var run = new RunState { DejaVuLastDay = lastDay };
+        run.DejaVuShownTo.Add("Pierre");
+        Assert.False(DejaVuRules.RepairStaleCaps(run, today));
+        Assert.Contains("Pierre", run.DejaVuShownTo);
+        Assert.Equal(lastDay, run.DejaVuLastDay);
+    }
 }

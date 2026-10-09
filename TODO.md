@@ -2527,6 +2527,13 @@ rulings: nightly familiarity rollup (talk +1, gift +3, heart event +10) into
 week overall; a prepend on `NPC.checkForNewCurrentDialogue` that never touches an Introduction line;
 every line in the villager's own voice and reviewed by Jeff first.
 
+**0.19.23 fix (2026-10-09, found while speccing phase 2):** the per-loop caps (`DejaVuShownTo`,
+`DejaVuLastDay`) were never cleared by `RunState.BeginNewRun`, only by `tly_dejavu reset`, so "one per
+villager per loop" was "one per villager ever", and the DaysPlayed stamp (DaysPlayed restarts at 1 each
+loop) blocked every line after a rewind until the new loop passed the old stamp + 7. Now cleared in
+`BeginNewRun` (`DejaVuRules.ResetForNewLoop`), and `DejaVuRules.RepairStaleCaps` clears both on load
+when the stamp is ahead of today's DaysPlayed. Not live-tested.
+
 **Phase 2 (Jeff, 2026-08-27, not spec'd):** memories tied to events and festivals, fed by the same
 counters. Examples in Jeff's words: "Did you come to town for the dance last year?"; the Luau pot:
 "Just don't put X in the pot this year. Wait... why did I think that?" or, if the previous loop's

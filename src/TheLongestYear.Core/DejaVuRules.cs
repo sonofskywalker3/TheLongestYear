@@ -28,6 +28,25 @@ public static class DejaVuRules
         return true;
     }
 
+    /// <summary>Clear the per-loop caps (who already spoke, and the weekly stamp). Called when a new
+    /// loop begins.</summary>
+    public static void ResetForNewLoop(RunState run)
+    {
+        (run.DejaVuShownTo ??= new()).Clear();
+        run.DejaVuLastDay = -1;
+    }
+
+    /// <summary>Load-time repair for saves from before the caps reset each loop. A weekly stamp
+    /// ahead of today's days-played can only come from an earlier loop (the rewind sets days-played
+    /// back to 1), and it means no line has played yet this loop, so the villager list is stale too.
+    /// Returns true when it cleared anything.</summary>
+    public static bool RepairStaleCaps(RunState run, int daysPlayed)
+    {
+        if (run.DejaVuLastDay <= daysPlayed) return false;
+        ResetForNewLoop(run);
+        return true;
+    }
+
     /// <summary>The tier to play now (0 = nothing). <paramref name="rollPercent"/> returns a value in
     /// [0,100) given 100; a hit is roll &lt; chance. <paramref name="force"/> (debug) skips the
     /// chance and the caps, never the config switch, and plays at least tier 1.</summary>
