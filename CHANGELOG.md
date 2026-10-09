@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.23 - 2026-10-09
+
+3240 tests.
+
+### Fixed
+
+- **Villagers' déjà-vu lines come back every loop again.** The "one line per villager per loop, one a week in town" limits were never reset by the rewind, so a villager who'd said a line once never said another, and after a rewind the weekly limit could go quiet for most of the new loop. Both limits now start fresh at every rewind. Saves already stuck are fixed on load, or at the next rewind at the latest.
+
 ## 0.19.22 - 2026-10-09
 
 3235 tests.

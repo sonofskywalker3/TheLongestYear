@@ -523,5 +523,8 @@ public sealed class RunState
         WeatherOverride = null;
         YearTwoSeedsWeek = -1;
         SneakPeekSeason = -1;
+        // Deja-vu caps are per loop. The weekly stamp is a DaysPlayed value, which the rewind puts
+        // back to 1, so a kept stamp would block every line until the new loop passed the old one.
+        DejaVuRules.ResetForNewLoop(this);
     }
 }
