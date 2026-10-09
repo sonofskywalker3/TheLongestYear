@@ -49,9 +49,9 @@ namespace TheLongestYear.Loop
         }
     }
 
-    /// <summary>Quick Growth (spec 2026-10-09 power 7): a baby that aged tonight takes one more step,
-    /// the same way vanilla steps it (FarmAnimal.cs:984): growFully on its last baby day, else one day
-    /// older. An unfed night still does not age it.</summary>
+    /// <summary>Quick Growth (spec 2026-10-09 power 7, amended 2026-10-09: one row, overnight): a baby
+    /// that aged tonight grows up now, through vanilla's own growFully (FarmAnimal.cs:984). An unfed
+    /// night still does not age it, so it does not grow up either.</summary>
     [HarmonyPatch(typeof(FarmAnimal), nameof(FarmAnimal.dayUpdate))]
     internal static class QuickGrowthPatch
     {
@@ -74,10 +74,6 @@ namespace TheLongestYear.Loop
                     case QuickGrowthStep.GrowFully:
                         __instance.growFully(Utility.CreateRandom(__instance.myID.Value, Game1.stats.DaysPlayed, GrowSalt));
                         PatchLog.Info($"{AnimalPowers.QuickGrowth}: {__instance.displayName} ({__instance.type.Value}) grew up (age {__instance.age.Value}).");
-                        break;
-                    case QuickGrowthStep.AgeOneDay:
-                        __instance.age.Value++;
-                        PatchLog.Info($"{AnimalPowers.QuickGrowth}: {__instance.displayName} ({__instance.type.Value}) age {__state} -> {__instance.age.Value} of {data.DaysToMature}.");
                         break;
                 }
             }
