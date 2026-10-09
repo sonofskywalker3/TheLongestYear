@@ -1,8 +1,8 @@
 namespace TheLongestYear.Core;
 
-/// <summary>The nine configured difficulty modifiers, serialized into
+/// <summary>The ten configured difficulty modifiers, serialized into
 /// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
-/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all nine, and a dial edited
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
@@ -21,7 +21,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all nine dials to one level.</summary>
+    /// <summary>Set the lever and all ten dials to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;
