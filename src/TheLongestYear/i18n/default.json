@@ -278,6 +278,8 @@
     "upgrade.animal_quick_growth.desc": "Baby animals grow up in half the time.",
     "upgrade.animal_fast_hatch.name": "Fast Hatch",
     "upgrade.animal_fast_hatch.desc": "Eggs in an incubator hatch in half the time.",
+    "upgrade.animal_more_births.name": "Growing Herd",
+    "upgrade.animal_more_births.desc": "Cows, goats, sheep and pigs give birth more often.",
     "upgrade.animal_snug_barn.name": "Snug Barn",
     "upgrade.animal_snug_barn.desc": "Animals stay happy on days they can't go outside.",
     "upgrade.animal_fast_produce_coop.name": "Busy Coop",
