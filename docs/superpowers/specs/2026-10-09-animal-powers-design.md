@@ -1,12 +1,33 @@
 # Animal powers: twelve permanent upgrades for barn, coop, horse and pet (design, 2026-10-09)
 
 **Date:** 2026-10-09
-**Status:** DRAFT for Jeff. Roster picked by Jeff (2026-10-09). Prices, numbers, the category and every item
-under "Open questions" are proposals; nothing here is decided until Jeff answers.
+**Status:** APPROVED by Jeff 2026-10-09 with the rulings below. Where a ruling and the body disagree, the
+ruling wins.
 **Scope:** PC 1.6 only (Android is not supported until PC runs well). Decompile references are to
 `decompiled-pc/Stardew Valley`. Game data values were read from the live game's `Data/FarmAnimals`,
 `Data/Machines` (Content Patcher `patch export`) and `Data/Pets` (scratch .NET dump of `Content/Data/Pets.xnb`).
 **Dropped by Jeff, not in this spec:** half hay, large products more often.
+
+## Rulings (Jeff, 2026-10-09)
+
+1. **Busy Barnyard: no bundle or difficulty compensation of any kind.** TLY's contract is "earn JP, power up,
+   make it further next time"; a power that makes things easier must never make bundles harder. It is a
+   permanent power, and the effort model stays untouched (Open question 1 closed).
+2. **Busy Barnyard is split into two rows** (Open question 3): a coop row (`animal_fast_produce_coop`: ducks
+   2 to 1 day, rabbits 4 to 2) and a barn row (`animal_fast_produce_barn`: goats 2 to 1, sheep 3 to 1), 600 JP
+   each, no gate. The tooltip only says they produce faster.
+3. **Warm Welcome I / II / III as specced** (1 / 2 / 3 hearts, 200 / 450 / 800 JP). Large eggs and milk
+   starting early is accepted (Open question 4, option a).
+4. **The existing animal keeps move into the new Animals tab** (Open question 2): Keep Horse, Keep Pet, the
+   "Start with a" rows and the Herd Book. Prices and save ids are unchanged, so owned rows stay owned. Animal
+   buildings were left to judgement; the call made at build time: the Coop and Barn chains and Keep Silo move
+   too (they only exist to house and feed animals, and every "Start with a" row chains from a Coop or Barn
+   keep, so the chains stay readable in one tab); Keep Fish Pond stays in Buildings (fish, not farm animals).
+5. **Rates confirmed** (Open question 5): Fine Feathers +25%, Truffle Nose 25%, Swift Horse +1.0, Loyal Pet 40%
+   from 3 hearts.
+6. **Defaults confirmed:** Morning Rounds has no gate (Open question 6); Swift Horse and Horse Flute require
+   Keep Horse (Open question 8); the names are the spec's (placeholders Jeff may rename later, all in i18n,
+   Open question 7).
 
 ## Why
 
