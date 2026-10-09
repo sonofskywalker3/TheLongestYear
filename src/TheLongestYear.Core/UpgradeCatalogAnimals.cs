@@ -13,6 +13,7 @@ public static class AnimalUpgradeRows
     /// <summary>Every row of the Animals tab, in the order the tab lists them.</summary>
     public static IEnumerable<UpgradeDefinition> Build(IReadOnlyList<long> herdBookCosts)
     {
+        foreach (UpgradeDefinition def in Powers()) yield return def;
         foreach (UpgradeDefinition def in MovedKeeps()) yield return def;
         // Herd Book (spec 2026-09-25): a chain like the Cookbook's, no building gate. A slot whose
         // building keep is not owned yet just waits (the menu says so).
@@ -20,6 +21,34 @@ public static class AnimalUpgradeRows
             yield return new UpgradeDefinition($"{UpgradeCatalog.HerdBookPrefix}{tier}", UpgradeCategory.Animals,
                 herdBookCosts[tier - 1], tier == 1 ? null : $"{UpgradeCatalog.HerdBookPrefix}{tier - 1}");
     }
+
+    /// <summary>The animal powers (spec 2026-10-09, prices from its table, Busy Barnyard split per Ruling 2).
+    /// Rows that work for any animal come first, then the species rows, then the horse and pet rows.</summary>
+    private static IEnumerable<UpgradeDefinition> Powers()
+    {
+        yield return new UpgradeDefinition(AnimalPowers.MorningRounds, UpgradeCategory.Animals, 600);
+        for (int tier = 1; tier <= AnimalPowers.WarmWelcomeTiers; tier++)
+            yield return new UpgradeDefinition(AnimalPowers.WarmWelcomePrefix + tier, UpgradeCategory.Animals,
+                WarmWelcomeCosts[tier - 1], tier == 1 ? null : AnimalPowers.WarmWelcomePrefix + (tier - 1));
+        yield return new UpgradeDefinition(AnimalPowers.QuickGrowth, UpgradeCategory.Animals, 350);
+        yield return new UpgradeDefinition(AnimalPowers.FastHatch, UpgradeCategory.Animals, 200);
+        yield return new UpgradeDefinition(AnimalPowers.SnugBarn, UpgradeCategory.Animals, 250);
+        // Busy Barnyard (Ruling 1: permanent, no bundle compensation of any kind).
+        yield return new UpgradeDefinition(AnimalPowers.BusyCoop, UpgradeCategory.Animals, 600);
+        yield return new UpgradeDefinition(AnimalPowers.BusyBarn, UpgradeCategory.Animals, 600);
+        yield return new UpgradeDefinition(AnimalPowers.FineFeathers, UpgradeCategory.Animals, 250,
+            metaRequirement: "species:" + AnimalPowers.DuckType);
+        yield return new UpgradeDefinition(AnimalPowers.LuckyRabbits, UpgradeCategory.Animals, 450,
+            metaRequirement: "species:" + AnimalPowers.RabbitType);
+        yield return new UpgradeDefinition(AnimalPowers.TruffleNose, UpgradeCategory.Animals, 400,
+            metaRequirement: "species:" + AnimalPowers.PigType);
+        yield return new UpgradeDefinition(AnimalPowers.SwiftHorse, UpgradeCategory.Animals, 300, AnimalPowers.KeepHorse);
+        yield return new UpgradeDefinition(AnimalPowers.HorseFlute, UpgradeCategory.Animals, 350, AnimalPowers.KeepHorse);
+        yield return new UpgradeDefinition(AnimalPowers.LoyalPet, UpgradeCategory.Animals, 150,
+            metaRequirement: null, runReachRequirement: "pet:1");
+    }
+
+    private static readonly long[] WarmWelcomeCosts = { 200, 450, 800 };
 
     private static IEnumerable<UpgradeDefinition> MovedKeeps()
     {
