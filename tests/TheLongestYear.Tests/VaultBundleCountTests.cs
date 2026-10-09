@@ -48,6 +48,22 @@ public class VaultBundleCountTests
         => Assert.Equal(0, new BundleCountRule().VaultDelta);
 
     [Fact]
+    public void A_held_board_keeps_its_vault_count()
+    {
+        var fresh = DifficultyResolver.Resolve(new DifficultySettings { BundleCount = DifficultyStep.Extreme }, new GameplayConfig());
+        BundleCountStamp.ForReset(fresh, BundleCountRule.For(DifficultyStep.Easy), holdingBoard: true);
+        Assert.Equal(-1, fresh.BundleCount!.VaultDelta);
+    }
+
+    [Fact]
+    public void A_new_board_takes_the_new_vault_count()
+    {
+        var fresh = DifficultyResolver.Resolve(new DifficultySettings { BundleCount = DifficultyStep.Extreme }, new GameplayConfig());
+        BundleCountStamp.ForReset(fresh, BundleCountRule.For(DifficultyStep.Easy), holdingBoard: false);
+        Assert.Equal(2, fresh.BundleCount!.VaultDelta);
+    }
+
+    [Fact]
     public void Easy_drops_the_priciest_and_keeps_order()
     {
         IReadOnlyList<BundleSpec> kept = VaultBundleCount.Kept(ScaledVault(), -1);
