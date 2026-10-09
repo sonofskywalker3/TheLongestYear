@@ -1,18 +1,29 @@
 # Deja-vu festival memory lines (draft for Jeff's review)
 
 Companion to `2026-10-09-deja-vu-festivals-design.md`. Each memory is something the player did at a
-festival in an earlier loop. The speaker cannot remember it, only half-feel it. A villager speaks only
-at familiarity 60 and up (phase 1's tier 1), and only lines for a memory the player actually has.
-"Festival day" lines are pushed onto the villager's festival dialogue and play before the contest or
-main event; "lead-up" lines play in ordinary dialogue in the week before the festival. `{{item}}` is
-the item's in-game name, filled in at runtime. Jeff's own three lines are used verbatim as the
-fallback lines for their memories. Status: DRAFT, not coded.
+festival in an earlier loop. The speaker cannot remember it, only half-feel it. "Festival day" lines
+are pushed onto the villager's festival dialogue and play before the contest or main event; "lead-up"
+lines play in ordinary dialogue in the week before the festival. `{{item}}` is the item's in-game name
+and `{{partner}}` is this loop's dance partner, both filled in at runtime. Jeff's own lines are used
+verbatim. Status: DRAFT, not coded.
+
+**Updated 2026-10-09 for Jeff's rulings.** Who can speak:
+
+- Ordinary memories: any villager at familiarity 60 and up (phase 1's tier 1), 20% each.
+- Bond memories (every past dance partner and every past Winter Star recipient, from any loop):
+  50% each, no familiarity needed.
+- After an egg hunt win: guaranteed at the next Egg Festival, from whichever eligible villager the
+  player talks to first.
+- One memory per festival per loop. The first one heard silences the rest.
 
 Fallback lines go to any eligible villager without a line of his or her own for that memory.
 
+Marks: **[NEW]** added in this pass, **[CHANGED]** reworded or moved in this pass. Unmarked lines are
+unchanged from the first draft.
+
 ## Egg Festival (festival day, before the hunt)
 
-Won the egg hunt last time (`egghunt.won`)
+Won the egg hunt last time (`egghunt.won`). Guaranteed the first loop after a win.
 
 | Speaker | Line |
 |---|---|
@@ -29,18 +40,21 @@ Lost the egg hunt last time (`egghunt.lost`)
 | Abigail | Something tells me I'm beating you today. Don't ask how I know. |
 | Vincent | I think Abigail wins. She always wins. |
 
-## Flower Dance (lead-up week)
+## Flower Dance
 
-Came to the dance last time (`dance.attended`, anyone except last time's partner)
+### Lead-up week
+
+Came to the dance last time (`dance.attended`, anyone who was never your partner)
 
 | Speaker | Line |
 |---|---|
 | Fallback | Did you come to town for the dance last year? |
 
-Danced with this villager last time (`dance.partner`, only that partner speaks it)
+Danced with this villager in any earlier loop (`dance.partner`, only past partners speak it)
 
 | Speaker | Line |
 |---|---|
+| Fallback **[NEW]** | I swear we've danced before, but this is your first time right? |
 | Abigail | I had a dream I went to the Flower Dance with you. Weird, right? |
 | Alex | For some reason I keep picturing you at the Flower Dance. With me. |
 | Elliott | I keep imagining the Flower Dance with you as my partner. I can't think where the idea came from. |
@@ -53,6 +67,46 @@ Danced with this villager last time (`dance.partner`, only that partner speaks i
 | Sam | Dude, I swear we danced together once. Was that a dream? |
 | Sebastian | I hate dancing. But I keep thinking I'd go if it was with you. |
 | Shane | Don't laugh. I keep thinking I danced with you once. I don't dance. |
+
+### Festival day, a past partner says yes again (`dance.again`) [NEW]
+
+Plays as a second page right after the villager's own "yes" line, so none of these says yes itself.
+
+| Speaker | Line |
+|---|---|
+| Fallback **[NEW]** | I swear we've danced before, but this is your first time right? |
+| Abigail **[NEW]** | This is going to sound weird, but I think we've done this before. |
+| Alex **[NEW]** | Funny. I feel like I've said yes to you before. |
+| Elliott **[NEW]** | How strange. I feel as though we've shared this dance already. |
+| Emily **[NEW]** | I think we've danced together before. Maybe in another life. |
+| Haley **[NEW]** | Try not to step on my dress. I feel like you did that once. |
+| Harvey **[NEW]** | Odd. I could swear you've asked me this before. |
+| Leah **[NEW]** | I think I already know you're a good dancer. I don't know how. |
+| Maru **[NEW]** | I have the strongest feeling we've done this before. That's not possible. |
+| Penny **[NEW]** | I feel like you've asked me this before. Sorry, that's silly. |
+| Sam **[NEW]** | Wait, haven't we done this before? I swear we have. |
+| Sebastian **[NEW]** | I feel like I've already done this with you. Weird. |
+| Shane **[NEW]** | I feel like I already danced with you once. Don't ask. |
+
+### Festival day, a past partner sees you ask someone else (`dance.other`) [NEW]
+
+Plays when the player talks to a past partner after already having a partner this year.
+
+| Speaker | Line |
+|---|---|
+| Fallback **[NEW]** | You're dancing with {{partner}}? I thought you'd ask me. I don't know why. |
+| Abigail **[NEW]** | Huh. I had a feeling you'd ask me this year. |
+| Alex **[NEW]** | {{partner}}, huh? I figured you'd ask me. No idea why. |
+| Elliott **[NEW]** | I confess I half expected you to ask me. I can't say why. |
+| Emily **[NEW]** | I was so sure you'd ask me! My intuition must be off today. |
+| Haley **[NEW]** | You asked {{partner}}? I was sure it'd be me. |
+| Harvey **[NEW]** | Oh, you asked {{partner}}. I don't know why I thought it would be me. |
+| Leah **[NEW]** | Have fun with {{partner}}. I had a feeling you'd ask me. |
+| Maru **[NEW]** | I was sure you'd ask me. I'm usually better at predictions. |
+| Penny **[NEW]** | Oh, you're dancing with {{partner}}. I thought you might ask me. |
+| Sam **[NEW]** | Dude, I was sure you'd ask me. Weird. |
+| Sebastian **[NEW]** | I was sure you'd ask me. Not that I wanted to dance. |
+| Shane **[NEW]** | Thought you'd ask me. Good thing you didn't. I don't dance. |
 
 ## Luau (festival day, before you add to the soup)
 
@@ -150,7 +204,20 @@ Went to the Night Market last time (`nightmarket.attended`)
 | Fallback | Feels like I've seen you at the Night Market before. Have you been? |
 | Willy | The Night Market's comin' up. Feels like I already saw ye there. |
 
-## Feast of the Winter Star (lead-up week, only last time's gift recipient speaks)
+## Feast of the Winter Star
+
+Only villagers you were Secret Santa for in an earlier loop speak these. **[CHANGED]** The first draft
+used last loop's recipient only; now any past recipient from any loop can speak them, using the
+latest gift you gave him or her.
+
+### Lead-up week
+
+You're his or her Secret Santa again this loop, after you've read Lewis's letter (`winterstar.again`)
+[NEW]
+
+| Speaker | Line |
+|---|---|
+| Fallback **[NEW]** | I have a funny feeling you're my Secret Santa this year. |
 
 Gave this villager a gift he or she loved or liked (`winterstar.liked`)
 
@@ -164,7 +231,17 @@ Gave this villager a gift he or she disliked or hated (`winterstar.disliked`)
 |---|---|
 | Fallback | For some reason I really hope nobody gives me {{item}} this year. |
 
+### Festival day, a past recipient who isn't this year's (`winterstar.seen`) [NEW]
+
+| Speaker | Line |
+|---|---|
+| Fallback **[NEW]** | Did you give me a present once? I keep thinking you did. |
+
 ## Count
 
-51 lines: 15 fallback lines (3 of them Jeff's own, verbatim), 36 per-villager lines. Jeff's line
-"Wait... why did I think that?" keeps its ellipsis because it is his; no other line uses one.
+80 lines: 20 fallback lines and 60 per-villager lines. 29 are new in this pass (both new Flower Dance
+tables, the `dance.partner` fallback, `winterstar.again`, `winterstar.seen`), none reworded. Jeff's
+four lines are used verbatim; "I swear we've danced before, but this is your first time right?" is
+used twice, as the `dance.partner` and `dance.again` fallback, so mod-added partners get it in the
+lead-up and at the dance. "Wait... why did I think that?" keeps its ellipsis because it is Jeff's; no
+other line uses one.
