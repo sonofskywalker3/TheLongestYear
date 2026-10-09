@@ -164,13 +164,26 @@ public class VaultBundleCountTests
         Assert.False(VaultRules.IsVaultGateSatisfied(Season.Winter, run, new MetaState()));
     }
 
+    // Keep Bus Unlocked (Jeff, 2026-10-09): every Vault bundle on the board paid, or the Vault
+    // room repaired, whichever comes first. No fixed count.
     [Theory]
-    [InlineData(3, 3, 4)]  // Easy board, every Vault bundle paid: counts as the full four
-    [InlineData(2, 3, 2)]
-    [InlineData(4, 4, 4)]
-    [InlineData(4, 5, 4)]  // Hard board: four paid still reads four, as before
-    [InlineData(5, 5, 5)]
-    [InlineData(0, 0, 0)]
-    public void Bus_reach_counts_an_easy_vault_in_full(int paid, int vaultCount, int expected)
-        => Assert.Equal(expected, VaultRules.BusReachValue(paid, vaultCount));
+    [InlineData(new[] { 23, 24, 25 }, new[] { 23, 24, 25 }, true)]           // Easy: all three
+    [InlineData(new[] { 23, 24 }, new[] { 23, 24, 25 }, false)]
+    [InlineData(new[] { 23, 24, 25, 26 }, new[] { 23, 24, 25, 26 }, true)]   // Normal: all four
+    [InlineData(new[] { 23, 24, 25 }, new[] { 23, 24, 25, 26 }, false)]
+    [InlineData(new[] { 23, 24, 25, 26 }, new[] { 23, 24, 25, 26, 40 }, false)] // Hard: four is not enough
+    [InlineData(new[] { 23, 24, 25, 26, 40 }, new[] { 23, 24, 25, 26, 40 }, true)]
+    [InlineData(new[] { 23, 24, 25, 26, 40 }, new[] { 23, 24, 25, 26, 40, 41 }, false)] // Extreme
+    [InlineData(new[] { 23, 24, 25, 26, 40, 41 }, new[] { 23, 24, 25, 26, 40, 41 }, true)]
+    [InlineData(new[] { 1, 2, 3, 4 }, new[] { 23, 24, 25, 26 }, false)]         // stale indices off another board
+    [InlineData(new int[0], new int[0], false)]                                // no Vault known: never "all paid"
+    public void Bus_is_repaired_once_every_vault_bundle_on_the_board_is_paid(int[] paid, int[] board, bool expected)
+        => Assert.Equal(expected, VaultRules.IsBusRepaired(paid, board, vaultRoomComplete: false));
+
+    [Theory]
+    [InlineData(new int[0], new[] { 23, 24, 25, 26 })]
+    [InlineData(new[] { 23 }, new[] { 23, 24, 25, 26, 40, 41 })]
+    [InlineData(new int[0], new int[0])]
+    public void A_repaired_vault_room_meets_the_bus_reach_whatever_is_paid(int[] paid, int[] board)
+        => Assert.True(VaultRules.IsBusRepaired(paid, board, vaultRoomComplete: true));
 }

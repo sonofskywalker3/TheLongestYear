@@ -58,11 +58,27 @@ public static class VaultRules
     public static int RequiredPaid(Season season, int vaultCount)
         => vaultCount > 0 ? System.Math.Min(SeasonOrdinal(season), vaultCount) : SeasonOrdinal(season);
 
-    /// <summary>The value the "bus" reach requirement (keep_bus_unlocked, "bus:4") reads: the Vault
-    /// bundles paid this run, except that paying every Vault bundle on a board with fewer than
-    /// <see cref="StandardVaultCount"/> (Easy) counts as the full four, so the gift stays reachable.</summary>
-    public static int BusReachValue(int paid, int vaultCount)
-        => vaultCount > 0 && vaultCount < StandardVaultCount && paid >= vaultCount ? StandardVaultCount : paid;
+    /// <summary>The reach metric of keep_bus_unlocked: a bare yes/no flag ("bus"), met by
+    /// <see cref="IsBusRepaired"/>.</summary>
+    public const string BusReachMetric = "bus";
+
+    /// <summary>Keep Bus Unlocked's reach (Jeff, 2026-10-09): met once EVERY Vault bundle on this
+    /// board is paid this run, or the Vault room is repaired, whichever comes first. Replaces the
+    /// old "4 paid" count, which opened the gift before the bus on a Hard or Extreme board (5 or 6
+    /// Vault bundles) and needed an Easy special case (3). An empty board list is never "all
+    /// paid"; only <paramref name="vaultRoomComplete"/> can meet it then.</summary>
+    public static bool IsBusRepaired(IEnumerable<int> paidThisRun, IReadOnlyCollection<int> boardVaultIndices, bool vaultRoomComplete)
+    {
+        if (vaultRoomComplete)
+            return true;
+        if (boardVaultIndices == null || boardVaultIndices.Count == 0)
+            return false;
+        var paid = new HashSet<int>(paidThisRun ?? System.Array.Empty<int>());
+        foreach (int index in boardVaultIndices)
+            if (!paid.Contains(index))
+                return false;
+        return true;
+    }
 
     /// <summary>Number of distinct vault bundles paid this run.</summary>
     public static int PaidCount(RunState run) => run.VaultBundlesPaid.Count;

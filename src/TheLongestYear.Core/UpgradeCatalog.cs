@@ -289,7 +289,8 @@ public static class UpgradeCatalog
         // (GiftLadder): every Gift owned raises the price of the rest, 1,000 JP up to 5,000. The
         // reset restores only the room's completion mail (WorldResetService.RestoreKeptGifts), so
         // the bundles stay on the board, still pay, and vanilla never re-sends the letter that
-        // plays the repair scene. The bus row keeps its id and its vault gate short-circuit.
+        // plays the repair scene. The bus row keeps its id and its vault gate short-circuit; its reach
+        // is every Vault bundle on the board paid or the Vault room repaired (VaultRules.IsBusRepaired).
         // Reach is the ROOM's bundles all complete on the live board (room:), not the completion
         // mail: a room finished on the Fail day has its letter still in mailForTomorrow, which the
         // fail-night purge strips before the perk screen opens (review 2026-08-29).
@@ -302,7 +303,7 @@ public static class UpgradeCatalog
         new UpgradeDefinition(GiftLadder.KeepMinecartsId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: "room:BoilerRoom"),
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
-            metaRequirement: null, runReachRequirement: "bus:4"),
+            metaRequirement: null, runReachRequirement: VaultRules.BusReachMetric),
         };
         // Animals tab (spec 2026-10-09): the animal powers, then the moved animal keeps (Keep Pet,
         // Keep Horse, Coop / Barn / Silo, Start with, Herd Book), ids and prices unchanged.

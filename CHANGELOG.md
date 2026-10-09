@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.37 - 2026-10-09
+
+3559 tests.
+
+### Changed
+
+- **Keep Bus Unlocked unlocks once the bus is repaired** (was: once four Vault bundles were paid). Pay every Vault bundle on your board, or finish the Vault room, whichever comes first. On a Hard or Extreme board (five or six Vault bundles) four paid is no longer enough, and on Easy all three are. The unlock hint now reads "unlocked once every Vault bundle is paid".
+
 ## 0.19.36 - 2026-10-09
 
 3552 tests.
