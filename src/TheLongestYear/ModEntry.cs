@@ -586,6 +586,12 @@ namespace TheLongestYear
                 IsTechCrossModBundlesLoaded(), Context.IsMainPlayer, _meta.State.WrittenBoard,
                 new TheLongestYear.Loop.LiveBundleBoard(),
                 message => this.Monitor.Log(message, LogLevel.Info));
+            // A TLY Custom board whose rooms are not the game's default size (the bundle-count
+            // dial, spec 2026-10-09): the load put Data/Bundles' default keys back and built the
+            // CC's room lookups from them. Drop the bundles this board does not have and refresh
+            // the lookups, before anything below repairs, classifies or reads the board.
+            if (!BundleSourceNames.IsVanilla(_meta.State.BundleSource))
+                TheLongestYear.Loop.BundleKeySync.SyncToStoredBoard(_meta.State.WrittenBoard, this.Monitor);
             // Loop 1 of a new Normal/Remixed game has no reset to store its board, so store it here,
             // on the new-game load, after Tech's handler and before TLY's own load-time edits (the
             // unstackable clamp and later the week discount mirror into it from here on). An
