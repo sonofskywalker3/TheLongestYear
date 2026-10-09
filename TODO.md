@@ -14,13 +14,13 @@ adds 62,500g; Extreme adds 62,500g and 100,000g. Spec amendment in
 reload (log only, game minimized). `tly_gatecheck` now reads the board's real Vault prices.
 - [ ] Jeff: my calls, say if any is wrong. (1) The season gate never asks for more Vault bundles than the board has,
   so Easy asks for 3 by Winter (otherwise Winter could not be passed). Hard and Extreme still ask for 4 by Winter;
-  the extras only finish the room (the bus). (2) Keep Bus Unlocked's reach ("4 vault bundles paid") counts an Easy
-  board's full Vault as 4; on Hard and Extreme it still unlocks at 4 paid, before the bus is fixed. (3) The extra
+  the extras only finish the room (the bus). (2) Superseded by Jeff's ruling of 2026-10-09 (built 0.19.37):
+  Keep Bus Unlocked unlocks once every Vault bundle on the board is paid or the Vault room is repaired. (3) The extra
   bundles give the same reward as the priciest Vault bundle (a Crystalarium on vanilla data), with bag tints 5 and 6.
-- [ ] Not fixed, found on the way: `VaultPaymentSync.Reconcile` (the backstop for payments the observer missed)
-  checks `CommunityCenter.isBundleComplete`, which is never true for a paid Vault bundle (vanilla only sets slot 0
-  of its 3-slot array). The live observer path works, so nothing is lost in normal play; the backstop is dead code
-  for the Vault. Pre-existing, unrelated to the dial.
+- [x] FIXED 0.19.38: `VaultPaymentSync.Reconcile` (the backstop for payments the observer missed) checked
+  `CommunityCenter.isBundleComplete`, which is never true for a paid Vault bundle (vanilla only sets slot 0 of its
+  3-slot array). It now reads slot 0 (`VaultRules.IsMoneyBundlePaid`); the per-index ledger keeps it from paying
+  JP twice alongside the live observer.
 - [ ] Release: README + Nexus What's New (the Bundles per room line says the Vault never changes; update it).
 ### BUILT, NOT RELEASED (0.19.24 to 0.19.30, 2026-10-09): animal powers and the Animals tab
 Spec `docs/superpowers/specs/2026-10-09-animal-powers-design.md` (Jeff's rulings of 2026-10-09), plan

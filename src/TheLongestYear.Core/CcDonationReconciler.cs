@@ -13,8 +13,8 @@ namespace TheLongestYear.Core;
 /// same tick, a path it didn't scan). A missed donation never enters <see cref="RunState"/>'s
 /// ledger, so the season gate can read "failed" even though vanilla shows the bundle complete
 /// (beta report, khauser13: completed every goal but the run reset). Reconciling from the game's
-/// own authoritative slot state fixes that — mirroring how <c>VaultPaymentSync</c> already reconciles
-/// the vault ledger from <c>isBundleComplete</c>.
+/// own authoritative slot state fixes that, mirroring how <c>VaultPaymentSync</c> reconciles the vault
+/// ledger from each money bundle's slot 0 (<c>VaultRules.IsMoneyBundlePaid</c>).
 /// </para>
 ///
 /// <para>
