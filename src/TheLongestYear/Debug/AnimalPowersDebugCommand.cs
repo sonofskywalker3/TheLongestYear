@@ -81,7 +81,7 @@ namespace TheLongestYear.DebugCommands
             }
         }
 
-        /// <summary>Calls the patched GetProduceID on n throwaway adults with distinct ids (Fine Feathers'
+        /// <summary>Calls the patched GetProduceID on n throwaway adults with distinct ids (Molting Season'
         /// roll is seeded per animal and day, so one animal would give the same answer n times).</summary>
         private static void Produce(IMonitor monitor, string type, int n)
         {

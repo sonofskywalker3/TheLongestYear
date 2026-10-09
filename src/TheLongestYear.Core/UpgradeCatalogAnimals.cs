@@ -33,7 +33,7 @@ public static class AnimalUpgradeRows
         yield return new UpgradeDefinition(AnimalPowers.QuickGrowth, UpgradeCategory.Animals, 350);
         yield return new UpgradeDefinition(AnimalPowers.FastHatch, UpgradeCategory.Animals, 200);
         yield return new UpgradeDefinition(AnimalPowers.SnugBarn, UpgradeCategory.Animals, 250);
-        // Busy Barnyard (Ruling 1: permanent, no bundle compensation of any kind).
+        // Busy Coop and Busy Barn (Ruling 1: permanent, no bundle compensation of any kind).
         yield return new UpgradeDefinition(AnimalPowers.BusyCoop, UpgradeCategory.Animals, 600);
         yield return new UpgradeDefinition(AnimalPowers.BusyBarn, UpgradeCategory.Animals, 600);
         yield return new UpgradeDefinition(AnimalPowers.FineFeathers, UpgradeCategory.Animals, 250,
