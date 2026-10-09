@@ -1,9 +1,9 @@
-# Deja-vu festival memory lines (draft for Jeff's review)
+# Deja-vu festival memory lines (APPROVED 2026-10-09)
 
 Companion to `2026-10-09-deja-vu-festivals-design.md`. Each memory is something the player did at a
 festival in an earlier loop. The speaker cannot place it. He or she half-remembers it, or the moment
 feels familiar. `{{item}}` is the item's in-game name and `{{partner}}` is this loop's dance partner,
-both filled in at runtime. Status: DRAFT, not coded.
+both filled in at runtime. Status: APPROVED by Jeff 2026-10-09 ("festival lines are good"); in `i18n/default.json` verbatim as the `festmem.*` keys.
 
 **Rewritten 2026-10-09 for Jeff's rule:** "they don't read like deja vu or memories, they read like
 prophesies, which isn't the goal at all. they're talking about present or future, they need to be

@@ -252,4 +252,16 @@ public sealed class GameplayConfig
     /// <summary>Percent chance per eligible conversation. Capped to one line per villager per loop
     /// and one line per week across the whole town regardless of this value.</summary>
     public int DejaVuChancePercent { get; set; } = 6;
+
+    /// <summary>Festival memories (deja-vu phase 2, spec 2026-10-09): from the second loop, villagers at
+    /// a festival sometimes half-remember what the player did there in an earlier loop. Does nothing
+    /// while <see cref="EnableDejaVuDialogue"/> is off. No mechanical effect. GMCM "Features".</summary>
+    public bool EnableDejaVuFestivalMemories { get; set; } = true;
+
+    /// <summary>Percent chance each villager at a festival carries its memory. No friendship gate
+    /// (Jeff: "for festivals don't take any friendship into account"); one memory per festival per loop.</summary>
+    public int DejaVuFestivalChancePercent { get; set; } = 20;
+
+    /// <summary>Percent chance for a past Flower Dance partner or past secret friend.</summary>
+    public int DejaVuFestivalBondChancePercent { get; set; } = 50;
 }

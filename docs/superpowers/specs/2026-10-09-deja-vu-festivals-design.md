@@ -1,9 +1,10 @@
 # Deja-vu phase 2: festival memories
 
 **Date:** 2026-10-09
-**Status:** DRAFT. Jeff's rulings of 2026-10-09 are applied (see "Jeff's rulings"). Nothing is coded.
-Lines are drafts in `2026-10-09-deja-vu-festival-lines.md` and need Jeff's yes before they go into
-i18n.
+**Status:** APPROVED 2026-10-09. Jeff's rulings of 2026-10-09 are applied (see "Jeff's rulings"), and
+he approved the 72 lines in `2026-10-09-deja-vu-festival-lines.md` the same day ("festival lines are
+good"). Build plan: `docs/superpowers/plans/2026-10-09-deja-vu-festivals.md` (branch
+`deja-vu-festivals`), which also settles the post-result questions left open below.
 **Builds on:** phase 1, `2026-08-27-deja-vu-dialogue-design.md` (shipped 0.16.17).
 **Credit:** u/Gribbleby (r/StardewValley beta thread) for the idea; already in README Credits from
 phase 1. Jeff's own example lines are used verbatim.
