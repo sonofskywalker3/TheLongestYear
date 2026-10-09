@@ -3,6 +3,30 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.27 - 2026-10-09
+
+3333 tests. Covers 0.19.24 to 0.19.27 (not released yet).
+
+### Added
+
+- **A new Animals tab in the upgrade menu, with twelve animal powers.** They are permanent, like every other upgrade, and none of them makes a bundle ask for more.
+  - **Morning Rounds:** every animal on your farm gets petted each morning, like an Auto-Petter.
+  - **Warm Welcome I, II and III:** new animals arrive with 1, 2 or 3 hearts. Animals coming back from the Herd Book keep their own hearts.
+  - **Quick Growth:** baby animals grow up in half the time (a chicken in 2 days instead of 3, a pig in 5 instead of 10).
+  - **Fast Hatch:** eggs in an incubator hatch in half the time.
+  - **Snug Barn:** on rainy and Winter days (and the snow day) your animals stay happy indoors in the evening.
+  - **Busy Barnyard: Coop and Busy Barnyard: Barn:** ducks lay every day and rabbits every 2 days; goats and sheep produce every day.
+  - **Fine Feathers:** ducks have an extra 25% chance to leave a Duck Feather instead of an egg, at any heart level. Shows up once you've owned a duck.
+  - **Lucky Rabbits:** rabbits always leave a Rabbit's Foot instead of Wool. Shows up once you've owned a rabbit.
+  - **Truffle Nose:** each truffle a pig digs up has a 25% chance to be two. Shows up once you've owned a pig.
+  - **Swift Horse:** your horse runs about 10% faster. Needs Keep Horse.
+  - **Horse Flute:** start every loop with a Horse Flute. Needs Keep Horse.
+  - **Loyal Pet:** your pet brings presents twice as often, starting at 3 hearts instead of 5.
+
+### Changed
+
+- **Your animal upgrades moved to the Animals tab:** Keep Horse, Keep Pet, Keep Coop and Keep Barn (and their bigger versions), Keep Silo, every "Start with" animal and the Herd Book. Same prices, and anything you already own stays owned. Keep Fish Pond stays under Buildings.
+
 ## 0.19.23 - 2026-10-09
 
 3240 tests.

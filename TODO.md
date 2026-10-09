@@ -6,6 +6,22 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT, NOT RELEASED (0.19.24 to 0.19.27, 2026-10-09): animal powers and the Animals tab
+Spec `docs/superpowers/specs/2026-10-09-animal-powers-design.md` (Jeff's rulings of 2026-10-09), plan
+`docs/superpowers/plans/2026-10-09-animal-powers.md`. All twelve powers built (Busy Barnyard split into a coop and a
+barn row), the animal keeps moved to the new Animals tab (Coop/Barn chains and Keep Silo too; Fish Pond stays in
+Buildings). Live-checked on a throwaway farm 2026-10-09 with `tly_animalpowers` (see the 0.19.27 changelog).
+Still open:
+- [ ] Not seen live: a pet actually dropping a present with Loyal Pet (only the Data/Pets edit was read back:
+  GiftChance 0.4, thresholds 600 for Cat, Dog and Turtle), an incubator egg hatching with Warm Welcome (same
+  adoptAnimal path as Marnie's and "Start with", both checked), Fast Hatch with Coopmaster.
+- [ ] Jeff: names are placeholders (Lucky Rabbits, Fine Feathers, Busy Barnyard: Coop / Barn, Truffle Nose and the rest).
+- [ ] Jeff: once Swift Horse is owned the green "Keep Horse" owned row no longer shows (the menu shows only the top
+  row of a chain, and Swift Horse and Horse Flute both chain from Keep Horse). Same as Keep Coop today. Fine, or
+  should Keep Horse always show?
+- [ ] Merge into `story`: story adds its own UpgradeCategory (Wards); the enum will conflict, keep both entries.
+- [ ] Release: README + Nexus What's New.
+
 ### RELEASED 0.19.21 (pitytheviolins, Nexus posts, 2026-10-09): "harmony error" at startup
 Her log (TLY 0.19.1, 117 mods, https://smapi.io/log/9a32eecc3a0444fc8dca67acc8dde96b): `Harmony patch
 'TheLongestYear.Loop.WildcardAnimalPatch' failed to apply ... FarmAnimal::updateWhenNotCurrentLocation`, then

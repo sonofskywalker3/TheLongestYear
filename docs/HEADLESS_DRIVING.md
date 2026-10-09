@@ -88,6 +88,19 @@ keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmty
 plays the opening on a type, prints the farmer's porch tile and ends the event with `debug ee`.
 Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
 
+**Animal powers (2026-10-09).** `tly_animalpowers` lists the owned powers and every farm animal (age, daysOwned,
+daysSinceLastLay, produce days with Busy Barnyard, friendship, happiness, wasAutoPet). Subcommands: `produce <type>
+<n>` (GetProduceID on n throwaway adults: Lucky Rabbits, Fine Feathers), `dig <n>` (n throwaway pigs dig on the
+current map: Truffle Nose), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
+Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the percentage reads high), `pets`
+(Data/Pets as loaded: Loyal Pet), `incubate` (an Egg into the first empty incubator: Fast Hatch), `grow`, `feed`,
+`sethappy <n>`. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
+with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
+
+**Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
+with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
+text.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
