@@ -1176,22 +1176,27 @@ namespace TheLongestYear.Loop
                 LogLevel.Trace);
         }
 
-        // Refresh MetaState.KeptBuildingSpots from the live farm: for every building in a
-        // known family (coop/barn/silo), remember its top-left tile. Families with no live
-        // building keep their previous entry (a demolished building still remembers its spot).
+        // Refresh MetaState.KeptBuildingSpots from the live farm: for each known family
+        // (coop/barn/silo, plus the greenhouse), remember the tile of the building the rewind
+        // keeps (KeptBuildingSpotPicker: highest tier, then the last remembered spot, then the
+        // first built). Families with no live building keep their previous entry (a demolished
+        // building still remembers its spot). Before 0.19.22 the LAST building of a family won,
+        // so a second coop pulled the kept one onto its spot (bug 2026-09-25).
         private void SnapshotKeptBuildingSpots()
         {
+            var buildings = new List<FamilyBuilding>();
             foreach (Building b in Game1.getFarm().buildings)
             {
-                string family = ChainInfo(b.buildingType.Value).Family;
+                var (family, tier) = ChainInfo(b.buildingType.Value);
                 // The greenhouse is not a kept-building chain (vanilla spawns it), but Keep
                 // Greenhouse (Gifts of the Junimos) puts it back where the player moved it.
                 if (family.Length == 0 && b.buildingType.Value == GreenhouseType)
-                    family = GreenhouseType;
+                    (family, tier) = (GreenhouseType, 1);
                 if (family.Length == 0)
                     continue;
-                _meta.KeptBuildingSpots[family] = new BuildingSpot(b.tileX.Value, b.tileY.Value);
+                buildings.Add(new FamilyBuilding(family, tier, new BuildingSpot(b.tileX.Value, b.tileY.Value)));
             }
+            _meta.KeptBuildingSpots = KeptBuildingSpotPicker.Pick(buildings, _meta.KeptBuildingSpots);
         }
 
         private void ApplyKeptBuildings(IReadOnlyList<string> buildings)
