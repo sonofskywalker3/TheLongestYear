@@ -1,10 +1,31 @@
 # The Longest Year - Status
 
-**Last updated:** 2026-10-07, story: darkness agents and gate scenes built (plan Tasks 1 to 13, final-review fix wave, Jeff's corrections)
+**Last updated:** 2026-10-08, story: live check of Jeff's save-1 fixes, new handoff farms
 **Branch:** `story`; every commit pushed to `origin/story`
-**Tests:** 4032 passing
+**Tests:** 4475 passing
 **Build:** clean, 0 errors; deployed to the local Mods folder for the live checks; game closed
 **Last public release:** 0.19.1 (tag v0.19.1). Nothing below is released: `story` merges to master once, as one release, when Jeff says so.
+
+## 2026-10-08: live check of the save-1 fixes, three new handoff farms
+
+Automated, minimized run on throwaway farms (screenshots via PrintWindow with the game window parked
+off-screen). Passed: crows swoop in from both sides, one crow on one scarecrow hat with two
+scarecrows in frame (`FeetIntoHatPixels` 8 unchanged), random pecking, the crows morning box; the
+thief's morning box lists what was taken; the see-through fade (a chest behind the farmhouse roof:
+house and a pine faded); the hall morning box names item and bundle and the bundle page marks the
+slot purple; a Winter tamper rewrites the weekly goal and the quest checklist; Summer, Fall and
+Winter porch scenes play on the first Farm arrival after waking in the farmhouse with the hub, and
+a reload of the Continue morning owes the scene again.
+
+Failed and fixed: Linus's witness line after a first meeting (3225237). His Introduction ends the
+first talk with vanilla's `$e`, so the follow-up was dropped and the line slid to a third talk; it
+now waits for the introduction's last box and opens right after it. Debug helpers added:
+`tly_sabotage fixture ... scarecrows=2` (c4c2e88), `tly_openbundle <bundle>` (bundle page headless),
+`tly_sabotage giftbox` (opens the farmhouse starter box, so the thief's draw is only the fixture).
+
+Handoff farms rebuilt (old three deleted): `standard_451181986` Summer 14, `standard_451180888`
+Fall 13 (hall on night 13, morning Fall 14 is no festival), `standard_451181551` Winter 1 (porch
+scene owed, guaranteed tamper that night). Night-by-night plan and open questions in `TODO.md`.
 
 ## 2026-10-07: darkness agents and gate scenes built on story, Jeff's pass owed
 

@@ -14,34 +14,40 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
    the farm" box), not the terse HUD one-liner with the X. Lets the lines say more. BUILT f83b6c1
    (vanilla's corner text box, one at a time, held while a menu or scene is up; live check owed).
 3. Crows: they dropped straight down onto the field. They must swoop in from the sides.
-   Rest of the crows scene "pretty good". BUILT 58a497f (live check owed).
+   Rest of the crows scene "pretty good". BUILT 58a497f. Live check passed 2026-10-08 (crows enter off both frame edges).
 4. Crows morning text, in the big box: "Some strange crows visited the farm last night. They
-   didn't eat your crops, but X have withered away." BUILT f83b6c1 ("but 1 has" for one).
+   didn't eat your crops, but X have withered away." BUILT f83b6c1 ("but 1 has" for one). Live check passed 2026-10-08 ("...but 3 have withered away." in the big box).
 5. Linus's witness line lost to his first-meeting intro (they had never talked). The witness line
    has to work when it is the first conversation too. BUILT d5f9e4f (intro, then the line, same
    talk; Shane too; live check owed).
 6. Remove the Better Start mod from his Mods folder (its letter every loop is annoying). DONE (moved to Mods-disabled).
 7. Thief: nothing spoils, a thief steals. One morning box listing what was taken with counts.
-   BUILT f83b6c1. Draft line (placeholder, Jeff to judge): "Some of your things have gone missing
+   BUILT f83b6c1, live check passed 2026-10-08 ("...gone missing overnight: 3 Copper Ore and 2 Parsnips."). Draft line (placeholder, Jeff to judge): "Some of your things have gone missing
    overnight: {{items}}." e.g. "6 Parsnips, 1 bottle of Wine and 3 other things".
 8. The thief's chest was hidden behind a tree on save 1 (fixture chest at Farm 69,21). Anything in
    front of the chest or his path goes see-through for the scene; `tly_sabotage fixture` clears
-   trees and bushes in front of its chest. BUILT 9ae2774 (live check owed).
+   trees and bushes in front of its chest. BUILT 9ae2774. Live check passed 2026-10-08: a chest behind the farmhouse roof, the house and a pine faded while the thief walked in and opened it.
 
 **Save 1, second pass (2026-10-08, on standard_451170160). Collecting; build when Jeff is done:**
 9. Crows "look much better". The scarecrow crow lands ON the scarecrow, not beside it. BUILT 0f65f7c
-   (perched on the hat, no ground shadow; live check owed).
+   (perched on the hat, no ground shadow). Live check passed 2026-10-08: feet on the hat crown, `FeetIntoHatPixels` 8 needs no change.
 10. Crows peck at random, each on its own timing, for the few seconds they are on the ground; not in sync.
-    BUILT 0f65f7c (live check owed).
+    BUILT 0f65f7c. Live check passed 2026-10-08 (each crow in a different pose in the same frame).
 11. Several scarecrows: the scene picks ONE scarecrow for the landing crow, never one crow per scarecrow.
-    BUILT 0f65f7c (the code already used one; the pick is now the nearest that fits in the frame, unit tested).
+    BUILT 0f65f7c (the code already used one; the pick is now the nearest that fits in the frame, unit tested). Live check passed 2026-10-08 with two scarecrows in frame: one crow on one hat.
 12. Linus's line STILL lost after the first-meeting Introduction on the second pass, although the log
     said "Witness: Linus's line follows his Characters\Dialogue\Linus:Introduction dialogue" (17:22:13).
     The follow-up never showed. Fine either way (Jeff): say it after the intro, or mark the witness
     as already met on test farms before a pass. Fix the follow-up AND meet Linus/Shane on handoff farms.
     BUILT 4060258: the follow-up was pushed on top of the closing intro and vanilla's close popped it;
     now it sits under the intro and opens when the intro's box closes. Headless check: `tly_witness
-    fresh|arm|talk|click`. Live check owed. Meeting them on handoff farms: not done (handoff farm process).
+    fresh|arm|talk|click`. Live check 2026-10-08 FAILED, fixed 3225237: Linus's Introduction is
+    "A stranger?... Hello.#$e#Don't mind me...", and vanilla's `$e` ends the FIRST talk after
+    "Hello.", leaving the rest for the next talk. The box closed with the intro unfinished, the
+    follow-up was dropped, and the line slid to a third talk. Now the line waits under the intro
+    until its last box closes: talk 1 "A stranger?... Hello.", talk 2 "Don't mind me..." and then
+    the crows line straight after, same conversation (re-verified live). Shane has no Introduction
+    in vanilla 1.6, so his line opens on the first talk. Handoff farms (below): Linus and Shane met.
 **Winter save pass (2026-10-08, standard_451080615):**
 15. Shane's witness line worked on Fall 16 (met before the scene, "last night").
 16. Winter porch scene: Jeff likes it, but it plays on waking and THEN he gets out of bed, which reads
@@ -50,7 +56,9 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
     BUILT 8d9c100: the Continue morning runs the normal day start (planning hub on waking, in the
     farmhouse) and owes the scene; the first Farm arrival by any route plays it at the porch behind
     black, then returns him to his arrival tile. Owed until seen, across a save; before a tamper scene
-    on the same arrival. Live check owed.
+    on the same arrival. Live check passed 2026-10-08 for Summer, Fall and Winter: hub on waking in
+    the farmhouse, scene on the door step, farmer back on (64,15); a reload of the Fall 1 and Winter 1
+    saves replays the pending Continue and owes the scene again.
 
 **Fall save pass (2026-10-08, standard_451080418):**
 13. MY MISTAKE: the Fall handoff farm forces the hall on night 15, and Fall 16 is the Stardew Valley Fair,
@@ -59,26 +67,44 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 14. Jeff expected a Junimo scene on leaving the farm after the hall. None exists for reversion (only the
     Winter tamper has one). ANSWERED: no hall Junimo scene; the morning box names the item and bundle
     ("The Parsnips are gone from the Spring Crops bundle.") BUILT 1b42785, and the emptied slot is marked
-    purple in the bundle menu until refilled BUILT 63cc9da (live checks owed).
+    purple in the bundle menu until refilled BUILT 63cc9da. Live checks passed 2026-10-08 ("The Clay is gone
+    from the Forest bundle."; the Clay icon glows purple on the Forest page, `tly_openbundle Forest`).
 15. Super Cucumber and Sea Cucumber take normal plurals ("all the Super Cucumbers", "7 Sea Cucumbers"),
     not the fish same-word. BUILT 581e083.
 16. Winter save: after a tamper the weekly quest still asked for the tainted Super Cucumbers. Goals on a
     rewritten slot now follow it (new item and stack, both lists) and the quest text refreshes. BUILT
-    9ccebc6 (live check owed).
+    9ccebc6. Live check passed 2026-10-08: Snow Yam tampered to Nautilus Shell, "1 weekly goal line(s) on
+    Winter Foraging now ask for 1 Nautilus Shell", and the saved quest checklist reads "Nautilus Shell -
+    Winter Foraging". Porch lines: "all the Snow Yams", "touched them", "Bring us Nautilus Shell instead."
 
 Spec `docs/superpowers/specs/2026-09-21-darkness-agents-and-gate-scenes-design.md`, plan Tasks 1 to
 13 all built on `story` and pushed to `origin/story`. Not released: the story merges to master once,
 when Jeff says. Summary in `STATUS.md` (2026-10-07).
 
-**Jeff's pass (his launch; ask first).** Three throwaway farms are saved, all "Rodger" on a standard
-farm. Load from the title screen's Load menu (the date on each row tells them apart) or headless
-with `tly_loadsave <folder>`:
+**Jeff's pass (his launch; ask first).** Three throwaway farms, rebuilt 2026-10-08 (the old
+`standard_451170160`, `standard_451080418`, `standard_451080615` are deleted). All "Rodger", standard
+farm, built through real gate passes, 5,500g, starter gift box opened (15 Parsnip Seeds in the bag),
+Linus and Shane already met (talked to once on Spring 1, so their witness lines open on the first
+talk), nothing struck and no strike scene seen on any of them. The season porch scenes on the Summer
+and Fall farms already played. Load from the title screen's Load menu (the date on each row tells
+them apart) or headless with `tly_loadsave <folder>`. Each plan below was rehearsed on a copy of the
+save and the copy thrown away, so the saves on disk are the untouched mornings.
 
-| Folder | Date | Sleep into |
+| Folder | Saved at | Night by night |
 |---|---|---|
-| `standard_451170160` | Summer 14, nothing struck yet | Night 14 is quiet. Pick a theme on 15, sleep: the crows (Linus walks in). Talk to Linus on 16 ("last night") and again a few days later. Sleep on 16: the thief at a chest on the farm. |
-| `standard_451080418` | Fall 14, nothing struck yet in Fall | Night 14 is quiet. Pick a theme on 15, sleep: the hall (Shane passes, the figure in the window). Talk to Shane on 16 and again later ("the other night"). |
-| `standard_451080615` | Winter 1, guaranteed tamper due tonight | Sleep: the cloud. On Winter 2 step out of the farmhouse door (or arrive on the farm any other way): the Junimos name the tainted item at the porch, then you are back where you came in. Look at the aura on that item (`tly_sabotage aurachest` puts it in a chest). The Winter gate scene already played on this farm; replay it with `tly_seasonturn winter` to watch the held glow. |
+| `standard_451181986` | Summer 14 | Fixture: 50 corn in 5 rows, a scarecrow at the head of the rows and a second one below the chest (both in the crows' frame), a chest in the open at (69,21) with 20 Parsnip + 10 Copper Ore. Night 14: quiet (seed roll 0.917 against 25%; night 13 was 0.837). Summer 15: pick a theme, sleep: the crows (forced), one crow on one scarecrow hat, Linus walks in. Summer 16 morning box: "...but 3 have withered away." Talk to Linus on 16 ("last night"). Night 16: the thief at the chest on the farm (forced). Summer 17 box: "Some of your things have gone missing overnight: ..." Summer 16 and 17 are not festivals (Summer: Luau 11, Moonlight Jellies 28). |
+| `standard_451180888` | Fall 13 | Night 13: the hall (natural roll 0.181 against Fall's 35%; reversion is the only kind that can act, because the farm has no crops and nothing in a chest). Morning Fall 14, not a festival (Fall: Fair 16, Spirit's Eve 27): "...The Clay is gone from the Construction bundle." (rehearsed). Talk to Shane on 14 ("last night") and later ("the other night"); look at the purple slot in the Construction bundle. Do not plant anything or put items in a chest on Fall 13: then the night's pick can go to the crows or the thief instead, and the forced reversion would fall on night 15 with the Fair on the 16th. |
+| `standard_451181551` | Winter 1 | The Winter porch scene is still owed: it plays the first time he steps onto the Farm (out of the door after picking the theme). Night 1: the guaranteed Winter tamper, the cloud (rehearsed: Super Cucumber in Night Fishing became 4 Walleye; a Night Fishing goal on the Mixed card followed it). Winter 2, not a festival (Ice Festival 8, Night Market 15 to 17, Winter Star 25): step out of the door, the Junimos name the tainted item at the porch, then he is back where he came in. The aura: `tly_sabotage aurachest`. |
+
+**From the 2026-10-08 live run (for Jeff, not decided):**
+- A one-item tamper reads "Bring us Nautilus Shell instead. It remains pure." (count 1 keeps the bare
+  name, per the asks table). Should a single replacement take "a" ("Bring us a Nautilus Shell")?
+- Linus's first meeting is two talks in vanilla (`$e` in his Introduction), so on a farm where he was
+  never met his crows line comes at the end of the SECOND talk. Fine, or should the line follow the
+  first box ("A stranger?... Hello.") instead?
+- Not reproduced: once, on a throwaway farm driven hard with debug warps and `debug season`, the
+  game woke on Winter 15 with `eventUp` stuck on and no event, so the planning hub waited forever; a
+  reload cleared it. No TLY code sets `eventUp`; not seen on any real gate pass or on the three farms.
 
 Things to judge: every scene's look and length, the aura's colour (it also tints the top of the
 hair when held), the cloud's darkness, "our war" over "our fight" in the Winter closer, and the gate

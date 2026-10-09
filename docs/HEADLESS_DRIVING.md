@@ -312,6 +312,24 @@ on nights 25 to 28.
 line, `doy` is `season*28 + day` (Spring 0). A save is always written after a night roll, so to hand
 over a clean "nothing struck yet" save, pick a farm whose draw on that night is quiet.
 
+**Handoff farms (2026-10-08).** What lands on disk is the state at the night's save, so set a
+farm up on the day BEFORE the morning you hand over, and make that night quiet (predict it from the
+seed, or leave nothing the night can act on). Gotchas: `debug sleep` saves the farmer where he
+stands, so a farm slept from the Farm loads with him already outside and the owed porch or Junimo
+scene waits for an arrival that never comes; `debug warp FarmHouse 9 9` before every `debug sleep`.
+The farmhouse starter gift box is a chest the thief can pick: `tly_sabotage giftbox` opens it (items
+to the bag). `tly_sabotage fixture scarecrow scarecrows=2 rows=5` adds a second scarecrow below the
+chest. To rehearse a plan without spending the save, copy the save folder, play the nights, go to the
+title with `tly_totitle` and copy the folder back (TLY's run state lives inside the save file).
+`tly_openbundle <name|index>` opens one bundle's page in the Community Center note (close it with
+`tly_dismiss`).
+
+**Screenshots without the desktop.** A minimized window cannot be captured. Restore it without
+activating it and park it far off every monitor (`ShowWindow` 4, then `SetWindowPos` with
+`HWND_BOTTOM`, `SWP_NOACTIVATE|SWP_NOSIZE`, x = -12000): PrintWindow flag 2 then renders the full
+frame and nothing appears on Jeff's screens. Check the monitor bounds first; at -5000 the window
+still overlapped his left monitor and half the captures were stale.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
