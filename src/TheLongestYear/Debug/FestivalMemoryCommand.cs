@@ -15,7 +15,7 @@ namespace TheLongestYear.DebugCommands
         public const string Name = "tly_festmem";
         public const string Description =
             "Debug: festival memories (deja-vu phase 2). Usage: tly_festmem [status] | set <festival> <outcome> [item-or-npc] [score] | " +
-            "partner <npc> [run] | recipient <npc> <item> <outcome> [run] | clear [festival|partners|recipients] | commit | force <festival|all|off>";
+            "partner <npc> [run] | recipient <npc> <item> <outcome> [run] | clear [festival|partners|recipients|heard] | commit | force <festival|all|off> | talk <npc> | start | click";
 
         public static void Run(IMonitor monitor, MetaState meta, Func<RunState> runProvider, GameplayConfig config, string[] args)
         {
@@ -60,6 +60,9 @@ namespace TheLongestYear.DebugCommands
                         run.FestivalMemoryHeard.Clear();
                         monitor.Log($"{Name}: this loop's log committed to meta (as at a rewind) and cleared.", LogLevel.Info);
                         break;
+                    case "talk" when args.Length >= 2: Talk(monitor, args[1]); break;
+                    case "start": Start(monitor); break;
+                    case "click": Click(monitor); break;
                     case "force" when args.Length >= 2:
                         FestivalMemoryContext.ForceFestival = args[1] == "off" ? null : args[1];
                         monitor.Log($"{Name}: force = {FestivalMemoryContext.ForceFestival ?? "off"} (every roll hits, budget ignored; speaker guards kept).", LogLevel.Info);
@@ -71,6 +74,48 @@ namespace TheLongestYear.DebugCommands
             {
                 monitor.Log($"{Name} {sub}: threw {ex.GetType().Name}: {ex.Message}", LogLevel.Error);
             }
+        }
+
+        /// <summary>Talk to a festival actor through the festival's own checkAction (Event.cs 11631), the
+        /// path a click on the villager takes, so the heard stamp runs as in play.</summary>
+        private static void Talk(IMonitor monitor, string name)
+        {
+            Event ev = Game1.CurrentEvent;
+            NPC npc = FestivalMemoryContext.Actor(ev, name);
+            if (ev == null || !ev.isFestival || npc == null) { monitor.Log($"{Name} talk: no festival actor '{name}'.", LogLevel.Warn); return; }
+            string top = npc.CurrentDialogue.Count > 0 ? npc.CurrentDialogue.Peek().TranslationKey : "(empty)";
+            bool handled = ev.checkAction(new xTile.Dimensions.Location(npc.TilePoint.X, npc.TilePoint.Y), Game1.viewport, Game1.player);
+            string shown = (Game1.activeClickableMenu as StardewValley.Menus.DialogueBox)?.getCurrentString();
+            monitor.Log($"{Name} talk {npc.Name}: handled={handled} top was {top}; box shows \"{shown ?? "-"}\".", LogLevel.Info);
+        }
+
+        /// <summary>The host's "yes": start the festival's main event (egg hunt, soup, dance...).</summary>
+        private static void Start(IMonitor monitor)
+        {
+            Event ev = Game1.CurrentEvent;
+            NPC host = ev == null ? null : FestivalMemoryContext.Host(ev);
+            if (ev == null || !ev.isFestival || host == null) { monitor.Log($"{Name} start: no festival host here.", LogLevel.Warn); return; }
+            ev.answerDialogueQuestion(host, "yes");
+            monitor.Log($"{Name} start: answered yes to {host.Name} at {ev.id}.", LogLevel.Info);
+        }
+
+        /// <summary>One left click on the open dialogue box: finishes the typing, or turns the page.</summary>
+        private static void Click(IMonitor monitor)
+        {
+            if (Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box)
+            {
+                string before = box.getCurrentString();
+                box.receiveLeftClick(box.xPositionOnScreen + 10, box.yPositionOnScreen + 10);
+                monitor.Log($"{Name} click: \"{before}\"", LogLevel.Info);
+            }
+            else monitor.Log($"{Name} click: no dialogue box (menu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, command {Game1.CurrentEvent?.CurrentCommand}: {CurrentCommand()}).", LogLevel.Info);
+        }
+
+        private static string CurrentCommand()
+        {
+            Event ev = Game1.CurrentEvent;
+            if (ev?.eventCommands == null || ev.CurrentCommand < 0 || ev.CurrentCommand >= ev.eventCommands.Length) return "-";
+            return ev.eventCommands[ev.CurrentCommand];
         }
 
         private static int RunArg(string[] args, int index, int fallback)
