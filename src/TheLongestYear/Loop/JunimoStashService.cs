@@ -201,6 +201,7 @@ namespace TheLongestYear.Loop
         /// </summary>
         public void PopulateFromMeta()
         {
+            _heldBack.Clear();
             Chest chest = FindStashChest();
             if (chest == null)
                 return;
@@ -243,6 +244,12 @@ namespace TheLongestYear.Loop
                 chest.Items.Add(item);
                 restored++;
             }
+            // A record whose item id is unknown this session (its mod is off) is not in the chest,
+            // so BankToMeta, which rebuilds StashItems from the chest, would drop it at the next
+            // save or reset. Hold it here and bank it back untouched until the mod returns.
+            _heldBack.AddRange(unknown);
+            if (unknown.Count > 0)
+                _monitor.Log($"JunimoStashService: {unknown.Count} stashed item(s) need a mod that is not loaded; kept in the stash data until it is.", LogLevel.Info);
             if (overflow.Count > 0)
             {
                 foreach (Item extra in overflow)
@@ -250,9 +257,8 @@ namespace TheLongestYear.Loop
                 // The extras now live on their own (in the stash or on the ground). Write the
                 // trimmed containers and the deposited extras back, so a second populate (tly_setstash,
                 // save load) neither ejects them again nor loses the ones already in the stash.
-                // Unknown-id records stay banked, as they were before.
+                // Unknown-id records stay banked (BankToMeta appends _heldBack).
                 BankToMeta();
-                _meta.StashItems.AddRange(unknown);
             }
             if (ejectedCount > 0)
                 _monitor.Log($"JunimoStashService: took {ejectedCount} non-cosmetic item(s) out of stashed containers.", LogLevel.Info);
@@ -268,6 +274,10 @@ namespace TheLongestYear.Loop
         /// Overwrites whatever was previously in StashItems — the chest is the authoritative source.
         /// No-op if no stash upgrade is owned or the tile is not configured.
         /// </summary>
+        /// <summary>Stash records whose item could not be recreated this session (unknown id, its
+        /// mod not loaded). Never deleted: <see cref="BankToMeta"/> writes them back as they were.</summary>
+        private readonly List<StashItemRecord> _heldBack = new();
+
         public void BankToMeta()
         {
             Chest chest = FindStashChest();
@@ -283,6 +293,7 @@ namespace TheLongestYear.Loop
                 if (item == null) continue;
                 _meta.StashItems.Add(StashItemCodec.ToRecord(item));
             }
+            _meta.StashItems.AddRange(_heldBack);
 
             _monitor.Log(
                 $"JunimoStashService: banked {_meta.StashItems.Count} items into MetaState.StashItems.",

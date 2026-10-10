@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.45 - 2026-10-09
+
+### Fixed
+
+- **Stashed items from a mod you turned off for a session are no longer lost.** If you played without a mod whose items were in the Junimo Stash, those items could not be shown, and the next save threw them away. They now wait in the stash data, untouched, and come back when the mod is on again.
+
 ## 0.19.44 - 2026-10-09
 
 ### Fixed
