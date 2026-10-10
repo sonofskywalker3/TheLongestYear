@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.57 - 2026-10-09
+
+### Fixed
+
+- Debug: `tly_reset` while a day-28 outcome is still queued no longer replays the old scene on the new loop's Spring 1.
+
 ## 0.19.56 - 2026-10-09
 
 ### Internal

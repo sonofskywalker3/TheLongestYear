@@ -539,4 +539,17 @@ public class RunStateTests
         Assert.Empty(run.CurrentWeekShrineGoals);
         Assert.Contains(Theme.Mining, run.SelectedThemesThisMonth);
     }
+
+    /// <summary>A debug tly_reset after a gate-pass night left the old Continue scene queued, and
+    /// the next load replayed it on the new loop's Spring 1 (TODO, 2026-09-29).</summary>
+    [Theory]
+    [InlineData(TheLongestYear.Core.Day28.Day28Branch.Continue)]
+    [InlineData(TheLongestYear.Core.Day28.Day28Branch.Fail)]
+    [InlineData(TheLongestYear.Core.Day28.Day28Branch.Win)]
+    public void BeginNewRun_clears_a_pending_day28_outcome(TheLongestYear.Core.Day28.Day28Branch branch)
+    {
+        var run = new RunState { PendingDay28 = branch };
+        run.BeginNewRun(seed: 7);
+        Assert.Equal(TheLongestYear.Core.Day28.Day28Branch.None, run.PendingDay28);
+    }
 }

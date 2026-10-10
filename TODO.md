@@ -266,8 +266,8 @@ Ben streamed TLY on YouTube (Part 1 XpOwgbRrFi4, Part 2 DG2UNAb2Xe4); Jeff is co
 Audit 2026-10-09: every fix below shipped in 0.18.84 or 0.18.98 (the BUILT 0.18.85 to 0.18.89 items are in
 0.18.98 too); Ben is credited in the README, the Nexus description and Thanks (ae8a508). Nijah's randomizer answers
 fed the Randomizer, released 0.19.0. What is left:
-- The debug-only `tly_reset` / PendingDay28 bug below: still not fixed (`RunState.BeginNewRun` does not clear
-  PendingDay28). Real resets are not affected.
+- The debug-only `tly_reset` / PendingDay28 bug below: FIXED in 0.19.57 (`RunState.BeginNewRun` clears
+  PendingDay28 and RestartMenusDone; unit-tested).
 - Not seen in game: tooltip wrapping by hover, the petless-farm Marnie visit, the Year 1 checkbox tooltip text
   (Jeff may reword its placeholder).
 - **RELEASED 0.18.84 (2026-09-29): goals named items before their week, any week of the season.** Seasonal bundles skipped the week check (e.g. Strawberry,
@@ -288,9 +288,9 @@ fed the Randomizer, released 0.19.0. What is left:
   fade (headless). Jeff playtested it 2026-09-29: worked well.
 - **RELEASED 0.18.98 (2026-09-29):** rolls up 0.18.85-0.18.98 (Dye, Qi Bean, artifacts week 3, pet, Year 1
   tooltip, Keep Lost Books, theme discount, shrine restart). DONE 2026-09-29: told tanky24u (Nexus posts) Keep Lost Books shipped.
-- **BUG (debug only?): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
+- **FIXED 0.19.57 (debug only): tly_reset during a pending day-28 outcome** leaves PendingDay28 set (BeginNewRun does
   not clear it), so the next load replays the old Continue scene on the new loop's Spring 1. Seen 2026-09-29
-  with tly_reset after a gate-pass night. Real resets consume the branch first; not fixed.
+  with tly_reset after a gate-pass night. Real resets consume the branch first. BeginNewRun now clears it.
 - **RELEASED 0.18.98: pet after a rewind** (Jeff 2026-09-29): Keep Pet 50 JP; petless farm un-marks Marnie's
   visit (1590166 cat / 897405 dog) after RestorePet so it replays. Adopt flag still stamped. Not seen in game
   (the visit needs the naming prompt clicked); unit-tested.
