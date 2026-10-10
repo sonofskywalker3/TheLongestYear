@@ -31,8 +31,8 @@ Never use `tools/game.ps1` (mouse and keyboard) or `tools/screenshot.ps1` in thi
 
 | Need | Tool | Notes |
 |---|---|---|
-| Build, close, relaunch | `tools/deploy.ps1 -Minimized` | Archives the old log first. `-NoLaunch` to build only. Do NOT `git add` the pruned archives; run `git checkout -- test-output/log-archive` afterwards. |
-| Any `tly_*` command | `tools/bridge.ps1 -Action send -Lines "cmd1|cmd2"` | Whole batch runs in one tick, in order. Works at the title screen (`tly_loadsave`) and in-world. |
+| Build, close, relaunch | `tools/deploy.ps1 -Minimized` | Archives the old log first. `-NoLaunch` to build only. The archives go to `test-output/log-archive/`, which git ignores, so pruning needs no cleanup. |
+| Any `tly_*` command | `tools/bridge.ps1 -Action send -Lines "cmd1|cmd2"` | Whole batch runs in one tick, in order. The bridge and the SMAPI console share one command table (`ModEntry.Commands.cs`), so every `tly_*` command works in both. Works at the title screen (`tly_loadsave`) and in-world. |
 | Wait for a log line | `tools/bridge.ps1 -Action wait -Pattern "<regex>" -TimeoutSec 60 -FromLine <n>` | Take `<n>` from `-Action count` BEFORE sending, so you only match new lines. Returns `FOUND: ...` or `TIMEOUT`. |
 | The game's own `debug` commands | `tools/send-smapi-command.ps1 "debug sleep"` | Writes into SMAPI's console input buffer, focus-independent. `debug season summer`, `debug sleep`, `debug time 1000`, `debug warp ...`. |
 
