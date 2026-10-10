@@ -241,17 +241,8 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Postfix(Chest __instance, ref int __result)
         {
-            // 2026-05-29 round 10 diagnostic: trace WHY the cap might not be applying. User
-            // reported "stash shows 36 slots" after the round-9 sweep-order fix — narrowing
-            // the cause requires seeing whether the gate is failing because modData is missing,
-            // _meta is null, or cap = 0.
-            bool hasTag = __instance?.modData?.ContainsKey(JunimoStashService.StashModDataKey) ?? false;
-            int probedCap = _meta?.StashSlotCount ?? -1;
-            PatchLog.Trace(
-                $"GetActualCapacity postfix: tile=({__instance?.TileLocation.X}, {__instance?.TileLocation.Y}), " +
-                $"qid='{__instance?.QualifiedItemId}', hasStashTag={hasTag}, metaWired={_meta != null}, " +
-                $"probedCap={probedCap}, vanillaResult={__result}.");
-
+            // No log line here: the game asks every chest's capacity many times a frame while a
+            // chest menu is open, and the 2026-05-29 diagnostic that lived here bloated player logs.
             if (_meta == null) return;
             if (!__instance.modData.ContainsKey(JunimoStashService.StashModDataKey)) return;
 

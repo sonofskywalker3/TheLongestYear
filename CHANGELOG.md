@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.55 - 2026-10-09
+
+### Changed
+
+- **Smaller SMAPI logs.** Two old diagnostic lines wrote to the log for every rock you broke and many times a second while a chest was open. They are gone.
+
 ## 0.19.54 - 2026-10-09
 
 ### Fixed
