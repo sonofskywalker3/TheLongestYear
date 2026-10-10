@@ -86,6 +86,22 @@ public class BoostsTests
         Assert.Equal("Rain", run.WeatherOverride);
     }
 
+    /// <summary>Green rain is never overwritten (vanilla turns the written weather into green
+    /// rain, and TLY keeps it), so a weather buy the day before would spend JP for nothing.</summary>
+    [Theory]
+    [InlineData(BoostId.RainDance)]
+    [InlineData(BoostId.StormCall)]
+    public void Weather_rows_refuse_the_day_before_green_rain(BoostId id)
+    {
+        var run = new RunState();
+        var meta = Meta();
+        long before = meta.JunimoPoints;
+        var greenRainEve = new BoostContext(33, TomorrowIsFestival: false, new[] { 0, 0, 0, 0, 0 }, 0, TomorrowIsGreenRain: true);
+        Assert.Equal(BoostPurchase.Result.NotAvailable, BoostPurchase.TryBuy(meta, run, id, greenRainEve));
+        Assert.Equal(before, meta.JunimoPoints);
+        Assert.Null(run.WeatherOverride);
+    }
+
     /// <summary>Jeff, 2026-09-24: Rain Dance works in Winter, so a past season's rain fish is a JP
     /// cost under a *Returns boost rather than a wall.</summary>
     [Fact]
