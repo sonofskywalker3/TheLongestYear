@@ -44,9 +44,12 @@ namespace TheLongestYear
         /// time. Call from SaveCreating: the game saves a new farm at character creation and SMAPI does
         /// not raise Saving for that write, so without this a farm quit before its first night loaded
         /// as a vanilla save (Nexus, 2026-09-14). Writes a fresh MetaState, never <see cref="State"/>,
-        /// which may still hold the previous save's data at that moment.</summary>
-        public void StampNewRunMarker()
-            => _data.WriteSaveData(MetaDataKey, new MetaState { IsLongestYearRun = true });
+        /// which may still hold the previous save's data at that moment. The marker also carries the
+        /// new-game choices (<see cref="NewRunStamp.Marker"/>): before 0.19.47 they lived only in
+        /// memory until the first night, so a farm quit before it reloaded on a TLY Custom board
+        /// with mod items on, whatever the player picked.</summary>
+        public void StampNewRunMarker(MetaState marker)
+            => _data.WriteSaveData(MetaDataKey, marker);
 
         /// <summary>Commit banked progress and run-state into the save. Call from the game's Saving event.</summary>
         public void Save()

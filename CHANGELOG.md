@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.47 - 2026-10-09
+
+### Fixed
+
+- **A new farm quit before its first night keeps the choices you made when you created it.** The Community Center bundle choice (Normal, Remixed or TLY Custom), the mod items setting and Skip intro were only saved at the end of the first day, so quitting earlier brought the farm back on TLY Custom bundles with mod items on and replayed the intro. They are now saved with the new farm.
+
 ## 0.19.46 - 2026-10-09
 
 ### Fixed
