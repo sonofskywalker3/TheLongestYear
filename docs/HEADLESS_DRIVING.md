@@ -110,6 +110,15 @@ vanilla's own exit action instead (the Vault restore cutscene), so the bus repai
 `tly_bundlecount bus` logs Keep Bus Unlocked's reach with each path on its own (every Vault bundle on the board paid
 this run; the Vault room repaired: area flag or the ccVault mail) and the live result.
 
+**Core-fix checks (2026-10-10).** `tly_fixcheck` (no args prints the usage) re-runs the review-2 live checks:
+`collect` uses the milk pail or shears on every animal with produce through the tool's own DoFunction (a Kitchen
+week or Double Yolk second product shows as a second pass); `stash unknown` adds a stash record whose mod is not
+loaded; `failstep <step name>` makes that restore step of the next reset throw (`off` clears it); `trees <n>` fells
+n grown oaks near the player on the Farm; `seed <location> <n>` places spawned Daffodils and `spawn <location> <n>`
+runs spawnObjects n times (Forager's Eye must clone only new forage); `liab`, `nextpick <theme>`, `pairings on|off`
+and `exhaust` set up and read the month rollover and the empty-offer week; `greenrain`, `rod`, `stashfill`, `meta`
+read state. A level-up after milking blocks the next `debug sleep`: send `tly_dismiss`.
+
 **Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
 with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
 text.

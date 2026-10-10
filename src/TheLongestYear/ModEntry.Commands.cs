@@ -192,6 +192,7 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
                     BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
                     this.Helper.DirectoryPath, a));
+            yield return new DebugCommand("tly_fixcheck", FixCheckUsage, this.CmdFixCheck);
             yield return new DebugCommand(TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name,
                 "Debug: check every way of backing out of the Cookbook and Craftbook (click, Escape, menu key, pad B). " + TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,
