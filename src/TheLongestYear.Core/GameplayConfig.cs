@@ -107,18 +107,6 @@ public sealed class GameplayConfig
     /// <summary>Price cutoffs used to derive an item's rarity (and thus its JP value).</summary>
     public RarityThresholds RarityThresholds { get; set; } = new RarityThresholds();
 
-    /// <summary>Number of weather preview rows shown on the planning hub. Hidden by default
-    /// (count = 0); Plan 06 will compute this dynamically from owned Weather Sage upgrades.</summary>
-    public int DefaultWeatherPreviewSlots { get; set; } = 0;
-
-    /// <summary>Number of Traveling Cart preview rows shown on the planning hub. Hidden by default
-    /// (count = 0); Plan 06 will compute this dynamically from owned Cart Whisperer tiers.</summary>
-    public int DefaultCartPreviewSlots { get; set; } = 0;
-
-    /// <summary>SButton name (parsed mod-side) for the hotkey that reopens the weekly planning hub. Default: 'P'.
-    /// (unused in v1; Plan 06 will re-enable the hotkey)</summary>
-    public string WeeklyHubHotkey { get; set; } = "P";
-
     /// <summary>Master switch for The Longest Year. When false, TLY does no setup at SaveLoaded
     /// and no game effects fire. Use the in-game GMCM (if installed) to toggle, or edit
     /// config.json directly. Toggling takes effect on next save load.</summary>
