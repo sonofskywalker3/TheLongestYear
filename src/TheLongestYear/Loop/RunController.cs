@@ -1308,10 +1308,6 @@ namespace TheLongestYear.Loop
             return Rarity.Common;
         }
 
-        /// <summary>Public mirror so the planning-hub UI's preview path uses the exact same rarity
-        /// lookup as the selection-time commit. Keeps the two samples deterministically aligned.</summary>
-        public Rarity GetRarityForItem(string itemId) => RarityForItem(itemId);
-
         /// <summary>Live per-slot completion state for a bundle (vanilla source of truth), or
         /// null when absent. Same NetBundles access pattern as ItemDonationSync/VaultPaymentSync:
         /// FieldDict.ContainsKey is the safe presence check.</summary>
@@ -1464,11 +1460,6 @@ namespace TheLongestYear.Loop
         public int BonusListSizeFor(CoreSeason season)
             => BonusItemSampler.DefaultMaxCountBySeason[(int)season];
 
-        /// <summary>How big the per-card bonus-item preview list should be for the current season.
-        /// Lives in <see cref="BonusItemSampler.DefaultMaxCountBySeason"/>.</summary>
-        public int BonusListSizeForCurrentSeason()
-            => BonusListSizeFor(Run.Season);
-
         /// <summary>
         /// Number of weather preview days to reveal (the next N days, starting tomorrow).
         /// Equals the highest Weather Sage tier owned (weather_sage_1 through weather_sage_6).
@@ -1477,26 +1468,10 @@ namespace TheLongestYear.Loop
         public int WeatherSageTier()
             => _store.State.HighestKeptTier("weather_sage_", 6);
 
-        /// <summary>
-        /// Number of Traveling Cart item slots to preview on the planning hub.
-        /// Equals 2 * highest Cart Whisperer tier owned (cart_whisper_1 through cart_whisper_5).
-        /// Returns 0 if none owned.
-        /// </summary>
-        public int CartPreviewSlots()
-            => CartStockPreview.SlotsToReveal(_store.State.HighestKeptTier("cart_whisper_", 5));
-
-        /// <summary>Obtainability predicate for the sampler: looks up the item in the CcItem
-        /// catalog and tests against this season's ObtainableSeasons. Items not in the catalog
-        /// default to obtainable so SVE/mod additions aren't silently excluded.</summary>
-        private bool IsObtainableInCurrentSeason(string itemId)
-            => IsObtainableInSeason(itemId, Run.Season);
-
-        /// <summary>Mirror for the UI: same predicate, callable from the menu's bonus-preview path.</summary>
-        public bool IsObtainableForCurrentSeason(string itemId)
-            => IsObtainableInCurrentSeason(itemId);
-
-        /// <summary>Same predicate but for an arbitrary season — used by the Sunday-night day-28
-        /// hub when previewing NEXT season's bonus pool.</summary>
+        /// <summary>Obtainability predicate for an arbitrary season: looks up the item in the CcItem
+        /// catalog and tests it against that season. Items not in the catalog default to obtainable
+        /// so SVE/mod additions aren't silently excluded. Used by the Sunday-night day-28 hub when
+        /// previewing NEXT season's bonus pool.</summary>
         public bool IsObtainableInSeason(string itemId, CoreSeason season)
             => IsObtainableInWeek(itemId, AvailabilityWeeks.LastWeekOf(season));
 

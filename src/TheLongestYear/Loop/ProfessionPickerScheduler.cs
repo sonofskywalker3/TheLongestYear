@@ -24,8 +24,6 @@ namespace TheLongestYear.Loop
 
         public ProfessionPickerScheduler(IMonitor monitor) => _monitor = monitor;
 
-        public int PendingCount => _pending.Count;
-
         /// <summary>Queue picker menus for the given skill index based on the kept level.
         /// L5 keep → one menu. L10 keep → two menus (L5 then L10).</summary>
         public void Enqueue(int skillIndex, int level)

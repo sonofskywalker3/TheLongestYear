@@ -40,9 +40,6 @@ public static class AnimalProductAvailability
         return links;
     }
 
-    public static int HousingEffort(string building, IReadOnlyList<RawBuilding> buildings)
-        => BaseHousingEffort + HousingLinks(building, buildings);
-
     public static ItemEffort? Derive(
         string qualifiedId, IReadOnlyList<RawFarmAnimal> animals, IReadOnlyList<RawBuilding> buildings)
     {

@@ -36,8 +36,6 @@ public static class AvailabilityWeeks
     /// <c>ItemPoolBuilder.BuiltInExcludedItemIds</c>. Keep the two in step: widening this bound
     /// without lifting that ban would place a dish no board can deliver.</summary>
     public const int YearTwoLastReachableEpisode = 31;
-    /// <summary>A dish the Saloon or a Cookout Kit can supply without a kitchen.</summary>
-    public const int ShopDishWeek = 3;
     public const int PondDelayWeeks = 4;
     public const int SaplingWeek = 1;
     /// <summary>First week any artifact may be asked for, whatever route finds it: time for geodes,

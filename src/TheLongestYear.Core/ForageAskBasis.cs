@@ -20,10 +20,6 @@ public static class ForageAskBasis
     /// seeds, each seed one forage a week later; 30 is a tilled patch kept in rotation.</summary>
     public const double FarmableAllowance = 30;
 
-    /// <summary>Kept for callers and tests that ask what "farmable" meant: the allowance alone,
-    /// which is the basis when nothing was measured for the item.</summary>
-    public const double FarmableBasis = FarmableAllowance;
-
     /// <summary>True when the item can carry a banded ask at all: measured in some season, ruled,
     /// or growable from Wild Seeds. The stack multiplier leaves such a slot alone.</summary>
     public static bool Covers(string? itemId)
