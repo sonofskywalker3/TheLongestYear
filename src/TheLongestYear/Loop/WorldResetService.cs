@@ -1229,7 +1229,29 @@ namespace TheLongestYear.Loop
                 // instead walk it to the player's own spot, like Keep Greenhouse does
                 // (2026-09-06, first Meadowlands rewind: the kept coop was skipped and the
                 // player's placement lost).
-                Building existing = farm.buildings.FirstOrDefault(b => b.buildingType.Value == blueprint);
+                List<Building> fresh = farm.buildings.ToList();
+                var (match, index) = AnimalHousing.FindOnFreshFarm(
+                    blueprint, fresh.Select(f => f.buildingType.Value).ToList());
+                Building existing = match == KeptBuildingMatch.Exact ? fresh[index] : null;
+                // A LOWER tier of the kept chain is the farm type's starter (Meadowlands' Coop under
+                // a kept Big or Deluxe Coop). Building the kept one beside the exact-type check left
+                // the starter under it, overlapping. Take the starter down and move its animals
+                // (Meadowlands' two chickens) into the kept building once it stands.
+                List<FarmAnimal> starterAnimals = null;
+                if (match == KeptBuildingMatch.LowerTier)
+                {
+                    Building starter = fresh[index];
+                    starterAnimals = new List<FarmAnimal>();
+                    if (starter.GetIndoors() is AnimalHouse starterHouse)
+                    {
+                        starterAnimals.AddRange(starterHouse.animals.Values);
+                        starterHouse.animals.Clear();
+                        starterHouse.animalsThatLiveHere.Clear();
+                    }
+                    farm.buildings.Remove(starter);
+                    _monitor.Log($"Reset: starter '{starter.buildingType.Value}' at ({starter.tileX.Value},{starter.tileY.Value}) " +
+                        $"replaced by the kept '{blueprint}' ({starterAnimals.Count} animal(s) move in).", LogLevel.Info);
+                }
                 if (existing != null)
                 {
                     if (existing.tileX.Value != (int)tile.X || existing.tileY.Value != (int)tile.Y)
@@ -1266,6 +1288,15 @@ namespace TheLongestYear.Loop
 
                 _monitor.Log($"Reset: kept building '{blueprint}' placed at ({tile.X},{tile.Y}).",
                     LogLevel.Info);
+
+                if (starterAnimals is { Count: > 0 } && b.GetIndoors() is AnimalHouse keptHouse)
+                {
+                    foreach (FarmAnimal animal in starterAnimals)
+                    {
+                        animal.home = b;
+                        keptHouse.adoptAnimal(animal);
+                    }
+                }
             }
         }
 
