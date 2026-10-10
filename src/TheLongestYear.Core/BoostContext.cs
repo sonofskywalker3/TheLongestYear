@@ -9,12 +9,15 @@ namespace TheLongestYear.Core;
 /// <param name="SkillLevels">Current levels indexed Farming 0, Fishing 1, Foraging 2, Mining 3, Combat 4.</param>
 /// <param name="MineFloor">netWorldState.LowestMineLevel (0 = mine not entered).</param>
 /// <param name="Skill">Crash Course: the skill being bought; -1 otherwise.</param>
+/// <param name="TomorrowIsGreenRain">Tomorrow is vanilla's green rain day (weather rows refuse:
+/// green rain is never overwritten, so the buy would be wasted).</param>
 public sealed record BoostContext(
     int DayOfYear,
     bool TomorrowIsFestival,
     IReadOnlyList<int> SkillLevels,
     int MineFloor,
-    int Skill = -1)
+    int Skill = -1,
+    bool TomorrowIsGreenRain = false)
 {
     public Season Season => Calendar.SeasonOfDay(DayOfYear);
     public int DayOfMonth => (DayOfYear - 1) % Calendar.DaysPerMonth + 1;

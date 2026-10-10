@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.52 - 2026-10-09
+
+### Fixed
+
+- **Rain Dance and Storm Call can no longer be bought the day before green rain.** Green rain always wins over the weather you bought, so the JP was wasted. They are now unavailable that day, like the day before a festival.
+
 ## 0.19.51 - 2026-10-09
 
 ### Fixed

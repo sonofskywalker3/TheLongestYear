@@ -135,10 +135,12 @@ public static class BoostPurchase
         // so a weather buy for those mornings would spend JP for nothing: refuse on day 28 too.
         // Rain Dance works in Winter (Jeff, 2026-09-24): it is how a player gets a past season's rain
         // fish under a *Returns boost, a JP cost for a missed fish rather than a wall. Snow is not rain.
+        // Green rain is never overwritten (vanilla turns the written weather into green rain and
+        // TLY keeps it), so a weather buy for that morning is refused like a festival's.
         BoostId.RainDance
-            => !ctx.TomorrowIsFestival && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
+            => !ctx.TomorrowIsFestival && !ctx.TomorrowIsGreenRain && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
         BoostId.StormCall
-            => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival
+            => ctx.Season != Season.Winter && !ctx.TomorrowIsFestival && !ctx.TomorrowIsGreenRain
                && ctx.DayOfMonth < Calendar.DaysPerMonth && ctx.DayOfYear < Calendar.DaysPerYear,
         BoostId.SpringReturns or BoostId.SummerReturns or BoostId.FallReturns
             => PastSeasonBoosts.Available(id, ctx.Season),
