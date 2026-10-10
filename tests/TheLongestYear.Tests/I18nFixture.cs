@@ -40,8 +40,30 @@ public sealed class I18nFixture
     }
 
     public static string DefaultJsonPath =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "src", "TheLongestYear", "i18n", "default.json"));
+        Path.Combine(RepoRoot, "src", "TheLongestYear", "i18n", "default.json");
+
+    /// <summary>The folder holding TheLongestYear.sln. Found by walking up from this source file's
+    /// compile-time path (so <c>dotnet test -o &lt;any folder&gt;</c> still works), then from the
+    /// test binary as a fallback.</summary>
+    public static string RepoRoot { get; } = FindRepoRoot();
+
+    private const string SolutionFile = "TheLongestYear.sln";
+
+    private static string FindRepoRoot()
+    {
+        string? fromSource = Path.GetDirectoryName(ThisSourceFile());
+        foreach (string? start in new[] { fromSource, AppContext.BaseDirectory })
+        {
+            if (string.IsNullOrEmpty(start)) continue;
+            for (var dir = new DirectoryInfo(start); dir != null; dir = dir.Parent)
+                if (File.Exists(Path.Combine(dir.FullName, SolutionFile)))
+                    return dir.FullName;
+        }
+        throw new FileNotFoundException(
+            $"Could not find {SolutionFile} above {fromSource} or {AppContext.BaseDirectory}; the i18n tests read the mod's default.json from the repo.");
+    }
+
+    private static string ThisSourceFile([System.Runtime.CompilerServices.CallerFilePath] string path = "") => path;
 
     private static IReadOnlyDictionary<string, string> Load()
     {
