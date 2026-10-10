@@ -106,15 +106,24 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(StardewValley.Tools.MilkPail), nameof(StardewValley.Tools.MilkPail.DoFunction))]
     internal static class MilkPailDoublePatch
     {
-        private static void Postfix(StardewValley.Tools.MilkPail __instance)
-            => AnimalDoubleProductPatch.RestoreIfRecorded(__instance?.animal);
+        // DoFunction ends with finish(), whose NetEvent0 fires doFinish at once and sets
+        // animal = null, so the postfix cannot read __instance.animal; capture it first.
+        private static void Prefix(StardewValley.Tools.MilkPail __instance, out FarmAnimal __state)
+            => __state = __instance?.animal;
+
+        private static void Postfix(FarmAnimal __state)
+            => AnimalDoubleProductPatch.RestoreIfRecorded(__state);
     }
 
     [HarmonyPatch(typeof(StardewValley.Tools.Shears), nameof(StardewValley.Tools.Shears.DoFunction))]
     internal static class ShearsDoublePatch
     {
-        private static void Postfix(StardewValley.Tools.Shears __instance)
-            => AnimalDoubleProductPatch.RestoreIfRecorded(__instance?.animal);
+        // Same as the pail: finish() clears animal before a postfix runs.
+        private static void Prefix(StardewValley.Tools.Shears __instance, out FarmAnimal __state)
+            => __state = __instance?.animal;
+
+        private static void Postfix(FarmAnimal __state)
+            => AnimalDoubleProductPatch.RestoreIfRecorded(__state);
     }
 
     [HarmonyPatch(typeof(FarmAnimal), nameof(FarmAnimal.DigUpProduce))]

@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.42 - 2026-10-09
+
+### Fixed
+
+- **The second milk or wool from Kitchen week and Double Yolk now shows up.** The bonus rolled and logged that a cow, goat or sheep would give a second product, but the game forgot which animal you had just milked or sheared before the mod could hand it back, so you never got it. Pigs and eggs were not affected.
+
 ## 0.19.41 - 2026-10-09
 
 ### Added
