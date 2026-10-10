@@ -3,7 +3,7 @@
 # containing "Stardew Valley" AND window class "SDL_app" — a title-only match grabs the SMAPI
 # console first (both windows have "Stardew Valley"+"SMAPI" in the title; the console is
 # ConsoleWindowClass / CASCADIA_HOSTING_WINDOW_CLASS, the MonoGame window is SDL_app).
-# Usage: pwsh -NoProfile -File printwindow.ps1 <out.png>
+# Usage: pwsh -NoProfile -File tools/screenshot.ps1 <out.png>
 param([string]$Out = "win-screen.png")
 
 Add-Type @"

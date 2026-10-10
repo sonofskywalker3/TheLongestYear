@@ -1,7 +1,9 @@
-# Close SMAPI and pull the PC log into TheLongestYear's test-output/ for analysis.
+# Close SMAPI and pull the PC log into TheLongestYear's test-output/ for analysis (git-ignored).
 $logSource = "$env:APPDATA\StardewValley\ErrorLogs\SMAPI-latest.txt"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$logDest = Join-Path $projectRoot "SMAPI-latest.txt"
+$logDir = Join-Path $projectRoot "test-output"
+New-Item -ItemType Directory -Force $logDir | Out-Null
+$logDest = Join-Path $logDir "SMAPI-latest.txt"
 
 $procs = Get-Process -Name "StardewModdingAPI", "Stardew Valley" -ErrorAction SilentlyContinue
 if ($procs) {
