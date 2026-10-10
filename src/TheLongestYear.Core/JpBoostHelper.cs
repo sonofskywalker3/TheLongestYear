@@ -18,6 +18,15 @@ namespace TheLongestYear.Core;
 /// </summary>
 public static class JpBoostHelper
 {
+    /// <summary>Upgrade id prefix of the chain; tier N is <c>jp_boost_N</c> in the upgrade catalog.</summary>
+    public const string TierIdPrefix = "jp_boost_";
+
+    /// <summary>Number of tiers in the chain (jp_boost_1 to jp_boost_5).</summary>
+    public const int MaxTier = 5;
+
+    /// <summary>Bonus each tier adds: +5% per tier, so tier 5 is +25%.</summary>
+    public const double BonusPerTier = 0.05;
+
     /// <summary>Returns <paramref name="baseAmount"/> scaled by the highest owned
     /// jp_boost tier. Zero / negative bases pass through unchanged (the math is
     /// defined but a "boosted zero" log line would be misleading).</summary>
@@ -26,7 +35,7 @@ public static class JpBoostHelper
         if (meta == null || baseAmount <= 0) return baseAmount;
         int tier = HighestTier(meta);
         if (tier == 0) return baseAmount;
-        double mult = 1.0 + 0.05 * tier;
+        double mult = 1.0 + BonusPerTier * tier;
         return (long)Math.Round(baseAmount * mult, MidpointRounding.AwayFromZero);
     }
 
@@ -34,8 +43,8 @@ public static class JpBoostHelper
     public static int HighestTier(MetaState meta)
     {
         if (meta == null) return 0;
-        for (int t = 5; t >= 1; t--)
-            if (meta.HasUpgrade("jp_boost_" + t)) return t;
+        for (int t = MaxTier; t >= 1; t--)
+            if (meta.HasUpgrade(TierIdPrefix + t)) return t;
         return 0;
     }
 }
