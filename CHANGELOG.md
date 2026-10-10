@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.44 - 2026-10-09
+
+### Fixed
+
+- **A kept Big Coop or Deluxe Coop no longer lands on top of Meadowlands' starter Coop.** Meadowlands always starts with a Coop, and the rewind only looked for a coop of the exact same size, so it built your kept coop over the starter one. The kept coop now replaces it, and the two starter chickens move in.
+
 ## 0.19.43 - 2026-10-09
 
 ### Fixed
