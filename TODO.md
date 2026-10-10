@@ -805,10 +805,10 @@ Open when it is picked up: does Impossible force BundleSource=Engine (it must, s
 own board), and does it turn season pity off the way the Hard step does.
 
 
+## Resolved / closed
+
 The 72 released, shipped or closed items that still sat under Open were moved here on 2026-10-09
 (hygiene pass), in the order they had there; the older entries below them are unchanged.
-
-## Resolved / closed
 
 ### RELEASED 0.19.21 (pitytheviolins, Nexus posts, 2026-10-09): "harmony error" at startup
 Her log (TLY 0.19.1, 117 mods, https://smapi.io/log/9a32eecc3a0444fc8dca67acc8dde96b): `Harmony patch
