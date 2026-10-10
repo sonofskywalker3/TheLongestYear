@@ -18,7 +18,7 @@ using TheLongestYear.UI;
 
 namespace TheLongestYear
 {
-    public sealed class ModEntry : Mod
+    public sealed partial class ModEntry : Mod
     {
         private GameplayConfig _config;
         private MetaStore _meta;
