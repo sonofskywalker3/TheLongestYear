@@ -393,7 +393,10 @@ namespace TheLongestYear.Loop
                 if (key == "newLoop")
                 {
                     _monitor.Log("Post-win choice: 'Start a new loop' — triggering reset.", LogLevel.Info);
-                    ContinueAfterResetSpend();
+                    // Inside the answer callback the DialogueBox is still the active menu, so the
+                    // books would be refused and the reset would wipe recipes and herd animals
+                    // unbanked. The shrine already ran before this question; defer the rest a tick.
+                    DeferContinue(ContinueAfterResetSpend);
                 }
                 else
                 {
@@ -500,6 +503,17 @@ namespace TheLongestYear.Loop
             _shrineOpenPending = onContinue;
         }
 
+        /// <summary>Same deferral as <see cref="DeferShrineThenContinue"/> for a continuation that
+        /// does not reopen the shrine (the post-win "Start a new loop" answer, whose shrine already
+        /// ran before the question). Drained by <see cref="TickShrineWatchdog"/> once no menu is up.</summary>
+        private void DeferContinue(System.Action onContinue)
+        {
+            _continuePending = onContinue;
+        }
+
+        /// <summary>Continuation queued by <see cref="DeferContinue"/>.</summary>
+        private System.Action _continuePending;
+
         /// <summary>Continuation owed a shrine open, queued by <see cref="DeferShrineThenContinue"/>
         /// and drained by <see cref="TickShrineWatchdog"/> once no menu is up.</summary>
         private System.Action _shrineOpenPending;
@@ -551,6 +565,13 @@ namespace TheLongestYear.Loop
             {
                 _holdReaskPending = false;
                 ShowHoldChoice();
+                return;
+            }
+            if (_continuePending != null && Game1.activeClickableMenu == null)
+            {
+                System.Action owed = _continuePending;
+                _continuePending = null;
+                owed();
                 return;
             }
             if (_shrineOpenPending != null && Game1.activeClickableMenu == null)

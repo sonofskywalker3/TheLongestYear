@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.43 - 2026-10-09
+
+### Fixed
+
+- **Starting a new loop after a win now offers the Cookbook, Craftbook and Herd Book before the rewind.** The answer to the win question ran the rewind while the question box was still on screen, so the books could not open and the reset cleared your recipes and herd without letting you bank them.
+
 ## 0.19.42 - 2026-10-09
 
 ### Fixed
