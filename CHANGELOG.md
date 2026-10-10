@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.50 - 2026-10-09
+
+### Fixed
+
+- **Kept decor and furniture the rewind drops on the ground are no longer lost if you quit on Spring 1.** When Keep Farm Decor or Keep Farmhouse Furniture had no room and the stash was full, the extra pieces were dropped on the ground, but the game never saves ground items, so quitting before picking them up lost them. They now come back on the ground when you load, until your first night.
+
 ## 0.19.49 - 2026-10-09
 
 ### Fixed

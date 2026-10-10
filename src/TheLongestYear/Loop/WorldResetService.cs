@@ -770,6 +770,9 @@ namespace TheLongestYear.Loop
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
             RestoreStep("book quest intros", FireBookQuestIntros);
 
+            // 13-drops. From here to step 14b, overflow can drop on the ground; remember it (below).
+            GroundDrop.BeginResetCapture();
+
             // 13. Place the Junimo Stash chest on the Farm and populate from MetaState.
             RestoreStep("Junimo Stash", () =>
             {
@@ -816,6 +819,13 @@ namespace TheLongestYear.Loop
             {
                 _monitor.Log($"Reset: Keep Farmhouse Furniture restore failed; continuing the reset.\n{ex}", LogLevel.Error);
             }
+
+            // 14c. Ground debris is never saved, and the forced save follows right after the reset,
+            //      so a quit before picking these up lost them. Remember them until the first night.
+            List<PendingGroundDrop> resetDrops = GroundDrop.EndResetCapture();
+            ResetGroundDrops.Remember(_meta, resetDrops);
+            if (resetDrops.Count > 0)
+                _monitor.Log($"Reset: {resetDrops.Count} item(s) dropped on the ground; remembered until the first night in case the game is quit before they are picked up.", LogLevel.Info);
 
             // Undo vanilla's one-way map edits. Fixing the beach bridge (Beach.fixBridge) and
             // Robin's community shortcuts (showCommunityUpgradeShortcuts / ApplyMapOverride) edit
