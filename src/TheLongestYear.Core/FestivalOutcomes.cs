@@ -82,7 +82,7 @@ public static class FestivalOutcomes
     /// <summary>The ordinary (non-bond) memory a festival record can be spoken as, or null when the
     /// outcome is not memorable. The Flower Dance and the Jellies speak from attendance alone; the
     /// Winter Star speaks only through its bonds.</summary>
-    public static string MemoryFor(FestivalMemory record)
+    public static string? MemoryFor(FestivalMemory? record)
     {
         if (record == null) return null;
         switch (record.Festival)
@@ -91,7 +91,7 @@ public static class FestivalOutcomes
             case FestivalIds.Jellies: return record.Attended ? FestivalMemoryKeys.JelliesAttended : null;
             case FestivalIds.WinterStar: return null;
         }
-        return record.HasOutcome && MemoryByOutcome.TryGetValue(record.Outcome, out string memory) ? memory : null;
+        return record.HasOutcome && MemoryByOutcome.TryGetValue(record.Outcome, out string? memory) ? memory : null;
     }
 
     /// <summary>The memory a past secret friend speaks at the Winter Star, from the latest gift.</summary>

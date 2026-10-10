@@ -30,7 +30,7 @@ namespace TheLongestYear.DebugCommands
             if (arg.StartsWith("stardrop:", System.StringComparison.Ordinal))
             {
                 string source = arg.Substring("stardrop:".Length);
-                WalletKeep? keep = WalletKeepTable.TryGet(WalletKeepTable.StardropIdPrefix + source);
+                WalletKeep keep = WalletKeepTable.TryGet(WalletKeepTable.StardropIdPrefix + source);
                 if (keep == null || keep.Kind != WalletKeepKind.Stardrop)
                 {
                     monitor.Log($"tly_wallet: unknown Stardrop source '{source}' (fair, fish, mines, sewer, spouse, statue, museum).", LogLevel.Warn);

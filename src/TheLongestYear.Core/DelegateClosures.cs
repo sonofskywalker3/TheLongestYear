@@ -30,12 +30,12 @@ public static class DelegateClosures
         if (target == null || depth < 0 || !seen.Add(target))
             return false;
 
-        for (Type type = target.GetType(); type != null && type != typeof(object); type = type.BaseType)
+        for (Type? type = target.GetType(); type != null && type != typeof(object); type = type.BaseType)
         {
             foreach (FieldInfo field in type.GetFields(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
             {
-                object value;
+                object? value;
                 try { value = field.GetValue(target); }
                 catch { continue; }
 

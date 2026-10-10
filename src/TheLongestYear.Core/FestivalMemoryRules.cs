@@ -39,9 +39,9 @@ public static class FestivalMemoryRules
         if (!Active(config) || meta == null || run == null || actors == null) yield break;
         if (!force && FestivalMemoryStore.IsSpent(run, festival)) yield break;
 
-        FestivalMemory record = null;
+        FestivalMemory? record = null;
         meta.FestivalMemories?.TryGetValue(festival, out record);
-        string ordinary = FestivalOutcomes.MemoryFor(record);
+        string? ordinary = FestivalOutcomes.MemoryFor(record);
         bool guaranteed = festival == FestivalIds.EggFestival && ordinary == FestivalMemoryKeys.EggHuntWon
             && FestivalMemoryStore.EggGuaranteeArmed(meta);
 
@@ -50,7 +50,7 @@ public static class FestivalMemoryRules
             if (actor == null || !CanSpeak(actor)) continue;
             if (festival == FestivalIds.WinterStar)
             {
-                BondMemory gift = FestivalBonds.LatestGift(meta, actor.Name);
+                BondMemory? gift = FestivalBonds.LatestGift(meta, actor.Name);
                 if (gift == null) continue;
                 if (force || roll(actor.Name) < config.DejaVuFestivalBondChancePercent)
                     yield return new PlannedMemory(actor.Name, FestivalOutcomes.WinterStarSeenMemory(gift.Outcome),
@@ -72,16 +72,16 @@ public static class FestivalMemoryRules
 
     /// <summary>The post-result memory, or null: the result just now repeats the remembered one (won
     /// again, bad soup again). The speaker is whoever owns the line (<see cref="FestivalMemoryLines.AfterSpeakers"/>).</summary>
-    public static string PlanAfter(MetaState meta, RunState run, string festival, string outcomeNow,
+    public static string? PlanAfter(MetaState meta, RunState run, string festival, string outcomeNow,
         GameplayConfig config, int roll, bool force)
     {
         if (!Active(config) || meta == null || run == null) return null;
         if (!force && FestivalMemoryStore.IsSpent(run, festival)) return null;
-        FestivalMemory record = null;
+        FestivalMemory? record = null;
         meta.FestivalMemories?.TryGetValue(festival, out record);
-        string past = FestivalOutcomes.MemoryFor(record);
+        string? past = FestivalOutcomes.MemoryFor(record);
         if (past == null) return null;
-        string now = FestivalOutcomes.MemoryFor(new FestivalMemory { Festival = festival, Outcome = outcomeNow ?? "" });
+        string? now = FestivalOutcomes.MemoryFor(new FestivalMemory { Festival = festival, Outcome = outcomeNow ?? "" });
         if (now != past) return null;
         bool guaranteed = past == FestivalMemoryKeys.EggHuntWon && FestivalMemoryStore.EggGuaranteeArmed(meta);
         int chance = guaranteed ? Certain : config.DejaVuFestivalChancePercent;

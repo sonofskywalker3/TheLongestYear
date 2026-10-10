@@ -1360,7 +1360,7 @@ namespace TheLongestYear.Loop
         /// <summary>An item's availability basis text, for SlotPoolBuilder's routeTagOf (spec
         /// 2026-08-28-obtainable-board-4-boosts): it checks the basis for "Sneak Peek" to tag a
         /// dish goal that only exists because of that Boost.</summary>
-        private string? RouteBasisOf(string itemId)
+        private string RouteBasisOf(string itemId)
             => Availability?.For(itemId).Basis;
 
         /// <summary>Rule C's number: how many goals the sampler would actually produce for the
