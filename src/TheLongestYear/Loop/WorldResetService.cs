@@ -117,7 +117,7 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>The in-place rewind to Spring 1, as named phases in their fixed order (each phase
-        /// lives in WorldResetService.ResetPhases.cs). The order matters: captures run before
+        /// lives in the WorldResetService.ResetPhases*.cs files). The order matters: captures run before
         /// loadForNewGame wipes the world, the board is written after the farmer reset, and the farm is
         /// placed after the board.</summary>
         public void PerformReset()
