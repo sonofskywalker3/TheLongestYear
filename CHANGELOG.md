@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.93 - 2026-10-10
+
+### Fixed
+
+- **A save backup that fails partway no longer leaves a broken copy behind.** When the one-time backup before your first rewind could not finish, the half-written copy stayed in the backups folder looking like a real backup. It is now removed, and the backup is tried again at the next rewind.
+
 ## 0.19.92 - 2026-10-10
 
 ### Internal
