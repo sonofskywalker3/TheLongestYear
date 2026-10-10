@@ -465,8 +465,9 @@ public static class ItemPoolBuilder
 
             if (!locationsById.TryGetValue(id, out List<string>? locs))
                 locationsById[id] = locs = new List<string>();
-            if (!locs.Contains(spawn.Location))
-                locs.Add(spawn.Location);
+            // Location is the Data/Locations key the spawn row was read under, never null here.
+            if (!locs.Contains(spawn.Location!))
+                locs.Add(spawn.Location!);
         }
 
         var fish = new List<PoolItem>();

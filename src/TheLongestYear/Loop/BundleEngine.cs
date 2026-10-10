@@ -405,7 +405,7 @@ namespace TheLongestYear.Loop
                     // The recipe is built ONCE per bundle here and carried on the record: the fill
                     // order below, the diagnostics line and the fill itself all read this one
                     // instance, instead of each rebuilding it (final review, 2026-08-29).
-                    Core.PoolRecipe? recipe = match.Domain == PoolDomain.Recipe
+                    Core.PoolRecipe recipe = match.Domain == PoolDomain.Recipe
                         ? BundleSlotFiller.RecipeFor(pick, itemPools, Availability)
                         : null;
                     picked.Add(new PickRecord(pick, match, null) { Recipe = recipe });
@@ -663,7 +663,7 @@ namespace TheLongestYear.Loop
 
             /// <summary>This pick's pool recipe, built once in pass 1 (null for every domain but
             /// Recipe). Shared by the fill-order count, the diagnostics line and the fill.</summary>
-            public Core.PoolRecipe? Recipe { get; init; }
+            public Core.PoolRecipe Recipe { get; init; }
         }
 
         /// <summary>A gold ask (a money slot), or a bundle with nothing to re-roll at all. These

@@ -65,7 +65,7 @@ public static class FestivalMemoryLines
     /// <summary>The line to speak, tokens filled, or null when there is no pool or a token the line
     /// needs is missing (a removed mod item, no partner yet). <paramref name="rollIndex"/> maps a pool
     /// size to an index in [0,size).</summary>
-    public static string Pick(string memory, string npc, bool after, IReadOnlyCollection<string> available,
+    public static string? Pick(string memory, string npc, bool after, IReadOnlyCollection<string> available,
         Func<int, int> rollIndex, string itemName, string partnerName)
     {
         IReadOnlyList<string> keys = KeysFor(memory, npc, after, available);

@@ -56,7 +56,7 @@ public static class StackScaling
     /// <param name="bandedSlots">Slot indices QuantityAskPass already set for this bundle. They carry
     /// their step's ask and are skipped; scaling them again would apply the dial twice. Null means
     /// no pass ran (the vanilla-board path).</param>
-    public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, IReadOnlySet<int> bandedSlots)
+    public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, IReadOnlySet<int>? bandedSlots)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -66,7 +66,7 @@ public static class StackScaling
         if (IsMoneyBundle(spec))
             return spec;
 
-        List<BundleSlotSpec> scaled = null;
+        List<BundleSlotSpec>? scaled = null;
         for (int i = 0; i < spec.Slots.Count; i++)
         {
             BundleSlotSpec slot = spec.Slots[i];

@@ -11,7 +11,7 @@ public static class FestivalMemoryStore
     private static FestivalMemory Entry(RunState run, string festival)
     {
         run.FestivalLog ??= new();
-        if (!run.FestivalLog.TryGetValue(festival, out FestivalMemory m))
+        if (!run.FestivalLog.TryGetValue(festival, out FestivalMemory? m))
             run.FestivalLog[festival] = m = new FestivalMemory { Festival = festival };
         return m;
     }
@@ -58,7 +58,7 @@ public static class FestivalMemoryStore
     public static bool EggGuaranteeArmed(MetaState meta)
     {
         if (meta?.FestivalMemories == null) return false;
-        if (!meta.FestivalMemories.TryGetValue(FestivalIds.EggFestival, out FestivalMemory m)) return false;
+        if (!meta.FestivalMemories.TryGetValue(FestivalIds.EggFestival, out FestivalMemory? m)) return false;
         return m.Outcome == FestivalOutcome.EggWon && m.OutcomeRun >= 0 && m.HeardRun <= m.OutcomeRun;
     }
 
@@ -81,7 +81,7 @@ public static class FestivalMemoryStore
         {
             if (!FestivalIds.IsTracked(kv.Key)) continue;
             FestivalMemory log = kv.Value;
-            FestivalMemory target = null;
+            FestivalMemory? target = null;
             // 2. Attendance.
             if (log.Attended)
                 (target = Meta(meta, kv.Key)).AttendedRun = log.AttendedRun;
@@ -106,7 +106,7 @@ public static class FestivalMemoryStore
 
     private static FestivalMemory Meta(MetaState meta, string festival)
     {
-        if (!meta.FestivalMemories.TryGetValue(festival, out FestivalMemory m))
+        if (!meta.FestivalMemories.TryGetValue(festival, out FestivalMemory? m))
             meta.FestivalMemories[festival] = m = new FestivalMemory { Festival = festival };
         return m;
     }
@@ -131,7 +131,7 @@ public static class FestivalBonds
         => meta?.WinterStarRecipients != null && meta.WinterStarRecipients.Exists(b => string.Equals(b.Npc, npc, StringComparison.Ordinal));
 
     /// <summary>That villager's most recent secret gift from the player, or null.</summary>
-    public static BondMemory LatestGift(MetaState meta, string npc)
+    public static BondMemory? LatestGift(MetaState meta, string npc)
     {
         if (meta?.WinterStarRecipients == null) return null;
         for (int i = meta.WinterStarRecipients.Count - 1; i >= 0; i--)

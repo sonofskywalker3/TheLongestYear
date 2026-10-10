@@ -97,7 +97,7 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>Data/Bundles room name for a `room:` key (keys carry no spaces).</summary>
-        private static string RoomName(string? key) => key switch
+        private static string RoomName(string key) => key switch
         {
             "Pantry" => "Pantry",
             "CraftsRoom" => "Crafts Room",
@@ -111,7 +111,7 @@ namespace TheLongestYear.Integration
         /// <summary>True when every bundle of the room is complete on the live board. Read from
         /// the board rather than the completion mail so a room finished on the Fail day counts
         /// (its letter is still in mailForTomorrow when the perk screen opens).</summary>
-        public static bool RoomComplete(string? key)
+        public static bool RoomComplete(string key)
         {
             if (Game1.getLocationFromName("CommunityCenter") is not StardewValley.Locations.CommunityCenter cc) return false;
             var data = Game1.netWorldState?.Value?.BundleData;
@@ -147,7 +147,7 @@ namespace TheLongestYear.Integration
 
         /// <summary>Some wallet getters read Game1.MasterPlayer (HasRustyKey, HasSkullKey, the Dwarvish
         /// guide); single-player that is the same Farmer, so check both sides to be safe.</summary>
-        private static bool HasMail(Farmer p, string? flag) =>
+        private static bool HasMail(Farmer p, string flag) =>
             flag != null && (p.mailReceived.Contains(flag)
                 || (Game1.MasterPlayer != null && Game1.MasterPlayer.mailReceived.Contains(flag)));
 

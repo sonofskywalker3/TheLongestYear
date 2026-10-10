@@ -5377,7 +5377,7 @@ namespace TheLongestYear
                         // with season/day (SVE audit, TODO) re-derives a different board on the
                         // post-reset reload than the reset wrote, and without this line the
                         // mismatch is undiagnosable from a player log.
-                        string? drift = EngineManifestCheck.FirstDifference(generatedData, liveData);
+                        string drift = EngineManifestCheck.FirstDifference(generatedData, liveData);
                         this.Monitor.Log(
                             $"ResolveRequirements: manifest check (EnableNonObjectDonations={nonObject}, mod items {(allowModItems ? "allowed" : "vanilla only")}) differs at {drift ?? "(no difference found)"}.",
                             LogLevel.Debug);
