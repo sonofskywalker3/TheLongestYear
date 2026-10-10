@@ -24,6 +24,7 @@ namespace TheLongestYear.Loop
         // ReSharper disable once InconsistentNaming: Harmony convention.
         private static void Postfix(Crop __instance)
         {
+            if (!RunActivation.IsActive) return;   // dormant on non-TLY saves: vanilla behaviour there
             GameLocation location = __instance.currentLocation;
             if (location == null) return;
             if (!WildSeedRipening.ShouldBecomeForage(__instance.isWildSeedCrop(), __instance.dead.Value,
