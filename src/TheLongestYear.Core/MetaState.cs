@@ -27,9 +27,6 @@ public sealed class MetaState
     /// <summary>IDs of permanently purchased upgrades.</summary>
     public List<string> OwnedUpgrades { get; set; } = new();
 
-    /// <summary>Tier of the Junimo Stash capacity upgrade (0 = base).</summary>
-    public int StashCapacityTier { get; set; }
-
     /// <summary>True once the one-time pre-first-reset save backup has been taken (banked forever).</summary>
     public bool BackupDone { get; set; }
 

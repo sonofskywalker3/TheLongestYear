@@ -35,7 +35,4 @@ public static class DifficultySteps
         => Enum.TryParse(name, ignoreCase: true, out DifficultyStep step) && Enum.IsDefined(typeof(DifficultyStep), step)
             ? step
             : DifficultyStep.Normal;
-
-    /// <summary>The i18n key suffix for a step ("easy", "normal", "hard", "extreme").</summary>
-    public static string KeySuffix(DifficultyStep step) => step.ToString().ToLowerInvariant();
 }
