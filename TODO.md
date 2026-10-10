@@ -6,6 +6,37 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT, NOT RELEASED (0.19.42 to 0.19.60, 2026-10-09): core-systems bug hunt fixes (review 2 + review 1 A-C)
+One fix per version; CHANGELOG has each in player words. Full suite passes (3593).
+- [x] 0.19.42 Kitchen / Double Yolk second milk or wool (pail and shears lost the animal before the postfix).
+- [x] 0.19.43 Post-win "Start a new loop" defers the books and reset a tick (books were refused under the question box).
+- [x] 0.19.44 Kept Big/Deluxe Coop replaces Meadowlands' starter Coop (chickens move in). Live-checked on a
+  throwaway Meadowlands farm: Coop@(54,9) gone, Big Coop at the player's spot, both chickens inside.
+- [x] 0.19.45 Junimo Stash keeps records whose mod is missing for a session.
+- [x] 0.19.46 Post-loadForNewGame carry-over steps are fail-soft (RestoreStep). Not changed: a failed one-time
+  SaveBackup still aborts the reset before loadForNewGame, as its comment intends; the review's note that the run
+  then carries on unreset is left for Jeff.
+- [x] 0.19.47 New-game choices stamped into the creation-time save. Live-checked: a Remixed + Skip intro farm quit
+  before its first night reloaded as Remixed with no intro.
+- [x] 0.19.48 Mixed all_drops_up on a full tree's fall (Tree.tickUpdate). Not seen live (needs a chop).
+- [x] 0.19.49 Forager's Eye rolls only the forage each spawn pass placed.
+- [x] 0.19.50 Rewind ground drops remembered until the first night, dropped again on a reload. Not seen live.
+- [x] 0.19.51 Month rollover on load sets the Random Pairings drawback.
+- [x] 0.19.52 Rain Dance / Storm Call refuse the day before green rain (descriptions say so; placeholder text).
+- [x] 0.19.53 Empty-offer backstop ends last week's pick (RunState.SkipWeek).
+- [x] 0.19.54 Keep Rod marks Willy's rod scene (739330) seen; the dead willyBackRoom mail is gone.
+- [x] 0.19.55 Per-stone and per-capacity-check trace lines removed.
+- [x] 0.19.56 Wild seed grow-completely fix gated on RunActivation.
+- [x] 0.19.57 BeginNewRun clears PendingDay28 (the debug tly_reset bug below).
+- [x] 0.19.58 Herd Book restores get the Morning Rounds pet (review 1 A).
+- [x] 0.19.59 Bundles per room: Normal is a true no-op, no cap at 6 (review 1 B).
+- [x] 0.19.60 FarmerReset Horse Flute comment corrected (review 1 C).
+- [ ] Jeff: design calls from the review, not changed. (6) After "Keep playing", every Spring/Summer/Fall 28 in
+  Year 2+ pays the checkpoint JP and replays the next-season scene, and a later voluntary restart carries that JP.
+  (14) Touching a map edge during a timed festival contest (Egg Hunt etc.) ends the festival with no prompt and the
+  main event cannot be retried. (18) Villagers never visit the CC for the whole run, even after full restoration.
+- [ ] Release: What's New for these fixes.
+
 ### BUILT, NOT RELEASED (0.19.33 to 0.19.35, 2026-10-09): the Vault joins Bundles per room
 Jeff, 2026-10-09: Easy drops the priciest Vault bundle, Hard adds one at 2x the priciest, Extreme a second at 1.6x
 that. TLY Custom boards only, on the board's scaled prices: Easy 3,125 / 6,250 / 12,500g; Normal adds 31,250g; Hard
