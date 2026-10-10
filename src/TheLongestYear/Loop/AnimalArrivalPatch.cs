@@ -9,27 +9,36 @@ namespace TheLongestYear.Loop
     /// Postfix on AnimalHouse.adoptAnimal (AnimalHouse.cs:143), which every arrival goes through:
     /// Marnie's shop, an incubator hatch, a barn birth, TLY's "Start with a" animals and vanilla's
     /// `debug animal`. Only a brand-new animal counts (<c>daysOwned &lt; 0</c>; an animal moved between
-    /// buildings has lived a night already). Herd Book restores are skipped on purpose: they come back
-    /// with their own hearts (<see cref="Restoring"/> is set around HerdBookService.Restore).</summary>
+    /// buildings has lived a night already). Herd Book restores skip Warm Welcome on purpose: they come
+    /// back with their own hearts (<see cref="Restoring"/> is set around HerdBookService.Restore). They
+    /// still get the Morning Rounds pet, since the rewind restores them after the day-start pass.</summary>
     [HarmonyPatch(typeof(AnimalHouse), nameof(AnimalHouse.adoptAnimal))]
     internal static class AnimalArrivalPatch
     {
-        /// <summary>True while the Herd Book puts its animals back; Warm Welcome leaves them alone.</summary>
+        /// <summary>True while the Herd Book puts its animals back: Warm Welcome leaves them alone,
+        /// Morning Rounds still pets them.</summary>
         internal static bool Restoring;
 
         private static void Postfix(FarmAnimal animal)
         {
-            if (animal == null || Restoring || UpgradeChecker.HasUpgrade == null || !Game1.IsMasterGame) return;
-            if (animal.daysOwned.Value >= 0) return;
+            if (animal == null || UpgradeChecker.HasUpgrade == null || !Game1.IsMasterGame) return;
+            // A Herd Book restore is not new (it keeps its own days owned and hearts), but it arrives
+            // after the day-start Morning Rounds pass, so it still gets that pet here; only the Warm
+            // Welcome floor is skipped for it.
+            bool restoring = Restoring;
+            if (!restoring && animal.daysOwned.Value >= 0) return;
             try
             {
-                int floor = AnimalPowers.WarmWelcomeFloor(UpgradeChecker.HasUpgrade);
-                int before = animal.friendshipTowardFarmer.Value;
-                int after = AnimalPowers.WelcomedFriendship(before, floor);
-                if (after != before)
+                if (!restoring)
                 {
-                    animal.friendshipTowardFarmer.Value = after;
-                    PatchLog.Info($"Warm Welcome: {animal.displayName} ({animal.type.Value}) arrives with friendship {after} (was {before}).");
+                    int floor = AnimalPowers.WarmWelcomeFloor(UpgradeChecker.HasUpgrade);
+                    int before = animal.friendshipTowardFarmer.Value;
+                    int after = AnimalPowers.WelcomedFriendship(before, floor);
+                    if (after != before)
+                    {
+                        animal.friendshipTowardFarmer.Value = after;
+                        PatchLog.Info($"Warm Welcome: {animal.displayName} ({animal.type.Value}) arrives with friendship {after} (was {before}).");
+                    }
                 }
                 if (UpgradeChecker.HasUpgrade(AnimalPowers.MorningRounds) && !animal.wasAutoPet.Value && Game1.player != null)
                 {

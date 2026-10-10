@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.58 - 2026-10-09
+
+### Fixed
+
+- **Morning Rounds now pets your Herd Book animals on the first day of a loop.** They come back after the morning's petting has already run, and the arrival check skipped them, so they went unpetted on day 1.
+
 ## 0.19.57 - 2026-10-09
 
 ### Fixed
