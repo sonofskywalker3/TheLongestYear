@@ -21,7 +21,7 @@ public class I18nGuardTests
     public I18nGuardTests(I18nFixture fixture) => _fixture = fixture;
 
     private static string SrcRoot =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src"));
+        Path.Combine(I18nFixture.RepoRoot, "src");
 
     /// <summary>Matches <c>Strings.Get("key", ...)</c> and the ternary-selected-key form
     /// <c>Strings.Get(cond ? "key-a" : "key-b", ...)</c> (e.g. JunimoStashCapPatch's
