@@ -497,6 +497,10 @@ public sealed class RunState
     {
         RunNumber += 1;
         Seed = seed;
+        // A day-28 outcome still queued belongs to the old loop (a debug tly_reset after a gate
+        // night): left set, the next load replayed its scene on the new loop's Spring 1.
+        PendingDay28 = Day28.Day28Branch.None;
+        RestartMenusDone = false;
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
