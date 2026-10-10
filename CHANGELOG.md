@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.92 - 2026-10-10
+
+### Internal
+
+- Debug: `tly_fixcheck` drives the headless live checks of the core-systems fixes (milk pail and shears on owed animals, unknown-mod stash records, a forced restore-step failure, felled trees, forage seeding and spawn passes, the Random Pairings drawback, an exhausted offer, green rain days, rods).
+
 ## 0.19.91 - 2026-10-10
 
 ### Fixed

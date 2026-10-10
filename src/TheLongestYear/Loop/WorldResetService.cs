@@ -170,6 +170,10 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
+        /// <summary>Debug only (tly_fixcheck failstep): the restore step with this name throws on the
+        /// next reset, to check a failing step does not strand the run. Null in play.</summary>
+        internal static string DebugFailStep;
+
         /// <summary>One carry-over step after loadForNewGame. By then the old world is gone, so a
         /// throw must not abort the reset: that stranded the player on a fresh Spring 1 farm with
         /// the old run's state and the HUD hidden, and the next save kept that mix. Log the step
@@ -178,6 +182,8 @@ namespace TheLongestYear.Loop
         {
             try
             {
+                if (DebugFailStep != null && string.Equals(DebugFailStep, name, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException($"debug: tly_fixcheck failstep forced '{name}' to fail.");
                 step();
             }
             catch (Exception ex)
