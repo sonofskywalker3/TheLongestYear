@@ -427,7 +427,7 @@ public class BundleClassifierAvailabilityTests
 
         Assert.NotNull(req);
         Assert.Equal(BundleKind.PerItem, req!.Kind);
-        Assert.Equal(2, req.ItemSeasonPins.Count);
+        Assert.Equal(2, req.ItemSeasonPins!.Count);
         Assert.Equal(Season.Fall, req.ItemSeasonPins["(O)9999"]);
         Assert.Equal(Season.Winter, req.ItemSeasonPins["(O)9998"]);
     }

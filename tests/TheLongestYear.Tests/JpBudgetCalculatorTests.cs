@@ -17,7 +17,7 @@ public class JpBudgetCalculatorTests
 
     private static BudgetBundle Vault(int gold) => new("Vault", $"{gold}g", 1, new List<BudgetSlot>(), gold);
 
-    private static JpBudgetReport Run(IReadOnlyList<BudgetBundle> board, int[] goalSlots = null)
+    private static JpBudgetReport Run(IReadOnlyList<BudgetBundle> board, int[]? goalSlots = null)
         => JpBudgetCalculator.Compute(board, new JpSettings(), 1.5, goalSlots ?? NoGoalSlots);
 
     [Fact]

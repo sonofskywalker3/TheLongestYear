@@ -58,7 +58,7 @@ public class VanillaOnlyBoardTests
             string.Join(",", p.Crops.Select(i => $"{i.ItemId}:{i.Weight}")),
             string.Join(",", p.ByKind.OrderBy(kv => kv.Key).Select(kv => kv.Key + "=" + string.Join(";", kv.Value.Select(i => i.ItemId)))),
             string.Join(",", p.ExcludedIds.OrderBy(i => i, StringComparer.Ordinal)),
-            string.Join(",", p.QualityEligibleIds.OrderBy(i => i, StringComparer.Ordinal)),
+            string.Join(",", p.QualityEligibleIds!.OrderBy(i => i, StringComparer.Ordinal)),
             string.Join(",", p.DerivedSeasonPins.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => kv.Key + kv.Value)),
         });
 

@@ -18,7 +18,7 @@ public static class DelegateClosures
     /// <summary>True when <paramref name="del"/>'s closure (its Target object, nested
     /// compiler-generated closure objects, and captured delegates' closures, up to a small
     /// depth) holds a reference to <paramref name="needle"/>.</summary>
-    public static bool References(Delegate del, object needle)
+    public static bool References(Delegate? del, object? needle)
     {
         if (del?.Target == null || needle == null)
             return false;

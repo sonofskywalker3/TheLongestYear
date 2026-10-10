@@ -25,7 +25,7 @@ public static class RemixSelector
     private static readonly Regex SeasonalCropsName = new Regex(
         @"^(Spring|Summer|Fall) Crops$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static bool IsAlwaysPicked(string bundleName)
+    public static bool IsAlwaysPicked(string? bundleName)
         => bundleName != null && SeasonalCropsName.IsMatch(bundleName);
 
     public static IReadOnlyList<BundleSpec> PickForRoom(
