@@ -538,7 +538,12 @@ namespace TheLongestYear.UI
         private static Item ResolveItem(string id, int stack = 1, int quality = 0)
         {
             try { return ItemRegistry.Create(id, stack, quality, allowNull: true); }
-            catch (Exception) { return null; }
+            catch (Exception ex)
+            {
+                TheLongestYear.Loop.PatchLog.TraceOnce("goals-item:" + id,
+                    $"Season Goals: item '{id}' could not be created ({ex.GetType().Name}); its icon is left empty.");
+                return null;
+            }
         }
 
         // ---------- types ----------

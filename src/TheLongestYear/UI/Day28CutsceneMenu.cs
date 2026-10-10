@@ -42,7 +42,11 @@ namespace TheLongestYear.UI
             _onComplete = onComplete;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
-            catch (Exception) { _junimoTexture = null; }
+            catch (Exception ex)
+            {
+                TheLongestYear.Loop.PatchLog.Trace($"{GetType().Name}: the Junimo sprite did not load ({ex.GetType().Name}); drawn without it.");
+                _junimoTexture = null;
+            }
 
             Game1.playSound("junimoMeep1");
         }

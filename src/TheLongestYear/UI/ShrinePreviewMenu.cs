@@ -202,8 +202,10 @@ namespace TheLongestYear.UI
                     _cartItems.Add((pair.Key, pair.Value.Price, pair.Key.DisplayName));
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                TheLongestYear.Loop.PatchLog.WarnOnce("shrine-cart-stock",
+                    $"Planning shrine: the Traveling Cart stock could not be built ({ex.GetType().Name}: {ex.Message}); the Foresight tab shows no cart items.");
                 _cartItems.Clear();
             }
 

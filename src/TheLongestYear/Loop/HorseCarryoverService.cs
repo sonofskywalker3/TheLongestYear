@@ -180,7 +180,11 @@ namespace TheLongestYear.Loop
                     if (snap.HatQualifiedItemId != null)
                     {
                         try { horse.hat.Value = ItemRegistry.Create<Hat>(snap.HatQualifiedItemId); }
-                        catch (System.Exception) { /* hat id no longer valid — leave bare-headed */ }
+                        catch (System.Exception ex)
+                        {
+                            // Hat id no longer valid: leave the horse bare-headed.
+                            PatchLog.Trace($"Horse carryover: hat '{snap.HatQualifiedItemId}' could not be created ({ex.GetType().Name}); the horse stays bare-headed.");
+                        }
                     }
                 }
 

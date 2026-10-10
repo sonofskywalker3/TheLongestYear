@@ -46,7 +46,11 @@ namespace TheLongestYear.Loop
         {
             GameLocation indoors = null;
             try { indoors = __instance?.home?.GetIndoors(); }
-            catch (Exception) { indoors = null; }
+            catch (Exception ex)
+            {
+                PatchLog.Trace($"{BonusId}: the home interior of {__instance?.displayName} could not be read ({ex.GetType().Name}); no second product today.");
+                indoors = null;
+            }
             __state = new State
             {
                 ProduceBefore = __instance?.currentProduce?.Value,
