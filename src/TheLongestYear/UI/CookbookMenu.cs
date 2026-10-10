@@ -313,13 +313,13 @@ namespace TheLongestYear.UI
         public override void emergencyShutDown()
         {
             base.emergencyShutDown();
-            _meta.DismissedIndicators.Add("tly.cookbook");
+            _meta.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.LegacyCookbookDismissed);
         }
 
         protected override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
-            _meta.DismissedIndicators.Add("tly.cookbook");
+            _meta.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.LegacyCookbookDismissed);
         }
 
         public override void draw(SpriteBatch b)

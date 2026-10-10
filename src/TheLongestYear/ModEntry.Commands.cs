@@ -113,7 +113,7 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name, TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, a));
-            yield return new DebugCommand("tly_payvault", "Mark a Vault bundle as paid this run (debug — Harmony hookup is Plan 06). Usage: tly_payvault <season|index>", this.CmdPayVault);
+            yield return new DebugCommand("tly_payvault", "Mark a Vault bundle as paid this run (debug; a real payment is picked up by VaultPaymentSync). Usage: tly_payvault <season|index>", this.CmdPayVault);
             yield return new DebugCommand("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             yield return new DebugCommand("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
             yield return new DebugCommand("tly_opencookbook",

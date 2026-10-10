@@ -10,7 +10,7 @@ namespace TheLongestYear.UI
     /// <summary>
     /// Centralises opening the planning hub and shrine shop. Exposes Open* methods called by RunController
     /// at week-start and by debug commands. Guards against opening over an existing menu or before a save
-    /// is loaded. Hotkey wiring removed in Plan 05 (unused in v1; Plan 06 will re-enable the hotkey).
+    /// is loaded. There is no hotkey: the hub opens on week-start mornings (RunController.PresentOffer).
     /// </summary>
     internal sealed class MenuLauncher
     {

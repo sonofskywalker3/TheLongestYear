@@ -313,13 +313,13 @@ namespace TheLongestYear.UI
         public override void emergencyShutDown()
         {
             base.emergencyShutDown();
-            _meta.DismissedIndicators.Add("tly.craftbook");
+            _meta.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.LegacyCraftbookDismissed);
         }
 
         protected override void cleanupBeforeExit()
         {
             base.cleanupBeforeExit();
-            _meta.DismissedIndicators.Add("tly.craftbook");
+            _meta.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.LegacyCraftbookDismissed);
         }
 
         public override void draw(SpriteBatch b)

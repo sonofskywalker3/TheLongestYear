@@ -120,7 +120,7 @@ namespace TheLongestYear.Loop
             // Same DismissedIndicators set the cookbook/craftbook menus write to — the
             // visual ? indicator was removed 2026-05-29 per user, but the dismissal-tracking
             // semantic was preserved to keep one-time intro quests one-time.
-            JunimoStashCapPatch._meta?.DismissedIndicators.Add("tly.stash");
+            JunimoStashCapPatch._meta?.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.StashDismissed);
 
             if (Game1.activeClickableMenu is ItemGrabMenu igm)
                 StripColorPicker(igm);
