@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.60 - 2026-10-09
+
+### Internal
+
+- FarmerReset: correct the Horse Flute comment (the stable restore runs after Apply; the flute finds the horse at use)
+
 ## 0.19.59 - 2026-10-09
 
 ### Fixed

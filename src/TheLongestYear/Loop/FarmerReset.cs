@@ -162,8 +162,9 @@ namespace TheLongestYear.Loop
             EnsureBasicTools(p, skipBasicScythe: baseline.GrantGoldenScythe);
             if (baseline.GrantGoldenScythe)
                 GrantGoldenScythe(p);
-            // Horse Flute power (spec 2026-10-09): Keep Horse rebuilds the stable owned by the player
-            // before this runs, so the flute works from the first morning.
+            // Horse Flute power (spec 2026-10-09): granted here, before the stable is back (Keep
+            // Horse's restore runs later in the reset, step 9 of WorldResetService.PerformReset). That
+            // is fine: the flute looks for the player's horse when it is used, not when it is given.
             if (baseline.GrantHorseFlute)
                 GrantHorseFlute(p, _monitor);
 
