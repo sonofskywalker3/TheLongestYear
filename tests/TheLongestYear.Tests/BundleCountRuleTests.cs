@@ -7,7 +7,7 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>Spec 2026-10-09-bundle-count-dial: Easy one or two fewer (floor 2), Normal the
-/// standard count (cap 6), Hard one or two more (cap 8), Extreme always 9.</summary>
+/// standard count (no change), Hard one or two more (cap 8), Extreme always 9.</summary>
 public class BundleCountRuleTests
 {
     private static IEnumerable<int> Targets(DifficultyStep step, int standard)
@@ -37,13 +37,15 @@ public class BundleCountRuleTests
         Assert.All(Targets(DifficultyStep.Normal, 1), t => Assert.Equal(1, t));
     }
 
+    /// <summary>Normal is "no change": a content mod's room with more than six bundles keeps them
+    /// all, and a legacy unstamped save re-derives the same board (review 2026-10-09).</summary>
     [Theory]
-    [InlineData(3, 3)]
-    [InlineData(6, 6)]
-    [InlineData(7, 6)]
-    [InlineData(10, 6)]
-    public void Normal_keeps_the_standard_count_capped_at_six(int standard, int expected)
-        => Assert.All(Targets(DifficultyStep.Normal, standard), t => Assert.Equal(expected, t));
+    [InlineData(3)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(10)]
+    public void Normal_keeps_the_standard_count(int standard)
+        => Assert.All(Targets(DifficultyStep.Normal, standard), t => Assert.Equal(standard, t));
 
     [Theory]
     [InlineData(3)]
