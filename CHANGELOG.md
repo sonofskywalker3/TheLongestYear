@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.51 - 2026-10-09
+
+### Fixed
+
+- **With Random Pairings on, a new month's first week keeps the drawback its card showed after a reload.** If the game was loaded right across a month change, week 1 ran the theme's usual drawback instead of the paired one you picked.
+
 ## 0.19.50 - 2026-10-09
 
 ### Fixed

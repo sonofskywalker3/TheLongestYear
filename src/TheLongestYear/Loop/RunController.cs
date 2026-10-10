@@ -170,6 +170,11 @@ namespace TheLongestYear.Loop
                 if (Run.CurrentSelection.HasValue)
                 {
                     PopulateBonusSlotsForCurrentSelection();
+                    // Same drawback the card showed, as the live rollover picks it (DoDayStartSeasonAndHub);
+                    // BeginNewMonth's Select left it null, which fell back to the theme's default
+                    // drawback with Random Pairings on.
+                    Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear,
+                        Run.CurrentSelection.Value, RandomizerForWeekPeek(Run.WeekOfYear).RandomPairings);
                     // Empty new-season pool for the pre-picked theme: lift the drawback now, same
                     // as the live rollover paths (SelectByName/DoDayStartSeasonAndHub). Safe re
                     // ordering: the effects-restore block below calls ActiveEffectsProvider.Set
