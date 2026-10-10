@@ -7,7 +7,7 @@ namespace TheLongestYear.Core;
 /// Stamped on <see cref="DifficultyProfile.BundleCount"/> as resolved numbers rather than the
 /// step, like every other dial, so retuning a step later never reshapes a board in flight.
 ///
-/// Easy: one or two fewer, floor 2. Normal: the standard count, cap 6. Hard: one or two more,
+/// Easy: one or two fewer, floor 2, cap 6. Normal: the standard count, unchanged. Hard: one or two more,
 /// cap 8. Extreme: always 9, the room page's 9 fixed bag spots.
 ///
 /// The Vault (amendment of 2026-10-09): Easy drops its priciest bundle, Hard adds one, Extreme
@@ -44,6 +44,9 @@ public sealed record BundleCountRule
     /// stamped before the Vault joined the dial, so such a board keeps its four Vault bundles.</summary>
     public int VaultDelta { get; init; }
 
+    /// <summary>True for Normal: the room keeps its standard count.</summary>
+    public bool IsNoChange() => Exact == null && DeltaMin == 0 && DeltaMax == 0;
+
     public static BundleCountRule For(DifficultyStep step) => step switch
     {
         DifficultyStep.Easy => new BundleCountRule { DeltaMin = -2, DeltaMax = -1, Cap = NormalCap, VaultDelta = VaultDeltaEasy },
@@ -58,6 +61,11 @@ public sealed record BundleCountRule
     {
         if (Exact is int exact)
             return exact;
+        // Normal is "no change": no delta and no exact count leaves the room as it is, cap or not,
+        // so the engine skips the planner (a content mod room over six keeps every bundle, and a
+        // legacy unstamped save re-derives the same board).
+        if (IsNoChange())
+            return standard;
         int delta = DeltaMin == DeltaMax ? DeltaMin : rng.Next(DeltaMin, DeltaMax + 1);
         int target = Math.Min(standard + delta, Cap);
         return Math.Max(target, Math.Min(Floor, standard));

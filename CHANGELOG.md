@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.59 - 2026-10-09
+
+### Fixed
+
+- **Bundles per room on Normal really changes nothing.** Normal quietly capped every room at 6 bundles, so a content mod's room with more lost one, and an older save's board could stop matching what the mod expected. Normal now keeps every room exactly as it is.
+
 ## 0.19.58 - 2026-10-09
 
 ### Fixed
