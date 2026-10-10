@@ -1426,19 +1426,19 @@ namespace TheLongestYear.Loop
 
             // Stash quest always fires — the chest is placed unconditionally (auto-pick when
             // config is (0,0)). The DismissedIndicators guard suppresses it once interacted with.
-            if (!_meta.DismissedIndicators.Contains("tly.stash"))
+            if (!_meta.DismissedIndicators.Contains(IntroQuestIds.StashDismissed))
             {
                 AddIntroQuest(
-                    id: "tly.-9003",
+                    id: IntroQuestIds.StashQuest,
                     title: Strings.Get("quest.stash.title"),
                     description: Strings.Get("quest.stash.desc"));
             }
 
             // Planning shrine — a view-only board just left of the farmhouse, present from loop 1.
-            if (!_meta.DismissedIndicators.Contains("tly.shrine"))
+            if (!_meta.DismissedIndicators.Contains(IntroQuestIds.ShrineDismissed))
             {
                 AddIntroQuest(
-                    id: "tly.-9005",
+                    id: IntroQuestIds.ShrineQuest,
                     title: Strings.Get("quest.shrine.title"),
                     description: Strings.Get("quest.shrine.desc"));
             }

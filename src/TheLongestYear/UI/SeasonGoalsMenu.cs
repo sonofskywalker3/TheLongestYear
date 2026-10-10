@@ -112,11 +112,11 @@ namespace TheLongestYear.UI
         /// craftbook / stash pattern). Idempotent — questComplete bails on already-completed.</summary>
         private void CompleteFireplaceIntroQuest()
         {
-            _meta?.DismissedIndicators.Add("tly.fireplace");
+            _meta?.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.LegacyFireplaceDismissed);
             if (Game1.player?.questLog == null) return;
             foreach (var q in Game1.player.questLog)
             {
-                if (q != null && q.id.Value == "tly.-9004")
+                if (q != null && q.id.Value == TheLongestYear.Core.IntroQuestIds.LegacyFireplaceQuest)
                 {
                     q.questComplete();
                     break;

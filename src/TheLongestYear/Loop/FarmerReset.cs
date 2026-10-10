@@ -12,7 +12,7 @@ namespace TheLongestYear.Loop
     /// of a new run. Game1.loadForNewGame rebuilds the world but leaves the player's
     /// money/skills/inventory/relationships intact, so we clear them here, then re-apply the
     /// baseline (backpack, tool tiers, skill levels with XP flooring, starting gold).
-    /// Plan 07 will carve the Junimo Stash out of the inventory wipe.
+    /// Items the player keeps across the wipe live in the Junimo Stash chest (JunimoStashService).
     /// </summary>
     internal sealed class FarmerReset
     {
@@ -42,8 +42,8 @@ namespace TheLongestYear.Loop
         {
             p.Money = baseline.StartingGold;
 
-            // Inventory — wipe CONTENTS but set the slot count from the baseline (Stash
-            // preservation is Plan 07). p.Items.Clear() removes the slot list itself, which
+            // Inventory — wipe CONTENTS but set the slot count from the baseline (kept items
+            // ride in the Junimo Stash chest). p.Items.Clear() removes the slot list itself, which
             // leaves MaxItems lookups returning 0 → addItemToInventory always fails (round-3
             // playtest bug); reset MaxItems then re-pad nulls.
             // Sub-state that lives on the tool INSTANCE, not in Data/Tools: rod bait/tackle,
