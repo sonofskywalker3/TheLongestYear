@@ -17,7 +17,7 @@ namespace TheLongestYear.Core;
 public static class FestivalMainEvent
 {
     /// <summary>Record that today's festival main event has been played. No-op on a null run.</summary>
-    public static void MarkPlayed(RunState run, string festivalId, int totalDays)
+    public static void MarkPlayed(RunState? run, string? festivalId, int totalDays)
     {
         if (run == null || string.IsNullOrEmpty(festivalId)) return;
         run.FestivalMainEventId = festivalId;
@@ -25,7 +25,7 @@ public static class FestivalMainEvent
     }
 
     /// <summary>True when this exact festival's main event has already run on this exact day.</summary>
-    public static bool AlreadyPlayed(RunState run, string festivalId, int totalDays)
+    public static bool AlreadyPlayed(RunState? run, string? festivalId, int totalDays)
     {
         if (run == null || string.IsNullOrEmpty(festivalId)) return false;
         return run.FestivalMainEventDay == totalDays

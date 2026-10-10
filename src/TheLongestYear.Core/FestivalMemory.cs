@@ -83,7 +83,7 @@ public static class FestivalIds
     public static bool IsTracked(string id) => id != null && Tracked.Contains(id);
 
     /// <summary>"festival_spring13" or "spring13" to "spring13"; null for anything empty.</summary>
-    public static string? FromEventId(string eventId)
+    public static string? FromEventId(string? eventId)
     {
         if (string.IsNullOrEmpty(eventId)) return null;
         string id = eventId.StartsWith(EventIdPrefix, StringComparison.Ordinal)

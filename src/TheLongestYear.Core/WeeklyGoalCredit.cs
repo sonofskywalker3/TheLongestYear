@@ -20,12 +20,12 @@ public static class WeeklyGoalCredit
 {
     /// <summary>True when this goal slot counts: the player deposited into it AND the live CC
     /// state agrees the slot is filled.</summary>
-    public static bool IsSatisfied(BonusSlot slot, bool liveComplete) =>
+    public static bool IsSatisfied(BonusSlot? slot, bool liveComplete) =>
         slot != null && slot.Deposited && liveComplete;
 
     /// <summary>Record a real deposit against this week's goals. Returns true when the deposit
     /// landed on one of them (callers use it for logging only).</summary>
-    public static bool RecordDeposit(IReadOnlyList<BonusSlot> slots, int bundleIndex, int ingredientIndex)
+    public static bool RecordDeposit(IReadOnlyList<BonusSlot>? slots, int bundleIndex, int ingredientIndex)
     {
         if (slots == null) return false;
         bool hit = false;
