@@ -43,7 +43,10 @@ namespace TheLongestYear
                 OnSaveLoaded(sender, e);
         }
 
-        /// <summary>Load this playthrough's banked progress when a save opens.</summary>
+        /// <summary>Load this playthrough's banked progress when a save opens. The phases run in a
+        /// fixed order: activation first, the board restored before anything reads it, the data
+        /// models before the board repair, the repair before the catalog, the catalog before the
+        /// run controller.</summary>
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
         {
             // The save carries its own options, so the unfocused-pause setting is re-applied here.
@@ -69,6 +72,41 @@ namespace TheLongestYear
 
             _meta.Load();
 
+            if (!DecideActivation(out bool wasNewGame))
+                return;
+            ApplyNewSaveStamps(wasNewGame);
+            RunActivation.Activate();
+            _metaLoaded = true;
+            RestoreBoardFromOtherMods(wasNewGame);
+            ApplyPerSaveFlags();
+
+            var ctx = new LoadContext();
+            BuildResetServices(ctx);
+            BuildDataModels(ctx);
+            RepairBoard(ctx);
+            BuildCatalogAndRequirements(ctx);
+            WireRunController(ctx);
+            PlaceAndWireFarmServices();
+            this.Monitor.Log(
+                $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
+                LogLevel.Info);
+        }
+
+        /// <summary>The values one <see cref="OnSaveLoaded"/> call hands from phase to phase.</summary>
+        private sealed class LoadContext
+        {
+            public IReadOnlyDictionary<string, TheLongestYear.Core.Theme> ThemeOverrides;
+            public IReadOnlyDictionary<string, TheLongestYear.Core.Season> ItemSeasonPins;
+            public IReadOnlyDictionary<string, int[]> BundleQuotas;
+            /// <summary>Kept for its LastReachability: the board repair re-checks against it.</summary>
+            public TheLongestYear.Loop.GameDataPools EnginePoolReader;
+            public TheLongestYear.Core.ItemPools EnginePools;
+        }
+
+        /// <summary>Load phase: TLY runs only on a save started as a Longest Year run (or adopted as one). False
+        /// leaves the mod dormant on this save.</summary>
+        private bool DecideActivation(out bool wasNewGame)
+        {
             // Per-save opt-in. TLY only activates on a save that was STARTED as a Longest Year run:
             //   - a brand-new game created this session (_isNewGame, set by OnSaveCreating), or
             //   - a save that already carries the run marker, or
@@ -76,7 +114,7 @@ namespace TheLongestYear
             // Any other save — a normal vanilla playthrough loaded with the mod installed — leaves
             // TLY fully dormant: no Harmony effects, no HUD, no reset loop. _metaLoaded stays false
             // so OnSaving never persists empty defaults over the player's real save data.
-            bool wasNewGame = _isNewGame;
+            wasNewGame = _isNewGame;
             bool isLongestYearSave = _isNewGame || _meta.State.IsLongestYearRun || _meta.LoadedExistingData;
             _isNewGame = false; // consume — only the load right after SaveCreating counts as new
             // A farm quit before its first night, saved by the game at character creation before
@@ -99,9 +137,15 @@ namespace TheLongestYear
                     "This save wasn't started as a Longest Year run — the mod will stay dormant and " +
                     "leave it untouched. Start a new game to play The Longest Year.",
                     LogLevel.Info);
-                return;
+                return false;
             }
+            return true;
+        }
 
+        /// <summary>Load phase: stamp the run marker and, on a new game, the mod-items default, the skip-intro
+        /// choice and the Advanced Options bundle source.</summary>
+        private void ApplyNewSaveStamps(bool wasNewGame)
+        {
             // Stamp the marker so new games (and back-filled legacy TLY saves) take the clean flag
             // path next load; it persists with the game's own save via OnSaving.
             _meta.State.IsLongestYearRun = true;
@@ -147,8 +191,12 @@ namespace TheLongestYear
                     $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
                     LogLevel.Info);
             }
-            RunActivation.Activate();
-            _metaLoaded = true;
+        }
+
+        /// <summary>Load phase: put this loop's board back over the one Tech's Cross-Mod Bundles wrote, sync the
+        /// bundle keys, and store loop 1's board when it needs a board of record.</summary>
+        private void RestoreBoardFromOtherMods(bool wasNewGame)
+        {
             // Tech's Cross-Mod Bundles writes its own saved board over the live one on every load
             // (its SaveLoaded handler, which ran before this one; see OnSaveLoadedLate). Put this
             // loop's board back before anything below repairs, classifies or verifies it (spec
@@ -179,6 +227,12 @@ namespace TheLongestYear
                     $"New game: stored loop 1's board ({newGameBoard.Count} bundles) as the board of record, since Tech's Cross-Mod Bundles rewrites the board on every load.",
                     LogLevel.Info);
             }
+        }
+
+        /// <summary>Load phase: per-save flags and providers (intro mail, deja-vu caps, upgrade and boost checks,
+        /// patch providers, asset refreshes) and the replayable-cutscene scan.</summary>
+        private void ApplyPerSaveFlags()
+        {
             // Inject the tly_intro_done mail flag now if the player has already seen the intro
             // on a prior loop — that's what suppresses both intro events for years 2+.
             _introInjector?.ApplyMailFlagsForRun();
@@ -221,6 +275,11 @@ namespace TheLongestYear
                 BuildReplayableExclude(),
                 _config.AutoDetectReplayableUnlockCutscenes,
                 this.Monitor);
+        }
+
+        /// <summary>Load phase: the unlock, stash and patch services, the config merges and the reset service.</summary>
+        private void BuildResetServices(LoadContext ctx)
+        {
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
@@ -247,14 +306,14 @@ namespace TheLongestYear
             // Computed once and shared by both the reset service (owned-bundle engine seed-time
             // manifest generation, see WorldResetService.PerformReset) and the catalog builder
             // below -- the same merged config the legacy classify path has always used.
-            var themeOverrides = ParseThemeOverrides();
-            var itemSeasonPins = ParseItemSeasonPins();
-            var bundleQuotas = ParseBundleQuotas();
+            ctx.ThemeOverrides = ParseThemeOverrides();
+            ctx.ItemSeasonPins = ParseItemSeasonPins();
+            ctx.BundleQuotas = ParseBundleQuotas();
             _reset = new WorldResetService(
                 this.Monitor, _meta.State, _meta.Run, _config, _ccUnlock,
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
-                itemSeasonPins, bundleQuotas, this.Helper.GameContent);
+                ctx.ItemSeasonPins, ctx.BundleQuotas, this.Helper.GameContent);
             // The rewind must let a legendary be caught again: the game blocks a repeat catch
             // through SpawnFishData.CatchLimit against player.fishCaught, and FarmerReset never
             // touched that record. Read the catch-limited ids once here (same shape as
@@ -262,20 +321,24 @@ namespace TheLongestYear
             _reset.CatchLimitedFishIds = ReadCatchLimitedFishIds();
             // Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
             _reset.TechBundles = new TheLongestYear.Loop.TechCrossModBundlesTarget(this.Helper.ModRegistry);
+        }
 
+        /// <summary>Load phase: the engine pools, season resolver, effort tables and the item availability model.</summary>
+        private void BuildDataModels(LoadContext ctx)
+        {
             // Engine pools double as season ground truth: fish/crab-pot spawn seasons feed
             // the SeasonResolver (so weekly themes can't ask for out-of-season fish, Nexus
             // 1122423) and DerivedSeasonPins feed the obtainability clamp below.
             // Held in a local (rather than the old new-and-Build one-liner) so its
             // LastReachability survives the call: the board repair below re-checks the LIVE board
             // against exactly the verdicts these pools were built from.
-            var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
-            TheLongestYear.Core.ItemPools enginePools =
-                enginePoolReader.Build(_config.PoolTuning,
+            ctx.EnginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
+            ctx.EnginePools =
+                ctx.EnginePoolReader.Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity));
             _seasonResolver = new SeasonResolver(
-                TheLongestYear.Core.SpawnSeasonMap.FromPools(enginePools));
+                TheLongestYear.Core.SpawnSeasonMap.FromPools(ctx.EnginePools));
             // Derived item model: earliest-possible season and effort per item, from the same
             // live pools the engine generates from. Curated pins ride along as season overrides.
             // Built here because it needs enginePools, and consumed by everything below that
@@ -287,9 +350,9 @@ namespace TheLongestYear
             // at the same point a reset re-resolves the difficulty for the new run.
             _effortData = new TheLongestYear.Loop.GameEffortData(this.Monitor)
                 .Build(_config.PoolTuning.ExcludedLocationMarkers);
-            _enginePools = enginePools;
-            _engineReachability = enginePoolReader.LastReachability;
-            _itemSeasonPins = itemSeasonPins;
+            _enginePools = ctx.EnginePools;
+            _engineReachability = ctx.EnginePoolReader.LastReachability;
+            _itemSeasonPins = ctx.ItemSeasonPins;
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
@@ -305,6 +368,11 @@ namespace TheLongestYear
                     "Rejected season pins (derived floor kept instead): "
                     + string.Join(", ", _availability.RejectedSeasonOverrides),
                     LogLevel.Warn);
+        }
+
+        /// <summary>Load phase: clamp unstackable asks and replace unreachable ones on the live board.</summary>
+        private void RepairBoard(LoadContext ctx)
+        {
             // An ask above one for a hat, weapon or trophy ring can never be deposited (Nexus bug
             // report 2026-09-14). Fixed first, so the requirement manifest below reads the repaired
             // board and matches what the fixed generator re-derives.
@@ -321,13 +389,13 @@ namespace TheLongestYear
             // keeps the shared pools, other mods' items included, as before.
             TheLongestYear.Core.ItemPools repairPools =
                 BundleSourceNames.IsVanilla(_meta.State.BundleSource) || _meta.State.ModItemsOnBoard()
-                ? enginePools
+                ? ctx.EnginePools
                 : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
                     TheLongestYear.Loop.BundleEngine.VanillaOnlyIds);
             int repaired = new TheLongestYear.Loop.BoardRepairService(
-                this.Monitor, enginePoolReader.LastReachability, repairPools,
+                this.Monitor, ctx.EnginePoolReader.LastReachability, repairPools,
                 _config.PoolTuning, _availability,
                 // The board's own seed basis, not the run seed (a new game assigns that only after
                 // this runs), and the stored board of record takes every swap, so a reload restores
@@ -339,22 +407,26 @@ namespace TheLongestYear
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
                     LogLevel.Info);
+        }
 
+        /// <summary>Load phase: the bundle catalog, the requirements, the board fingerprint and the donation services.</summary>
+        private void BuildCatalogAndRequirements(LoadContext ctx)
+        {
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                themeOverrides, itemSeasonPins, bundleQuotas, _availability);
+                ctx.ThemeOverrides, ctx.ItemSeasonPins, ctx.BundleQuotas, _availability);
             // Obtainability clamp for the read-and-classify path: curated pins + the engine's
             // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
             // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
             var obtainabilityPins = new Dictionary<string, TheLongestYear.Core.Season>(
-                enginePools.DerivedSeasonPins,
+                ctx.EnginePools.DerivedSeasonPins,
                 StringComparer.Ordinal);
-            foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
+            foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in ctx.ItemSeasonPins)
                 obtainabilityPins[pin.Key] = pin.Value;
             _boardBuilder.ObtainabilityPins = obtainabilityPins;
             var builder = _boardBuilder;
             _catalog = builder.Build();
-            _requirements = ResolveRequirements(builder, itemSeasonPins, bundleQuotas);
+            _requirements = ResolveRequirements(builder, ctx.ItemSeasonPins, ctx.BundleQuotas);
             _boardFingerprint = BoardInspection.Fingerprint(Game1.netWorldState.Value.BundleData);
             // The weapon/hat donation patches must stay live for a board that already carries
             // (W)/(H) slots, whatever EnableNonObjectDonations says now (it governs the NEXT
@@ -367,7 +439,11 @@ namespace TheLongestYear
                     "keeping the donation patches on for this loop; rings-only from the next reset.",
                     LogLevel.Info);
             DonationService.Active = new DonationService(this.Monitor, _meta, _config);
+        }
 
+        /// <summary>Load phase: the weekly quest, shrine donations, the run controller and its hooks, and the mine tracker.</summary>
+        private void WireRunController(LoadContext ctx)
+        {
             _questService = new WeeklyThemeQuestService(
                 this.Monitor, _meta, _config,
                 slotStateForBundle: RunController.SlotStateForBundle);
@@ -382,8 +458,8 @@ namespace TheLongestYear
             _runController = new RunController(this.Monitor, _meta, _config, _reset, _catalog, _requirements);
             _runController.GoalCaps = new[]
             {
-                new GoalGroupCap(enginePools.FruitTreeFruitIds, 1),
-                new GoalGroupCap(enginePools.TrapFishIds, 1),
+                new GoalGroupCap(ctx.EnginePools.FruitTreeFruitIds, 1),
+                new GoalGroupCap(ctx.EnginePools.TrapFishIds, 1),
                 new GoalGroupCap(GoalGroupCap.JellyIds, 1),
             };
             _runController.Availability = _availability;
@@ -414,6 +490,11 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);
             this.Helper.Events.Player.Warped += _peakMineFloorTracker.OnWarped;
+        }
+
+        /// <summary>Load phase: stash, shrine, ground drops, purchases, menus, boosts, books and intro quests.</summary>
+        private void PlaceAndWireFarmServices()
+        {
             // Restore stash chest on every save load (not just after reset), so a
             // save-and-reload mid-run re-places the chest correctly.
             _stashService.PlaceChest();
@@ -469,9 +550,6 @@ namespace TheLongestYear
             // fireplace board intro added 2026-05-29 — without this call, current playthroughs
             // would have to roll over a full year before seeing it).
             _reset.FireBookQuestIntros();
-            this.Monitor.Log(
-                $"Run {_meta.Run.RunNumber} loaded ({_meta.Run.Season} {_meta.Run.DayOfMonth}). JP banked: {_meta.State.JunimoPoints}.",
-                LogLevel.Info);
         }
 
         /// <summary>A brand-new game is being created. If TLY is enabled, this save becomes a Longest
