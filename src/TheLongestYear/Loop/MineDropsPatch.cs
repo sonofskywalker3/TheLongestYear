@@ -43,17 +43,8 @@ namespace TheLongestYear.Loop
         private static void Postfix(GameLocation __instance, string stoneId, int x, int y,
             Farmer who, int __state)
         {
-            // 2026-05-29 round 9: unconditional trace so we can confirm the patch is wired.
-            // The prior round confirmed Object.performToolAction was firing but never saw
-            // ore destruction; we then moved to OnStoneDestroyed but a full mining run
-            // produced zero bonus log lines. Trace will tell us whether the postfix is
-            // entering at all and what the debris-diff looks like.
-            int newCount = (__instance?.debris?.Count ?? 0) - System.Math.Max(0, __state);
-            PatchLog.Trace(
-                $"OnStoneDestroyed postfix: stoneId='{stoneId}', loc='{__instance?.NameOrUniqueName}', " +
-                $"newDebrisAdded={newCount}, mineBonus={ActiveEffectsProvider.ActiveBonus("mine_drops_up")}, " +
-                $"allBonus={ActiveEffectsProvider.ActiveBonus("all_drops_up")}.");
-
+            // No per-stone log line: this runs for every rock broken, and the 2026-05-29 wiring
+            // diagnostic that lived here bloated player logs. A bonus that fires logs itself below.
             if (string.IsNullOrEmpty(stoneId)) return;
             if (__state < 0 || __instance?.debris == null) return;
 
