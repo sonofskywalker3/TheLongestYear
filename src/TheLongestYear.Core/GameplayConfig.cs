@@ -36,7 +36,8 @@ public sealed class GameplayConfig
     /// Data/Bundles "name" field, e.g. "Crab Pot", "Artisan"); value is a 4-int array of
     /// cumulative donations required by [Spring, Summer, Fall, Winter] day 28. Used by KIND 3
     /// Percentage bundles only — see <see cref="BundleKind.Percentage"/>. User entries OVERRIDE
-    /// <see cref="DefaultBundleQuotas"/> on conflict.
+    /// <see cref="DefaultBundleQuotas"/> on conflict; an entry that is not four counts, or has a
+    /// negative one, is logged and skipped (<see cref="ConfigOverrides.MergeQuotas"/>).
     /// </summary>
     public Dictionary<string, int[]> BundleQuotas { get; set; } = new();
 

@@ -5516,83 +5516,35 @@ namespace TheLongestYear
         }
 
         /// <summary>Merge GameplayConfig.DefaultItemSeasonPins + user ItemSeasonPins. User wins on conflict.
-        /// Invalid season strings in user config are logged and skipped.</summary>
+        /// Invalid season strings in user config are logged and skipped (<see cref="ConfigOverrides"/>).</summary>
         private System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> ParseItemSeasonPins()
-        {
-            var merged = new System.Collections.Generic.Dictionary<string, TheLongestYear.Core.Season>();
-
-            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultItemSeasonPins)
-                if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Season s))
-                    merged[kv.Key] = s;
-
-            if (_config?.ItemSeasonPins != null)
-            {
-                foreach (var kv in _config.ItemSeasonPins)
-                {
-                    if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Season s))
-                        merged[kv.Key] = s;
-                    else
-                        this.Monitor.Log(
-                            $"ItemSeasonPins: '{kv.Value}' is not a valid season for id '{kv.Key}' — ignoring.",
-                            LogLevel.Warn);
-                }
-            }
-
-            return merged;
-        }
+            => ConfigOverrides.MergeEnum<TheLongestYear.Core.Season>(
+                TheLongestYear.Core.GameplayConfig.DefaultItemSeasonPins, _config?.ItemSeasonPins,
+                (key, value) => this.Monitor.Log(
+                    $"ItemSeasonPins: '{value}' is not a valid season for id '{key}' — ignoring.",
+                    LogLevel.Warn));
 
         /// <summary>Merge GameplayConfig.DefaultBundleQuotas + user BundleQuotas. User wins on conflict.
-        /// Malformed user arrays (wrong length, negative values) are logged and skipped.</summary>
+        /// Malformed user arrays (wrong length, negative values) are logged and skipped
+        /// (<see cref="ConfigOverrides"/>).</summary>
         private System.Collections.Generic.IReadOnlyDictionary<string, int[]> ParseBundleQuotas()
-        {
-            var merged = new System.Collections.Generic.Dictionary<string, int[]>();
-
-            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultBundleQuotas)
-                merged[kv.Key] = (int[])kv.Value.Clone();
-
-            if (_config?.BundleQuotas != null)
-            {
-                foreach (var kv in _config.BundleQuotas)
-                {
-                    if (kv.Value == null || kv.Value.Length != TheLongestYear.Core.Calendar.MonthsPerYear)
-                    {
-                        this.Monitor.Log(
-                            $"BundleQuotas: '{kv.Key}' needs a 4-int cumulative array; got length " +
-                            $"{kv.Value?.Length ?? 0} — ignoring.",
-                            LogLevel.Warn);
-                        continue;
-                    }
-                    merged[kv.Key] = (int[])kv.Value.Clone();
-                }
-            }
-
-            return merged;
-        }
+            => ConfigOverrides.MergeQuotas(
+                TheLongestYear.Core.GameplayConfig.DefaultBundleQuotas, _config?.BundleQuotas,
+                TheLongestYear.Core.Calendar.MonthsPerYear,
+                (key, value, problem) => this.Monitor.Log(
+                    problem == ConfigOverrides.QuotaProblem.Negative
+                        ? $"BundleQuotas: '{key}' has a negative count; ignoring."
+                        : $"BundleQuotas: '{key}' needs a 4-int cumulative array; got length {value?.Length ?? 0} — ignoring.",
+                    LogLevel.Warn));
 
         /// <summary>Merge GameplayConfig.DefaultThemeOverrides + user ThemeOverrides for the catalog builder.</summary>
         private System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Theme> ParseThemeOverrides()
-        {
-            var merged = new System.Collections.Generic.Dictionary<string, TheLongestYear.Core.Theme>();
+            => ConfigOverrides.MergeEnum<TheLongestYear.Core.Theme>(
+                TheLongestYear.Core.GameplayConfig.DefaultThemeOverrides, _config?.ThemeOverrides,
+                (key, value) => this.Monitor.Log(
+                    $"ThemeOverrides: '{value}' is not a valid theme for id '{key}' — ignoring.",
+                    LogLevel.Warn));
 
-            foreach (var kv in TheLongestYear.Core.GameplayConfig.DefaultThemeOverrides)
-                if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Theme t))
-                    merged[kv.Key] = t;
-
-            if (_config?.ThemeOverrides != null)
-            {
-                foreach (var kv in _config.ThemeOverrides)
-                {
-                    if (System.Enum.TryParse(kv.Value, ignoreCase: true, out TheLongestYear.Core.Theme t))
-                        merged[kv.Key] = t;
-                    else
-                        this.Monitor.Log(
-                            $"ThemeOverrides: '{kv.Value}' is not a valid theme for id '{kv.Key}' — ignoring.",
-                            LogLevel.Warn);
-                }
-            }
-
-            return merged;
-        }
         /// <summary>Localised label for a difficulty step in the GMCM dropdown. Written as four
         /// literal <see cref="Strings.Get"/> calls rather than an interpolated key so the i18n
         /// guard's source scan can prove all four keys are reachable.</summary>
