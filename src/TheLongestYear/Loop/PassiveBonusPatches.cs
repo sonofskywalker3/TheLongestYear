@@ -145,7 +145,7 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>Forager's Eye (foragers_eye_1..5): on every spawnObjects pass (overnight forage
-    /// spawn), iterate the newly-placed forage tiles and roll X% per tile to drop a clone on
+    /// spawn), iterate the forage tiles that pass placed (snapshot diff) and roll X% per tile to drop a clone on
     /// an adjacent tile. Same placement strategy as <see cref="ForageYieldPatch"/> — try 8
     /// neighbours, first valid one wins. Stacks with the Foraging-week themed bonus: a
     /// Forager's Eye V owner on a Foraging week sees a 25% passive roll plus the themed
@@ -153,9 +153,23 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(GameLocation), "spawnObjects")]
     internal static class ForagersEyePatch
     {
+        // Only the forage THIS call placed is rolled. Rolling every spawned forage item on the map
+        // re-rolled yesterday's unpicked forage and the patch's own clones on each of the one to
+        // four daily spawnObjects calls, so forage compounded (the Farm never gets the weekly
+        // cleanup). The snapshot also means a call ForageOffPatch skipped (Mining week) adds
+        // nothing: Harmony still runs this postfix, but no tile is new.
         // ReSharper disable once InconsistentNaming — Harmony convention.
-        private static void Postfix(GameLocation __instance)
+        private static void Prefix(GameLocation __instance, out System.Collections.Generic.HashSet<Microsoft.Xna.Framework.Vector2> __state)
         {
+            __state = __instance?.objects == null || UpgradeChecker.GetTier("foragers_eye", 5) == 0
+                ? null
+                : new System.Collections.Generic.HashSet<Microsoft.Xna.Framework.Vector2>(__instance.objects.Keys);
+        }
+
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        private static void Postfix(GameLocation __instance, System.Collections.Generic.HashSet<Microsoft.Xna.Framework.Vector2> __state)
+        {
+            if (__state == null) return;
             int tier = UpgradeChecker.GetTier("foragers_eye", 5);
             if (tier == 0) return;
             if (__instance == null) return;
@@ -168,6 +182,7 @@ namespace TheLongestYear.Loop
             {
                 Object obj = pair.Value;
                 if (obj == null) continue;
+                if (__state.Contains(pair.Key)) continue;   // was already there before this spawn pass
                 if (!obj.IsSpawnedObject) continue;
                 if (!obj.isForage()) continue;
                 toBonus.Add((pair.Key, obj));
