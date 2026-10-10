@@ -6,6 +6,23 @@ Once an item is planned, it moves into `docs/superpowers/plans/`.
 
 ## Open
 
+### BUILT, NOT RELEASED (0.19.61 to 0.19.90, 2026-10-09): hygiene pass (review 3)
+Code health only; summary in `STATUS.md`. The one player-visible rule: a `BundleQuotas` entry in
+config.json with a negative count is now logged and skipped, as its doc always said. Nothing for
+the release notes beyond that line. Left for later, on purpose:
+- `save-recovery-backup/` (19 MB of real save data, git-ignored): Jeff's call whether to delete.
+- The one-off probe commands (`tly_removehorse`, `tly_giftbox`, `tly_ringtest`, `tly_stashmenu`,
+  `tly_driedprobe`, `tly_flavors`, `tly_housefurn`): ask Jeff before retiring any.
+- `tly_leaktest` runs two raw resets without the post-reset save, so the reload that follows
+  finds the live board different from the stored one and falls back to the read path (seen on
+  0.19.88 and 0.19.90 alike, so not from the refactor). Debug-only; a fix would end the test with
+  the same save `FinalizeReset` does.
+- Checked and not a bug: the post-win "Keep playing" answer opens the planning hub while the
+  question box is still up, but `PresentOffer` defers a refused open and `TryDrainDeferredOffer`
+  opens it on the next free tick (the books needed `DeferContinue` because they had no such retry).
+- Checked and not a collision: the Herd Book and the Craftbook both use control ids 8950/8951, but
+  ids only matter inside one menu and the two never share one.
+
 ### BUILT, NOT RELEASED (0.19.42 to 0.19.60, 2026-10-09): core-systems bug hunt fixes (review 2 + review 1 A-C)
 One fix per version; CHANGELOG has each in player words. Full suite passes (3593).
 - [x] 0.19.42 Kitchen / Double Yolk second milk or wool (pail and shears lost the animal before the postfix).
