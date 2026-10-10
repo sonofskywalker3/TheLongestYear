@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.91 - 2026-10-10
+
+### Fixed
+
+- **A failed save backup no longer stops the rewind.** The one-time backup before your first rewind used to cancel the whole rewind if it couldn't be written, which left you in the next season as if the gate had passed. The rewind now goes ahead, and the backup is tried again next time.
+
 ## 0.19.60 - 2026-10-09
 
 ### Internal

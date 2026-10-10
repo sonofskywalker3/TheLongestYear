@@ -122,7 +122,7 @@ namespace TheLongestYear.Loop
         /// placed after the board.</summary>
         public void PerformReset()
         {
-            // One-time safety backup before the first destructive reset (throws if it fails -> reset aborts).
+            // One-time safety backup before the first destructive reset (a failed backup is logged and the reset goes ahead).
             // Lands inside the mod folder (not in Stardew's Saves dir) so it doesn't appear as a second
             // save on the title screen.
             SaveBackup.BackupOnce(_meta, _monitor, _modDirectory);
