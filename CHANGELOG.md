@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.54 - 2026-10-09
+
+### Fixed
+
+- **Keep Rod owners no longer get Willy's rod scene and a spare Bamboo Pole each loop.** The check meant to skip that scene was wiped by the rewind before it could work. The scene is now skipped when you start the loop with your kept rod.
+
 ## 0.19.53 - 2026-10-09
 
 ### Fixed

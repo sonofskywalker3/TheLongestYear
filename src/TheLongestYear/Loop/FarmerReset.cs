@@ -28,6 +28,9 @@ namespace TheLongestYear.Loop
         /// "Introduction" dialogue on first contact (vanilla Farmer ctor, Farmer.cs:2029).</summary>
         private const string IntroductionDialogueKey = "Introduction";
 
+        /// <summary>Willy's beach scene that gives the Bamboo Pole (Event.cs case "739330").</summary>
+        private const string WillyRodEventId = "739330";
+
         /// <summary>Days vanilla keeps that key alive on a brand-new farmer (Farmer.cs:2029).</summary>
         private const int IntroductionDialogueDays = 6;
 
@@ -237,6 +240,13 @@ namespace TheLongestYear.Loop
 
             // Suppress the vanilla intro cutscene from replaying every loop (matches TitleMenu's new-game path).
             p.eventsSeen.Add("60367");
+
+            // Keep Rod: the player starts with the kept rod, so Willy's beach rod scene must not play
+            // (it hands over a Bamboo Pole to anyone not holding one: an extra rod for a Fiberglass or
+            // Iridium keep). The old guard pre-mailed "willyBackRoom" in ApplyToolTiers, which the
+            // mail wipe above erased and which the game never reads for this scene anyway.
+            if (baseline.ToolTiers.ContainsKey("fishing_rod"))
+                p.eventsSeen.Add(WillyRodEventId);
 
             // Kept power events (Bear's Knowledge 2120303, Spring Onion Mastery 3910979): both are
             // replayable, so the re-seed above skipped them; a bought keep re-marks the scene seen,
@@ -596,8 +606,8 @@ namespace TheLongestYear.Loop
                 }
             }
 
-            // Grant a fresh rod (at the kept tier) if none is held. Pre-mail "willyBackRoom" so
-            // Willy's day-2 bamboo-rod event doesn't fire on top of it.
+            // Grant a fresh rod (at the kept tier) if none is held. Willy's rod scene is kept from
+            // replaying on top of it in Apply (WillyRodEventId), after eventsSeen is rebuilt.
             if (!hasRod && tiers.TryGetValue("fishing_rod", out int rodLevel))
             {
                 string rid = RodItemId(rodLevel);
@@ -610,7 +620,6 @@ namespace TheLongestYear.Loop
                         break;
                     }
                 }
-                p.mailReceived.Add("willyBackRoom");
                 applied.Add($"fishing_rod={rid}(new)");
             }
 
