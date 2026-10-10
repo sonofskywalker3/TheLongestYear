@@ -107,7 +107,8 @@ namespace TheLongestYear.Loop
         }
     }
 
-    /// <summary>Tree chopping — doubles wood/sap/seeds/whatever drops on the Mixed all_drops_up roll.</summary>
+    /// <summary>Tree chopping — doubles wood/sap/seeds/whatever drops on the Mixed all_drops_up roll.
+    /// Covers stumps and saplings; a full tree drops when its fall ends (TreeFallAllDropsBonusPatch).</summary>
     [HarmonyPatch(typeof(Tree), nameof(Tree.performToolAction))]
     internal static class TreeAllDropsBonusPatch
     {
@@ -123,6 +124,29 @@ namespace TheLongestYear.Loop
             if (__instance == null) return;
             TerrainBonusPatches.TryDoubleNewDrops(
                 __instance.Location, __state, (int)tileLocation.X, (int)tileLocation.Y);
+        }
+    }
+
+    /// <summary>A full tree's wood, sap, hardwood and seeds drop when the fall ends, in
+    /// <see cref="Tree.tickUpdate"/> (decompile Tree.cs, the falling branch), not during the chop
+    /// swing; the performToolAction patch above only sees stumps and saplings. Diff the debris
+    /// across the one tick whose fall completes (falling true before, false after).</summary>
+    [HarmonyPatch(typeof(Tree), nameof(Tree.tickUpdate))]
+    internal static class TreeFallAllDropsBonusPatch
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Prefix(Tree __instance, out int __state)
+        {
+            __state = __instance != null && __instance.falling.Value
+                ? __instance.Location?.debris?.Count ?? -1
+                : -1;
+        }
+
+        private static void Postfix(Tree __instance, int __state)
+        {
+            if (__state < 0 || __instance == null || __instance.falling.Value) return;
+            Vector2 tile = __instance.Tile;
+            TerrainBonusPatches.TryDoubleNewDrops(__instance.Location, __state, (int)tile.X, (int)tile.Y);
         }
     }
 

@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.48 - 2026-10-09
+
+### Fixed
+
+- **Mixed week's extra drop now works on full-grown trees.** The bonus only looked at what fell during the axe swing, but a big tree drops its wood, sap and seeds a moment later when it hits the ground, so only stumps and saplings ever got the extra item.
+
 ## 0.19.47 - 2026-10-09
 
 ### Fixed
