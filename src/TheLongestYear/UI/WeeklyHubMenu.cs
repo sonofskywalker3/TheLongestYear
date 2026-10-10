@@ -192,7 +192,11 @@ namespace TheLongestYear.UI
             _cartPreviewSlots = cartPreviewSlots;
 
             try { _junimoTexture = Game1.content.Load<Texture2D>("Characters\\Junimo"); }
-            catch (Exception) { _junimoTexture = null; }
+            catch (Exception ex)
+            {
+                TheLongestYear.Loop.PatchLog.Trace($"{GetType().Name}: the Junimo sprite did not load ({ex.GetType().Name}); drawn without it.");
+                _junimoTexture = null;
+            }
 
             _weatherForecast = _weatherSageSlots > 0
                 ? WeatherForecast.Build(
@@ -352,7 +356,12 @@ namespace TheLongestYear.UI
                 // 2026-07-09 slot redesign; replaces the global per-id MAX maps here.
                 Item item = null;
                 try { item = ItemRegistry.Create(slot.ItemId, slot.Stack, slot.Quality, allowNull: true); }
-                catch (Exception) { item = null; }
+                catch (Exception ex)
+                {
+                    TheLongestYear.Loop.PatchLog.TraceOnce("hub-item:" + slot.ItemId,
+                        $"Planning hub: goal item '{slot.ItemId}' could not be created ({ex.GetType().Name}); its icon is left empty.");
+                    item = null;
+                }
                 dest.Add(item);
             }
         }

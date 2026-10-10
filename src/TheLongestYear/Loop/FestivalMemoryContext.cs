@@ -63,7 +63,11 @@ namespace TheLongestYear.Loop
         public static NPC Host(Event ev)
         {
             try { return HostRef(ev); }
-            catch (Exception) { return null; }
+            catch (Exception ex)
+            {
+                Monitor?.Log($"Festival memories: the festival host could not be read ({ex.GetType().Name}).", LogLevel.Trace);
+                return null;
+            }
         }
 
         /// <summary>The event's actors as the rules see them.</summary>
@@ -95,7 +99,11 @@ namespace TheLongestYear.Loop
         {
             if (string.IsNullOrEmpty(qualifiedId)) return null;
             try { return ItemRegistry.GetData(qualifiedId)?.DisplayName; }
-            catch (Exception) { return null; }
+            catch (Exception ex)
+            {
+                Monitor?.Log($"Festival memories: no item data for '{qualifiedId}' ({ex.GetType().Name}).", LogLevel.Trace);
+                return null;
+            }
         }
 
         /// <summary>Pick a line for this villager, stable for the loop.</summary>

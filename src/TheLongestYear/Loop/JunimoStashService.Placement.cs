@@ -111,7 +111,11 @@ namespace TheLongestYear.Loop
         private static Point? TryGetFarmHouseEntry(Farm farm)
         {
             try { return farm.GetMainFarmHouseEntry(); }
-            catch { return null; }
+            catch (System.Exception ex)
+            {
+                PatchLog.Warn($"Junimo stash: the farmhouse entry could not be read ({ex.GetType().Name}: {ex.Message}); placing without it.");
+                return null;
+            }
         }
 
         /// <summary>

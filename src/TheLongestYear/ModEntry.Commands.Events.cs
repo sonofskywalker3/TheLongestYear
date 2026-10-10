@@ -47,9 +47,11 @@ namespace TheLongestYear
                 {
                     data = this.Helper.GameContent.Load<System.Collections.Generic.Dictionary<string, string>>($"Data/Events/{loc}");
                 }
-                catch (System.Exception)
+                catch (System.Exception ex)
                 {
-                    continue; // location has no event data file
+                    // Location has no event data file.
+                    this.Monitor.Log($"Data/Events/{loc}: not loaded ({ex.GetType().Name}); skipped.", LogLevel.Trace);
+                    continue;
                 }
                 if (data == null) continue;
 
@@ -98,8 +100,9 @@ namespace TheLongestYear
                 {
                     data = this.Helper.GameContent.Load<System.Collections.Generic.Dictionary<string, string>>($"Data/Events/{loc.Name}");
                 }
-                catch (System.Exception)
+                catch (System.Exception ex)
                 {
+                    this.Monitor.Log($"Data/Events/{loc.Name}: not loaded ({ex.GetType().Name}); skipped.", LogLevel.Trace);
                     continue;
                 }
                 if (data == null) continue;

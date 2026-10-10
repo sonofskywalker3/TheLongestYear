@@ -545,7 +545,11 @@ namespace TheLongestYear
                 var data = StardewValley.ItemRegistry.GetData(BundleParsing.NormalizeItemId(itemId));
                 return data != null ? data.DisplayName : itemId;
             }
-            catch { return itemId; }
+            catch (Exception ex)
+            {
+                PatchLog.TraceOnce("name:" + itemId, $"No display name for '{itemId}' ({ex.GetType().Name}); using the id.");
+                return itemId;
+            }
         }
     }
 }

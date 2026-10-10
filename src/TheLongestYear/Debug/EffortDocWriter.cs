@@ -44,7 +44,11 @@ namespace TheLongestYear.Debug
         private static string Name(string id)
         {
             try { return ItemRegistry.GetDataOrErrorItem(id).DisplayName; }
-            catch (Exception) { return id; }
+            catch (Exception ex)
+            {
+                TheLongestYear.Loop.PatchLog.Trace($"Effort doc: no display name for '{id}' ({ex.GetType().Name}); using the id.");
+                return id;
+            }
         }
     }
 }

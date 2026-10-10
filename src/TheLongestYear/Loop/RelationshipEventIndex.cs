@@ -55,9 +55,11 @@ namespace TheLongestYear.Loop
                 {
                     data = Game1.content.Load<Dictionary<string, string>>($"Data/Events/{loc}");
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    continue; // no event data file for this location
+                    // No event data file for this location (expected for most maps).
+                    PatchLog.Trace($"Data/Events/{loc}: not loaded ({ex.GetType().Name}); skipped.");
+                    continue;
                 }
                 if (data == null) continue;
 

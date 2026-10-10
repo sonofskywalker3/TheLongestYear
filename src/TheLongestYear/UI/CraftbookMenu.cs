@@ -415,9 +415,12 @@ namespace TheLongestYear.UI
                 // CraftingRecipe.name is the localised display name.
                 return new CraftingRecipe(recipeId, isCooking).name;
             }
-            catch
+            catch (Exception ex)
             {
-                // Unknown recipe id (content mod removed) — fall back to raw id.
+                // Unknown recipe id (content mod removed): fall back to the raw id. Drawn every
+                // frame, so logged once per id.
+                TheLongestYear.Loop.PatchLog.TraceOnce("recipe:" + recipeId,
+                    $"Recipe '{recipeId}' could not be read ({ex.GetType().Name}); showing the raw id.");
                 return recipeId;
             }
         }

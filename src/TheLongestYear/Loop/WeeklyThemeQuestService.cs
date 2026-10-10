@@ -367,9 +367,10 @@ namespace TheLongestYear.Loop
                 Item item = ItemRegistry.Create(slot.ItemId, 1, 0, allowNull: true);
                 if (item != null) name = item.DisplayName;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // ItemRegistry may throw for malformed ids; fall back to the raw id.
+                _monitor.Log($"Weekly quest: goal item '{slot.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
             }
 
             string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(slot.ItemId), out string colorKey)
