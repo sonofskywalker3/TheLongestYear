@@ -563,20 +563,12 @@ namespace TheLongestYear
                 // every reset regenerates the same kind of board (Nexus bug 1108030 root cause:
                 // Game1.bundleType is never persisted by the game).
                 BundleOptionPatch.Choice choice = BundleOptionPatch.ConsumeLastChoice();
-                string chosenSource = choice switch
-                {
-                    BundleOptionPatch.Choice.VanillaRemixed => BundleSourceNames.Remixed,
-                    BundleOptionPatch.Choice.VanillaStandard => BundleSourceNames.Normal,
-                    _ => BundleSourceNames.Engine,
-                };
-                _meta.State.BundleSource = BundleSourceNames.IsVanilla(chosenSource)
-                    ? BundleSourceNames.LegacyVanilla : BundleSourceNames.Engine;
-                _meta.State.VanillaBundleType =
-                    BundleSourceNames.VanillaTypeFor(chosenSource) ?? Game1.BundleType.Default.ToString();
+                string chosenSource = BundleOptionPatch.SourceFor(choice);
                 // Kept on the save, not mirrored into the config: the config is shared by every
                 // save, and mirroring it here is how a new TLY Custom game flipped an older Normal
                 // save to custom bundles at its next reset (victoriatauanem, Nexus 2026-09-28).
-                _meta.State.ChosenBundleSource = chosenSource;
+                // Same stamp as the creation-time marker (OnSaveCreating).
+                TheLongestYear.Core.NewRunStamp.ApplyBundleChoice(_meta.State, chosenSource);
 
                 this.Monitor.Log(
                     $"New game: bundle source={chosenSource} (Advanced Options choice {choice}, vanilla type {_meta.State.VanillaBundleType}).",
@@ -920,7 +912,14 @@ namespace TheLongestYear
             _isNewGame = true;
             try
             {
-                _meta.StampNewRunMarker();
+                string chosenSource = BundleOptionPatch.SourceFor(BundleOptionPatch.PeekLastChoice());
+                _meta.StampNewRunMarker(TheLongestYear.Core.NewRunStamp.Marker(chosenSource, _config.AllowModItemsInCustomBundles));
+                // Skip intro: plant the cc-seen flag in the creation-time save too, so a farm quit
+                // before its first night does not replay the intro the player skipped. The choice
+                // is consumed (and the flag re-checked) by the new-game load as before.
+                if (SkipIntroChoicePatch.Choice.Pending && Game1.player != null
+                    && !Game1.player.mailReceived.Contains(TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail))
+                    Game1.player.mailReceived.Add(TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail);
             }
             catch (System.InvalidOperationException ex)
             {
