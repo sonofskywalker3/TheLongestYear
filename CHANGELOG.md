@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.53 - 2026-10-09
+
+### Fixed
+
+- **A week with no theme to offer no longer keeps last week's theme running.** Late in Winter the planning board can have nothing left to offer, and the mod skips that week's pick. Last week's bonus, drawback and goals stayed active through it. That week now really runs with no theme.
+
 ## 0.19.52 - 2026-10-09
 
 ### Fixed

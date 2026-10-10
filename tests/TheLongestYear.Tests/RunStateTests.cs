@@ -511,4 +511,32 @@ public class RunStateTests
         Assert.Null(old.SecondSelection);
         Assert.Equal(1.0, old.SecondGoalMultiplier);
     }
+
+    /// <summary>The empty-offer backstop skips a week with no theme, no bonus and no drawback:
+    /// last week's pick must not carry on into it.</summary>
+    [Fact]
+    public void SkipWeek_clears_last_weeks_pick_goals_and_drawback_but_keeps_the_months_picks()
+    {
+        var run = new RunState();
+        run.Select(Theme.Mining);
+        run.SelectSecond(Theme.Fishing);
+        run.CurrentLiabilityId = "forage_off";
+        run.CurrentGoalMultiplier = 1.5;
+        run.LiabilitySuppressedThisWeek = true;
+        run.CurrentWeekBonusSlots.Add(new BonusSlot { ItemId = "(O)24" });
+        run.CurrentWeekBonusItems.Add("(O)24");
+        run.CurrentWeekShrineGoals.Add(new ShrineGoal { ItemId = "(O)24", ListIndex = 0 });
+
+        run.SkipWeek();
+
+        Assert.Null(run.CurrentSelection);
+        Assert.Null(run.SecondSelection);
+        Assert.Null(run.CurrentLiabilityId);
+        Assert.Equal(1.0, run.CurrentGoalMultiplier);
+        Assert.False(run.LiabilitySuppressedThisWeek);
+        Assert.Empty(run.CurrentWeekBonusSlots);
+        Assert.Empty(run.CurrentWeekBonusItems);
+        Assert.Empty(run.CurrentWeekShrineGoals);
+        Assert.Contains(Theme.Mining, run.SelectedThemesThisMonth);
+    }
 }

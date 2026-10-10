@@ -1644,6 +1644,15 @@ namespace TheLongestYear.Loop
                     LogLevel.Warn);
                 Run.OfferPresentedWeek = week;
                 _deferredOffer = null;
+                // This week's own offer (not a day-28 pre-pick for next month, which BeginNewMonth
+                // clears anyway): end last week's pick, goals and drawback so the week really runs
+                // with none of them.
+                if (!seasonOverride.HasValue && week == Run.WeekOfYear)
+                {
+                    Run.SkipWeek();
+                    ActiveEffectsProvider.Clear();
+                    _questService?.OnThemeSelected();   // drops last week's quest, adds none
+                }
                 return;
             }
 

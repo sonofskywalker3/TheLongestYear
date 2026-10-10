@@ -447,6 +447,21 @@ public sealed class RunState
         ClearReroll();
     }
 
+    /// <summary>A week with no theme (the empty-offer backstop): last week's pick, drawback, goal
+    /// slots and shrine goals end, so nothing of it carries on. The month's picks stay counted.</summary>
+    public void SkipWeek()
+    {
+        CurrentSelection = null;
+        CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
+        CurrentWeekShrineGoals.Clear();
+        CurrentWeekBonusItems.Clear();
+        CurrentWeekBonusSlots.Clear();
+        LiabilitySuppressedThisWeek = false;
+        ClearReroll();
+    }
+
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
     /// persist. If <see cref="NextMonthSelection"/> was set (Sunday-night day-28 pre-pick), apply
     /// it as the new month's week-1 selection before clearing.</summary>
