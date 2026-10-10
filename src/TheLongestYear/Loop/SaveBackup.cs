@@ -49,10 +49,12 @@ namespace TheLongestYear.Loop
                 meta.BackupDone = true;
                 monitor.Log($"One-time save backup written to: {dest}", LogLevel.Info);
             }
-            catch (IOException ex)
+            // A failed backup no longer aborts the reset (Jeff, 2026-10-10): an aborted rewind left the
+            // player in the next season with the failed gate never applied, a free gate clear. The
+            // backup is one-time insurance; BackupDone stays false so the next rewind tries again.
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                monitor.Log($"Save backup FAILED ({ex.Message}); reset aborted to protect the save.", LogLevel.Error);
-                throw;
+                monitor.Log($"Save backup failed ({ex.Message}); the rewind goes ahead without it and the next rewind retries.", LogLevel.Warn);
             }
         }
 
