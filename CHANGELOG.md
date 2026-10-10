@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.56 - 2026-10-09
+
+### Internal
+
+- Wild seed grow-completely fix stays dormant on non-TLY saves (RunActivation gate)
+
 ## 0.19.55 - 2026-10-09
 
 ### Changed
