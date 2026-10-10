@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.49 - 2026-10-09
+
+### Fixed
+
+- **Forager's Eye no longer piles up copies of old forage.** It rolled every forage item already on the map each time the game spawned forage, up to four times a day, including yesterday's leftovers and its own copies, so unpicked forage kept multiplying (and it still cloned on Mining week's no-forage days). It now rolls only the forage that just appeared.
+
 ## 0.19.48 - 2026-10-09
 
 ### Fixed
