@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
@@ -14,6 +15,46 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class GroundDrop
     {
+        /// <summary>While the rewind restores carry-overs, every drop that lands is recorded here (see
+        /// <see cref="ResetGroundDrops"/>); null otherwise.</summary>
+        private static List<PendingGroundDrop> _capture;
+
+        /// <summary>True once this session's world has the rewind's drops on the ground, so the
+        /// deferred SaveLoaded that follows an in-place reset does not drop them a second time.
+        /// Cleared on return to title.</summary>
+        internal static bool ResetDropsOnGround;
+
+        internal static void BeginResetCapture() => _capture = new List<PendingGroundDrop>();
+
+        /// <summary>Stop recording and return what the rewind dropped.</summary>
+        internal static List<PendingGroundDrop> EndResetCapture()
+        {
+            List<PendingGroundDrop> drops = _capture ?? new List<PendingGroundDrop>();
+            _capture = null;
+            ResetDropsOnGround = true;
+            return drops;
+        }
+
+        /// <summary>On load, before the first night: drop the rewind's ground items again (the save
+        /// never holds ground debris). They stay remembered until the night.</summary>
+        internal static void RedropAfterLoad(MetaState meta, IMonitor monitor)
+        {
+            if (ResetDropsOnGround || meta.PendingResetDrops.Count == 0)
+                return;
+            ResetDropsOnGround = true;
+            foreach (PendingGroundDrop d in meta.PendingResetDrops)
+            {
+                Item item = StashItemCodec.CreateFromRecord(d.Item, monitor);
+                if (item == null)
+                {
+                    monitor?.Log($"GroundDrop: could not recreate '{d.Item.ItemId}' the rewind dropped (unknown id).", LogLevel.Warn);
+                    continue;
+                }
+                AtTile(Game1.getLocationFromName(d.Location), new Vector2(d.X, d.Y), item, monitor,
+                    "the rewind dropped this before the save was quit, and ground items are not saved");
+            }
+        }
+
         /// <summary>How far, in tiles, the search for an open tile walks out from its start.</summary>
         internal const int SearchRadius = 12;
 
@@ -61,7 +102,10 @@ namespace TheLongestYear.Loop
             }
             try
             {
+                StashItemRecord record = _capture != null ? StashItemCodec.ToRecord(item) : null;
                 Game1.createItemDebris(item, tile * TileSize + new Vector2(HalfTile, HalfTile), AnyDirection, location);
+                if (record != null)
+                    _capture.Add(new PendingGroundDrop(location.NameOrUniqueName, (int)tile.X, (int)tile.Y, record));
                 monitor?.Log($"GroundDrop: {why}; dropped {what} at ({tile.X}, {tile.Y}) in {location.NameOrUniqueName}.", LogLevel.Info);
                 return true;
             }

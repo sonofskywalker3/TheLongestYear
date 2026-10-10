@@ -846,6 +846,8 @@ namespace TheLongestYear
             _stashService.PlaceChest();
             _stashService.PopulateFromMeta();
             _planningShrine.Place(_stashService.LastPlacedTile);
+            // Items the last rewind dropped on the ground, quit before the first night: drop them again.
+            TheLongestYear.Loop.GroundDrop.RedropAfterLoad(_meta.State, this.Monitor);
             _purchases = new UpgradePurchaseService(this.Monitor, _meta, _config);
             _purchases.Purchased = id =>
             {
@@ -941,6 +943,7 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            TheLongestYear.Loop.GroundDrop.ResetDropsOnGround = false;
             // The quarter baseline belongs to one save's season; carrying it to the title screen would
             // let the next save's quarter 2 plan against the previous save's ledger.
             _playSeasonBaseline = null;
@@ -2726,6 +2729,8 @@ namespace TheLongestYear
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
             if (!RunActivation.IsActive) return;
+            // The rewind's ground drops are ordinary ground items from the first night on.
+            TheLongestYear.Core.ResetGroundDrops.ForgetAtNight(_meta.State);
             _runController?.OnDayEnding(sender, e);
             // Vanilla spawns tomorrow's forage overnight, before DayStarted: prepare for tomorrow now.
             _pastSeasonSpawns?.Refresh(TodayDayOfYear() + 1);

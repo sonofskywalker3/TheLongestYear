@@ -318,6 +318,10 @@ public sealed class MetaState
     /// </summary>
     public List<StashItemRecord> StashItems { get; set; } = new();
 
+    /// <summary>Items the last rewind dropped on the ground, kept until the first night so a quit
+    /// before picking them up does not lose them (see <see cref="ResetGroundDrops"/>).</summary>
+    public List<PendingGroundDrop> PendingResetDrops { get; set; } = new();
+
     /// <summary>
     /// Current slot capacity of the Junimo Stash. Every save gets 4 slots from day 1
     /// (the Junimos bring the chest with them); each owned stash_N upgrade adds 4 more.
