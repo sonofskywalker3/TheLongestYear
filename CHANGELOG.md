@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.46 - 2026-10-09
+
+### Fixed
+
+- **One broken carry-over can no longer strand the rewind half done.** If putting back one kept thing (a building, the horse, the Herd Book animals, the stash and so on) hit an error, the whole rewind stopped there and left a fresh farm with the old run's progress. Each of those steps now logs its error and the rewind carries on.
+
 ## 0.19.45 - 2026-10-09
 
 ### Fixed

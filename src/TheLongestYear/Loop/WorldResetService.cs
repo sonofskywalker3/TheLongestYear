@@ -321,14 +321,14 @@ namespace TheLongestYear.Loop
 
             // 1-display. Put the zoom + UI scale back on the new Options instance. Game1.Update
             // notices the change on its next tick and calls refreshWindowSettings itself.
-            DisplayOptionsCarryover.Restore(displayOptions, _monitor);
+            RestoreStep("display options", () => DisplayOptionsCarryover.Restore(displayOptions, _monitor));
 
             // 1-seeds. First-loop-only starting seeds: loadForNewGame rebuilds the FarmHouse, whose
             // constructor (AddStarterGiftBox) drops a starter gift box of 15 parsnip seeds. FarmerReset
             // wipes the inventory but not this placed box, so it reappears every loop. PerformReset only
             // runs on resets (never the first new game), so removing it here means run 1 keeps the
             // vanilla nudge and every loop after gets none.
-            RemoveStarterGiftBox();
+            RestoreStep("starter gift box", RemoveStarterGiftBox);
 
             // 1a. Defensive bundle / area-completion wipe. CommunityCenter.bundles is a PROPERTY
             // pointing at Game1.netWorldState.Value.Bundles (CommunityCenter.cs:104) — a NetCollection
@@ -518,7 +518,7 @@ namespace TheLongestYear.Loop
             //     town order, the board's offer and the completed list all rode into the next loop.
             //     Drop town orders, clear the board so it re-rolls, forget completed town orders.
             //     Qi's orders are left alone. Every player, with or without Keep Special Orders Board.
-            SpecialOrderReset.Apply(_monitor);
+            RestoreStep("special orders", () => SpecialOrderReset.Apply(_monitor));
 
             // 3. Capture the in-run peaks from the live player BEFORE the wipe — the cap
             //    side of cap-not-grant. The Farmer-side wipe happens inside
@@ -591,43 +591,46 @@ namespace TheLongestYear.Loop
 
             // 8. Pre-build kept buildings on the Farm. Coords are deterministic — we always
             //    use the same tiles so subsequent runs land buildings in the same spots.
-            ApplyKeptBuildings(baseline.KeptBuildings);
+            RestoreStep("kept buildings", () => ApplyKeptBuildings(baseline.KeptBuildings));
             // 8a. Keep Greenhouse: back to where the player had moved it (Gifts of the Junimos).
-            RestoreGreenhouseSpot();
+            RestoreStep("greenhouse spot", RestoreGreenhouseSpot);
 
             // 9. Keep Horse — restore the player's stable + horse at its saved tile (pure carry-over;
             //    no auto-build, so a player who hasn't built a stable yet has no horse this loop).
             //    Gated on the upgrade + a prior snapshot inside the service.
-            HorseCarryoverService.RestoreHorse(_meta, _monitor);
+            RestoreStep("horse", () => HorseCarryoverService.RestoreHorse(_meta, _monitor));
 
             // 9a. Keep Fish Pond: one EMPTY pond back at the player's spot. Runs after every other
             //     building is back, so the pond is the one that moves if its spot is now taken.
-            FishPondCarryoverService.Restore(_meta, _monitor);
+            RestoreStep("fish pond", () => FishPondCarryoverService.Restore(_meta, _monitor));
 
             // 10. Herd Book animals move in first (Jeff, 2026-09-25, option C): the Herd Book's
             //     room check counts only its own slots, so its animals get each building's room
             //     before the Start-with animals. An entry with no building or no room waits in the
             //     book.
-            HerdBookService.Restore(_meta, _monitor);
+            RestoreStep("Herd Book animals", () => HerdBookService.Restore(_meta, _monitor));
 
             // 10-start. Start-with animals fill whatever room the Herd Book left; one that no
             //     longer fits is skipped and logged.
-            ApplyStartingAnimals(baseline.StartingAnimals);
+            RestoreStep("starting animals", () => ApplyStartingAnimals(baseline.StartingAnimals));
 
             // 10a. Restore the snapshotted pet on the Farm (keep_pet upgrade). Runs after
             // starting animals so the Farm.characters collection is already settled. No-op
             // when the upgrade isn't owned or no prior snapshot exists. Also sets the
             // MarniePetAdoption mail flag so vanilla's day-1 adoption offer is suppressed.
-            PetCarryoverService.RestorePet(_meta, _monitor);
+            RestoreStep("pet", () => PetCarryoverService.RestorePet(_meta, _monitor));
             // 10b. If the rewind left the farm petless (no Keep Pet, or the upgrade was never
             //      bought), re-open vanilla adoption route at Marnie counter: the rewind
             //      otherwise shuts every door to a new pet. See EnableAdoptionIfPetless.
-            PetCarryoverService.EnableAdoptionIfPetless(_monitor);
+            RestoreStep("pet adoption", () => PetCarryoverService.EnableAdoptionIfPetless(_monitor));
             // 10c. A petless farm gets Marnie's pet visit back too, not just the paid Adopt option.
-            int reopened = TheLongestYear.Core.PetCarryover.ReopenArrivalScenes(
-                Game1.player.eventsSeen, farmHasPet: Utility.getAllPets().Any());
-            if (reopened > 0)
-                _monitor.Log($"PetCarryover: no pet after the rewind; Marnie's pet visit can play again ({reopened} scene ids cleared).", LogLevel.Info);
+            RestoreStep("pet visit", () =>
+            {
+                int reopened = TheLongestYear.Core.PetCarryover.ReopenArrivalScenes(
+                    Game1.player.eventsSeen, farmHasPet: Utility.getAllPets().Any());
+                if (reopened > 0)
+                    _monitor.Log($"PetCarryover: no pet after the rewind; Marnie's pet visit can play again ({reopened} scene ids cleared).", LogLevel.Info);
+            });
 
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
@@ -762,15 +765,18 @@ namespace TheLongestYear.Loop
             //      the room's world reward stands from day 1; the bundles stay on the board and are
             //      paid like any other (Jeff, 2026-08-29).
             if (baseline.KeptGiftMails.Count > 0)
-                RestoreKeptGifts(baseline);
+                RestoreStep("Gifts of the Junimos", () => RestoreKeptGifts(baseline));
 
             // 12. Fire cookbook/craftbook quest intros on the first run after purchase.
-            FireBookQuestIntros();
+            RestoreStep("book quest intros", FireBookQuestIntros);
 
             // 13. Place the Junimo Stash chest on the Farm and populate from MetaState.
-            _stashService?.PlaceChest();
-            _stashService?.PopulateFromMeta();
-            _planningShrine?.Place(_stashService?.LastPlacedTile);
+            RestoreStep("Junimo Stash", () =>
+            {
+                _stashService?.PlaceChest();
+                _stashService?.PopulateFromMeta();
+            });
+            RestoreStep("planning shrine", () => _planningShrine?.Place(_stashService?.LastPlacedTile));
 
             // 13a. Keep Farm Decor back on its tiles, after kept buildings, the stash chest and the
             // planning shrine, so each of them wins its tile and displaced decor can go to the stash.
@@ -825,19 +831,35 @@ namespace TheLongestYear.Loop
             RefreshMutatedVanillaMaps();
 
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
-            _ccUnlock.Apply();
+            RestoreStep("Community Center unlock", () => _ccUnlock.Apply());
 
             // Re-clear the Mountain landslide. loadForNewGame rebuilt every location, so the
             // Mountain ctor saw DaysPlayed = 1 and re-initialised landslide.Value = true.
-            _mountainUnlock?.Apply();
+            RestoreStep("mountain landslide", () => _mountainUnlock?.Apply());
 
             // Books are inventory items wiped by FarmerReset; re-grant exactly one of each.
-            _bookFurniture?.ReconcileInventory();
+            RestoreStep("books", () => _bookFurniture?.ReconcileInventory());
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
                 LogLevel.Info);
+        }
+
+        /// <summary>One carry-over step after loadForNewGame. By then the old world is gone, so a
+        /// throw must not abort the reset: that stranded the player on a fresh Spring 1 farm with
+        /// the old run's state and the HUD hidden, and the next save kept that mix. Log the step
+        /// and keep going; the rest of the reset still lands.</summary>
+        private void RestoreStep(string name, Action step)
+        {
+            try
+            {
+                step();
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Reset: the '{name}' step failed; continuing the reset without it.\n{ex}", LogLevel.Error);
+            }
         }
 
         /// <summary>
