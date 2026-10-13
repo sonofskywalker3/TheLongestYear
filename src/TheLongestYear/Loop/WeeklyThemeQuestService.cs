@@ -344,21 +344,9 @@ namespace TheLongestYear.Loop
                 LogLevel.Info);
         }
 
-        /// <summary>Egg objects whose DisplayName collides across colors: 174/182 both render as
-        /// "Large Egg" and 176/180 both as "Egg". A bundle slot accepts exactly ONE color, so the
-        /// quest log must name it or the player can't tell which egg the goal wants (khauser13,
-        /// Nexus: "says a large egg but it needed a large brown egg — the white one didn't count").
-        /// Keyed by bare id (qualifier stripped).</summary>
-        private static readonly Dictionary<string, string> AmbiguousEggColors = new(StringComparer.Ordinal)
-        {
-            ["174"] = "egg-color.white",   // Large Egg (white)
-            ["182"] = "egg-color.brown",   // Large Egg (brown)
-            ["176"] = "egg-color.white",   // Egg (white)
-            ["180"] = "egg-color.brown",   // Egg (brown)
-        };
-
-        /// <summary>"DisplayName (Brown) x5 (gold) - Bundle Name" — names the exact slot
-        /// requirement. Quality tags via <see cref="QualityTags"/>.</summary>
+        /// <summary>"DisplayName x5 (gold) - Bundle Name": names the exact slot requirement. An egg
+        /// slot needs no color tag: either color fills it (InterchangeableItems). Quality tags via
+        /// <see cref="QualityTags"/>.</summary>
         private string DescribeSlot(BonusSlot slot)
         {
             string name = slot.ItemId;
@@ -373,8 +361,6 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"Weekly quest: goal item '{slot.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
             }
 
-            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(slot.ItemId), out string colorKey)
-                ? Strings.Get(colorKey) : "";
             string qty = slot.Stack > 1
                 ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = slot.Stack.ToString() })
                 : "";
@@ -382,7 +368,6 @@ namespace TheLongestYear.Loop
             string described = Strings.Get("quest.weekly.slot", new Dictionary<string, string>
             {
                 ["item"] = name,
-                ["color"] = colorTag,
                 ["qty"] = qty,
                 ["quality"] = quality,
                 ["bundle"] = slot.BundleName,
@@ -397,7 +382,7 @@ namespace TheLongestYear.Loop
                 : tagged + Strings.Get("goal.route-tag", new Dictionary<string, string> { ["tag"] = slot.RouteTag });
         }
 
-        /// <summary>"DisplayName (Brown) x5 - Junimo Shrine": a random shrine donation goal, any quality.</summary>
+        /// <summary>"DisplayName x5 - Junimo Shrine": a random shrine donation goal, any quality.</summary>
         private string DescribeShrineGoal(ShrineGoal goal)
         {
             string name = goal.ItemId;
@@ -411,28 +396,14 @@ namespace TheLongestYear.Loop
                 // ItemRegistry may throw for malformed ids; fall back to the raw id.
                 _monitor.Log($"Shrine goal '{goal.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
             }
-            string colorTag = AmbiguousEggColors.TryGetValue(BareItemId(goal.ItemId), out string colorKey)
-                ? Strings.Get(colorKey) : "";
             string qty = goal.Stack > 1
                 ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = goal.Stack.ToString() })
                 : "";
             return Strings.Get("quest.weekly.shrine-slot", new Dictionary<string, string>
             {
                 ["item"] = name,
-                ["color"] = colorTag,
                 ["qty"] = qty,
             });
-        }
-
-        /// <summary>Strip a "(O)"/"(BC)" type prefix from a qualified id, leaving the bare id. Used
-        /// to key the egg-color table regardless of qualifier.</summary>
-        private static string BareItemId(string qualifiedId)
-        {
-            if (string.IsNullOrEmpty(qualifiedId)) return qualifiedId;
-            int close = qualifiedId.IndexOf(')');
-            return close >= 0 && qualifiedId.StartsWith("(", StringComparison.Ordinal)
-                ? qualifiedId[(close + 1)..]
-                : qualifiedId;
         }
 
         /// <summary>The weekly quest for <paramref name="list"/>: the second list's id ends with
