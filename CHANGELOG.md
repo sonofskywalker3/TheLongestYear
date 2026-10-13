@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.95 - 2026-10-12
+
+### Fixed
+
+- **Brown eggs count.** An egg slot takes white or brown eggs of its size, and you can mix colors toward one slot's count. Shrine goals work the same way.
+- **No more Ginger Island fish in bundles.** Lionfish, Stingray and Blue Discus (and Slimejack, which lives only in the Mutant Bug Lair) can no longer be asked for, even when another mod adds them somewhere else. A board that already asks for one gets that slot swapped the next time you load the save.
+
 ## 0.19.93 - 2026-10-10
 
 ### Fixed
