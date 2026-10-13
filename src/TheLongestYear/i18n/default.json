@@ -599,9 +599,9 @@
     "quest.weekly.description": "Bonus: {{bonus}}\nDrawback: {{drawback}}",
     "quest.weekly.mult": "Goal JP: {{mult}}",
     "quest.weekly.progress": "Donated {{done}}/{{total}}:",
-    "quest.weekly.slot": "{{item}}{{color}}{{qty}}{{quality}} - {{bundle}}",
+    "quest.weekly.slot": "{{item}}{{qty}}{{quality}} - {{bundle}}",
     "quest.weekly.qty": " x{{count}}",
-    "quest.weekly.shrine-slot": "{{item}}{{color}}{{qty}} - Junimo Shrine",
+    "quest.weekly.shrine-slot": "{{item}}{{qty}} - Junimo Shrine",
     "goal.stretch-tag": " (stretch)",
     "goal.route-tag": " ({{tag}})",
     "quest.weekly.tip": "Tip: hold matching donations for their theme week - each goal pays 1.5x JP plus its share of the weekly bonus, and finishing every goal lifts the drawback.",
@@ -616,8 +616,6 @@
     "quality.silver": " (silver)",
     "quality.gold": " (gold)",
     "quality.iridium": " (iridium)",
-    "egg-color.white": " (White)",
-    "egg-color.brown": " (Brown)",
 
     // -- book menus / victory / cutscene hint ---------------------------------------
     // menu.books.* are shared by BOTH CookbookMenu and CraftbookMenu, keep the key
