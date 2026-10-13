@@ -39,6 +39,15 @@ public static partial class ItemPoolBuilder
         "(O)907", // Tropical Curry    — island dish
         "(O)873", // Piña Colada       — island resort drink
         "(O)795", // Void Salmon       — Witch's Swamp only, behind the Dark Talisman quest (post-CC)
+        // Island-only fish (Nexus bug report 2026-10-12, iroeny: Weatherman's asked for a Lionfish).
+        // The live Data/Locations rows them only on island maps, which the location markers drop,
+        // but that was the only guard: a mod that rows one on a map of its own put it back in the
+        // fish pool. Banned by id, like the island crops. Slimejack is the Mutant Bug Lair's, behind
+        // the same post-CC quest as Void Salmon.
+        "(O)836", // Stingray: Pirate Cove (IslandSouthEastCave) only
+        "(O)837", // Lionfish: IslandSouth, IslandSouthEast, IslandWest only
+        "(O)838", // Blue Discus: IslandNorth, IslandWest only
+        "(O)796", // Slimejack: Mutant Bug Lair (BugLand) only
         // The five Extended Family fish hang off Mr. Qi's post-CC order (0.16.176 dropped their spawn
         // rows), but a recipe bundle that draws by colour or tag from ALL objects (Dye) never sees a
         // spawn row: board 129 of the 2026-09-04 sweep asked for Son of Crimsonfish. Ban the ids.

@@ -10,7 +10,9 @@ using TheLongestYear.Core.Availability;
 namespace TheLongestYear.Loop
 {
     /// <summary>Swaps provably unreachable asks out of a board that was generated before the
-    /// reachability rule existed (spec 2026-09-10-source-reachability, task 9).
+    /// reachability rule existed (spec 2026-09-10-source-reachability, task 9), and every ask on
+    /// the built-in ban list (<see cref="BoardRepairRules"/>: island fish and crops, post-CC
+    /// content), even when the reachability read vouches for it or failed.
     ///
     /// Runs at save load, not at reset: a player mid-year is holding an old board, and if the
     /// impossible ask is what blocks their season gate, waiting most of an in-game year for the
@@ -105,7 +107,9 @@ namespace TheLongestYear.Loop
         {
             // A farmhand must never write the shared world state (correction 3).
             if (!Context.IsMainPlayer) return 0;
-            if (_reachability == null || _pools == null || _tuning == null) return 0;
+            // A failed reachability read (null) still leaves the built-in bans to enforce
+            // (BoardRepairRules): an island fish on the board is never fine.
+            if (_pools == null || _tuning == null) return 0;
 
             var worldState = Game1.netWorldState?.Value;
             if (worldState?.BundleData == null) return 0;
@@ -158,7 +162,7 @@ namespace TheLongestYear.Loop
 
                     slotsRead++;
                     string oldId = BundleParsing.NormalizeItemId(slot.ItemRef);
-                    if (!_reachability.IsUnreachable(oldId)) continue;
+                    if (!MustReplace(oldId)) continue;
 
                     if (spec == null)
                     {
@@ -296,7 +300,7 @@ namespace TheLongestYear.Loop
                     // would repeat the same line up to MaxDrawAttempts times.
                     attempt == 0 ? note => _monitor?.Log($"Board repair: {note}", LogLevel.Trace) : null);
                 if (pick == null) return null;
-                if (!_reachability.IsUnreachable(pick.ItemId)) return pick;
+                if (!MustReplace(pick.ItemId)) return pick;
                 rejected.Add(pick.ItemId);
             }
             return null;
@@ -370,10 +374,18 @@ namespace TheLongestYear.Loop
                 bundle.Room, bundle.Index, bundle.Name, bundle.Name, "", 0, bundle.NumberOfSlots,
                 slots.Select(s => new BundleSlotSpec(s.ItemRef, s.Stack, s.Quality)).ToList());
 
+        /// <summary>A reachability verdict or a built-in ban (<see cref="BoardRepairRules"/>).</summary>
+        private bool MustReplace(string itemId)
+            => BoardRepairRules.MustReplace(itemId, _reachability == null ? null : _reachability.IsUnreachable);
+
         private string Reason(string itemId)
-            => _reachability.Reasons.TryGetValue(itemId, out string why) && !string.IsNullOrEmpty(why)
+        {
+            string banned = BoardRepairRules.BannedReason(itemId);
+            if (banned != null) return banned;
+            return _reachability != null && _reachability.Reasons.TryGetValue(itemId, out string why) && !string.IsNullOrEmpty(why)
                 ? why
                 : "no reachable source";
+        }
 
         private ParsedBundle TryParse(string key, string value)
         {
