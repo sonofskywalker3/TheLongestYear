@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.96 - 2026-10-14
+
+### Fixed
+
+- **The save right after a rewind works with other mods again.** The game saves as soon as the Junimos rewind you to Spring 1, but that save skipped the save step other mods hook into. With mods like Unlockable Bundles the save failed, and the old save folder stayed behind. The rewind now saves the way a night does, so every mod gets to prepare its data, and the old folder is cleaned up once the save is written.
+
+### Internal
+
+- Debug: `tly_fixcheck weatherprobe add|check` adds a location weather entry the save cannot hold, to check that the rewind save sets it aside and puts it back.
+
 ## 0.19.95 - 2026-10-12
 
 ### Fixed

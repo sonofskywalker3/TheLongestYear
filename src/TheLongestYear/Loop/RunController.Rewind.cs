@@ -263,7 +263,6 @@ namespace TheLongestYear.Loop
                     $"FinalizeReset ({reason}): WorldResetService.LastGeneratedRequirements was null — " +
                     "keeping the previous requirement manifest.",
                     LogLevel.Warn);
-            _reset.ProfessionPicker.DrainOnDayStart();
             // Festival memories: this loop's festivals become the next loop's half-memories. Every
             // rewind path comes through here; BeginNewRun clears the log right after.
             int festivals = Run.FestivalLog?.Count ?? 0;
@@ -280,7 +279,33 @@ namespace TheLongestYear.Loop
             // the stale on-disk meta from before the shrine was opened — refunding the JP the player
             // just spent and dropping their purchases (2026-06-01 playtest: "it refunded all my JP").
             _store.Save();
-            ForceFullSave();
+            // The full save runs through the game's save menu so SMAPI raises Saving and Saved for
+            // every mod (see ResetSave). The rest of the reset waits for it: the planning hub and
+            // the profession pickers would otherwise replace the save menu.
+            if (Game1.eventUp || Game1.currentMinigame != null)
+            {
+                _monitor.Log(
+                    "Day-28 save: skipped (event/minigame active). Save stays loadable via the " +
+                    "inner-file rename; the next sleep will rewrite it.",
+                    LogLevel.Warn);
+                CompleteReset();
+                return;
+            }
+            // The cleanup is bound to this reset service: the deferred SaveLoaded may rebuild
+            // _reset before a delayed save writes, and only this instance knows the old folder.
+            // It deletes the pre-reset folder so the reset leaves exactly one save (no "None2_"
+            // duplicate), and only after a confirmed write, so a failure never destroys the only
+            // loadable copy.
+            WorldResetService reset = _reset;
+            ResetSave.Start(_monitor, onWritten: reset.CleanupAbandonedSaveFolder, after: CompleteReset);
+        }
+
+        /// <summary>The reset's tail, once the post-reset save has settled (or right away when the
+        /// save has to wait for a clear screen): the kept skills' profession pickers, then the
+        /// day-start flow and the week-1 planning hub.</summary>
+        private void CompleteReset()
+        {
+            _reset.ProfessionPicker.DrainOnDayStart();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
             // Re-persist the meta AFTER the hub opened. DoDayStartSeasonAndHub → PresentOffer sets
@@ -296,48 +321,6 @@ namespace TheLongestYear.Loop
             // Restore the HUD hidden for the FAIL cutscene's shop→reset window (OnCutsceneEnded).
             // Safe/no-op on the non-cutscene paths that also call this (post-win, debug, fallback).
             Game1.displayHUD = true;
-        }
-
-        /// <summary>Write a full game save right after the in-place reset so the on-disk save —
-        /// whose folder + inner files PerformReset just renamed to the new uniqueID — holds the
-        /// consistent Spring 1 world NOW, closing the rename window the reset would otherwise leave
-        /// open until the next natural sleep (batch-B notes §4). <c>SaveGame.Save()</c> is an
-        /// enumerator that runs the write on a background task and yields until done, so we drain
-        /// it to completion. Guarded: SaveGame.Save no-ops while an event/minigame is up, and any
-        /// failure degrades to the existing inner-file-rename mitigation (the save stays loadable;
-        /// the next sleep rewrites it) rather than aborting the reset.</summary>
-        private void ForceFullSave()
-        {
-            try
-            {
-                if (Game1.eventUp || Game1.currentMinigame != null)
-                {
-                    _monitor.Log(
-                        "Day-28 save: skipped (event/minigame active). Save stays loadable via the " +
-                        "inner-file rename; the next sleep will rewrite it.",
-                        LogLevel.Warn);
-                    return;
-                }
-
-                var save = StardewValley.SaveGame.Save();
-                while (save.MoveNext()) { }
-
-                _monitor.Log(
-                    "Day-28 save: full save written post-reset — save folder is now consistent at Spring 1.",
-                    LogLevel.Info);
-
-                // The new canonical save folder now exists on disk. Delete the pre-reset folder so
-                // the reset leaves exactly one save (no "None2_" duplicate). Done only here, after a
-                // confirmed save, so a failure/kill earlier never destroys the only loadable copy.
-                _reset.CleanupAbandonedSaveFolder();
-            }
-            catch (System.Exception ex)
-            {
-                _monitor.Log(
-                    $"Day-28 save: forced save failed ({ex.Message}). Save remains loadable via the " +
-                    "inner-file rename; the next natural sleep will rewrite it.",
-                    LogLevel.Warn);
-            }
         }
     }
 }

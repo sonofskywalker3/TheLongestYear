@@ -33,7 +33,7 @@ namespace TheLongestYear.Loop
             // and step 0 above just reseeded it to a fresh value for THIS loop. Two problems rule
             // it out entirely, not just the obvious one:
             //   (a) using the value captured HERE (post-reseed) would make a replayed reset
-            //       reroll: ForceFullSave (called by FinalizeReset right after this method
+            //       reroll: the post-reset save (started by FinalizeReset right after this method
             //       returns) explicitly documents a skip-and-defer-to-next-sleep path when an
             //       event/minigame is active, so "generate+write happened but the save hasn't
             //       landed on disk yet" is a real, reachable window, not just a theoretical

@@ -200,6 +200,8 @@ namespace TheLongestYear
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             helper.Events.GameLoop.Saving += this.OnSaving;
+            // Settles the post-reset save (ResetSave) before the DayStarted SMAPI raises with Saved.
+            helper.Events.GameLoop.Saved += (_, _) => TheLongestYear.Loop.ResetSave.OnSaved();
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
@@ -411,6 +413,10 @@ namespace TheLongestYear
                 // bridge (the bridge must never run commands against a save the mod is dormant on).
                 if (!RunActivation.IsActive)
                     return;
+
+                // Open a post-reset save that waited for a clear screen, or settle one that
+                // closed without a Saved event.
+                TheLongestYear.Loop.ResetSave.Tick();
 
                 // Re-attempt a planning-hub open that was deferred because the menu surface was busy
                 // (the post-win keep-playing dialogue still closing when the new loop's reset fired).

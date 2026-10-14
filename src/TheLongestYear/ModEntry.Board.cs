@@ -32,7 +32,7 @@ namespace TheLongestYear
         ///   BundleData VALUE-for-value via <see cref="EngineManifestCheck.Matches"/> before
         ///   trusting it -- the engine's write-key space is invariant across generations, so
         ///   key-existence alone would pass a live board stuck on an OLDER generation (reachable:
-        ///   MetaStore.Save persists the bumped counters before ForceFullSave writes the world; a
+        ///   MetaStore.Save persists the bumped counters before the post-reset save writes the world; a
         ///   crash/skip in that window reloads with the new meta but the old generation's bundles
         ///   still on the board). A mismatch logs a WARN and falls through to case 3 instead of
         ///   silently serving a manifest that disagrees with what's actually on the CC board.</item>

@@ -198,7 +198,7 @@ namespace TheLongestYear.Loop
         /// left alone. Best-effort: a failure here only re-opens the "save bricks on mid-window kill"
         /// gap, it never corrupts data.</summary>
         /// <summary>Delete the pre-reset save folder recorded in <see cref="PerformReset"/>. Called
-        /// by RunController.ForceFullSave ONLY after the post-reset full save has written the new
+        /// by the post-reset save (ResetSave) ONLY after the post-reset full save has written the new
         /// canonical folder — deleting after the confirmed save guarantees we never remove the
         /// player's only loadable copy (a kill before this point leaves the old folder intact).
         /// The reset always changes <c>uniqueIDForThisGame</c>, so the abandoned folder is always a

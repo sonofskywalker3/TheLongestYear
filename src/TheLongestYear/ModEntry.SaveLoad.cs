@@ -319,6 +319,7 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            TheLongestYear.Loop.ResetSave.Clear();
             TheLongestYear.Loop.GroundDrop.ResetDropsOnGround = false;
             // The quarter baseline belongs to one save's season; carrying it to the title screen would
             // let the next save's quarter 2 plan against the previous save's ledger.

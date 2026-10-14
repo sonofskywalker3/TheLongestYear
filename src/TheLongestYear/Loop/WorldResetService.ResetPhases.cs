@@ -168,7 +168,7 @@ namespace TheLongestYear.Loop
             Game1.weatherForTomorrow = "Sun";
 
             // Record the folder we're abandoning so it can be deleted AFTER the post-reset full save
-            // writes the new canonical folder (RunController.ForceFullSave → CleanupAbandonedSaveFolder).
+            // writes the new canonical folder (ResetSave → CleanupAbandonedSaveFolder).
             // We deliberately DON'T rename it here: Stardew's SaveGame.Save writes to the CANONICAL
             // "<farmName>_<uniqueID>" folder, but the on-disk folder may carry a non-canonical prefix
             // (e.g. "None2_" from an earlier de-dup). Renaming by the old prefix produced a SECOND

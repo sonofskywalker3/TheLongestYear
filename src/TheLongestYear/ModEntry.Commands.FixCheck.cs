@@ -27,7 +27,8 @@ namespace TheLongestYear
             "forage [location] | seed <location> <n> (places n spawned Daffodils) | spawn <location> <n> (runs spawnObjects n times) | " +
             "liab (selection, drawbacks, the Random Pairings drawback for the current week) | nextpick <theme> | " +
             "pairings on|off (in memory) | exhaust (marks every theme picked this month) | " +
-            "greenrain | rod | stashfill | meta";
+            "greenrain | rod | stashfill | meta | " +
+            "weatherprobe add|check (a location weather entry of a non-public type, like Unlockable Bundles keeps mid-day; the next save must survive it)";
 
         private void CmdFixCheck(string command, string[] args)
         {
@@ -65,6 +66,7 @@ namespace TheLongestYear
                 case "greenrain": FixCheckGreenRain(); break;
                 case "rod": FixCheckRod(); break;
                 case "stashfill": FixCheckStashFill(); break;
+                case "weatherprobe": FixCheckWeatherProbe(args.Length > 1 ? args[1] : "add"); break;
                 case "meta":
                     this.Monitor.Log($"tly_fixcheck: BackupDone={_meta.State.BackupDone}, CompletedResets={_meta.State.CompletedResets}, " +
                                      $"PendingResetDrops={_meta.State.PendingResetDrops.Count}, StashItems={_meta.State.StashItems.Count}, " +
@@ -72,6 +74,23 @@ namespace TheLongestYear
                     break;
                 default: this.Monitor.Log(FixCheckUsage, LogLevel.Info); break;
             }
+        }
+
+        /// <summary>Stands in for a mod's non-public LocationWeather subclass (Unlockable Bundles'
+        /// BundleDictionary): XmlSerializer cannot write it, so a save that holds it throws.</summary>
+        private sealed class UnsaveableWeatherProbe : StardewValley.Network.LocationWeather { }
+
+        private const string WeatherProbeKey = "TLY_FixCheckProbe";
+
+        private void FixCheckWeatherProbe(string mode)
+        {
+            var weather = Game1.netWorldState.Value.LocationWeather;
+            if (mode == "add")
+                weather[WeatherProbeKey] = new UnsaveableWeatherProbe();
+            bool present = weather.TryGetValue(WeatherProbeKey, out var probe);
+            this.Monitor.Log(
+                $"tly_fixcheck: weather probe {(mode == "add" ? "added" : "checked")}: present={present}, " +
+                $"type={probe?.GetType().Name ?? "none"}, ResetSave pending={ResetSave.Pending}.", LogLevel.Info);
         }
 
         private static IEnumerable<FarmAnimal> AllFarmAnimals()
