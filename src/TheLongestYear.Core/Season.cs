@@ -19,6 +19,4 @@ public static class SeasonExtensions
             throw new ArgumentOutOfRangeException(nameof(monthIndex), monthIndex, "Month index must be 0-3.");
         return (Season)monthIndex;
     }
-
-    public static int ToMonthIndex(this Season season) => (int)season;
 }

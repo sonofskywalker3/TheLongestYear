@@ -23,7 +23,17 @@ namespace TheLongestYear.Donations
             // LowestMineLevelForOrder is set (the reset pins it), so read through the same getter
             // the elevator menu uses.
             int floor = Game1.netWorldState?.Value == null ? 0 : MineShaft.lowestLevelReached;
-            return new BoostContext(day, TomorrowIsFestival(), levels, floor, skill);
+            return new BoostContext(day, TomorrowIsFestival(), levels, floor, skill, TomorrowIsGreenRain());
+        }
+
+        /// <summary>Tomorrow is vanilla's green rain day (Utility.isGreenRainDay, the same check the
+        /// weather patches use to leave green rain alone).</summary>
+        private static bool TomorrowIsGreenRain()
+        {
+            if (Game1.Date == null) return false;
+            WorldDate tomorrow = new WorldDate(Game1.Date);
+            tomorrow.TotalDays += 1;
+            return Utility.isGreenRainDay(tomorrow.DayOfMonth, tomorrow.Season);
         }
 
         /// <summary>Festival tomorrow, active or passive with a map replacement (Trout Derby,

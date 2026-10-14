@@ -12,7 +12,6 @@ public class MetaStateTests
         var original = new MetaState
         {
             JunimoPoints = 123,
-            StashCapacityTier = 2,
             OwnedUpgrades = { "backpack_1", "cult_redcabbage" }
         };
 
@@ -20,8 +19,17 @@ public class MetaStateTests
         MetaState restored = JsonSerializer.Deserialize<MetaState>(json)!;
 
         Assert.Equal(123, restored.JunimoPoints);
-        Assert.Equal(2, restored.StashCapacityTier);
         Assert.Equal(new[] { "backpack_1", "cult_redcabbage" }, restored.OwnedUpgrades);
+    }
+
+    [Fact]
+    public void Old_save_with_the_removed_stash_capacity_tier_still_loads()
+    {
+        // StashCapacityTier was persisted but never read; SMAPI's Json.NET skips the leftover key.
+        MetaState restored = Newtonsoft.Json.JsonConvert.DeserializeObject<MetaState>(
+            "{\"JunimoPoints\":42,\"StashCapacityTier\":2}")!;
+
+        Assert.Equal(42, restored.JunimoPoints);
     }
 
     [Fact]
@@ -29,7 +37,6 @@ public class MetaStateTests
     {
         var s = new MetaState();
         Assert.Equal(0, s.JunimoPoints);
-        Assert.Equal(0, s.StashCapacityTier);
         Assert.Empty(s.OwnedUpgrades);
     }
 

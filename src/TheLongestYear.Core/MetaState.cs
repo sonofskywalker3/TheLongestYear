@@ -27,9 +27,6 @@ public sealed class MetaState
     /// <summary>IDs of permanently purchased upgrades.</summary>
     public List<string> OwnedUpgrades { get; set; } = new();
 
-    /// <summary>Tier of the Junimo Stash capacity upgrade (0 = base).</summary>
-    public int StashCapacityTier { get; set; }
-
     /// <summary>True once the one-time pre-first-reset save backup has been taken (banked forever).</summary>
     public bool BackupDone { get; set; }
 
@@ -318,6 +315,19 @@ public sealed class MetaState
     /// heart events, and the loops each happened in). Feeds the ending's assembled line.</summary>
     public Dictionary<string, VillagerMemory> VillagerMemory { get; set; } = new();
 
+    /// <summary>Festival memories (deja-vu phase 2, spec 2026-10-09): the latest record of each
+    /// festival from earlier loops, by festival id. Merged from RunState.FestivalLog at every rewind
+    /// (FestivalMemoryStore.Commit); a skipped festival keeps its older record.</summary>
+    public Dictionary<string, FestivalMemory> FestivalMemories { get; set; } = new();
+
+    /// <summary>Every Flower Dance partner from every earlier loop, oldest first, one per loop. Never
+    /// pruned, so the first loop's partner can still remember the dance in loop five.</summary>
+    public List<BondMemory> DancePartners { get; set; } = new();
+
+    /// <summary>Every Winter Star secret friend (the villager the player gave to) from every earlier
+    /// loop, with the gift and how it went over. Oldest first, never pruned.</summary>
+    public List<BondMemory> WinterStarRecipients { get; set; } = new();
+
     /// <summary>
     /// Cooking recipe IDs banked in the Cookbook across runs. Keys match
     /// <c>Farmer.cookingRecipes</c> dictionary keys (vanilla recipe id strings, e.g. "Fried_Egg").
@@ -355,6 +365,10 @@ public sealed class MetaState
     /// every reset by <c>JunimoStashService.PopulateFromMeta</c>.
     /// </summary>
     public List<StashItemRecord> StashItems { get; set; } = new();
+
+    /// <summary>Items the last rewind dropped on the ground, kept until the first night so a quit
+    /// before picking them up does not lose them (see <see cref="ResetGroundDrops"/>).</summary>
+    public List<PendingGroundDrop> PendingResetDrops { get; set; } = new();
 
     /// <summary>
     /// Current slot capacity of the Junimo Stash. Every save gets 4 slots from day 1

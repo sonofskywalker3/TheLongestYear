@@ -7,4 +7,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Direct tests for internal primitives such as WeightedSampler. -->
+    <InternalsVisibleTo Include="TheLongestYear.Tests" />
+  </ItemGroup>
+
 </Project>

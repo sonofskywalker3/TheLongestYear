@@ -6,7 +6,7 @@ using TheLongestYear.Donations;
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// Reconciles the run's vault ledger from the vanilla CC's own paid-state — the source of
+    /// Reconciles the run's vault ledger from the vanilla CC's own paid-state, the source of
     /// truth for whether a money bundle has been paid. Additive only: it unions any vanilla-complete
     /// vault bundle (this save's actual indices, remix-aware) into <see cref="RunState.VaultBundlesPaid"/> via the idempotent
     /// <see cref="DonationService.OnVaultBundlePaid"/>; it never removes.
@@ -27,17 +27,15 @@ namespace TheLongestYear.Integration
             if (!Game1.IsMasterGame || Game1.IsMultiplayer) return;
 
             if (Game1.getLocationFromName("CommunityCenter") is not CommunityCenter cc) return;
-            var dict = Game1.netWorldState.Value?.Bundles?.FieldDict;
-            if (dict == null) return;
+            if (Game1.netWorldState.Value?.Bundles?.FieldDict == null) return;
 
-            foreach (int idx in VaultBundleMap.Indices())
-            {
-                // Guard: isBundleComplete indexes bundles[idx] directly and throws
-                // KeyNotFoundException if the index isn't present (see WorldResetService notes).
-                if (!dict.ContainsKey(idx)) continue;
-                if (cc.isBundleComplete(idx))
-                    DonationService.Active?.OnVaultBundlePaid(idx);
-            }
+            // Read slot 0, the flag vanilla's purchase button sets, NOT cc.isBundleComplete: that
+            // wants all three slots of the money bundle's array true, and vanilla never sets the
+            // other two, so it never saw a paid Vault bundle (VaultRules.IsMoneyBundlePaid).
+            // OnVaultBundlePaid is idempotent per index (RunState.TryMarkVaultBundlePaid), so a
+            // bundle the live DonationObserver already paid for earns no second JP.
+            foreach (int idx in VaultRules.PaidOnBoard(VaultBundleMap.Indices(), cc.bundlesDict()))
+                DonationService.Active?.OnVaultBundlePaid(idx);
         }
     }
 }

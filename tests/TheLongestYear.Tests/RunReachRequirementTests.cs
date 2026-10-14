@@ -45,16 +45,16 @@ public class RunReachRequirementTests
     }
 
     [Theory]
-    [InlineData(4, true)]
-    [InlineData(3, false)]
+    [InlineData(1, true)]
     [InlineData(0, false)]
-    public void Bus_four_is_met_only_with_four_paid(int actualCount, bool expectedMet)
+    public void Bus_is_a_bare_flag(int actual, bool expectedMet)
     {
-        RunReachRequirement? r = RunReachRequirement.Parse("bus:4");
+        RunReachRequirement? r = RunReachRequirement.Parse("bus");
         Assert.NotNull(r);
         Assert.Equal("bus", r!.Metric);
-        Assert.Equal(4, r.Threshold);
-        Assert.Equal(expectedMet, r.IsMet(actualCount));
+        Assert.Null(r.Key);
+        Assert.Equal(1, r.Threshold);
+        Assert.Equal(expectedMet, r.IsMet(actual));
     }
 
     // tanky24u (Nexus, 2026-09-24): "room:BoilerRoom" did not parse, so the evaluator read it as

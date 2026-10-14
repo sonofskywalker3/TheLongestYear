@@ -46,12 +46,14 @@ namespace TheLongestYear.Donations
         /// <summary>The bank, for debug before/after lines.</summary>
         public long JunimoPoints => _store.State.JunimoPoints;
 
-        /// <summary>True when <paramref name="item"/> would fill goal <paramref name="goalIndex"/>
-        /// (right item, any quality, enough in this one stack, goal still open).</summary>
+        /// <summary>True when <paramref name="item"/> would fill goal <paramref name="goalIndex"/>:
+        /// the goal's item or the other color of the same egg, any quality, goal still open, and
+        /// enough of it across the whole inventory (this stack plus every other matching stack).</summary>
         public bool CanFill(int goalIndex, Item item)
             => item != null
                && goalIndex >= 0 && goalIndex < Goals.Count
-               && ShrineGoalRules.CanCredit(Goals[goalIndex], item.QualifiedItemId, item.Quality, item.Stack);
+               && ShrineGoalRules.CanCredit(Goals[goalIndex], item.QualifiedItemId, item.Quality,
+                   ShrineGoalRules.MatchingCount(Goals[goalIndex], HeldStacks(Game1.player)));
 
         /// <summary>The first open goal <paramref name="item"/> can fill, or -1.</summary>
         public int GoalIndexFor(Item item)
@@ -61,9 +63,21 @@ namespace TheLongestYear.Donations
             return -1;
         }
 
-        /// <summary>Donate exactly the goal's stack out of <paramref name="item"/>, which must sit in
-        /// the player's inventory. Marks the goal deposited, pays its JP and refreshes the quest.
-        /// Returns false and changes nothing when the item cannot fill the goal.</summary>
+        /// <summary>The player's inventory as id and stack per slot, empty slots kept so the
+        /// indices line up with <c>Farmer.Items</c>.</summary>
+        private static List<ShrineGoalRules.HeldStack> HeldStacks(Farmer who)
+        {
+            var held = new List<ShrineGoalRules.HeldStack>();
+            if (who?.Items == null) return held;
+            foreach (Item it in who.Items)
+                held.Add(new ShrineGoalRules.HeldStack(it?.QualifiedItemId, it?.Stack ?? 0));
+            return held;
+        }
+
+        /// <summary>Donate exactly the goal's stack, starting with <paramref name="item"/> (which must
+        /// sit in the player's inventory) and topping up from other stacks of the same item or its
+        /// other egg color. Marks the goal deposited, pays its JP and refreshes the quest.
+        /// Returns false and changes nothing when the inventory cannot fill the goal.</summary>
         public bool Donate(int goalIndex, Item item)
         {
             if (!CanFill(goalIndex, item))
@@ -80,10 +94,20 @@ namespace TheLongestYear.Donations
             }
 
             ShrineGoal goal = Goals[goalIndex];
-            if (item.Stack == goal.Stack)
-                who.removeItemFromInventory(item);
-            else
-                item.Stack -= goal.Stack;
+            IReadOnlyList<ShrineGoalRules.Take> plan = ShrineGoalRules.TakePlan(goal, HeldStacks(who), slot);
+            if (plan == null)
+            {
+                _monitor.Log($"Shrine donate refused: no take plan for {item.QualifiedItemId} toward goal {goalIndex}.", LogLevel.Warn);
+                return false;
+            }
+            foreach (ShrineGoalRules.Take take in plan)
+            {
+                Item from = who.Items[take.Slot];
+                if (from.Stack == take.Amount)
+                    who.removeItemFromInventory(from);
+                else
+                    from.Stack -= take.Amount;
+            }
             goal.Deposited = true;
 
             Rarity rarity = ItemRarityResolver.Resolve(goal.ItemId, _config.RarityThresholds);

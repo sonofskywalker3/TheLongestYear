@@ -21,5 +21,20 @@ namespace TheLongestYear.Loop
         public static void Trace(string message) => _monitor?.Log(message, LogLevel.Trace);
         public static void Info(string message)  => _monitor?.Log(message, LogLevel.Info);
         public static void Warn(string message)  => _monitor?.Log(message, LogLevel.Warn);
+
+        private static readonly System.Collections.Generic.HashSet<string> Logged = new();
+
+        /// <summary>Trace a failure once per <paramref name="key"/> for the session, for fallbacks on
+        /// paths that run every frame (a draw call would otherwise log the same line 60 times a second).</summary>
+        public static void TraceOnce(string key, string message)
+        {
+            if (Logged.Add(key)) Trace(message);
+        }
+
+        /// <summary>Warn once per <paramref name="key"/> for the session.</summary>
+        public static void WarnOnce(string key, string message)
+        {
+            if (Logged.Add(key)) Warn(message);
+        }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Tools;
@@ -48,6 +49,10 @@ namespace TheLongestYear.Integration
             DebugLog(sb.ToString());
         }
 
+        /// <summary>The Vault bundles TLY recorded as paid this run (debug readout of the bus reach).</summary>
+        internal static System.Collections.Generic.List<int> PaidThisRun()
+            => _runState?.Invoke()?.VaultBundlesPaid?.ToList() ?? new System.Collections.Generic.List<int>();
+
         /// <summary>Null/empty requirement ⇒ always met (non-reach upgrades). Unknown metric ⇒ false.</summary>
         public static bool Meets(string requirement)
         {
@@ -76,7 +81,11 @@ namespace TheLongestYear.Integration
                 "house"    => p.HouseUpgradeLevel,
                 "pet"      => p.hasPet() ? 1 : 0,
                 "shortcuts" => Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts") ? 1 : 0,
-                "bus"      => _runState?.Invoke()?.VaultBundlesPaid.Count ?? 0,   // 0–4 (deduped on insert)
+                // Keep Bus Unlocked (Jeff, 2026-10-09): every Vault bundle on this board paid this
+                // run, or the Vault room repaired, whichever comes first.
+                VaultRules.BusReachMetric => VaultRules.IsBusRepaired(
+                    _runState?.Invoke()?.VaultBundlesPaid ?? new System.Collections.Generic.List<int>(),
+                    VaultBundleMap.Indices().ToArray(), VaultRoomRepaired()) ? 1 : 0,
                 // The run reached Fall 2, the day vanilla opens the board. Read straight from
                 // DaysPlayed, NOT the (patched) IsSpecialOrdersBoardUnlocked. DaysPlayed only drops
                 // back to 1 inside PerformReset, which runs after the perk screen closes, so the
@@ -88,7 +97,7 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>Data/Bundles room name for a `room:` key (keys carry no spaces).</summary>
-        private static string RoomName(string? key) => key switch
+        private static string RoomName(string key) => key switch
         {
             "Pantry" => "Pantry",
             "CraftsRoom" => "Crafts Room",
@@ -102,28 +111,43 @@ namespace TheLongestYear.Integration
         /// <summary>True when every bundle of the room is complete on the live board. Read from
         /// the board rather than the completion mail so a room finished on the Fail day counts
         /// (its letter is still in mailForTomorrow when the perk screen opens).</summary>
-        public static bool RoomComplete(string? key)
+        public static bool RoomComplete(string key)
         {
             if (Game1.getLocationFromName("CommunityCenter") is not StardewValley.Locations.CommunityCenter cc) return false;
             var data = Game1.netWorldState?.Value?.BundleData;
             var slots = Game1.netWorldState?.Value?.Bundles?.FieldDict;
             if (data == null || slots == null) return false;
             string prefix = RoomName(key) + "/";
+            var slotsByIndex = cc.bundlesDict();
             bool any = false;
             foreach (string bundleKey in data.Keys)
             {
                 if (!bundleKey.StartsWith(prefix, System.StringComparison.Ordinal)) continue;
                 if (!int.TryParse(bundleKey.Substring(prefix.Length), out int index)) continue;
-                if (!slots.ContainsKey(index)) return false;
+                if (!slots.ContainsKey(index) || !slotsByIndex.TryGetValue(index, out bool[] bundleSlots)) return false;
                 any = true;
-                if (!cc.isBundleComplete(index)) return false;
+                // A paid Vault bundle sets only slot 0, so isBundleComplete never sees it (VaultRules).
+                if (!VaultRules.IsRoomBundleDone(RoomName(key), cc.isBundleComplete(index), bundleSlots)) return false;
             }
             return any;
         }
 
+        private const string VaultRepairedMail = "ccVault";
+
+        /// <summary>The Vault room counts as repaired once vanilla marks the area complete or sends
+        /// its completion mail (the bus repair).</summary>
+        internal static bool VaultRoomRepaired()
+        {
+            if (Game1.getLocationFromName("CommunityCenter") is StardewValley.Locations.CommunityCenter cc
+                && cc.areasComplete.Count > StardewValley.Locations.CommunityCenter.AREA_Vault
+                && cc.areasComplete[StardewValley.Locations.CommunityCenter.AREA_Vault])
+                return true;
+            return Game1.MasterPlayer?.mailReceived.Contains(VaultRepairedMail) == true;
+        }
+
         /// <summary>Some wallet getters read Game1.MasterPlayer (HasRustyKey, HasSkullKey, the Dwarvish
         /// guide); single-player that is the same Farmer, so check both sides to be safe.</summary>
-        private static bool HasMail(Farmer p, string? flag) =>
+        private static bool HasMail(Farmer p, string flag) =>
             flag != null && (p.mailReceived.Contains(flag)
                 || (Game1.MasterPlayer != null && Game1.MasterPlayer.mailReceived.Contains(flag)));
 

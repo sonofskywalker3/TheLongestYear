@@ -228,12 +228,20 @@ public sealed class RunState
     /// <summary>Deja-vu dialogue: days-played stamp of the last line anywhere in town (-1 = none).</summary>
     public int DejaVuLastDay { get; set; } = -1;
 
+    /// <summary>Festival memories (deja-vu phase 2): what the player did at each festival THIS loop,
+    /// by festival id. Merged into MetaState.FestivalMemories at the rewind and never read as a memory
+    /// before then, so a line is always about an earlier loop.</summary>
+    public Dictionary<string, FestivalMemory> FestivalLog { get; set; } = new();
+
+    /// <summary>Festival memories: festivals whose one memory for this loop has been heard.</summary>
+    public List<string> FestivalMemoryHeard { get; set; } = new();
+
     /// <summary>Deja-vu rollup: Farmer.eventsSeen as of the last rollup, so tonight's new heart
     /// events can be counted by difference.</summary>
     public List<string> EventsSeenAtDayStart { get; set; } = new();
 
     /// <summary>
-    /// Vault bundle indices paid this run (vanilla 1.6: 34=2500g, 35=5000g, 36=10000g, 37=25000g).
+    /// Vault bundle indices paid this run (vanilla 1.6.15: 23=2500g, 24=5000g, 25=10000g, 26=25000g).
     /// Each season's gate requires the bundle of matching tier to be paid by day 28; missing it
     /// fails the run. The keep_bus_unlocked Buildings upgrade auto-satisfies all four.
     /// </summary>
@@ -515,6 +523,21 @@ public sealed class RunState
         ClearReroll();
     }
 
+    /// <summary>A week with no theme (the empty-offer backstop): last week's pick, drawback, goal
+    /// slots and shrine goals end, so nothing of it carries on. The month's picks stay counted.</summary>
+    public void SkipWeek()
+    {
+        CurrentSelection = null;
+        CurrentLiabilityId = null;
+        CurrentGoalMultiplier = 1.0;
+        ClearSecondSelection();
+        CurrentWeekShrineGoals.Clear();
+        CurrentWeekBonusItems.Clear();
+        CurrentWeekBonusSlots.Clear();
+        LiabilitySuppressedThisWeek = false;
+        ClearReroll();
+    }
+
     /// <summary>Advance to a new month: change season, reset to day 1, clear selections. Donations
     /// persist. If <see cref="NextMonthSelection"/> was set (Sunday-night day-28 pre-pick), apply
     /// it as the new month's week-1 selection before clearing.</summary>
@@ -550,6 +573,10 @@ public sealed class RunState
     {
         RunNumber += 1;
         Seed = seed;
+        // A day-28 outcome still queued belongs to the old loop (a debug tly_reset after a gate
+        // night): left set, the next load replayed its scene on the new loop's Spring 1.
+        PendingDay28 = Day28.Day28Branch.None;
+        RestartMenusDone = false;
         Season = Season.Spring;
         DayOfMonth = 1;
         DonatedItemIds.Clear();
@@ -626,5 +653,11 @@ public sealed class RunState
         (JojaLetterDays ??= new()).Clear();
         JojaLettersSent = 0;
         JojaDecisionLettersSent = 0;
+        // Deja-vu caps are per loop. The weekly stamp is a DaysPlayed value, which the rewind puts
+        // back to 1, so a kept stamp would block every line until the new loop passed the old one.
+        DejaVuRules.ResetForNewLoop(this);
+        // Festival memories: this loop's log was committed to meta just before (FinalizeReset).
+        (FestivalLog ??= new()).Clear();
+        (FestivalMemoryHeard ??= new()).Clear();
     }
 }

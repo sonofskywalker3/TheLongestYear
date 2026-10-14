@@ -101,7 +101,8 @@ public static class FlavoredSlotRules
 
     /// <summary>How a flavored slot's own id is written into the bundle data: vanilla's
     /// PreserveType name, unqualified. Anything else comes back unchanged.</summary>
-    public static string WrittenIdFor(string baseItemId)
+    [return: System.Diagnostics.CodeAnalysis.NotNullIfNotNull(nameof(baseItemId))]
+    public static string? WrittenIdFor(string? baseItemId)
         => PreserveTypeNames.TryGetValue(BundleParsing.NormalizeItemId(baseItemId ?? ""), out string? name)
             ? name
             : baseItemId;

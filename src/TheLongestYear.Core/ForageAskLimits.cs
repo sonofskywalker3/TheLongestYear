@@ -279,7 +279,7 @@ public static class ForageAskLimits
     /// season for it, so the item's best season is the one that will be asking. Taking the maximum
     /// is deliberately the safe direction - it can never clamp BELOW what that bundle's own season
     /// can produce, so this can only ever be too lenient, never impossible.</summary>
-    public static int? MaxAskAnySeason(string itemId)
+    public static int? MaxAskAnySeason(string? itemId)
     {
         if (itemId == null || IsWildSeedGrowable(itemId)) return null;
         int? ruled = RuledMaxAsk(itemId);
@@ -292,7 +292,7 @@ public static class ForageAskLimits
     }
 
     /// <summary>Clamp without a season. See <see cref="MaxAskAnySeason"/>.</summary>
-    public static int ClampAnySeason(string itemId, int stack)
+    public static int ClampAnySeason(string? itemId, int stack)
     {
         int? max = MaxAskAnySeason(itemId);
         return max == null || stack <= max.Value ? stack : max.Value;

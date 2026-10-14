@@ -1,0 +1,33 @@
+0.19.95 - Animals tab, festival memories, Bundles per room, and a pile of fixes
+
+Covers everything since 0.19.21.
+
+Added
+- A new Animals tab in the upgrade menu with thirteen animal powers (Morning Rounds, Warm Welcome I to III, Quick Growth, Fast Hatch, Growing Herd, Snug Barn, Busy Coop, Busy Barn, Molting Season, Lucky Rabbits, Truffle Hog, Swift Horse, Horse Flute, Loyal Pet). Your existing animal upgrades moved there at the same prices.
+- Festival memories: from the second loop, villagers sometimes half-remember what you did at a festival in an earlier loop. No gameplay effect; toggle in Features.
+- Bundles per room difficulty option for TLY Custom boards (Easy, Normal, Hard, Extreme), including the Vault.
+
+Changed
+- Keep Bus Unlocked unlocks once the bus is repaired (every Vault bundle paid, or the Vault room done).
+- Quick Growth: a baby animal grows up after its first night with food. 400 JP.
+- Smaller SMAPI logs.
+
+Fixed
+- Brown eggs count: an egg slot takes white or brown eggs of its size, and you can mix them. Thanks to flutegir.
+- Ginger Island fish (Lionfish, Stingray, Blue Discus) and Slimejack can no longer be asked for, even when another mod adds them elsewhere. A board that already asks for one gets the slot swapped on load. Thanks to iroeny.
+- The rewind no longer stops halfway when one carry-over fails, and a failed save backup no longer cancels it or leaves a broken copy behind.
+- Kept buildings come back on their own spot, and a kept coop no longer lands on Meadowlands' starter Coop.
+- Stashed items from a mod you switched off for a session are kept.
+- Kept decor dropped on the ground is no longer lost if you quit on Spring 1.
+- A new farm quit before its first night keeps the choices you made when you created it.
+- The second milk or wool from Kitchen week and Double Yolk now shows up; Morning Rounds pets Herd Book animals on day 1.
+- Forager's Eye no longer multiplies old forage; Mixed week's extra drop works on full-grown trees.
+- Rain Dance and Storm Call can't be bought the day before green rain.
+- Random Pairings keeps the drawback its card showed after a reload across a month change; a week with no theme no longer keeps last week's running.
+- Villagers' deja vu lines come back every loop; dance partner memories now show.
+- Keep Rod owners no longer get Willy's rod scene and a spare Bamboo Pole each loop.
+- Vault payments: a paid Vault room counts as done, and a missed payment is picked up overnight.
+- Starting a new loop after a win offers the Cookbook, Craftbook and Herd Book before the rewind.
+- Bundles per room on Normal really changes nothing.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

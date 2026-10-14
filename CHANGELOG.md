@@ -35,6 +35,288 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|show|talk|click|arm|fresh` (`talk` runs a real conversation, `fresh` makes a villager unmet again); `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
+## 0.19.97 - 2026-10-14
+
+### Fixed
+
+- **Fixed: island fish and forage from other mods' maps stay off the board.** Some mods add new spots you reach through Ginger Island, like the rainforest in Forager's Nooks and Crannies. Anything you could only get there could still end up in a year-one bundle. TLY now checks whether you can actually walk to a spot from your farm without going through the island, so island-only catches and forage stay off the board no matter which mod adds them, and so does anything sold only at the island shops. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report and the log.
+- Ginger Island dig spots and random shop stock that a shop's own condition filters out no longer count as a way to get an item in year one.
+
+## 0.19.96 - 2026-10-14
+
+### Fixed
+
+- **The save right after a rewind works with other mods again.** The game saves as soon as the Junimos rewind you to Spring 1, but that save skipped the save step other mods hook into. With mods like Unlockable Bundles the save failed, and the old save folder stayed behind. The rewind now saves the way a night does, so every mod gets to prepare its data, and the old folder is cleaned up once the save is written.
+
+### Internal
+
+- Debug: `tly_fixcheck weatherprobe add|check` adds a location weather entry the save cannot hold, to check that the rewind save sets it aside and puts it back.
+
+## 0.19.95 - 2026-10-12
+
+### Fixed
+
+- **Brown eggs count.** An egg slot takes white or brown eggs of its size, and you can mix colors toward one slot's count. Shrine goals work the same way.
+- **No more Ginger Island fish in bundles.** Lionfish, Stingray and Blue Discus (and Slimejack, which lives only in the Mutant Bug Lair) can no longer be asked for, even when another mod adds them somewhere else. A board that already asks for one gets that slot swapped the next time you load the save.
+
+## 0.19.93 - 2026-10-10
+
+### Fixed
+
+- **A save backup that fails partway no longer leaves a broken copy behind.** When the one-time backup before your first rewind could not finish, the half-written copy stayed in the backups folder looking like a real backup. It is now removed, and the backup is tried again at the next rewind.
+
+## 0.19.92 - 2026-10-10
+
+### Internal
+
+- Debug: `tly_fixcheck` drives the headless live checks of the core-systems fixes (milk pail and shears on owed animals, unknown-mod stash records, a forced restore-step failure, felled trees, forage seeding and spawn passes, the Random Pairings drawback, an exhausted offer, green rain days, rods).
+
+## 0.19.91 - 2026-10-10
+
+### Fixed
+
+- **A failed save backup no longer stops the rewind.** The one-time backup before your first rewind used to cancel the whole rewind if it couldn't be written, which left you in the next season as if the gate had passed. The rewind now goes ahead, and the backup is tried again next time.
+
+## 0.19.60 - 2026-10-09
+
+### Internal
+
+- FarmerReset: correct the Horse Flute comment (the stable restore runs after Apply; the flute finds the horse at use)
+
+## 0.19.59 - 2026-10-09
+
+### Fixed
+
+- **Bundles per room on Normal really changes nothing.** Normal quietly capped every room at 6 bundles, so a content mod's room with more lost one, and an older save's board could stop matching what the mod expected. Normal now keeps every room exactly as it is.
+
+## 0.19.58 - 2026-10-09
+
+### Fixed
+
+- **Morning Rounds now pets your Herd Book animals on the first day of a loop.** They come back after the morning's petting has already run, and the arrival check skipped them, so they went unpetted on day 1.
+
+## 0.19.57 - 2026-10-09
+
+### Fixed
+
+- Debug: `tly_reset` while a day-28 outcome is still queued no longer replays the old scene on the new loop's Spring 1.
+
+## 0.19.56 - 2026-10-09
+
+### Internal
+
+- Wild seed grow-completely fix stays dormant on non-TLY saves (RunActivation gate)
+
+## 0.19.55 - 2026-10-09
+
+### Changed
+
+- **Smaller SMAPI logs.** Two old diagnostic lines wrote to the log for every rock you broke and many times a second while a chest was open. They are gone.
+
+## 0.19.54 - 2026-10-09
+
+### Fixed
+
+- **Keep Rod owners no longer get Willy's rod scene and a spare Bamboo Pole each loop.** The check meant to skip that scene was wiped by the rewind before it could work. The scene is now skipped when you start the loop with your kept rod.
+
+## 0.19.53 - 2026-10-09
+
+### Fixed
+
+- **A week with no theme to offer no longer keeps last week's theme running.** Late in Winter the planning board can have nothing left to offer, and the mod skips that week's pick. Last week's bonus, drawback and goals stayed active through it. That week now really runs with no theme.
+
+## 0.19.52 - 2026-10-09
+
+### Fixed
+
+- **Rain Dance and Storm Call can no longer be bought the day before green rain.** Green rain always wins over the weather you bought, so the JP was wasted. They are now unavailable that day, like the day before a festival.
+
+## 0.19.51 - 2026-10-09
+
+### Fixed
+
+- **With Random Pairings on, a new month's first week keeps the drawback its card showed after a reload.** If the game was loaded right across a month change, week 1 ran the theme's usual drawback instead of the paired one you picked.
+
+## 0.19.50 - 2026-10-09
+
+### Fixed
+
+- **Kept decor and furniture the rewind drops on the ground are no longer lost if you quit on Spring 1.** When Keep Farm Decor or Keep Farmhouse Furniture had no room and the stash was full, the extra pieces were dropped on the ground, but the game never saves ground items, so quitting before picking them up lost them. They now come back on the ground when you load, until your first night.
+
+## 0.19.49 - 2026-10-09
+
+### Fixed
+
+- **Forager's Eye no longer piles up copies of old forage.** It rolled every forage item already on the map each time the game spawned forage, up to four times a day, including yesterday's leftovers and its own copies, so unpicked forage kept multiplying (and it still cloned on Mining week's no-forage days). It now rolls only the forage that just appeared.
+
+## 0.19.48 - 2026-10-09
+
+### Fixed
+
+- **Mixed week's extra drop now works on full-grown trees.** The bonus only looked at what fell during the axe swing, but a big tree drops its wood, sap and seeds a moment later when it hits the ground, so only stumps and saplings ever got the extra item.
+
+## 0.19.47 - 2026-10-09
+
+### Fixed
+
+- **A new farm quit before its first night keeps the choices you made when you created it.** The Community Center bundle choice (Normal, Remixed or TLY Custom), the mod items setting and Skip intro were only saved at the end of the first day, so quitting earlier brought the farm back on TLY Custom bundles with mod items on and replayed the intro. They are now saved with the new farm.
+
+## 0.19.46 - 2026-10-09
+
+### Fixed
+
+- **One broken carry-over can no longer strand the rewind half done.** If putting back one kept thing (a building, the horse, the Herd Book animals, the stash and so on) hit an error, the whole rewind stopped there and left a fresh farm with the old run's progress. Each of those steps now logs its error and the rewind carries on.
+
+## 0.19.45 - 2026-10-09
+
+### Fixed
+
+- **Stashed items from a mod you turned off for a session are no longer lost.** If you played without a mod whose items were in the Junimo Stash, those items could not be shown, and the next save threw them away. They now wait in the stash data, untouched, and come back when the mod is on again.
+
+## 0.19.44 - 2026-10-09
+
+### Fixed
+
+- **A kept Big Coop or Deluxe Coop no longer lands on top of Meadowlands' starter Coop.** Meadowlands always starts with a Coop, and the rewind only looked for a coop of the exact same size, so it built your kept coop over the starter one. The kept coop now replaces it, and the two starter chickens move in.
+
+## 0.19.43 - 2026-10-09
+
+### Fixed
+
+- **Starting a new loop after a win now offers the Cookbook, Craftbook and Herd Book before the rewind.** The answer to the win question ran the rewind while the question box was still on screen, so the books could not open and the reset cleared your recipes and herd without letting you bank them.
+
+## 0.19.42 - 2026-10-09
+
+### Fixed
+
+- **The second milk or wool from Kitchen week and Double Yolk now shows up.** The bonus rolled and logged that a cow, goat or sheep would give a second product, but the game forgot which animal you had just milked or sheared before the mod could hand it back, so you never got it. Pigs and eggs were not affected.
+
+## 0.19.41 - 2026-10-09
+
+### Added
+
+- Debug: `tly_animalpowers pet [friendship]`, `count` and `add <type> <n> [x y]` for headless animal power checks.
+
+## 0.19.40 - 2026-10-09
+
+3571 tests.
+
+### Fixed
+
+- **A paid Vault room now counts as done when the mod checks the Community Center room by room.** That check asked the game whether each Vault bundle was complete, and the game never says so for a bundle bought with gold, so the Vault always read as open (`tly_runstate` showed `Vault=OPEN` with every Vault bundle paid). It decided whether the Community Center counts as finished before the hall itself is restored. It now reads the purchase flag the Vault page sets.
+
+## 0.19.39 - 2026-10-09
+
+### Added
+
+- Debug commands for headless live checks: `tly_festmem pot`, `give` and `score` (the Luau pot, the secret gift, the egg hunt score), `tly_animalpowers pet` (pets every pet the way a click does), `tly_bundlecount bus` (Keep Bus Unlocked's reach, path by path) and `tly_bundlecount exit` (closes the Vault page with the game's own restore cutscene).
+
+## 0.19.38 - 2026-10-09
+
+3567 tests.
+
+### Fixed
+
+- **A Vault payment the mod missed is now picked up overnight.** The nightly check that catches Vault bundles paid but not recorded (for example, paid on an older mod version) never saw any paid Vault bundle, so it did nothing. It now finds them and gives their JP, once per bundle; a payment already counted when you made it is never paid twice.
+
+## 0.19.37 - 2026-10-09
+
+3559 tests.
+
+### Changed
+
+- **Keep Bus Unlocked unlocks once the bus is repaired** (was: once four Vault bundles were paid). Pay every Vault bundle on your board, or finish the Vault room, whichever comes first. On a Hard or Extreme board (five or six Vault bundles) four paid is no longer enough, and on Easy all three are. The unlock hint now reads "unlocked once every Vault bundle is paid".
+
+## 0.19.36 - 2026-10-09
+
+3552 tests.
+
+### Changed
+
+- **Quick Growth now makes baby animals grow up overnight** (was: half the time). Any baby animal you buy, hatch or get from a barn birth is an adult after its first night with food. It costs 400 JP (was 350). If you already own it, you keep it.
+## 0.19.35 - 2026-10-09
+
+3553 tests. Covers 0.19.33 to 0.19.35 (not released yet).
+
+### Changed
+
+- **Bundles per room now changes the Vault too (TLY Custom boards only).** Easy drops the most expensive Vault bundle, leaving three (3,125g, 6,250g and 12,500g). Normal keeps the usual four. Hard adds a fifth at twice the price of the most expensive one (62,500g). Extreme adds a fifth and a sixth (62,500g and 100,000g). The bus is repaired once every Vault bundle on your board is paid. The season checkpoints still ask for one Vault bundle by Spring, two by Summer, three by Fall and four by Winter, but never more than your board has, so on Easy three is enough for Winter. Like the rest of the option, it takes effect when a new board is rolled, and a board you keep on a Fail night keeps its Vault.
+
+### Fixed
+
+- **`tly_gatecheck` shows the Vault prices your board really asks for** (3,125g and up on a TLY Custom board), not the game's base prices.
+
+### Added
+
+- Debug command `tly_bundlecount buy` pays a Vault bundle through the Vault page's own button, and `tly_bundlecount close` closes the page.
+
+## 0.19.32 - 2026-10-09
+
+3523 tests.
+
+### Fixed
+
+- **A dance partner's festival memory now actually shows.** When someone you'd danced with in an earlier loop said yes again, the memory was added as a second page of her answer, but the box closed after the first page, so you never saw it. The same applied to your secret friend's memory at the Feast of the Winter Star. Both now show as the next page.
+
+## 0.19.31 - 2026-10-09
+
+3520 tests. Covers 0.19.24 to 0.19.31 (not released yet).
+
+### Added
+
+- **A new difficulty option, Bundles per room (TLY Custom boards only).** Easy gives each Community Center room one or two fewer bundles, never below 2. Normal is the usual count. Hard adds one or two. Extreme fills every room to 9. Extra bundles come from the same pool as the rest, are due in their own season and pay JP like any other. The Vault and the Missing Bundle never change, and Normal and Remixed boards stay as they are. It takes effect when a new board is rolled; a board you keep on a Fail night keeps its count. Thanks to ThirteenRedCats for the idea.
+- **Festival memories.** From the second loop, villagers at a festival sometimes half-remember what you did there in an earlier loop: the egg hunt you won or lost, the soup you made, your grange display, the ice fishing contest, the golden pumpkin, or that you came at all. Each villager at the festival has a 20% chance to carry one; the first you hear is that festival's memory for the loop, and the rest go quiet. Thanks to u/Gribbleby, whose idea the half-remembering town was.
+  - **Win the egg hunt and someone will remember it** at the next Egg Festival.
+  - **Dance partners and secret friends never forget.** Everyone you have danced with, in any loop, has a 50% chance to remember it when you ask again or when you dance with someone else. Everyone you have given a secret gift to may remember it at the Feast of the Winter Star, and so might this year's secret friend after you give your gift.
+  - **Some memories come right after the result**: Abigail after the egg hunt, Gus after the Governor tastes the soup, Pierre after the grange judging, Willy after the ice fishing.
+  - Dancing with someone and the secret gift now count toward how well the town remembers you.
+  - No gameplay effect. Toggle "Festival memories" in Features (needs deja-vu dialogue on).
+- Debug commands `tly_bundlecount` (bundles per room, open a room page, set the dial) and `tly_festmem` (status, set, partner, recipient, clear, commit, force, talk, start, click).
+
+### Fixed
+
+- **The Vault's fallback bundle numbers match the game again (23 to 26).** Only used when a save's board has no Vault room, so nobody should have noticed.
+
+## 0.19.30 - 2026-10-09
+
+3344 tests.
+
+### Added
+
+- **A new Animals tab in the upgrade menu, with thirteen animal powers.** They are permanent, like every other upgrade, and none of them makes a bundle ask for more.
+  - **Morning Rounds:** every animal on your farm gets petted each morning, like an Auto-Petter.
+  - **Warm Welcome I, II and III:** new animals arrive with 1, 2 or 3 hearts. Animals coming back from the Herd Book keep their own hearts.
+  - **Quick Growth:** baby animals grow up in half the time (a chicken in 2 days instead of 3, a pig in 5 instead of 10).
+  - **Fast Hatch:** eggs in an incubator hatch in half the time.
+  - **Growing Herd:** cows, goats, sheep and pigs give birth more often (about four times as often, and a night's birth is never wasted on a baby or an ostrich). Shows up once you've had a Big Barn.
+  - **Snug Barn:** on rainy and Winter days (and the snow day) your animals stay happy indoors in the evening.
+  - **Busy Coop and Busy Barn:** ducks lay every day and rabbits every 2 days; goats and sheep produce every day.
+  - **Molting Season:** ducks have an extra 25% chance to leave a Duck Feather instead of an egg, at any heart level. Shows up once you've owned a duck.
+  - **Lucky Rabbits:** rabbits always leave a Rabbit's Foot instead of Wool. Shows up once you've owned a rabbit.
+  - **Truffle Hog:** each truffle a pig digs up has a 25% chance to be two. Shows up once you've owned a pig.
+  - **Swift Horse:** your horse runs about 10% faster. Needs Keep Horse.
+  - **Horse Flute:** start every loop with a Horse Flute. Needs Keep Horse.
+  - **Loyal Pet:** your pet brings presents twice as often, starting at 3 hearts instead of 5.
+
+### Changed
+
+- **Your animal upgrades moved to the Animals tab:** Keep Horse, Keep Pet, Keep Coop and Keep Barn (and their bigger versions), Keep Silo, every "Start with" animal and the Herd Book. Same prices, and anything you already own stays owned. Keep Fish Pond stays under Buildings.
+
+## 0.19.23 - 2026-10-09
+
+3240 tests.
+
+### Fixed
+
+- **Villagers' déjà-vu lines come back every loop again.** The "one line per villager per loop, one a week in town" limits were never reset by the rewind, so a villager who'd said a line once never said another, and after a rewind the weekly limit could go quiet for most of the new loop. Both limits now start fresh at every rewind. Saves already stuck are fixed on load, or at the next rewind at the latest.
+
+## 0.19.22 - 2026-10-09
+
+3235 tests.
+
+### Fixed
+
+- **A kept building no longer jumps onto your other building's spot.** With two buildings of one kind (say your kept Big Coop plus a second Coop you built later, or two Silos), the rewind put the kept one back where the newer one stood. Now it comes back where it was: the bigger building wins, and between two of the same size it's the one the last rewind put back (or the first one you built). Checked live: a kept Big Coop at (52,20) and Silo at (44,20), with a second Coop at (60,28) and Silo at (36,28), both came back on their own spots.
 
 ## 0.19.21 - 2026-10-09
 

@@ -36,7 +36,8 @@ public sealed class GameplayConfig
     /// Data/Bundles "name" field, e.g. "Crab Pot", "Artisan"); value is a 4-int array of
     /// cumulative donations required by [Spring, Summer, Fall, Winter] day 28. Used by KIND 3
     /// Percentage bundles only — see <see cref="BundleKind.Percentage"/>. User entries OVERRIDE
-    /// <see cref="DefaultBundleQuotas"/> on conflict.
+    /// <see cref="DefaultBundleQuotas"/> on conflict; an entry that is not four counts, or has a
+    /// negative one, is logged and skipped (<see cref="ConfigOverrides.MergeQuotas"/>).
     /// </summary>
     public Dictionary<string, int[]> BundleQuotas { get; set; } = new();
 
@@ -106,18 +107,6 @@ public sealed class GameplayConfig
 
     /// <summary>Price cutoffs used to derive an item's rarity (and thus its JP value).</summary>
     public RarityThresholds RarityThresholds { get; set; } = new RarityThresholds();
-
-    /// <summary>Number of weather preview rows shown on the planning hub. Hidden by default
-    /// (count = 0); Plan 06 will compute this dynamically from owned Weather Sage upgrades.</summary>
-    public int DefaultWeatherPreviewSlots { get; set; } = 0;
-
-    /// <summary>Number of Traveling Cart preview rows shown on the planning hub. Hidden by default
-    /// (count = 0); Plan 06 will compute this dynamically from owned Cart Whisperer tiers.</summary>
-    public int DefaultCartPreviewSlots { get; set; } = 0;
-
-    /// <summary>SButton name (parsed mod-side) for the hotkey that reopens the weekly planning hub. Default: 'P'.
-    /// (unused in v1; Plan 06 will re-enable the hotkey)</summary>
-    public string WeeklyHubHotkey { get; set; } = "P";
 
     /// <summary>Master switch for The Longest Year. When false, TLY does no setup at SaveLoaded
     /// and no game effects fire. Use the in-game GMCM (if installed) to toggle, or edit
@@ -259,4 +248,16 @@ public sealed class GameplayConfig
     /// <summary>Percent chance per eligible conversation. Capped to one line per villager per loop
     /// and one line per week across the whole town regardless of this value.</summary>
     public int DejaVuChancePercent { get; set; } = 6;
+
+    /// <summary>Festival memories (deja-vu phase 2, spec 2026-10-09): from the second loop, villagers at
+    /// a festival sometimes half-remember what the player did there in an earlier loop. Does nothing
+    /// while <see cref="EnableDejaVuDialogue"/> is off. No mechanical effect. GMCM "Features".</summary>
+    public bool EnableDejaVuFestivalMemories { get; set; } = true;
+
+    /// <summary>Percent chance each villager at a festival carries its memory. No friendship gate
+    /// (Jeff: "for festivals don't take any friendship into account"); one memory per festival per loop.</summary>
+    public int DejaVuFestivalChancePercent { get; set; } = 20;
+
+    /// <summary>Percent chance for a past Flower Dance partner or past secret friend.</summary>
+    public int DejaVuFestivalBondChancePercent { get; set; } = 50;
 }

@@ -49,10 +49,28 @@ namespace TheLongestYear.Loop
                 meta.BackupDone = true;
                 monitor.Log($"One-time save backup written to: {dest}", LogLevel.Info);
             }
-            catch (IOException ex)
+            // A failed backup no longer aborts the reset (Jeff, 2026-10-10): an aborted rewind left the
+            // player in the next season with the failed gate never applied, a free gate clear. The
+            // backup is one-time insurance; BackupDone stays false so the next rewind tries again.
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                monitor.Log($"Save backup FAILED ({ex.Message}); reset aborted to protect the save.", LogLevel.Error);
-                throw;
+                monitor.Log($"Save backup failed ({ex.Message}); the rewind goes ahead without it and the next rewind retries.", LogLevel.Warn);
+                RemovePartialCopy(dest, monitor);
+            }
+        }
+
+        /// <summary>A copy that failed partway is not a backup: left in the backups folder it reads
+        /// like one, and a player restoring from it would get a save with files missing.</summary>
+        private static void RemovePartialCopy(string dest, IMonitor monitor)
+        {
+            try
+            {
+                if (Directory.Exists(dest))
+                    Directory.Delete(dest, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                monitor.Log($"Save backup: could not remove the partial copy at {dest} ({ex.Message}).", LogLevel.Warn);
             }
         }
 

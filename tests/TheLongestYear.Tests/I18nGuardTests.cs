@@ -23,7 +23,7 @@ public class I18nGuardTests
     public I18nGuardTests(I18nFixture fixture) => _fixture = fixture;
 
     private static string SrcRoot =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src"));
+        Path.Combine(I18nFixture.RepoRoot, "src");
 
     /// <summary>Matches <c>Strings.Get("key", ...)</c> and the ternary-selected-key form
     /// <c>Strings.Get(cond ? "key-a" : "key-b", ...)</c> (e.g. JunimoStashCapPatch's
@@ -142,6 +142,9 @@ public class I18nGuardTests
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
             foreach (string key in TheLongestYear.Core.Sabotage.WitnessLines.AllKeys)
+                _ = Strings.Get(key);
+            // festmem.* is resolved from the key set at runtime too (FestivalMemoryLines).
+            foreach (string key in FestivalMemoryLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
             // reach.* keys are built from the reach metric (ReachText.Describe); walk every catalog requirement.
             foreach (var def in UpgradeCatalog.All)
@@ -285,11 +288,13 @@ public class I18nGuardTests
     /// already asserts no "{{" survives in resolved catalog output, which is strictly stronger proof
     /// for that family than a per-key token match here would be.</summary>
     private static readonly string[] ExcludedTokenFamilies =
-        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "event.ending.crack.tier" };
+        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "event.ending.crack.tier", "festmem." };
     // reach.*: ReachText builds the key from the metric (ReachTextTests covers it).
     // event.ending.crack.tier*: the {{scene}} token is supplied at a call site whose key is a
     // variable (the ending injector builds it via EndingLine.MiddleKey), so the literal-scanning
     // token check above can never see that call site.
+    // festmem.*: FestivalMemoryLines picks the key from the key set and drops a line with an
+    // unfilled token (FestivalMemoryLinesTests covers it).
 
     /// <summary>
     /// For every default.json value containing a <c>{{token}}</c> placeholder (outside the

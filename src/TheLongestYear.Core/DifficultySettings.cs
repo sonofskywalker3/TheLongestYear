@@ -3,9 +3,9 @@ using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>The configured difficulty modifiers: the nine original dials plus Darkness, serialized
-/// into <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
-/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
+/// <summary>The configured difficulty modifiers: the nine original dials plus Bundle Count and
+/// Darkness, serialized into <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets every dial, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
@@ -24,7 +24,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all nine dials to one level.</summary>
+    /// <summary>Set the lever and every dial to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;
@@ -38,6 +38,7 @@ public sealed class DifficultySettings
         CartSlots = step;
         HoldPrices = step;
         Darkness = step;
+        BundleCount = step;
     }
 
     // ---- Ask-side: baked into the board when it is generated ----
@@ -76,6 +77,11 @@ public sealed class DifficultySettings
     /// expensive, it does not tax the first mistake.</summary>
     public DifficultyStep HoldPrices { get; set; } = DifficultyStep.Normal;
 
+    /// <summary>How many bundles each themed room of a TLY Custom board holds: Easy one or two
+    /// fewer, Hard one or two more, Extreme 9 (<see cref="BundleCountRule"/>). Never applies to a
+    /// Normal or Remixed board, the Vault or The Missing Bundle. Spec 2026-10-09-bundle-count-dial.</summary>
+    public DifficultyStep BundleCount { get; set; } = DifficultyStep.Normal;
+
     // ---- The darkness (spec 2026-09-15 darkness-obtainability-wiring, section 2.3) ----
 
     /// <summary>How hard the darkness hits from Summer on: blight share and caps, the fairness
@@ -88,8 +94,8 @@ public sealed class DifficultySettings
     /// <summary>The dial as gameplay reads it: the value, or the lowest of the nine when unset.</summary>
     public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
 
-    /// <summary>The lowest of the NINE original dials (never the lever, never Darkness itself).
-    /// Nine: SeasonPity was removed, see the note below this class's properties.</summary>
+    /// <summary>The lowest of the NINE original dials (never the lever, never Bundle Count, never
+    /// Darkness itself). Nine: SeasonPity was removed, see the note below this class's properties.</summary>
     public DifficultyStep LowestDial()
         => new[]
         {
@@ -120,6 +126,7 @@ public sealed class DifficultySettings
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
            && HoldPrices == DifficultyStep.Normal
+           && BundleCount == DifficultyStep.Normal
            && DarknessOrLowest == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
@@ -145,6 +152,7 @@ public sealed class DifficultySettings
         StartingGold = StartingGold,
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
+        BundleCount = BundleCount,
         Darkness = Darkness,
     };
 }

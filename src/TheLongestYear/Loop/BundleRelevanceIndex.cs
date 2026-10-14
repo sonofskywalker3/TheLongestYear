@@ -81,7 +81,11 @@ namespace TheLongestYear.Loop
             {
                 CraftingRecipe r;
                 try { r = new CraftingRecipe(name, isCooking); }
-                catch (Exception) { continue; }
+                catch (Exception ex)
+                {
+                    PatchLog.Trace($"Bundle relevance: recipe '{name}' could not be read ({ex.GetType().Name}); skipped.");
+                    continue;
+                }
 
                 if (r.itemToProduce == null || r.itemToProduce.Count == 0) continue;
                 string productId = BundleParsing.NormalizeItemId(r.itemToProduce[0]);

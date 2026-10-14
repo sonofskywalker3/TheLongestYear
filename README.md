@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.21`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.95`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,31 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.21
+## What's New in 0.19.97
+
+**Fixed: island fish and forage from other mods' maps stay off the board.** Some mods add new spots you reach through Ginger Island, like the rainforest in Forager's Nooks and Crannies. Anything you could only get there could still end up in a year-one bundle. TLY now checks whether you can actually walk to a spot from your farm without going through the island, so island-only catches and forage stay off the board no matter which mod adds them, and so does anything sold only at the island shops. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report and the log.
+
+**Fixed: the save right after a rewind works with other mods.** The game saves as soon as the Junimos rewind you to Spring 1, but that save skipped the step other mods use to get their data ready. With mods like Unlockable Bundles the save failed, and the old save folder was left behind. The rewind now saves the way a night does, and the old folder is cleaned up once the new save is written.
+
+## 0.19.95
+
+**A new Animals tab in the upgrade menu, with thirteen animal powers.** Morning Rounds pets every animal each morning, Warm Welcome gives new animals a head start on hearts, Quick Growth turns a baby into an adult after its first night with food, and there are more for hatching, births, coops and barns, rabbits, pigs, your horse and your pet. Your existing animal upgrades (Keep Horse, Keep Coop, Keep Barn, the Herd Book and the rest) moved to this tab at the same prices, and anything you already own stays owned. None of them makes a bundle ask for more.
+
+**Festival memories.** From the second loop, villagers at a festival sometimes half-remember what you did there in an earlier loop: the egg hunt, the soup, your grange display, the ice fishing, who you danced with and who got your secret gift. No gameplay effect, and you can turn it off in Features.
+
+**New difficulty option: Bundles per room (TLY Custom boards only).** Easy gives each Community Center room one or two fewer bundles, Hard one or two more, and Extreme fills every room to 9. It changes the Vault too: Easy has three Vault bundles, Hard and Extreme add more.
+
+**Keep Bus Unlocked now unlocks once the bus is repaired,** so on a board with five or six Vault bundles you pay them all (or finish the Vault room) instead of stopping at four.
+
+**Fixed: brown eggs count.** An egg slot takes white or brown eggs of its size, and you can mix colors toward one slot's count. Shrine goals work the same way. Thanks to flutegir for the report.
+
+**Fixed: no more Ginger Island fish in bundles.** Lionfish, Stingray and Blue Discus (and Slimejack, which lives only in the Mutant Bug Lair) can no longer be asked for, even when another mod adds them somewhere else. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report.
+
+**Fixed: the rewind is sturdier.** One broken carry-over no longer stops the whole rewind halfway, a save backup that fails no longer cancels the rewind, kept buildings come back on their own spot (and no longer on top of the Meadowlands starter Coop), and stashed items from a mod you switched off for a session are kept until you turn it back on.
+
+**Plus a batch of smaller fixes:** the second milk or wool from Kitchen week and Double Yolk now shows up, Forager's Eye no longer piles up copies of old forage, the Mixed week bonus works on full-grown trees, Rain Dance and Storm Call can't be bought the day before green rain, villagers' déjà vu lines come back every loop, Keep Rod owners skip Willy's rod scene, and SMAPI logs are much smaller.
+
+## 0.19.21
 
 **Fixed: no more red Harmony error at startup with ExtraAnimalConfig.** With ExtraAnimalConfig or a similar animal mod installed, the game showed a red "Harmony patch failed" error from TLY when it started. That error is gone. On a Wildcard snow day your animals still stay inside, and the other mod's animal settings keep working. Thanks to pitytheviolins for the report.
 
@@ -95,13 +119,28 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **Seasonal time-loop.** Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
 - **Junimo Points.** Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
 - **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
+- **Animal powers.** The upgrade menu's **Animals** tab sells permanent animal upgrades. None of them makes a bundle ask for more. Your animal keeps (Keep Horse, Keep Pet, Keep Coop, Keep Barn, Keep Silo, the Start with animals and the Herd Book) live on the same tab.
+  - **Morning Rounds:** every animal on your farm gets petted each morning, like an Auto-Petter.
+  - **Warm Welcome I, II and III:** new animals arrive with 1, 2 or 3 hearts. Animals coming back from the Herd Book keep their own hearts.
+  - **Quick Growth:** a baby animal grows up after its first night with food.
+  - **Fast Hatch:** eggs in an incubator hatch in half the time.
+  - **Growing Herd:** cows, goats, sheep and pigs give birth about four times as often. Shows up once you've had a Big Barn.
+  - **Snug Barn:** your animals stay happy on rainy and Winter days they spend indoors.
+  - **Busy Coop:** ducks lay every day and rabbits every 2 days.
+  - **Busy Barn:** goats and sheep produce every day.
+  - **Molting Season:** ducks have an extra 25% chance to leave a Duck Feather instead of an egg. Shows up once you've owned a duck.
+  - **Lucky Rabbits:** rabbits always leave a Rabbit's Foot instead of Wool. Shows up once you've owned a rabbit.
+  - **Truffle Hog:** each truffle a pig digs up has a 25% chance to be two. Shows up once you've owned a pig.
+  - **Swift Horse:** your horse runs about 10% faster. Needs Keep Horse.
+  - **Horse Flute:** start every loop with a Horse Flute. Needs Keep Horse.
+  - **Loyal Pet:** your pet brings presents twice as often, starting at 3 hearts instead of 5.
 - **JP Boosts.** The Junimo statue on your farm sells this-loop edges for JP: tomorrow's rain or a lucky day, a free late night, stacking forage/fish/crop/mine/drop chances, a faster walk, a season of cheaper shops, faster friendships, extra energy, a skill level on the spot, or an elevator stop you have not earned yet. An Active tab shows what is running and a Plan tab shows what each keep still needs.
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
 - **Randomizer.** An optional settings section that adds chance to the weekly themes, goals, bundle rewards and the cart. Everything in it starts off.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
 - **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
-- **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. Rare, no gameplay effect, and it never explains itself. Toggle in Features.
+- **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. From the second loop, festivals stir it up too. At most festivals one villager half-remembers something you did there in an earlier loop: the egg hunt you won, the dance you shared, what you put in the soup. Talk to people to find out who. Win the egg hunt and someone will bring it up at the next Egg Festival, and everyone you have danced with may remember it when you ask again. No gameplay effect, and it never explains itself. Toggle in Features.
 - **Break the loop.** Finish the Center in a year to win — then keep playing or start fresh.
 
 ## Requirements
@@ -135,7 +174,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Difficulty
 
-Nine difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**, with one overall **Difficulty** option above them. Pick a level there and every dial switches to it, then change any single dial you like. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
+Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**, with one overall **Difficulty** option above them. Pick a level there and every dial switches to it, then change any single dial you like. Every dial has four steps, **Easy / Normal / Hard / Extreme**, and every one starts on **Normal**, which is the balance the mod ships with. Changing nothing changes nothing.
 
 **Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
 
@@ -148,6 +187,7 @@ Nine difficulty dials live in the mod's settings menu (GMCM) under **Difficulty*
 - **Quality asks.** How often a slot wants a silver or gold star. Items the game never gives a star to are still never asked for at quality, at any step.
 - **Required slots.** How many of a bundle's shown items you must actually donate. Hard asks for one more, Easy one fewer, Extreme asks for all of them.
 - **Item rarity.** Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. **TLY Custom bundles only** (see below).
+- **Bundles per room.** How many bundles each Community Center room has. Easy has one or two fewer, never below 2. Normal is the usual count. Hard has one or two more. Extreme fills every room to 9. Extra bundles come from the same pool as the rest and are due in their own season. The Vault changes too: Easy drops its most expensive bundle, Hard adds one at twice that price, and Extreme adds another at 1.6 times the Hard one. The bus is repaired once every Vault bundle on your board is paid, and the season checkpoints never ask for more Vault bundles than your board has. The Missing Bundle never changes. **TLY Custom bundles only** (see below).
 
 **What you carry between loops**
 
@@ -157,7 +197,7 @@ Nine difficulty dials live in the mod's settings menu (GMCM) under **Difficulty*
 - **Starting cart slots.** How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is empty until you buy Cart Stall I.
 - **Hold prices.** Scales the JP price of keeping your board on a Fail night. The first hold stays free at every step.
 
-**One dial does not work on vanilla boards.** Item rarity applies to **TLY Custom** bundles only, because changing which item a vanilla bundle asks for would be changing the bundle. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
+**Two dials do not work on vanilla boards.** Item rarity and Bundles per room apply to **TLY Custom** bundles only, because changing which item a vanilla bundle asks for, or how many bundles a room has, would be changing the board. Stack size, quality asks and required slots all work on vanilla Standard and Remixed boards too.
 
 `tly_difficulty` in the SMAPI console prints what your save is actually running under, including anything you have changed since your last loop. Please attach it to any balance report.
 

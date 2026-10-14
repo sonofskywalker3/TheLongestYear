@@ -31,8 +31,8 @@ Never use `tools/game.ps1` (mouse and keyboard) or `tools/screenshot.ps1` in thi
 
 | Need | Tool | Notes |
 |---|---|---|
-| Build, close, relaunch | `tools/deploy.ps1 -Minimized` | Archives the old log first. `-NoLaunch` to build only. Do NOT `git add` the pruned archives; run `git checkout -- test-output/log-archive` afterwards. |
-| Any `tly_*` command | `tools/bridge.ps1 -Action send -Lines "cmd1|cmd2"` | Whole batch runs in one tick, in order. Works at the title screen (`tly_loadsave`) and in-world. |
+| Build, close, relaunch | `tools/deploy.ps1 -Minimized` | Archives the old log first. `-NoLaunch` to build only. The archives go to `test-output/log-archive/`, which git ignores, so pruning needs no cleanup. |
+| Any `tly_*` command | `tools/bridge.ps1 -Action send -Lines "cmd1|cmd2"` | Whole batch runs in one tick, in order. The bridge and the SMAPI console share one command table (`ModEntry.Commands.cs`), so every `tly_*` command works in both. Works at the title screen (`tly_loadsave`) and in-world. |
 | Wait for a log line | `tools/bridge.ps1 -Action wait -Pattern "<regex>" -TimeoutSec 60 -FromLine <n>` | Take `<n>` from `-Action count` BEFORE sending, so you only match new lines. Returns `FOUND: ...` or `TIMEOUT`. |
 | The game's own `debug` commands | `tools/send-smapi-command.ps1 "debug sleep"` | Writes into SMAPI's console input buffer, focus-independent. `debug season summer`, `debug sleep`, `debug time 1000`, `debug warp ...`. |
 
@@ -330,6 +330,41 @@ activating it and park it far off every monitor (`ShowWindow` 4, then `SetWindow
 frame and nothing appears on Jeff's screens. Check the monitor bounds first; at -5000 the window
 still overlapped his left monitor and half the captures were stale.
 
+**Animal powers (2026-10-09).** `tly_animalpowers` lists the owned powers and every farm animal (age, daysOwned,
+daysSinceLastLay, produce days with Busy Coop / Busy Barn, friendship, happiness, wasAutoPet). Subcommands: `produce <type>
+<n>` (GetProduceID on n throwaway adults: Lucky Rabbits, Molting Season), `dig <n>` (n throwaway pigs dig on the
+current map: Truffle Hog), `speed` (mounts the farm horse, then prints the riding speed against vanilla's sum:
+Swift Horse; headless the farmer walks at speed 2, not the auto-run 5, so the percentage reads high), `pets`
+(Data/Pets as loaded: Loyal Pet), `incubate` (an Egg into the first empty incubator: Fast Hatch), `grow`, `feed`,
+`sethappy <n>`, `setfriend <n>`, `births <n>` (runs the barn-birth roll n times and counts births by parent: Growing Herd; compare before and after buying), `birthnight` (tonight's farm event is a certain barn birth), `doors` (opens every animal door), `truffles` (truffles found and on the farm, pigs outdoors: Truffle Hog over a real day on the farm), `enter coop|barn [i]` (warps inside; a ready incubator hatches on entry), `incubators`, `grow new|<name>`, `revoke <id>` (debug un-own, for a control run). `pet [friendship]` (sets the pet's friendship first when given, then pets every pet once through Pet.checkAction, the click path; vanilla rolls the present on the day's first petting and drops it beside the pet, so the line lists the items lying there before and after: Loyal Pet). `count` (animals per coop and barn: Growing Herd over real nights), `add <type> <n> [buildingX buildingY]` (adopts n new animals into that building through its own adoptAnimal; spaces in the type as `_`). `tly_dismiss` closes the birth or hatch dialogue and names a NamingMenu through its own Enter path. `debug animal <type>` (vanilla, on the Farm) adds an animal through adoptAnimal; building names
+with spaces need quotes: `debug forcebuild "Deluxe Coop" 52 20`.
+
+**Bundles per room (2026-10-09).** `tly_bundlecount` lists the live bundles per room and says whether the CC's own
+room lookup knows every bundle (a missing one throws KeyNotFound in `checkForMissedRewards`). `tly_bundlecount set
+<step>` sets the dial in memory only (config.json untouched; the next new board uses it), `tly_bundlecount open
+<area 0-5>` opens that room's page and logs each bag and its spot (the Vault is area 4), `tly_bundlecount missed` runs
+`checkForMissedRewards` and logs whether it threw. `tly_bundlecount buy` opens the Vault page; `tly_bundlecount buy
+[cheapest|<index>]` in a LATER batch pays that bundle through the page's own purchase button (gives the farmer the
+gold first) and logs the price, the gold taken and whether ccVault was queued; TLY's observer logs `Vault bundle N
+paid` on the next tick. The page stays open so the observer sees it: send `tly_bundlecount close` (closes any menu
+without its exit action, so no restore cutscene) when done. After the purchase that finishes the room, `tly_bundlecount exit` closes the page with
+vanilla's own exit action instead (the Vault restore cutscene), so the bus repair follows that night as in play.
+`tly_bundlecount bus` logs Keep Bus Unlocked's reach with each path on its own (every Vault bundle on the board paid
+this run; the Vault room repaired: area flag or the ccVault mail) and the live result.
+
+**Core-fix checks (2026-10-10).** `tly_fixcheck` (no args prints the usage) re-runs the review-2 live checks:
+`collect` uses the milk pail or shears on every animal with produce through the tool's own DoFunction (a Kitchen
+week or Double Yolk second product shows as a second pass); `stash unknown` adds a stash record whose mod is not
+loaded; `failstep <step name>` makes that restore step of the next reset throw (`off` clears it); `trees <n>` fells
+n grown oaks near the player on the Farm; `seed <location> <n>` places spawned Daffodils and `spawn <location> <n>`
+runs spawnObjects n times (Forager's Eye must clone only new forage); `liab`, `nextpick <theme>`, `pairings on|off`
+and `exhaust` set up and read the month rollover and the empty-offer week; `greenrain`, `rod`, `stashfill`, `meta`
+read state. A level-up after milking blocks the next `debug sleep`: send `tly_dismiss`.
+
+**Upgrade menu screenshots.** `tly_openshop <tab> [hoverRow] [scroll]` opens the upgrade menu on a tab, scrolled,
+with the tooltip pinned to a row (drawn under that row, not at the mouse), and logs the visible rows and the tooltip
+text.
+
 ## Read-only diagnostics (no world change)
 
 `tly_themepool [theme]`, `tly_goals [season] [week]`, `tly_gatecheck`, `tly_gateneeds` (per-bundle remaining demand for the current season's gate, the same numbers as the Season Goals page; run it after any donation to see what the gate still wants),
@@ -397,3 +432,12 @@ buys any boost, `tly_boostexpire` forces the boosts' day-start pass.
 - The hub can show a single card (`offer: Foraging`) when only one theme can ask for two goals;
   the script handles it since 2026-08-28.
 
+## Festival memories (`tly_festmem`)
+
+Besides `status`, `set`, `partner`, `recipient`, `clear`, `commit` and `force`, these drive a festival headlessly
+(date with `debug season`/`tly_setday` and a sleep, then `debug time 900` and `debug warp <map>` enters it):
+`talk <npc>` (the festival's own checkAction on that villager), `start` (the host's "yes"), `click` (one click on
+the open dialogue box), `pot` (acts on the Luau soup pot tile, which opens vanilla's ingredient menu), `give <item>
+[quality]` (picks that item in the open item menu through the menu's own callback: the Luau pot or the secret gift
+after `talk <secret friend>` and `tly_answer 0`), and `score <n>` (sets the eggs or fish found, e.g. 9 wins the egg
+hunt).

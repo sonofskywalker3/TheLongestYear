@@ -160,6 +160,8 @@ namespace TheLongestYear.Loop
             // try/catch, separate from the pool reads above: fail open on ANY exception here,
             // because a partial source graph is worse than none (it looks authoritative while
             // missing exactly the alternative route that would have kept an item allowed).
+            // Read first: the spawn-row rule below needs the one-way door walk as well as the warp graph.
+            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
             SourceReachability reachability = null;
             List<RawShopListing> listingsForWeeks = null;
             List<RawShopPlacement> placementsForWeeks = null;
@@ -271,6 +273,19 @@ namespace TheLongestYear.Loop
                 listingsForWeeks = shopListings;
                 placementsForWeeks = shopPlacements;
 
+                // Spawn rows on a map no walk from the farm reaches (a mod map entered only from
+                // Ginger Island: Forager's Nooks and Crannies' Rainforest Retreat rows Lionfish) are
+                // island content: they neither feed the pools nor prove an item reachable, and a fish
+                // row there is a closed catch route like a row on the island itself (SpawnPlaceRule).
+                IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
+                    links, allLocations,
+                    name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
+                var spawnRule = new SpawnPlaceRule(unreachablePlaces, locationWeeks);
+                SpawnRowSplit forageSplit = spawnRule.Split(forage);
+                SpawnRowSplit fishSplit = spawnRule.Split(fish);
+                var closedCatch = new HashSet<string>(excludedCatch, StringComparer.Ordinal);
+                closedCatch.UnionWith(fishSplit.DroppedItemIds());
+
                 // Positive-reachability evidence: every id the game already told us spawns
                 // somewhere, from tables this method has ALREADY read above. Without this, an
                 // item that is forageable AND also listed in an unreachable island shop would be
@@ -281,8 +296,8 @@ namespace TheLongestYear.Loop
                     if (string.IsNullOrEmpty(rawId)) return;
                     reachableSpawnIds.Add(BundleParsing.NormalizeItemId(rawId));
                 }
-                foreach (RawSpawnEntry spawn in forage) MarkSpawn(spawn?.ItemId);
-                foreach (RawSpawnEntry spawn in fish) MarkSpawn(spawn?.ItemId);
+                foreach (RawSpawnEntry spawn in forageSplit.Kept) MarkSpawn(spawn.ItemId);
+                foreach (RawSpawnEntry spawn in fishSplit.Kept) MarkSpawn(spawn.ItemId);
                 // Crab-pot ids (Lobster, Crab, Cockle, Mussel, Oyster, Shrimp, Snail, Periwinkle,
                 // Crayfish, any mod trap fish): trap-only catches have no Data/Locations row, so
                 // nothing else speaks for them on the reachable side. Same failure mode as the
@@ -306,16 +321,22 @@ namespace TheLongestYear.Loop
                 // Artifact spots, both the Data/Locations rows and each object's own
                 // ArtifactSpotChances. The Dinosaur Egg's only traceable proof: the animal route
                 // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
+                // A spot on an excluded or unwalkable map proves nothing: the island rows dig up
+                // Golden Coconuts and the island fossils, none of them year-1 finds.
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                {
+                    if (spawnRule.IsClosedPlace(kv.Key, tuning.ExcludedLocationMarkers)) continue;
                     foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                                  .Where(s => YearOneCondition.Allows(s?.Condition, closedRules)))
                     {
-                        foreach (string id in ItemQueryIds.Expand(spot?.ItemId)) MarkSpawn(id);
+                        foreach (string id in QueryIds(spot?.ItemId, spot?.PerItemCondition)) MarkSpawn(id);
                         foreach (string raw in spot?.RandomItemId ?? new List<string>())
-                            foreach (string id in ItemQueryIds.Expand(raw)) MarkSpawn(id);
+                            foreach (string id in QueryIds(raw, spot?.PerItemCondition)) MarkSpawn(id);
                     }
+                }
                 foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
-                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0)
+                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0
+                        && spawnRule.AnyOpenPlace(kv.Value.ArtifactSpotChances.Keys, tuning.ExcludedLocationMarkers))
                         MarkSpawn(kv.Key);
 
                 // Machine goods and animal produce as routes (Ninjamaid, Nexus 2026-09-28: Blue Eggs
@@ -329,9 +350,9 @@ namespace TheLongestYear.Loop
                         var outputs = new List<string>();
                         foreach (var output in rule?.OutputItem ?? new List<StardewValley.GameData.Machines.MachineItemOutput>())
                         {
-                            outputs.AddRange(ItemQueryIds.Expand(output?.ItemId));
+                            outputs.AddRange(QueryIds(output?.ItemId, output?.PerItemCondition));
                             foreach (string raw in output?.RandomItemId ?? new List<string>())
-                                outputs.AddRange(ItemQueryIds.Expand(raw));
+                                outputs.AddRange(QueryIds(raw, output?.PerItemCondition));
                         }
                         if (outputs.Count == 0) continue;
                         var triggers = rule.Triggers ?? new List<StardewValley.GameData.Machines.MachineOutputTriggerRule>();
@@ -368,15 +389,18 @@ namespace TheLongestYear.Loop
                         a.EggItemIds ?? new List<string>(), produce));
                 }
 
-                IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
-                    links, allLocations,
-                    name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
                 reachability = new SourceReachability(
                     unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                    machineRules, animals, excludedCatch);
+                    machineRules, animals, closedCatch);
+                // Only now, with the whole read done: a failure above leaves every row in, as before.
+                forage = forageSplit.Kept.ToList();
+                fish = fishSplit.Kept.ToList();
                 _monitor?.Log(
-                    $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
+                    $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach; " +
+                    $"{forageSplit.Dropped.Count} forage and {fishSplit.Dropped.Count} fish rows on maps no walk reaches.",
                     LogLevel.Trace);
+                foreach (string place in forageSplit.Dropped.Concat(fishSplit.Dropped).Select(r => r.Location).Distinct(StringComparer.Ordinal))
+                    _monitor?.Log($"  spawn rows dropped from {place}", LogLevel.Trace);
             }
             catch (Exception ex)
             {
@@ -387,7 +411,6 @@ namespace TheLongestYear.Loop
                 reachability = null;
             }
             this.LastReachability = reachability;
-            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
 
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
@@ -511,6 +534,14 @@ namespace TheLongestYear.Loop
                 }
             }
         }
+
+        /// <summary>The object ids an artifact-spot or machine-output line names
+        /// (<see cref="ItemQueryIds"/>). A <c>RANDOM_ITEMS</c> range narrowed by a PerItemCondition is
+        /// resolved through the game with that condition, so only the items that pass it count.</summary>
+        private IReadOnlyList<string> QueryIds(string raw, string perItemCondition)
+            => ItemQueryIds.NeedsItemFilter(raw, perItemCondition)
+                ? ResolveQuery(raw, perItemCondition)
+                : ItemQueryIds.Expand(raw);
 
         private static bool IsRegisteredQueryKey(string key)
             => StardewValley.Internal.ItemQueryResolver.ItemResolvers.ContainsKey(key);

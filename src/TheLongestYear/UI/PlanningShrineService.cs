@@ -149,12 +149,12 @@ namespace TheLongestYear.UI
 
                 // First open: dismiss the indicator (so the intro quest won't re-add) and
                 // complete the shrine intro quest if it's still in the log.
-                state.DismissedIndicators.Add("tly.shrine");
+                state.DismissedIndicators.Add(TheLongestYear.Core.IntroQuestIds.ShrineDismissed);
                 if (Game1.player?.questLog != null)
                 {
                     foreach (var q in Game1.player.questLog)
                     {
-                        if (q != null && q.id.Value == "tly.-9005")
+                        if (q != null && q.id.Value == TheLongestYear.Core.IntroQuestIds.ShrineQuest)
                         {
                             q.questComplete();
                             break;

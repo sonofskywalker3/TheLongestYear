@@ -68,7 +68,7 @@ public class ForageAskLimitsTests
         int? anySeason = ForageAskLimits.MaxAskAnySeason("(O)393");
         Assert.NotNull(summer);
         Assert.NotNull(anySeason);
-        Assert.True(anySeason.Value >= summer.Value);
+        Assert.True(anySeason!.Value >= summer!.Value);
     }
 
     /// <summary>No ceiling may exceed a single inventory stack, or the ask is unfillable.</summary>

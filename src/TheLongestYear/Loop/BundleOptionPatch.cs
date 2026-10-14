@@ -44,6 +44,17 @@ namespace TheLongestYear.Loop
             return c;
         }
 
+        /// <summary>The pending choice without consuming it (save creation stamps it early).</summary>
+        internal static Choice PeekLastChoice() => _lastChoice;
+
+        /// <summary>The bundle source a dropdown choice stands for.</summary>
+        internal static string SourceFor(Choice choice) => choice switch
+        {
+            Choice.VanillaRemixed => BundleSourceNames.Remixed,
+            Choice.VanillaStandard => BundleSourceNames.Normal,
+            _ => BundleSourceNames.Engine,
+        };
+
         internal static void ResetChoice() => _lastChoice = Choice.TlyCustom;
 
         /// <summary>What picking a dropdown entry does, for tly_newgame's bundle-choice token.</summary>

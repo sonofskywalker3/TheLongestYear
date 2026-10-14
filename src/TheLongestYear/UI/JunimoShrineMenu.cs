@@ -24,13 +24,13 @@ namespace TheLongestYear.UI
         private const int PanelWidth = 1100;
         private const int PanelHeight = 700;
         private const int TabWidth = 200;
-        private const int TabHeight = 56;
-        private const int TabSpacing = 8;
+        private const int TabHeight = 52;   // 10 tabs (Animals and Wards) must fit the 700px panel
+        private const int TabSpacing = 4;
         private const int RowHeight = 96;
         private const int RowSpacing = 8;
         private const int PanelPadding = 32;
 
-        private const int TabIdBase = 6100;          // 6100..6105 for 6 tabs
+        private const int TabIdBase = 6100;          // one id per UpgradeCategory (10 tabs: 6100..6109)
         private const int RowIdBase = 7000;          // one id per visible row slot
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
@@ -192,6 +192,11 @@ namespace TheLongestYear.UI
         {
             base.performHoverAction(x, y);
             _hoverText = "";
+            if (_debugHoverRow >= 0 && _debugHoverRow < _rowSlots.Count)
+            {
+                x = _rowSlots[_debugHoverRow].bounds.Center.X;
+                y = _rowSlots[_debugHoverRow].bounds.Center.Y;
+            }
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out _, out _);
             for (int i = 0; i < rows.Count; i++)
@@ -274,6 +279,26 @@ namespace TheLongestYear.UI
             _lastPurchaseTick = Game1.ticks;
             _purchases.TryPurchase(def.Id);
             // The list redraws next frame from the updated MetaState — no extra refresh needed.
+        }
+
+        /// <summary>Debug (tly_openshop &lt;tab&gt; [hoverRow] [scroll]): show a tab, optionally scrolled, and
+        /// hover a visible row, so the tab and its tooltip can be screenshotted without a mouse.</summary>
+        /// <summary>Row slot the debug command pins the hover to (-1: follow the mouse).</summary>
+        private int _debugHoverRow = -1;
+
+        internal void DebugShow(UpgradeCategory category, int hoverRow, int scroll)
+        {
+            _activeCategory = category;
+            _scrollIndex = scroll;
+            ClampScroll();
+            _debugHoverRow = hoverRow;
+            if (hoverRow >= 0 && hoverRow < _rowSlots.Count)
+                performHoverAction(_rowSlots[hoverRow].bounds.Center.X, _rowSlots[hoverRow].bounds.Center.Y);
+            IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int start);
+            _monitor.Log($"tly_openshop: tab {category}, rows {start}..{start + rows.Count - 1} of {total}: " +
+                         string.Join(", ", rows.Select(r => r.Def.Id + (r.Owned ? " (owned)" : r.BlockReason != null ? " (blocked)" : ""))) +
+                         (_hoverText.Length > 0 ? "; hover: " + _hoverText.Replace("\n", " / ") : ""),
+                LogLevel.Info);
         }
 
         private void SetActiveCategory(UpgradeCategory category)
@@ -379,7 +404,9 @@ namespace TheLongestYear.UI
 
             base.draw(b);
             if (!string.IsNullOrEmpty(_hoverText))
-                HoverText.Draw(b, _hoverText);
+                HoverText.Draw(b, _hoverText,
+                    _debugHoverRow >= 0 && _debugHoverRow < _rowSlots.Count ? _rowSlots[_debugHoverRow].bounds.Center.X : -1,
+                    _debugHoverRow >= 0 && _debugHoverRow < _rowSlots.Count ? _rowSlots[_debugHoverRow].bounds.Bottom : -1);
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
         }

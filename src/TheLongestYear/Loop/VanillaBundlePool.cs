@@ -383,9 +383,10 @@ namespace TheLongestYear.Loop
                     if (field != null)
                         return ((int)field.GetValue(null)).ToString();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Fall through to fuzzy search below.
+                    PatchLog.Trace($"Vanilla board: category field '{itemText}' did not resolve ({ex.GetType().Name}); trying a fuzzy item search.");
                 }
             }
 
@@ -394,8 +395,9 @@ namespace TheLongestYear.Loop
                 Item item = FuzzyItemSearch(itemText, stack);
                 return item?.ItemId;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                PatchLog.Trace($"Vanilla board: fuzzy item search for '{itemText}' failed ({ex.GetType().Name}: {ex.Message}); the slot is skipped.");
                 return null;
             }
         }
@@ -424,8 +426,9 @@ namespace TheLongestYear.Loop
                 return Utility.getStandardDescriptionFromItem(item, item.Stack);
 #pragma warning restore CS0618
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                PatchLog.Trace($"Vanilla board: reward '{rawReward}' did not resolve ({ex.GetType().Name}: {ex.Message}); kept as written.");
                 return rawReward;
             }
         }
