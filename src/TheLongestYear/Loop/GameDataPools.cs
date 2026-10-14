@@ -160,6 +160,8 @@ namespace TheLongestYear.Loop
             // try/catch, separate from the pool reads above: fail open on ANY exception here,
             // because a partial source graph is worse than none (it looks authoritative while
             // missing exactly the alternative route that would have kept an item allowed).
+            // Read first: the spawn-row rule below needs the one-way door walk as well as the warp graph.
+            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
             SourceReachability reachability = null;
             List<RawShopListing> listingsForWeeks = null;
             List<RawShopPlacement> placementsForWeeks = null;
@@ -271,6 +273,19 @@ namespace TheLongestYear.Loop
                 listingsForWeeks = shopListings;
                 placementsForWeeks = shopPlacements;
 
+                // Spawn rows on a map no walk from the farm reaches (a mod map entered only from
+                // Ginger Island: Forager's Nooks and Crannies' Rainforest Retreat rows Lionfish) are
+                // island content: they neither feed the pools nor prove an item reachable, and a fish
+                // row there is a closed catch route like a row on the island itself (SpawnPlaceRule).
+                IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
+                    links, allLocations,
+                    name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
+                var spawnRule = new SpawnPlaceRule(unreachablePlaces, locationWeeks);
+                SpawnRowSplit forageSplit = spawnRule.Split(forage);
+                SpawnRowSplit fishSplit = spawnRule.Split(fish);
+                var closedCatch = new HashSet<string>(excludedCatch, StringComparer.Ordinal);
+                closedCatch.UnionWith(fishSplit.DroppedItemIds());
+
                 // Positive-reachability evidence: every id the game already told us spawns
                 // somewhere, from tables this method has ALREADY read above. Without this, an
                 // item that is forageable AND also listed in an unreachable island shop would be
@@ -281,8 +296,8 @@ namespace TheLongestYear.Loop
                     if (string.IsNullOrEmpty(rawId)) return;
                     reachableSpawnIds.Add(BundleParsing.NormalizeItemId(rawId));
                 }
-                foreach (RawSpawnEntry spawn in forage) MarkSpawn(spawn?.ItemId);
-                foreach (RawSpawnEntry spawn in fish) MarkSpawn(spawn?.ItemId);
+                foreach (RawSpawnEntry spawn in forageSplit.Kept) MarkSpawn(spawn.ItemId);
+                foreach (RawSpawnEntry spawn in fishSplit.Kept) MarkSpawn(spawn.ItemId);
                 // Crab-pot ids (Lobster, Crab, Cockle, Mussel, Oyster, Shrimp, Snail, Periwinkle,
                 // Crayfish, any mod trap fish): trap-only catches have no Data/Locations row, so
                 // nothing else speaks for them on the reachable side. Same failure mode as the
@@ -368,15 +383,18 @@ namespace TheLongestYear.Loop
                         a.EggItemIds ?? new List<string>(), produce));
                 }
 
-                IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
-                    links, allLocations,
-                    name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
                 reachability = new SourceReachability(
                     unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                    machineRules, animals, excludedCatch);
+                    machineRules, animals, closedCatch);
+                // Only now, with the whole read done: a failure above leaves every row in, as before.
+                forage = forageSplit.Kept.ToList();
+                fish = fishSplit.Kept.ToList();
                 _monitor?.Log(
-                    $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach.",
+                    $"Reachability: {unreachablePlaces.Count} of {allLocations.Count} locations out of reach; " +
+                    $"{forageSplit.Dropped.Count} forage and {fishSplit.Dropped.Count} fish rows on maps no walk reaches.",
                     LogLevel.Trace);
+                foreach (string place in forageSplit.Dropped.Concat(fishSplit.Dropped).Select(r => r.Location).Distinct(StringComparer.Ordinal))
+                    _monitor?.Log($"  spawn rows dropped from {place}", LogLevel.Trace);
             }
             catch (Exception ex)
             {
@@ -387,7 +405,6 @@ namespace TheLongestYear.Loop
                 reachability = null;
             }
             this.LastReachability = reachability;
-            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
 
             ItemPools pools = ItemPoolBuilder.Build(
                 crops, objects, forage, fish, trapIds, drops,
