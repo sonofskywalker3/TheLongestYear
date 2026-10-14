@@ -23,6 +23,24 @@ public static class ItemQueryIds
             ["SmokedFish"] = "(O)SmokedFish", ["Bait"] = "(O)SpecificBait",
         };
 
+    /// <summary><see cref="Expand(string?)"/> for a data line that also carries a PerItemCondition.
+    /// A <c>RANDOM_ITEMS</c> range filtered by a condition offers only the items that pass it (a mod
+    /// digging up "any object 0-900 with the fossil tag"), which this pure reader cannot test, so it
+    /// expands to nothing; reading the whole range would claim hundreds of items the line never
+    /// gives. The game layer resolves such a line through the game's own resolver instead
+    /// (<see cref="NeedsItemFilter"/>).</summary>
+    public static IReadOnlyList<string> Expand(string? itemIdOrQuery, string? perItemCondition)
+        => NeedsItemFilter(itemIdOrQuery, perItemCondition) ? Array.Empty<string>() : Expand(itemIdOrQuery);
+
+    /// <summary>True when the line is a readable <c>RANDOM_ITEMS</c> range narrowed by a
+    /// PerItemCondition, so only the game can say which items it offers.</summary>
+    public static bool NeedsItemFilter(string? itemIdOrQuery, string? perItemCondition)
+    {
+        if (string.IsNullOrWhiteSpace(perItemCondition)) return false;
+        string text = (itemIdOrQuery ?? "").Trim();
+        return text.StartsWith(RandomItemsQuery + " ", StringComparison.Ordinal) && Expand(text).Count > 0;
+    }
+
     public static IReadOnlyList<string> Expand(string? itemIdOrQuery)
     {
         string text = (itemIdOrQuery ?? "").Trim();
