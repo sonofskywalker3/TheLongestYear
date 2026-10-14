@@ -227,4 +227,16 @@ public class SpawnPlaceRuleTests
         Assert.False(reach.IsUnreachable("(O)110"));
         Assert.False(reach.IsUnreachable("(O)330"));
     }
+    [Fact]
+    public void BoardRepair_SwapsAnAskThatOnlyTheRetreatVouchedFor()
+    {
+        // Super Cucumber is on no ban list: only the door-walk rule condemns it in this world, and
+        // the load-time repair reads the same verdict.
+        var (reach, _, _) = Read();
+        Assert.DoesNotContain("(O)155", ItemPoolBuilder.BuiltInExcludedItemIds);
+        Assert.True(BoardRepairRules.MustReplace("(O)155", reach.IsUnreachable));
+        Assert.True(BoardRepairRules.MustReplace("(O)837", reach.IsUnreachable));
+        Assert.False(BoardRepairRules.MustReplace("(O)130", reach.IsUnreachable));
+        Assert.False(BoardRepairRules.MustReplace("(O)Mod_GrottoFish", reach.IsUnreachable));
+    }
 }
