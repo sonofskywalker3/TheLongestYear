@@ -189,4 +189,42 @@ public class SpawnPlaceRuleTests
         var rule = new SpawnPlaceRule(ReachabilityGraph.UnreachableLocations(links, AllLocations, Forbidden), LocationWeeks.Build(links, Forbidden));
         Assert.False(rule.IsOutOfReach(Retreat));
     }
+    [Fact]
+    public void IslandAndUnwalkableArtifactSpots_AreClosed_DefaultAndMainlandAreOpen()
+    {
+        SpawnPlaceRule rule = Rule();
+        string[] none = Array.Empty<string>();
+        Assert.True(rule.IsClosedPlace("IslandSouth", none));
+        Assert.True(rule.IsClosedPlace("IslandWest", none));   // not even a loaded map here: the marker closes it
+        Assert.True(rule.IsClosedPlace(Retreat, none));
+        Assert.False(rule.IsClosedPlace("Default", none));
+        Assert.False(rule.IsClosedPlace("Beach", none));
+        Assert.False(rule.IsClosedPlace("Farm_Standard", none));
+        Assert.False(rule.IsClosedPlace(Grotto, none));
+        Assert.True(rule.AnyOpenPlace(new[] { "IslandNorth", "Town" }, none));
+        Assert.False(rule.AnyOpenPlace(new[] { "IslandNorth", Retreat }, none));
+    }
+
+    [Fact]
+    public void GoldenCoconut_DugOnlyOnTheIsland_AndSoldByTheIslandTrader_IsUnreachable()
+    {
+        // The live Data/Locations ArtifactSpots: IslandSouth/SouthEast/West/North dig up (O)791;
+        // the mainland maps never do. Proof is gathered the way GameDataPools gathers it.
+        SpawnPlaceRule rule = Rule();
+        var spots = new[]
+        {
+            ("IslandSouth", "(O)791"), ("IslandWest", "(O)791"), ("IslandWest", "(O)825"),
+            ("Town", "(O)110"), ("Default", "(O)330"),
+        };
+        var proof = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (place, id) in spots)
+            if (!rule.IsClosedPlace(place, Array.Empty<string>())) proof.Add(id);
+        var reach = new SourceReachability(
+            new HashSet<string>(StringComparer.Ordinal) { "IslandNorth", "IslandSouth", "IslandWest" },
+            new[] { new RawShopListing("(O)791", "IslandTrade"), new RawShopListing("(O)110", "IslandTrade"), new RawShopListing("(O)330", "IslandTrade") },
+            Array.Empty<RawShopPlacement>(), Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), proof);
+        Assert.True(reach.IsUnreachable("(O)791"));
+        Assert.False(reach.IsUnreachable("(O)110"));
+        Assert.False(reach.IsUnreachable("(O)330"));
+    }
 }

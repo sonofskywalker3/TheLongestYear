@@ -46,6 +46,26 @@ public sealed class SpawnPlaceRule
         return _unreachablePlaces.Contains(place) && !_weeks.TryGet(place, out _);
     }
 
+    /// <summary>True when a row keyed to this Data/Locations key or map name proves nothing about
+    /// reach: a map the location markers exclude (Ginger Island, the Mutant Bug Lair...) or one no
+    /// walk reaches. A non-habitat key ("Default") is not a place, its rows apply everywhere, so it
+    /// stays open. Used for artifact spots, whose island rows (Golden Coconut, the island fossils)
+    /// used to count as proof that those items are reachable.</summary>
+    public bool IsClosedPlace(string? place, IReadOnlyList<string> excludedMarkers)
+    {
+        if (string.IsNullOrEmpty(place)) return false;
+        if (ItemPoolBuilder.BuiltInNonHabitatLocationKeys.Contains(place)) return false;
+        return ItemPoolBuilder.IsExcludedLocation(place, excludedMarkers ?? Array.Empty<string>()) || IsOutOfReach(place);
+    }
+
+    /// <summary>True when at least one of the places is open (<see cref="IsClosedPlace"/>).</summary>
+    public bool AnyOpenPlace(IEnumerable<string>? places, IReadOnlyList<string> excludedMarkers)
+    {
+        foreach (string place in places ?? Array.Empty<string>())
+            if (!IsClosedPlace(place, excludedMarkers)) return true;
+        return false;
+    }
+
     /// <summary>Splits spawn rows into the ones on a reachable map and the ones that are not.</summary>
     public SpawnRowSplit Split(IEnumerable<RawSpawnEntry>? rows)
     {

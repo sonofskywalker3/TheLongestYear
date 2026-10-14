@@ -321,7 +321,11 @@ namespace TheLongestYear.Loop
                 // Artifact spots, both the Data/Locations rows and each object's own
                 // ArtifactSpotChances. The Dinosaur Egg's only traceable proof: the animal route
                 // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
+                // A spot on an excluded or unwalkable map proves nothing: the island rows dig up
+                // Golden Coconuts and the island fossils, none of them year-1 finds.
                 foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                {
+                    if (spawnRule.IsClosedPlace(kv.Key, tuning.ExcludedLocationMarkers)) continue;
                     foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                                  .Where(s => YearOneCondition.Allows(s?.Condition, closedRules)))
                     {
@@ -329,8 +333,10 @@ namespace TheLongestYear.Loop
                         foreach (string raw in spot?.RandomItemId ?? new List<string>())
                             foreach (string id in ItemQueryIds.Expand(raw)) MarkSpawn(id);
                     }
+                }
                 foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
-                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0)
+                    if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0
+                        && spawnRule.AnyOpenPlace(kv.Value.ArtifactSpotChances.Keys, tuning.ExcludedLocationMarkers))
                         MarkSpawn(kv.Key);
 
                 // Machine goods and animal produce as routes (Ninjamaid, Nexus 2026-09-28: Blue Eggs
