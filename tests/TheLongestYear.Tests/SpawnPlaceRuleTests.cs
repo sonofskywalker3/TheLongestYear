@@ -18,6 +18,7 @@ public class SpawnPlaceRuleTests
     private const string ModCove = "Mod_SunnyCove";         // a modded mainland map with a door from the Beach
     private const string Grotto = "Mod_SecretGrotto";       // no warps at all: entered by a mod's own code
     private const string Attic = "Mod_Attic";               // entered by script, its one exit leads to Town
+    private const string Lagoon = "Mod_IslandLagoon";       // another mod's map behind a door on IslandSouth
 
     private static readonly string[] RetreatFish = { "(O)155", "(O)130", "(O)128", "(O)267", "(O)837", "(O)SeaJelly" };
     private static readonly string[] RetreatForage =
@@ -39,11 +40,12 @@ public class SpawnPlaceRuleTests
         new("IslandEast", Retreat), new(Retreat, "IslandEast"),
         new("Beach", ModCove), new(ModCove, "Beach"),
         new(Attic, "Town"),
+        new("IslandSouth", Lagoon), new(Lagoon, "IslandSouth"),
     };
 
     private static readonly string[] AllLocations =
     {
-        "Farm", "BusStop", "Town", "Beach", "IslandSouth", "IslandEast", Retreat, ModCove, Grotto, Attic,
+        "Farm", "BusStop", "Town", "Beach", "IslandSouth", "IslandEast", Retreat, ModCove, Grotto, Attic, Lagoon,
     };
 
     private static bool Forbidden(string name)
@@ -55,8 +57,10 @@ public class SpawnPlaceRuleTests
     private static List<RawSpawnEntry> FishRows()
     {
         var rows = RetreatFish.Select(id => new RawSpawnEntry(id, null, null, Retreat)).ToList();
-        rows.Add(new RawSpawnEntry("(O)130", null, null, "Beach"));
-        rows.Add(new RawSpawnEntry("(O)128", null, null, "Beach"));
+        // Vanilla Beach lists every Retreat fish except Lionfish (Data/Locations, 1.6.15).
+        foreach (string id in new[] { "(O)155", "(O)130", "(O)128", "(O)267", "(O)SeaJelly" })
+            rows.Add(new RawSpawnEntry(id, null, null, "Beach"));
+        rows.Add(new RawSpawnEntry("(O)Mod_LagoonFish", null, null, Lagoon));
         rows.Add(new RawSpawnEntry("(O)Mod_CoveFish", null, null, ModCove));
         rows.Add(new RawSpawnEntry("(O)Mod_GrottoFish", null, null, Grotto));
         rows.Add(new RawSpawnEntry("(O)Mod_AtticFish", null, null, Attic));
@@ -112,9 +116,9 @@ public class SpawnPlaceRuleTests
     public void RainforestRetreatRows_AreDropped_AndEveryOtherRowIsKept()
     {
         var (_, fish, forage) = Read();
-        Assert.All(fish.Dropped, r => Assert.Equal(Retreat, r.Location));
+        Assert.All(fish.Dropped, r => Assert.Contains(r.Location, new[] { Retreat, Lagoon }));
         Assert.All(forage.Dropped, r => Assert.Equal(Retreat, r.Location));
-        Assert.Equal(RetreatFish.Length, fish.Dropped.Count);
+        Assert.Equal(RetreatFish.Length + 1, fish.Dropped.Count);
         Assert.Equal(RetreatForage.Length, forage.Dropped.Count);
         Assert.DoesNotContain(fish.Kept, r => r.Location == Retreat);
     }
@@ -124,16 +128,16 @@ public class SpawnPlaceRuleTests
     {
         var (reach, _, _) = Read();
         Assert.True(reach.IsUnreachable("(O)837"));
-        Assert.True(reach.IsUnreachable("(O)155"));   // Super Cucumber: no reachable row in this world
-        Assert.True(reach.IsUnreachable("(O)267"));
+        Assert.True(reach.IsUnreachable("(O)Mod_LagoonFish"));
     }
 
     [Fact]
     public void AFishTheRetreatSharesWithAReachableMap_StaysReachable()
     {
         var (reach, _, _) = Read();
-        Assert.False(reach.IsUnreachable("(O)130"));
-        Assert.False(reach.IsUnreachable("(O)128"));
+        // Super Cucumber, Tuna, Pufferfish, Flounder and Sea Jelly are also caught at the Beach.
+        foreach (string id in new[] { "(O)155", "(O)130", "(O)128", "(O)267", "(O)SeaJelly" })
+            Assert.False(reach.IsUnreachable(id));
         Assert.False(reach.IsUnreachable("(O)Mod_CoveFish"));
         Assert.False(reach.IsUnreachable("(O)Mod_GrottoFish"));
         Assert.False(reach.IsUnreachable("(O)Mod_AtticFish"));
@@ -155,7 +159,7 @@ public class SpawnPlaceRuleTests
         var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal)
         {
             ["155"] = Fish(), ["130"] = Fish(), ["128"] = Fish(), ["267"] = Fish(), ["837"] = Fish(), ["SeaJelly"] = Fish(),
-            ["Mod_CoveFish"] = Fish(), ["Mod_GrottoFish"] = Fish(), ["Mod_AtticFish"] = Fish(), ["Mod_FarmFish"] = Fish(),
+            ["Mod_CoveFish"] = Fish(), ["Mod_LagoonFish"] = Fish(), ["Mod_GrottoFish"] = Fish(), ["Mod_AtticFish"] = Fish(), ["Mod_FarmFish"] = Fish(),
             ["16"] = Forage(), ["Mod_GrottoMoss"] = Forage(), ["Wildflour.AtelierGoods_Pistachio"] = Forage(),
         };
         ItemPools pools = ItemPoolBuilder.Build(
@@ -164,9 +168,9 @@ public class SpawnPlaceRuleTests
             new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(),
             new BundleGenerationTuning(), reachability: reach);
 
-        foreach (string id in new[] { "(O)155", "(O)267", "(O)837", "(O)SeaJelly" })
+        foreach (string id in new[] { "(O)837", "(O)Mod_LagoonFish" })
             Assert.DoesNotContain(pools.Fish, p => p.ItemId == id);
-        foreach (string id in new[] { "(O)130", "(O)128", "(O)Mod_CoveFish", "(O)Mod_GrottoFish", "(O)Mod_AtticFish", "(O)Mod_FarmFish" })
+        foreach (string id in new[] { "(O)155", "(O)130", "(O)128", "(O)267", "(O)SeaJelly", "(O)Mod_CoveFish", "(O)Mod_GrottoFish", "(O)Mod_AtticFish", "(O)Mod_FarmFish" })
             Assert.Contains(pools.Fish, p => p.ItemId == id);
         Assert.DoesNotContain(pools.Forage, p => p.ItemId == "(O)Wildflour.AtelierGoods_Pistachio");
         Assert.Contains(pools.Forage, p => p.ItemId == "(O)Mod_GrottoMoss");
@@ -228,14 +232,16 @@ public class SpawnPlaceRuleTests
         Assert.False(reach.IsUnreachable("(O)330"));
     }
     [Fact]
-    public void BoardRepair_SwapsAnAskThatOnlyTheRetreatVouchedFor()
+    public void BoardRepair_SwapsAnAskOnlyAnIslandMapVouchedFor()
     {
-        // Super Cucumber is on no ban list: only the door-walk rule condemns it in this world, and
-        // the load-time repair reads the same verdict.
+        // The lagoon fish is on no ban list: only the door-walk rule condemns it, and the load-time
+        // repair reads the same verdict. A Retreat fish the Beach also lists is left alone.
         var (reach, _, _) = Read();
-        Assert.DoesNotContain("(O)155", ItemPoolBuilder.BuiltInExcludedItemIds);
-        Assert.True(BoardRepairRules.MustReplace("(O)155", reach.IsUnreachable));
+        Assert.DoesNotContain("(O)Mod_LagoonFish", ItemPoolBuilder.BuiltInExcludedItemIds);
+        Assert.True(BoardRepairRules.MustReplace("(O)Mod_LagoonFish", reach.IsUnreachable));
         Assert.True(BoardRepairRules.MustReplace("(O)837", reach.IsUnreachable));
+        Assert.False(BoardRepairRules.MustReplace("(O)155", reach.IsUnreachable));
+        Assert.False(BoardRepairRules.MustReplace("(O)267", reach.IsUnreachable));
         Assert.False(BoardRepairRules.MustReplace("(O)130", reach.IsUnreachable));
         Assert.False(BoardRepairRules.MustReplace("(O)Mod_GrottoFish", reach.IsUnreachable));
     }
