@@ -25,7 +25,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.95
+## What's New in 0.19.97
+
+**Fixed: island fish and forage from other mods' maps stay off the board.** Some mods add new spots you reach through Ginger Island, like the rainforest in Forager's Nooks and Crannies. Anything you could only get there could still end up in a year-one bundle. TLY now checks whether you can actually walk to a spot from your farm without going through the island, so island-only catches and forage stay off the board no matter which mod adds them, and so does anything sold only at the island shops. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report and the log.
+
+**Fixed: the save right after a rewind works with other mods.** The game saves as soon as the Junimos rewind you to Spring 1, but that save skipped the step other mods use to get their data ready. With mods like Unlockable Bundles the save failed, and the old save folder was left behind. The rewind now saves the way a night does, and the old folder is cleaned up once the new save is written.
+
+## 0.19.95
 
 **A new Animals tab in the upgrade menu, with thirteen animal powers.** Morning Rounds pets every animal each morning, Warm Welcome gives new animals a head start on hearts, Quick Growth turns a baby into an adult after its first night with food, and there are more for hatching, births, coops and barns, rabbits, pigs, your horse and your pet. Your existing animal upgrades (Keep Horse, Keep Coop, Keep Barn, the Herd Book and the rest) moved to this tab at the same prices, and anything you already own stays owned. None of them makes a bundle ask for more.
 

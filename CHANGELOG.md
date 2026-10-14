@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.97 - 2026-10-14
+
+### Fixed
+
+- **Fixed: island fish and forage from other mods' maps stay off the board.** Some mods add new spots you reach through Ginger Island, like the rainforest in Forager's Nooks and Crannies. Anything you could only get there could still end up in a year-one bundle. TLY now checks whether you can actually walk to a spot from your farm without going through the island, so island-only catches and forage stay off the board no matter which mod adds them, and so does anything sold only at the island shops. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report and the log.
+- Ginger Island dig spots and random shop stock that a shop's own condition filters out no longer count as a way to get an item in year one.
+
 ## 0.19.96 - 2026-10-14
 
 ### Fixed
