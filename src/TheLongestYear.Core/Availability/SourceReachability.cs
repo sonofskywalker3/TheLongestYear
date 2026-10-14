@@ -96,6 +96,16 @@ public sealed class SourceReachability
                 _shopLocations[placement.ShopId] = list = new List<string>();
             if (!string.IsNullOrEmpty(placement.LocationName)) list.Add(placement.LocationName);
         }
+        // The shops the game opens from code at a fixed map (the Island Trader, the resort bar, the
+        // Volcano dwarf, the Desert Trader) have no owner and no tile, so they used to be unplaced,
+        // an unknown route that kept everything they sell allowed. ShopWeeks already knows where
+        // they stand; read the same table here so an item sold only on the island is a closed route.
+        foreach (KeyValuePair<string, string> fixedShop in ShopWeeks.CodeOpenedShops)
+        {
+            if (!_shopLocations.TryGetValue(fixedShop.Key, out List<string>? list))
+                _shopLocations[fixedShop.Key] = list = new List<string>();
+            if (!list.Contains(fixedShop.Value)) list.Add(fixedShop.Value);
+        }
 
         // A LIST, not a single value: mods define several seeds yielding one harvest, and a
         // scalar would let whichever row enumerated last erase a reachable alternative.
