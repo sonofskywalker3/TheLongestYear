@@ -329,9 +329,9 @@ namespace TheLongestYear.Loop
                     foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                                  .Where(s => YearOneCondition.Allows(s?.Condition, closedRules)))
                     {
-                        foreach (string id in ItemQueryIds.Expand(spot?.ItemId)) MarkSpawn(id);
+                        foreach (string id in QueryIds(spot?.ItemId, spot?.PerItemCondition)) MarkSpawn(id);
                         foreach (string raw in spot?.RandomItemId ?? new List<string>())
-                            foreach (string id in ItemQueryIds.Expand(raw)) MarkSpawn(id);
+                            foreach (string id in QueryIds(raw, spot?.PerItemCondition)) MarkSpawn(id);
                     }
                 }
                 foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
@@ -350,9 +350,9 @@ namespace TheLongestYear.Loop
                         var outputs = new List<string>();
                         foreach (var output in rule?.OutputItem ?? new List<StardewValley.GameData.Machines.MachineItemOutput>())
                         {
-                            outputs.AddRange(ItemQueryIds.Expand(output?.ItemId));
+                            outputs.AddRange(QueryIds(output?.ItemId, output?.PerItemCondition));
                             foreach (string raw in output?.RandomItemId ?? new List<string>())
-                                outputs.AddRange(ItemQueryIds.Expand(raw));
+                                outputs.AddRange(QueryIds(raw, output?.PerItemCondition));
                         }
                         if (outputs.Count == 0) continue;
                         var triggers = rule.Triggers ?? new List<StardewValley.GameData.Machines.MachineOutputTriggerRule>();
@@ -534,6 +534,14 @@ namespace TheLongestYear.Loop
                 }
             }
         }
+
+        /// <summary>The object ids an artifact-spot or machine-output line names
+        /// (<see cref="ItemQueryIds"/>). A <c>RANDOM_ITEMS</c> range narrowed by a PerItemCondition is
+        /// resolved through the game with that condition, so only the items that pass it count.</summary>
+        private IReadOnlyList<string> QueryIds(string raw, string perItemCondition)
+            => ItemQueryIds.NeedsItemFilter(raw, perItemCondition)
+                ? ResolveQuery(raw, perItemCondition)
+                : ItemQueryIds.Expand(raw);
 
         private static bool IsRegisteredQueryKey(string key)
             => StardewValley.Internal.ItemQueryResolver.ItemResolvers.ContainsKey(key);

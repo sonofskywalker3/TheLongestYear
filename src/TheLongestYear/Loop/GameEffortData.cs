@@ -79,7 +79,7 @@ namespace TheLongestYear.Loop
                     if (o.GeodeDropsDefaultItems)
                         geodeDrops.AddRange(GeodeAvailability.DefaultTableDrops(geodeId));
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
-                        foreach (string id in SpawnIds(drop?.ItemId, drop?.RandomItemId))
+                        foreach (string id in SpawnIds(drop?.ItemId, drop?.RandomItemId, drop?.PerItemCondition))
                             geodeDrops.Add(new RawGeodeDrop(geodeId, id, drop.Chance));
                 }
 
@@ -105,12 +105,12 @@ namespace TheLongestYear.Loop
                     // row drops only during Qi's DROP_QI_BEANS order (2026-09-29).
                     foreach (ArtifactSpotDropData spot in (loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                                  .Where(s => TheLongestYear.Core.Availability.YearOneCondition.Allows(s?.Condition, closedRules)))
-                        foreach (string id in SpawnIds(spot?.ItemId, spot?.RandomItemId))
+                        foreach (string id in SpawnIds(spot?.ItemId, spot?.RandomItemId, spot?.PerItemCondition))
                             artifactSpots.Add(new RawArtifactSpot(kv.Key, id, spot.Chance));
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, excludedLocationMarkers))
                         continue;
                     foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !TheLongestYear.Core.PastSeasonSpawn.IsCopy(r?.Id)))
-                        foreach (string id in SpawnIds(f?.ItemId, f?.RandomItemId))
+                        foreach (string id in SpawnIds(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key, f.Chance));
 
                     // How much this map can produce in a day. Only meaningful for maps that grow
@@ -126,7 +126,7 @@ namespace TheLongestYear.Loop
                     foreach (MachineOutputRule rule in kv.Value?.OutputRules ?? new List<MachineOutputRule>())
                     {
                         var outputs = (rule.OutputItem ?? new List<MachineItemOutput>())
-                            .SelectMany(o => SpawnIds(o?.ItemId, o?.RandomItemId))
+                            .SelectMany(o => SpawnIds(o?.ItemId, o?.RandomItemId, o?.PerItemCondition))
                             .Distinct(StringComparer.Ordinal)
                             .ToList();
                         if (outputs.Count == 0) continue;
@@ -214,7 +214,7 @@ namespace TheLongestYear.Loop
                     if (pond == null) continue;
                     var products = new List<RawFishPondProduct>();
                     foreach (FishPondReward reward in pond.ProducedItems ?? new List<FishPondReward>())
-                        foreach (string id in SpawnIds(reward?.ItemId, reward?.RandomItemId))
+                        foreach (string id in SpawnIds(reward?.ItemId, reward?.RandomItemId, reward?.PerItemCondition))
                             products.Add(new RawFishPondProduct(id, reward.RequiredPopulation, reward.Chance));
                     ponds.Add(new RawFishPondRule((IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), products));
                 }
@@ -248,7 +248,7 @@ namespace TheLongestYear.Loop
                 {
                     if (kv.Value == null) continue;
                     var fruit = (kv.Value.Fruit ?? new List<StardewValley.GameData.FruitTrees.FruitTreeFruitData>())
-                        .SelectMany(f => SpawnIds(f?.ItemId, f?.RandomItemId))
+                        .SelectMany(f => SpawnIds(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                         .Distinct(StringComparer.Ordinal).ToList();
                     var treeSeasons = (kv.Value.Seasons ?? new List<StardewValley.Season>())
                         .Select(season => (TheLongestYear.Core.Season)(int)season).Distinct().ToList();
@@ -301,7 +301,7 @@ namespace TheLongestYear.Loop
                 if (chop == null || !string.IsNullOrWhiteSpace(chop.Condition)) continue;
                 if (chop.MaxSize != null && chop.MaxSize < WildTreeGrowthStage.Tree) continue;
                 Core.Season? season = chop.Season == null ? null : (Core.Season)(int)chop.Season.Value;
-                foreach (string id in SpawnIds(chop.ItemId, chop.RandomItemId))
+                foreach (string id in SpawnIds(chop.ItemId, chop.RandomItemId, chop.PerItemCondition))
                     drops.Add(new RawWildTreeDrop(id, chop.Chance, season));
             }
             return new RawWildTree(treeId, tree.SeedItemId, tree.SeedOnShakeChance, tree.SeedOnChopChance, tree.DropWoodOnChop, drops);
@@ -331,13 +331,14 @@ namespace TheLongestYear.Loop
                 .Select(p => BundleParsing.NormalizeItemId(p.ItemId))
                 .ToList();
 
-        /// <summary>Object ids from an item id or query plus its RandomItemId list.</summary>
-        private static IEnumerable<string> SpawnIds(string itemId, List<string> randomItemId)
+        /// <summary>Object ids from an item id or query plus its RandomItemId list. A RANDOM_ITEMS
+        /// range narrowed by the line's PerItemCondition reads as nothing (ItemQueryIds.Expand).</summary>
+        private static IEnumerable<string> SpawnIds(string itemId, List<string> randomItemId, string perItemCondition)
         {
-            foreach (string id in ItemQueryIds.Expand(itemId))
+            foreach (string id in ItemQueryIds.Expand(itemId, perItemCondition))
                 yield return id;
             foreach (string raw in randomItemId ?? new List<string>())
-                foreach (string id in ItemQueryIds.Expand(raw))
+                foreach (string id in ItemQueryIds.Expand(raw, perItemCondition))
                     yield return id;
         }
 
