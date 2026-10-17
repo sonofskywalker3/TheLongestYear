@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.98 - 2026-10-17
+
+### Fixed
+
+- **Keep tool upgrades now find your best tool wherever it is.** The Junimo Shrine's "Keep <tool>" offer used to read only the first tool of that kind in your backpack. A spare basic pickaxe earlier in the bag hid the iridium one, a tool sitting in a chest counted for nothing, and a tool you had just handed to Clint for an upgrade vanished from the offer (and the rewind then cancelled that upgrade). The offer, the planner and the rewind now look at every tool you own, in the backpack, at Clint's counter and in every chest, fridge and Junimo chest on your farm, and use the highest tier they find. The tier you keep is applied to the tool you get back after the rewind, and the bait, tackle and enchantments carry over from the tool that was actually upgraded.
+
 ## 0.19.97 - 2026-10-14
 
 ### Fixed

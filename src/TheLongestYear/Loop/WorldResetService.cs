@@ -231,19 +231,14 @@ namespace TheLongestYear.Loop
         }
 
         // Read in-run peaks from the live player so the baseline builder can apply
-        // cap-not-grant. Walks p.Items looking for each tool kind and reads its
-        // UpgradeLevel; reads skill level fields directly.
+        // cap-not-grant. The tool peak is the highest tier owned ANYWHERE (bag, Clint's counter,
+        // owned chests; ToolTierScan), the same read the shrine's keep offer uses, so a kept tier
+        // bought for a tool sitting at Clint's or in a chest is not capped back to basic here.
+        // Runs before FarmerReset cancels the Clint upgrade and before the world wipe empties the
+        // chests. Skill levels are read directly.
         private static PlayerSnapshot CapturePeaks(Farmer p)
         {
-            var toolTiers = new Dictionary<string, int>();
-            foreach (var item in p.Items)
-            {
-                if (item is StardewValley.Tools.Hoe         h)  toolTiers["hoe"]          = System.Math.Max(toolTiers.TryGetValue("hoe", out var v0) ? v0 : 0, h.UpgradeLevel);
-                if (item is StardewValley.Tools.Pickaxe     pk) toolTiers["pickaxe"]      = System.Math.Max(toolTiers.TryGetValue("pickaxe", out var v1) ? v1 : 0, pk.UpgradeLevel);
-                if (item is StardewValley.Tools.Axe         a)  toolTiers["axe"]          = System.Math.Max(toolTiers.TryGetValue("axe", out var v2) ? v2 : 0, a.UpgradeLevel);
-                if (item is StardewValley.Tools.WateringCan w)  toolTiers["watering_can"] = System.Math.Max(toolTiers.TryGetValue("watering_can", out var v3) ? v3 : 0, w.UpgradeLevel);
-                if (item is StardewValley.Tools.FishingRod  fr) toolTiers["fishing_rod"]  = System.Math.Max(toolTiers.TryGetValue("fishing_rod", out var v4) ? v4 : 0, fr.UpgradeLevel);
-            }
+            var toolTiers = new Dictionary<string, int>(TheLongestYear.Integration.ToolTierScan.Peaks(p));
 
             var skillLevels = new Dictionary<int, int>
             {

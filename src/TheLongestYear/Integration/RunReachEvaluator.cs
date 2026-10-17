@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using StardewValley;
 using StardewValley.Menus;
@@ -21,32 +22,39 @@ namespace TheLongestYear.Integration
         /// investigation: dumps what the live tool reach actually sees when a shrine builds.</summary>
         public static System.Action<string> DebugLog;
 
-        /// <summary>Log every tool currently in the player's inventory with its UpgradeLevel, plus
-        /// what <see cref="ToolLevel"/> resolves per kind. Diagnoses why a "Keep &lt;tool&gt;" row is
-        /// missing from the shrine: a leftover basic tool earlier in the bag masks an upgraded one
-        /// (ToolLevel returns the FIRST match, not the highest), or the upgraded tool isn't in the
-        /// bag at all at shrine-open time. Call when the shrine's keep list is built.</summary>
+        /// <summary>Log every tool the player owns (bag, Clint's counter, owned chests) with its
+        /// UpgradeLevel and where it sits, plus what <see cref="ToolLevel"/> resolves per kind.
+        /// Diagnoses a missing "Keep &lt;tool&gt;" row. Call when the shrine's keep list is built.</summary>
         public static void LogToolSnapshot()
         {
             if (DebugLog == null) return;
             Farmer p = Game1.player;
             if (p == null) { DebugLog("[reach-snapshot] no player loaded."); return; }
 
-            var sb = new System.Text.StringBuilder("[reach-snapshot] tools in bag: ");
-            foreach (Item it in p.Items)
-            {
-                switch (it)
-                {
-                    case Hoe h:         sb.Append($"Hoe(L{h.UpgradeLevel}) ");          break;
-                    case Pickaxe pk:    sb.Append($"Pickaxe(L{pk.UpgradeLevel}) ");     break;
-                    case Axe a:         sb.Append($"Axe(L{a.UpgradeLevel}) ");          break;
-                    case WateringCan w: sb.Append($"Can(L{w.UpgradeLevel}) ");          break;
-                    case FishingRod rd: sb.Append($"Rod(L{rd.UpgradeLevel}) ");         break;
-                }
-            }
+            var sb = new System.Text.StringBuilder("[reach-snapshot] tools owned: ");
+            foreach ((string slug, Tool tool, string source) in ToolTierScan.OwnedTools(p))
+                sb.Append($"{slug}(L{tool.UpgradeLevel}@{source}) ");
             sb.Append($"| ToolLevel resolves: hoe={ToolLevel(p, "hoe")} pickaxe={ToolLevel(p, "pickaxe")} ")
               .Append($"axe={ToolLevel(p, "axe")} watering_can={ToolLevel(p, "watering_can")} rod={RodLevel(p)}");
             DebugLog(sb.ToString());
+        }
+
+        // One world walk per menu build, not one per keep row: the peaks are cached for the tick
+        // they were read on (a shrine evaluates every tool keep in the same tick).
+        private static IReadOnlyDictionary<string, int> _peaks;
+        private static uint _peaksTick = uint.MaxValue;
+        private static Farmer _peaksFarmer;
+
+        private static IReadOnlyDictionary<string, int> Peaks(Farmer p)
+        {
+            uint tick = (uint)Game1.ticks;
+            if (_peaks == null || _peaksTick != tick || !ReferenceEquals(_peaksFarmer, p))
+            {
+                _peaks = ToolTierScan.Peaks(p);
+                _peaksTick = tick;
+                _peaksFarmer = p;
+            }
+            return _peaks;
         }
 
         /// <summary>The Vault bundles TLY recorded as paid this run (debug readout of the bus reach).</summary>
@@ -151,28 +159,16 @@ namespace TheLongestYear.Integration
             flag != null && (p.mailReceived.Contains(flag)
                 || (Game1.MasterPlayer != null && Game1.MasterPlayer.mailReceived.Contains(flag)));
 
+        /// <summary>The HIGHEST upgrade level of that tool kind the player owns anywhere (bag,
+        /// Clint's counter, owned chests). A spare basic tool can no longer hide the upgraded one,
+        /// and a tool handed to Clint or parked in a chest still counts (Nexus keep-tool reports).</summary>
         private static int ToolLevel(Farmer p, string kind)
-        {
-            foreach (Item it in p.Items)
-            {
-                switch (kind)
-                {
-                    case "hoe"          when it is Hoe h:          return h.UpgradeLevel;
-                    case "pickaxe"      when it is Pickaxe pk:     return pk.UpgradeLevel;
-                    case "axe"          when it is Axe a:          return a.UpgradeLevel;
-                    case "watering_can" when it is WateringCan w:  return w.UpgradeLevel;
-                }
-            }
-            return 0;
-        }
+            => ToolTierPeaks.Level(Peaks(p), kind);
 
+        /// <summary>0 bamboo, 2 fiberglass, 3 iridium (1 = training rod); -1 when no rod is owned,
+        /// distinct from bamboo.</summary>
         private static int RodLevel(Farmer p)
-        {
-            foreach (Item it in p.Items)
-                if (it is FishingRod rod)
-                    return rod.UpgradeLevel;   // 0 bamboo, 2 fiberglass, 3 iridium (1 = training rod)
-            return -1;                          // no rod held — distinct from bamboo (UpgradeLevel 0)
-        }
+            => ToolTierPeaks.Level(Peaks(p), ToolTierScan.RodSlug, ToolTierPeaks.NoRod);
 
         private static int BackpackTier(Farmer p) => p.MaxItems switch
         {
