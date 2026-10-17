@@ -323,6 +323,40 @@ namespace TheLongestYear.UI
             ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus,
                 // Double week: the right card shows its list without the lines the left card owns.
                 ownedByOtherCard: _double ? PreviewFor(_offer[0]) : null);
+            ResolveCardDrawbacks();
+        }
+
+        /// <summary>Each card's drawback, drawn against the goals the card previews (and both cards'
+        /// goals on a double week), the same way the pick commits it (RunController.DrawbackFor).
+        /// Resolved once per offer, not per frame: the preview samples the goal pool.</summary>
+        private readonly Dictionary<int, string> _cardDrawbacks = new Dictionary<int, string>();
+
+        private void ResolveCardDrawbacks()
+        {
+            _cardDrawbacks.Clear();
+            var goals = new List<BonusSlot>();
+            if (_double)
+                foreach (Theme theme in _offer)
+                    goals.AddRange(PreviewFor(theme));
+            for (int slot = 0; slot < _offer.Count; slot++)
+            {
+                IEnumerable<BonusSlot> cardGoals = _double ? goals : PreviewFor(_offer[slot]);
+                _cardDrawbacks[slot] = _runController.DrawbackFor(
+                    _offer[slot], OfferWeek, _rand.RandomPairings, OtherCard(slot), cardGoals);
+            }
+        }
+
+        /// <summary>The drawback the card in <paramref name="slot"/> shows (and would commit).</summary>
+        private string DrawbackFor(int slot)
+        {
+            if (!_cardDrawbacks.TryGetValue(slot, out string drawback))
+            {
+                ResolveCardDrawbacks();
+                drawback = _cardDrawbacks.TryGetValue(slot, out string resolved)
+                    ? resolved
+                    : ThemeModifiers.For(_offer[slot]).LiabilityId;
+            }
+            return drawback;
         }
 
         /// <summary>True when the card in <paramref name="slot"/> is face down this offer week. Keyed on

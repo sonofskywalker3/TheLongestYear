@@ -171,7 +171,7 @@ namespace TheLongestYear.UI
             }
 
             string bonusMod = ThemeModifiers.For(theme.Value).BonusId;
-            string liabilityMod = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme.Value, _rand.RandomPairings, OtherCard(slot));
+            string liabilityMod = DrawbackFor(slot);
             string bonusName = ThemeModifiers.DisplayNameFor(bonusMod);
             string liabilityName = ThemeModifiers.DisplayNameFor(liabilityMod);
 

@@ -97,7 +97,7 @@ namespace TheLongestYear.UI
             {
                 Theme theme = _offer[slot];
                 bool sealedCard = IsSealed(slot);
-                string drawback = RandomPairing.LiabilityFor(_run.Seed, OfferWeek, theme, _rand.RandomPairings, OtherCard(slot));
+                string drawback = DrawbackFor(slot);
                 double mult = CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double);
                 _monitor.Log(
                     $"Hub card slot {slot}: {(sealedCard ? CardMultiplier.SealedLabel : theme.ToString())}, " +

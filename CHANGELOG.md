@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.99 - 2026-10-17
+
+### Fixed
+
+- **A random drawback can no longer cancel the week's own goals.** With Random Pairings on, a card could draw "mines closed" while its goal list asked for a Ghostfish or a Cave Carrot, or "no forage" while it asked for a Red Mushroom, which left that goal impossible all week. The drawback is now drawn after the goals are sampled and checked against them: if it would shut the only way to get one of them, the card draws a different drawback instead (and falls back to a milder one if nothing else is allowed). The planning hub shows the same drawback the pick commits, on single and double theme weeks alike, and the same seed still gives the same card.
+
 ## 0.19.98 - 2026-10-17
 
 ### Fixed

@@ -223,6 +223,9 @@ namespace TheLongestYear
                     ? ItemKindClassifier.From(objectData.Category, objectData.Type)
                     : ItemKind.Other;
             };
+            // A random drawback is checked against the week's sampled goals (DrawbackConflicts):
+            // the profiles come from the same pools the board was generated from.
+            _runController.GoalSourceOf = ItemSourceIndex.From(_enginePools).For;
             _runController.AttachQuestService(_questService);
             _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
             TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;
