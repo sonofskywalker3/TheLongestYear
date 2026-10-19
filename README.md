@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.97`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.116`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,19 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.97
+## What's New in 0.19.116
+
+**Focus cards: something to aim for in every loop.** At the start of each loop the Junimos deal three hands of cards: tools, buildings and knacks. You pick one card from each hand. Any time that year you can buy a picked card with JP, from the new Focus tab on the farm statue, and the Junimos deliver it: your tool is upgraded where it sits, a coop or barn goes up for free and finished, and a knack works right away. You keep it for every loop after. A card you don't buy waits for you in the upgrade menu at the end of the year, at the same price.
+
+**A goal the Junimos especially want pays double JP.** Each week's theme card can hold one goal marked with an x2 badge. Every item you donate to it earns twice the usual JP.
+
+**Fixed: the Keep tool offer finds your best tool.** It used to read only the first tool of that kind in your backpack, so a spare basic pickaxe could hide your iridium one. It now checks your backpack, Clint's counter and every chest on your farm, and keeps the highest tier it finds.
+
+**Fixed: a random drawback can't cancel the week's own goals.** With Random pairings on, a card could draw "mines closed" while asking for a Cave Carrot. A drawback that would shut the only way to get one of the week's goals is now swapped for another.
+
+**Fixed: villagers keep their routine after a rewind with the shortcuts kept.** Elliott, Sebastian, Willy and others headed for the beach could lose their routine for the day. The shortcuts are now open from the first morning of the new year.
+
+## 0.19.97
 
 **Fixed: island fish and forage from other mods' maps stay off the board.** Some mods add new spots you reach through Ginger Island, like the rainforest in Forager's Nooks and Crannies. Anything you could only get there could still end up in a year-one bundle. TLY now checks whether you can actually walk to a spot from your farm without going through the island, so island-only catches and forage stay off the board no matter which mod adds them, and so does anything sold only at the island shops. If your board already asks for one, that slot is swapped the next time you load your save. Thanks to iroeny for the report and the log.
 
@@ -119,6 +131,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **Seasonal time-loop.** Each season has a donation minimum. Miss it and the year unwinds to Spring 1.
 - **Junimo Points.** Donations earn JP — scaled by rarity and by how late in the year you give. JP banks across loops.
 - **Junimo Upgrades.** Spend JP on upgrades that let you hold on to some of what you gained: skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, the Junimos' own gifts (greenhouse, quarry bridge, boulder, minecarts, bus), and more.
+- **Focus cards.** At the start of each loop, pick one card from each of three hands: tools, buildings and knacks. Buy a picked card with JP any time that year, the Junimos deliver it, and you keep it for later loops.
 - **Animal powers.** The upgrade menu's **Animals** tab sells permanent animal upgrades. None of them makes a bundle ask for more. Your animal keeps (Keep Horse, Keep Pet, Keep Coop, Keep Barn, Keep Silo, the Start with animals and the Herd Book) live on the same tab.
   - **Morning Rounds:** every animal on your farm gets petted each morning, like an Auto-Petter.
   - **Warm Welcome I, II and III:** new animals arrive with 1, 2 or 3 hearts. Animals coming back from the Herd Book keep their own hearts.
@@ -167,6 +180,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. This works on every bundle source.
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
 - **Junimo Upgrades.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, and more.
+- **Focus cards.** Before the first planning hub of every loop, the Junimos offer three hands of cards in turn (tools, buildings, knacks) and you pick one from each. Buy a picked card with JP from the farm statue's Focus tab any time that year. The Junimos deliver it then and there, and you keep it for later loops. A card you don't buy stays in the upgrade menu at the end of the year.
 - **JP Boosts.** The Junimo statue on the farm sells this-loop edges for JP any day (weather, luck, a free late night, stacking bonuses, a temporary skill level, an elevator stop) and shows what is running on its Active tab.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
 - **Restarting.** Want a fresh loop before the season runs out? The Junimo Shrine's **Restart the year** button ends the day and runs a Fail night without the Junimo scene: keep or reshuffle your bundles, spend JP, bank recipes, and wake on Spring 1. It counts as a loop, and it works after Keep playing too.
