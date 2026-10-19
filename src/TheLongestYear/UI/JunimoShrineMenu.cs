@@ -9,6 +9,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
+using TheLongestYear.Focus;
 using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
@@ -19,7 +20,7 @@ namespace TheLongestYear.UI
     /// hardcoded to gold/festival/club/QiGems (ShopMenu.cs:802-812), so reusing it would require
     /// monkey-patching a 2400-line file. A custom menu is the "fix the data" path.
     /// </summary>
-    internal sealed class JunimoShrineMenu : IClickableMenu
+    internal sealed partial class JunimoShrineMenu : IClickableMenu
     {
         private const int PanelWidth = 1100;
         private const int PanelHeight = 700;
@@ -65,17 +66,25 @@ namespace TheLongestYear.UI
             /// <summary>Set when the row passes every gate but the kept-building room
             /// (AnimalCapacityRule): drawn greyed with this reason, never bought.</summary>
             public readonly string BlockReason;
+            /// <summary>Set on a "your focus" row: the card's theme and its live quote.</summary>
+            public readonly FocusTheme? FocusTheme;
+            public readonly FocusQuote Quote;
             public ShrineRow(UpgradeDefinition def, bool owned, string blockReason = null)
-            { Def = def; Owned = owned; BlockReason = blockReason; }
+            { Def = def; Owned = owned; BlockReason = blockReason; FocusTheme = null; Quote = null; }
+            public ShrineRow(UpgradeDefinition def, FocusTheme theme, FocusQuote quote)
+            { Def = def; Owned = false; BlockReason = null; FocusTheme = theme; Quote = quote; }
             public bool Buyable => !Owned && BlockReason == null;
+            public bool IsFocus => FocusTheme.HasValue;
         }
 
-        public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases)
+        public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases, FocusService focus = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
             _store = store;
             _purchases = purchases;
+            _focus = focus;
+            RefreshFocusCards();
 
             // #3 diagnostic: dump what the live tool reach sees the instant the spend shrine opens
             // (default category is Loadout) — distinguishes "leftover basic tool masks the upgrade"
@@ -204,7 +213,9 @@ namespace TheLongestYear.UI
                 if (_rowSlots[i].containsPoint(x, y))
                 {
                     UpgradeDefinition def = rows[i].Def;
-                    string footer = rows[i].Owned
+                    string footer = rows[i].IsFocus
+                        ? FocusFooter(rows[i])
+                        : rows[i].Owned
                         ? Strings.Get("menu.shrine.owned")
                         : rows[i].BlockReason != null
                         ? rows[i].BlockReason
@@ -234,7 +245,7 @@ namespace TheLongestYear.UI
             for (int i = 0; i < rows.Count; i++)
                 if (_rowSlots[i].containsPoint(x, y))
                 {
-                    if (rows[i].Buyable) TryBuy(rows[i].Def);    // owned and room-blocked rows are display-only
+                    if (rows[i].Buyable) TryBuy(rows[i]);    // owned and room-blocked rows are display-only
                     return;
                 }
         }
@@ -257,7 +268,7 @@ namespace TheLongestYear.UI
                 {
                     IReadOnlyList<ShrineRow> rows = VisibleRows(out _, out _);
                     int slot = id - RowIdBase;
-                    if (slot < rows.Count && rows[slot].Buyable) TryBuy(rows[slot].Def);
+                    if (slot < rows.Count && rows[slot].Buyable) TryBuy(rows[slot]);
                     return;
                 }
             }
@@ -272,13 +283,17 @@ namespace TheLongestYear.UI
         /// (Nexus 1122027: Mine Upgrade 1 + 2 for ~200 JP in one press).</summary>
         private int _lastPurchaseTick = -1;
 
-        private void TryBuy(UpgradeDefinition def)
+        private void TryBuy(ShrineRow row)
         {
             if (Game1.ticks == _lastPurchaseTick)
                 return; // duplicate dispatch of the same press — see _lastPurchaseTick
             _lastPurchaseTick = Game1.ticks;
-            _purchases.TryPurchase(def.Id);
-            // The list redraws next frame from the updated MetaState — no extra refresh needed.
+            if (row.IsFocus) BuyFocus(row);
+            else _purchases.TryPurchase(row.Def.Id);
+            // A plain keep can lower a focus card's price (it kept one of the card's lower rungs),
+            // so the focus quotes are taken again. The catalog rows redraw from MetaState next frame.
+            RefreshFocusCards();
+            ClampScroll();
         }
 
         /// <summary>Debug (tly_openshop &lt;tab&gt; [hoverRow] [scroll]): show a tab, optionally scrolled, and
@@ -296,7 +311,7 @@ namespace TheLongestYear.UI
                 performHoverAction(_rowSlots[hoverRow].bounds.Center.X, _rowSlots[hoverRow].bounds.Center.Y);
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int start);
             _monitor.Log($"tly_openshop: tab {category}, rows {start}..{start + rows.Count - 1} of {total}: " +
-                         string.Join(", ", rows.Select(r => r.Def.Id + (r.Owned ? " (owned)" : r.BlockReason != null ? " (blocked)" : ""))) +
+                         string.Join(", ", rows.Select(r => r.Def.Id + (r.IsFocus ? " (your focus)" : r.Owned ? " (owned)" : r.BlockReason != null ? " (blocked)" : ""))) +
                          (_hoverText.Length > 0 ? "; hover: " + _hoverText.Replace("\n", " / ") : ""),
                 LogLevel.Info);
         }
@@ -328,16 +343,18 @@ namespace TheLongestYear.UI
         /// have and read its effect to test it.</summary>
         private IReadOnlyList<ShrineRow> VisibleCatalogForActiveCategory()
         {
-            var rows = new List<ShrineRow>();
+            // "Your focus" rows lead the tab; the plain row for the same upgrade is dropped.
+            List<ShrineRow> rows = FocusRows(out HashSet<string> focusIds);
             foreach (UpgradeDefinition def in
                 KeepShopFilter.BuyableInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
-                rows.Add(new ShrineRow(def, owned: false));
+                if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: false));
             foreach (UpgradeDefinition def in
                 KeepShopFilter.RoomBlockedInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
-                rows.Add(new ShrineRow(def, owned: false, AnimalCapacityRule.BlockReason(_store.State, def.Id)));
+                if (!focusIds.Contains(def.Id))
+                    rows.Add(new ShrineRow(def, owned: false, AnimalCapacityRule.BlockReason(_store.State, def.Id)));
             foreach (UpgradeDefinition def in
                 KeepShopFilter.OwnedLeavesInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
-                rows.Add(new ShrineRow(def, owned: true));
+                if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: true));
             return rows;
         }
 
@@ -414,6 +431,12 @@ namespace TheLongestYear.UI
         private void DrawRow(SpriteBatch b, ClickableComponent slot, ShrineRow row)
         {
             UpgradeDefinition def = row.Def;
+
+            if (row.IsFocus)
+            {
+                DrawFocusRow(b, slot, row);
+                return;
+            }
 
             if (row.Owned)
             {

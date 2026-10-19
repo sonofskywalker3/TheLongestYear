@@ -109,7 +109,7 @@ namespace TheLongestYear.UI
                 return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
-            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases);
+            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, _focus);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
         }
 

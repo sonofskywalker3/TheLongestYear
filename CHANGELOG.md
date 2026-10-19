@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.111 - 2026-10-19
+
+### Added
+
+- **Your focus cards under the JP box.** Three small icons show your chosen cards. A card you can buy now glows, and a bought card is faded.
+- **Unbought focus cards in the upgrade menu at the end of a year.** Each chosen card you did not buy shows at the top of its tab, marked "Your focus", at the card's price. It keeps the card's upgrade and the lower ones it includes. Buying it keeps the upgrade, and nothing is handed over that night.
+
 ## 0.19.110 - 2026-10-19
 
 ### Fixed

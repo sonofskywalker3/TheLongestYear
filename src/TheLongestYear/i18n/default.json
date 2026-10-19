@@ -585,6 +585,7 @@
     "focus.row.none": "You have not picked any focus cards yet.",
     "focus.row.host-only": "The host buys focus cards for the farm.",
     "focus.hub.label": "Your focus cards",
+    "focus.row.your-focus": "Your focus",
     "menu.hub.double-week": "Double week: take both",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
     "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
