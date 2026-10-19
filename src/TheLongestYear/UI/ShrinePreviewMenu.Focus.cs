@@ -106,7 +106,8 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            bool affordable = _state.JunimoPoints >= row.Quote.Price;
+            // The same rule the click uses, so the grey button and the HUD line never disagree.
+            bool affordable = _focus.CanAfford(row.Hand.Theme);
             string cost = FocusCardStrip.StatusText(row.Hand, row.Quote);
             Vector2 costSize = Game1.smallFont.MeasureString(cost);
             Utility.drawTextWithShadow(b, cost, Game1.smallFont,

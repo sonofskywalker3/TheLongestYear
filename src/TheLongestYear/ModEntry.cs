@@ -218,6 +218,7 @@ namespace TheLongestYear
             {
                 this.Helper.GameContent.InvalidateCache("Data/Mail");
                 this.Helper.GameContent.InvalidateCache("Data/Furniture");
+                TheLongestYear.UI.FocusCardStrip.ClearFaces();
             };
 
             // Watch the character-creation screen (Skip intro notice). Wired here (not in

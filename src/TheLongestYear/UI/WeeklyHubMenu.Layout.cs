@@ -114,8 +114,8 @@ namespace TheLongestYear.UI
             }
 
             // The focus cards: beside the weather calendar, or in their own band under the cards
-            // (after any cart rows).
-            LayoutFocusStrip(_cartPreviewSlots > 0 ? rowY : cardsY + CardHeight + FocusBandGap);
+            // (after the calendar and any cart rows when those are drawn).
+            LayoutFocusStrip(_weatherSageSlots > 0 || _cartPreviewSlots > 0 ? rowY : cardsY + CardHeight + FocusBandGap);
 
             // Reroll debug button — centred horizontally, sits in the bottom strip of the
             // panel just above its border. Lets the playtester cycle through theme offers

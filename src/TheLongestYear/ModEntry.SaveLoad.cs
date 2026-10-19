@@ -53,6 +53,7 @@ namespace TheLongestYear
             this.KeepRunningUnfocused("save load");
             // Bundle-relevance set is per-save (bundle data can differ) — rebuild on the next use.
             TheLongestYear.Loop.BundleRelevanceIndex.Invalidate();
+            TheLongestYear.UI.FocusCardStrip.ClearFaces();
 
             // Cleared until _meta.Load() runs below, so the early-return paths leave OnSaving inert
             // (it must not persist empty defaults over the player's banked progression).

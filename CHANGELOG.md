@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.110 - 2026-10-19
+
+### Fixed
+
+- **The focus cards on the planning hub no longer cover the Weather heading.** With a short forecast the cards start past the heading, and they move under the theme cards when there is not enough room beside the forecast. A Buy button on the Focus tab is greyed by the same check that decides whether the purchase goes through.
+
 ## 0.19.109 - 2026-10-19
 
 ### Added
