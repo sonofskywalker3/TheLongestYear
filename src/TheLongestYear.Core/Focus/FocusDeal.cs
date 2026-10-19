@@ -11,6 +11,11 @@ public static class FocusDeal
     private const int ThemePrime = 7919;
     private const int HandSize = 3;
 
+    /// <summary>Whether a chain quoted this way can be dealt: only an offer. A keep-only card (the
+    /// world already has its rung) would do nothing until the fail night, so it is never dealt; a
+    /// dealt card that turns keep-only later in the loop stays in its hand.</summary>
+    public static bool IsDealable(FocusQuote quote) => quote.Kind == FocusQuoteKind.Offer;
+
     public static List<FocusHand> Deal(int runSeed, Func<FocusChain, bool> feasible)
     {
         var hands = new List<FocusHand>();

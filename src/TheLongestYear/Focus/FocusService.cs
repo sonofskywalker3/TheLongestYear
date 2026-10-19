@@ -35,7 +35,8 @@ namespace TheLongestYear.Focus
         private double PriceFactor => _store.State.EffectiveDifficulty(_config).ShrinePriceFactor;
 
         /// <summary>Deals this run's hands if they have not been dealt yet. A card is dealt only
-        /// when it can be bought now (an offer or a keep-only).</summary>
+        /// when it is an offer now: a keep-only card (the world already has its rung) would do
+        /// nothing until the fail night. A dealt card that later turns keep-only stays in the hand.</summary>
         public void EnsureDealt()
         {
             if (FocusPicks.NeedsDeal(_store.Run)) Deal();
@@ -53,7 +54,7 @@ namespace TheLongestYear.Focus
             RunState run = _store.Run;
             IReadOnlyDictionary<string, int> peaks = ToolTierScan.Peaks(Game1.player);
             List<FocusHand> hands = FocusDeal.Deal(run.Seed, chain =>
-                Quote(chain, peaks).Kind is FocusQuoteKind.Offer or FocusQuoteKind.KeepOnly);
+                FocusDeal.IsDealable(Quote(chain, peaks)));
             FocusPicks.Install(run, hands);
             _monitor.Log($"Focus cards dealt for run {run.RunNumber}.", LogLevel.Trace);
         }

@@ -10,7 +10,8 @@ using TheLongestYear.Focus;
 namespace TheLongestYear.UI
 {
     /// <summary>The "your focus" rows: each chosen, unbought focus card that can still be bought
-    /// shows at the top of the tab that holds its target upgrade, at the card's live deal (same
+    /// shows at the top of the tab that holds its target upgrade, on the rewind shrine only (the
+    /// win shrine opens without a FocusService, so it has no focus rows), at the card's live deal (same
     /// rung, same price, the unkept lower rungs included). Run-reach does not apply, and the plain
     /// catalog row for the same upgrade is left out so it is not listed twice. Buying one keeps the
     /// upgrade only: the loop is ending, so nothing is handed over in the world. Host only.</summary>

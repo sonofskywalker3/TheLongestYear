@@ -103,13 +103,16 @@ namespace TheLongestYear.UI
             return true;
         }
 
-        public void OpenShrineShop()
+        /// <param name="focusRows">Show the "your focus" rows. Only the rewind shrine (the loop is
+        /// ending) does: a keep-only buy at the win shrine, before "Keep playing", would hand nothing
+        /// over for the rest of the run.</param>
+        public void OpenShrineShop(bool focusRows = false)
         {
             if (!CanOpen())
                 return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
-            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, _focus);
+            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, focusRows ? _focus : null);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
         }
 

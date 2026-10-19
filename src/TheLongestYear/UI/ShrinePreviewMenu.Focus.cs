@@ -106,8 +106,10 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            // The same rule the click uses, so the grey button and the HUD line never disagree.
-            bool affordable = _focus.CanAfford(row.Hand.Theme);
+            // The same rule as FocusService.CanAfford (and the HUD icons), on the row's quote and the
+            // live JP: re-quoting here would scan every chest each frame for a tool card. The click
+            // still checks through FocusService.CanAfford/Buy on a fresh quote.
+            bool affordable = _state.JunimoPoints >= row.Quote.Price;
             string cost = FocusCardStrip.StatusText(row.Hand, row.Quote);
             Vector2 costSize = Game1.smallFont.MeasureString(cost);
             Utility.drawTextWithShadow(b, cost, Game1.smallFont,

@@ -43,6 +43,23 @@ public class FocusDealTests
             Assert.DoesNotContain("axe", FocusDeal.Deal(seed, c => c.Id != "axe").SelectMany(h => h.Chains));
     }
 
+    [Theory]
+    [InlineData(FocusQuoteKind.Offer, true)]
+    [InlineData(FocusQuoteKind.KeepOnly, false)]
+    [InlineData(FocusQuoteKind.Done, false)]
+    [InlineData(FocusQuoteKind.Locked, false)]
+    public void Only_an_offer_is_dealable(FocusQuoteKind kind, bool dealable)
+        => Assert.Equal(dealable, FocusDeal.IsDealable(new FocusQuote("axe", kind, 1, "keep_axe_1", new[] { "keep_axe_1" }, 100)));
+
+    [Fact]
+    public void A_world_reached_top_rung_is_not_dealt()
+    {
+        var chain = FocusChains.TryGet("axe")!;
+        var quote = FocusMorph.Quote(chain, new MetaState(), chain.Rungs.Count, 1.0);
+        Assert.Equal(FocusQuoteKind.KeepOnly, quote.Kind);
+        Assert.False(FocusDeal.IsDealable(quote));
+    }
+
     [Fact]
     public void A_theme_with_two_feasible_deals_two_and_none_deals_empty()
     {

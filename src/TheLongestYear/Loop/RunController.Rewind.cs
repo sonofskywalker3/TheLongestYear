@@ -46,7 +46,7 @@ namespace TheLongestYear.Loop
             {
                 System.Action owed = _shrineOpenPending;
                 _shrineOpenPending = null;
-                TryOpenShrineThenContinue(owed);
+                TryOpenShrineThenContinue(owed, _shrineOpenPendingFocusRows);
                 return;
             }
             if (_menuWatch is not { } watch) return;
@@ -101,7 +101,7 @@ namespace TheLongestYear.Loop
                     // After the win screen closes: open the JP-spend shrine (the player spends the JP
                     // banked across the run), then ask "start a new loop" vs "keep playing". Same order as the
                     // old _pendingWinChoice path, with the win screen now in front of it.
-                    TryOpenShrineThenContinue(ShowKeepPlayingChoice);
+                    TryOpenShrineThenContinue(ShowKeepPlayingChoice, focusRows: false);
                     break;
                 case Day28Branch.None:
                 default:
@@ -130,7 +130,7 @@ namespace TheLongestYear.Loop
             if (!BundleHold.IsOfferable(BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType)))
             {
                 _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
-                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                TryOpenShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
             }
             else
             {

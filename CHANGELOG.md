@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.115 - 2026-10-19
+
+### Changed
+
+- Focus cards only show in the upgrade menu on the night the year rewinds. The menu after a win no longer lists them: a card bought there before "Keep playing" was kept for later loops but never delivered in the current one.
+- A focus card is only dealt when the Junimos can deliver it now. A card whose upgrade you already have in the world is left out of the hand.
+- The focus card pick no longer says you get the card right away. It now says the Junimos deliver it as soon as they can.
+- The house focus card says Robin is busy at your house until the upgrade is ready, since her shop is closed that day.
+- The Focus tab in the shrine preview no longer re-prices every card each frame.
+
 ## 0.19.114 - 2026-10-19
 
 ### Changed
