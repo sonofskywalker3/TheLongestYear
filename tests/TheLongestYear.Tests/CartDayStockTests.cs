@@ -62,6 +62,19 @@ public class CartDayStockTests
     }
 
     [Fact]
+    public void Extra_slot_bought_mid_day_opens_the_next_unseen_item_and_keeps_the_gap()
+    {
+        var run = new RunState { CartStockDay = 10, CartStockIds = new List<string> { "(O)1", "(O)2" } };
+        var afterBuying1 = new[] { "(O)2", "(O)3", "(O)4", "(O)5" };
+        var kept = CartDayStock.Select(run, day: 10, afterBuying1, allowed: 3);
+        Assert.Equal(new[] { "(O)2", "(O)3" }, kept);
+        Assert.Equal(new List<string> { "(O)1", "(O)2", "(O)3" }, run.CartStockIds);
+
+        // The next build that day is stable: no further slide up.
+        Assert.Equal(new[] { "(O)2", "(O)3" }, CartDayStock.Select(run, day: 10, afterBuying1, allowed: 3));
+    }
+
+    [Fact]
     public void KeyFor_distinguishes_recipe_from_item()
     {
         Assert.Equal("(O)1", CartDayStock.KeyFor("(O)1", isRecipe: false));

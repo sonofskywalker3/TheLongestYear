@@ -84,13 +84,10 @@ namespace TheLongestYear.Loop
             //     location unless the player previously had an L3 house at save creation. With
             //     HouseUpgradeLevel = 3 forced by FarmerReset, the FarmHouse warp tile will try
             //     to teleport into a non-existent "Cellar" location. Create it on demand here
-            //     before resetForPlayerEntry runs the warp setup. updateCellarAssignments
-            //     binds the cellar to the master player.
-            if (ctx.Baseline.BasementOnDay1 && Game1.getLocationFromName("Cellar") == null)
-            {
-                Game1.locations.Add(new StardewValley.Locations.Cellar("Maps\\Cellar", "Cellar"));
-                Game1.updateCellarAssignments();
-            }
+            //     before resetForPlayerEntry runs the warp setup. CellarHelper also binds the
+            //     cellar to the master player.
+            if (ctx.Baseline.BasementOnDay1)
+                CellarHelper.EnsureCellar();
         }
 
         /// <summary>Reset phase (steps 8 to 10c): kept buildings, greenhouse, horse, fish pond, animals and pet.</summary>

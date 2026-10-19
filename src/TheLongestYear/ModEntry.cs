@@ -367,6 +367,8 @@ namespace TheLongestYear
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             _runController?.OnDayStarted(sender, e);
+            // A basement focus card's Cellar, once the night's house upgrade has landed.
+            _focus?.Delivery.OnDayStarted();
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
@@ -397,6 +399,9 @@ namespace TheLongestYear
             // The rewind's ground drops are ordinary ground items from the first night on.
             TheLongestYear.Core.ResetGroundDrops.ForgetAtNight(_meta.State);
             _runController?.OnDayEnding(sender, e);
+            // After the run controller (a rewind clears the target): steps a focus-card basement up
+            // to the level below it, so vanilla's own overnight upgrade lands the last one.
+            _focus?.Delivery.OnDayEnding();
             // Vanilla spawns tomorrow's forage overnight, before DayStarted: prepare for tomorrow now.
             _pastSeasonSpawns?.Refresh(TodayDayOfYear() + 1);
         }

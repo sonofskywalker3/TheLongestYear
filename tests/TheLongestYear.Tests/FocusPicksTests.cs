@@ -100,4 +100,18 @@ public class FocusPicksTests
         Assert.Equal("keep_axe_2", t.BoughtUpgradeId);
         Assert.Null(back.FocusHandFor(FocusTheme.Knacks)!.Chosen);
     }
+
+    [Fact]
+    public void House_target_defaults_to_none_round_trips_and_clears_on_reset()
+    {
+        var run = new RunState();
+        Assert.Equal(RunState.NoFocusHouseTarget, run.FocusHouseTarget);
+
+        run.FocusHouseTarget = 3;
+        var back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(run))!;
+        Assert.Equal(3, back.FocusHouseTarget);
+
+        back.ResetFocus();
+        Assert.Equal(RunState.NoFocusHouseTarget, back.FocusHouseTarget);
+    }
 }

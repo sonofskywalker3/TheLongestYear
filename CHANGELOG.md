@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.106 - 2026-10-19
+
+### Added
+
+- **Buying a focus card delivers it now.** A tool card upgrades your tool where it sits, in the bag or in a chest, carrying over its enchantments, bait and tackle. A tool waiting at Clint's comes straight back at the card's tier, and a tool you do not have yet (a rod before Willy's letter) is handed to you. A knack works from the moment you buy it, and a backpack card grows the bag on the spot. The shortcuts open at once, and the kitchen or basement is finished overnight. Building cards (coop, barn, silo, fish pond) still record the keep only for now.
+
+### Changed
+
+- **A Cart Stall slot bought mid-day opens on the Traveling Cart that same day.** Items already bought still leave their gap.
+
 ## 0.19.105 - 2026-10-19
 
 ### Added

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using StardewValley;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
@@ -11,18 +12,6 @@ namespace TheLongestYear.UI
     {
         private const string RodChain = "fishing_rod";
         private const int FirstRung = 1;
-
-        private static readonly string[] MetalToolPrefixes = { "Copper", "Steel", "Gold", "Iridium" };
-        private static readonly string[] RodItemIds = { "BambooPole", "FiberglassRod", "IridiumRod" };
-
-        private static readonly IReadOnlyDictionary<string, string> MetalToolBaseIds =
-            new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                ["hoe"] = "Hoe",
-                ["pickaxe"] = "Pickaxe",
-                ["axe"] = "Axe",
-                ["watering_can"] = "WateringCan",
-            };
 
         private static readonly IReadOnlyDictionary<string, string> ChainItemIds =
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -57,9 +46,9 @@ namespace TheLongestYear.UI
         {
             if (chainId == null) return null;
             if (chainId == RodChain)
-                return "(T)" + RodItemIds[Math.Clamp(targetRung, FirstRung, RodItemIds.Length) - 1];
-            if (MetalToolBaseIds.TryGetValue(chainId, out string baseId))
-                return "(T)" + MetalToolPrefixes[Math.Clamp(targetRung, FirstRung, MetalToolPrefixes.Length) - 1] + baseId;
+                return ToolTierItems.ItemIdFor(chainId, ToolTierItems.RodLevelForRung(targetRung));
+            if (ToolTierItems.IsMetalSlug(chainId))
+                return ToolTierItems.ItemIdFor(chainId, Math.Clamp(targetRung, FirstRung, ToolTierItems.MaxMetalLevel));
             return ChainItemIds.TryGetValue(chainId, out string itemId) ? itemId : null;
         }
     }

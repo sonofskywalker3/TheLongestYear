@@ -25,6 +25,7 @@ namespace TheLongestYear.Focus
             _store = store;
             _config = config;
             _purchases = purchases;
+            Delivery = new FocusDelivery(monitor, store);
         }
 
         /// <summary>Read per call: a reset re-stamps the difficulty mid-session.</summary>
@@ -90,15 +91,44 @@ namespace TheLongestYear.Focus
                 && _store.State.JunimoPoints >= quote.Price;
         }
 
-        /// <summary>Buys the chosen card's keep only: JP and the kept rungs, nothing placed in the world.</summary>
-        public FocusBuyResult BuyKeepOnly(FocusTheme theme)
+        /// <summary>Hands a bought card over in the world (tools, knacks, house, shortcuts); its
+        /// day hooks finish the overnight house upgrade.</summary>
+        public FocusDelivery Delivery { get; }
+
+        /// <summary>Buys the chosen card's keep only: JP and the kept rungs, nothing placed in the world.
+        /// Host only: a farmhand's call changes nothing.</summary>
+        public FocusBuyResult BuyKeepOnly(FocusTheme theme) => BuyKeep(theme, out _);
+
+        /// <summary>Buys the chosen card and delivers it now. Host only: a farmhand's call changes
+        /// nothing. A building that needs the placement screen is bought keep-only for now; the
+        /// placement flow replaces that branch (it must charge only after a placement lands).</summary>
+        public FocusBuyResult Buy(FocusTheme theme)
         {
+            if (!Context.IsMainPlayer) return Logged(theme, null, FocusBuyResult.NotHost);
+
+            string chosen = _store.Run.FocusHandFor(theme)?.Chosen;
+            if (FocusDelivery.NeedsPlacement(chosen))
+                return BuyKeepOnly(theme);   // seam: building placement goes here
+
+            FocusBuyResult result = BuyKeep(theme, out FocusQuote quote);
+            if (result == FocusBuyResult.Success)
+            {
+                string message = Delivery.Deliver(quote, theme);
+                _monitor.Log($"Focus delivery for '{quote.ChainId}': {message ?? "nothing to hand over (keep only)"}.", LogLevel.Trace);
+            }
+            return result;
+        }
+
+        private FocusBuyResult BuyKeep(FocusTheme theme, out FocusQuote quote)
+        {
+            quote = null;
+            if (!Context.IsMainPlayer) return Logged(theme, null, FocusBuyResult.NotHost);
             FocusHand hand = _store.Run.FocusHandFor(theme);
             if (hand == null) return Logged(theme, null, FocusBuyResult.NotChosen);
             if (hand.Bought) return Logged(theme, null, FocusBuyResult.AlreadyBought);
             if (hand.Chosen == null) return Logged(theme, null, FocusBuyResult.NotChosen);
 
-            FocusQuote quote = QuoteFor(hand.Chosen);
+            quote = QuoteFor(hand.Chosen);
             if (quote == null) return Logged(theme, null, FocusBuyResult.NotChosen);
             FocusBuyResult result = FocusPurchase.TryBuy(_store.State, hand, quote);
             if (result == FocusBuyResult.Success)
@@ -109,10 +139,6 @@ namespace TheLongestYear.Focus
             }
             return Logged(theme, quote, result);
         }
-
-        /// <summary>Buys the chosen card. The keep part only for now; delivering the tool or
-        /// building into the world is added on top of this.</summary>
-        public FocusBuyResult Buy(FocusTheme theme) => BuyKeepOnly(theme);
 
         private FocusBuyResult Logged(FocusTheme theme, FocusQuote quote, FocusBuyResult result)
         {

@@ -1,6 +1,6 @@
 namespace TheLongestYear.Core;
 
-public enum FocusBuyResult { Success, NotChosen, AlreadyBought, Done, Locked, NotEnoughJp }
+public enum FocusBuyResult { Success, NotChosen, AlreadyBought, Done, Locked, NotEnoughJp, NotHost }
 
 /// <summary>The purchase rule for a focus card. It deliberately ignores a rung's prerequisite and
 /// run-reach gate: the quote already grants every lower rung, and a card is a way to get the
