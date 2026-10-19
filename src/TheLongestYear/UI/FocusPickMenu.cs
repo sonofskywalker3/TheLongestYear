@@ -28,9 +28,6 @@ namespace TheLongestYear.UI
         private const int MaxCards = 3;
         private const string HouseChain = "house";
         private const float HoverTint = 0.2f;
-        /// <summary>Input is ignored this many ticks after opening, so the press that picked the
-        /// previous hand cannot also pick on this one.</summary>
-        private const int InputGraceTicks = 15;
 
         private static readonly Rectangle CardBoxSource = new(0, 256, 60, 60);
 
@@ -60,7 +57,11 @@ namespace TheLongestYear.UI
         private int _cardsTop;
         private Card _hovered;
         private bool _picked;
-        private readonly int _openedTick = Game1.ticks;
+
+        /// <summary>False until A and the left mouse button have both been seen released since this
+        /// menu opened, so the press (or a held button's repeated clicks) that picked the previous
+        /// hand can never pick on this one. Picks are permanent.</summary>
+        private bool _armed;
 
         public FocusPickMenu(IMonitor monitor, Func<RunState> run, FocusService focus, FocusTheme theme)
         {
@@ -87,14 +88,17 @@ namespace TheLongestYear.UI
         {
             FocusQuote quote = _focus.QuoteFor(chainId);
             FocusChain chain = FocusChains.TryGet(chainId);
-            string upgradeId = quote?.UpgradeId ?? (chain != null ? chain.Rungs[chain.Rungs.Count - 1] : null);
+            // One rung for the icon and the text: the quote's target, else the chain's top rung.
+            int rung = quote?.TargetRung ?? chain?.Rungs.Count ?? 1;
+            string upgradeId = quote?.UpgradeId
+                ?? (chain != null && rung >= 1 && rung <= chain.Rungs.Count ? chain.Rungs[rung - 1] : null);
             UpgradeDefinition def = upgradeId != null ? UpgradeCatalog.TryGet(upgradeId) : null;
             bool priced = quote != null && quote.Kind is FocusQuoteKind.Offer or FocusQuoteKind.KeepOnly;
 
             return new Card
             {
                 ChainId = chainId,
-                Icon = FocusIcons.For(chainId, quote?.TargetRung ?? 1),
+                Icon = FocusIcons.For(chainId, rung),
                 Name = def?.DisplayName ?? chainId,
                 Description = def?.Description ?? "",
                 Price = priced
@@ -185,6 +189,9 @@ namespace TheLongestYear.UI
 
         public override bool readyToClose() => false;
 
+        /// <summary>The menu handles A itself, so the game sends no emulated clicks for it.</summary>
+        public override bool areGamePadControlsImplemented() => true;
+
         public override void receiveKeyPress(Keys key)
         {
             if (key == Keys.Escape) return;
@@ -196,11 +203,8 @@ namespace TheLongestYear.UI
             switch (b)
             {
                 case Buttons.A:
-                    if (currentlySnappedComponent != null)
-                    {
-                        int i = currentlySnappedComponent.myID;
-                        if (i >= 0 && i < _cards.Count) Pick(_cards[i]);
-                    }
+                    Card target = GamePadTarget();
+                    if (target != null) Pick(target);
                     return;
                 case Buttons.B:
                 case Buttons.Back:
@@ -221,11 +225,32 @@ namespace TheLongestYear.UI
         {
         }
 
+        /// <summary>The card A acts on: the snapped card with snappy menus on, otherwise the card
+        /// under the free cursor (never a card the player is not pointing at).</summary>
+        private Card GamePadTarget()
+        {
+            if (!Game1.options.snappyMenus)
+                return CardAt(Game1.getMouseX(), Game1.getMouseY());
+            int i = currentlySnappedComponent?.myID ?? -1;
+            return i >= 0 && i < _cards.Count ? _cards[i] : null;
+        }
+
+        private Card CardAt(int x, int y)
+        {
+            foreach (Card card in _cards)
+                if (card.Bounds.containsPoint(x, y)) return card;
+            return null;
+        }
+
         // ---------- picking ----------
 
         public override void update(GameTime time)
         {
             base.update(time);
+            if (!_armed
+                && !Game1.input.GetGamePadState().IsButtonDown(Buttons.A)
+                && Game1.input.GetMouseState().LeftButton == ButtonState.Released)
+                _armed = true;
             // Never leave an unclosable empty menu up (every card vanished from the hand).
             if (!_picked && _cards.Count == 0)
             {
@@ -245,19 +270,13 @@ namespace TheLongestYear.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            foreach (Card card in _cards)
-            {
-                if (card.Bounds.containsPoint(x, y))
-                {
-                    Pick(card);
-                    return;
-                }
-            }
+            Card card = CardAt(x, y);
+            if (card != null) Pick(card);
         }
 
         private void Pick(Card card)
         {
-            if (_picked || Game1.ticks - _openedTick < InputGraceTicks) return;
+            if (_picked || !_armed) return;
             _picked = true;
             bool chosen = FocusPicks.Choose(_run(), _theme, card.ChainId);
             _monitor.Log(
@@ -299,7 +318,7 @@ namespace TheLongestYear.UI
                 new Vector2(xPositionOnScreen + (width - subtitleSize.X) / 2f, y), Game1.textColor);
 
             foreach (Card card in _cards)
-                DrawCard(b, card, card == _hovered || card.Bounds == currentlySnappedComponent && Game1.options.gamepadControls);
+                DrawCard(b, card, card == _hovered || Game1.options.snappyMenus && Game1.options.gamepadControls && card.Bounds == currentlySnappedComponent);
 
             drawMouse(b);
         }

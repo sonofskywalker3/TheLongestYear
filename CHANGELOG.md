@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.105 - 2026-10-19
+
+### Added
+
+- **Saves updated mid-loop get their focus cards at the next planning hub.** A save from before 0.19.104 has no hands dealt for its current loop, so the picks now come before the next Monday planning hub instead of waiting for the next loop.
+
+### Changed
+
+- **Focus card picks on a controller.** A picks the card you are pointing at, and holding a button down can no longer pick on the next hand. Each hand waits until the button has been let go.
+
 ## 0.19.104 - 2026-10-19
 
 ### Added

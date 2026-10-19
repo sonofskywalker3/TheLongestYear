@@ -81,13 +81,15 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>Opens the next focus card pick when this is week 1 and a pick is still due,
-        /// dealing the hands first if needed. Returns false (open the hub) when every hand is
-        /// already picked or was dealt empty.</summary>
+        /// dealing the hands first if needed. A run that was never dealt (a save updated mid-loop)
+        /// gets its picks at the next hub whatever the week. Returns false (open the hub) when
+        /// every hand is already picked or was dealt empty.</summary>
         private bool TryOpenFocusPick()
         {
             if (_focus == null || !Context.IsMainPlayer) return false;
             RunState run = _store.Run;
-            if (run.WeekOfYear != FirstWeek || !FocusPicks.Pending(run)) return false;
+            bool due = FocusPicks.NeedsDeal(run) || (run.WeekOfYear == FirstWeek && FocusPicks.Pending(run));
+            if (!due) return false;
 
             _focus.EnsureDealt();
             FocusHand next = FocusPicks.NextToPick(_store.Run);
