@@ -2,6 +2,7 @@ using StardewModdingAPI;
 using StardewValley;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
+using TheLongestYear.Focus;
 using TheLongestYear.Loop;
 using CoreSeason = TheLongestYear.Core.Season;
 
@@ -14,31 +15,39 @@ namespace TheLongestYear.UI
     /// </summary>
     internal sealed class MenuLauncher
     {
+        private const int FirstWeek = 1;
+
         private readonly IMonitor _monitor;
         private readonly GameplayConfig _config;
         private readonly MetaStore _store;
         private readonly RunController _runController;
         private readonly UpgradePurchaseService _purchases;
+        private readonly FocusService _focus;
 
         public MenuLauncher(IMonitor monitor, GameplayConfig config, MetaStore store,
-            RunController runController, UpgradePurchaseService purchases)
+            RunController runController, UpgradePurchaseService purchases, FocusService focus)
         {
             _monitor = monitor;
             _config = config;
             _store = store;
             _runController = runController;
             _purchases = purchases;
+            _focus = focus;
         }
 
         /// <summary>Open the planning hub. If <paramref name="seasonOverride"/> is set (Sunday-night
         /// day-28 case), the menu shows next season's bundles + bonus preview and routes the pick
         /// to <see cref="RunState.NextMonthSelection"/> rather than CurrentSelection.</summary>
         /// <returns><c>true</c> if the hub actually opened; <c>false</c> if it was blocked
-        /// (no save, a menu/cutscene already up). Callers use the result to decide whether the
-        /// week's offer counts as presented — see <see cref="RunController.PresentOffer"/>.</returns>
+        /// (no save, a menu/cutscene already up, or the loop's focus card picks opened first).
+        /// Callers use the result to decide whether the week's offer counts as presented — see
+        /// <see cref="RunController.PresentOffer"/>.</returns>
         public bool OpenWeeklyHub(CoreSeason? seasonOverride = null)
         {
             if (!CanOpen()) return false;
+            // The loop's focus card picks come before the week-1 hub. Returning false leaves the
+            // week unpresented, so the deferred offer opens the hub once the last pick closes.
+            if (seasonOverride == null && TryOpenFocusPick()) return false;
 
             CoreSeason offerSeason = seasonOverride ?? _store.Run.Season;
             // Offer pool: for cross-month, ignore current month's selections (empty list).
@@ -71,13 +80,39 @@ namespace TheLongestYear.UI
             return true;
         }
 
-        public void OpenShrineShop()
+        /// <summary>Opens the next focus card pick when this is week 1 and a pick is still due,
+        /// dealing the hands first if needed. A run that was never dealt (a save updated mid-loop)
+        /// gets its picks at the next hub whatever the week. Returns false (open the hub) when
+        /// every hand is already picked or was dealt empty.</summary>
+        private bool TryOpenFocusPick()
+        {
+            if (_focus == null || !Context.IsMainPlayer) return false;
+            RunState run = _store.Run;
+            bool due = FocusPicks.NeedsDeal(run) || (run.WeekOfYear == FirstWeek && FocusPicks.Pending(run));
+            if (!due) return false;
+
+            _focus.EnsureDealt();
+            FocusHand next = FocusPicks.NextToPick(_store.Run);
+            if (next == null)
+            {
+                _monitor.Log("Focus cards: no hand has a card to pick; opening the planning hub.", LogLevel.Trace);
+                return false;
+            }
+            Game1.activeClickableMenu = new FocusPickMenu(_monitor, () => _store.Run, _focus, next.Theme);
+            _monitor.Log($"Opened the focus card pick for {next.Theme} (cards: {string.Join(",", next.Chains)}).", LogLevel.Info);
+            return true;
+        }
+
+        /// <param name="focusRows">Show the "your focus" rows. Only the rewind shrine (the loop is
+        /// ending) does: a keep-only buy at the win shrine, before "Keep playing", would hand nothing
+        /// over for the rest of the run.</param>
+        public void OpenShrineShop(bool focusRows = false)
         {
             if (!CanOpen())
                 return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
-            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases);
+            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, focusRows ? _focus : null);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
         }
 

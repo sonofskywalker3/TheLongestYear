@@ -35,6 +35,112 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|show|talk|click|arm|fresh` (`talk` runs a real conversation, `fresh` makes a villager unmet again); `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
+## 0.19.116 - 2026-10-19
+
+### Fixed
+
+- After a rewind with the shortcuts kept, some villagers (Elliott, Sebastian, Willy and others headed for the beach) could lose their routine for the day. The shortcut paths are now properly open from the first morning of the new year.
+
+## 0.19.115 - 2026-10-19
+
+### Changed
+
+- Focus cards only show in the upgrade menu on the night the year rewinds. The menu after a win no longer lists them: a card bought there before "Keep playing" was kept for later loops but never delivered in the current one.
+- A focus card is only dealt when the Junimos can deliver it now. A card whose upgrade you already have in the world is left out of the hand.
+- The focus card pick no longer says you get the card right away. It now says the Junimos deliver it as soon as they can.
+- The house focus card says Robin is busy at your house until the upgrade is ready, since her shop is closed that day.
+- The Focus tab in the shrine preview no longer re-prices every card each frame.
+
+## 0.19.114 - 2026-10-19
+
+### Changed
+
+- The "(double JP)" tag on a weekly quest line goes once you donate that item, like the x2 badge.
+- The x2 badge on the bundle page no longer darkens tooltips drawn over it, and it dims with the other ingredients while you add part of a stack to one slot.
+
+## 0.19.113 - 2026-10-19
+
+### Added
+
+- **An x2 badge marks the goal the Junimos want.** The planning hub shows it on that goal's icon in each card's preview, the weekly quest adds "(double JP)" to its line, and the bundle page shows it on the ingredient until you donate it. Hovering the icon in the hub or the bundle page says "The Junimos want this one. It pays double JP."
+
+## 0.19.112 - 2026-10-19
+
+### Added
+
+- **A goal the Junimos especially want pays double JP.** Each theme card can hold one such goal, set when you pick the card and kept all week. Every item you donate to it earns twice the usual JP. A double theme week can have one on each card. Bundle, room and weekly completion bonuses are unchanged.
+
+### Debug
+
+- `tly_favour [itemId|clear]` makes one of this week's goals the double JP goal (clearing the others in its list), clears every flag, or with no argument logs the flags. `tly_goals` now tags the double JP goal of each theme and of this week's lists as "favoured".
+
+## 0.19.111 - 2026-10-19
+
+### Added
+
+- **Your focus cards under the JP box.** Three small icons show your chosen cards. A card you can buy now glows, and a bought card is faded.
+- **Unbought focus cards in the upgrade menu at the end of a year.** Each chosen card you did not buy shows at the top of its tab, marked "Your focus", at the card's price. It keeps the card's upgrade and the lower ones it includes. Buying it keeps the upgrade, and nothing is handed over that night.
+
+## 0.19.110 - 2026-10-19
+
+### Fixed
+
+- **The focus cards on the planning hub no longer cover the Weather heading.** With a short forecast the cards start past the heading, and they move under the theme cards when there is not enough room beside the forecast. A Buy button on the Focus tab is greyed by the same check that decides whether the purchase goes through.
+
+## 0.19.109 - 2026-10-19
+
+### Added
+
+- **A Focus tab on the farm statue.** It sits between Boosts and Plan and lists your three chosen focus cards with their price and a Buy button, or Owned once bought. A building card closes the statue and opens the placement screen.
+- **Your focus cards on the planning hub.** The three cards show along the bottom of the hub, or beside the weather forecast when you have one, with each card's price or Owned. Hover a card for its name and what it does.
+
+## 0.19.108 - 2026-10-19
+
+### Added
+
+- **Building focus cards build for free and finish on the spot.** A new coop, barn, silo or fish pond opens Robin's placement screen with only that building, at no gold, no materials and no wait. The JP is taken only once the building is placed, so backing out costs nothing and the card stays unbought. A Big or Deluxe Coop or Barn card upgrades your building at once.
+
+## 0.19.107 - 2026-10-19
+
+### Fixed
+
+- **A rod focus card bought before Willy's beach scene no longer earns a second Bamboo Pole.** The scene is skipped, the same as for a kept rod.
+
+### Changed
+
+- **Clearer message for a tool card.** It says whether the Junimos upgraded your tool or brought you a new one.
+
+## 0.19.106 - 2026-10-19
+
+### Added
+
+- **Buying a focus card delivers it now.** A tool card upgrades your tool where it sits, in the bag or in a chest, carrying over its enchantments, bait and tackle. A tool waiting at Clint's comes straight back at the card's tier, and a tool you do not have yet (a rod before Willy's letter) is handed to you. A knack works from the moment you buy it, and a backpack card grows the bag on the spot. The shortcuts open at once, and the kitchen or basement is finished overnight. Building cards (coop, barn, silo, fish pond) still record the keep only for now.
+
+### Changed
+
+- **A Cart Stall slot bought mid-day opens on the Traveling Cart that same day.** Items already bought still leave their gap.
+
+## 0.19.105 - 2026-10-19
+
+### Added
+
+- **Saves updated mid-loop get their focus cards at the next planning hub.** A save from before 0.19.104 has no hands dealt for its current loop, so the picks now come before the next Monday planning hub instead of waiting for the next loop.
+
+### Changed
+
+- **Focus card picks on a controller.** A picks the card you are pointing at, and holding a button down can no longer pick on the next hand. Each hand waits until the button has been let go.
+
+## 0.19.104 - 2026-10-19
+
+### Added
+
+- **Focus cards at the start of every loop.** Before the week-1 planning hub, the Junimos offer three hands of cards in turn: tools, then buildings, then knacks. You pick one card from each hand. A picked card can be bought with JP any time that year. You get it right away and keep it for later loops. A hand with no card to offer is skipped. The picks cannot be closed without choosing, and a reload brings back the same hands with your earlier picks remembered.
+
+## 0.19.103 - 2026-10-19
+
+### Debug
+
+- `tly_focus show | deal | pick <tools|buildings|knacks> <chainId> | buy <tools|buildings|knacks> [keeponly] | reset` shows this run's focus card hands with each card's live quote, forces a re-deal, picks a card, buys the picked card's keep, or clears the hands.
 
 ## 0.19.99 - 2026-10-17
 

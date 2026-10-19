@@ -55,6 +55,7 @@ namespace TheLongestYear.UI
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds, RightSlot);
 
             DrawWeatherCalendar(b);
+            DrawFocusStrip(b);
             for (int i = 0; i < _cartRows.Count; i++)
             {
                 string label = (i < _cartItems.Count && _cartItems[i] != null)
@@ -235,7 +236,7 @@ namespace TheLongestYear.UI
             }
             else
             {
-                DrawBonusIcons(b, bonus, bonusBounds);
+                DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot));
             }
         }
 
@@ -263,7 +264,7 @@ namespace TheLongestYear.UI
                 Game1.textColor);
         }
 
-        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds)
+        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds, List<bool> favoured)
         {
             for (int i = 0; i < items.Count && i < bounds.Count; i++)
             {
@@ -276,6 +277,7 @@ namespace TheLongestYear.UI
                     // so the player sees the actual donation quantity (e.g. Wood = 99, not "1").
                     // The Item is created with the sampled BonusSlot's Stack/Quality above.
                     item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
+                    DrawFavouredBadge(b, favoured, i, slot);
                 }
                 else
                 {

@@ -45,10 +45,10 @@ namespace TheLongestYear.UI
             for (int i = 0; i < _tabs.Count; i++)
             {
                 ClickableTextureComponent tab = _tabs[i];
-                Color tint = (int)_tab == i ? Color.White : Color.White * 0.7f;
+                Color tint = _tabOrder[i] == _tab ? Color.White : Color.White * 0.7f;
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                     tab.bounds.X, tab.bounds.Y, tab.bounds.Width, tab.bounds.Height, tint, 1f, false);
-                string label = TabLabel((ShrineTab)i);
+                string label = TabLabel(_tabOrder[i]);
                 Vector2 labelSize = Game1.smallFont.MeasureString(label);
                 Utility.drawTextWithShadow(b, label, Game1.smallFont,
                     new Vector2(tab.bounds.X + (tab.bounds.Width - labelSize.X) / 2f,
@@ -117,6 +117,10 @@ namespace TheLongestYear.UI
                 }
                 case RowKind.Boost:
                     DrawBoostRow(b, row, rowY);
+                    break;
+                case RowKind.FocusCard:
+                case RowKind.FocusText:
+                    DrawFocusRow(b, row, rowY);
                     break;
                 case RowKind.Upgrade when row.IsOwned:
                 {

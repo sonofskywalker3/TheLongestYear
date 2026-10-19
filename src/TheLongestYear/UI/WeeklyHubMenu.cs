@@ -319,10 +319,11 @@ namespace TheLongestYear.UI
         /// The face-down card gets none: no icons, so no item tooltips either.</summary>
         private void ResolvePerCardData()
         {
-            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus);
-            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus,
-                // Double week: the right card shows its list without the lines the left card owns.
-                ownedByOtherCard: _double ? PreviewFor(_offer[0]) : null);
+            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus, _leftFavoured);
+            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus, _rightFavoured,
+                // Double week: the right card shows its list without the lines the left card owns,
+                // taken from the left list as shown (stored once picked, else the preview).
+                ownedByOtherCard: _double ? ShownGoalsFor(_offer[0], null) : null);
             ResolveCardDrawbacks();
         }
 
@@ -373,31 +374,6 @@ namespace TheLongestYear.UI
             // Sample for the OFFER's season (which is next-season on day 28's Sunday-night hub).
             int week = _isPreSelectForNextMonth ? _run.WeekOfYear + 1 : _run.WeekOfYear;
             return _runController.PreviewSlotsForTheme(theme, _offerSeason, week);
-        }
-
-        private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest, IReadOnlyList<BonusSlot> ownedByOtherCard = null)
-        {
-            dest.Clear();
-            if (theme == null) return;
-
-            IReadOnlyList<BonusSlot> sample = PreviewFor(theme.Value);
-            if (ownedByOtherCard != null)
-                sample = GoalLists.Dedupe(ownedByOtherCard, sample);
-
-            foreach (BonusSlot slot in sample)
-            {
-                // Each icon shows ITS slot's true requirement (stack badge + quality star) —
-                // 2026-07-09 slot redesign; replaces the global per-id MAX maps here.
-                Item item = null;
-                try { item = ItemRegistry.Create(slot.ItemId, slot.Stack, slot.Quality, allowNull: true); }
-                catch (Exception ex)
-                {
-                    TheLongestYear.Loop.PatchLog.TraceOnce("hub-item:" + slot.ItemId,
-                        $"Planning hub: goal item '{slot.ItemId}' could not be created ({ex.GetType().Name}); its icon is left empty.");
-                    item = null;
-                }
-                dest.Add(item);
-            }
         }
 
         /// <summary>Current season's JP multiplier, formatted for display ("1", "1.5", "2.5", "4").

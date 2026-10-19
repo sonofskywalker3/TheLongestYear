@@ -16,7 +16,7 @@ namespace TheLongestYear.Loop
         /// <summary>Year One Ending (spec 2026-09-06 section 5): after the event and the shrine spend.
         /// Loop again resets right here; Keep playing marks the win, hands vanilla its post-completion
         /// world, arms the Spring 1 year-2 wall, and lets the Junimos say what comes next.</summary>
-        public void OnEndingFinished() => TryOpenShrineThenContinue(ShowEndingChoice);
+        public void OnEndingFinished() => TryOpenShrineThenContinue(ShowEndingChoice, focusRows: false);
 
         /// <summary>The Year 2 wall: one response, Loop again. ESC also selects the last (only)
         /// response, so there is no way past it on this version; quitting re-shows it next load.</summary>
@@ -174,7 +174,7 @@ namespace TheLongestYear.Loop
         /// here; it was removed (Jeff, 2026-09-24: players adjust the difficulty themselves).</summary>
         private void AfterHoldChoice(bool held)
         {
-            DeferShrineThenContinue(ContinueAfterResetSpend);
+            DeferShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
         }
 
         /// <summary>Queue the shrine open for the next tick instead of opening it now.
@@ -187,9 +187,10 @@ namespace TheLongestYear.Loop
         /// outro would tear the shrine down. Nexus bug 1123181, regression from 0.12.17 (the hold
         /// prompt put a question in front of a shrine open that used to be called from
         /// OnCutsceneEnded directly). Drained by <see cref="TickShrineWatchdog"/>.</summary>
-        private void DeferShrineThenContinue(System.Action onContinue)
+        private void DeferShrineThenContinue(System.Action onContinue, bool focusRows)
         {
             _shrineOpenPending = onContinue;
+            _shrineOpenPendingFocusRows = focusRows;
         }
 
         /// <summary>Same deferral as <see cref="DeferShrineThenContinue"/> for a continuation that
@@ -207,12 +208,17 @@ namespace TheLongestYear.Loop
         /// and drained by <see cref="TickShrineWatchdog"/> once no menu is up.</summary>
         private System.Action _shrineOpenPending;
 
+        /// <summary>Whether the shrine queued by <see cref="DeferShrineThenContinue"/> shows the focus rows.</summary>
+        private bool _shrineOpenPendingFocusRows;
+
         /// <summary>Try to open the Junimo Shrine menu; on close, run <paramref name="onContinue"/>.
         /// If the menu can't open (cutscene blocking, already-open menu), run onContinue
-        /// immediately so the gameplay path never gets stranded waiting for a missed popup.</summary>
-        private void TryOpenShrineThenContinue(System.Action onContinue)
+        /// immediately so the gameplay path never gets stranded waiting for a missed popup.
+        /// <paramref name="focusRows"/> is true only for the rewind shrine (fail night or restart):
+        /// focus cards bought there are kept for the next loop, so the win shrine leaves them out.</summary>
+        private void TryOpenShrineThenContinue(System.Action onContinue, bool focusRows)
         {
-            _launcher?.OpenShrineShop();
+            _launcher?.OpenShrineShop(focusRows);
             if (Game1.activeClickableMenu is TheLongestYear.UI.JunimoShrineMenu shrine)
             {
                 _menuWatch = (shrine, onContinue);

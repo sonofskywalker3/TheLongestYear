@@ -41,7 +41,7 @@ namespace TheLongestYear.UI
             // Reserve space for the reroll debug button row below preview rows / cards — only when
             // the button is enabled (Randomizer Rerolls is not Off; off by default).
             int rerollBlock = (_rand.Rerolls != RerollMode.Off) ? RerollButtonHeight + 24 : 0;
-            height = titleBlock + CardHeight + previewBlock + rerollBlock + PanelPadding;
+            height = titleBlock + CardHeight + previewBlock + FocusBandHeight() + rerollBlock + PanelPadding;
 
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
@@ -112,6 +112,10 @@ namespace TheLongestYear.UI
                 _cartRows.Add(row);
                 rowY += PreviewRowHeight + PreviewSpacing;
             }
+
+            // The focus cards: beside the weather calendar, or in their own band under the cards
+            // (after the calendar and any cart rows when those are drawn).
+            LayoutFocusStrip(_weatherSageSlots > 0 || _cartPreviewSlots > 0 ? rowY : cardsY + CardHeight + FocusBandGap);
 
             // Reroll debug button — centred horizontally, sits in the bottom strip of the
             // panel just above its border. Lets the playtester cycle through theme offers

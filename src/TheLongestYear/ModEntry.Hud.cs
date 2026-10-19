@@ -115,6 +115,9 @@ namespace TheLongestYear
                     scale: TextScale);
                 textY += (int)(font.MeasureString(line).Y * TextScale) + LineGap;
             }
+
+            // The focus cards sit under the box and share every hide rule above.
+            FocusHudIcons.Draw(b, x + boxWidth, y + boxHeight, _focus, jp);
         }
 
         /// <summary>Developer bridge only: the game pauses its update loop whenever its window is not

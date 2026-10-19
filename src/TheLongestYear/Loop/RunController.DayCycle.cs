@@ -55,7 +55,7 @@ namespace TheLongestYear.Loop
             if (_pendingChoice)
             {
                 _pendingChoice = false;
-                TryOpenShrineThenContinue(ShowEndingChoice);
+                TryOpenShrineThenContinue(ShowEndingChoice, focusRows: false);
                 return;
             }
 

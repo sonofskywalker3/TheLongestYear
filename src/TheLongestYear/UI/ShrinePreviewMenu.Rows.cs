@@ -28,6 +28,7 @@ namespace TheLongestYear.UI
             {
                 case ShrineTab.Active: BuildActiveRows(); break;
                 case ShrineTab.Boosts: BuildBoostRows(); break;
+                case ShrineTab.Focus: BuildFocusRows(); break;
                 case ShrineTab.Donate: BuildDonateGoals(); break;   // no rows: slots + inventory
                 default: BuildPlanRows(); break;
             }

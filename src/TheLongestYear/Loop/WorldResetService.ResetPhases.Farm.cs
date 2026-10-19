@@ -84,13 +84,10 @@ namespace TheLongestYear.Loop
             //     location unless the player previously had an L3 house at save creation. With
             //     HouseUpgradeLevel = 3 forced by FarmerReset, the FarmHouse warp tile will try
             //     to teleport into a non-existent "Cellar" location. Create it on demand here
-            //     before resetForPlayerEntry runs the warp setup. updateCellarAssignments
-            //     binds the cellar to the master player.
-            if (ctx.Baseline.BasementOnDay1 && Game1.getLocationFromName("Cellar") == null)
-            {
-                Game1.locations.Add(new StardewValley.Locations.Cellar("Maps\\Cellar", "Cellar"));
-                Game1.updateCellarAssignments();
-            }
+            //     before resetForPlayerEntry runs the warp setup. CellarHelper also binds the
+            //     cellar to the master player.
+            if (ctx.Baseline.BasementOnDay1)
+                CellarHelper.EnsureCellar();
         }
 
         /// <summary>Reset phase (steps 8 to 10c): kept buildings, greenhouse, horse, fish pond, animals and pet.</summary>
@@ -229,6 +226,15 @@ namespace TheLongestYear.Loop
             // cached maps and reload each location from clean data, AFTER the mail flags for this
             // loop are settled (step 7b) so MakeMapModifications re-applies only what is kept.
             RefreshMutatedVanillaMaps();
+
+            // Kept shortcuts: put their warps back. The cache invalidation above makes SMAPI reload
+            // each map and run MakeMapModifications(force: true), which adds the shortcut warps
+            // (Forest to Beach and back) and rebuilds the NPC route cache with them. The reload
+            // right after it (updateLayout -> updateWarps) then drops those warps, while the
+            // locations still think the shortcuts are shown and the route cache still sends NPCs
+            // through them, so villagers bound for the Beach lost their schedule for the day.
+            if (Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts"))
+                RestoreStep("shortcut maps", () => TheLongestYear.Focus.FocusDelivery.RefreshShortcutMaps());
 
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
             RestoreStep("Community Center unlock", () => _ccUnlock.Apply());

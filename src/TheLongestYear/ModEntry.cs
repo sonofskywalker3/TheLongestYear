@@ -368,6 +368,7 @@ namespace TheLongestYear
             {
                 this.Helper.GameContent.InvalidateCache("Data/Mail");
                 this.Helper.GameContent.InvalidateCache("Data/Furniture");
+                TheLongestYear.UI.FocusCardStrip.ClearFaces();
             };
 
             // Watch the character-creation screen (Skip intro notice). Wired here (not in
@@ -431,6 +432,7 @@ namespace TheLongestYear
             // gate — see BundleDonationPatches). _config is a single stable instance for the
             // whole session, so Connect only needs to run once here.
             TheLongestYear.Patches.BundleDonationPatches.Connect(this.Monitor, _config);
+            TheLongestYear.Focus.FocusBuildSession.Monitor = this.Monitor;
 
             // Observation-based donation detector. See DonationObserver.cs for why we can't rely
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
@@ -584,6 +586,8 @@ namespace TheLongestYear
             // pending rewind so the old loop's last morning sends nothing.
             _jojaLetters?.OnDayStarted(rewindPending: _runController?.IsRewindChainRunning == true);
             _runController?.OnDayStarted(sender, e);
+            // A basement focus card's Cellar, once the night's house upgrade has landed.
+            _focus?.Delivery.OnDayStarted();
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
@@ -623,6 +627,9 @@ namespace TheLongestYear
             // The rewind's ground drops are ordinary ground items from the first night on.
             TheLongestYear.Core.ResetGroundDrops.ForgetAtNight(_meta.State);
             _runController?.OnDayEnding(sender, e);
+            // After the run controller (a rewind clears the target): steps a focus-card basement up
+            // to the level below it, so vanilla's own overnight upgrade lands the last one.
+            _focus?.Delivery.OnDayEnding();
             // Vanilla spawns tomorrow's forage overnight, before DayStarted: prepare for tomorrow now.
             _pastSeasonSpawns?.Refresh(TodayDayOfYear() + 1);
         }
@@ -633,6 +640,9 @@ namespace TheLongestYear
         /// </summary>
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            // A focus building placement settles the tick its screen closes (placed or backed out).
+            TheLongestYear.Focus.FocusBuildSession.Tick();
+
             if (Context.IsWorldReady)
             {
                 // Dormant on non-TLY saves: no deferred-offer retry, no festival auto-eject, no debug

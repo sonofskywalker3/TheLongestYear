@@ -35,6 +35,16 @@ public static class CartDayStock
         }
 
         var remembered = new HashSet<string>(run.CartStockIds, StringComparer.Ordinal);
+        // More slots than remembered (a cart slot bought mid-day, from a focus card): the new
+        // slots open now, filled from the stock not shown yet. The remembered ones keep their gaps.
+        if (run.CartStockIds.Count < allowed)
+        {
+            foreach (string id in stockIds)
+            {
+                if (run.CartStockIds.Count >= allowed) break;
+                if (remembered.Add(id)) run.CartStockIds.Add(id);
+            }
+        }
         return stockIds.Where(remembered.Contains).ToList();
     }
 }

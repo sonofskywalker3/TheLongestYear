@@ -46,7 +46,7 @@ namespace TheLongestYear.Loop
             {
                 System.Action owed = _shrineOpenPending;
                 _shrineOpenPending = null;
-                TryOpenShrineThenContinue(owed);
+                TryOpenShrineThenContinue(owed, _shrineOpenPendingFocusRows);
                 return;
             }
             if (_menuWatch is not { } watch) return;
@@ -140,7 +140,7 @@ namespace TheLongestYear.Loop
             if (!BundleHold.IsOfferable(BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType)))
             {
                 _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
-                TryOpenShrineThenContinue(ContinueAfterResetSpend);
+                TryOpenShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
             }
             else
             {

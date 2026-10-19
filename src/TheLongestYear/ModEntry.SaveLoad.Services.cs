@@ -277,7 +277,8 @@ namespace TheLongestYear
                 if (id.StartsWith("ward_circle_", System.StringComparison.Ordinal))
                     _circles.Reconcile();
             };
-            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
+            _focus = new TheLongestYear.Focus.FocusService(this.Monitor, _meta, _config, _purchases);
+            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
@@ -303,6 +304,8 @@ namespace TheLongestYear
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart());
             _planningShrine.AttachDonate(() => ShrineDonationService.Active);
+            _planningShrine.AttachFocus(() => _focus);
+            TheLongestYear.UI.WeeklyHubMenu.FocusCards = () => _focus?.ChosenCards();
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);

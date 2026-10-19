@@ -54,12 +54,22 @@ namespace TheLongestYear.Loop
             int budget = GoalBudget.For(
                 BonusListSizeFor(season), dueLines, pool.Count - dueLines,
                 _config.FillerAllowanceFor(season), GoalBudget.WeeksLeftInSeason(weekOfYear));
-            return BonusSlotSampler.SampleSlots(
+            var sample = new List<BonusSlot>(BonusSlotSampler.SampleSlots(
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
                 remainingNeedForBundle: idx => SeasonNeedForBundle(idx, season),
                 caps: GoalCaps,
-                rules: RulesFor(season, weekOfYear));
+                rules: RulesFor(season, weekOfYear)));
+            // The card's favoured line is decided from this same seeded sample, so the hub preview
+            // and the committed pick agree on it.
+            MarkFavoured(sample);
+            return sample;
         }
+
+        /// <summary>Flags the hardest hard roll in one theme card's goal list as favoured (double
+        /// per-item JP). Called again after GoalLists.Dedupe takes lines from a double week's
+        /// second card, so that card still gets its favoured line from what is left.</summary>
+        public void MarkFavoured(IList<BonusSlot> cardGoals)
+            => FavouredGoal.Mark(cardGoals, EffortOf);
 
         /// <summary>Rules A, B and E for a season: filler allowance from config, effort from the
         /// derived model (null for an id no rule placed, which then takes the price bucket).</summary>

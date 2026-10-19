@@ -203,3 +203,22 @@ public class WeeklyGoalDiscountPreviewTests
         Assert.Equal(31, WeeklyGoalDiscount.Preview(sample, current, 0.0)[0].Stack);
     }
 }
+
+/// <summary>The hub shows the favoured line from the preview copy, so the copy must keep the flag
+/// or the hub would show no x2 while the committed pick pays it.</summary>
+public class WeeklyGoalDiscountPreviewFavouredTests
+{
+    [Fact]
+    public void Preview_keeps_the_favoured_flag()
+    {
+        var sample = new List<BonusSlot>
+        {
+            new() { BundleIndex = 0, IngredientIndex = 0, ItemId = "(O)24", Stack = 1, Favoured = true },
+            new() { BundleIndex = 0, IngredientIndex = 1, ItemId = "(O)24", Stack = 1 },
+        };
+
+        var shown = WeeklyGoalDiscount.Preview(sample, new List<BonusSlot>(), 0.25);
+
+        Assert.Equal(new[] { true, false }, shown.Select(s => s.Favoured));
+    }
+}
