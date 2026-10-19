@@ -145,6 +145,16 @@ namespace TheLongestYear.Focus
         private string DeliverShortcuts()
         {
             Game1.MasterPlayer.mailReceived.Add(ShortcutsMail);
+            List<string> refreshed = RefreshShortcutMaps();
+            _monitor.Log($"Focus delivery: shortcuts opened, maps refreshed: {string.Join(", ", refreshed)}.", LogLevel.Info);
+            return Show("focus.delivered.shortcuts", Strings.Get("focus.delivered.shortcuts"));
+        }
+
+        /// <summary>Re-runs vanilla's map changes on every map the shortcuts mail touches, so the
+        /// shortcut tiles and warps match the mail now. Also used by the rewind once a kept
+        /// shortcuts mail is back. Returns the maps refreshed.</summary>
+        internal static List<string> RefreshShortcutMaps()
+        {
             var refreshed = new List<string>();
             foreach (string name in ShortcutLocations)
             {
@@ -153,8 +163,7 @@ namespace TheLongestYear.Focus
                 loc.MakeMapModifications(force: true);
                 refreshed.Add(name);
             }
-            _monitor.Log($"Focus delivery: shortcuts opened, maps refreshed: {string.Join(", ", refreshed)}.", LogLevel.Info);
-            return Show("focus.delivered.shortcuts", Strings.Get("focus.delivered.shortcuts"));
+            return refreshed;
         }
 
         private string DeliverHouse(FocusQuote quote)

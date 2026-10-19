@@ -227,6 +227,15 @@ namespace TheLongestYear.Loop
             // loop are settled (step 7b) so MakeMapModifications re-applies only what is kept.
             RefreshMutatedVanillaMaps();
 
+            // Kept shortcuts: put their warps back. The cache invalidation above makes SMAPI reload
+            // each map and run MakeMapModifications(force: true), which adds the shortcut warps
+            // (Forest to Beach and back) and rebuilds the NPC route cache with them. The reload
+            // right after it (updateLayout -> updateWarps) then drops those warps, while the
+            // locations still think the shortcuts are shown and the route cache still sends NPCs
+            // through them, so villagers bound for the Beach lost their schedule for the day.
+            if (Game1.MasterPlayer.mailReceived.Contains("communityUpgradeShortcuts"))
+                RestoreStep("shortcut maps", () => TheLongestYear.Focus.FocusDelivery.RefreshShortcutMaps());
+
             // Re-apply the CC unlock so the loop preserves day-1 CC access (loadForNewGame + FarmerReset wiped it).
             RestoreStep("Community Center unlock", () => _ccUnlock.Apply());
 

@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.116 - 2026-10-19
+
+### Fixed
+
+- After a rewind with the shortcuts kept, some villagers (Elliott, Sebastian, Willy and others headed for the beach) could lose their routine for the day. The shortcut paths are now properly open from the first morning of the new year.
+
 ## 0.19.115 - 2026-10-19
 
 ### Changed
