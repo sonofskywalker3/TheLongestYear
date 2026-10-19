@@ -39,20 +39,33 @@ public static class FocusWorldRungs
     /// passes each building's finished type (the pending upgrade name, else its current type).</summary>
     public static int BuildingRung(string chainId, IEnumerable<string> buildingTypes)
     {
-        IReadOnlyDictionary<string, int>? table = chainId switch
-        {
-            "coop" => CoopRungs,
-            "barn" => BarnRungs,
-            "silo" => SiloRungs,
-            "fish_pond" => FishPondRungs,
-            _ => null,
-        };
+        IReadOnlyDictionary<string, int>? table = BuildingTable(chainId);
         if (table == null || buildingTypes == null) return 0;
         int best = 0;
         foreach (string type in buildingTypes)
             if (type != null && table.TryGetValue(type, out int rung) && rung > best) best = rung;
         return best;
     }
+
+    /// <summary>The building type a building chain's rung stands for ("Big Coop" for coop rung 2),
+    /// or null for a rung off the chain or a chain that is not a placed building.</summary>
+    public static string? BuildingTypeForRung(string chainId, int rung)
+    {
+        IReadOnlyDictionary<string, int>? table = BuildingTable(chainId);
+        if (table == null) return null;
+        foreach (KeyValuePair<string, int> pair in table)
+            if (pair.Value == rung) return pair.Key;
+        return null;
+    }
+
+    private static IReadOnlyDictionary<string, int>? BuildingTable(string chainId) => chainId switch
+    {
+        "coop" => CoopRungs,
+        "barn" => BarnRungs,
+        "silo" => SiloRungs,
+        "fish_pond" => FishPondRungs,
+        _ => null,
+    };
 
     public static int HouseRung(int houseLevel, bool upgradePending)
     {

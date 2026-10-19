@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Locations;
+using StardewValley.TokenizableStrings;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
 using TheLongestYear.Loop;
@@ -12,7 +13,8 @@ namespace TheLongestYear.Focus
     /// <summary>Puts a bought focus card into the world now: the tool is upgraded where it sits,
     /// the knack takes effect, the shortcuts open and the house upgrade lands overnight. The keep
     /// itself is already recorded by <see cref="FocusPurchase"/>; this is only the "get it now"
-    /// half. Building chains that need the placement screen are not delivered here.
+    /// half. Coop, barn, silo and fish pond cards are built by <see cref="FocusService"/> through
+    /// <see cref="FocusBuildSession"/> and <see cref="FocusBuildingUpgrade"/>, not here.
     ///
     /// Knack readers audited for the mid-loop purchase (all read MetaState per call unless noted):
     /// UpgradeChecker.GetTier / HasUpgrade (green thumb, coal vein, forager's eye, quick bite,
@@ -32,11 +34,10 @@ namespace TheLongestYear.Focus
         private const int BasementLevel = 3;
         private const int HouseUpgradeTonight = 1;
 
-        /// <summary>Building chains placed through the vanilla placement screen. They are bought
-        /// keep-only until that flow exists (the placement seam in <see cref="FocusService.Buy"/>).</summary>
+        /// <summary>Building chains that stand on the farm: a new one goes through the placement
+        /// screen, an existing one is upgraded in place (see <see cref="FocusService.Buy"/>).</summary>
         private static readonly IReadOnlySet<string> PlacedBuildingChains =
             new HashSet<string>(StringComparer.Ordinal) { "coop", "barn", "silo", "fish_pond" };
-
 
         /// <summary>Every map the shortcuts mail changes. Vanilla re-reads the mail in each one's
         /// MakeMapModifications (Town, Forest, Mountain, Beach overrides; Backwoods in GameLocation).</summary>
@@ -214,6 +215,16 @@ namespace TheLongestYear.Focus
                 p.daysUntilHouseUpgrade.Value = HouseUpgradeTonight;
                 _monitor.Log($"Focus delivery: house still at level {p.HouseUpgradeLevel}, below {target}; upgrade armed for tonight again.", LogLevel.Warn);
             }
+        }
+
+        /// <summary>The HUD line for a focus building that now stands finished on the farm.</summary>
+        public string ShowBuilding(string buildingType)
+        {
+            string name = buildingType != null && Game1.buildingData.TryGetValue(buildingType, out var data)
+                ? TokenParser.ParseText(data.Name) ?? buildingType
+                : buildingType;
+            return Show("focus.delivered.building", Strings.Get("focus.delivered.building",
+                new Dictionary<string, string> { ["building"] = name }));
         }
 
         private static string Show(string key, string text)

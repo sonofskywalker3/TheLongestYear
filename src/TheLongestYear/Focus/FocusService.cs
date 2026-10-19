@@ -12,6 +12,9 @@ namespace TheLongestYear.Focus
     /// the store on every call, never cached, because a reload replaces the run.</summary>
     internal sealed class FocusService
     {
+        /// <summary>The rung a placement builds: the plain building (Coop, Barn, Silo, Fish Pond).</summary>
+        private const int PlacedRung = 1;
+
         private static readonly FocusTheme[] ThemeOrder = { FocusTheme.Tools, FocusTheme.Buildings, FocusTheme.Knacks };
 
         private readonly IMonitor _monitor;
@@ -100,15 +103,16 @@ namespace TheLongestYear.Focus
         public FocusBuyResult BuyKeepOnly(FocusTheme theme) => BuyKeep(theme, out _);
 
         /// <summary>Buys the chosen card and delivers it now. Host only: a farmhand's call changes
-        /// nothing. A building that needs the placement screen is bought keep-only for now; the
-        /// placement flow replaces that branch (it must charge only after a placement lands).</summary>
+        /// nothing. A new coop, barn, silo or fish pond opens the placement screen and returns
+        /// <see cref="FocusBuyResult.Placing"/>: the card is charged only when the building lands,
+        /// and backing out costs nothing. A coop or barn upgrade is charged, then applied at once.</summary>
         public FocusBuyResult Buy(FocusTheme theme)
         {
             if (!Context.IsMainPlayer) return Logged(theme, null, FocusBuyResult.NotHost);
 
             string chosen = _store.Run.FocusHandFor(theme)?.Chosen;
             if (FocusDelivery.NeedsPlacement(chosen))
-                return BuyKeepOnly(theme);   // seam: building placement goes here
+                return BuyBuilding(theme);
 
             FocusBuyResult result = BuyKeep(theme, out FocusQuote quote);
             if (result == FocusBuyResult.Success)
@@ -119,17 +123,87 @@ namespace TheLongestYear.Focus
             return result;
         }
 
+        /// <summary>The building branch of <see cref="Buy"/>. A keep-only card (the world already has
+        /// the top rung) is bought as usual; an offer either upgrades the farm's building in place or,
+        /// with none on the farm, places one through <see cref="FocusBuildSession"/>.</summary>
+        private FocusBuyResult BuyBuilding(FocusTheme theme)
+        {
+            FocusBuyResult check = Validate(theme, out FocusHand hand, out FocusQuote quote);
+            if (check != FocusBuyResult.Success) return Logged(theme, quote, check);
+            if (quote.Kind != FocusQuoteKind.Offer) return Charge(theme, hand, quote);
+
+            if (!CanAfford(theme))
+            {
+                Game1.addHUDMessage(new HUDMessage(Strings.Get("focus.cant-afford",
+                    new Dictionary<string, string> { ["jp"] = quote.Price.ToString() })));
+                return Logged(theme, quote, FocusBuyResult.NotEnoughJp);
+            }
+
+            if (FocusWorldReader.Rung(quote.ChainId) > 0)
+            {
+                FocusBuyResult upgraded = Charge(theme, hand, quote);
+                if (upgraded != FocusBuyResult.Success) return upgraded;
+                if (FocusBuildingUpgrade.Apply(quote.ChainId, quote.TargetRung))
+                    Delivery.ShowBuilding(FocusWorldRungs.BuildingTypeForRung(quote.ChainId, quote.TargetRung));
+                else
+                    _monitor.Log($"Focus delivery: no farm building of '{quote.ChainId}' could go to rung {quote.TargetRung}; keep recorded, nothing upgraded.", LogLevel.Warn);
+                return upgraded;
+            }
+
+            string placeType = FocusWorldRungs.BuildingTypeForRung(quote.ChainId, PlacedRung);
+            // The quote is fixed now: once the building lands the world rung rises, and a fresh
+            // quote would offer (and charge) the next rung up instead of this card.
+            bool opened = FocusBuildSession.Start(placeType,
+                onPlaced: () => OnPlaced(theme, quote),
+                onCancelled: () => _monitor.Log($"Focus card '{quote.ChainId}': placement backed out; nothing charged, card still unbought.", LogLevel.Info));
+            if (!opened)
+            {
+                Game1.addHUDMessage(new HUDMessage(Strings.Get("focus.build-busy")));
+                return Logged(theme, quote, FocusBuyResult.Busy);
+            }
+            _monitor.Log($"Focus card '{quote.ChainId}': placement screen open for '{placeType}'; charged once it is placed.", LogLevel.Info);
+            return FocusBuyResult.Placing;
+        }
+
+        /// <summary>The building landed: charge the card at the quote it was opened with, then raise
+        /// it further when the kept rungs put the card above a plain new building.</summary>
+        private void OnPlaced(FocusTheme theme, FocusQuote quote)
+        {
+            FocusHand hand = _store.Run.FocusHandFor(theme);
+            FocusBuyResult result = hand == null ? FocusBuyResult.NotChosen : Charge(theme, hand, quote);
+            if (result != FocusBuyResult.Success)
+            {
+                _monitor.Log($"Focus card '{quote.ChainId}': the building was placed but the charge failed ({result}).", LogLevel.Warn);
+                return;
+            }
+            if (quote.TargetRung > PlacedRung && !FocusBuildingUpgrade.Apply(quote.ChainId, quote.TargetRung))
+                _monitor.Log($"Focus delivery: the new '{quote.ChainId}' building could not go to rung {quote.TargetRung}.", LogLevel.Warn);
+            Delivery.ShowBuilding(FocusWorldRungs.BuildingTypeForRung(quote.ChainId, quote.TargetRung));
+        }
+
         private FocusBuyResult BuyKeep(FocusTheme theme, out FocusQuote quote)
         {
-            quote = null;
-            if (!Context.IsMainPlayer) return Logged(theme, null, FocusBuyResult.NotHost);
-            FocusHand hand = _store.Run.FocusHandFor(theme);
-            if (hand == null) return Logged(theme, null, FocusBuyResult.NotChosen);
-            if (hand.Bought) return Logged(theme, null, FocusBuyResult.AlreadyBought);
-            if (hand.Chosen == null) return Logged(theme, null, FocusBuyResult.NotChosen);
+            FocusBuyResult check = Validate(theme, out FocusHand hand, out quote);
+            if (check != FocusBuyResult.Success) return Logged(theme, quote, check);
+            return Charge(theme, hand, quote);
+        }
 
+        /// <summary>The checks before any purchase: host, a chosen and unbought card, a known chain.</summary>
+        private FocusBuyResult Validate(FocusTheme theme, out FocusHand hand, out FocusQuote quote)
+        {
+            quote = null;
+            hand = null;
+            if (!Context.IsMainPlayer) return FocusBuyResult.NotHost;
+            hand = _store.Run.FocusHandFor(theme);
+            if (hand == null) return FocusBuyResult.NotChosen;
+            if (hand.Bought) return FocusBuyResult.AlreadyBought;
+            if (hand.Chosen == null) return FocusBuyResult.NotChosen;
             quote = QuoteFor(hand.Chosen);
-            if (quote == null) return Logged(theme, null, FocusBuyResult.NotChosen);
+            return quote == null ? FocusBuyResult.NotChosen : FocusBuyResult.Success;
+        }
+
+        private FocusBuyResult Charge(FocusTheme theme, FocusHand hand, FocusQuote quote)
+        {
             FocusBuyResult result = FocusPurchase.TryBuy(_store.State, hand, quote);
             if (result == FocusBuyResult.Success)
             {

@@ -271,6 +271,7 @@ namespace TheLongestYear
             // gate — see BundleDonationPatches). _config is a single stable instance for the
             // whole session, so Connect only needs to run once here.
             TheLongestYear.Patches.BundleDonationPatches.Connect(this.Monitor, _config);
+            TheLongestYear.Focus.FocusBuildSession.Monitor = this.Monitor;
 
             // Observation-based donation detector. See DonationObserver.cs for why we can't rely
             // on a Harmony patch of Bundle.tryToDepositThisItem alone (the 2026-05-26 playtest
@@ -412,6 +413,9 @@ namespace TheLongestYear
         /// </summary>
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            // A focus building placement settles the tick its screen closes (placed or backed out).
+            TheLongestYear.Focus.FocusBuildSession.Tick();
+
             if (Context.IsWorldReady)
             {
                 // Dormant on non-TLY saves: no deferred-offer retry, no festival auto-eject, no debug

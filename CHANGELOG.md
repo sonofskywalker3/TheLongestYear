@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.108 - 2026-10-19
+
+### Added
+
+- **Building focus cards build for free and finish on the spot.** A new coop, barn, silo or fish pond opens Robin's placement screen with only that building, at no gold, no materials and no wait. The JP is taken only once the building is placed, so backing out costs nothing and the card stays unbought. A Big or Deluxe Coop or Barn card upgrades your building at once.
+
 ## 0.19.107 - 2026-10-19
 
 ### Fixed

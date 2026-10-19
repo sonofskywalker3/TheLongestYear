@@ -1,6 +1,9 @@
 namespace TheLongestYear.Core;
 
-public enum FocusBuyResult { Success, NotChosen, AlreadyBought, Done, Locked, NotEnoughJp, NotHost }
+/// <summary>How a focus card purchase went. <c>Placing</c>: the building placement screen is open
+/// and the card is charged only once a building lands. <c>Busy</c>: the placement screen could not
+/// open (a scene, or a menu that will not close); nothing was charged.</summary>
+public enum FocusBuyResult { Success, NotChosen, AlreadyBought, Done, Locked, NotEnoughJp, NotHost, Placing, Busy }
 
 /// <summary>The purchase rule for a focus card. It deliberately ignores a rung's prerequisite and
 /// run-reach gate: the quote already grants every lower rung, and a card is a way to get the

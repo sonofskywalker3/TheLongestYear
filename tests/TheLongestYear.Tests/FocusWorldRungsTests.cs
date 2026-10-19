@@ -23,6 +23,26 @@ public class FocusWorldRungsTests
         Assert.Equal(0, FocusWorldRungs.BuildingRung("silo", new[] { "Coop" }));
     }
 
+    [Theory]
+    [InlineData("coop", 1, "Coop"), InlineData("coop", 2, "Big Coop"), InlineData("coop", 3, "Deluxe Coop")]
+    [InlineData("barn", 1, "Barn"), InlineData("barn", 3, "Deluxe Barn")]
+    [InlineData("silo", 1, "Silo"), InlineData("fish_pond", 1, "Fish Pond")]
+    public void Building_type_for_each_rung(string chain, int rung, string type)
+        => Assert.Equal(type, FocusWorldRungs.BuildingTypeForRung(chain, rung));
+
+    [Theory]
+    [InlineData("coop", 0), InlineData("coop", 4), InlineData("silo", 2), InlineData("house", 1), InlineData("axe", 1)]
+    public void Building_type_is_null_off_the_chain(string chain, int rung)
+        => Assert.Null(FocusWorldRungs.BuildingTypeForRung(chain, rung));
+
+    [Fact]
+    public void Building_type_round_trips_through_the_rung()
+    {
+        foreach (string chain in new[] { "coop", "barn", "silo", "fish_pond" })
+            for (int rung = 1; FocusWorldRungs.BuildingTypeForRung(chain, rung) is { } type; rung++)
+                Assert.Equal(rung, FocusWorldRungs.BuildingRung(chain, new[] { type }));
+    }
+
     [Theory, InlineData(0, false, 0), InlineData(0, true, 1), InlineData(2, false, 1), InlineData(2, true, 2), InlineData(3, false, 2)]
     public void House_rungs(int level, bool pending, int rung) => Assert.Equal(rung, FocusWorldRungs.HouseRung(level, pending));
 
