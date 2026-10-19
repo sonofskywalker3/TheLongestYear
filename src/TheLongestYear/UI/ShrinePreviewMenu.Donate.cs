@@ -86,7 +86,7 @@ namespace TheLongestYear.UI
             _inventory = new InventoryMenu(invX, invY, playerInventory: true, actualInventory: null,
                 highlightMethod: CanDonate, capacity: InventoryCapacity, rows: InventoryRows);
 
-            int donateTabId = TabIdBase + (int)ShrineTab.Donate;
+            int donateTabId = TabIdBase + _tabOrder.IndexOf(ShrineTab.Donate);
             for (int i = 0; i < count; i++)
             {
                 int col = i % perRow, row = i / perRow;

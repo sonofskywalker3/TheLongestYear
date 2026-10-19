@@ -47,6 +47,9 @@ namespace TheLongestYear.UI
                     }
                 }
             }
+
+            if (string.IsNullOrEmpty(_hoverText))
+                _hoverText = FocusStripHover(x, y) ?? "";
         }
 
         private void CheckBonusIconHover(int x, int y, List<Item> items, List<Rectangle> bounds)

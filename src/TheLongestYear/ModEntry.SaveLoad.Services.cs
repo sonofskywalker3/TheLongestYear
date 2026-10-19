@@ -282,6 +282,8 @@ namespace TheLongestYear
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart());
             _planningShrine.AttachDonate(() => ShrineDonationService.Active);
+            _planningShrine.AttachFocus(() => _focus);
+            TheLongestYear.UI.WeeklyHubMenu.FocusCards = () => _focus?.ChosenCards();
             TheLongestYear.Loop.BoostEffectsService.SecondWindTonight = () => _boostEffects.Active(BoostId.SecondWind);
             TheLongestYear.Loop.BoostEffectsService.FastFriendsActive = () => _boostEffects.Active(BoostId.FastFriends);
             TheLongestYear.Loop.BoostEffectsService.HagglerActive = () => _boostEffects.Active(BoostId.Haggler);

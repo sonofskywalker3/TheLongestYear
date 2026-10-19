@@ -9,6 +9,7 @@ using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Donations;
+using TheLongestYear.Focus;
 using TheLongestYear.Integration;
 using TheLongestYear.Loop;
 
@@ -27,8 +28,9 @@ namespace TheLongestYear.UI
     /// Locked section naming what each reach-gated keep still needs this loop. Keeps are bought
     /// only on the loop-boundary JP perk screen; this tab shows the price and the effect.</item>
     /// </list></summary>
-    /// <remarks>A fourth tab, <b>Donate</b>, shows on weeks with random shrine donation goals
-    /// (ShrinePreviewMenu.Donate.cs).</remarks>
+    /// <remarks>A <b>Focus</b> tab between Boosts and Plan sells the year's three chosen focus
+    /// cards (ShrinePreviewMenu.Focus.cs). A <b>Donate</b> tab shows last on weeks with random
+    /// shrine donation goals (ShrinePreviewMenu.Donate.cs).</remarks>
     internal sealed partial class ShrinePreviewMenu : IClickableMenu
     {
         private const int RowHeight = 56;
@@ -74,11 +76,11 @@ namespace TheLongestYear.UI
         private static readonly Color LockedGray = new(110, 100, 90);
         private static readonly Color NoteBrown = new(120, 90, 40);
 
-        /// <summary>The value is the tab's index in the strip. Donate is last and only present on
-        /// weeks with shrine goals.</summary>
-        public enum ShrineTab { Active, Boosts, Plan, Donate }
+        /// <summary>Strip order. Focus shows when the focus cards are wired; Donate is last and only
+        /// present on weeks with shrine goals. <see cref="_tabOrder"/> maps a strip index to its tab.</summary>
+        public enum ShrineTab { Active, Boosts, Focus, Plan, Donate }
 
-        private enum RowKind { Header, Note, Running, Boost, Upgrade, LockedToggle, Locked }
+        private enum RowKind { Header, Note, Running, Boost, Upgrade, LockedToggle, Locked, FocusCard, FocusText }
 
         private sealed class Row
         {
@@ -92,6 +94,9 @@ namespace TheLongestYear.UI
             public bool IsOwned;                 // Upgrade rows: owned leaf (green) vs buyable (cost)
             public string Requirement;           // Locked rows: ReachText
             public UpgradeCategory Category;     // LockedToggle rows
+            public FocusHand Hand;               // FocusCard rows
+            public FocusQuote Quote;             // FocusCard rows
+            public FocusCardFace Face;           // FocusCard rows
         }
 
         private readonly MetaState _state;
@@ -105,6 +110,7 @@ namespace TheLongestYear.UI
 
         private ShrineTab _tab = ShrineTab.Active;
         private readonly List<ClickableTextureComponent> _tabs = new();
+        private readonly List<ShrineTab> _tabOrder = new();
         private readonly HashSet<UpgradeCategory> _expandedLocked = new();
 
         // Foresight data, fetched once at open (rolling: reads the live Game1 date).
@@ -129,10 +135,11 @@ namespace TheLongestYear.UI
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
             Func<BoostId, int, BoostPurchase.Result> buyBoost = null,
             Func<bool> restartOffered = null, Action requestRestart = null,
-            ShrineDonationService donations = null)
+            ShrineDonationService donations = null, FocusService focus = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
+            _focus = focus;
             // Read once at open, like the restart button: the tab shows only on weeks with goals,
             // and only for the host (shrine goals live in the host's save data, like Boosts).
             _donations = donations;
@@ -158,8 +165,14 @@ namespace TheLongestYear.UI
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
         {
             base.gameWindowSizeChanged(oldBounds, newBounds);
+            if (_tab == ShrineTab.Focus)
+                BuildRows();   // the descriptions wrap to the window width
             RecomputeBoundsAndLayout();
         }
+
+        /// <summary>The scrolling list's width, the same at every point of a layout pass, so the
+        /// Focus tab can wrap its rows before <see cref="RecomputeBoundsAndLayout"/> runs.</summary>
+        private static int ListWidthForWindow() => Math.Min(1260, Game1.uiViewport.Width - 64) - 80;
 
         private void RecomputeBoundsAndLayout()
         {
@@ -169,10 +182,16 @@ namespace TheLongestYear.UI
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             _listX = xPositionOnScreen + 40;
-            _listWidth = width - 80;
+            _listWidth = ListWidthForWindow();
 
             _tabs.Clear();
-            List<ShrineTab> tabs = new() { ShrineTab.Active, ShrineTab.Boosts, ShrineTab.Plan };
+            List<ShrineTab> tabs = _tabOrder;
+            tabs.Clear();
+            tabs.Add(ShrineTab.Active);
+            tabs.Add(ShrineTab.Boosts);
+            if (_focus != null)
+                tabs.Add(ShrineTab.Focus);
+            tabs.Add(ShrineTab.Plan);
             if (_showDonate)
                 tabs.Add(ShrineTab.Donate);
             int contentTopId = _tab == ShrineTab.Donate ? DonateFirstTargetId() : RowIdBase;
@@ -183,7 +202,7 @@ namespace TheLongestYear.UI
                 string restartLabel = Strings.Get("shrine.restart.button");
                 restartWidth = Math.Max(RestartButtonMinWidth, (int)Game1.smallFont.MeasureString(restartLabel).X + RestartButtonPadding);
             }
-            // Three tabs keep TabWidth exactly; the Donate tab shrinks all four to clear the button.
+            // Three tabs keep TabWidth exactly; more tabs (Focus, Donate) shrink them all to clear the button.
             int stripRoom = _showRestart ? _listWidth - restartWidth - TabGap : _listWidth;
             int tabWidth = ShrineTabLayout.TabWidth(tabs.Count, TabWidth, TabGap, stripRoom, TabMinWidth);
 
@@ -259,6 +278,7 @@ namespace TheLongestYear.UI
         {
             ShrineTab.Active => Strings.Get("shrine.tab.active"),
             ShrineTab.Boosts => Strings.Get("shrine.tab.boosts"),
+            ShrineTab.Focus => Strings.Get("shrine.tab.focus"),
             ShrineTab.Donate => Strings.Get("shrine.tab.donate"),
             _ => Strings.Get("shrine.tab.plan"),
         };
@@ -282,10 +302,11 @@ namespace TheLongestYear.UI
 
         /// <summary>Debug entry (tly_openshrine): open on a given tab so the bridge can exercise
         /// every tab's row builder and draw path without a mouse.
-        /// Returns false (and stays put) for the Donate tab on a week without shrine goals.</summary>
+        /// Returns false (and stays put) for a tab that is not in the strip: Donate on a week without
+        /// shrine goals, Focus when the focus cards are not wired.</summary>
         public bool ShowTab(ShrineTab tab)
         {
-            if (tab == ShrineTab.Donate && !_showDonate) return false;
+            if (!_tabOrder.Contains(tab)) return false;
             SetTab(tab);
             return true;
         }
@@ -293,7 +314,7 @@ namespace TheLongestYear.UI
         private void SetTab(ShrineTab tab)
         {
             if (_tab == tab) return;
-            if (tab == ShrineTab.Donate && !_showDonate) return;
+            if (!_tabOrder.Contains(tab)) return;
             _tab = tab;
             _scrollIndex = 0;
             _hoverText = "";

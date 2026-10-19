@@ -58,7 +58,7 @@ namespace TheLongestYear
             var tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
             if (args.Length > 0 && !System.Enum.TryParse(args[0], ignoreCase: true, out tab))
             {
-                this.Monitor.Log("Usage: tly_openshrine [active|boosts|plan|donate]", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_openshrine [active|boosts|focus|plan|donate]", LogLevel.Warn);
                 return;
             }
             var menu = new TheLongestYear.UI.ShrinePreviewMenu(
@@ -66,10 +66,10 @@ namespace TheLongestYear
                 (id, skill) => _boostPurchases.TryBuy(id, skill),
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart(),
-                ShrineDonationService.Active);
+                ShrineDonationService.Active, _focus);
             if (!menu.ShowTab(tab))
             {
-                this.Monitor.Log($"tly_openshrine: no {tab} tab this week (no shrine goals); opened on Active.", LogLevel.Warn);
+                this.Monitor.Log($"tly_openshrine: no {tab} tab here (Donate needs shrine goals this week); opened on Active.", LogLevel.Warn);
                 tab = TheLongestYear.UI.ShrinePreviewMenu.ShrineTab.Active;
             }
             Game1.activeClickableMenu = menu;

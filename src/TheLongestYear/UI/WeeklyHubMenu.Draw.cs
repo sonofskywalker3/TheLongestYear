@@ -55,6 +55,7 @@ namespace TheLongestYear.UI
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds, RightSlot);
 
             DrawWeatherCalendar(b);
+            DrawFocusStrip(b);
             for (int i = 0; i < _cartRows.Count; i++)
             {
                 string label = (i < _cartItems.Count && _cartItems[i] != null)

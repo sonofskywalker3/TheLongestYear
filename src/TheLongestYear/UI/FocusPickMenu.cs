@@ -26,7 +26,6 @@ namespace TheLongestYear.UI
         private const int SubtitleGap = 28;
         private const int LineGap = 12;
         private const int MaxCards = 3;
-        private const string HouseChain = "house";
         private const float HoverTint = 0.2f;
 
         private static readonly Rectangle CardBoxSource = new(0, 256, 60, 60);
@@ -87,25 +86,19 @@ namespace TheLongestYear.UI
         private Card BuildCard(string chainId)
         {
             FocusQuote quote = _focus.QuoteFor(chainId);
-            FocusChain chain = FocusChains.TryGet(chainId);
-            // One rung for the icon and the text: the quote's target, else the chain's top rung.
-            int rung = quote?.TargetRung ?? chain?.Rungs.Count ?? 1;
-            string upgradeId = quote?.UpgradeId
-                ?? (chain != null && rung >= 1 && rung <= chain.Rungs.Count ? chain.Rungs[rung - 1] : null);
-            UpgradeDefinition def = upgradeId != null ? UpgradeCatalog.TryGet(upgradeId) : null;
+            FocusCardFace face = FocusCardFace.For(chainId, quote);
             bool priced = quote != null && quote.Kind is FocusQuoteKind.Offer or FocusQuoteKind.KeepOnly;
 
             return new Card
             {
                 ChainId = chainId,
-                Icon = FocusIcons.For(chainId, rung),
-                Name = def?.DisplayName ?? chainId,
-                Description = def?.Description ?? "",
+                Icon = face.Icon,
+                Name = face.Name,
+                Description = face.Description,
                 Price = priced
                     ? Strings.Get("focus.card.price", new Dictionary<string, string> { ["jp"] = quote.Price.ToString() })
                     : "",
-                // Only a card that delivers a house upgrade waits for the morning; a keep-only one delivers nothing.
-                Note = chainId == HouseChain && quote?.Kind == FocusQuoteKind.Offer ? Strings.Get("focus.card.overnight") : "",
+                Note = face.Note,
             };
         }
 

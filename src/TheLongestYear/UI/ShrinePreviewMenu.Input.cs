@@ -20,7 +20,8 @@ namespace TheLongestYear.UI
 
         public override void snapToDefaultClickableComponent()
         {
-            currentlySnappedComponent = _tabs.Count > 0 ? _tabs[(int)_tab] : getComponentWithID(RowIdBase);
+            int tabIndex = _tabOrder.IndexOf(_tab);
+            currentlySnappedComponent = tabIndex >= 0 && tabIndex < _tabs.Count ? _tabs[tabIndex] : getComponentWithID(RowIdBase);
             snapCursorToCurrentSnappedComponent();
         }
 
@@ -29,7 +30,7 @@ namespace TheLongestYear.UI
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
-                if (id >= TabIdBase && id < TabIdBase + _tabs.Count) { SetTab((ShrineTab)(id - TabIdBase)); return; }
+                if (id >= TabIdBase && id < TabIdBase + _tabs.Count) { SetTab(_tabOrder[id - TabIdBase]); return; }
                 if (id == RestartButtonId && _restartButton != null) { RequestRestart(); return; }
                 if (id == ScrollUpId) { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
@@ -54,7 +55,7 @@ namespace TheLongestYear.UI
             base.receiveLeftClick(x, y, playSound);   // handles the close button
             for (int i = 0; i < _tabs.Count; i++)
             {
-                if (_tabs[i].containsPoint(x, y)) { SetTab((ShrineTab)i); return; }
+                if (_tabs[i].containsPoint(x, y)) { SetTab(_tabOrder[i]); return; }
             }
             if (_restartButton != null && _restartButton.containsPoint(x, y)) { RequestRestart(); return; }
             if (_tab == ShrineTab.Donate) { DonateClick(x, y); return; }
@@ -72,7 +73,7 @@ namespace TheLongestYear.UI
                     ActivateRow(row);
                     return;
                 }
-                if (HasButton(row) && BoostButtonBounds(rowY).Contains(x, y))
+                if ((HasButton(row) || HasFocusButton(row)) && BoostButtonBounds(rowY).Contains(x, y))
                 {
                     ActivateRow(row);
                     return;
@@ -80,7 +81,7 @@ namespace TheLongestYear.UI
             }
         }
 
-        /// <summary>Gamepad A / click on a row: toggle a Locked section, or buy a boost.</summary>
+        /// <summary>Gamepad A / click on a row: toggle a Locked section, buy a boost or buy a focus card.</summary>
         private void ActivateRow(Row row)
         {
             if (row.Kind == RowKind.LockedToggle)
@@ -89,6 +90,11 @@ namespace TheLongestYear.UI
                 Game1.playSound("shwip");
                 BuildRows();
                 ClampScroll();
+                return;
+            }
+            if (row.Kind == RowKind.FocusCard)
+            {
+                BuyFocus(row);
                 return;
             }
             if (!HasButton(row) || StateOf(row) != BoostRowState.Buy) return;

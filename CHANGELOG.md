@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.109 - 2026-10-19
+
+### Added
+
+- **A Focus tab on the farm statue.** It sits between Boosts and Plan and lists your three chosen focus cards with their price and a Buy button, or Owned once bought. A building card closes the statue and opens the placement screen.
+- **Your focus cards on the planning hub.** The three cards show along the bottom of the hub, or beside the weather forecast when you have one, with each card's price or Owned. Hover a card for its name and what it does.
+
 ## 0.19.108 - 2026-10-19
 
 ### Added
