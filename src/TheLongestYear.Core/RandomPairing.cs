@@ -48,6 +48,34 @@ public static class RandomPairing
         return allowed[rng.Next(allowed.Count)];
     }
 
+    /// <summary>The draw above, checked against the week's sampled goal lines: a drawback that
+    /// hard-blocks any of them (<see cref="DrawbackConflicts"/>: mines_closed against a mine-only
+    /// item, forage_off against a forage-only item) is redrawn from the drawbacks that block none,
+    /// with the same seeded stream, so the same seed still gives the same card. If every allowed
+    /// drawback blocks something, a soft drawback is drawn instead. A week whose first draw blocks
+    /// nothing gets exactly the drawback it always did.</summary>
+    /// <param name="goalItemIds">Every goal line the drawback would sit beside: this card's list,
+    /// plus the other card's on a double week, since both drawbacks run all week.</param>
+    /// <param name="profileOf">Source profile per item id (<see cref="ItemSourceIndex.For"/>).</param>
+    public static string LiabilityFor(int seed, int weekOfYear, Theme theme, bool random, Theme? otherCard,
+        IEnumerable<string>? goalItemIds, Func<string, ItemSourceProfile>? profileOf)
+    {
+        string own = ThemeModifiers.For(theme).LiabilityId;
+        if (!random) return own;
+        IReadOnlySet<string> excluded = ExcludedFor(theme);
+        IReadOnlySet<string> excludedByOther = otherCard.HasValue ? ExcludedFor(otherCard.Value) : None;
+        var allowed = AllLiabilities.Where(id => !excluded.Contains(id) && !excludedByOther.Contains(id)).ToList();
+        var rng = RollSeed.Rng(seed, weekOfYear, Salt, (int)theme);
+        string drawn = allowed[rng.Next(allowed.Count)];
+        var goals = (goalItemIds ?? Array.Empty<string>()).ToList();
+        if (!DrawbackConflicts.BlocksAny(drawn, goals, profileOf)) return drawn;
+
+        var clear = allowed.Where(id => id != drawn && !DrawbackConflicts.BlocksAny(id, goals, profileOf)).ToList();
+        if (clear.Count > 0) return clear[rng.Next(clear.Count)];
+        var soft = allowed.Where(id => !DrawbackConflicts.IsHard(id)).ToList();
+        return soft.Count > 0 ? soft[rng.Next(soft.Count)] : own;
+    }
+
     public static (string BonusId, string LiabilityId) EffectsFor(RunState run, Theme theme)
     {
         var own = ThemeModifiers.For(theme);

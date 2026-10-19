@@ -42,9 +42,38 @@ namespace TheLongestYear.Loop
             RevertWeekDiscount("re-pick");
             Run.Select(theme);
             RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
-            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, theme, rand.RandomPairings);
             Run.CurrentGoalMultiplier = slot < 0 ? 1.0 : CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, theme, slot, rand);
             CommitSelection();
+        }
+
+        /// <summary>Source profile per goal item id, for <see cref="DrawbackConflicts"/>: wired by
+        /// ModEntry from the generation's item pools (<see cref="ItemSourceIndex.From"/>). The
+        /// default places nothing, so a drawback is never redrawn when the pools are unknown.</summary>
+        public Func<string, ItemSourceProfile> GoalSourceOf { get; set; } = _ => ItemSourceProfile.Open;
+
+        /// <summary>The drawback a card gets for its goal lines: the seeded draw, redrawn when it
+        /// would hard-block one of <paramref name="goals"/> (<see cref="RandomPairing"/>). The hub
+        /// preview and the committed pick both come through here so the card the player sees is
+        /// the card the week gets.</summary>
+        public string DrawbackFor(Theme theme, int weekOfYear, bool random, Theme? otherCard, IEnumerable<BonusSlot> goals)
+            => RandomPairing.LiabilityFor(Run.Seed, weekOfYear, theme, random, otherCard,
+                (goals ?? Array.Empty<BonusSlot>()).Select(g => g.ItemId), GoalSourceOf);
+
+        /// <summary>Draw this week's drawback(s) from the goal lines just sampled. On a double week
+        /// both drawbacks run all week, so each is checked against BOTH lists.</summary>
+        private void DrawLiabilitiesForSampledGoals()
+        {
+            if (!Run.CurrentSelection.HasValue) return;
+            Theme theme = Run.CurrentSelection.Value;
+            bool random = RandomizerForWeekPeek(Run.WeekOfYear).RandomPairings;
+            List<BonusSlot> goals = AllWeekGoalSlots();
+            if (Run.SecondSelection is Theme second)
+            {
+                Run.CurrentLiabilityId = DrawbackFor(theme, Run.WeekOfYear, random, second, goals);
+                Run.SecondLiabilityId = DrawbackFor(second, Run.WeekOfYear, random, theme, goals);
+            }
+            else
+                Run.CurrentLiabilityId = DrawbackFor(theme, Run.WeekOfYear, random, null, goals);
         }
 
         /// <summary>Double theme week (spec section 6): take both cards. The first card keeps every
@@ -65,10 +94,8 @@ namespace TheLongestYear.Loop
             RevertWeekDiscount("re-pick");
             Run.Select(first);
             RandomizerSettings rand = RandomizerForWeekPeek(Run.WeekOfYear);
-            Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, first, rand.RandomPairings, otherCard: second);
             Run.CurrentGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, first, FirstCardSlot, rand, doubleWeek: true);
             Run.SelectSecond(second);
-            Run.SecondLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear, second, rand.RandomPairings, otherCard: first);
             Run.SecondGoalMultiplier = CardMultiplier.ForCard(Run.Seed, Run.WeekOfYear, second, SecondCardSlot, rand, doubleWeek: true);
             CommitSelection();
         }
@@ -91,6 +118,9 @@ namespace TheLongestYear.Loop
             if (_deferredOffer is { } stale && stale.week == Run.WeekOfYear)
                 _deferredOffer = null;
             PopulateBonusSlotsForCurrentSelection();
+            // The drawback is drawn AFTER the goals are sampled so it can be checked against them:
+            // a mines_closed week never asks for a mine fish, a forage_off week never for forage.
+            DrawLiabilitiesForSampledGoals();
             var (bonus, liability) = RandomPairing.EffectsFor(Run, theme);
             ActiveEffectsProvider.Set(bonus, liability);
             string liability2 = null;

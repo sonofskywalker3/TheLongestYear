@@ -129,14 +129,17 @@ namespace TheLongestYear.Loop
             it is Axe ? "axe" :
             it is WateringCan ? "watering_can" : null;
 
-        /// <summary>Snapshot the player's tools by slug before the inventory wipe.</summary>
+        /// <summary>Snapshot the player's tools by slug before the inventory wipe: the highest-tier
+        /// instance of each kind, wherever it sits (bag, Clint's counter, an owned chest), so the
+        /// state transplant (bait, tackle, enchantments) comes from the tool that was actually
+        /// upgraded, not a spare basic copy earlier in the bag.</summary>
         private static Dictionary<string, Tool> CaptureTools(Farmer p)
         {
             var tools = new Dictionary<string, Tool>();
-            foreach (Item it in p.Items)
+            foreach ((string slug, Tool t, _) in TheLongestYear.Integration.ToolTierScan.OwnedTools(p))
             {
-                string slug = ToolSlug(it);
-                if (slug != null && it is Tool t && !tools.ContainsKey(slug)) tools[slug] = t;
+                if (!tools.TryGetValue(slug, out Tool known) || t.UpgradeLevel > known.UpgradeLevel)
+                    tools[slug] = t;
             }
             return tools;
         }

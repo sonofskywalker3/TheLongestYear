@@ -224,6 +224,9 @@ namespace TheLongestYear
                     ? ItemKindClassifier.From(objectData.Category, objectData.Type)
                     : ItemKind.Other;
             };
+            // A random drawback is checked against the week's sampled goals (DrawbackConflicts):
+            // the profiles come from the same pools the board was generated from.
+            _runController.GoalSourceOf = ItemSourceIndex.From(_enginePools).For;
             _runController.AttachQuestService(_questService);
             // Darkness pushback (spec 2026-09-09): the night pass and the morning report.
             _sabotage = new TheLongestYear.Loop.SabotageService(

@@ -92,9 +92,9 @@ namespace TheLongestYear.Loop
                 if (Run.CurrentSelection.HasValue)
                 {
                     PopulateBonusSlotsForCurrentSelection();
-                    // The card was shown with this week's settings; pick the drawback the same way.
-                    Run.CurrentLiabilityId = RandomPairing.LiabilityFor(Run.Seed, Run.WeekOfYear,
-                        Run.CurrentSelection.Value, RandomizerForWeekPeek(Run.WeekOfYear).RandomPairings);
+                    // The card was shown with this week's settings and goals; draw the drawback the
+                    // same way, against the goals just sampled (DrawbackConflicts).
+                    DrawLiabilitiesForSampledGoals();
                     var (bonus, liability) = RandomPairing.EffectsFor(Run, Run.CurrentSelection.Value);
                     ActiveEffectsProvider.Set(bonus, liability);
                     _monitor.Log(

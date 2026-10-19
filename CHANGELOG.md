@@ -35,6 +35,19 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|show|talk|click|arm|fresh` (`talk` runs a real conversation, `fresh` makes a villager unmet again); `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
+
+## 0.19.99 - 2026-10-17
+
+### Fixed
+
+- **A random drawback can no longer cancel the week's own goals.** With Random Pairings on, a card could draw "mines closed" while its goal list asked for a Ghostfish or a Cave Carrot, or "no forage" while it asked for a Red Mushroom, which left that goal impossible all week. The drawback is now drawn after the goals are sampled and checked against them: if it would shut the only way to get one of them, the card draws a different drawback instead (and falls back to a milder one if nothing else is allowed). The planning hub shows the same drawback the pick commits, on single and double theme weeks alike, and the same seed still gives the same card.
+
+## 0.19.98 - 2026-10-17
+
+### Fixed
+
+- **Keep tool upgrades now find your best tool wherever it is.** The Junimo Shrine's "Keep <tool>" offer used to read only the first tool of that kind in your backpack. A spare basic pickaxe earlier in the bag hid the iridium one, a tool sitting in a chest counted for nothing, and a tool you had just handed to Clint for an upgrade vanished from the offer (and the rewind then cancelled that upgrade). The offer, the planner and the rewind now look at every tool you own, in the backpack, at Clint's counter and in every chest, fridge and Junimo chest on your farm, and use the highest tier they find. The tier you keep is applied to the tool you get back after the rewind, and the bait, tackle and enchantments carry over from the tool that was actually upgraded.
+
 ## 0.19.97 - 2026-10-14
 
 ### Fixed
