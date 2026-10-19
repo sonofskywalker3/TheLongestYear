@@ -321,8 +321,9 @@ namespace TheLongestYear.UI
         {
             ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus, _leftFavoured);
             ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus, _rightFavoured,
-                // Double week: the right card shows its list without the lines the left card owns.
-                ownedByOtherCard: _double ? PreviewFor(_offer[0]) : null);
+                // Double week: the right card shows its list without the lines the left card owns,
+                // taken from the left list as shown (stored once picked, else the preview).
+                ownedByOtherCard: _double ? ShownGoalsFor(_offer[0], null) : null);
             ResolveCardDrawbacks();
         }
 

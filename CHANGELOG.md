@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.114 - 2026-10-19
+
+### Changed
+
+- The "(double JP)" tag on a weekly quest line goes once you donate that item, like the x2 badge.
+- The x2 badge on the bundle page no longer darkens tooltips drawn over it, and it dims with the other ingredients while you add part of a stack to one slot.
+
 ## 0.19.113 - 2026-10-19
 
 ### Added

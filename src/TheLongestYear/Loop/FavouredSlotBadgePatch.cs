@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using HarmonyLib;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Menus;
@@ -16,11 +14,11 @@ namespace TheLongestYear.Loop
     /// its hover name. Reads the STORED goal lists (<see cref="FavouredGoal.BadgeAt"/>), never a
     /// fresh sample, and the badge goes once that slot is deposited.
     ///
-    /// Vanilla draws the cursor, the held item and the tooltip at the end of
-    /// <c>JunimoNoteMenu.draw</c>, so a badge drawn in the postfix would sit on top of them. When a
-    /// badge is drawn, the postfix draws that tail again in vanilla's order.
+    /// The badge is drawn from a postfix on the bundle page's own <c>inventory.draw</c>. Vanilla
+    /// calls that after the ingredient icons and before the cursor, held item and tooltip, so the
+    /// badge sits over its icon and under everything drawn last, with nothing drawn twice.
     /// </summary>
-    [HarmonyPatch(typeof(JunimoNoteMenu))]
+    [HarmonyPatch]
     internal static class FavouredSlotBadgePatch
     {
         /// <summary>The live run (wired at save load, cleared on return to title).</summary>
@@ -32,15 +30,14 @@ namespace TheLongestYear.Loop
         /// <summary>Width the hover line wraps to in the bundle page's dialogue font.</summary>
         private const int HoverLineWidth = 640;
 
-        /// <summary>How close the cursor must be to a badged icon before it is redrawn over the badge.</summary>
-        private const int CursorReach = 64;
+        /// <summary>Vanilla's alpha for the other ingredients while one takes a partial donation.</summary>
+        private const float PartialDonationDim = 0.25f;
 
-        private static readonly AccessTools.FieldRef<JunimoNoteMenu, bool> SingleBundleMenu =
-            AccessTools.FieldRefAccess<JunimoNoteMenu, bool>("singleBundleMenu");
+        private const int NoPartialIngredient = -1;
 
         // ReSharper disable once UnusedMember.Local - discovered by the manual PatchClassProcessor scan.
         [HarmonyPostfix]
-        [HarmonyPatch(nameof(JunimoNoteMenu.performHoverAction))]
+        [HarmonyPatch(typeof(JunimoNoteMenu), nameof(JunimoNoteMenu.performHoverAction))]
         // ReSharper disable once InconsistentNaming - Harmony convention.
         private static void AfterHover(JunimoNoteMenu __instance, int x, int y)
         {
@@ -57,21 +54,21 @@ namespace TheLongestYear.Loop
 
         // ReSharper disable once UnusedMember.Local - discovered by the manual PatchClassProcessor scan.
         [HarmonyPostfix]
-        [HarmonyPatch(nameof(JunimoNoteMenu.draw), typeof(SpriteBatch))]
+        [HarmonyPatch(typeof(InventoryMenu), nameof(InventoryMenu.draw), typeof(SpriteBatch))]
         // ReSharper disable once InconsistentNaming - Harmony convention.
-        private static void AfterDraw(JunimoNoteMenu __instance, SpriteBatch b)
+        private static void AfterInventoryDraw(InventoryMenu __instance, SpriteBatch b)
         {
-            // The bundle-complete swipe draws last in vanilla; leave that moment alone.
-            if (!Active(__instance) || JunimoNoteMenu.screenSwipe != null) return;
-            var badged = new List<Rectangle>();
-            foreach (ClickableTextureComponent icon in __instance.ingredientList)
+            if (Game1.activeClickableMenu is not JunimoNoteMenu menu || menu.inventory != __instance) return;
+            if (!Active(menu)) return;
+            foreach (ClickableTextureComponent icon in menu.ingredientList)
             {
-                if (icon?.item == null || !icon.visible || !Favoured(__instance, icon)) continue;
-                FavouredBadge.Draw(b, icon.bounds, FavouredBadge.BundleScale);
-                badged.Add(icon.bounds);
+                if (icon?.item == null || !icon.visible || !Favoured(menu, icon)) continue;
+                int partial = menu.currentPartialIngredientDescriptionIndex;
+                float alpha = partial != NoPartialIngredient && partial != icon.myID - IngredientIdBase
+                    ? PartialDonationDim
+                    : 1f;
+                FavouredBadge.Draw(b, icon.bounds, FavouredBadge.BundleScale, alpha);
             }
-            if (badged.Count > 0)
-                RedrawTail(__instance, b, badged);
         }
 
         /// <summary>A TLY run is live and the menu is on one bundle's page.</summary>
@@ -87,37 +84,6 @@ namespace TheLongestYear.Loop
             if (ingredient < 0 || ingredient >= bundle.ingredients.Count) return false;
             if (bundle.ingredients[ingredient].completed) return false;
             return FavouredGoal.BadgeAt(Run(), bundle.bundleIndex, ingredient);
-        }
-
-        /// <summary>Vanilla's last draws (cursor, held item, tooltip), again over the badges.</summary>
-        private static void RedrawTail(JunimoNoteMenu menu, SpriteBatch b, List<Rectangle> badged)
-        {
-            if (JunimoNoteMenu.canClick && CursorNear(badged))
-                menu.drawMouse(b);
-            menu.heldItem?.drawInMenu(b, new Vector2(Game1.getOldMouseX() + 16, Game1.getOldMouseY() + 16), 1f);
-            if (menu.inventory.descriptionText.Length > 0)
-            {
-                if (menu.hoveredItem != null)
-                    IClickableMenu.drawToolTip(b, menu.hoveredItem.getDescription(), menu.hoveredItem.DisplayName, menu.hoveredItem);
-            }
-            else
-            {
-                string text = JunimoNoteMenu.hoverText;
-                bool unreadable = !SingleBundleMenu(menu) && !Game1.player.hasOrWillReceiveMail("canReadJunimoText") && text.Length > 0;
-                IClickableMenu.drawHoverText(b, unreadable ? "???" : text, Game1.dialogueFont);
-            }
-        }
-
-        private static bool CursorNear(List<Rectangle> badged)
-        {
-            int mx = Game1.getMouseX(), my = Game1.getMouseY();
-            foreach (Rectangle r in badged)
-            {
-                Rectangle reach = r;
-                reach.Inflate(CursorReach, CursorReach);
-                if (reach.Contains(mx, my)) return true;
-            }
-            return false;
         }
     }
 }

@@ -22,12 +22,14 @@ namespace TheLongestYear.UI
 
         private static readonly Color BadgeColor = Color.Gold;
 
-        public static void Draw(SpriteBatch b, Rectangle icon, float scale)
+        /// <param name="alpha">1 normally. The bundle page passes vanilla's 0.25 while another
+        /// ingredient takes a partial donation, so the badge dims with its icon.</param>
+        public static void Draw(SpriteBatch b, Rectangle icon, float scale, float alpha = 1f)
         {
             string text = Strings.Get("goal.favoured-badge");
             Vector2 size = Game1.smallFont.MeasureString(text) * scale;
             var pos = new Vector2(icon.Right - size.X + Overhang, icon.Y - Overhang);
-            Utility.drawTextWithShadow(b, text, Game1.smallFont, pos, BadgeColor, scale);
+            Utility.drawTextWithShadow(b, text, Game1.smallFont, pos, BadgeColor * alpha, scale, shadowIntensity: alpha);
         }
     }
 }

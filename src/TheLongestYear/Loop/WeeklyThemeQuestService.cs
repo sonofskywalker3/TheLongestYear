@@ -375,8 +375,9 @@ namespace TheLongestYear.Loop
             // Spec 2026-08-28-obtainable-board-2-stretch: a stretch goal asks for an item the
             // model wouldn't otherwise call obtainable yet - tag it so the player isn't confused.
             string tagged = slot.Stretch ? described + Strings.Get("goal.stretch-tag") : described;
-            // The card's favoured line pays double per-item JP (spec 2026-10-19-focus-cards).
-            if (slot.Favoured) tagged += Strings.Get("goal.favoured-tag");
+            // The card's favoured line pays double per-item JP (spec 2026-10-19-focus-cards). The tag
+            // goes once the slot is deposited, like the badge.
+            if (FavouredGoal.ShowsBadge(slot)) tagged += Strings.Get("goal.favoured-tag");
             // Spec 2026-08-28-obtainable-board-4-boosts: tag a goal that routes through a Boost
             // (Year-Two Seeds, Sneak Peek) so the player knows why it's askable at all.
             return slot.RouteTag == null
