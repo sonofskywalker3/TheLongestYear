@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Tools;
 using TheLongestYear.Core;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.Loop
 {
@@ -28,8 +29,8 @@ namespace TheLongestYear.Loop
         /// "Introduction" dialogue on first contact (vanilla Farmer ctor, Farmer.cs:2029).</summary>
         private const string IntroductionDialogueKey = "Introduction";
 
-        /// <summary>Willy's beach scene that gives the Bamboo Pole (Event.cs case "739330").</summary>
-        private const string WillyRodEventId = "739330";
+        /// <summary>Willy's beach scene that gives the Bamboo Pole (shared with focus delivery).</summary>
+        private const string WillyRodEventId = ToolTierItems.WillyRodEventId;
 
         /// <summary>Days vanilla keeps that key alive on a brand-new farmer (Farmer.cs:2029).</summary>
         private const int IntroductionDialogueDays = 6;

@@ -12,8 +12,8 @@ public static class FocusWorldRungs
     private const int RodSecondRungLevel = 2;
     private const int RodFirstRungMaxLevel = 1;
     private const int HouseTopLevel = 3;
-    private const int BackpackTierTwoSize = 36;
-    private const int BackpackTierOneSize = 24;
+    public const int BackpackTierTwoSize = 36;
+    public const int BackpackTierOneSize = 24;
 
     private static readonly IReadOnlyDictionary<string, int> CoopRungs = new Dictionary<string, int>(StringComparer.Ordinal)
         { ["Coop"] = 1, ["Big Coop"] = 2, ["Deluxe Coop"] = 3 };
@@ -60,6 +60,10 @@ public static class FocusWorldRungs
         if (effective <= 0) return 0;
         return effective >= HouseTopLevel ? 2 : 1;
     }
+
+    /// <summary>The bag size a backpack rung stands for: rung 1 is 24 slots, rung 2 (or more) is 36.</summary>
+    public static int BackpackSizeForRung(int rung)
+        => rung >= 2 ? BackpackTierTwoSize : BackpackTierOneSize;
 
     public static int BackpackRung(int maxItems)
         => maxItems >= BackpackTierTwoSize ? 2 : maxItems >= BackpackTierOneSize ? 1 : 0;

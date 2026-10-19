@@ -4,6 +4,7 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Tools;
 using TheLongestYear.Core;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.Loop
 {
@@ -113,7 +114,7 @@ namespace TheLongestYear.Loop
         private static Dictionary<string, Tool> CaptureTools(Farmer p)
         {
             var tools = new Dictionary<string, Tool>();
-            foreach ((string slug, Tool t, _) in TheLongestYear.Integration.ToolTierScan.OwnedTools(p))
+            foreach ((string slug, Tool t, _) in ToolTierScan.OwnedTools(p))
             {
                 if (!tools.TryGetValue(slug, out Tool known) || t.UpgradeLevel > known.UpgradeLevel)
                     tools[slug] = t;
@@ -180,7 +181,7 @@ namespace TheLongestYear.Loop
                 if (!keptTiers.ContainsKey(slug)) continue;
                 if (!outgoing.TryGetValue(slug, out Tool old) || ReferenceEquals(old, fresh)) continue;
 
-                TheLongestYear.Integration.ToolTierItems.CopyState(old, fresh, slug, moved);
+                ToolTierItems.CopyState(old, fresh, slug, moved);
             }
             if (moved.Count > 0)
                 monitor.Log("Reset: transplanted tool state — " + string.Join(", ", moved), LogLevel.Trace);
@@ -205,7 +206,7 @@ namespace TheLongestYear.Loop
                     hasRod = true;
                     if (tiers.TryGetValue("fishing_rod", out int rl))
                     {
-                        string rid = TheLongestYear.Integration.ToolTierItems.RodItemId(rl);
+                        string rid = ToolTierItems.RodItemId(rl);
                         p.Items[i] = ItemRegistry.Create($"(T){rid}");
                         applied.Add($"fishing_rod={rid}");
                     }
@@ -219,9 +220,9 @@ namespace TheLongestYear.Loop
                     it is WateringCan ? "watering_can" : null;
                 if (slug == null) continue;
 
-                if (tiers.TryGetValue(slug, out int tier) && tier > 0 && tier <= TheLongestYear.Integration.ToolTierItems.MaxMetalLevel)
+                if (tiers.TryGetValue(slug, out int tier) && tier > 0 && tier <= ToolTierItems.MaxMetalLevel)
                 {
-                    string itemId = TheLongestYear.Integration.ToolTierItems.MetalItemId(slug, tier);
+                    string itemId = ToolTierItems.MetalItemId(slug, tier);
                     p.Items[i] = ItemRegistry.Create($"(T){itemId}");
                     applied.Add($"{slug}={itemId}");
                 }
@@ -231,7 +232,7 @@ namespace TheLongestYear.Loop
             // replaying on top of it in Apply (WillyRodEventId), after eventsSeen is rebuilt.
             if (!hasRod && tiers.TryGetValue("fishing_rod", out int rodLevel))
             {
-                string rid = TheLongestYear.Integration.ToolTierItems.RodItemId(rodLevel);
+                string rid = ToolTierItems.RodItemId(rodLevel);
                 Item rod = ItemRegistry.Create($"(T){rid}");
                 for (int i = 0; i < p.Items.Count; i++)
                 {

@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.107 - 2026-10-19
+
+### Fixed
+
+- **A rod focus card bought before Willy's beach scene no longer earns a second Bamboo Pole.** The scene is skipped, the same as for a kept rod.
+
+### Changed
+
+- **Clearer message for a tool card.** It says whether the Junimos upgraded your tool or brought you a new one.
+
 ## 0.19.106 - 2026-10-19
 
 ### Added

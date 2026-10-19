@@ -18,6 +18,11 @@ namespace TheLongestYear.Integration
     {
         public const int MaxMetalLevel = 4;
 
+        /// <summary>Willy's beach scene that gives the Bamboo Pole (Event.cs case "739330"). It
+        /// hands a pole to anyone not holding one, so it is marked seen whenever a rod is granted
+        /// another way (a kept rod at reset, a rod focus card).</summary>
+        public const string WillyRodEventId = "739330";
+
         private static readonly string[] MetalToolPrefixes = { "", "Copper", "Steel", "Gold", "Iridium" };
 
         private static readonly IReadOnlyDictionary<string, string> BasicToolBaseId =

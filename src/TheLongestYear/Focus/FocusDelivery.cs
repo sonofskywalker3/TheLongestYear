@@ -37,8 +37,6 @@ namespace TheLongestYear.Focus
         private static readonly IReadOnlySet<string> PlacedBuildingChains =
             new HashSet<string>(StringComparer.Ordinal) { "coop", "barn", "silo", "fish_pond" };
 
-        /// <summary>Backpack size by rung: rung 1 is 24 slots, rung 2 is 36.</summary>
-        private static readonly int[] BackpackSizeByRung = { 24, 36 };
 
         /// <summary>Every map the shortcuts mail changes. Vanilla re-reads the mail in each one's
         /// MakeMapModifications (Town, Forest, Mountain, Beach overrides; Backwoods in GameLocation).</summary>
@@ -91,6 +89,9 @@ namespace TheLongestYear.Focus
             {
                 p.addItemByMenuIfNecessary(fresh);
                 where = "granted fresh";
+                // Without this Willy's beach scene still plays and hands over a second Bamboo Pole.
+                if (slug == ToolTierScan.RodSlug)
+                    p.eventsSeen.Add(ToolTierItems.WillyRodEventId);
             }
             else
             {
@@ -113,8 +114,11 @@ namespace TheLongestYear.Focus
                 $"Focus delivery: {slug} -> {fresh.QualifiedItemId} ({where})" +
                 (moved.Count > 0 ? $", carried over {string.Join(", ", moved)}." : "."),
                 LogLevel.Info);
-            return Show("focus.delivered.tool", Strings.Get("focus.delivered.tool",
-                new Dictionary<string, string> { ["item"] = fresh.DisplayName }));
+            return slot == null
+                ? Show("focus.delivered.tool-new", Strings.Get("focus.delivered.tool-new",
+                    new Dictionary<string, string> { ["item"] = fresh.DisplayName }))
+                : Show("focus.delivered.tool", Strings.Get("focus.delivered.tool",
+                    new Dictionary<string, string> { ["item"] = fresh.DisplayName }));
         }
 
         private string DeliverKnack(FocusQuote quote)
@@ -122,7 +126,7 @@ namespace TheLongestYear.Focus
             if (quote.ChainId == BackpackChain)
             {
                 Farmer p = Game1.player;
-                int size = BackpackSizeByRung[Math.Clamp(quote.TargetRung, 1, BackpackSizeByRung.Length) - 1];
+                int size = FocusWorldRungs.BackpackSizeForRung(quote.TargetRung);
                 if (p.MaxItems < size)
                     p.increaseBackpackSize(size - p.MaxItems);
                 _monitor.Log($"Focus delivery: backpack is now {p.MaxItems} slots.", LogLevel.Info);
@@ -156,6 +160,9 @@ namespace TheLongestYear.Focus
         {
             int target = quote.TargetRung == KitchenRung ? KitchenLevel : BasementLevel;
             _store.Run.FocusHouseTarget = target;
+            int robinDays = Game1.player.daysUntilHouseUpgrade.Value;
+            if (robinDays > HouseUpgradeTonight)
+                _monitor.Log($"Focus delivery: Robin's house upgrade had {robinDays} days left; the card finishes it tonight instead.", LogLevel.Trace);
             Game1.player.daysUntilHouseUpgrade.Value = HouseUpgradeTonight;
             _monitor.Log($"Focus delivery: house goes to level {target} overnight (now {Game1.player.HouseUpgradeLevel}).", LogLevel.Info);
             return Show("focus.delivered.house-overnight", Strings.Get("focus.delivered.house-overnight"));
