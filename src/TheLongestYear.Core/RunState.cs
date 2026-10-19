@@ -7,7 +7,7 @@ namespace TheLongestYear.Core;
 /// the game's own save (see MetaStore) so it cannot be save-scummed. Lists (not sets) keep JSON
 /// round-tripping simple; membership helpers enforce uniqueness.
 /// </summary>
-public sealed class RunState
+public sealed partial class RunState
 {
     /// <summary>Per-run RNG seed (used by SelectionService + BonusItemSampler).
     /// Stored so reload reproduces this week's offer and bonus samples.</summary>
@@ -522,6 +522,7 @@ public sealed class RunState
         DiscountWeek = -1;
         RestartMenusDone = false;
         OfferPresentedWeek = -1;
+        ResetFocus();
         ClearReroll();
         RandomizerWeek = -1;
         RandomizerSnapshot = null;

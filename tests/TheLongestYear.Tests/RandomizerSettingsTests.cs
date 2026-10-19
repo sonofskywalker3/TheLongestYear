@@ -17,6 +17,10 @@ public class RandomizerSettingsTests
     }
 
     [Fact]
+    public void Rerolls_default_off_when_config_json_omits_it()
+        => Assert.Equal(RerollMode.Off, JsonSerializer.Deserialize<GameplayConfig>("{}")!.Randomizer.Rerolls);
+
+    [Fact]
     public void An_old_reroll_switch_that_was_on_becomes_free()
     {
         var c = new GameplayConfig { EnableThemeReroll = true };
