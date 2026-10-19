@@ -35,6 +35,10 @@ namespace TheLongestYear.Donations
         /// upgrades whose effect needs a live refresh, e.g. a Data/Shops cache invalidation).</summary>
         public System.Action<string> Purchased;
 
+        /// <summary>Runs the live purchase hooks for an upgrade granted outside this service (a
+        /// focus card), so it takes effect the same way a shrine purchase does.</summary>
+        public void NotifyPurchased(string id) => Purchased?.Invoke(id);
+
         /// <summary>Attempt to buy by id. Returns the rule's result so the caller can react.</summary>
         public UpgradePurchase.PurchaseResult TryPurchase(string upgradeId)
         {

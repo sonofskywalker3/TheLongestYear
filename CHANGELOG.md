@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.103 - 2026-10-19
+
+### Debug
+
+- `tly_focus show | deal | pick <tools|buildings|knacks> <chainId> | buy <tools|buildings|knacks> [keeponly] | reset` shows this run's focus card hands with each card's live quote, forces a re-deal, picks a card, buys the picked card's keep, or clears the hands.
+
 ## 0.19.99 - 2026-10-17
 
 ### Fixed

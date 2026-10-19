@@ -256,6 +256,7 @@ namespace TheLongestYear
                 if (id == TheLongestYear.Core.AnimalPowers.LoyalPet)
                     _animalPowers.RefreshPets("bought");
             };
+            _focus = new TheLongestYear.Focus.FocusService(this.Monitor, _meta, _config, _purchases);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
