@@ -175,8 +175,12 @@ namespace TheLongestYear.Loop
             ApplyToolTiers(p, baseline.ToolTiers, _monitor);
             TransplantToolState(p, baseline.ToolTiers, outgoingTools, _monitor);
 
-            // Relationships, mail, events, quests.
+            // Relationships, mail, events, quests. A marriage ends with the rewind
+            // (FarmerReset.Marriage.cs): spouse and mod caches first, while friendshipData still says
+            // who was married, then the world side once the entries are gone.
+            IReadOnlyList<string> formerPartners = ClearMarriageState(p);
             p.friendshipData.Clear();
+            ClearMarriageWorld(p, formerPartners);
             p.mailReceived.Clear();
 
             // Kept wallet items / Stardrop source markers (spec 2026-08-27 keep-wallet-stardrops):

@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.117 - 2026-10-19
+
+### Fixed
+
+- A marriage or roommate no longer survives the rewind. Your spouse used to keep living in your farmhouse on the new loop even though your hearts with them had reset. Now the rewind ends the marriage like every other relationship: your former spouse or roommate goes back to their own home and routine, the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
+
 ## 0.19.116 - 2026-10-19
 
 ### Fixed
