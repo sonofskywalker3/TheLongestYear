@@ -47,4 +47,10 @@ public sealed class BonusSlot
     /// The quest text tags such a goal so the player knows a Boost (or the permanent buy/watch) is
     /// the item's route, not vanilla pacing.</summary>
     public string? RouteTag { get; set; }
+
+    /// <summary>True on the one line of a theme card's list that pays double per-item JP (spec
+    /// 2026-10-19-focus-cards, "The favoured goal"). Set by <see cref="FavouredGoal.Mark"/> at
+    /// sampling and again after GoalLists.Dedupe, then stored with the committed week so it never
+    /// changes mid-week.</summary>
+    public bool Favoured { get; set; }
 }

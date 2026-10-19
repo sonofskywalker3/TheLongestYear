@@ -166,8 +166,12 @@ namespace TheLongestYear.Loop
             // Double week: the second card's list, without any line the first card already owns.
             (Run.SecondWeekBonusSlots ??= new System.Collections.Generic.List<BonusSlot>()).Clear();
             if (Run.SecondSelection is Theme second)
+            {
                 Run.SecondWeekBonusSlots.AddRange(GoalLists.Dedupe(
                     Run.CurrentWeekBonusSlots, SampleSlotsForTheme(second, Run.Season, Run.WeekOfYear)));
+                // Dedupe may have taken the second card's favoured line; pick again from what is left.
+                MarkFavoured(Run.SecondWeekBonusSlots);
+            }
             ApplyWeekDiscount();
             // Random shrine donations: top each list up (only lists that have none, so a reload never re-rolls).
             RollShrineGoals();

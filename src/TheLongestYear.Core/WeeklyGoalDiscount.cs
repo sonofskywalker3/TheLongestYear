@@ -126,6 +126,7 @@ public static class WeeklyGoalDiscount
                 Paid = s.Paid,
                 Stretch = s.Stretch,
                 RouteTag = s.RouteTag,
+                Favoured = s.Favoured,
             });
         }
         return shown;

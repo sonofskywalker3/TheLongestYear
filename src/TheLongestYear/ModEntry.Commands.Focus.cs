@@ -64,6 +64,51 @@ namespace TheLongestYear
             }
         }
 
+        /// <summary>tly_favour [itemId|clear]: force this week's favoured goal (debug). An item id
+        /// flags the matching committed line in whichever list holds it and clears the rest of that
+        /// list; clear removes every flag; no argument only logs. Logs both lists' flags after.</summary>
+        private void CmdFavour(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (!Context.IsMainPlayer) { this.Monitor.Log("tly_favour: host only.", LogLevel.Warn); return; }
+
+            RunState run = _meta.Run;
+            if (args.Length > 0)
+            {
+                if (args[0].Equals("clear", StringComparison.OrdinalIgnoreCase))
+                {
+                    foreach (BonusSlot s in run.CurrentWeekBonusSlots) s.Favoured = false;
+                    foreach (BonusSlot s in run.SecondWeekBonusSlots ?? new System.Collections.Generic.List<BonusSlot>()) s.Favoured = false;
+                    this.Monitor.Log("tly_favour: every favoured flag cleared.", LogLevel.Info);
+                }
+                else if (!FavourIn(run.CurrentWeekBonusSlots, args[0]) && !FavourIn(run.SecondWeekBonusSlots, args[0]))
+                {
+                    this.Monitor.Log($"tly_favour: '{args[0]}' is not one of this week's committed goals.", LogLevel.Warn);
+                }
+            }
+
+            LogCommittedGoals("This week's goals", run.CurrentSelection, run.CurrentGoalMultiplier,
+                run.LiabilitySuppressedThisWeek, run.CurrentWeekBonusSlots);
+            if (run.SecondSelection.HasValue)
+                LogCommittedGoals("Double week second list", run.SecondSelection, run.SecondGoalMultiplier,
+                    run.SecondLiabilitySuppressedThisWeek, run.SecondWeekBonusSlots);
+        }
+
+        /// <summary>Flags the first line in <paramref name="slots"/> whose item is <paramref name="itemId"/>
+        /// (qualified, or bare and read as an object) and clears the others. False when none matches.</summary>
+        private static bool FavourIn(System.Collections.Generic.List<BonusSlot> slots, string itemId)
+        {
+            if (slots == null) return false;
+            BonusSlot match = slots.FirstOrDefault(s => SameItem(s.ItemId, itemId));
+            if (match == null) return false;
+            foreach (BonusSlot s in slots) s.Favoured = ReferenceEquals(s, match);
+            return true;
+        }
+
+        private static bool SameItem(string slotItemId, string typed)
+            => string.Equals(slotItemId, typed, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(slotItemId, "(O)" + typed, StringComparison.OrdinalIgnoreCase);
+
         private static bool TryParseFocusTheme(string text, out FocusTheme theme)
             => Enum.TryParse(text, ignoreCase: true, out theme) && Enum.IsDefined(typeof(FocusTheme), theme);
 

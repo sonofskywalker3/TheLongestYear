@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.112 - 2026-10-19
+
+### Added
+
+- **A goal the Junimos especially want pays double JP.** Each theme card can hold one such goal, set when you pick the card and kept all week. Every item you donate to it earns twice the usual JP. A double theme week can have one on each card. Bundle, room and weekly completion bonuses are unchanged.
+
+### Debug
+
+- `tly_favour [itemId|clear]` makes one of this week's goals the double JP goal (clearing the others in its list), clears every flag, or with no argument logs the flags. `tly_goals` now tags the double JP goal of each theme and of this week's lists as "favoured".
+
 ## 0.19.111 - 2026-10-19
 
 ### Added

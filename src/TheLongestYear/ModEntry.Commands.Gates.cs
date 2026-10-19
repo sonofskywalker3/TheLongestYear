@@ -155,7 +155,7 @@ namespace TheLongestYear
                 {
                     string quality = slot.Quality > 0 ? $" q{slot.Quality}" : "";
                     this.Monitor.Log(
-                        $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}{quality}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]",
+                        $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}{quality}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]{(slot.Favoured ? " favoured" : "")}",
                         LogLevel.Info);
                 }
             }
@@ -179,7 +179,7 @@ namespace TheLongestYear
             foreach (BonusSlot slot in slots)
                 this.Monitor.Log(
                     $"    - {DisplayName(slot.ItemId)} ({slot.ItemId}) x{slot.Stack}  [{slot.BundleName} #{slot.BundleIndex}/{slot.IngredientIndex}]" +
-                    $"{(slot.Deposited ? " deposited" : "")}{(slot.Paid ? " paid" : "")}",
+                    $"{(slot.Favoured ? " favoured" : "")}{(slot.Deposited ? " deposited" : "")}{(slot.Paid ? " paid" : "")}",
                     LogLevel.Info);
         }
 

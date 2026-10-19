@@ -382,7 +382,12 @@ namespace TheLongestYear.UI
 
             IReadOnlyList<BonusSlot> sample = PreviewFor(theme.Value);
             if (ownedByOtherCard != null)
-                sample = GoalLists.Dedupe(ownedByOtherCard, sample);
+            {
+                List<BonusSlot> kept = GoalLists.Dedupe(ownedByOtherCard, sample);
+                // Same re-mark as the commit, so the preview shows the line the pick will pay double.
+                _runController.MarkFavoured(kept);
+                sample = kept;
+            }
 
             foreach (BonusSlot slot in sample)
             {

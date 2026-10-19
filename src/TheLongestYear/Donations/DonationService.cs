@@ -68,6 +68,10 @@ namespace TheLongestYear.Donations
             long awarded = bonusApplies
                 ? (long)Math.Round(baseJp * _config.SelectionBonusMultiplier * cardMultiplier, MidpointRounding.AwayFromZero)
                 : baseJp;
+            // The card's favoured line pays double per-item JP, before the JP boost. Bundle, room and
+            // weekly bonuses are paid elsewhere and stay as they are.
+            bool favoured = bonusApplies && SlotIn(owner, bundleIndex, ingredientIndex)?.Favoured == true;
+            awarded = FavouredGoal.Apply(awarded, favoured);
             awarded = JpBoostHelper.Apply(_store.State, awarded);
 
             _store.State.JunimoPoints += awarded;
@@ -77,6 +81,7 @@ namespace TheLongestYear.Donations
                 _monitor.Log($"OnItemDonated('{qualifiedItemId}') without a slot identity: JP paid, ledger untouched (the board mirror settles it).", LogLevel.Trace);
 
             string bonusTag = bonusApplies ? $" (bonus x{_config.SelectionBonusMultiplier}, card x{cardMultiplier})" : "";
+            if (favoured) bonusTag += $" (favoured x{FavouredGoal.JpFactor})";
             int jpBoostTier = JpBoostHelper.HighestTier(_store.State);
             string boostTag = jpBoostTier > 0 ? $" (jp_boost tier {jpBoostTier})" : "";
             // Per-item donation line is Trace: a full CC restoration donates dozens-to-hundreds of
@@ -109,12 +114,16 @@ namespace TheLongestYear.Donations
         }
 
         private static bool Holds(List<BonusSlot> slots, int bundleIndex, int ingredientIndex)
+            => SlotIn(slots, bundleIndex, ingredientIndex) != null;
+
+        /// <summary>The goal line for (bundle, ingredient) in <paramref name="slots"/>, or null.</summary>
+        private static BonusSlot SlotIn(List<BonusSlot> slots, int bundleIndex, int ingredientIndex)
         {
-            if (slots == null) return false;
+            if (slots == null) return null;
             foreach (BonusSlot s in slots)
                 if (s.BundleIndex == bundleIndex && s.IngredientIndex == ingredientIndex)
-                    return true;
-            return false;
+                    return s;
+            return null;
         }
 
         /// <summary>A bundle just completed — award its one-time completion bonus (season-scaled).</summary>
