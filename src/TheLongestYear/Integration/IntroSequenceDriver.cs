@@ -104,9 +104,17 @@ namespace TheLongestYear.Integration
                 case IntroAction.OpenPicker:
                     if (Game1.activeClickableMenu == null)
                     {
-                        _monitor.Log("Intro: cutscene done — opening the theme picker.", LogLevel.Info);
-                        _launcher?.Invoke()?.OpenWeeklyHub();
-                        _finished = true;
+                        // Finished only once the hub itself is up. A false return (the focus card
+                        // picks opened first, or the surface was busy) retries on a later free tick.
+                        if (_launcher?.Invoke()?.OpenWeeklyHub() == true)
+                        {
+                            _monitor.Log("Intro: cutscene done, theme picker open.", LogLevel.Info);
+                            _finished = true;
+                        }
+                        else
+                        {
+                            Bump();
+                        }
                     }
                     break;
 

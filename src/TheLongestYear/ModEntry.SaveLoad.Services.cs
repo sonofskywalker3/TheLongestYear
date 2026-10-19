@@ -257,7 +257,7 @@ namespace TheLongestYear
                     _animalPowers.RefreshPets("bought");
             };
             _focus = new TheLongestYear.Focus.FocusService(this.Monitor, _meta, _config, _purchases);
-            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases);
+            _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);

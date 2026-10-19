@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.104 - 2026-10-19
+
+### Added
+
+- **Focus cards at the start of every loop.** Before the week-1 planning hub, the Junimos offer three hands of cards in turn: tools, then buildings, then knacks. You pick one card from each hand. A picked card can be bought with JP any time that year. You get it right away and keep it for later loops. A hand with no card to offer is skipped. The picks cannot be closed without choosing, and a reload brings back the same hands with your earlier picks remembered.
+
 ## 0.19.103 - 2026-10-19
 
 ### Debug

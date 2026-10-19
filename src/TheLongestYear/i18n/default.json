@@ -564,6 +564,12 @@
 
     // -- weekly hub / season goals / weather ---------------------------------------
     "menu.hub.pick-theme": "Pick a theme",
+    "focus.pick.title.tools": "We can improve one of your tools.",
+    "focus.pick.title.buildings": "We can build one thing for you.",
+    "focus.pick.title.knacks": "We can share one of our knacks.",
+    "focus.pick.subtitle": "Choose one. Buy it with JP any time this year. You get it right away and you keep it.",
+    "focus.card.price": "{{jp}} JP",
+    "focus.card.overnight": "Ready the next morning.",
     "menu.hub.double-week": "Double week: take both",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
     "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
