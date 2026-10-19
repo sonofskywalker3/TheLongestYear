@@ -203,6 +203,10 @@ namespace TheLongestYear.Loop
         /// <summary>Spec 2026-08-28-even-year: a weekly goal may name an item only from the week
         /// the availability model says it first exists (mines 30 floors a week, and so on).</summary>
         public bool IsObtainableInWeek(string itemId, int weekOfYear)
+            => BlockerForWeek(itemId, weekOfYear) == GoalBlock.None;
+
+        /// <summary>Which signal keeps an item off a week's goals (none when obtainable).</summary>
+        private GoalBlock BlockerForWeek(string itemId, int weekOfYear)
         {
             System.Collections.Generic.IReadOnlySet<CoreSeason> catalogSeasons = null;
             foreach (var item in _catalog)
@@ -211,7 +215,7 @@ namespace TheLongestYear.Loop
                     catalogSeasons = item.ObtainableSeasons;
                     break;
                 }
-            return GoalObtainability.IsObtainable(catalogSeasons, Availability, itemId, weekOfYear);
+            return GoalObtainability.BlockerFor(catalogSeasons, Availability, itemId, weekOfYear);
         }
 
         /// <summary>Derived item model (fish, crab-pot, metals floors incl. location gating), so a

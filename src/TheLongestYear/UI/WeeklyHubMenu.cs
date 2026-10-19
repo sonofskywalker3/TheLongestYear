@@ -175,7 +175,8 @@ namespace TheLongestYear.UI
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
             // stored re-rolled pair, and the restored count keeps the pick on the re-roll path.
-            IReadOnlyList<Theme> rerolled = _run.RerolledOfferFor(OfferWeek, SelectionsForOffer);
+            IReadOnlyList<Theme> rerolled = _run.RerolledOfferFor(
+                OfferWeek, _runController.RerollExclusions(OfferWeek, _offerSeason, SelectionsForOffer));
             if (rerolled != null)
             {
                 _offer = rerolled.ToList();

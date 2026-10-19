@@ -15,6 +15,9 @@ namespace TheLongestYear.Core;
 /// room themes in seed order (the legacy shuffle) that can still ask for at least one goal.
 /// A theme that can ask nothing never pads a card (Jeff, 2026-08-28) -- the offer can come back
 /// short, even a single card, rather than hand out a free drawback lift for nothing.
+///
+/// A short offer then refills from the themes already picked this month that can still ask for
+/// goals (RefillOrder), so the week only comes back empty when no theme at all can ask anything.
 /// </summary>
 public static class SelectionService
 {
@@ -97,11 +100,39 @@ public static class SelectionService
             Shuffle(fallback, rng);
             offer.AddRange(fallback.Take(OfferSize - offer.Count));
         }
+
+        if (offer.Count < OfferSize)
+            offer.AddRange(RefillOrder(selected, offer, askableFor, rng).Take(OfferSize - offer.Count));
         return offer;
     }
 
+    /// <summary>The themes already picked this month that may refill a short offer, in deal order:
+    /// those that can fill a card (<see cref="MinAskableToOffer"/> or more goals) first, then the
+    /// thin ones (at least <see cref="MinAskableToPad"/>), each tier in seed order. Never a theme
+    /// already on <paramref name="onOffer"/>, never one that can ask nothing. Player report
+    /// (0.19.97): with every unpicked theme dry, the next Monday dealt no card at all and the
+    /// season gate failed on lines only an already-picked theme could ask for.</summary>
+    private static List<Theme> RefillOrder(
+        IReadOnlyCollection<Theme> picked, IReadOnlyCollection<Theme> onOffer, Func<Theme, int> askableFor, Random rng)
+    {
+        List<(Theme Theme, int Askable)> reusable = picked
+            .Distinct()
+            .Where(t => !onOffer.Contains(t))
+            .OrderBy(t => (int)t)
+            .Select(t => (t, askableFor(t)))
+            .Where(pair => pair.Item2 >= MinAskableToPad)
+            .ToList();
+        List<Theme> full = reusable.Where(p => p.Askable >= MinAskableToOffer).Select(p => p.Theme).ToList();
+        List<Theme> thin = reusable.Where(p => p.Askable < MinAskableToOffer).Select(p => p.Theme).ToList();
+        Shuffle(full, rng);
+        Shuffle(thin, rng);
+        full.AddRange(thin);
+        return full;
+    }
+
     /// <summary>The themes a re-roll may offer: every theme not picked this month that can ask for
-    /// at least <see cref="MinAskableToPad"/> goal (Jeff, 2026-09-28, from Nijah's report: with the
+    /// at least <see cref="MinAskableToPad"/> goal, plus the picked ones that can when fewer than a
+    /// pair is left (the same refill the weekly offer makes) (Jeff, 2026-09-28, from Nijah's report: with the
     /// old floor of <see cref="MinAskableToOffer"/> a week with exactly two qualified themes
     /// re-rolled the same pair forever). Never a theme that can ask nothing, which would lift the
     /// drawback for free. The normal weekly offer keeps its floor of two.</summary>
@@ -110,10 +141,16 @@ public static class SelectionService
     {
         if (askableFor == null) throw new ArgumentNullException(nameof(askableFor));
         var selectedSet = new HashSet<Theme>(alreadySelectedThisMonth ?? Array.Empty<Theme>());
-        return Enum.GetValues(typeof(Theme)).Cast<Theme>()
+        List<Theme> candidates = Enum.GetValues(typeof(Theme)).Cast<Theme>()
             .Where(t => !selectedSet.Contains(t) && askableFor(t) >= MinAskableToPad)
             .OrderBy(t => (int)t)
             .ToList();
+        // Fewer than a pair left: the picked themes that can still ask join, as in the offer's refill.
+        if (candidates.Count < OfferSize)
+            candidates.AddRange(selectedSet
+                .Where(t => askableFor(t) >= MinAskableToPad)
+                .OrderBy(t => (int)t));
+        return candidates;
     }
 
     private static void Shuffle(List<Theme> list, Random rng)

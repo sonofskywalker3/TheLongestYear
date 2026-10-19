@@ -29,6 +29,10 @@ namespace TheLongestYear.Loop
                 ? (System.Collections.Generic.IReadOnlyCollection<Theme>)System.Array.Empty<Theme>()
                 : Run.SelectedThemesThisMonth;
             var offer = OfferFor(week, seasonOverride ?? Run.Season, selectionsForOffer);
+            // Even after the refill from this month's picks the offer can run short: say in the
+            // log which gate lines no theme can ask this week, and why (player report, 0.19.97).
+            if (offer.Count < SelectionService.OfferSize)
+                LogUnaskableGateLines(week, seasonOverride ?? Run.Season, offer, selectionsForOffer);
 
             // Backstop (khauser13 soft lock): the hub has no close button by design — a forced
             // 1-of-N choice — so an EMPTY offer would hard-lock the player. The month rollover
@@ -52,6 +56,9 @@ namespace TheLongestYear.Loop
                     Run.SkipWeek();
                     ActiveEffectsProvider.Clear();
                     _questService?.OnThemeSelected();   // drops last week's quest, adds none
+                    // Never silent (player report, 0.19.97): no hub opened and the player could
+                    // not tell why. Say there is no theme and what the season still needs.
+                    ShowNoThemeWeekMessage();
                 }
                 return;
             }
@@ -60,7 +67,7 @@ namespace TheLongestYear.Loop
             // The face-down card shows as "?" at Info; the real offer goes to Trace (final review I2).
             RandomizerSettings offerRand = RandomizerForWeekPeek(week);
             // A stored re-roll replaces the seeded pair when the hub opens, so log the pair that will show.
-            var restored = Run.RerolledOfferFor(week, selectionsForOffer);
+            var restored = Run.RerolledOfferFor(week, RerollExclusions(week, seasonOverride ?? Run.Season, selectionsForOffer));
             var shown = restored ?? offer;
             string restoredTag = restored != null ? " [restored re-roll]" : "";
             bool doubleOffer = IsDoubleWeekOffer(week, shown.Count, prePick: seasonOverride.HasValue);

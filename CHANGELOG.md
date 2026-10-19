@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.118 - 2026-10-19
+
+### Fixed
+
+- The weekly theme pick no longer runs dry partway through a season. When the themes you haven't picked yet this month have nothing left to ask for, the planning hub now deals themes you already picked that month again, as long as they still have goals for you. Before, you could get a week with one card and a "(no offer)" side, then a Monday with no theme pick at all, and then fail the season because no theme could ask for what the bundles still needed.
+- If no theme at all has anything to ask for, you now get a message saying so and how many items the season still needs by day 28, instead of the theme pick silently not showing up.
+
 ## 0.19.117 - 2026-10-19
 
 ### Fixed

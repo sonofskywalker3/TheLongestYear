@@ -23,7 +23,7 @@ public class MarriageResetRulesTests
     [Fact]
     public void Former_partners_are_empty_for_a_single_farmer()
     {
-        Assert.Empty(MarriageResetRules.FormerPartners(null, new[] { ("Abigail", false) }));
+        Assert.Empty(MarriageResetRules.FormerPartners(null!, new[] { ("Abigail", false) }));
         Assert.Empty(MarriageResetRules.FormerPartners("", new (string, bool)[0]));
     }
 
