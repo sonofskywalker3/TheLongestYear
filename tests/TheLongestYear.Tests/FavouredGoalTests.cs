@@ -96,4 +96,58 @@ public class FavouredGoalTests
         Assert.Equal(15, FavouredGoal.Apply(15, false));
         Assert.Equal(0, FavouredGoal.Apply(0, true));
     }
+
+    private static RunState WeekWith(BonusSlot first, BonusSlot? second = null)
+    {
+        var run = new RunState();
+        run.Select(Theme.Farming);
+        run.CurrentWeekBonusSlots.Add(first);
+        if (second != null)
+        {
+            run.SelectSecond(Theme.Fishing);
+            run.SecondWeekBonusSlots.Add(second);
+        }
+        return run;
+    }
+
+    [Fact]
+    public void Badge_shows_on_a_favoured_line_until_it_is_deposited()
+    {
+        var line = new BonusSlot { BundleIndex = 3, IngredientIndex = 1, Favoured = true };
+        RunState run = WeekWith(line);
+        Assert.True(FavouredGoal.BadgeAt(run, 3, 1));
+        Assert.False(FavouredGoal.BadgeAt(run, 3, 2));
+        line.Deposited = true;
+        Assert.False(FavouredGoal.BadgeAt(run, 3, 1));
+    }
+
+    [Fact]
+    public void Badge_never_shows_on_a_line_that_is_not_favoured()
+    {
+        RunState run = WeekWith(new BonusSlot { BundleIndex = 3, IngredientIndex = 1 });
+        Assert.False(FavouredGoal.BadgeAt(run, 3, 1));
+        Assert.False(FavouredGoal.BadgeAt(null, 3, 1));
+    }
+
+    [Fact]
+    public void Badge_reads_the_second_list_on_a_double_week()
+    {
+        RunState run = WeekWith(
+            new BonusSlot { BundleIndex = 1, IngredientIndex = 0 },
+            new BonusSlot { BundleIndex = 5, IngredientIndex = 2, Favoured = true });
+        Assert.True(FavouredGoal.BadgeAt(run, 5, 2));
+        run.SecondSelection = null;
+        Assert.False(FavouredGoal.BadgeAt(run, 5, 2));
+    }
+
+    [Fact]
+    public void A_picked_theme_reads_its_stored_list()
+    {
+        var line = new BonusSlot { BundleIndex = 3, IngredientIndex = 1, Favoured = true };
+        var other = new BonusSlot { BundleIndex = 5, IngredientIndex = 2 };
+        RunState run = WeekWith(line, other);
+        Assert.Same(run.CurrentWeekBonusSlots, FavouredGoal.StoredListFor(run, Theme.Farming));
+        Assert.Same(run.SecondWeekBonusSlots, FavouredGoal.StoredListFor(run, Theme.Fishing));
+        Assert.Null(FavouredGoal.StoredListFor(run, Theme.Mining));
+    }
 }

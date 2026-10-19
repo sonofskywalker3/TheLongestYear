@@ -254,6 +254,8 @@ namespace TheLongestYear
                 () => (IReadOnlyDictionary<string, string>)_meta.State.WrittenBoardFlavors;
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
             CartDaysPatch.RunProvider = () => _meta.Run;
+            // The x2 badge on the bundle page reads this week's stored goal lists.
+            FavouredSlotBadgePatch.Run = () => _meta.Run;
             CartDaysPatch.Settings = week => _runController?.RandomizerForWeekPeek(week);
             CartSlotLimitPatch.StartingSlotsProvider = () => _meta.State.EffectiveDifficulty(_config).StartingCartSlots;
             // Once-per-day guard for festival main events (Egg Hunt and friends): TLY festivals do
@@ -345,6 +347,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.DetachBoosts();
             TheLongestYear.Loop.CartSlotLimitPatch.RunProvider = null;
             TheLongestYear.Loop.CartDaysPatch.RunProvider = null;
+            TheLongestYear.Loop.FavouredSlotBadgePatch.Run = null;
             TheLongestYear.Loop.CartDaysPatch.Settings = null;
             TheLongestYear.Loop.CartSlotLimitPatch.StartingSlotsProvider = null;
             TheLongestYear.Loop.FestivalMainEventOncePatch.RunProvider = null;

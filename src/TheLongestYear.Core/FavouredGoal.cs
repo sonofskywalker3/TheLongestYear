@@ -43,5 +43,41 @@ public static class FavouredGoal
     public static long Apply(long jp, bool favoured)
         => favoured ? (long)Math.Round(jp * JpFactor, MidpointRounding.AwayFromZero) : jp;
 
+    /// <summary>True when <paramref name="slot"/> shows the x2 badge: favoured and not yet deposited.</summary>
+    public static bool ShowsBadge(BonusSlot? slot) => slot != null && slot.Favoured && !slot.Deposited;
+
+    /// <summary>True when the bundle slot (bundle, ingredient) is a committed favoured line still
+    /// waiting for its deposit. Reads the stored lists the way the donation payout does: the first
+    /// list while a theme is selected, the second only on a double week.</summary>
+    public static bool BadgeAt(RunState? run, int bundleIndex, int ingredientIndex)
+    {
+        if (run == null) return false;
+        if (run.CurrentSelection.HasValue && ShowsBadge(SlotAt(run.CurrentWeekBonusSlots, bundleIndex, ingredientIndex)))
+            return true;
+        return run.SecondSelection.HasValue && ShowsBadge(SlotAt(run.SecondWeekBonusSlots, bundleIndex, ingredientIndex));
+    }
+
+    /// <summary>The stored goal list of <paramref name="theme"/> when it is already picked this week,
+    /// or null. A view of a picked theme reads this, never a fresh sample: donated lines drop out of
+    /// the open pool, so a re-sample can land on a different favoured line.</summary>
+    public static IReadOnlyList<BonusSlot>? StoredListFor(RunState? run, Theme theme)
+    {
+        if (run == null) return null;
+        if (run.CurrentSelection == theme && run.CurrentWeekBonusSlots is { Count: > 0 } first)
+            return first;
+        if (run.SecondSelection == theme && run.SecondWeekBonusSlots is { Count: > 0 } second)
+            return second;
+        return null;
+    }
+
+    private static BonusSlot? SlotAt(List<BonusSlot>? slots, int bundleIndex, int ingredientIndex)
+    {
+        if (slots == null) return null;
+        foreach (BonusSlot s in slots)
+            if (s != null && s.BundleIndex == bundleIndex && s.IngredientIndex == ingredientIndex)
+                return s;
+        return null;
+    }
+
     private static long Ranks(int? effort) => effort ?? long.MinValue;
 }

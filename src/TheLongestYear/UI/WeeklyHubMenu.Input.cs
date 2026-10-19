@@ -28,8 +28,8 @@ namespace TheLongestYear.UI
             // Per-item bonus-icon tooltips still surface below so the player can see the
             // exact donation quantities.
 
-            CheckBonusIconHover(x, y, _leftBonus, _leftBonusBounds);
-            CheckBonusIconHover(x, y, _rightBonus, _rightBonusBounds);
+            CheckBonusIconHover(x, y, _leftBonus, _leftBonusBounds, _leftFavoured);
+            CheckBonusIconHover(x, y, _rightBonus, _rightBonusBounds, _rightFavoured);
 
             // Weather calendar cells: "Day N - Weather", same as the planning-shrine board.
             if (string.IsNullOrEmpty(_hoverText))
@@ -52,7 +52,7 @@ namespace TheLongestYear.UI
                 _hoverText = FocusStripHover(x, y) ?? "";
         }
 
-        private void CheckBonusIconHover(int x, int y, List<Item> items, List<Rectangle> bounds)
+        private void CheckBonusIconHover(int x, int y, List<Item> items, List<Rectangle> bounds, List<bool> favoured)
         {
             for (int i = 0; i < items.Count && i < bounds.Count; i++)
             {
@@ -68,6 +68,7 @@ namespace TheLongestYear.UI
                         ["name"] = items[i].DisplayName,
                         ["qty"] = qty,
                     });
+                    _hoverText = WithFavouredLine(_hoverText, favoured, i);
                     return;
                 }
             }

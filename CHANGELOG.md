@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.113 - 2026-10-19
+
+### Added
+
+- **An x2 badge marks the goal the Junimos want.** The planning hub shows it on that goal's icon in each card's preview, the weekly quest adds "(double JP)" to its line, and the bundle page shows it on the ingredient until you donate it. Hovering the icon in the hub or the bundle page says "The Junimos want this one. It pays double JP."
+
 ## 0.19.112 - 2026-10-19
 
 ### Added
