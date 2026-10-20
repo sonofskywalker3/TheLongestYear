@@ -64,9 +64,11 @@ public static partial class ItemPoolBuilder
         IReadOnlyList<RawSpawnEntry> forageSpawns,
         IReadOnlyList<RawSpawnEntry> fishSpawns,
         IReadOnlySet<string> trapFishIds,
-        HashSet<string> excluded)
+        HashSet<string> excluded,
+        HashSet<string> shallowWaterFish)
     {
         var result = new HashSet<string>(StringComparer.Ordinal);
+        var deepWaterFish = new HashSet<string>(StringComparer.Ordinal);
         foreach (RawCropEntry crop in crops)
         {
             if (string.IsNullOrEmpty(crop.HarvestItemId)) continue;
@@ -84,8 +86,12 @@ public static partial class ItemPoolBuilder
             if (!objects.TryGetValue(bare, out RawObjectEntry? obj)
                 || !string.Equals(obj.Type, FishType, StringComparison.OrdinalIgnoreCase)) continue;
             if (trapFishIds.Contains(bare) || IsJelly(id)) continue;
-            result.Add(id);
+            // A star needs water deep enough for one somewhere the fish bites (FishStarDepth).
+            if (FishStarDepth.CanRollStar(spawn.MaxClearWater)) deepWaterFish.Add(id);
+            else shallowWaterFish.Add(id);
         }
+        shallowWaterFish.ExceptWith(deepWaterFish);
+        result.UnionWith(deepWaterFish);
         foreach (RawSpawnEntry spawn in forageSpawns)
         {
             if (string.IsNullOrEmpty(spawn.ItemId) || IsSpecialOrderGated(spawn.Condition)) continue;

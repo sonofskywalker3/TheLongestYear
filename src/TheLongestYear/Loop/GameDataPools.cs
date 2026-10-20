@@ -114,8 +114,12 @@ namespace TheLongestYear.Loop
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
                             forage.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
                     foreach (SpawnFishData f in (loc.Fish ?? new List<SpawnFishData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
+                    {
+                        // How deep the water gets where this row bites decides whether its fish can carry a star.
+                        int? depth = FishCatchSpots.MaxClearWater(kv.Key, f, _monitor);
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
-                            fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key));
+                            fish.Add(new RawSpawnEntry(id, MapSeason(f.Season), f.Condition, kv.Key, MaxClearWater: depth));
+                    }
                 }
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Fish"))

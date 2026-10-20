@@ -30,7 +30,7 @@ namespace TheLongestYear.UI
         // whitespace between the bonus/liability lines and the icon row. Tighter sizing also
         // gets the panel onto smaller monitors without scrollbars.
         private const int CardWidth = 480;
-        private const int CardHeight = 344;   // taller so the bonus row clears both the text above and the frame below
+        private const int BaseCardHeight = 344;   // taller so the bonus row clears both the text above and the frame below (CardHeight adds room for the counts under the goal icons)
         private const int CardSpacing = 24;
         private const int CardInnerPad = 20;
         private const int PanelPadding = 32;
@@ -61,7 +61,7 @@ namespace TheLongestYear.UI
         private const int BonusIconSize = 48;
         private const int BonusIconGap = 10;
         // Bottom margin for the bonus row (icons + their header), so they sit off the card frame.
-        private const int BonusBottomMargin = 34;
+        private const int BaseBonusBottomMargin = 34;
 
         // ---------- Preview rows (foresight, Plan 06) ----------
         private const int PreviewRowHeight = 44;
@@ -175,7 +175,8 @@ namespace TheLongestYear.UI
 
             // A re-roll sticks for the week (Nijah, Nexus 2026-09-28): reopening the hub shows the
             // stored re-rolled pair, and the restored count keeps the pick on the re-roll path.
-            IReadOnlyList<Theme> rerolled = _run.RerolledOfferFor(OfferWeek, SelectionsForOffer);
+            IReadOnlyList<Theme> rerolled = _run.RerolledOfferFor(
+                OfferWeek, _runController.RerollExclusions(OfferWeek, _offerSeason, SelectionsForOffer));
             if (rerolled != null)
             {
                 _offer = rerolled.ToList();
@@ -319,8 +320,8 @@ namespace TheLongestYear.UI
         /// The face-down card gets none: no icons, so no item tooltips either.</summary>
         private void ResolvePerCardData()
         {
-            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus, _leftFavoured);
-            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus, _rightFavoured,
+            ResolveBonusItemsForTheme(_offer.Count > 0 && !IsSealed(LeftSlot) ? (Theme?)_offer[0] : null, _leftBonus, _leftFavoured, _leftFullAsks);
+            ResolveBonusItemsForTheme(_offer.Count > 1 && !IsSealed(RightSlot) ? (Theme?)_offer[1] : null, _rightBonus, _rightFavoured, _rightFullAsks,
                 // Double week: the right card shows its list without the lines the left card owns,
                 // taken from the left list as shown (stored once picked, else the preview).
                 ownedByOtherCard: _double ? ShownGoalsFor(_offer[0], null) : null);

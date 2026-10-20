@@ -113,12 +113,15 @@ public static class WeeklyGoalDiscount
         foreach (BonusSlot s in sample ?? Array.Empty<BonusSlot>())
         {
             int full = fullAsk.TryGetValue((s.BundleIndex, s.IngredientIndex), out int original) ? original : s.Stack;
+            int lowered = Stack(full, discount);
             shown.Add(new BonusSlot
             {
                 BundleIndex = s.BundleIndex,
                 IngredientIndex = s.IngredientIndex,
                 ItemId = s.ItemId,
-                Stack = Stack(full, discount),
+                Stack = lowered,
+                // The full ask rides along so the card can show "13 (was 27)" (LoweredAsk).
+                OriginalStack = lowered < full ? full : 0,
                 Quality = s.Quality,
                 BundleName = s.BundleName,
                 Deposited = s.Deposited,

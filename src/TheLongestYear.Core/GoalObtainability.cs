@@ -19,16 +19,23 @@ public static class GoalObtainability
     public static bool IsObtainable(
         IReadOnlySet<Season>? catalogSeasons, ItemAvailabilityModel? availability,
         string itemId, int weekOfYear)
+        => BlockerFor(catalogSeasons, availability, itemId, weekOfYear) == GoalBlock.None;
+
+    /// <summary>Which of the two signals keeps an item off this week's goals, for the log a short
+    /// offer writes. <see cref="GoalBlock.None"/> exactly when the week form of IsObtainable is true.</summary>
+    public static GoalBlock BlockerFor(
+        IReadOnlySet<Season>? catalogSeasons, ItemAvailabilityModel? availability,
+        string itemId, int weekOfYear)
     {
         Season season = AvailabilityWeeks.SeasonOf(weekOfYear);
         if (catalogSeasons != null && !catalogSeasons.Contains(season))
-            return false;
+            return GoalBlock.OutOfSeason;
         if (availability != null)
         {
-            if (!availability.IsPlaced(itemId)) return false;
-            if (availability.For(itemId).GoalWeek > weekOfYear) return false;
+            if (!availability.IsPlaced(itemId)) return GoalBlock.NotPlaced;
+            if (availability.For(itemId).GoalWeek > weekOfYear) return GoalBlock.NotYet;
         }
-        return true;
+        return GoalBlock.None;
     }
 
     /// <summary>Season form: obtainable by the season's last week (the day-28 hub's preview of
@@ -37,4 +44,17 @@ public static class GoalObtainability
         IReadOnlySet<Season>? catalogSeasons, ItemAvailabilityModel? availability,
         string itemId, Season season)
         => IsObtainable(catalogSeasons, availability, itemId, AvailabilityWeeks.LastWeekOf(season));
+}
+
+/// <summary>Why <see cref="GoalObtainability"/> keeps an item off a week's goals.</summary>
+public enum GoalBlock
+{
+    /// <summary>Obtainable this week.</summary>
+    None,
+    /// <summary>The catalog's season set leaves out this week's season.</summary>
+    OutOfSeason,
+    /// <summary>The availability model never placed the item (no route it can vouch for).</summary>
+    NotPlaced,
+    /// <summary>Placed, but its goal week is still ahead.</summary>
+    NotYet,
 }

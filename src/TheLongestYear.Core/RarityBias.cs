@@ -64,7 +64,7 @@ public static class RarityBias
                 kv => kv.Key, kv => Reweight(kv.Value, bias, PoolDomain.None, thresholds), StringComparer.Ordinal),
             WinterOnly = Reweight(pools.WinterOnly, bias, PoolDomain.None, thresholds),
 
-            // Obtainability and quality-eligibility data (DerivedSeasonPins, QualityEligibleIds,
+            // Obtainability and quality-eligibility data (DerivedSeasonPins, QualityEligibleIds, ShallowWaterFishIds,
             // FishRows, TrapFishIds, FruitTreeFruitIds, ExcludedIds) are correctness, not
             // difficulty: they are rules, not weights, and the `with` above carries them unchanged.
         };

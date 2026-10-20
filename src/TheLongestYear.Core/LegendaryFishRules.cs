@@ -10,7 +10,7 @@ namespace TheLongestYear.Core;
 ///
 /// <list type="bullet">
 /// <item>A legendary is asked for ONCE. The game lets it be caught once per loop
-/// (CatchLimit 1; <see cref="CaughtFishReset"/> clears that on the rewind), so a stack of two is
+/// (CatchLimit 1; <see cref="PerfectionRewind"/> clears the fish collection on the rewind), so a stack of two is
 /// not hard, it is impossible. The stack-size modifier rounds a plain x1 up to x2 on Hard, which is
 /// exactly how every report above was produced. Since 0.18.12 the stack clamp lives in
 /// <see cref="OncePerLoopAsks"/> with the other once-per-loop items, under one setting.</item>

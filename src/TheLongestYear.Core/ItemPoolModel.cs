@@ -67,6 +67,11 @@ public sealed record ItemPools
     /// Jelly, silver Tea Leaves), 2026-08-25.</summary>
     public IReadOnlySet<string>? QualityEligibleIds { get; init; }
 
+    /// <summary>Rod-caught fish that would carry a star but only bite in water too shallow for
+    /// one (<see cref="FishStarDepth"/>: the Forest waterfall pool's Goby). Left out of
+    /// <see cref="QualityEligibleIds"/>; the load-time repair lowers any starred ask for one.</summary>
+    public IReadOnlySet<string> ShallowWaterFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     /// <summary>Qualified ids of every Data/Fish "trap" row (crab-pot catches). The weekly-goal
     /// sampler allows at most one of these per theme list (Jeff, 2026-08-28).</summary>
     public IReadOnlySet<string> TrapFishIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
@@ -154,9 +159,14 @@ public sealed record RawCropEntry(
 /// GameLocation.spawnObjects: <c>r.ChooseFrom(possibleForage)</c> then <c>r.NextBool(forage.Chance)</c>).
 /// The pool/effort rules only ask "can this item appear at all", so they ignore it; the yield
 /// simulator needs it, because an entry at Chance 0.15 is worth a sixth of one at 1.0. Defaults to
-/// 1.0, which is both the game's default and the right no-op for every caller that does not set it.</summary>
+/// 1.0, which is both the game's default and the right no-op for every caller that does not set it.
+///
+/// <paramref name="MaxClearWater"/> is, for a fish row, the deepest clear-water distance a cast
+/// can reach where the row bites, read from the live map (<see cref="FishCastReach"/>); null when
+/// the map could not be read. It decides whether the fish may carry a star (<see cref="FishStarDepth"/>).</summary>
 public sealed record RawSpawnEntry(
-    string ItemId, Season? Season, string? Condition, string Location, double Chance = 1.0);
+    string ItemId, Season? Season, string? Condition, string Location, double Chance = 1.0,
+    int? MaxClearWater = null);
 
 /// <summary>The three Data/Locations knobs that decide how much forage a location produces in a
 /// day (decompile GameLocation.spawnObjects + LocationData): the game rolls

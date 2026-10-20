@@ -283,8 +283,17 @@ public static partial class BundleSlotFiller
 
         // Structural rule (2026-08-25): only items the game itself gives quality to may carry
         // a quality ask. Null = no eligibility data (hand-built pools), keep legacy behaviour.
-        if (pools.QualityEligibleIds != null && !pools.QualityEligibleIds.Contains(item.ItemId))
+        // A shallow-water fish (Goby) still takes its two rolls and is clamped to base after, so the
+        // random stream is the one 0.19.120 consumed for every seed and older boards re-derive.
+        bool shallowFish = pools.ShallowWaterFishIds.Contains(item.ItemId);
+        if (pools.QualityEligibleIds != null && !pools.QualityEligibleIds.Contains(item.ItemId) && !shallowFish)
             return 0;
+        int quality = RollDomainQuality(domain, tuning, rng);
+        return shallowFish ? 0 : quality;
+    }
+
+    private static int RollDomainQuality(PoolDomain domain, BundleGenerationTuning tuning, Random rng)
+    {
         switch (domain)
         {
             case PoolDomain.QualityCrops:

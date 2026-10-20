@@ -85,10 +85,12 @@ namespace TheLongestYear
             ApplyPerSaveFlags();
 
             var ctx = new LoadContext();
+            TheLongestYear.Loop.FishCatchSpots.ResetTiming();
             BuildResetServices(ctx);
             BuildDataModels(ctx);
             RepairBoard(ctx);
             BuildCatalogAndRequirements(ctx);
+            TheLongestYear.Loop.FishCatchSpots.LogTiming(this.Monitor);
             WireRunController(ctx);
             PlaceAndWireFarmServices();
             this.Monitor.Log(
@@ -280,6 +282,7 @@ namespace TheLongestYear
                 EventGatingTables.Default.ReplayableEventIds,
                 BuildReplayableExclude(),
                 _config.AutoDetectReplayableUnlockCutscenes,
+                _config.ResendBetterStartGift,
                 this.Monitor);
         }
 

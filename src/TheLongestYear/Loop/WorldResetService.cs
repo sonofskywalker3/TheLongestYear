@@ -64,12 +64,6 @@ namespace TheLongestYear.Loop
         /// it), which keeps the legacy pin-table path.</summary>
         public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
 
-        /// <summary>Qualified item ids with a catch limit (the five legendary fish), read once
-        /// from Data/Locations at SaveLoaded by ModEntry and forwarded to <see cref="FarmerReset.Apply"/>
-        /// on every reset so a legendary caught in an earlier loop can be caught again. Null/empty
-        /// on any host that never sets it, which leaves player.fishCaught untouched.</summary>
-        public IReadOnlyList<string> CatchLimitedFishIds { get; set; }
-
         /// <summary>Tech's Cross-Mod Bundles, for the Normal and Remixed reroll (spec 2026-10-08 addendum 2).
         /// Null skips it.</summary>
         public TheLongestYear.Core.ITechBundlesRerollTarget TechBundles { get; set; }
@@ -181,7 +175,12 @@ namespace TheLongestYear.Loop
             ReapplyWorldUnlocks();
 
             _timing.Mark("14 player placement, furniture, books, circles");
+            // Money earned rewinds with the year. Last, so the starting gold and any gold a restore
+            // step hands out are not counted as this year's earnings.
+            RestoreStep("money earned", _farmerReset.ResetMoneyEarned);
+            _timing.Mark("15 money earned");
             _timing.Total();
+
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",

@@ -113,6 +113,8 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.OpenBundleCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_bundlecount", TheLongestYear.DebugCommands.BundleCountDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, a));
+            yield return new DebugCommand(TheLongestYear.DebugCommands.MenuShotCommand.Name, TheLongestYear.DebugCommands.MenuShotCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,
@@ -121,7 +123,9 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.SpawnProbeCommand.Run(this.Monitor, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.MineSweepCommand.Name, TheLongestYear.DebugCommands.MineSweepCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.MineSweepCommand.Run(this.Monitor, this.Helper, a));
-            yield return new DebugCommand(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name, TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
+            yield return new DebugCommand(TheLongestYear.DebugCommands.PerfectionDebugCommand.Name, TheLongestYear.DebugCommands.PerfectionDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.PerfectionDebugCommand.Run(this.Monitor, a));
+            yield return new DebugCommand(TheLongestYear.DebugCommands.BankRecipesDebugCommand.Name,TheLongestYear.DebugCommands.BankRecipesDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.BankRecipesDebugCommand.Run(this.Monitor, _meta?.State, a));
             yield return new DebugCommand("tly_payvault", "Mark a Vault bundle as paid this run (debug; a real payment is picked up by VaultPaymentSync). Usage: tly_payvault <season|index>", this.CmdPayVault);
             yield return new DebugCommand("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
@@ -216,6 +220,7 @@ namespace TheLongestYear
                     BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
                     this.Helper.DirectoryPath, a));
             yield return new DebugCommand("tly_fixcheck", FixCheckUsage, this.CmdFixCheck);
+            yield return new DebugCommand("tly_fishspots", FishSpotsUsage, this.CmdFishSpots);
             yield return new DebugCommand(TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name,
                 "Debug: check every way of backing out of the Cookbook and Craftbook (click, Escape, menu key, pad B). " + TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,

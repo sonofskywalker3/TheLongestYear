@@ -106,7 +106,8 @@ public static partial class ItemPoolBuilder
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
         var (fishPool, crabPotPool, unpooledFish) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks);
         var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning, festivalSeasons);
-        var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded);
+        var shallowWaterFish = new HashSet<string>(StringComparer.Ordinal);
+        var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded, shallowWaterFish);
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);
         var metalsPool = BuildCategoryPool(objects, MetalCategory, excluded, tuning);
         var artisanPool = BuildCategoryPool(objects, ArtisanCategory, excluded, tuning);
@@ -141,6 +142,7 @@ public static partial class ItemPoolBuilder
             TapperGoods = tapperGoodsPool,
             DerivedSeasonPins = DerivePins(cropPool, fishPool, crabPotPool, foragePool),
             QualityEligibleIds = qualityEligible,
+            ShallowWaterFishIds = shallowWaterFish,
             TrapFishIds = new HashSet<string>(trapFishIds.Select(id => Qualify(Unqualify(id))), StringComparer.Ordinal),
             JellyIds = new HashSet<string>(
                 fishPool.Where(p => IsJelly(p.ItemId)

@@ -35,6 +35,129 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 - `tly_win` (now arms the ending), `tly_ending [speaker <Name>]`, `tly_eventstep`, `tly_year2wall`, `tly_answer <n>`, `tly_dumpsprite <Name>`.
 - `tly_sabotage scene crows|thief|hall|cloud` and `tly_sabotage scene [old] [new] [mass]` (play a darkness scene now), `tly_sabotage fixture [scarecrow] [rows=<n>] [here]`, `tly_sabotage aurachest`, `tly_sabotage breakscene <crows|thief|hall|cloud|off> [pick|setup]` (break a scene on purpose), `tly_witness list|peek|show|talk|click|arm|fresh` (`talk` runs a real conversation, `fresh` makes a villager unmet again); `tly_sabotage status` lists the scenes played and seen, the kinds struck and still owed this loop, and the pending witness lines.
+
+## 0.19.133 - 2026-10-20
+
+### Fixed
+
+- Like the Rusty Key fix in 0.19.130: a scene or gift from another mod that unlocks once something happens in the year now waits until it happens again after a rewind, instead of showing up early in the new year.
+
+## 0.19.132 - 2026-10-20
+
+### Fixed
+
+- On the theme cards in the planning hub, every goal's count now sits centred under its own item, with space between neighbouring goals. A lowered count such as "15 (20)" no longer runs into the number of the goal next to it, so "1" and "15 (20)" can't be read as one number.
+
+## 0.19.131 - 2026-10-20
+
+### Changed
+
+- Every goal now shows how many items it asks for, including a goal for a single item, which used to show no number. This covers the theme cards in the planning hub and the Season Goals page.
+
+## 0.19.130 - 2026-10-20
+
+### Fixed
+
+- The Rusty Key no longer comes back for free after a rewind. Gunther could walk onto your farm on the first morning of the new year and hand you the key again, even with the museum empty and no Keep Rusty Key bought. Now the key comes back only if you bought its keep, or once you donate 60 items to the museum again. A save that already got the key this way loses it at the next rewind.
+
+## 0.19.129 - 2026-10-20
+
+### Changed
+
+- Since the fish collection now starts over each year, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
+
+### Fixed
+
+- When a bundle asks for the same item twice at different qualities, the Season Goals tooltip now shows the right full amount for each one.
+
+## 0.19.128 - 2026-10-20
+
+### Changed
+
+- A goal the theme week lowers no longer says "was". On a theme card in the planning hub, the full amount now sits in brackets right after the item's count, in the same small numbers, so a goal reads "10 (13)". Cards with several lowered goals space their icons out so the numbers never run into each other.
+- The weekly quest, the Season Goals tooltip and the theme card tooltips show "x33 (44)", and the bundle page tooltip says "Asks 33 (44) until the week ends."
+
+## 0.19.127 - 2026-10-20
+
+### Changed
+
+- Everything that counts toward Perfection now starts over each year. The rewind clears your whole fish collection, not just the legendary fish, so every fish counts as new again and the legendaries can still be caught once a year.
+- The rewind also forgets which dishes you have cooked. Recipes in your cookbook come back known, but a dish counts toward Perfection and the cooking collection only once you cook it again that year.
+- The Monster Slayer goals were already starting over, but the "all goals done" mark stayed on into the next year. It now clears with the kill counts, so it shows the year you are in.
+
+## 0.19.126 - 2026-10-20
+
+### Changed
+
+- On Easy and Normal, a theme card in the planning hub now shows the full amount under each goal the pick would lower, such as "was 27" under a goal that drops to 20. Goals the pick does not lower show no "was". Hard and Extreme do not lower goals, so their cards show none.
+- During the theme week, a lowered goal names its full amount too. The bundle page tooltip says "Asks 20 (was 27) until the week ends.", and the weekly quest and the Season Goals tooltip show "x20 (was 27)". A goal you already donated shows no "was".
+
+## 0.19.125 - 2026-10-20
+
+### Fixed
+
+- The Wildcard Day night event is more varied on a new farm. When the event it picked could not happen (no ripe crop for the fairy, no coop for the witch, no clear spot for the meteorite), it always moved on to the next one in a fixed list, so the stone owl turned up far more often than the rest. It now picks another event at random from the ones it has not tried yet. The same save and week still always get the same night.
+
+## 0.19.124 - 2026-10-20
+
+### Fixed
+
+- Your total earnings now start from zero every year, like the rest of your progress. Before, the total on the inventory page kept growing across every loop. It counts toward Perfection, so it now rewinds with the year.
+- The letters from Mom or Dad and the Tribune's "up and coming" story now arrive again each year when this year's earnings reach their amount. Before, each one came only once per save.
+- Things in the game that wait for you to earn a certain amount now wait for this year's earnings. Marnie's visit with a pet on a farm without one waits until you have earned 1,000g this year, as on a new farm.
+- A save that is partway through a year is not changed when you load it. The total goes back to zero at the next rewind.
+
+## 0.19.123 - 2026-10-20
+
+### Fixed
+
+- The shipping collection now starts empty every year, like the rest of your progress. Before, the collection tab kept every item you had ever shipped, so a new Spring 1 could already show pumpkins as shipped. Shipping counts toward Perfection, so it now rewinds with the year.
+
+## 0.19.122 - 2026-10-20
+
+### Fixed
+
+- Saves from older versions of the mod keep the exact bundle board they had. The Goby fix in 0.19.121 could make the mod lose track of how some older boards were built, which showed a warning in the log on load. Only the Goby's star changes now, as intended.
+- Loading a save is a little faster. The check for how deep the water is at each fishing spot now does its work once per map instead of once per fish.
+
+## 0.19.121 - 2026-10-20
+
+### Fixed
+
+- Fish bundles no longer ask for a silver or gold Goby. Goby only bites in the pool under the Forest waterfall, and every spot you can cast to there is so close to the bank that the fish always come out base quality. A fish that only lives in water that shallow is now always asked for at base quality. This is worked out from each fish's spots on the map, so fish and maps added by other mods follow the same rule.
+- If your current board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save.
+
+## 0.19.120 - 2026-10-20
+
+### Fixed
+
+- The weekly theme pick now always deals a theme you haven't picked this month before bringing back one you already picked, even when the unpicked theme has only one goal left to ask for. Before, a theme you picked earlier could take the card, and the unpicked theme's last goal never came up.
+- Re-rolling the theme cards no longer hides the only theme you haven't picked this month behind two you already picked. It stays on every re-rolled pair, and themes with a full card of goals come back before ones with a single goal.
+- A re-rolled pair that brought back a theme you already picked now stays when you reopen the planning hub that week, as long as that theme still has a goal to ask for.
+- The message for a week with no theme now reads more plainly and still says how many items the Community Center needs by day 28.
+
+## 0.19.119 - 2026-10-20
+
+### Fixed
+
+- Ending a marriage at the rewind now works even when your spouse is out of the house at that moment. Before, a spouse who was out in town could stop the clear partway, so children stayed, the spouse room stayed and other villagers were not sent home.
+- Saves hit by the old bug are repaired when you load them: if the game still lists a spouse you are no longer married to, that villager goes back to their own home and the spouse room goes away. A marriage you made in the current loop is left alone.
+- The rewind no longer removes data that other mods keep on villagers. Only the marriage records from PolySweet are cleared now, and modded locations that just happen to be named like a cabin are no longer treated as a farmhouse.
+- A problem while ending a marriage can no longer stop the rest of the rewind.
+
+## 0.19.118 - 2026-10-19
+
+### Fixed
+
+- The weekly theme pick no longer runs dry partway through a season. When the themes you haven't picked yet this month have nothing left to ask for, the planning hub now deals themes you already picked that month again, as long as they still have goals for you. Before, you could get a week with one card and a "(no offer)" side, then a Monday with no theme pick at all, and then fail the season because no theme could ask for what the bundles still needed.
+- If no theme at all has anything to ask for, you now get a message saying so and how many items the season still needs by day 28, instead of the theme pick silently not showing up.
+
+## 0.19.117 - 2026-10-19
+
+### Fixed
+
+- A marriage or roommate no longer survives the rewind. Your spouse used to keep living in your farmhouse on the new loop even though your hearts with them had reset. Now the rewind ends the marriage like every other relationship: your former spouse or roommate goes back to their own home and routine, the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
+
 ## 0.19.116 - 2026-10-19
 
 ### Fixed

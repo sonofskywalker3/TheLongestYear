@@ -1,0 +1,35 @@
+0.19.133 - Perfection starts over each year, lowered goals show their full amount, and fixes
+
+Covers everything since 0.19.116.
+
+Changed
+- Everything that counts toward Perfection now starts over each year. Anything you bought a keep for in the upgrade menu still comes back.
+- The shipping collection starts empty every year. Before, a new Spring 1 could already show pumpkins as shipped.
+- Your total earnings start from zero every year. The letters from Mom or Dad and the Tribune's "up and coming" story now arrive again each year when this year's earnings reach their amount, and things that wait for you to earn a certain amount, such as Marnie's visit with a pet, wait for this year's earnings.
+- The rewind clears your whole fish collection, not just the legendary fish, so every fish counts as new again and the legendaries can still be caught once a year.
+- Since the fish collection starts over, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
+- The rewind forgets which dishes you have cooked. Recipes in your cookbook come back known, but a dish counts toward Perfection and the cooking collection only once you cook it again that year.
+- The Monster Slayer "all goals done" mark now clears with the kill counts, so it shows the year you are in.
+- A save that is partway through a year is not changed when you load it. These reset at the next rewind.
+- On Easy and Normal, a theme card in the planning hub shows the full amount of each goal the pick would lower in brackets after its count, such as "10 (13)", so you can see what a pick takes off before you choose.
+- During the theme week, the weekly quest, the Season Goals tooltip and the theme card tooltips show a lowered goal as "x33 (44)", and the bundle page tooltip says "Asks 33 (44) until the week ends." A goal you already donated shows only its count.
+- Every goal now shows how many items it asks for, including a goal for a single item, on the theme cards and the Season Goals page.
+- On the theme cards, every goal's count sits centred under its own item with space between neighbours, so a lowered count such as "15 (20)" no longer runs into the next goal's number.
+
+Fixed
+- A marriage or roommate no longer survives the rewind. Your former spouse or roommate goes back to their own home and routine, your children and the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
+- Ending a marriage at the rewind works even when your spouse is out of the house at that moment.
+- The Rusty Key no longer comes back for free after a rewind. Gunther could walk onto your farm on the first morning and hand you the key again, even with the museum empty and no Keep Rusty Key bought. Now it comes back only if you bought its keep, or once you donate 60 items to the museum again.
+- The same goes for scenes and gifts from other mods that unlock once something happens in the year: after a rewind they wait until it happens again instead of showing up early.
+- Saves hit by the old bug are repaired when you load them: a villager the game still lists as your spouse, though you are no longer married, goes back to their own home and the spouse room goes away. A marriage you made in the current loop is left alone.
+- The rewind no longer removes data other mods keep on villagers, and a modded location that is only named like a cabin is no longer treated as a farmhouse.
+- The weekly theme pick no longer runs dry partway through a season. You could get a week with one card and a "(no offer)" side, then a Monday with no theme pick at all. The planning hub now deals the themes you haven't picked this month first, then brings back this month's picks that still have goals for you.
+- Re-rolling the theme cards keeps the only theme you haven't picked this month on every pair, and a re-rolled pair stays when you reopen the planning hub that week.
+- If no theme has anything left to ask for, a message tells you so and how many items the Community Center still needs by day 28.
+- Fish bundles no longer ask for a silver or gold Goby. Goby only bites in water so shallow that it always comes out base quality. Any fish that only lives in water that shallow is now asked for at base quality, and fish from other mods follow the same rule.
+- If your board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save. The rest of your board stays exactly as it was.
+- Wildcard Day nights no longer favor the Stone Owl. When the night event picked could not happen, the next one came from a fixed list. Now another event is picked at random from the ones not tried yet. The same save and week still always get the same night.
+- When a bundle asks for the same item twice at different qualities, the Season Goals tooltip shows the right full amount for each one.
+- Loading a save is faster. The mod now works out how deep the water is at each fishing spot once per map instead of once per fish.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

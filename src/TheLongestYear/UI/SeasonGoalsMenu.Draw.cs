@@ -133,8 +133,9 @@ namespace TheLongestYear.UI
                     iconRowY);
                 if (probe != null)
                 {
+                    // Draw_OneInclusive so a one-item goal shows "1" like the rest.
                     probe.drawInMenu(b, pos, IngredientIconSize / 64f, 1f, 0.86f,
-                        StackDrawType.Draw, Color.White, drawShadow: true);
+                        StackDrawType.Draw_OneInclusive, Color.White, drawShadow: true);
                 }
                 else
                 {
