@@ -25,11 +25,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.130
+## What's New in 0.19.131
 
 **Everything that counts toward Perfection now starts over each year.** The rewind clears your shipping collection, your money earned, the fish you have caught, the dishes you have cooked and the Monster Slayer goals. Since money earned starts from zero, the letters from Mom or Dad and the Tribune's "up and coming" story come again each year. Anything you bought a keep for in the upgrade menu still comes back. Since the fish collection starts over, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
 
-**See what a theme pick takes off before you choose.** On Easy and Normal, the theme cards in the planning hub and the goal lists show a lowered goal with its full amount in brackets, such as "33 (44)". During the theme week, the weekly quest, the Season Goals tooltip and the bundle page show it the same way until you donate it.
+**See what a theme pick takes off before you choose.** On Easy and Normal, the theme cards in the planning hub and the goal lists show a lowered goal with its full amount in brackets, such as "33 (44)". During the theme week, the weekly quest, the Season Goals tooltip and the bundle page show it the same way until you donate it. A goal that asks for a single item now shows its "1" too, on the theme cards and in Season Goals.
 
 **Fixed: a marriage ends at the rewind.** Your spouse or roommate used to keep living in your farmhouse on the new loop, with your hearts back at zero. Now the rewind ends a marriage like every other relationship: your former spouse or roommate goes back to their own home and routine, your children and the spouse room go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet. If your save still has a spouse you are no longer married to, it is repaired when you load it.
 

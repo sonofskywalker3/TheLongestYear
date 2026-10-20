@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.131 - 2026-10-20
+
+### Changed
+
+- Every goal now shows how many items it asks for, including a goal for a single item, which used to show no number. This covers the theme cards in the planning hub and the Season Goals page.
+
 ## 0.19.130 - 2026-10-20
 
 ### Fixed

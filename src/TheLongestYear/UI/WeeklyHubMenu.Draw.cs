@@ -274,8 +274,8 @@ namespace TheLongestYear.UI
                 Vector2 pos = new Vector2(slot.X, slot.Y);
                 if (item != null)
                 {
-                    // StackDrawType.Draw renders the stack number badge over the icon — needed
-                    // so the player sees the actual donation quantity (e.g. Wood = 99, not "1").
+                    // The stack number badge over the icon shows the player the actual
+                    // donation quantity (e.g. Wood = 99), including a single item's "1".
                     // The Item is created with the sampled BonusSlot's Stack/Quality above.
                     if (FullAskAt(items, fullAsks, i) is int full)
                     {
@@ -288,7 +288,8 @@ namespace TheLongestYear.UI
                         DrawLoweredCount(b, slot, pitch, now, full, item.Quality > 0);
                     }
                     else
-                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
+                        // Draw_OneInclusive: vanilla hides a stack of 1, but a one-item goal still shows "1".
+                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw_OneInclusive, Color.White, false);
                     DrawFavouredBadge(b, favoured, i, slot);
                 }
                 else
