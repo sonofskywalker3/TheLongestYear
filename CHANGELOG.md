@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.122 - 2026-10-20
+
+### Fixed
+
+- Saves from older versions of the mod keep the exact bundle board they had. The Goby fix in 0.19.121 could make the mod lose track of how some older boards were built, which showed a warning in the log on load. Only the Goby's star changes now, as intended.
+- Loading a save is a little faster. The check for how deep the water is at each fishing spot now does its work once per map instead of once per fish.
+
 ## 0.19.121 - 2026-10-20
 
 ### Fixed

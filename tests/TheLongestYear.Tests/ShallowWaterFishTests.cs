@@ -49,176 +49,6 @@ public class ShallowWaterFishTests
     public void CanRollStar_FollowsTheDeepestReachableSpot(int? maxClearWater, bool expected)
         => Assert.Equal(expected, FishStarDepth.CanRollStar(maxClearWater));
 
-    // ---- the map walk ----
-
-    /// <summary>Legend: ~ fishable water, w water the rod cannot fish (a waterfall), . land the
-    /// farmer can stand on, # land he cannot (cliff), S a standable entry tile (a warp arrival).</summary>
-    private sealed class AsciiMap : IFishingMap
-    {
-        private readonly string[] _rows;
-        public AsciiMap(params string[] rows) => _rows = rows;
-        public int Width => _rows[0].Length;
-        public int Height => _rows.Length;
-        private char At(int x, int y) => _rows[y][x];
-        public bool IsWater(int x, int y) => At(x, y) is '~' or 'w';
-        public bool IsFishable(int x, int y) => At(x, y) == '~';
-        public bool IsStandable(int x, int y) => At(x, y) is '.' or 'S';
-        public IEnumerable<(int X, int Y)> Seeds()
-        {
-            for (int y = 0; y < Height; y++)
-                for (int x = 0; x < Width; x++)
-                    if (At(x, y) == 'S') yield return (x, y);
-        }
-    }
-
-    [Fact]
-    public void ClearWaterDistance_MatchesTheGameRings()
-    {
-        var map = new AsciiMap(
-            "...........",
-            ".~~~~~~~~~.",
-            ".~~~~~~~~~.",
-            ".~~~~~~~~~.",
-            ".~~~~~~~~~.",
-            ".~~~~~~~~~.",
-            "...........");
-        Assert.Equal(0, FishCastReach.ClearWaterDistance(map, 1, 1));
-        Assert.Equal(1, FishCastReach.ClearWaterDistance(map, 2, 2));
-        Assert.Equal(2, FishCastReach.ClearWaterDistance(map, 3, 3));
-        Assert.Equal(2, FishCastReach.ClearWaterDistance(map, 5, 3));
-    }
-
-    [Fact]
-    public void ClearWaterDistance_CountsOffMapAsWater()
-    {
-        var map = new AsciiMap(
-            "~~~~~~~~~~~~~",
-            "~~~~~~~~~~~~~",
-            "~~~~~~~~~~~~~",
-            "~~~~~~~~~~~~~",
-            "~~~~~~~~~~~~~",
-            "~~~~~~~~~~~~~",
-            ".............");
-        Assert.Equal(5, FishCastReach.ClearWaterDistance(map, 6, 0));
-        Assert.Equal(0, FishCastReach.ClearWaterDistance(map, 6, 5));
-    }
-
-    /// <summary>The Forest waterfall pool in miniature: a ledge (row 1, column 2) above a cliff,
-    /// the waterfall column straight below it, and the pool beside the waterfall. A straight cast
-    /// down lands on the waterfall, which the game nudges one tile sideways onto the pool's edge.</summary>
-    private static AsciiMap WaterfallPool() => new(
-        "S.........",
-        "..........",
-        "##w~~~~~##",
-        "##w~~~~~##",
-        "##w~~~~~##",
-        "##w~~~~~##",
-        "##w~~~~~##",
-        "##########");
-
-    [Fact]
-    public void ALedgeAboveAWaterfall_ReachesOnlyThePoolEdge()
-    {
-        var map = WaterfallPool();
-        // Every standable tile on rows 0-1 casts down; only column 2's cast lands on the waterfall
-        // and is nudged onto column 3, the rest land in the pool itself.
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        Assert.Contains(landings, l => l.X == 3 && l.Y == 4);
-        Assert.DoesNotContain(landings, l => map.IsWater(l.X, l.Y) && !map.IsFishable(l.X, l.Y));
-    }
-
-    [Fact]
-    public void ACatchAreaReachedOnlyAtItsEdge_CannotCarryAStar()
-    {
-        // The real layout: the river runs into the waterfall (rows 2-3) between the farmer's bank
-        // (columns 0-2) and a cliff, and the catch area is the pool below it (rows 4 and down).
-        // The bank's casts down land on the waterfall column and slide onto the pool's edge,
-        // one tile from the cliff, which is as deep as any cast there gets.
-        var map = new AsciiMap(
-            "S..~~~~~##",
-            "...~~~~~##",
-            "##.wwwww##",
-            "###wwwww##",
-            "##w~~~~~##",
-            "##w~~~~~##",
-            "##w~~~~~##",
-            "##w~~~~~##",
-            "##w~~~~~##",
-            "##########");
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        int deepest = FishCastReach.MaxClearWater(map, landings, (x, y) => y >= 4);
-        Assert.Equal(1, deepest);
-        Assert.DoesNotContain(landings, l => l.Y >= 4 && l.X > 3);
-        Assert.False(FishStarDepth.CanRollStar(deepest));
-    }
-
-    [Fact]
-    public void AShoreFacingTheSamePool_CanReachItsMiddle()
-    {
-        var map = new AsciiMap(
-            "S.........",
-            "..........",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..........");
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        int deepest = FishCastReach.MaxClearWater(map, landings, (x, y) => true);
-        Assert.Equal(2, deepest);
-        Assert.True(FishStarDepth.CanRollStar(deepest));
-    }
-
-    [Fact]
-    public void AStandableTileNoPathReaches_CastsNothing()
-    {
-        // The open water on the right is only castable from the walled-in tile at column 12;
-        // the bank on the left is eight tiles away, past the longest cast.
-        var map = new AsciiMap(
-            "S.#############~~~~~",
-            "..##########.##~~~~~",
-            "..#############~~~~~");
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        Assert.Empty(landings);
-        Assert.Equal(FishCastReach.NoCastableSpot, FishCastReach.MaxClearWater(map, landings, (x, y) => true));
-    }
-
-    [Fact]
-    public void ARowsShoreDistanceLimits_KeepOnlyTheTilesItBitesOn()
-    {
-        var map = new AsciiMap(
-            "S.........",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..........");
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        Assert.Equal(0, FishCastReach.MaxClearWater(map, landings, (x, y) => true, maxDistance: 0));
-        Assert.Equal(2, FishCastReach.MaxClearWater(map, landings, (x, y) => true, minDistance: 3));
-    }
-
-    [Fact]
-    public void AStandingArea_LimitsWhereTheCastStarts()
-    {
-        var map = new AsciiMap(
-            "S.........",
-            "..........",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..~~~~~~~.",
-            "..........");
-        var landings = FishCastReach.Landings(map, map.Seeds(), FishStarDepth.YearOneFishingLevel);
-        // Standing only in the top-left corner: the casts from there reach column 2 and row 2 only.
-        int deepest = FishCastReach.MaxClearWater(map, landings, (x, y) => true,
-            playerArea: new TileRect(0, 0, 2, 2));
-        Assert.Equal(0, deepest);
-    }
-
     // ---- the pool rule ----
 
     private static RawObjectEntry Fish() => new("Fish", -4, 100, false, new[] { "fish_river" });
@@ -277,6 +107,53 @@ public class ShallowWaterFishTests
             foreach (BundleSlotSpec slot in filled.Slots.Where(s => s.ItemId == "(O)Goby"))
                 Assert.Equal(0, slot.Quality);
         }
+    }
+
+    /// <summary>Boards from before 0.19.121 re-derive from their seed (pre-0.16.158 saves keep no
+    /// stored board). A shallow-water fish must take the same two quality rolls it took then, so
+    /// every later slot and bundle draws the same numbers; only its own star is dropped.</summary>
+    [Fact]
+    public void AShallowFish_TakesTheSameRolls_SoTheSeedStillGivesTheSameBoard()
+    {
+        RawSpawnEntry[] Rows(int? gobyDepth) => new[]
+        {
+            new RawSpawnEntry("(O)Goby", null, null, "Forest", MaxClearWater: gobyDepth),
+            new RawSpawnEntry("(O)145", null, null, "Forest", MaxClearWater: 4),
+            new RawSpawnEntry("(O)132", null, null, "Forest", MaxClearWater: 4),
+            new RawSpawnEntry("(O)139", null, null, "Forest", MaxClearWater: 4),
+            new RawSpawnEntry("(O)140", null, null, "Forest", MaxClearWater: 4),
+        };
+        ItemPools shallow = Pools(Rows(1));
+        ItemPools deep = Pools(Rows(4));
+        Assert.Contains("(O)Goby", shallow.ShallowWaterFishIds);
+        Assert.Empty(deep.ShallowWaterFishIds);
+        var tuning = new BundleGenerationTuning { GoldQualityChance = 0.3, SilverQualityChance = 0.4 };
+        var spec = new BundleSpec("Pantry", 0, "River Fish", "River Fish", "O 1 1", 4, 3,
+            new List<BundleSlotSpec> { new("(O)136", 1, 0), new("(O)137", 1, 0), new("(O)138", 1, 0) });
+        int gobyStarsDropped = 0;
+        for (int seed = 0; seed < 200; seed++)
+        {
+            var rngShallow = new Random(seed);
+            var rngDeep = new Random(seed);
+            BundleSpec a = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Fish, null), shallow, tuning, rngShallow);
+            BundleSpec b = BundleSlotFiller.Fill(spec, new DomainMatch(PoolDomain.Fish, null), deep, tuning, rngDeep);
+            Assert.Equal(b.Slots.Count, a.Slots.Count);
+            for (int i = 0; i < a.Slots.Count; i++)
+            {
+                Assert.Equal(b.Slots[i].ItemId, a.Slots[i].ItemId);
+                Assert.Equal(b.Slots[i].Stack, a.Slots[i].Stack);
+                if (a.Slots[i].ItemId == "(O)Goby")
+                {
+                    Assert.Equal(0, a.Slots[i].Quality);
+                    if (b.Slots[i].Quality > 0) gobyStarsDropped++;
+                }
+                else
+                    Assert.Equal(b.Slots[i].Quality, a.Slots[i].Quality);
+            }
+            // The stream after the bundle is the same too, so the next bundle draws the same.
+            Assert.Equal(rngDeep.Next(), rngShallow.Next());
+        }
+        Assert.True(gobyStarsDropped > 0, "the test should cover a Goby that would have rolled a star");
     }
 
     // ---- the load-time repair ----

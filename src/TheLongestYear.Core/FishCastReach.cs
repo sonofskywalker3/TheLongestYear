@@ -102,6 +102,13 @@ public static class FishCastReach
         }
     }
 
+    /// <summary>GameLocation.getFish's tile test for one Data/Locations row: inside its
+    /// BobberPosition (null = anywhere) and, for a row with a FishAreaId, on a tile whose fish area
+    /// (<paramref name="areaAt"/>, null where none) is that id. The area is only read for such rows.</summary>
+    public static Func<int, int, bool> RowBitesAt(TileRect? bobber, string? fishAreaId, Func<int, int, string?> areaAt)
+        => (x, y) => (bobber is not TileRect b || b.Contains(x, y))
+            && (fishAreaId == null || string.Equals(areaAt(x, y), fishAreaId, StringComparison.Ordinal));
+
     /// <summary>The largest clear-water distance among landings where the fish bites, or
     /// <see cref="NoCastableSpot"/>. <paramref name="minDistance"/> and <paramref name="maxDistance"/>
     /// are the spawn row's MinDistanceFromShore / MaxDistanceFromShore (-1 = no limit); a fish
@@ -110,13 +117,20 @@ public static class FishCastReach
     public static int MaxClearWater(
         IFishingMap map, IReadOnlyList<CastLanding> landings, Func<int, int, bool> bitesAt,
         int minDistance = 0, int maxDistance = -1, TileRect? playerArea = null)
+        => MaxClearWater(new ClearWaterMemo(map), landings, bitesAt, minDistance, maxDistance, playerArea);
+
+    /// <summary><see cref="MaxClearWater(IFishingMap, IReadOnlyList{CastLanding}, Func{int, int, bool}, int, int, TileRect?)"/>
+    /// over a shared per-map memo, so every fish row on a map reads each tile's distance once.</summary>
+    public static int MaxClearWater(
+        ClearWaterMemo depths, IReadOnlyList<CastLanding> landings, Func<int, int, bool> bitesAt,
+        int minDistance = 0, int maxDistance = -1, TileRect? playerArea = null)
     {
         int best = NoCastableSpot;
         foreach (CastLanding landing in landings)
         {
             if (playerArea is TileRect area && !area.Contains(landing.StandX, landing.StandY)) continue;
             if (!bitesAt(landing.X, landing.Y)) continue;
-            int distance = ClearWaterDistance(map, landing.X, landing.Y);
+            int distance = depths.At(landing.X, landing.Y);
             if (distance + 1 < minDistance) continue;
             if (maxDistance >= 0 && distance > maxDistance) continue;
             best = Math.Max(best, distance);
@@ -145,4 +159,36 @@ public static class FishCastReach
     }
 
     private static bool OnMap(IFishingMap map, int x, int y) => x >= 0 && y >= 0 && x < map.Width && y < map.Height;
+}
+
+/// <summary><see cref="FishCastReach.ClearWaterDistance"/> for one map, each tile worked out once.
+/// A map's casts land on the same tiles from many standing spots, and every fish row on the map
+/// asks about the same landings, so the ring walk (up to 120 tile reads) runs once per tile.</summary>
+public sealed class ClearWaterMemo
+{
+    private const sbyte Unknown = -1;
+    private readonly IFishingMap _map;
+    private readonly sbyte[,] _distance;
+
+    public ClearWaterMemo(IFishingMap map)
+    {
+        _map = map;
+        _distance = new sbyte[map.Width, map.Height];
+        for (int x = 0; x < map.Width; x++)
+            for (int y = 0; y < map.Height; y++)
+                _distance[x, y] = Unknown;
+    }
+
+    /// <summary>Ring walks actually run (a test hook: repeats must not add to it).</summary>
+    public int Computed { get; private set; }
+
+    public int At(int x, int y)
+    {
+        if (_distance[x, y] == Unknown)
+        {
+            _distance[x, y] = (sbyte)FishCastReach.ClearWaterDistance(_map, x, y);
+            Computed++;
+        }
+        return _distance[x, y];
+    }
 }

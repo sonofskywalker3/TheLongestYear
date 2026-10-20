@@ -82,10 +82,12 @@ namespace TheLongestYear
             ApplyPerSaveFlags();
 
             var ctx = new LoadContext();
+            TheLongestYear.Loop.FishCatchSpots.ResetTiming();
             BuildResetServices(ctx);
             BuildDataModels(ctx);
             RepairBoard(ctx);
             BuildCatalogAndRequirements(ctx);
+            TheLongestYear.Loop.FishCatchSpots.LogTiming(this.Monitor);
             WireRunController(ctx);
             PlaceAndWireFarmServices();
             this.Monitor.Log(

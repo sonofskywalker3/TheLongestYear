@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
@@ -27,10 +28,22 @@ namespace TheLongestYear.Loop
         {
             public Map Map;
             public LiveMap Tiles;
+            /// <summary>Null when no warp leads in: nothing on the map can be cast to.</summary>
             public IReadOnlyList<CastLanding> Landings;
+            public ClearWaterMemo Depths;
+            /// <summary>Each row's answer, by the row object: every GameDataPools build in a load
+            /// reads the same Data/Locations rows, and a re-loaded asset brings new row objects.</summary>
+            public readonly ConditionalWeakTable<SpawnFishData, StrongBox<int>> Rows = new();
         }
 
         private static readonly ConditionalWeakTable<GameLocation, Analysis> Cache = new();
+
+        /// <summary>Time spent in <see cref="MaxClearWater"/> since <see cref="ResetTiming"/>.</summary>
+        private static readonly Stopwatch Elapsed = new();
+        private static int _rowsAsked;
+
+        /// <summary>Above this, the load's fish depth time is worth an Info line.</summary>
+        private const long SlowLoadMs = 250;
 
         /// <summary>The deepest clear-water distance a year-one cast reaches where this row
         /// bites, <see cref="FishCastReach.NoCastableSpot"/> when no cast does, or null when
@@ -38,21 +51,28 @@ namespace TheLongestYear.Loop
         public static int? MaxClearWater(string locationKey, SpawnFishData row, IMonitor monitor)
         {
             if (row == null || Game1.locations == null || Game1.locations.Count == 0) return null;
+            _rowsAsked++;
+            Elapsed.Start();
             try
             {
                 GameLocation loc = Game1.getLocationFromName(locationKey);
                 if (loc?.Map == null || !string.Equals(loc.Name, locationKey, StringComparison.OrdinalIgnoreCase))
                     return null;
                 Analysis analysis = AnalysisFor(loc);
-                if (analysis == null) return null;
+                if (analysis.Landings == null) return null;
+                if (analysis.Rows.TryGetValue(row, out StrongBox<int> known)) return known.Value;
 
                 Rectangle? bobber = row.BobberPosition;
                 Rectangle? player = row.PlayerPosition;
-                return FishCastReach.MaxClearWater(
-                    analysis.Tiles, analysis.Landings,
-                    (x, y) => (bobber == null || bobber.Value.Contains(x, y)) && InArea(loc, row.FishAreaId, x, y),
+                int depth = FishCastReach.MaxClearWater(
+                    analysis.Depths, analysis.Landings,
+                    FishCastReach.RowBitesAt(
+                        bobber is Rectangle b ? new TileRect(b.X, b.Y, b.Width, b.Height) : null,
+                        row.FishAreaId, (x, y) => AreaAt(loc, x, y)),
                     row.MinDistanceFromShore, row.MaxDistanceFromShore,
                     player is Rectangle p ? new TileRect(p.X, p.Y, p.Width, p.Height) : null);
+                analysis.Rows.AddOrUpdate(row, new StrongBox<int>(depth));
+                return depth;
             }
             catch (Exception ex)
             {
@@ -60,28 +80,46 @@ namespace TheLongestYear.Loop
                 monitor?.Log($"Fish depth: could not read the {locationKey} map for '{row.Id}' ({ex.Message}); its fish keep their stars.", LogLevel.Trace);
                 return null;
             }
+            finally
+            {
+                Elapsed.Stop();
+            }
         }
 
-        /// <summary>GameLocation.getFish: a row with a FishAreaId bites only where the tile's area
-        /// (TryGetFishAreaForTile, which falls back to the location's area with no Position) matches.</summary>
-        private static bool InArea(GameLocation loc, string fishAreaId, int x, int y)
+        /// <summary>Starts a load's count from zero.</summary>
+        public static void ResetTiming()
         {
-            if (fishAreaId == null) return true;
-            return loc.TryGetFishAreaForTile(new Vector2(x, y), out string id, out _) && id == fishAreaId;
+            Elapsed.Reset();
+            _rowsAsked = 0;
         }
+
+        /// <summary>One line per load: how long the fish depth reads took across every pool build.</summary>
+        public static void LogTiming(IMonitor monitor)
+        {
+            long ms = Elapsed.ElapsedMilliseconds;
+            monitor?.Log($"Fish depth: {_rowsAsked} fish row(s) read in {ms} ms this load.",
+                ms > SlowLoadMs ? LogLevel.Info : LogLevel.Debug);
+            ResetTiming();
+        }
+
+        /// <summary>The tile's fish area (TryGetFishAreaForTile, which falls back to the location's
+        /// area with no Position), or null; a row with a FishAreaId bites only where it matches.</summary>
+        private static string AreaAt(GameLocation loc, int x, int y)
+            => loc.TryGetFishAreaForTile(new Vector2(x, y), out string id, out _) ? id : null;
 
         private static Analysis AnalysisFor(GameLocation loc)
         {
             if (Cache.TryGetValue(loc, out Analysis cached) && ReferenceEquals(cached.Map, loc.Map))
                 return cached;
+            // Cached even with no way in, so a map with no entry is not re-read by every build.
             var tiles = new LiveMap(loc);
             List<(int X, int Y)> entries = EntryTiles(loc);
-            if (entries.Count == 0) return null;
             var analysis = new Analysis
             {
                 Map = loc.Map,
                 Tiles = tiles,
-                Landings = FishCastReach.Landings(tiles, entries, FishStarDepth.YearOneFishingLevel),
+                Landings = entries.Count == 0 ? null : FishCastReach.Landings(tiles, entries, FishStarDepth.YearOneFishingLevel),
+                Depths = new ClearWaterMemo(tiles),
             };
             Cache.AddOrUpdate(loc, analysis);
             return analysis;
