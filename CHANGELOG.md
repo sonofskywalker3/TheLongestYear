@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.130 - 2026-10-20
+
+### Fixed
+
+- The Rusty Key no longer comes back for free after a rewind. Gunther could walk onto your farm on the first morning of the new year and hand you the key again, even with the museum empty and no Keep Rusty Key bought. Now the key comes back only if you bought its keep, or once you donate 60 items to the museum again. A save that already got the key this way loses it at the next rewind.
+
 ## 0.19.129 - 2026-10-20
 
 ### Changed

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.GameData.Museum;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -79,6 +80,16 @@ namespace TheLongestYear.Loop
             }
 
             _ids = EventGatingTables.CollectReplayableIds(events, baseReplayableIds, exclude);
+            // Museum reward markers (Data/MuseumRewards "MarkEventSeen"): the rewind empties the
+            // museum and the reward pays out again, so its marker must not be re-seeded either. The
+            // 60-donation marker 295672 gates Gunther's Rusty Key visit (Farm 66); re-seeded, the
+            // visit played on the next loop's first morning and handed the key back unbought.
+            int markers = 0;
+            foreach (string id in LoadMuseumRewardMarkers(content))
+            {
+                if (exclude != null && exclude.Contains(id)) continue;
+                if (_ids.Add(id)) markers++;
+            }
             int grants = _ids.Count;
             // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
             // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
@@ -86,9 +97,30 @@ namespace TheLongestYear.Loop
             roots.UnionWith(baseReplayableIds);
             EventGatingTables.PropagateChains(keys, _ids, roots, exclude);
             monitor.Log(
-                $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) and " +
+                $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
+                $"({markers} museum reward marker(s)) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
+        }
+
+        /// <summary>Event ids the museum rewards mark seen, read from the live Data/MuseumRewards.</summary>
+        private static IEnumerable<string> LoadMuseumRewardMarkers(IGameContentHelper content)
+        {
+            Dictionary<string, MuseumRewards> rewards;
+            try
+            {
+                rewards = content.Load<Dictionary<string, MuseumRewards>>("Data/MuseumRewards");
+            }
+            catch (Exception ex)
+            {
+                PatchLog.Trace($"Data/MuseumRewards: not loaded ({ex.GetType().Name}); no reward markers.");
+                return Array.Empty<string>();
+            }
+            if (rewards == null) return Array.Empty<string>();
+            var lists = new List<IEnumerable<string>>();
+            foreach (MuseumRewards reward in rewards.Values)
+                lists.Add(reward?.RewardActions);
+            return MuseumRewardMarkers.EventIds(lists);
         }
     }
 }
