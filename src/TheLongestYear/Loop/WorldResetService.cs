@@ -58,12 +58,6 @@ namespace TheLongestYear.Loop
         /// it), which keeps the legacy pin-table path.</summary>
         public TheLongestYear.Core.ItemAvailabilityModel AvailabilityModel { get; set; }
 
-        /// <summary>Qualified item ids with a catch limit (the five legendary fish), read once
-        /// from Data/Locations at SaveLoaded by ModEntry and forwarded to <see cref="FarmerReset.Apply"/>
-        /// on every reset so a legendary caught in an earlier loop can be caught again. Null/empty
-        /// on any host that never sets it, which leaves player.fishCaught untouched.</summary>
-        public IReadOnlyList<string> CatchLimitedFishIds { get; set; }
-
         /// <summary>Tech's Cross-Mod Bundles, for the Normal and Remixed reroll (spec 2026-10-08 addendum 2).
         /// Null skips it.</summary>
         public TheLongestYear.Core.ITechBundlesRerollTarget TechBundles { get; set; }

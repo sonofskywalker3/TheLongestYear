@@ -41,8 +41,7 @@ namespace TheLongestYear.Loop
             _farmerReset.Apply(Game1.player, ctx.Baseline,
                 _meta.CookbookRecipes,
                 _meta.CraftbookRecipes,
-                _meta.SeenEventsEver,
-                CatchLimitedFishIds);
+                _meta.SeenEventsEver);
             foreach (string flag in keptBookMail)
                 Game1.player.mailReceived.Add(flag);
 

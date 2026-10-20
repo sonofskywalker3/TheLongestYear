@@ -14,7 +14,7 @@ namespace TheLongestYear.Core;
 /// geodes, recipes, unlimited shop rows):
 /// <list type="bullet">
 /// <item>The five legendary fish: catch limit of one per loop (<see cref="LegendaryFishRules"/>;
-/// <see cref="CaughtFishReset"/> clears the record on the rewind).</item>
+/// <see cref="PerfectionRewind"/> clears the record on the rewind).</item>
 /// <item>The Alleyway Buffet and Mapping Cave Systems: one gift box each, and the bookseller only
 /// restocks them from year 3. FayGabi's Hard Book bundle asked for two (Nexus, 2026-09-14).</item>
 /// <item>The Golden Pumpkin: one chest in the Spirit's Eve maze per year. Luck can add more

@@ -60,11 +60,6 @@ namespace TheLongestYear
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 ctx.ItemSeasonPins, ctx.BundleQuotas, this.Helper.GameContent);
-            // The rewind must let a legendary be caught again: the game blocks a repeat catch
-            // through SpawnFishData.CatchLimit against player.fishCaught, and FarmerReset never
-            // touched that record. Read the catch-limited ids once here (same shape as
-            // GameDataPools's own Data/Locations read) and forward them through the reset service.
-            _reset.CatchLimitedFishIds = ReadCatchLimitedFishIds();
             // Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
             _reset.TechBundles = new TheLongestYear.Loop.TechCrossModBundlesTarget(this.Helper.ModRegistry);
         }

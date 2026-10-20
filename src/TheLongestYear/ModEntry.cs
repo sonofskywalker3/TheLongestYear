@@ -495,41 +495,6 @@ namespace TheLongestYear
                 this.Monitor.Log($"Debug bridge: unknown command '{command}'.", LogLevel.Warn);
         }
 
-        /// <summary>Reads every Data/Locations Fish row with a positive CatchLimit (the five
-        /// legendaries in vanilla, but SVE-proof by construction like GameDataPools) and returns
-        /// their qualified item ids, so FarmerReset can clear them from player.fishCaught on every
-        /// reset. Degrades to an empty list on any read failure, same pattern as GameDataPools.</summary>
-        private IReadOnlyList<string> ReadCatchLimitedFishIds()
-        {
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            try
-            {
-                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations"))
-                {
-                    StardewValley.GameData.Locations.LocationData loc = kv.Value;
-                    foreach (StardewValley.GameData.Locations.SpawnFishData f in
-                             loc?.Fish ?? (IList<StardewValley.GameData.Locations.SpawnFishData>)Array.Empty<StardewValley.GameData.Locations.SpawnFishData>())
-                    {
-                        if (f == null || f.CatchLimit <= 0) continue;
-                        if (!string.IsNullOrEmpty(f.ItemId))
-                            ids.Add(ItemRegistry.QualifyItemId(f.ItemId));
-                        foreach (string randomId in f.RandomItemId ?? (IList<string>)Array.Empty<string>())
-                            if (!string.IsNullOrEmpty(randomId))
-                                ids.Add(ItemRegistry.QualifyItemId(randomId));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                this.Monitor.Log(
-                    $"ReadCatchLimitedFishIds: data read failed ({ex.GetType().Name}: {ex.Message}), " +
-                    "legendary fish will not be re-catchable across resets this session.",
-                    LogLevel.Warn);
-                return Array.Empty<string>();
-            }
-            return ids.ToList();
-        }
-
         /// <summary>Builds the derived item availability model from the live engine pools for one
         /// difficulty step, in the mode that step maps to (<see cref="TheLongestYear.Core.WeekModes"/>).
         /// Used both at SaveLoaded (the first build) and by <c>WorldResetService.RebuildAvailabilityModel</c>

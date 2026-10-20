@@ -38,8 +38,7 @@ namespace TheLongestYear.Loop
         public void Apply(Farmer p, RunBaseline baseline,
             IReadOnlyList<string> cookbookRecipes,
             IReadOnlyList<string> craftbookRecipes,
-            IReadOnlyList<string> seenEventsEver,
-            IReadOnlyList<string> catchLimitedFishIds = null)
+            IReadOnlyList<string> seenEventsEver)
         {
             p.Money = baseline.StartingGold;
 
@@ -107,6 +106,11 @@ namespace TheLongestYear.Loop
             //    (StatResetRules, user ruling 2026-07-10): unknown future keys wipe; only
             //    engine-critical keys, RNG-sequence counters, and lifetime tallies survive.
             p.stats.specificMonstersKilled.Clear();
+            // The Perfection "Monster Slayer" flag: vanilla only recomputes it on a save load or a
+            // kill that finishes a goal, so it stayed on all the next year. With the counts empty
+            // and the Gil_* mail wiped, every goal and its reward is open again.
+            p.hasCompletedAllMonsterSlayerQuests.Value =
+                PerfectionRewind.SlayerDoneAfterRewind(killCountsCleared: true, p.hasCompletedAllMonsterSlayerQuests.Value);
             p.chestConsumedMineLevels.Clear();
             // Shipping collection (Jeff, 2026-10-20: it counts toward Perfection, so it rewinds with
             // the year). basicShipped is the only record behind the collections tab, the Perfection
@@ -332,21 +336,19 @@ namespace TheLongestYear.Loop
                 if (!p.craftingRecipes.ContainsKey(r))
                     p.craftingRecipes[r] = 0;
 
-            // Legendary fish must be catchable again each loop. The game blocks a repeat catch
-            // through SpawnFishData.CatchLimit checked against p.fishCaught (GameLocation.cs:13831),
-            // and nothing else in this reset ever touches that record; without this, a legendary
-            // caught in loop 1 stays permanently uncatchable in every later loop.
-            int fishCleared = 0;
-            if (catchLimitedFishIds != null && catchLimitedFishIds.Count > 0)
-            {
-                foreach (string id in CaughtFishReset.IdsToClear(catchLimitedFishIds, p.fishCaught.Keys.ToList()))
-                {
-                    p.fishCaught.Remove(id);
-                    fishCleared++;
-                }
-            }
-            if (fishCleared > 0)
-                _monitor.Log($"Reset: cleared {fishCleared} catch-limited fish so they can be caught again.", LogLevel.Info);
+            // Fish caught and dishes cooked (Jeff, 2026-10-20: everything that counts toward
+            // Perfection resets every loop; PerfectionRewind). fishCaught feeds the fish collection
+            // tab, the Perfection fish share and the legendaries' CatchLimit check (GameLocation.cs:13831),
+            // so clearing all of it also makes every legendary catchable again. recipesCooked is what
+            // getCookedRecipesPercent and the cooking tab read as "cooked": a banked recipe comes back
+            // known (above) but counts only once it is cooked again this year.
+            IReadOnlyList<string> fishToClear = PerfectionRewind.FishIdsToClear(p.fishCaught.Keys.ToList());
+            foreach (string id in fishToClear)
+                p.fishCaught.Remove(id);
+            IReadOnlyList<string> cookedToClear = PerfectionRewind.CookedIdsToClear(p.recipesCooked.Keys.ToList());
+            foreach (string id in cookedToClear)
+                p.recipesCooked.Remove(id);
+            _monitor.Log($"Reset: cleared the fish collection ({fishToClear.Count}) and the cooked dishes ({cookedToClear.Count}).", LogLevel.Info);
 
             _monitor.Log(
                 $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +

@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.127 - 2026-10-20
+
+### Changed
+
+- Everything that counts toward Perfection now starts over each year. The rewind clears your whole fish collection, not just the legendary fish, so every fish counts as new again and the legendaries can still be caught once a year.
+- The rewind also forgets which dishes you have cooked. Recipes in your cookbook come back known, but a dish counts toward Perfection and the cooking collection only once you cook it again that year.
+- The Monster Slayer goals were already starting over, but the "all goals done" mark stayed on into the next year. It now clears with the kill counts, so it shows the year you are in.
+
 ## 0.19.126 - 2026-10-20
 
 ### Changed
