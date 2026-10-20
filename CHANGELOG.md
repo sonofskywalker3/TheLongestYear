@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.123 - 2026-10-20
+
+### Fixed
+
+- The shipping collection now starts empty every year, like the rest of your progress. Before, the collection tab kept every item you had ever shipped, so a new Spring 1 could already show pumpkins as shipped. Shipping counts toward Perfection, so it now rewinds with the year.
+
 ## 0.19.122 - 2026-10-20
 
 ### Fixed
