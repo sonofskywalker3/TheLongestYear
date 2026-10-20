@@ -108,6 +108,11 @@ namespace TheLongestYear.Loop
             //    engine-critical keys, RNG-sequence counters, and lifetime tallies survive.
             p.stats.specificMonstersKilled.Clear();
             p.chestConsumedMineLevels.Clear();
+            // Shipping collection (Jeff, 2026-10-20: it counts toward Perfection, so it rewinds with
+            // the year). basicShipped is the only record behind the collections tab, the Perfection
+            // "shipped" share (Utility.getFarmerItemsShippedPercent), the shipping achievements and
+            // the shipped-item event/query checks. No keep preserves any of it.
+            p.basicShipped.Clear();
             foreach (string key in StatResetRules.SelectRunScoped(p.stats.Values.Keys))
                 p.stats.Values.Remove(key);
             // A kept trinket needs its slot visible, or it is worn and cannot be taken off.
