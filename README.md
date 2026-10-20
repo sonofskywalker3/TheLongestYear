@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.122`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.129`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.122
+## What's New in 0.19.129
+
+**Everything that counts toward Perfection now starts over each year.** The rewind clears your shipping collection, your money earned, the fish you have caught, the dishes you have cooked and the Monster Slayer goals. Since money earned starts from zero, the letters from Mom or Dad and the Tribune's "up and coming" story come again each year. Anything you bought a keep for in the upgrade menu still comes back. Since the fish collection starts over, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
+
+**See what a theme pick takes off before you choose.** On Easy and Normal, the theme cards in the planning hub and the goal lists show a lowered goal with its full amount in brackets, such as "33 (44)". During the theme week, the weekly quest, the Season Goals tooltip and the bundle page show it the same way until you donate it.
 
 **Fixed: a marriage ends at the rewind.** Your spouse or roommate used to keep living in your farmhouse on the new loop, with your hearts back at zero. Now the rewind ends a marriage like every other relationship: your former spouse or roommate goes back to their own home and routine, your children and the spouse room go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet. If your save still has a spouse you are no longer married to, it is repaired when you load it.
 
@@ -34,6 +38,8 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 **Fixed: fish bundles no longer ask for a silver or gold Goby.** Goby only bites in water so shallow that it always comes out base quality. Any fish that only lives in water that shallow is now asked for at base quality, and fish from other mods follow the same rule. If your board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save.
 
 **Loading a save is faster.** The mod now works out how deep the water is at each fishing spot once per map instead of once per fish.
+
+**Fixed: Wildcard Day nights no longer favor the Stone Owl.** When the night event picked for a Wildcard Day could not happen, the next one came from a fixed list, so the Stone Owl turned up far more often than the others. Now another event is picked at random from the ones not tried yet.
 
 ## 0.19.116
 
