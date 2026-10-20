@@ -22,7 +22,7 @@ namespace TheLongestYear.Loop
     /// no clear spot for the meteorite). Game1 calls setUp right after the pick and drops the event
     /// when it returns true, so the try order (<see cref="WildcardNightEvents.TryOrder"/>) is walked
     /// in a setUp postfix: when the forced event cancels, the next one is set up in its place and
-    /// written to <c>Game1.farmEvent</c>. Every cancel path in those setUps returns before it touches
+    /// written to <c>Game1.farmEvent</c> (each fallback is a random untried event, not the list neighbour). Every cancel path in those setUps returns before it touches
     /// the screen, so a cancelled try leaves nothing behind. When all five cancel, the night is empty.
     /// </summary>
     [HarmonyPatch(typeof(Utility), nameof(Utility.pickFarmEvent))]

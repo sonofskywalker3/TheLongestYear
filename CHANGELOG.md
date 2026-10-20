@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.125 - 2026-10-20
+
+### Fixed
+
+- The Wildcard Day night event is more varied on a new farm. When the event it picked could not happen (no ripe crop for the fairy, no coop for the witch, no clear spot for the meteorite), it always moved on to the next one in a fixed list, so the stone owl turned up far more often than the rest. It now picks another event at random from the ones it has not tried yet. The same save and week still always get the same night.
+
 ## 0.19.124 - 2026-10-20
 
 ### Fixed
