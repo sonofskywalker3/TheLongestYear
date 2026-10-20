@@ -127,8 +127,9 @@ namespace TheLongestYear.Loop
         /// Data/TriggerActions row in <c>Farmer.triggerActionsRun</c> (TriggerActionManager.cs:499)
         /// and never fires it again; hearts and mail are wiped above, so without this the twelve
         /// heart-gated invite mails (Abigail 8, Penny 10, Elliott's letters, ...) fired once per
-        /// save and the 8 and 10 heart events could not be reached in loop 2+. Rules and the two
-        /// exceptions (lifetime money mails, the Better Start toggle) in
+        /// save and the 8 and 10 heart events could not be reached in loop 2+. The money-earned
+        /// mails (Mom/Dad/Tribune) clear too, since the rewind also zeroes money earned
+        /// (<see cref="ResetMoneyEarned"/>); the one exception, the Better Start toggle, is in
         /// <see cref="TriggerActionResetRules"/>.
         /// </summary>
         private void ClearTriggerActionRecord(Farmer p)
@@ -136,26 +137,8 @@ namespace TheLongestYear.Loop
             if (p.triggerActionsRun.Count == 0)
                 return;
 
-            var conditionById = new Dictionary<string, string>();
-            try
-            {
-                foreach (StardewValley.GameData.TriggerActionData row in DataLoader.TriggerActions(Game1.content))
-                {
-                    if (!string.IsNullOrEmpty(row.Id))
-                        conditionById[row.Id] = row.Condition;
-                }
-            }
-            catch (System.Exception ex)
-            {
-                // Without the rows we cannot tell a lifetime-money mail from a heart invite, and
-                // clearing blind would re-send every Mom/Dad/Tribune letter on day 1. Keep the
-                // record as it is this loop rather than guess.
-                _monitor.Log($"FarmerReset: could not read Data/TriggerActions ({ex.Message}); leaving the trigger-action record untouched this loop.", LogLevel.Warn);
-                return;
-            }
-
             List<string> clear = TriggerActionResetRules.IdsToClear(
-                p.triggerActionsRun.ToList(), conditionById, ResendBetterStartGift());
+                p.triggerActionsRun.ToList(), ResendBetterStartGift());
             foreach (string id in clear)
                 p.triggerActionsRun.Remove(id);
 
@@ -164,6 +147,26 @@ namespace TheLongestYear.Loop
                 $"([{string.Join(", ", clear)}]); kept {p.triggerActionsRun.Count} " +
                 $"([{string.Join(", ", p.triggerActionsRun)}]).",
                 LogLevel.Info);
+        }
+
+        /// <summary>
+        /// Zero the farm's money earned (Jeff, 2026-10-20: it counts toward Perfection, so it rewinds
+        /// with the year). It lives on <c>FarmerTeam.totalMoneyEarned</c>, which loadForNewGame never
+        /// rebuilds, and only the host may write it. Run this AFTER <see cref="Apply"/>: the Money
+        /// setter adds any rise in gold to money earned (Farmer.cs:1989), so setting the starting gold
+        /// would otherwise count as earnings. Written to the net field directly; the Farmer property's
+        /// setter only adds milestone chat messages, and none apply going down to zero.
+        /// It drives the Mom/Dad/Tribune money mails (cleared in <see cref="ClearTriggerActionRecord"/>),
+        /// the "m" event precondition (Marnie's pet visit at 1000g, Demetrius' cave at 25000g), the
+        /// money achievements, the Parrot Egg trinket's level and the statue-blessing butterfly's gold.
+        /// </summary>
+        public void ResetMoneyEarned()
+        {
+            if (!Game1.IsMasterGame || Game1.player?.team == null)
+                return;
+            uint before = Game1.player.totalMoneyEarned;
+            Game1.player.team.totalMoneyEarned.Value = 0;
+            _monitor.Log($"FarmerReset: money earned reset to 0 (was {before}g).", LogLevel.Info);
         }
 
         /// <summary>Copy instance state (rod attachments, enchantments, water) from the outgoing tool

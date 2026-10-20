@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.124 - 2026-10-20
+
+### Fixed
+
+- Your total earnings now start from zero every year, like the rest of your progress. Before, the total on the inventory page kept growing across every loop. It counts toward Perfection, so it now rewinds with the year.
+- The letters from Mom or Dad and the Tribune's "up and coming" story now arrive again each year when this year's earnings reach their amount. Before, each one came only once per save.
+- Things in the game that wait for you to earn a certain amount now wait for this year's earnings. Marnie's visit with a pet on a farm without one waits until you have earned 1,000g this year, as on a new farm.
+- A save that is partway through a year is not changed when you load it. The total goes back to zero at the next rewind.
+
 ## 0.19.123 - 2026-10-20
 
 ### Fixed

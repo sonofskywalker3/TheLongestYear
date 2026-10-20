@@ -164,6 +164,10 @@ namespace TheLongestYear.Loop
             RestoreFarmAndHouse(ctx);
             ReapplyWorldUnlocks();
 
+            // Money earned rewinds with the year. Last, so the starting gold and any gold a restore
+            // step hands out are not counted as this year's earnings.
+            RestoreStep("money earned", _farmerReset.ResetMoneyEarned);
+
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +
                 $"Reset #{_meta.CompletedResets}.",
