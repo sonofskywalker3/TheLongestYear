@@ -4,7 +4,7 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>Which goal lines show "13 (was 27)": the ones the theme week discount lowered, before
+/// <summary>Which goal lines show "13 (27)": the ones the theme week discount lowered, before
 /// the pick on the hub card and during the week everywhere the ask is shown.</summary>
 public class LoweredAskTests
 {
@@ -23,9 +23,9 @@ public class LoweredAskTests
     }
 
     /// <summary>Hard and Extreme give no discount, and a line at or under the floor is never lowered:
-    /// neither shows a "was".</summary>
+    /// neither shows a full ask.</summary>
     [Fact]
-    public void No_discount_or_a_small_line_shows_no_was()
+    public void No_discount_or_a_small_line_shows_no_full_ask()
     {
         var sample = new List<BonusSlot> { Slot(0, 0, 27), Slot(0, 1, 10), Slot(0, 2, 11) };
 
@@ -37,7 +37,7 @@ public class LoweredAskTests
     }
 
     /// <summary>Reopening the hub mid-week: the line is already lowered on the board, and the card
-    /// still shows the real full ask, not the lowered one as "was".</summary>
+    /// still shows the real full ask, not the lowered one as the full one.</summary>
     [Fact]
     public void Preview_mid_week_shows_the_real_full_ask()
     {
@@ -50,7 +50,7 @@ public class LoweredAskTests
     }
 
     [Fact]
-    public void A_donated_line_shows_no_was()
+    public void A_donated_line_shows_no_full_ask()
     {
         BonusSlot slot = Slot(0, 0, 13, original: 27);
         slot.Deposited = true;
@@ -60,7 +60,7 @@ public class LoweredAskTests
     }
 
     [Fact]
-    public void Apply_then_revert_turns_the_was_on_and_off()
+    public void Apply_then_revert_turns_the_full_ask_on_and_off()
     {
         var board = new Dictionary<string, string> { ["Pantry/0"] = "Spring Crops/O 465 20/192 27 0 24 8 0/0/2//Spring Crops" };
         var slots = new List<BonusSlot> { Slot(0, 0, 27), Slot(0, 1, 8, id: "(O)24") };
@@ -73,10 +73,10 @@ public class LoweredAskTests
         Assert.Null(LoweredAsk.AtLine(slots, 0, 0, 27));
     }
 
-    /// <summary>A line another mod rewrote no longer holds the lowered ask: no "was" against a
+    /// <summary>A line another mod rewrote no longer holds the lowered ask: no full ask against a
     /// number the board is not asking for.</summary>
     [Fact]
-    public void A_line_rewritten_underneath_shows_no_was()
+    public void A_line_rewritten_underneath_shows_no_full_ask()
     {
         var slots = new List<BonusSlot> { Slot(3, 2, 13, original: 27) };
 

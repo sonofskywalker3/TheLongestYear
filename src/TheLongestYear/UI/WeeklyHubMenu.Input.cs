@@ -63,7 +63,7 @@ namespace TheLongestYear.UI
                     string qty = hoverStack > 1
                         ? Strings.Get("menu.hub.qty-suffix", new Dictionary<string, string> { ["count"] = hoverStack.ToString() })
                         : "";
-                    qty += WasTag(fullAsks, i);
+                    qty += FullTag(fullAsks, i);
                     _hoverText = Strings.Get("menu.hub.bonus-hover", new Dictionary<string, string>
                     {
                         ["name"] = items[i].DisplayName,

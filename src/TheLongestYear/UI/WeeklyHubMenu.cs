@@ -30,7 +30,7 @@ namespace TheLongestYear.UI
         // whitespace between the bonus/liability lines and the icon row. Tighter sizing also
         // gets the panel onto smaller monitors without scrollbars.
         private const int CardWidth = 480;
-        private const int BaseCardHeight = 344;   // taller so the bonus row clears both the text above and the frame below (CardHeight adds the "was" row)
+        private const int BaseCardHeight = 344;   // taller so the bonus row clears both the text above and the frame below (CardHeight adds room for a lowered count)
         private const int CardSpacing = 24;
         private const int CardInnerPad = 20;
         private const int PanelPadding = 32;

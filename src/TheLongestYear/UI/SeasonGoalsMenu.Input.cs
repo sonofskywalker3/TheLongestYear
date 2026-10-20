@@ -56,9 +56,9 @@ namespace TheLongestYear.UI
                         string qty = stack > 1
                             ? Strings.Get("menu.goals.qty-suffix", new Dictionary<string, string> { ["count"] = stack.ToString() })
                             : "";
-                        // A line this theme week lowered names its full ask too: " x13 (was 27)".
+                        // A line this theme week lowered names its full ask too: " x13 (27)".
                         if (LoweredAsk.ForItem(LoweredAsk.WeekSlots(_run), e.Bundle.BundleIndex, itemId, stack) is int full)
-                            qty += Strings.Get("goal.was-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
+                            qty += Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
                         string qStr = QualityTags.For(quality);
                         _hoverText = (probe?.DisplayName ?? itemId) + qty + qStr;
                         return;

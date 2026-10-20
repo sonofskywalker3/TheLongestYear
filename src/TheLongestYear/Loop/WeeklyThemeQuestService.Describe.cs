@@ -29,9 +29,9 @@ namespace TheLongestYear.Loop
             string qty = slot.Stack > 1
                 ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = slot.Stack.ToString() })
                 : "";
-            // A line the theme week discount lowered names its full ask too: " x13 (was 27)".
+            // A line the theme week discount lowered names its full ask too: " x13 (27)".
             if (LoweredAsk.FullAsk(slot) is int full)
-                qty += Strings.Get("goal.was-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
+                qty += Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
             string quality = QualityTags.For(slot.Quality);
             string described = Strings.Get("quest.weekly.slot", new Dictionary<string, string>
             {

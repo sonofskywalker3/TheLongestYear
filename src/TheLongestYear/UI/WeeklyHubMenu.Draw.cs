@@ -236,8 +236,7 @@ namespace TheLongestYear.UI
             }
             else
             {
-                DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot));
-                DrawLoweredLabels(b, bonusBounds, FullAsksFor(slot));
+                DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot), FullAsksFor(slot));
             }
         }
 
@@ -265,8 +264,9 @@ namespace TheLongestYear.UI
                 Game1.textColor);
         }
 
-        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds, List<bool> favoured)
+        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds, List<bool> favoured, List<int?> fullAsks)
         {
+            int pitch = bounds.Count > 1 ? bounds[1].X - bounds[0].X : CardWidth - CardInnerPad * 2;
             for (int i = 0; i < items.Count && i < bounds.Count; i++)
             {
                 Item item = items[i];
@@ -277,7 +277,18 @@ namespace TheLongestYear.UI
                     // StackDrawType.Draw renders the stack number badge over the icon — needed
                     // so the player sees the actual donation quantity (e.g. Wood = 99, not "1").
                     // The Item is created with the sampled BonusSlot's Stack/Quality above.
-                    item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
+                    if (FullAskAt(items, fullAsks, i) is int full)
+                    {
+                        // A lowered goal: draw the icon with its quality star but no count, then
+                        // "13 (27)" in the count's digits (stack 1 skips only the number).
+                        int now = item.Stack;
+                        item.Stack = 1;
+                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
+                        item.Stack = now;
+                        DrawLoweredCount(b, slot, pitch, now, full, item.Quality > 0);
+                    }
+                    else
+                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
                     DrawFavouredBadge(b, favoured, i, slot);
                 }
                 else

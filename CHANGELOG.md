@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.128 - 2026-10-20
+
+### Changed
+
+- A goal the theme week lowers no longer says "was". On a theme card in the planning hub, the full amount now sits in brackets right after the item's count, in the same small numbers, so a goal reads "10 (13)". Cards with several lowered goals space their icons out so the numbers never run into each other.
+- The weekly quest, the Season Goals tooltip and the theme card tooltips show "x33 (44)", and the bundle page tooltip says "Asks 33 (44) until the week ends."
+
 ## 0.19.127 - 2026-10-20
 
 ### Changed

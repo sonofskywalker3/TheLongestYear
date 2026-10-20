@@ -15,7 +15,7 @@ namespace TheLongestYear.Loop
     /// its hover name. Reads the STORED goal lists (<see cref="FavouredGoal.BadgeAt"/>), never a
     /// fresh sample, and the badge goes once that slot is deposited.
     ///
-    /// The hover also says when the theme week discount lowered the line ("Asks 13 (was 27) until
+    /// The hover also says when the theme week discount lowered the line ("Asks 13 (27) until
     /// the week ends", <see cref="LoweredAsk"/>), so the lowered stack reads as temporary.
     ///
     /// The badge is drawn from a postfix on the bundle page's own <c>inventory.draw</c>. Vanilla

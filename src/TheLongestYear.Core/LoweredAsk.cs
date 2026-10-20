@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace TheLongestYear.Core;
 
-/// <summary>Which goal lines show their full ask beside the lowered one ("13 (was 27)"), so the
+/// <summary>Which goal lines show their full ask beside the lowered one ("13 (27)"), so the
 /// player can see the theme week discount is temporary. Display only: the discount itself lives
 /// in <see cref="WeeklyGoalDiscount"/>.</summary>
 public static class LoweredAsk
@@ -27,7 +27,7 @@ public static class LoweredAsk
     /// <summary>The full ask of bundle line (<paramref name="bundleIndex"/>, <paramref name="ingredientIndex"/>)
     /// when this week's discount lowered it, or null. <paramref name="liveStack"/> is what the board
     /// asks for now: a line another mod rewrote underneath no longer holds the lowered ask, so it
-    /// gets no "was".</summary>
+    /// shows no full ask.</summary>
     public static int? AtLine(IEnumerable<BonusSlot> weekSlots, int bundleIndex, int ingredientIndex, int liveStack)
     {
         foreach (BonusSlot s in weekSlots ?? Array.Empty<BonusSlot>())

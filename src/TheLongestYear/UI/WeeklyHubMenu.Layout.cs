@@ -146,18 +146,24 @@ namespace TheLongestYear.UI
             if (_rerollButton != null)
                 allClickableComponents.Add(_rerollButton);
 
-            ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds, BonusIconPitch(_leftFullAsks, _leftBonus.Count));
-            ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds, BonusIconPitch(_rightFullAsks, _rightBonus.Count));
+            ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds, BonusIconPitch(_leftBonus, _leftFullAsks, _leftBonus.Count),
+                WidestLoweredCount(_leftBonus, _leftFullAsks) > 0f);
+            ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds, BonusIconPitch(_rightBonus, _rightFullAsks, _rightBonus.Count),
+                WidestLoweredCount(_rightBonus, _rightFullAsks) > 0f);
         }
 
-        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally, icons <paramref name="pitch"/> apart.</summary>
-        private void ComputeBonusIconBounds(ClickableComponent card, int count, List<Rectangle> bounds, int pitch)
+        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally, icons <paramref name="pitch"/> apart.
+        /// With a lowered goal on the card the row centres on the drawn sprites instead, whose centres the
+        /// "13 (27)" counts share, so the widest row of counts stays inside the card.</summary>
+        private void ComputeBonusIconBounds(ClickableComponent card, int count, List<Rectangle> bounds, int pitch, bool centreOnSprites)
         {
             bounds.Clear();
             if (card == null || count == 0) return;
 
             int totalWidth = BonusIconSize + (count - 1) * pitch;
-            int startX = card.bounds.X + (card.bounds.Width - totalWidth) / 2;
+            int startX = centreOnSprites
+                ? card.bounds.X + (card.bounds.Width - (count - 1) * pitch) / 2 - IconFrameCentre
+                : card.bounds.X + (card.bounds.Width - totalWidth) / 2;
             int y = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize;
             for (int i = 0; i < count; i++)
                 bounds.Add(new Rectangle(startX + i * pitch, y, BonusIconSize, BonusIconSize));

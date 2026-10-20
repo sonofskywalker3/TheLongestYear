@@ -58,72 +58,85 @@ namespace TheLongestYear.UI
             }
         }
 
-        // ---------- lowered goals: "13 (was 27)" ----------
-        // The theme week discount lowers a picked theme's goals for the week. The icon's stack badge
-        // shows the lowered ask; a "was 27" label under the icon shows the full one, before the pick
-        // and all week, so the number reads as temporary (Jeff, 2026-10-20).
+        // ---------- lowered goals: "13 (27)" ----------
+        // The theme week discount lowers a picked theme's goals for the week. A lowered icon's stack
+        // count reads "13 (27)": the lowered ask, then the full one in brackets, in the count's own
+        // pixel digits, before the pick and all week, so the number reads as temporary (Jeff, 2026-10-20).
 
-        /// <summary>Per icon, the full ask to show under it, or null. Parallel to _leftBonus / _rightBonus.</summary>
+        /// <summary>Per icon, the full ask to show beside its count, or null. Parallel to _leftBonus / _rightBonus.</summary>
         private readonly List<int?> _leftFullAsks = new List<int?>();
         private readonly List<int?> _rightFullAsks = new List<int?>();
 
         private List<int?> FullAsksFor(int slot) => slot == LeftSlot ? _leftFullAsks : _rightFullAsks;
 
-        /// <summary>Extra card height for the label row, reserved whenever this run's difficulty lowers
-        /// goals, so the panel keeps one size across rerolls.</summary>
-        private const int LoweredLabelRowHeight = 38;
-        private const int LoweredLabelTopGap = 16;   // clears the stack badge, which hangs below the icon
-        private const int LoweredLabelSidePad = 20;
-        /// <summary>How far an icon's stack badge reaches past its right edge; kept off the card frame.</summary>
-        private const int StackBadgeOverhang = 12;
-        private static readonly Color LoweredLabelColor = new Color(34, 110, 34);
+        /// <summary>The stack count's digit scale at the hub's icon size (Item.DrawMenuIcons uses 3 x scale).</summary>
+        private const float CountScale = 3f * BonusIconScale;
+        /// <summary>drawInMenu centres the sprite in a 64-pixel frame from the icon's top-left.</summary>
+        private const int IconFrameCentre = 32;
+        /// <summary>Top of the vanilla stack count below the icon's top (Item.DrawMenuIcons: 64 - 18 x scale + 1).</summary>
+        private const float CountTop = 64f - 18f * BonusIconScale + 1f;
+        /// <summary>Top of a lowered count on an icon with a quality star: the star sits where the wide
+        /// count would start, so the count drops just below it.</summary>
+        private const int StarredCountTop = 60;
+        /// <summary>Extra card height so a dropped count clears the card frame. Reserved whenever this
+        /// run lowers goals so the panel keeps one size across rerolls.</summary>
+        private const int LoweredCountDrop = 10;
+        /// <summary>Clear space wanted between two neighbouring lowered counts.</summary>
+        private const int LoweredCountGap = 10;
+        /// <summary>Least clear space before a crowded card scales its counts down.</summary>
+        private const int LoweredCountMinGap = 2;
 
         private bool AnyLoweredShown
             => _runController.WeekDiscount > 0
                || _leftFullAsks.Exists(f => f.HasValue) || _rightFullAsks.Exists(f => f.HasValue);
 
-        private int CardHeight => BaseCardHeight + (AnyLoweredShown ? LoweredLabelRowHeight : 0);
+        private int CardHeight => BaseCardHeight + (AnyLoweredShown ? LoweredCountDrop : 0);
 
-        private int BonusBottomMargin => BaseBonusBottomMargin + (AnyLoweredShown ? LoweredLabelRowHeight : 0);
+        private int BonusBottomMargin => BaseBonusBottomMargin + (AnyLoweredShown ? LoweredCountDrop : 0);
 
-        private static string LoweredLabel(int full)
-            => Strings.Get("goal.was-short", new Dictionary<string, string> { ["full"] = full.ToString() });
+        private static int? FullAskAt(List<Item> items, List<int?> fullAsks, int index)
+            => index < fullAsks.Count && index < items.Count && items[index] != null ? fullAsks[index] : null;
 
-        /// <summary>" (was 27)" for the icon's hover, or "".</summary>
-        private static string WasTag(List<int?> fullAsks, int index)
+        /// <summary>" (27)" for the icon's hover, or "".</summary>
+        private static string FullTag(List<int?> fullAsks, int index)
             => index < fullAsks.Count && fullAsks[index] is int full
-                ? Strings.Get("goal.was-tag", new Dictionary<string, string> { ["full"] = full.ToString() })
+                ? Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() })
                 : "";
 
-        /// <summary>Icon spacing for one card: wide enough for the widest label, never wider than the
-        /// card's inner width allows (labels scale down to fit instead, see DrawLoweredLabels).</summary>
-        private static int BonusIconPitch(List<int?> fullAsks, int count)
+        /// <summary>Width of the widest "13 (27)" count on a card, 0 when none is lowered.</summary>
+        private static float WidestLoweredCount(List<Item> items, List<int?> fullAsks)
         {
-            int pitch = BonusIconSize + BonusIconGap;
-            if (count <= 1) return pitch;
-            int widest = 0;
-            foreach (int? full in fullAsks)
-                if (full is int f)
-                    widest = Math.Max(widest, (int)Math.Ceiling(Game1.smallFont.MeasureString(LoweredLabel(f)).X));
-            int maxPitch = (CardWidth - CardInnerPad * 2 - BonusIconSize - StackBadgeOverhang * 2) / (count - 1);
-            return Math.Max(pitch, Math.Min(widest + LoweredLabelSidePad, maxPitch));
+            float widest = 0f;
+            for (int i = 0; i < items.Count; i++)
+                if (FullAskAt(items, fullAsks, i) is int full)
+                    widest = Math.Max(widest, TinyCount.Width(items[i].Stack, full, CountScale));
+            return widest;
         }
 
-        /// <summary>"was 27" centred under each lowered icon, scaled down when the card is crowded.</summary>
-        private static void DrawLoweredLabels(Microsoft.Xna.Framework.Graphics.SpriteBatch b,
-            List<Rectangle> bounds, List<int?> fullAsks)
+        /// <summary>Icon spacing for one card: wide enough that neighbouring "13 (27)" counts don't
+        /// touch, never wider than the card's inner width allows (counts scale down to fit instead,
+        /// see DrawLoweredCount). A 5-goal card with 3-digit counts on both sides ("100 (134)", 86 px)
+        /// still fits at full size: pitch 88, row 438 of the 440 inner width.</summary>
+        private static int BonusIconPitch(List<Item> items, List<int?> fullAsks, int count)
         {
-            int pitch = bounds.Count > 1 ? bounds[1].X - bounds[0].X : CardWidth - CardInnerPad * 2;
-            for (int i = 0; i < bounds.Count && i < fullAsks.Count; i++)
-            {
-                if (fullAsks[i] is not int full) continue;
-                string label = LoweredLabel(full);
-                Vector2 size = Game1.smallFont.MeasureString(label);
-                float scale = Math.Min(1f, (pitch - 4) / Math.Max(1f, size.X));
-                Rectangle icon = bounds[i];
-                var pos = new Vector2(icon.X + (icon.Width - size.X * scale) / 2f, icon.Bottom + LoweredLabelTopGap);
-                Utility.drawTextWithShadow(b, label, Game1.smallFont, pos, LoweredLabelColor, scale);
-            }
+            int pitch = BonusIconSize + BonusIconGap;
+            float widest = WidestLoweredCount(items, fullAsks);
+            if (count <= 1 || widest <= 0f) return pitch;
+            int wanted = (int)Math.Ceiling(widest) + LoweredCountGap;
+            int maxPitch = (int)((CardWidth - CardInnerPad * 2 - widest) / (count - 1));
+            return Math.Max(pitch, Math.Min(wanted, maxPitch));
+        }
+
+        /// <summary>"13 (27)" centred on a lowered icon's sprite at the vanilla count's height (just under
+        /// the quality star when the icon has one), scaled down only when the card is too crowded.</summary>
+        private static void DrawLoweredCount(Microsoft.Xna.Framework.Graphics.SpriteBatch b,
+            Rectangle icon, int pitch, int now, int full, bool starred)
+        {
+            float width = TinyCount.Width(now, full, CountScale);
+            float scale = CountScale * Math.Min(1f, (pitch - LoweredCountMinGap) / Math.Max(1f, width));
+            width = TinyCount.Width(now, full, scale);
+            var pos = new Vector2((int)(icon.X + IconFrameCentre - width / 2f), icon.Y + (starred ? StarredCountTop : CountTop));
+            TinyCount.Draw(b, now, full, pos, scale, 0.87f, Color.White);
         }
 
         /// <summary>The favoured icon's hover gets the Junimos' line under the item name.</summary>
