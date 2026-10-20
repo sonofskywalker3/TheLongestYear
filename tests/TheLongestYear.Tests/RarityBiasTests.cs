@@ -135,6 +135,7 @@ public class RarityBiasTests
             GeodeMinerals = one, Cooking = one, TapperGoods = one, WinterOnly = one,
             DerivedSeasonPins = new Dictionary<string, Season> { ["(O)24"] = Season.Fall },
             QualityEligibleIds = new HashSet<string> { "(O)24" },
+            ShallowWaterFishIds = new HashSet<string> { "(O)Goby" },
             TrapFishIds = new HashSet<string> { "(O)715" },
             JellyIds = new HashSet<string> { "(O)SeaJelly" },
             FruitTreeFruitIds = new HashSet<string> { "(O)634" },

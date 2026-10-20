@@ -129,6 +129,7 @@ text.
 `tly_seasongoals` (opens the Season Goals page; close it with its X button, Escape does not close it, and a page left open across a `tly_reset` keeps showing the OLD run's numbers until reopened),
 `tly_genbundles [loop] [custom|standard|remixed]` (custom = the TLY engine board; standard and
 remixed audit the board vanilla would build for that Advanced Options choice),
+`tly_fishspots [itemId]` (per Data/Locations fish row, the deepest clear water a level 10 cast reaches where it bites, and which fish never get a quality star; `tly_fishspots grid <location> <x> <y> <w> <h>` prints the game's own fishable / clear-water / standable grid; `tly_fishspots plant <bundleKey>` turns that bundle's first slot into a gold Goby on the live and stored board, so a save and reload shows the load-time repair),
 `tly_boost list` (the boost roster with each row's state and price), `tly_activeeffects` (running boosts, stacks per modifier), `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
 copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate`.
 

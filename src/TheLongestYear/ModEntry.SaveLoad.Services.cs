@@ -124,6 +124,9 @@ namespace TheLongestYear
             // board and matches what the fixed generator re-derives.
             bool oncePerLoopAsksOne = _meta.State.Difficulty?.OncePerLoopAsksOne ?? _config.OncePerLoopAsksOne;
             TheLongestYear.Loop.BoardRepairService.ClampUnstackableAsks(this.Monitor, _meta.State, oncePerLoopAsksOne);
+            // A star on a fish that only bites in shallow water could never be donated (player
+            // report 2026-10-20, gold Goby): lowered to base quality, same reason it runs first.
+            TheLongestYear.Loop.ShallowFishStarRepair.Run(this.Monitor, _meta.State, ctx.EnginePools);
             // Repair a board built before the reachability rule existed (spec
             // 2026-09-10-source-reachability, task 9). Runs HERE, above the catalog and the
             // fingerprint, so everything downstream reads the repaired board rather than the one

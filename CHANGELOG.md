@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.121 - 2026-10-20
+
+### Fixed
+
+- Fish bundles no longer ask for a silver or gold Goby. Goby only bites in the pool under the Forest waterfall, and every spot you can cast to there is so close to the bank that the fish always come out base quality. A fish that only lives in water that shallow is now always asked for at base quality. This is worked out from each fish's spots on the map, so fish and maps added by other mods follow the same rule.
+- If your current board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save.
+
 ## 0.19.120 - 2026-10-20
 
 ### Fixed
