@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.129 - 2026-10-20
+
+### Changed
+
+- Since the fish collection now starts over each year, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
+
+### Fixed
+
+- When a bundle asks for the same item twice at different qualities, the Season Goals tooltip now shows the right full amount for each one.
+
 ## 0.19.128 - 2026-10-20
 
 ### Changed

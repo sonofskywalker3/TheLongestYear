@@ -35,6 +35,9 @@ namespace TheLongestYear.Core
         // BillboardQuestsDone + GoldenTagsTurnedIn (prize/derby reward ladders),
         // blessingOfWaters (day-scoped statue blessing), individualMoneyEarned (money is
         // run-scoped), SquidFestScore_<day>_<year> — and every unknown future key.
+        // fishCaught is wiped with them, not kept as a tally: vanilla's checkForFishingAchievements
+        // (Stats.cs, ~1085) overwrites it from the fishCaught collection, which FarmerReset empties
+        // every loop (Perfection resets each year), so it would only drift out of step with it.
         //
         // KEPT-THEN-REGRANTED (spec 2026-08-27 keep-power-books): Book_* flags are still wiped
         // here; FarmerReset then re-sets the ones the player BOUGHT at the shrine from
@@ -69,7 +72,6 @@ namespace TheLongestYear.Core
             "dirtHoed",
             "duckEggsLayed",
             "exMemoriesWiped",
-            "fishCaught",
             "giftsGiven",
             "goatCheeseMade",
             "goatMilkProduced",

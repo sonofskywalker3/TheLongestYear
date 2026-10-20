@@ -62,11 +62,4 @@ public class PerfectionRewindTests
         Assert.Empty(PerfectionRewind.FishIdsToClear(System.Array.Empty<string>()));
         Assert.Empty(PerfectionRewind.CookedIdsToClear(System.Array.Empty<string>()));
     }
-
-    [Fact]
-    public void Slayer_flag_is_off_once_kill_counts_are_empty()
-    {
-        Assert.False(PerfectionRewind.SlayerDoneAfterRewind(killCountsCleared: true, wasDone: true));
-        Assert.True(PerfectionRewind.SlayerDoneAfterRewind(killCountsCleared: false, wasDone: true));
-    }
 }

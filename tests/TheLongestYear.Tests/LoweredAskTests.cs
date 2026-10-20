@@ -8,8 +8,8 @@ namespace TheLongestYear.Tests;
 /// the pick on the hub card and during the week everywhere the ask is shown.</summary>
 public class LoweredAskTests
 {
-    private static BonusSlot Slot(int bundle, int ingredient, int stack, int original = 0, string id = "(O)192")
-        => new() { BundleIndex = bundle, IngredientIndex = ingredient, ItemId = id, Stack = stack, OriginalStack = original };
+    private static BonusSlot Slot(int bundle, int ingredient, int stack, int original = 0, string id = "(O)192", int quality = 0)
+        => new() { BundleIndex = bundle, IngredientIndex = ingredient, ItemId = id, Stack = stack, OriginalStack = original, Quality = quality };
 
     [Theory]
     [InlineData(0.5, 13, 27)]
@@ -91,11 +91,27 @@ public class LoweredAskTests
     {
         var slots = new List<BonusSlot> { Slot(3, 2, 13, original: 27, id: "(O)192") };
 
-        Assert.Equal(27, LoweredAsk.ForItem(slots, 3, "(O)192", 13));
-        Assert.Equal(27, LoweredAsk.ForItem(slots, 3, "192", 13));
-        Assert.Null(LoweredAsk.ForItem(slots, 3, "(O)24", 13));
-        Assert.Null(LoweredAsk.ForItem(slots, 2, "(O)192", 13));
-        Assert.Null(LoweredAsk.ForItem(slots, 3, "", 13));
+        Assert.Equal(27, LoweredAsk.ForItem(slots, 3, "(O)192", 0, 13));
+        Assert.Equal(27, LoweredAsk.ForItem(slots, 3, "192", 0, 13));
+        Assert.Null(LoweredAsk.ForItem(slots, 3, "(O)24", 0, 13));
+        Assert.Null(LoweredAsk.ForItem(slots, 2, "(O)192", 0, 13));
+        Assert.Null(LoweredAsk.ForItem(slots, 3, "", 0, 13));
+    }
+
+    /// <summary>The same item on two lines of one bundle at different qualities, both asking the
+    /// same stack: each quality reads its own line's full ask, not whichever line comes first.</summary>
+    [Fact]
+    public void ForItem_tells_two_lines_of_the_same_item_apart_by_quality()
+    {
+        var slots = new List<BonusSlot>
+        {
+            Slot(3, 0, 5, original: 10, quality: 0),
+            Slot(3, 1, 5, original: 7, quality: 2),
+        };
+
+        Assert.Equal(10, LoweredAsk.ForItem(slots, 3, "(O)192", 0, 5));
+        Assert.Equal(7, LoweredAsk.ForItem(slots, 3, "(O)192", 2, 5));
+        Assert.Null(LoweredAsk.ForItem(slots, 3, "(O)192", 1, 5));
     }
 
     /// <summary>A double week's second list counts too.</summary>

@@ -109,8 +109,7 @@ namespace TheLongestYear.Loop
             // The Perfection "Monster Slayer" flag: vanilla only recomputes it on a save load or a
             // kill that finishes a goal, so it stayed on all the next year. With the counts empty
             // and the Gil_* mail wiped, every goal and its reward is open again.
-            p.hasCompletedAllMonsterSlayerQuests.Value =
-                PerfectionRewind.SlayerDoneAfterRewind(killCountsCleared: true, p.hasCompletedAllMonsterSlayerQuests.Value);
+            p.hasCompletedAllMonsterSlayerQuests.Value = false;
             p.chestConsumedMineLevels.Clear();
             // Shipping collection (Jeff, 2026-10-20: it counts toward Perfection, so it rewinds with
             // the year). basicShipped is the only record behind the collections tab, the Perfection

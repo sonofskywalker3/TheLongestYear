@@ -46,8 +46,4 @@ public static class PerfectionRewind
     /// <summary>Every dish cooked in an earlier year is forgotten, so a banked recipe counts toward
     /// Perfection only once it is cooked again this year.</summary>
     public static IReadOnlyList<string> CookedIdsToClear(IEnumerable<string> cookedIds) => cookedIds.ToList();
-
-    /// <summary>Vanilla recomputes the flag from the kill counts only on a save load or a kill that
-    /// finishes a goal, so the rewind sets it itself. With the counts empty no goal can be done.</summary>
-    public static bool SlayerDoneAfterRewind(bool killCountsCleared, bool wasDone) => !killCountsCleared && wasDone;
 }

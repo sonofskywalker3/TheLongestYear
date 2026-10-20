@@ -36,13 +36,15 @@ public static class LoweredAsk
         return null;
     }
 
-    /// <summary>As <see cref="AtLine"/>, for a list that knows the bundle and item but not the line.</summary>
-    public static int? ForItem(IEnumerable<BonusSlot> weekSlots, int bundleIndex, string itemId, int liveStack)
+    /// <summary>As <see cref="AtLine"/>, for a list that knows the bundle, item and quality but not
+    /// the line. Quality is part of the match: a bundle can ask for the same item on two lines at
+    /// different qualities, and only the line the list is showing may lend its full ask.</summary>
+    public static int? ForItem(IEnumerable<BonusSlot> weekSlots, int bundleIndex, string itemId, int quality, int liveStack)
     {
         if (string.IsNullOrEmpty(itemId)) return null;
         string id = BundleParsing.NormalizeItemId(itemId);
         foreach (BonusSlot s in weekSlots ?? Array.Empty<BonusSlot>())
-            if (s.BundleIndex == bundleIndex && s.Stack == liveStack
+            if (s.BundleIndex == bundleIndex && s.Stack == liveStack && s.Quality == quality
                 && string.Equals(BundleParsing.NormalizeItemId(s.ItemId), id, StringComparison.Ordinal)
                 && FullAsk(s) is int full)
                 return full;
