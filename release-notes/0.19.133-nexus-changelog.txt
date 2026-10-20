@@ -1,4 +1,4 @@
-0.19.132 - Perfection starts over each year, lowered goals show their full amount, and fixes
+0.19.133 - Perfection starts over each year, lowered goals show their full amount, and fixes
 
 Covers everything since 0.19.116.
 
@@ -20,6 +20,7 @@ Fixed
 - A marriage or roommate no longer survives the rewind. Your former spouse or roommate goes back to their own home and routine, your children and the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
 - Ending a marriage at the rewind works even when your spouse is out of the house at that moment.
 - The Rusty Key no longer comes back for free after a rewind. Gunther could walk onto your farm on the first morning and hand you the key again, even with the museum empty and no Keep Rusty Key bought. Now it comes back only if you bought its keep, or once you donate 60 items to the museum again.
+- The same goes for scenes and gifts from other mods that unlock once something happens in the year: after a rewind they wait until it happens again instead of showing up early.
 - Saves hit by the old bug are repaired when you load them: a villager the game still lists as your spouse, though you are no longer married, goes back to their own home and the spouse room goes away. A marriage you made in the current loop is left alone.
 - The rewind no longer removes data other mods keep on villagers, and a modded location that is only named like a cabin is no longer treated as a farmhouse.
 - The weekly theme pick no longer runs dry partway through a season. You could get a week with one card and a "(no offer)" side, then a Monday with no theme pick at all. The planning hub now deals the themes you haven't picked this month first, then brings back this month's picks that still have goals for you.

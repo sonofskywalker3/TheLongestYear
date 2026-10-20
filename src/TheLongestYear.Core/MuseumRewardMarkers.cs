@@ -22,8 +22,6 @@ public static class MuseumRewardMarkers
     /// <summary>Index of the optional "seen" bool; "false" un-marks the event instead.</summary>
     private const int SeenArg = 3;
 
-    private const string FalseValue = "false";
-
     /// <summary>Every event id the given reward action lists mark seen. Null lists and malformed
     /// actions are skipped; an action whose optional fourth argument is "false" (an un-mark) is not
     /// a marker.</summary>
@@ -46,18 +44,20 @@ public static class MuseumRewardMarkers
         return ids;
     }
 
-    /// <summary>The event id one action marks seen, or null if it is not a MarkEventSeen.</summary>
+    /// <summary>The event id one action marks seen, or null if it is not a MarkEventSeen. Arguments
+    /// split like vanilla's (<see cref="ActionArgs.SplitBySpaceQuoteAware"/>), so a quoted id keeps
+    /// its spaces. As in TriggerActionManager.MarkEventSeen, a blank id is invalid and the optional
+    /// "seen" argument must be a bool: "false" un-marks, anything unparsable makes the action fail.</summary>
     public static string? MarkedEventId(string? action)
     {
-        if (string.IsNullOrWhiteSpace(action))
-            return null;
-        string[] args = action.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        string[] args = ActionArgs.SplitBySpaceQuoteAware(action);
         if (args.Length <= EventIdArg
             || !string.Equals(args[0], MarkEventSeenAction, StringComparison.OrdinalIgnoreCase))
             return null;
-        if (args.Length > SeenArg && string.Equals(args[SeenArg].Trim('"'), FalseValue, StringComparison.OrdinalIgnoreCase))
+        if (args.Length > SeenArg && args[SeenArg].Length > 0
+            && (!bool.TryParse(args[SeenArg], out bool seen) || !seen))
             return null;
-        string id = args[EventIdArg].Trim('"');
-        return id.Length == 0 ? null : id;
+        string id = args[EventIdArg];
+        return string.IsNullOrWhiteSpace(id) ? null : id;
     }
 }

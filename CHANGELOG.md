@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.133 - 2026-10-20
+
+### Fixed
+
+- Like the Rusty Key fix in 0.19.130: a scene or gift from another mod that unlocks once something happens in the year now waits until it happens again after a rewind, instead of showing up early in the new year.
+
 ## 0.19.132 - 2026-10-20
 
 ### Fixed

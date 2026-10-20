@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.GameData;
 using StardewValley.GameData.Museum;
 using TheLongestYear.Core;
 
@@ -35,6 +36,7 @@ namespace TheLongestYear.Loop
             IEnumerable<string> baseReplayableIds,
             ISet<string> exclude,
             bool enabled,
+            bool resendBetterStartGift,
             IMonitor monitor)
         {
             if (!enabled)
@@ -90,6 +92,15 @@ namespace TheLongestYear.Loop
                 if (exclude != null && exclude.Contains(id)) continue;
                 if (_ids.Add(id)) markers++;
             }
+            // Trigger action markers (Data/TriggerActions "MarkEventSeen"): the rewind clears the
+            // trigger-action record so those rows fire again; re-seeding their marker would let a
+            // scene gated on it play early next loop.
+            int triggerMarkers = 0;
+            foreach (string id in LoadTriggerActionMarkers(content, resendBetterStartGift))
+            {
+                if (exclude != null && exclude.Contains(id)) continue;
+                if (_ids.Add(id)) triggerMarkers++;
+            }
             int grants = _ids.Count;
             // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
             // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
@@ -98,7 +109,7 @@ namespace TheLongestYear.Loop
             EventGatingTables.PropagateChains(keys, _ids, roots, exclude);
             monitor.Log(
                 $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
-                $"({markers} museum reward marker(s)) and " +
+                $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s)) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
         }
@@ -121,6 +132,27 @@ namespace TheLongestYear.Loop
             foreach (MuseumRewards reward in rewards.Values)
                 lists.Add(reward?.RewardActions);
             return MuseumRewardMarkers.EventIds(lists);
+        }
+
+        /// <summary>Event ids the trigger actions mark seen, read from the live Data/TriggerActions.</summary>
+        private static IEnumerable<string> LoadTriggerActionMarkers(IGameContentHelper content, bool resendBetterStartGift)
+        {
+            List<TriggerActionData> rows;
+            try
+            {
+                rows = content.Load<List<TriggerActionData>>("Data/TriggerActions");
+            }
+            catch (Exception ex)
+            {
+                PatchLog.Trace($"Data/TriggerActions: not loaded ({ex.GetType().Name}); no trigger action markers.");
+                return Array.Empty<string>();
+            }
+            if (rows == null) return Array.Empty<string>();
+            var parsed = new List<TriggerActionMarkers.Row>(rows.Count);
+            foreach (TriggerActionData row in rows)
+                if (row != null)
+                    parsed.Add(new TriggerActionMarkers.Row(row.Id, row.Action, row.Actions));
+            return TriggerActionMarkers.EventIds(parsed, resendBetterStartGift);
         }
     }
 }

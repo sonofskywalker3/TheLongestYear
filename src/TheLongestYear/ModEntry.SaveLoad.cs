@@ -279,6 +279,7 @@ namespace TheLongestYear
                 EventGatingTables.Default.ReplayableEventIds,
                 BuildReplayableExclude(),
                 _config.AutoDetectReplayableUnlockCutscenes,
+                _config.ResendBetterStartGift,
                 this.Monitor);
         }
 
