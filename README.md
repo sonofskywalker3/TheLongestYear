@@ -25,7 +25,7 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.131
+## What's New in 0.19.132
 
 **Everything that counts toward Perfection now starts over each year.** The rewind clears your shipping collection, your money earned, the fish you have caught, the dishes you have cooked and the Monster Slayer goals. Since money earned starts from zero, the letters from Mom or Dad and the Tribune's "up and coming" story come again each year. Anything you bought a keep for in the upgrade menu still comes back. Since the fish collection starts over, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
 

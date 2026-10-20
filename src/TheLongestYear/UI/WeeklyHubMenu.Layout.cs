@@ -146,27 +146,24 @@ namespace TheLongestYear.UI
             if (_rerollButton != null)
                 allClickableComponents.Add(_rerollButton);
 
-            ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds, BonusIconPitch(_leftBonus, _leftFullAsks, _leftBonus.Count),
-                WidestLoweredCount(_leftBonus, _leftFullAsks) > 0f);
-            ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds, BonusIconPitch(_rightBonus, _rightFullAsks, _rightBonus.Count),
-                WidestLoweredCount(_rightBonus, _rightFullAsks) > 0f);
+            _leftCountShrink = ComputeBonusIconBounds(_leftCard, _leftBonus, _leftFullAsks, _leftBonusBounds);
+            _rightCountShrink = ComputeBonusIconBounds(_rightCard, _rightBonus, _rightFullAsks, _rightBonusBounds);
         }
 
-        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally, icons <paramref name="pitch"/> apart.
-        /// With a lowered goal on the card the row centres on the drawn sprites instead, whose centres the
-        /// "13 (27)" counts share, so the widest row of counts stays inside the card.</summary>
-        private void ComputeBonusIconBounds(ClickableComponent card, int count, List<Rectangle> bounds, int pitch, bool centreOnSprites)
+        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally on the drawn
+        /// sprites, whose centres the counts share; spacing from <see cref="PlanBonusRow"/>.
+        /// Returns the factor the card's counts are drawn at.</summary>
+        private float ComputeBonusIconBounds(ClickableComponent card, List<Item> items, List<int?> fullAsks, List<Rectangle> bounds)
         {
             bounds.Clear();
-            if (card == null || count == 0) return;
+            if (card == null || items.Count == 0) return 1f;
 
-            int totalWidth = BonusIconSize + (count - 1) * pitch;
-            int startX = centreOnSprites
-                ? card.bounds.X + (card.bounds.Width - (count - 1) * pitch) / 2 - IconFrameCentre
-                : card.bounds.X + (card.bounds.Width - totalWidth) / 2;
+            IconCountRow.Plan plan = PlanBonusRow(items, fullAsks);
+            float left = card.bounds.X + (card.bounds.Width - plan.Width) / 2f;
             int y = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize;
-            for (int i = 0; i < count; i++)
-                bounds.Add(new Rectangle(startX + i * pitch, y, BonusIconSize, BonusIconSize));
+            foreach (float centre in plan.Centres)
+                bounds.Add(new Rectangle((int)(left + centre) - IconFrameCentre, y, BonusIconSize, BonusIconSize));
+            return plan.Shrink;
         }
 
         private int FirstRowIdBelowCards()

@@ -73,26 +73,28 @@ namespace TheLongestYear.UI
         private const float CountScale = 3f * BonusIconScale;
         /// <summary>drawInMenu centres the sprite in a 64-pixel frame from the icon's top-left.</summary>
         private const int IconFrameCentre = 32;
-        /// <summary>Top of the vanilla stack count below the icon's top (Item.DrawMenuIcons: 64 - 18 x scale + 1).</summary>
-        private const float CountTop = 64f - 18f * BonusIconScale + 1f;
-        /// <summary>Top of a lowered count on an icon with a quality star: the star sits where the wide
-        /// count would start, so the count drops just below it.</summary>
-        private const int StarredCountTop = 60;
-        /// <summary>Extra card height so a dropped count clears the card frame. Reserved whenever this
-        /// run lowers goals so the panel keeps one size across rerolls.</summary>
-        private const int LoweredCountDrop = 10;
-        /// <summary>Clear space wanted between two neighbouring lowered counts.</summary>
-        private const int LoweredCountGap = 10;
+        /// <summary>Top of every count below the icon's top: centred under the sprite and below the
+        /// quality star (sprite ends at 56, star at 61), so each count reads as its own icon's caption.</summary>
+        private const int CountTop = 60;
+        /// <summary>Extra card height so the counts under the icons clear the card frame.</summary>
+        private const int CountRoom = 10;
+        /// <summary>Clear space wanted between neighbouring icons (sprite or count, whichever is wider).</summary>
+        private const int CountGap = BonusIconGap;
         /// <summary>Least clear space before a crowded card scales its counts down.</summary>
-        private const int LoweredCountMinGap = 2;
+        private const int CountMinGap = 6;
+        /// <summary>Extra room a count wider than its sprite takes, so two side-by-side counts get
+        /// CountGap plus this between them (a wide count reads as one word otherwise).</summary>
+        private const int CountPad = 8;
 
-        private bool AnyLoweredShown
-            => _runController.WeekDiscount > 0
-               || _leftFullAsks.Exists(f => f.HasValue) || _rightFullAsks.Exists(f => f.HasValue);
+        /// <summary>Per card, the factor its counts are drawn at (1 unless the row is crowded).</summary>
+        private float _leftCountShrink = 1f;
+        private float _rightCountShrink = 1f;
 
-        private int CardHeight => BaseCardHeight + (AnyLoweredShown ? LoweredCountDrop : 0);
+        private float CountShrinkFor(int slot) => slot == LeftSlot ? _leftCountShrink : _rightCountShrink;
 
-        private int BonusBottomMargin => BaseBonusBottomMargin + (AnyLoweredShown ? LoweredCountDrop : 0);
+        private const int CardHeight = BaseCardHeight + CountRoom;
+
+        private const int BonusBottomMargin = BaseBonusBottomMargin + CountRoom;
 
         private static int? FullAskAt(List<Item> items, List<int?> fullAsks, int index)
             => index < fullAsks.Count && index < items.Count && items[index] != null ? fullAsks[index] : null;
@@ -103,39 +105,31 @@ namespace TheLongestYear.UI
                 ? Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() })
                 : "";
 
-        /// <summary>Width of the widest "13 (27)" count on a card, 0 when none is lowered.</summary>
-        private static float WidestLoweredCount(List<Item> items, List<int?> fullAsks)
+        /// <summary>Room each icon's count ("13 (27)" or a plain "5") takes at <paramref name="scale"/>,
+        /// with <see cref="CountPad"/> added; 0 for an empty icon.</summary>
+        private static IReadOnlyList<float> CountWidths(List<Item> items, List<int?> fullAsks, float scale)
         {
-            float widest = 0f;
+            var widths = new float[items.Count];
             for (int i = 0; i < items.Count; i++)
-                if (FullAskAt(items, fullAsks, i) is int full)
-                    widest = Math.Max(widest, TinyCount.Width(items[i].Stack, full, CountScale));
-            return widest;
+                widths[i] = items[i] == null ? 0f : TinyCount.Width(items[i].Stack, FullAskAt(items, fullAsks, i), scale) + CountPad;
+            return widths;
         }
 
-        /// <summary>Icon spacing for one card: wide enough that neighbouring "13 (27)" counts don't
-        /// touch, never wider than the card's inner width allows (counts scale down to fit instead,
-        /// see DrawLoweredCount). A 5-goal card with 3-digit counts on both sides ("100 (134)", 86 px)
-        /// still fits at full size: pitch 88, row 438 of the 440 inner width.</summary>
-        private static int BonusIconPitch(List<Item> items, List<int?> fullAsks, int count)
-        {
-            int pitch = BonusIconSize + BonusIconGap;
-            float widest = WidestLoweredCount(items, fullAsks);
-            if (count <= 1 || widest <= 0f) return pitch;
-            int wanted = (int)Math.Ceiling(widest) + LoweredCountGap;
-            int maxPitch = (int)((CardWidth - CardInnerPad * 2 - widest) / (count - 1));
-            return Math.Max(pitch, Math.Min(wanted, maxPitch));
-        }
+        /// <summary>One card's icon row: every icon takes the wider of its sprite and its count, with a
+        /// clear gap between neighbours, so a count never runs into the next icon's. A crowded card
+        /// closes the gap to <see cref="CountMinGap"/>, then shrinks its counts to stay inside the frame.</summary>
+        private static IconCountRow.Plan PlanBonusRow(List<Item> items, List<int?> fullAsks)
+            => IconCountRow.Fit(shrink => CountWidths(items, fullAsks, CountScale * shrink), BonusIconSize,
+                CardWidth - CardInnerPad * 2, CountGap, CountMinGap);
 
-        /// <summary>"13 (27)" centred on a lowered icon's sprite at the vanilla count's height (just under
-        /// the quality star when the icon has one), scaled down only when the card is too crowded.</summary>
-        private static void DrawLoweredCount(Microsoft.Xna.Framework.Graphics.SpriteBatch b,
-            Rectangle icon, int pitch, int now, int full, bool starred)
+        /// <summary>A goal's count ("13 (27)" when lowered, else the plain number, "1" included)
+        /// centred under its icon's sprite.</summary>
+        private static void DrawGoalCount(Microsoft.Xna.Framework.Graphics.SpriteBatch b,
+            Rectangle icon, int now, int? full, float shrink)
         {
-            float width = TinyCount.Width(now, full, CountScale);
-            float scale = CountScale * Math.Min(1f, (pitch - LoweredCountMinGap) / Math.Max(1f, width));
-            width = TinyCount.Width(now, full, scale);
-            var pos = new Vector2((int)(icon.X + IconFrameCentre - width / 2f), icon.Y + (starred ? StarredCountTop : CountTop));
+            float scale = CountScale * shrink;
+            float width = TinyCount.Width(now, full, scale);
+            var pos = new Vector2((int)(icon.X + IconFrameCentre - width / 2f), icon.Y + CountTop);
             TinyCount.Draw(b, now, full, pos, scale, 0.87f, Color.White);
         }
 

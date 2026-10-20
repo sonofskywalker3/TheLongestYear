@@ -35,8 +35,9 @@ namespace TheLongestYear.UI
         private static Texture2D _open;
         private static Texture2D _close;
 
-        /// <summary>Drawn width of "<paramref name="count"/> (<paramref name="full"/>)" at <paramref name="scale"/>.</summary>
-        public static float Width(int count, int full, float scale)
+        /// <summary>Drawn width of "<paramref name="count"/> (<paramref name="full"/>)" at <paramref name="scale"/>,
+        /// or of the plain count when <paramref name="full"/> is null.</summary>
+        public static float Width(int count, int? full, float scale)
         {
             float width = 0f;
             float lastWidth = 0f;
@@ -50,8 +51,9 @@ namespace TheLongestYear.UI
             return width - lastAdvance + lastWidth;
         }
 
-        /// <summary>Draws "<paramref name="count"/> (<paramref name="full"/>)" with its top-left at <paramref name="position"/>.</summary>
-        public static void Draw(SpriteBatch b, int count, int full, Vector2 position, float scale, float layerDepth, Color color)
+        /// <summary>Draws "<paramref name="count"/> (<paramref name="full"/>)", or the plain count when
+        /// <paramref name="full"/> is null, with its top-left at <paramref name="position"/>.</summary>
+        public static void Draw(SpriteBatch b, int count, int? full, Vector2 position, float scale, float layerDepth, Color color)
         {
             EnsureBrackets();
             float x = 0f;
@@ -73,12 +75,13 @@ namespace TheLongestYear.UI
         private const int Open = -2;
         private const int Close = -3;
 
-        private static IEnumerable<int> Glyphs(int count, int full)
+        private static IEnumerable<int> Glyphs(int count, int? full)
         {
             foreach (char c in count.ToString()) yield return c - '0';
+            if (full is not int ask) yield break;
             yield return Space;
             yield return Open;
-            foreach (char c in full.ToString()) yield return c - '0';
+            foreach (char c in ask.ToString()) yield return c - '0';
             yield return Close;
         }
 

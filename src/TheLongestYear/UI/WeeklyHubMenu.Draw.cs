@@ -236,7 +236,7 @@ namespace TheLongestYear.UI
             }
             else
             {
-                DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot), FullAsksFor(slot));
+                DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot), FullAsksFor(slot), CountShrinkFor(slot));
             }
         }
 
@@ -264,9 +264,9 @@ namespace TheLongestYear.UI
                 Game1.textColor);
         }
 
-        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds, List<bool> favoured, List<int?> fullAsks)
+        private void DrawBonusIcons(SpriteBatch b, List<Item> items, List<Rectangle> bounds, List<bool> favoured, List<int?> fullAsks,
+            float shrink)
         {
-            int pitch = bounds.Count > 1 ? bounds[1].X - bounds[0].X : CardWidth - CardInnerPad * 2;
             for (int i = 0; i < items.Count && i < bounds.Count; i++)
             {
                 Item item = items[i];
@@ -274,22 +274,15 @@ namespace TheLongestYear.UI
                 Vector2 pos = new Vector2(slot.X, slot.Y);
                 if (item != null)
                 {
-                    // The stack number badge over the icon shows the player the actual
-                    // donation quantity (e.g. Wood = 99), including a single item's "1".
-                    // The Item is created with the sampled BonusSlot's Stack/Quality above.
-                    if (FullAskAt(items, fullAsks, i) is int full)
-                    {
-                        // A lowered goal: draw the icon with its quality star but no count, then
-                        // "13 (27)" in the count's digits (stack 1 skips only the number).
-                        int now = item.Stack;
-                        item.Stack = 1;
-                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
-                        item.Stack = now;
-                        DrawLoweredCount(b, slot, pitch, now, full, item.Quality > 0);
-                    }
-                    else
-                        // Draw_OneInclusive: vanilla hides a stack of 1, but a one-item goal still shows "1".
-                        item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw_OneInclusive, Color.White, false);
+                    // Every goal shows its donation quantity (e.g. Wood = 99, a single item's "1",
+                    // a lowered "13 (27)") centred under its own icon, so neighbouring counts never
+                    // read as one. The icon itself draws with its quality star but no count (a stack
+                    // of 1 skips only the number). Stack/Quality come from the sampled BonusSlot above.
+                    int now = item.Stack;
+                    item.Stack = 1;
+                    item.drawInMenu(b, pos, BonusIconScale, 1f, 0.86f, StackDrawType.Draw, Color.White, false);
+                    item.Stack = now;
+                    DrawGoalCount(b, slot, now, FullAskAt(items, fullAsks, i), shrink);
                     DrawFavouredBadge(b, favoured, i, slot);
                 }
                 else

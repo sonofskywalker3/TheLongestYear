@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.132 - 2026-10-20
+
+### Fixed
+
+- On the theme cards in the planning hub, every goal's count now sits centred under its own item, with space between neighbouring goals. A lowered count such as "15 (20)" no longer runs into the number of the goal next to it, so "1" and "15 (20)" can't be read as one number.
+
 ## 0.19.131 - 2026-10-20
 
 ### Changed

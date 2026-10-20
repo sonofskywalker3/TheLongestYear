@@ -1,4 +1,4 @@
-0.19.131 - Perfection starts over each year, lowered goals show their full amount, and fixes
+0.19.132 - Perfection starts over each year, lowered goals show their full amount, and fixes
 
 Covers everything since 0.19.116.
 
@@ -14,6 +14,7 @@ Changed
 - On Easy and Normal, a theme card in the planning hub shows the full amount of each goal the pick would lower in brackets after its count, such as "10 (13)", so you can see what a pick takes off before you choose.
 - During the theme week, the weekly quest, the Season Goals tooltip and the theme card tooltips show a lowered goal as "x33 (44)", and the bundle page tooltip says "Asks 33 (44) until the week ends." A goal you already donated shows only its count.
 - Every goal now shows how many items it asks for, including a goal for a single item, on the theme cards and the Season Goals page.
+- On the theme cards, every goal's count sits centred under its own item with space between neighbours, so a lowered count such as "15 (20)" no longer runs into the next goal's number.
 
 Fixed
 - A marriage or roommate no longer survives the rewind. Your former spouse or roommate goes back to their own home and routine, your children and the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
