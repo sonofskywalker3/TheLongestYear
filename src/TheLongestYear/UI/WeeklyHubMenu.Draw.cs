@@ -237,6 +237,7 @@ namespace TheLongestYear.UI
             else
             {
                 DrawBonusIcons(b, bonus, bonusBounds, FavouredFor(slot));
+                DrawLoweredLabels(b, bonusBounds, FullAsksFor(slot));
             }
         }
 

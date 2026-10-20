@@ -16,13 +16,15 @@ namespace TheLongestYear.DebugCommands
     ///   (no args)        live bundles per room, and whether the CC's room lookup knows every bundle
     ///   set &lt;step&gt;       sets the dial in memory only (config.json is not written); next new board
     ///   open &lt;area 0-5&gt;  opens that room's page, logs the bags on it
+    ///   page &lt;bundle&gt; [ingredient]  opens one bundle's page through the room page's own click, and
+    ///                    logs the hover text of that ingredient (the lowered-ask line)
     ///   missed           runs the CC's checkForMissedRewards (threw KeyNotFound on a stale lookup)
     ///   close            closes the open menu without its exit action (no restore cutscene)
     ///   buy &lt;index|cheapest&gt;  pays a Vault bundle through the page's own purchase button</summary>
     internal static class BundleCountDebugCommand
     {
         public const string Usage =
-            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | close | exit | missed | buy <vault index|cheapest> | bus]. No args lists bundles per room.";
+            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | page <bundle index> [ingredient] | close | exit | missed | buy <vault index|cheapest> | bus]. No args lists bundles per room.";
 
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
@@ -47,6 +49,10 @@ namespace TheLongestYear.DebugCommands
             {
                 case "open":
                     Open(monitor, cc, args.Length > 1 && int.TryParse(args[1], out int area) ? area : 0);
+                    return;
+                case "page":
+                    Page(monitor, cc, args.Length > 1 && int.TryParse(args[1], out int bundle) ? bundle : 0,
+                        args.Length > 2 && int.TryParse(args[2], out int ingredient) ? ingredient : -1);
                     return;
                 case "missed":
                     Missed(monitor, cc);
@@ -97,6 +103,29 @@ namespace TheLongestYear.DebugCommands
                 $"tly_bundlecount: opened area {area} ({CommunityCenter.getAreaNameFromNumber(area)}) with {note.bundles.Count} bag(s): " +
                 string.Join(", ", note.bundles.Select(b => $"{b.bundleIndex}:{b.name}@{b.bounds.X},{b.bounds.Y}")),
                 LogLevel.Info);
+        }
+
+        /// <summary>Opens bundle <paramref name="bundleIndex"/>'s page the way a click on its bag does,
+        /// then runs the page's hover on <paramref name="ingredient"/> (when given) and logs the text.</summary>
+        private static void Page(IMonitor monitor, CommunityCenter cc, int bundleIndex, int ingredient)
+        {
+            string key = Game1.netWorldState.Value.BundleData.Keys
+                .FirstOrDefault(k => int.TryParse(k.Split('/')[1], out int i) && i == bundleIndex);
+            if (key == null) { monitor.Log($"tly_bundlecount page: no bundle {bundleIndex}.", LogLevel.Warn); return; }
+            Open(monitor, cc, CommunityCenter.getAreaNumberFromName(key.Split('/')[0]));
+            if (Game1.activeClickableMenu is not JunimoNoteMenu note) return;
+            Bundle bag = note.bundles.FirstOrDefault(b => b.bundleIndex == bundleIndex);
+            if (bag == null) { monitor.Log($"tly_bundlecount page: bundle {bundleIndex} is not on its room page.", LogLevel.Warn); return; }
+            note.receiveLeftClick(bag.bounds.Center.X, bag.bounds.Center.Y, playSound: false);
+            if (ingredient < 0 || ingredient >= note.ingredientList.Count)
+            {
+                monitor.Log($"tly_bundlecount page: opened bundle {bundleIndex} ({bag.name}).", LogLevel.Info);
+                return;
+            }
+            Microsoft.Xna.Framework.Point at = note.ingredientList[ingredient].bounds.Center;
+            note.performHoverAction(at.X, at.Y);
+            monitor.Log($"tly_bundlecount page: bundle {bundleIndex} ({bag.name}) ingredient {ingredient} hover = " +
+                        JunimoNoteMenu.hoverText.Replace("\n", " | "), LogLevel.Info);
         }
 
         /// <summary>Buys one Vault bundle through the Vault page's own purchase button (the vanilla

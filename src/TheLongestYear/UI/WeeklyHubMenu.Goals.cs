@@ -33,10 +33,11 @@ namespace TheLongestYear.UI
         }
 
         private void ResolveBonusItemsForTheme(Theme? theme, List<Item> dest, List<bool> favouredDest,
-            IReadOnlyList<BonusSlot> ownedByOtherCard = null)
+            List<int?> fullAskDest, IReadOnlyList<BonusSlot> ownedByOtherCard = null)
         {
             dest.Clear();
             favouredDest.Clear();
+            fullAskDest.Clear();
             if (theme == null) return;
 
             foreach (BonusSlot slot in ShownGoalsFor(theme.Value, ownedByOtherCard))
@@ -53,6 +54,75 @@ namespace TheLongestYear.UI
                 }
                 dest.Add(item);
                 favouredDest.Add(FavouredGoal.ShowsBadge(slot));
+                fullAskDest.Add(item == null ? null : LoweredAsk.FullAsk(slot));
+            }
+        }
+
+        // ---------- lowered goals: "13 (was 27)" ----------
+        // The theme week discount lowers a picked theme's goals for the week. The icon's stack badge
+        // shows the lowered ask; a "was 27" label under the icon shows the full one, before the pick
+        // and all week, so the number reads as temporary (Jeff, 2026-10-20).
+
+        /// <summary>Per icon, the full ask to show under it, or null. Parallel to _leftBonus / _rightBonus.</summary>
+        private readonly List<int?> _leftFullAsks = new List<int?>();
+        private readonly List<int?> _rightFullAsks = new List<int?>();
+
+        private List<int?> FullAsksFor(int slot) => slot == LeftSlot ? _leftFullAsks : _rightFullAsks;
+
+        /// <summary>Extra card height for the label row, reserved whenever this run's difficulty lowers
+        /// goals, so the panel keeps one size across rerolls.</summary>
+        private const int LoweredLabelRowHeight = 38;
+        private const int LoweredLabelTopGap = 16;   // clears the stack badge, which hangs below the icon
+        private const int LoweredLabelSidePad = 20;
+        /// <summary>How far an icon's stack badge reaches past its right edge; kept off the card frame.</summary>
+        private const int StackBadgeOverhang = 12;
+        private static readonly Color LoweredLabelColor = new Color(34, 110, 34);
+
+        private bool AnyLoweredShown
+            => _runController.WeekDiscount > 0
+               || _leftFullAsks.Exists(f => f.HasValue) || _rightFullAsks.Exists(f => f.HasValue);
+
+        private int CardHeight => BaseCardHeight + (AnyLoweredShown ? LoweredLabelRowHeight : 0);
+
+        private int BonusBottomMargin => BaseBonusBottomMargin + (AnyLoweredShown ? LoweredLabelRowHeight : 0);
+
+        private static string LoweredLabel(int full)
+            => Strings.Get("goal.was-short", new Dictionary<string, string> { ["full"] = full.ToString() });
+
+        /// <summary>" (was 27)" for the icon's hover, or "".</summary>
+        private static string WasTag(List<int?> fullAsks, int index)
+            => index < fullAsks.Count && fullAsks[index] is int full
+                ? Strings.Get("goal.was-tag", new Dictionary<string, string> { ["full"] = full.ToString() })
+                : "";
+
+        /// <summary>Icon spacing for one card: wide enough for the widest label, never wider than the
+        /// card's inner width allows (labels scale down to fit instead, see DrawLoweredLabels).</summary>
+        private static int BonusIconPitch(List<int?> fullAsks, int count)
+        {
+            int pitch = BonusIconSize + BonusIconGap;
+            if (count <= 1) return pitch;
+            int widest = 0;
+            foreach (int? full in fullAsks)
+                if (full is int f)
+                    widest = Math.Max(widest, (int)Math.Ceiling(Game1.smallFont.MeasureString(LoweredLabel(f)).X));
+            int maxPitch = (CardWidth - CardInnerPad * 2 - BonusIconSize - StackBadgeOverhang * 2) / (count - 1);
+            return Math.Max(pitch, Math.Min(widest + LoweredLabelSidePad, maxPitch));
+        }
+
+        /// <summary>"was 27" centred under each lowered icon, scaled down when the card is crowded.</summary>
+        private static void DrawLoweredLabels(Microsoft.Xna.Framework.Graphics.SpriteBatch b,
+            List<Rectangle> bounds, List<int?> fullAsks)
+        {
+            int pitch = bounds.Count > 1 ? bounds[1].X - bounds[0].X : CardWidth - CardInnerPad * 2;
+            for (int i = 0; i < bounds.Count && i < fullAsks.Count; i++)
+            {
+                if (fullAsks[i] is not int full) continue;
+                string label = LoweredLabel(full);
+                Vector2 size = Game1.smallFont.MeasureString(label);
+                float scale = Math.Min(1f, (pitch - 4) / Math.Max(1f, size.X));
+                Rectangle icon = bounds[i];
+                var pos = new Vector2(icon.X + (icon.Width - size.X * scale) / 2f, icon.Bottom + LoweredLabelTopGap);
+                Utility.drawTextWithShadow(b, label, Game1.smallFont, pos, LoweredLabelColor, scale);
             }
         }
 

@@ -27,6 +27,9 @@ namespace TheLongestYear.Loop
                 AllWeekGoalSlots(),
                 _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount());
 
+        /// <summary>The share a theme pick takes off its goals on this run's difficulty (0 on Hard and Extreme).</summary>
+        public double WeekDiscount => _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount();
+
         /// <summary>This week's goal lines from both lists (the second is empty except on a double
         /// week). The lists never share a line (GoalLists.Dedupe), so no line is lowered twice.
         /// The slots are the stored objects, so the discount's writes land on the RunState lists.</summary>

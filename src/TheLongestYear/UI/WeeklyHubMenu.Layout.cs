@@ -146,21 +146,21 @@ namespace TheLongestYear.UI
             if (_rerollButton != null)
                 allClickableComponents.Add(_rerollButton);
 
-            ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds);
-            ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds);
+            ComputeBonusIconBounds(_leftCard, _leftBonus.Count, _leftBonusBounds, BonusIconPitch(_leftFullAsks, _leftBonus.Count));
+            ComputeBonusIconBounds(_rightCard, _rightBonus.Count, _rightBonusBounds, BonusIconPitch(_rightFullAsks, _rightBonus.Count));
         }
 
-        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally.</summary>
-        private void ComputeBonusIconBounds(ClickableComponent card, int count, List<Rectangle> bounds)
+        /// <summary>Bonus icon row sits at the bottom of the card, centred horizontally, icons <paramref name="pitch"/> apart.</summary>
+        private void ComputeBonusIconBounds(ClickableComponent card, int count, List<Rectangle> bounds, int pitch)
         {
             bounds.Clear();
             if (card == null || count == 0) return;
 
-            int totalWidth = count * BonusIconSize + (count - 1) * BonusIconGap;
+            int totalWidth = BonusIconSize + (count - 1) * pitch;
             int startX = card.bounds.X + (card.bounds.Width - totalWidth) / 2;
             int y = card.bounds.Y + card.bounds.Height - BonusBottomMargin - BonusIconSize;
             for (int i = 0; i < count; i++)
-                bounds.Add(new Rectangle(startX + i * (BonusIconSize + BonusIconGap), y, BonusIconSize, BonusIconSize));
+                bounds.Add(new Rectangle(startX + i * pitch, y, BonusIconSize, BonusIconSize));
         }
 
         private int FirstRowIdBelowCards()

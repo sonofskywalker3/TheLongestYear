@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.126 - 2026-10-20
+
+### Changed
+
+- On Easy and Normal, a theme card in the planning hub now shows the full amount under each goal the pick would lower, such as "was 27" under a goal that drops to 20. Goals the pick does not lower show no "was". Hard and Extreme do not lower goals, so their cards show none.
+- During the theme week, a lowered goal names its full amount too. The bundle page tooltip says "Asks 20 (was 27) until the week ends.", and the weekly quest and the Season Goals tooltip show "x20 (was 27)". A goal you already donated shows no "was".
+
 ## 0.19.125 - 2026-10-20
 
 ### Fixed
