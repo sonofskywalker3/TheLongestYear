@@ -1,0 +1,17 @@
+0.19.122 - Marriages end at the rewind, a steadier theme pick, and fixes
+
+Covers everything since 0.19.116.
+
+Fixed
+- A marriage or roommate no longer survives the rewind. Your former spouse or roommate goes back to their own home and routine, your children and the spouse room and patio go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet.
+- Ending a marriage at the rewind works even when your spouse is out of the house at that moment.
+- Saves hit by the old bug are repaired when you load them: a villager the game still lists as your spouse, though you are no longer married, goes back to their own home and the spouse room goes away. A marriage you made in the current loop is left alone.
+- The rewind no longer removes data other mods keep on villagers, and a modded location that is only named like a cabin is no longer treated as a farmhouse.
+- The weekly theme pick no longer runs dry partway through a season. You could get a week with one card and a "(no offer)" side, then a Monday with no theme pick at all. The planning hub now deals the themes you haven't picked this month first, then brings back this month's picks that still have goals for you.
+- Re-rolling the theme cards keeps the only theme you haven't picked this month on every pair, and a re-rolled pair stays when you reopen the planning hub that week.
+- If no theme has anything left to ask for, a message tells you so and how many items the Community Center still needs by day 28.
+- Fish bundles no longer ask for a silver or gold Goby. Goby only bites in water so shallow that it always comes out base quality. Any fish that only lives in water that shallow is now asked for at base quality, and fish from other mods follow the same rule.
+- If your board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save. The rest of your board stays exactly as it was.
+- Loading a save is faster. The mod now works out how deep the water is at each fishing spot once per map instead of once per fish.
+
+Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

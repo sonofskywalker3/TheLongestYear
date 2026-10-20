@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.116`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.122`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,17 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.116
+## What's New in 0.19.122
+
+**Fixed: a marriage ends at the rewind.** Your spouse or roommate used to keep living in your farmhouse on the new loop, with your hearts back at zero. Now the rewind ends a marriage like every other relationship: your former spouse or roommate goes back to their own home and routine, your children and the spouse room go away, and you can court and marry again from the start. This also covers extra spouses from polyamory mods such as PolySweet. If your save still has a spouse you are no longer married to, it is repaired when you load it.
+
+**Fixed: the weekly theme pick no longer runs dry.** You could get a week with one card and a "(no offer)" side, or a Monday with no theme pick at all. The planning hub now deals the themes you haven't picked this month first, then brings back this month's picks that still have goals for you. If no theme has anything left to ask for, a message tells you how many items the Community Center still needs by day 28.
+
+**Fixed: fish bundles no longer ask for a silver or gold Goby.** Goby only bites in water so shallow that it always comes out base quality. Any fish that only lives in water that shallow is now asked for at base quality, and fish from other mods follow the same rule. If your board already asks for a silver or gold Goby, it is lowered to a plain Goby when you load your save.
+
+**Loading a save is faster.** The mod now works out how deep the water is at each fishing spot once per map instead of once per fish.
+
+## 0.19.116
 
 **Focus cards: something to aim for in every loop.** At the start of each loop the Junimos deal three hands of cards: tools, buildings and knacks. You pick one card from each hand. Any time that year you can buy a picked card with JP, from the new Focus tab on the farm statue, and the Junimos deliver it: your tool is upgraded where it sits, a coop or barn goes up for free and finished, and a knack works right away. You keep it for every loop after. A card you don't buy waits for you in the upgrade menu at the end of the year, at the same price.
 
