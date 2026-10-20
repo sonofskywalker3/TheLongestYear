@@ -31,27 +31,25 @@ public class MarriageResetRulesTests
     [InlineData("ApryllForever.PolyamorySweetLove/WeddingDate", true)]
     [InlineData("SpouseNeedsPlaced", true)]
     [InlineData("ApryllForever.PolyamorySweetLove/OtherParent", true)]
-    [InlineData("SomeMod/RoommateSince", true)]
-    [InlineData("SomeMod/MarriedOn", true)]
+    [InlineData("SomeMod/RoommateSince", false)]
+    [InlineData("SomeMod/MarriedOn", false)]
+    [InlineData("SomeMod/SpouseGiftCount", false)]
     [InlineData("sonofskywalker3.TheLongestYear/kept", false)]
-    [InlineData("SomeMod/GiftCount", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
-    public void Marriage_mod_data_keys_are_recognised(string key, bool expected)
+    public void Only_known_marriage_mod_data_keys_are_recognised(string key, bool expected)
     {
         Assert.Equal(expected, MarriageResetRules.IsMarriageModDataKey(key));
     }
 
     [Theory]
-    [InlineData("FarmHouse", true)]
-    [InlineData("Cabin", true)]
-    [InlineData("Cabin12345", true)]
-    [InlineData("IslandFarmHouse", true)]
-    [InlineData("SebastianRoom", false)]
-    [InlineData("Town", false)]
-    [InlineData(null, false)]
-    public void Farmer_homes_are_recognised(string map, bool expected)
+    [InlineData("Sebastian", false, false, true)]   // hearts wiped, name left: the bug's save
+    [InlineData("Sebastian", true, false, true)]    // entry back at Friendly: still orphaned
+    [InlineData("Sebastian", true, true, false)]    // a real marriage this loop
+    [InlineData(null, false, false, false)]         // single
+    [InlineData("", false, false, false)]
+    public void Orphaned_spouse_is_one_with_no_marriage_behind_it(string spouse, bool hasEntry, bool partner, bool expected)
     {
-        Assert.Equal(expected, MarriageResetRules.IsFarmerHomeMap(map));
+        Assert.Equal(expected, MarriageResetRules.IsOrphanedSpouse(spouse, hasEntry, partner));
     }
 }

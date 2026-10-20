@@ -31,6 +31,9 @@ namespace TheLongestYear
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
             };
+            // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no
+            // marriage behind it; clear it so that villager goes home (FarmerReset.Marriage.cs).
+            farmerReset.RepairOrphanedMarriage(Game1.player);
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
             JunimoStashService.SetTextureLoader(

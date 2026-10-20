@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.119 - 2026-10-20
+
+### Fixed
+
+- Ending a marriage at the rewind now works even when your spouse is out of the house at that moment. Before, a spouse who was out in town could stop the clear partway, so children stayed, the spouse room stayed and other villagers were not sent home.
+- Saves hit by the old bug are repaired when you load them: if the game still lists a spouse you are no longer married to, that villager goes back to their own home and the spouse room goes away. A marriage you made in the current loop is left alone.
+- The rewind no longer removes data that other mods keep on villagers. Only the marriage records from PolySweet are cleared now, and modded locations that just happen to be named like a cabin are no longer treated as a farmhouse.
+- A problem while ending a marriage can no longer stop the rest of the rewind.
+
 ## 0.19.118 - 2026-10-19
 
 ### Fixed

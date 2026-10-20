@@ -6,6 +6,7 @@ using System.Reflection;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Characters;
+using StardewValley.Locations;
 using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
@@ -19,6 +20,7 @@ namespace TheLongestYear.Loop
     /// report: married Sebastian, roommate Krobus, PolySweet installed; Sebastian in the house on
     /// spring 2 of loop 2). This clears everything vanilla's own Farmer.doDivorce clears, plus the
     /// engagement and mod-data side, and sends every former partner back to their own home.
+    /// Every step logs and swallows its own failure: the marriage clear must never abort the reset.
     /// </summary>
     internal sealed partial class FarmerReset
     {
@@ -45,74 +47,122 @@ namespace TheLongestYear.Loop
         /// married and engaged entries can still be read. Returns every former partner.</summary>
         private IReadOnlyList<string> ClearMarriageState(Farmer p)
         {
-            IReadOnlyList<string> partners = MarriageResetRules.FormerPartners(
-                p.spouse,
-                p.friendshipData.Pairs.Select(kv => (kv.Key,
-                    kv.Value.IsMarried() || kv.Value.IsEngaged() || kv.Value.RoommateMarriage)));
+            IReadOnlyList<string> partners = Array.Empty<string>();
+            try
+            {
+                partners = MarriageResetRules.FormerPartners(
+                    p.spouse,
+                    p.friendshipData.Pairs.Select(kv => (kv.Key, IsPartnerStatus(kv.Value))));
 
-            int cachesCleared = ClearModSpouseCaches(p);
+                // Vanilla doDivorce: spouse null, divorce flag off. Engagement and wedding countdown
+                // live on the friendship entry, which the caller clears next.
+                p.spouse = null;
+                p.divorceTonight.Value = false;
+                List<string> farmerKeys = RemoveMarriageModData(p.modData);
+                int cachesCleared = ClearModSpouseCaches(p);
 
-            // Vanilla doDivorce: spouse null, divorce flag off. Engagement and wedding countdown
-            // live on the friendship entry, which the caller clears next.
-            p.spouse = null;
-            p.divorceTonight.Value = false;
-            int farmerKeys = RemoveMarriageModData(p.modData);
-
-            if (partners.Count > 0 || cachesCleared > 0 || farmerKeys > 0)
-                _monitor.Log(
-                    $"Reset: marriage ended with the rewind. Former partner(s): [{string.Join(", ", partners)}]; " +
-                    $"cleared {cachesCleared} mod spouse cache(s), {farmerKeys} farmer marriage key(s).",
-                    LogLevel.Info);
+                if (partners.Count > 0 || cachesCleared > 0 || farmerKeys.Count > 0)
+                    _monitor.Log(
+                        $"Reset: marriage ended with the rewind. Former partner(s): [{string.Join(", ", partners)}]; " +
+                        $"cleared {cachesCleared} mod spouse cache(s), farmer keys [{string.Join(", ", farmerKeys)}].",
+                        LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Reset: clearing the farmer's marriage failed; continuing the reset.\n{ex}", LogLevel.Error);
+            }
             return partners;
         }
 
-        /// <summary>World-side marriage state, run after friendshipData is cleared: send former
-        /// partners (and any villager still homed in a farmhouse) back to their data home, strip
-        /// marriage mod data from villagers, remove children, and redo the spouse room and patio the
-        /// way vanilla doDivorce does. A failure is logged and the reset goes on.</summary>
-        private void ClearMarriageWorld(Farmer p, IReadOnlyList<string> partners)
+        /// <summary>Saves already hit by the bug (married on paper, hearts wiped): at load, a
+        /// Farmer.spouse with no Married, Engaged or roommate friendship behind it is left over
+        /// from an earlier loop. Clear it and send that villager home. A real marriage keeps its
+        /// Married status, so it never matches.</summary>
+        public void RepairOrphanedMarriage(Farmer p)
         {
             try
             {
-                var sentHome = new List<string>();
-                int npcKeys = 0;
+                string spouse = p.spouse;
+                bool hasEntry = spouse != null && p.friendshipData.TryGetValue(spouse, out Friendship f) && f != null;
+                bool partner = hasEntry && IsPartnerStatus(p.friendshipData[spouse]);
+                if (!MarriageResetRules.IsOrphanedSpouse(spouse, hasEntry, partner))
+                    return;
+
+                p.spouse = null;
+                p.divorceTonight.Value = false;
+                int cachesCleared = ClearModSpouseCaches(p);
+                _monitor.Log(
+                    $"Load: {spouse} was still recorded as the spouse with no marriage behind it (left over from an " +
+                    $"earlier loop); cleared it, {cachesCleared} mod spouse cache(s).",
+                    LogLevel.Warn);
+                ClearMarriageWorld(p, new[] { spouse }, wholeWorld: false);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Load: repairing a left-over spouse failed.\n{ex}", LogLevel.Error);
+            }
+        }
+
+        private static bool IsPartnerStatus(Friendship f)
+            => f != null && (f.IsMarried() || f.IsEngaged() || f.RoommateMarriage);
+
+        /// <summary>World-side marriage state, run after friendshipData is cleared: send former
+        /// partners back to their data home, strip marriage mod data, and redo the spouse room and
+        /// patio the way vanilla doDivorce does. With <paramref name="wholeWorld"/> (the rewind) it
+        /// also sends home any villager still homed in a farmhouse and removes children.</summary>
+        private void ClearMarriageWorld(Farmer p, IReadOnlyList<string> partners, bool wholeWorld = true)
+        {
+            try
+            {
                 var formerPartners = new HashSet<string>(partners, StringComparer.Ordinal);
+                var toSendHome = new List<NPC>();
+                var clearedKeys = new List<string>();
+
+                // Collect first: PerformDivorce warps the NPC, which removes it from the location's
+                // character list ForEachVillager is walking ("Collection was modified").
                 Utility.ForEachVillager(npc =>
                 {
-                    npcKeys += RemoveMarriageModData(npc.modData);
                     bool wasPartner = formerPartners.Contains(npc.Name);
-                    bool homedWithFarmer = MarriageResetRules.IsFarmerHomeMap(npc.DefaultMap)
-                        || MarriageResetRules.IsFarmerHomeMap(npc.currentLocation?.NameOrUniqueName);
-                    if ((wasPartner || homedWithFarmer) && npc.getSpouse() == null)
+                    if (!wasPartner && !wholeWorld) return true;
+                    foreach (string key in RemoveMarriageModData(npc.modData))
+                        clearedKeys.Add($"{npc.Name}:{key}");
+                    bool homedWithFarmer = IsFarmerHome(Game1.getLocationFromName(npc.DefaultMap))
+                        || IsFarmerHome(npc.currentLocation);
+                    if ((wasPartner || (wholeWorld && homedWithFarmer)) && npc.getSpouse() == null)
+                        toSendHome.Add(npc);
+                    return true;
+                });
+
+                var sentHome = new List<string>();
+                foreach (NPC npc in toSendHome)
+                {
+                    try
                     {
                         npc.PerformDivorce();
                         sentHome.Add(npc.Name);
                     }
-                    return true;
-                });
-
-                int children = 0;
-                Utility.ForEachLocation(loc =>
-                {
-                    if (!MarriageResetRules.IsFarmerHomeMap(loc.NameOrUniqueName)) return true;
-                    for (int i = loc.characters.Count - 1; i >= 0; i--)
+                    catch (Exception ex)
                     {
-                        if (loc.characters[i] is Child)
-                        {
-                            loc.characters.RemoveAt(i);
-                            children++;
-                        }
+                        _monitor.Log($"Reset: could not send {npc.Name} home.\n{ex}", LogLevel.Error);
                     }
-                    return true;
-                });
+                }
 
-                Utility.getHomeOfFarmer(p)?.showSpouseRoom();
-                Game1.getFarm()?.UpdatePatio();
+                int children = wholeWorld ? RemoveChildren() : 0;
 
-                if (sentHome.Count > 0 || npcKeys > 0 || children > 0)
+                try
+                {
+                    Utility.getHomeOfFarmer(p)?.showSpouseRoom();
+                    Game1.getFarm()?.UpdatePatio();
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Reset: could not refresh the spouse room or patio.\n{ex}", LogLevel.Error);
+                }
+
+                if (sentHome.Count > 0 || clearedKeys.Count > 0 || children > 0)
                     _monitor.Log(
-                        $"Reset: sent home [{string.Join(", ", sentHome)}], removed {npcKeys} villager marriage key(s), " +
-                        $"{children} child(ren).",
+                        $"Marriage clear: sent home [{string.Join(", ", sentHome)}], removed mod data " +
+                        $"[{string.Join(", ", clearedKeys)}], {children} child(ren).",
                         LogLevel.Info);
 
                 LogLeftoverMarriage(p);
@@ -121,6 +171,29 @@ namespace TheLongestYear.Loop
             {
                 _monitor.Log($"Reset: clearing the world side of the marriage failed; continuing.\n{ex}", LogLevel.Error);
             }
+        }
+
+        /// <summary>FarmHouse covers the cabins (Cabin derives from FarmHouse); IslandFarmHouse is
+        /// the Ginger Island house. A modded map that is merely named like a cabin does not count.</summary>
+        private static bool IsFarmerHome(GameLocation loc) => loc is FarmHouse || loc is IslandFarmHouse;
+
+        private static int RemoveChildren()
+        {
+            int children = 0;
+            Utility.ForEachLocation(loc =>
+            {
+                if (!IsFarmerHome(loc)) return true;
+                for (int i = loc.characters.Count - 1; i >= 0; i--)
+                {
+                    if (loc.characters[i] is Child)
+                    {
+                        loc.characters.RemoveAt(i);
+                        children++;
+                    }
+                }
+                return true;
+            });
+            return children;
         }
 
         /// <summary>Read the marriage back through the public getters (which other mods may patch)
@@ -140,19 +213,19 @@ namespace TheLongestYear.Loop
                 return true;
             });
             if (leftovers.Count > 0)
-                _monitor.Log("Reset: marriage data still present after the rewind (another mod may keep it): "
+                _monitor.Log("Marriage clear: marriage data still present (another mod may keep it): "
                     + string.Join("; ", leftovers), LogLevel.Warn);
             else
-                _monitor.Log("Reset: no marriage state left (spouse none, no villager married).", LogLevel.Trace);
+                _monitor.Log("Marriage clear: no marriage state left (spouse none, no villager married).", LogLevel.Trace);
         }
 
-        private static int RemoveMarriageModData(StardewValley.Mods.ModDataDictionary modData)
+        private static List<string> RemoveMarriageModData(StardewValley.Mods.ModDataDictionary modData)
         {
-            if (modData == null) return 0;
+            if (modData == null) return new List<string>();
             List<string> keys = modData.Keys.Where(MarriageResetRules.IsMarriageModDataKey).ToList();
             foreach (string key in keys)
                 modData.Remove(key);
-            return keys.Count;
+            return keys;
         }
 
         private int ClearModSpouseCaches(Farmer p)
@@ -160,38 +233,44 @@ namespace TheLongestYear.Loop
             int cleared = 0;
             foreach ((string asm, string type, string field) in ModSpouseCaches)
             {
-                if (FindStaticField(asm, type, field)?.GetValue(null) is IDictionary cache && cache.Contains(p.UniqueMultiplayerID))
+                try
                 {
-                    cache.Remove(p.UniqueMultiplayerID);
-                    cleared++;
+                    if (FindStaticField(asm, type, field)?.GetValue(null) is IDictionary cache && cache.Contains(p.UniqueMultiplayerID))
+                    {
+                        cache.Remove(p.UniqueMultiplayerID);
+                        cleared++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Marriage clear: could not clear {type}.{field} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
                 }
             }
             foreach ((string asm, string type, string field) in ModSpouseSlots)
             {
-                FieldInfo slot = FindStaticField(asm, type, field);
-                if (slot != null && !slot.FieldType.IsValueType && slot.GetValue(null) != null)
+                try
                 {
-                    slot.SetValue(null, null);
-                    cleared++;
+                    FieldInfo slot = FindStaticField(asm, type, field);
+                    if (slot != null && !slot.IsInitOnly && !slot.FieldType.IsValueType && slot.GetValue(null) != null)
+                    {
+                        slot.SetValue(null, null);
+                        cleared++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Marriage clear: could not clear {type}.{field} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
                 }
             }
             return cleared;
         }
 
-        private FieldInfo FindStaticField(string assemblyName, string typeName, string fieldName)
+        private static FieldInfo FindStaticField(string assemblyName, string typeName, string fieldName)
         {
-            try
-            {
-                Assembly asm = AppDomain.CurrentDomain.GetAssemblies()
-                    .FirstOrDefault(a => a.GetName().Name == assemblyName);
-                return asm?.GetType(typeName)?.GetField(fieldName,
-                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-            catch (Exception ex) when (ex is TypeLoadException || ex is ReflectionTypeLoadException)
-            {
-                _monitor.Log($"Reset: could not read {typeName}.{fieldName} ({ex.Message}).", LogLevel.Trace);
-                return null;
-            }
+            Assembly asm = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == assemblyName);
+            return asm?.GetType(typeName)?.GetField(fieldName,
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         }
     }
 }
