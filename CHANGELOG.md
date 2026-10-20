@@ -3,6 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.120 - 2026-10-20
+
+### Fixed
+
+- The weekly theme pick now always deals a theme you haven't picked this month before bringing back one you already picked, even when the unpicked theme has only one goal left to ask for. Before, a theme you picked earlier could take the card, and the unpicked theme's last goal never came up.
+- Re-rolling the theme cards no longer hides the only theme you haven't picked this month behind two you already picked. It stays on every re-rolled pair, and themes with a full card of goals come back before ones with a single goal.
+- A re-rolled pair that brought back a theme you already picked now stays when you reopen the planning hub that week, as long as that theme still has a goal to ask for.
+- The message for a week with no theme now reads more plainly and still says how many items the Community Center needs by day 28.
+
 ## 0.19.119 - 2026-10-20
 
 ### Fixed

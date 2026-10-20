@@ -74,9 +74,13 @@ public class SelectionRefillTests
         int Ask(Theme t) => t switch { Theme.Mixed => 3, Theme.Fishing => 2, Theme.Mining => 5, Theme.Kitchen => 1, _ => 0 };
         var picked = new[] { Theme.Mixed, Theme.Fishing, Theme.Mining, Theme.Kitchen };
         for (int seed = 1; seed <= Seeds; seed++)
-            Assert.Equal(
-                SelectionService.OfferForWeek(seed, 4, picked, Ask),
-                SelectionService.OfferForWeek(seed, 4, picked, Ask));
+        {
+            var offer = SelectionService.OfferForWeek(seed, 4, picked, Ask);
+            Assert.Equal(offer, SelectionService.OfferForWeek(seed, 4, picked.ToList(), Ask));
+            // Three picked themes fill a card, so thin Kitchen never refills.
+            Assert.Equal(2, offer.Count);
+            Assert.DoesNotContain(Theme.Kitchen, offer);
+        }
     }
 
     [Fact]
@@ -111,8 +115,9 @@ public class SelectionRefillTests
     public void Candidates_add_picked_themes_when_fewer_than_two_are_left()
     {
         int Ask(Theme t) => t switch { Theme.Artisan => 4, Theme.Mixed => 3, Theme.Farming => 1, _ => 0 };
+        // Mixed fills a card, so thin Farming stays out (the offer's refill order).
         var candidates = SelectionService.Candidates(new[] { Theme.Farming, Theme.Mixed, Theme.Fishing }, Ask);
-        Assert.Equal(new[] { Theme.Artisan, Theme.Farming, Theme.Mixed }, candidates);
+        Assert.Equal(new[] { Theme.Artisan, Theme.Mixed }, candidates);
     }
 
     [Fact]

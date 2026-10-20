@@ -121,7 +121,7 @@ namespace TheLongestYear.UI
 
         private bool RerollCanChange()
             => _rerollCanChange ??= RerollCycle.CanChange(
-                _runController.OfferCandidates(OfferWeek, _offerSeason, SelectionsForOffer), _offer);
+                _runController.OfferCandidates(OfferWeek, _offerSeason, SelectionsForOffer), _offer, SelectionsForOffer);
 
         /// <summary>The picks the offer excludes. The day-28 pre-pick is for next month, so none
         /// (the same rule <see cref="MenuLauncher.OpenWeeklyHub"/> uses for the first offer).</summary>
@@ -155,7 +155,7 @@ namespace TheLongestYear.UI
             IReadOnlyList<Theme> candidates = _runController
                 .OfferCandidates(week, _offerSeason, SelectionsForOffer);
             var rng = new System.Random(_run.Seed ^ (week * 7919) ^ (_rerollCounter * RerollSaltPrime));
-            _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng).ToList();
+            _offer = RerollCycle.Next(candidates, _run.RerollSeenPairs, _offer, rng, SelectionsForOffer).ToList();
             _double = ComputeDouble();
             _run.RecordReroll(week, _offer, _rerollCounter);
             _rerollCanChange = null;

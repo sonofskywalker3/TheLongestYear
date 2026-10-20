@@ -101,6 +101,17 @@ public static class SelectionService
             offer.AddRange(fallback.Take(OfferSize - offer.Count));
         }
 
+        // Still short: a thin activity theme not picked this month pads before any picked theme
+        // comes back, so an unpicked theme with one goal left is never passed over for a reused one.
+        if (offer.Count < OfferSize)
+        {
+            List<Theme> activityPad = UnpickedPadders(selectedSet, askableFor)
+                .Where(t => !ThemeDomains.RoomThemes.Contains(t) && !offer.Contains(t))
+                .ToList();
+            Shuffle(activityPad, rng);
+            offer.AddRange(activityPad.Take(OfferSize - offer.Count));
+        }
+
         if (offer.Count < OfferSize)
             offer.AddRange(RefillOrder(selected, offer, askableFor, rng).Take(OfferSize - offer.Count));
         return offer;
@@ -131,27 +142,47 @@ public static class SelectionService
     }
 
     /// <summary>The themes a re-roll may offer: every theme not picked this month that can ask for
-    /// at least <see cref="MinAskableToPad"/> goal, plus the picked ones that can when fewer than a
-    /// pair is left (the same refill the weekly offer makes) (Jeff, 2026-09-28, from Nijah's report: with the
-    /// old floor of <see cref="MinAskableToOffer"/> a week with exactly two qualified themes
-    /// re-rolled the same pair forever). Never a theme that can ask nothing, which would lift the
-    /// drawback for free. The normal weekly offer keeps its floor of two.</summary>
+    /// at least <see cref="MinAskableToPad"/> goal, plus picked ones when fewer than a pair is left
+    /// (Jeff, 2026-09-28, from Nijah's report: with the old floor of <see cref="MinAskableToOffer"/>
+    /// a week with exactly two qualified themes re-rolled the same pair forever). The picked ones
+    /// join in the offer's refill order: those that can fill a card, and the thin ones only when
+    /// that still leaves less than a pair. <see cref="RerollCycle"/> keeps every unpicked candidate
+    /// on a re-rolled pair. Never a theme that can ask nothing, which would lift the drawback for
+    /// free. The normal weekly offer keeps its floor of two.</summary>
     public static IReadOnlyList<Theme> Candidates(
         IReadOnlyCollection<Theme> alreadySelectedThisMonth, Func<Theme, int> askableFor)
     {
         if (askableFor == null) throw new ArgumentNullException(nameof(askableFor));
         var selectedSet = new HashSet<Theme>(alreadySelectedThisMonth ?? Array.Empty<Theme>());
-        List<Theme> candidates = Enum.GetValues(typeof(Theme)).Cast<Theme>()
-            .Where(t => !selectedSet.Contains(t) && askableFor(t) >= MinAskableToPad)
-            .OrderBy(t => (int)t)
-            .ToList();
-        // Fewer than a pair left: the picked themes that can still ask join, as in the offer's refill.
+        List<Theme> candidates = UnpickedPadders(selectedSet, askableFor).ToList();
+        if (candidates.Count >= OfferSize) return candidates;
+
+        List<Theme> picked = selectedSet.OrderBy(t => (int)t).ToList();
+        candidates.AddRange(picked.Where(t => askableFor(t) >= MinAskableToOffer));
         if (candidates.Count < OfferSize)
-            candidates.AddRange(selectedSet
-                .Where(t => askableFor(t) >= MinAskableToPad)
-                .OrderBy(t => (int)t));
+            candidates.AddRange(picked.Where(t => askableFor(t) >= MinAskableToPad && askableFor(t) < MinAskableToOffer));
         return candidates;
     }
+
+    /// <summary>This month's picks a stored re-roll may no longer show: those that can ask nothing
+    /// now. A picked theme only reaches a re-roll through the refill, and it stays valid for the
+    /// week while it can still ask for a goal, even if other counts moved since the re-roll.</summary>
+    public static IReadOnlyCollection<Theme> StaleRerollPicks(
+        IReadOnlyCollection<Theme> alreadySelectedThisMonth, Func<Theme, int> askableFor)
+    {
+        if (askableFor == null) throw new ArgumentNullException(nameof(askableFor));
+        return (alreadySelectedThisMonth ?? Array.Empty<Theme>())
+            .Distinct()
+            .Where(t => askableFor(t) < MinAskableToPad)
+            .ToList();
+    }
+
+    /// <summary>Every theme not picked this month that can ask for at least
+    /// <see cref="MinAskableToPad"/> goal, in enum order.</summary>
+    private static IEnumerable<Theme> UnpickedPadders(HashSet<Theme> selectedSet, Func<Theme, int> askableFor)
+        => Enum.GetValues(typeof(Theme)).Cast<Theme>()
+            .Where(t => !selectedSet.Contains(t) && askableFor(t) >= MinAskableToPad)
+            .OrderBy(t => (int)t);
 
     private static void Shuffle(List<Theme> list, Random rng)
     {

@@ -80,16 +80,14 @@ namespace TheLongestYear.Loop
             _monitor.Log($"No theme this week; HUD: \"{text}\" ({due} item(s) still due by {Run.Season} 28).", LogLevel.Warn);
         }
 
-        /// <summary>The picks a stored re-roll may still show: this month's picks minus any the week's
-        /// refill can deal again (offer or re-roll candidates). Without this, a re-rolled pair that
-        /// holds a refilled theme would be thrown away on reopening the hub.</summary>
+        /// <summary>The picks that void a stored re-roll: this month's picks that can ask nothing now
+        /// (<see cref="SelectionService.StaleRerollPicks"/>). A re-rolled pair that holds a refilled
+        /// theme survives reopening the hub while that theme can still ask for a goal.</summary>
         internal IReadOnlyCollection<Theme> RerollExclusions(
             int week, CoreSeason season, IReadOnlyCollection<Theme> selections)
         {
             if (selections == null || selections.Count == 0 || Run.RerollWeek != week) return selections;
-            var reusable = new HashSet<Theme>(OfferFor(week, season, selections)
-                .Concat(OfferCandidates(week, season, selections)));
-            return selections.Where(t => !reusable.Contains(t)).ToList();
+            return SelectionService.StaleRerollPicks(selections, t => AskableCount(t, season, week));
         }
 
         private static List<Theme> ThemesHolding(
