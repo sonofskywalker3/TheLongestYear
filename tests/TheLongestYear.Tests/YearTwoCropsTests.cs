@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
@@ -81,4 +82,43 @@ public class YearTwoCropsTests
         Assert.Equal(new[] { "(O)24" }, pools.Crops.Select(p => p.ItemId));
         Assert.DoesNotContain("(O)248", pools.QualityEligibleIds!);
     }
+
+    // Jeff, 2026-10-21: without the Pierre buy the three crops only come from Mixed Seeds, so their
+    // ask basis is 5, not the shop-seed 99 (a Fall board asked 49 Artichokes, JazzDaxx on Nexus).
+    [Theory]
+    [InlineData(YearTwoCrops.Garlic)]
+    [InlineData(YearTwoCrops.RedCabbage)]
+    [InlineData(YearTwoCrops.Artichoke)]
+    public void Year_two_crop_basis_is_mixed_seeds_without_pierre_and_a_shop_seed_with_it(string id)
+    {
+        Assert.Equal(99, QuantityBasisTables.Crops[id]);
+        Assert.Equal(YearTwoCrops.MixedSeedsOnlyAskBasis, QuantityAskPass.BasisByDeadline(id, Season.Fall, hasUpgrade: _ => false));
+        Assert.Equal(99, QuantityAskPass.BasisByDeadline(id, Season.Fall, hasUpgrade: u => u == YearTwoCrops.PierreUpgrade));
+        // A cultivation upgrade adds a Mixed Seeds route, not a shop, so it keeps the low basis.
+        Assert.Equal(YearTwoCrops.MixedSeedsOnlyAskBasis,
+            QuantityAskPass.BasisByDeadline(id, Season.Fall, hasUpgrade: u => u != YearTwoCrops.PierreUpgrade));
+        // No save in hand: the generated table stands.
+        Assert.Equal(99, QuantityAskPass.BasisByDeadline(id, Season.Fall));
+    }
+
+    [Theory]
+    [InlineData(YearTwoCrops.Garlic)]
+    [InlineData(YearTwoCrops.RedCabbage)]
+    [InlineData(YearTwoCrops.Artichoke)]
+    public void Year_two_crop_ask_keeps_the_difficulty_band_and_gold_factor_on_the_lower_basis(string id)
+    {
+        DifficultyProfile hard = DifficultyResolver.Resolve(new DifficultySettings { StackSize = DifficultyStep.Hard }, new GameplayConfig());
+        for (int seed = 0; seed < 50; seed++)
+        {
+            int without = Roll(id, hard, seed, 0, _ => false);
+            Assert.Equal(AskBands.Roll(YearTwoCrops.MixedSeedsOnlyAskBasis, hard, new Random(seed)), without);
+            Assert.Equal(AskBands.ForGold(without, AskBands.CropGoldFactor), Roll(id, hard, seed, 2, _ => false));
+            Assert.Equal(AskBands.Roll(99, hard, new Random(seed)), Roll(id, hard, seed, 0, u => u == YearTwoCrops.PierreUpgrade));
+        }
+    }
+
+    private static int Roll(string id, DifficultyProfile profile, int seed, int quality, Func<string, bool> hasUpgrade)
+        => QuantityAskPass.Apply(
+            new BundleSpec("Pantry", 5, "Test", "Test", "O 495 30", 0, 1, new List<BundleSlotSpec> { new(id, 1, quality) }),
+            profile, _ => null, new Random(seed), hasUpgrade: hasUpgrade).Slots[0].Stack;
 }

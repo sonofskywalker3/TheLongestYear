@@ -116,7 +116,7 @@ namespace TheLongestYear
                 foreach (bool allowModItems in modItemsOrder)
                 foreach (bool nonObject in new[] { _config.EnableNonObjectDonations, !_config.EnableNonObjectDonations })
                 {
-                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty);
+                    var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty, state.HasUpgrade);
                     engine.Availability = _availability;
                     engine.AllowModItems = allowModItems;
                     GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
@@ -163,7 +163,7 @@ namespace TheLongestYear
                 state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
                 BundleGenerationTuning freshTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
-                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty);
+                var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty, _meta.State.HasUpgrade);
                 engine.Availability = _availability;
                 // A NEW board takes the save's "Allow mod items in custom bundles" choice (written
                 // from the new-game default above) and stamps it with the board.

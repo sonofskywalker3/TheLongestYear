@@ -119,7 +119,7 @@ namespace TheLongestYear.Loop
                 // generation. Scale returns the same instance at Normal.
                 var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty);
+                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty, _meta.HasUpgrade);
                 engine.Availability = AvailabilityModel;
                 // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1): a new board takes
                 // the save's choice, a held board keeps the value it was built under. Stamped with the

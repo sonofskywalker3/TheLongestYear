@@ -216,6 +216,10 @@ namespace TheLongestYear.Loop
         /// <summary>Save-specific pool exclusions (YearTwoCrops.ExcludedFor). Part of the
         /// generation inputs: reset and reload must pass the same set.</summary>
         private readonly IReadOnlySet<string> _extraExcludedIds;
+        /// <summary>The save's owned upgrades, read by the quantity pass for the year-two crop
+        /// bases (YearTwoCrops.CropAskBasis). Generation input like the exclusions: reset and
+        /// reload must pass the same save.</summary>
+        private readonly Func<string, bool> _hasUpgrade;
 
         /// <summary>Derived item model, forwarded to <see cref="BundleSlotFiller.Fill"/> for the
         /// stretch and hard-item swaps (spec 2026-08-28-obtainable-board-2-stretch). Must be set the
@@ -240,9 +244,10 @@ namespace TheLongestYear.Loop
         /// tags them, so a board that quietly stopped rolling is visible in the log.</summary>
         public IReadOnlySet<string> LastVanillaOnlyRecipes => _lastVanillaOnlyRecipes;
 
-        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null, Core.DifficultyProfile difficulty = null)
+        public BundleEngine(IMonitor monitor, BundleGenerationTuning tuning, bool nonObjectDonationsEnabled, RarityThresholds thresholds = null, IReadOnlySet<string> extraExcludedIds = null, Core.DifficultyProfile difficulty = null, Func<string, bool> hasUpgrade = null)
         {
             _extraExcludedIds = extraExcludedIds;
+            _hasUpgrade = hasUpgrade;
             _monitor = monitor;
             _pool = new VanillaBundlePool(monitor);
             _tuning = tuning ?? new BundleGenerationTuning();

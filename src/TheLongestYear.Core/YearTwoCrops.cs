@@ -37,6 +37,15 @@ public static class YearTwoCrops
     public const string RedCabbage = "(O)266";
     public const string Artichoke = "(O)274";
 
+    /// <summary>Weekly ask basis for each of the three crops when the player does not own
+    /// <see cref="PierreUpgrade"/>. Without the Pierre buy, Mixed Seeds are the only route, and the
+    /// generated shop-seed basis of 99 let a Fall board ask for 49 Artichokes (JazzDaxx, Nexus;
+    /// Jeff, 2026-10-21).</summary>
+    public const double MixedSeedsOnlyAskBasis = 5;
+
+    private static readonly IReadOnlySet<string> CropIds =
+        new HashSet<string>(StringComparer.Ordinal) { Garlic, RedCabbage, Artichoke };
+
     /// <summary>The seeds behind those three crops. Their "YEAR 2" shop lines are TLY's own
     /// business (the upgrades above, and <see cref="ExcludedFor"/> on Easy), so source reachability
     /// does not read the year lock on them. Every other year-2 line, vanilla or modded, is closed.</summary>
@@ -59,4 +68,13 @@ public static class YearTwoCrops
             excluded.Add(RedCabbage);
         return excluded;
     }
+
+    /// <summary>The ask basis for <paramref name="qualifiedId"/>'s crop-table row: <see
+    /// cref="MixedSeedsOnlyAskBasis"/> for one of the three crops while <see cref="PierreUpgrade"/>
+    /// is not owned, the table's own value otherwise. A null <paramref name="hasUpgrade"/> (no save
+    /// in hand) keeps the table value.</summary>
+    public static double CropAskBasis(string qualifiedId, double tableBasis, Func<string, bool>? hasUpgrade)
+        => hasUpgrade != null && CropIds.Contains(qualifiedId) && !hasUpgrade(PierreUpgrade)
+            ? MixedSeedsOnlyAskBasis
+            : tableBasis;
 }

@@ -110,7 +110,7 @@ namespace TheLongestYear
             var engine = new TheLongestYear.Loop.BundleEngine(
                 this.Monitor, _config.PoolTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                 TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, candidateDifficulty.Steps.ItemRarity),
-                candidateDifficulty);
+                candidateDifficulty, _meta.State.HasUpgrade);
             engine.Availability = _availability;
             engine.AllowModItems = _meta.State.ModItemsOnBoard();
             int candidateSeed = BundleEngineSeed.For(

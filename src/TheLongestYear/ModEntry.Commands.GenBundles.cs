@@ -84,7 +84,7 @@ namespace TheLongestYear
             TheLongestYear.Core.DifficultyProfile genDifficulty = _meta.State.BoardDifficulty(_config);
             BundleGenerationTuning genTuning =
                 TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, genDifficulty);
-            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
+            var firstEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty, _meta.State.HasUpgrade);
             firstEngine.Availability = _availability;
             firstEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
@@ -93,7 +93,7 @@ namespace TheLongestYear
                 LogLevel.Info);
             LogGeneratedBundleSet(firstEngine, first, itemSeasonPins, bundleQuotas);
 
-            var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty);
+            var secondEngine = new TheLongestYear.Loop.BundleEngine(this.Monitor, genTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, genDifficulty.Steps.ItemRarity), genDifficulty, _meta.State.HasUpgrade);
             secondEngine.Availability = _availability;
             secondEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);

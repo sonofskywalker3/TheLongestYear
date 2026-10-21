@@ -22,17 +22,19 @@ public static class QuantityAskPass
     private const int QualityGold = 2;
 
     public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
-        ItemAvailabilityModel? model = null)
-        => Apply(spec, profile, deadlineFor, rng, out _, model);
+        ItemAvailabilityModel? model = null, Func<string, bool>? hasUpgrade = null)
+        => Apply(spec, profile, deadlineFor, rng, out _, model, hasUpgrade);
 
     /// <param name="bandedSlots">The slot indices this pass actually set. The stack multiplier skips
     /// exactly these; an item that has a basis somewhere but none reachable by its deadline is NOT
     /// banded, keeps its stack, and still meets the multiplier (design review, 2026-09-04).</param>
     /// <param name="model">Carries the generated dish table (<see cref="ItemAvailabilityModel.DishBases"/>);
     /// without it cooked dishes stay single asks.</param>
+    /// <param name="hasUpgrade">The save's owned upgrades, for the year-two crop bases
+    /// (<see cref="YearTwoCrops.CropAskBasis"/>). Null keeps the generated table.</param>
     public static BundleSpec Apply(
         BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
-        out IReadOnlySet<int> bandedSlots, ItemAvailabilityModel? model = null)
+        out IReadOnlySet<int> bandedSlots, ItemAvailabilityModel? model = null, Func<string, bool>? hasUpgrade = null)
     {
         if (spec == null) throw new ArgumentNullException(nameof(spec));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -47,7 +49,7 @@ public static class QuantityAskPass
             BundleSlotSpec slot = spec.Slots[i];
             if (LegendaryFishRules.IsLegendary(slot.ItemId) || !Covers(slot.ItemId, model))
                 continue;
-            double? basis = BasisByDeadline(slot.ItemId, deadlineFor(slot.ItemId), model);
+            double? basis = BasisByDeadline(slot.ItemId, deadlineFor(slot.ItemId), model, hasUpgrade);
             if (basis == null)
                 continue;
             touched.Add(i);
@@ -85,8 +87,13 @@ public static class QuantityAskPass
     ///
     /// A <see cref="SeasonalAskBasis"/> hand row is the per-season candidate when the id has one, even
     /// in a season where it reads 0; only an id without a hand row falls back to the model's
-    /// generated dish table.</summary>
-    public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null)
+    /// generated dish table.
+    ///
+    /// The crop row of Garlic, Red Cabbage and Artichoke drops to Mixed Seeds odds while the Pierre
+    /// upgrade is not owned (<see cref="YearTwoCrops.CropAskBasis"/>); a null
+    /// <paramref name="hasUpgrade"/> keeps the generated value.</summary>
+    public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null,
+        Func<string, bool>? hasUpgrade = null)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
         double? best = FishAskBasis.BasisByDeadline(id, deadline);
@@ -97,7 +104,12 @@ public static class QuantityAskPass
             double gathered = (forage ?? 0) + (pot ?? 0);
             if (best == null || gathered > best) best = gathered;
         }
-        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.Crops, QuantityBasisTables.MonsterDropsMeasured, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
+        if (QuantityBasisTables.Crops.TryGetValue(id, out double crop))
+        {
+            crop = YearTwoCrops.CropAskBasis(id, crop, hasUpgrade);
+            if (best == null || crop > best) best = crop;
+        }
+        foreach (IReadOnlyDictionary<string, double> table in new[] { QuantityBasisTables.MonsterDropsMeasured, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             if (table.TryGetValue(id, out double basis) && (best == null || basis > best)) best = basis;
         double? seasonal = SeasonalAskBasis.Rows.ContainsKey(id)
             ? SeasonalAskBasis.BasisByDeadline(id, deadline)
