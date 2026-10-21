@@ -3,6 +3,19 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 0.19.135 - 2026-10-21
+
+### Changed
+
+- Without the upgrade that has Pierre sell year-two seeds, Artichoke, Garlic and Red Cabbage asks are capped by your Stack Size setting: at most 2 on Easy, 3 on Normal, 4 on Hard and 5 on Extreme. This covers bundles, weekly goals, goods made from these crops, and dishes that can only be cooked with them. Owning the Pierre upgrade lifts the cap. Replaces the 0.19.134 change.
+- The Junimo Points earned tooltip now lists what each step gives (Easy 1.5x, Normal 1x, Hard 0.75x, Extreme 0.5x) and says harder settings give fewer points.
+
+## 0.19.134 - 2026-10-21
+
+### Fixed
+
+- Artichoke, Garlic and Red Cabbage were asked for as if Pierre sold their seeds, so a Fall board could ask for 49 Artichokes in year one. Without the Pierre year-two seeds upgrade they now ask far fewer.
+
 ## 0.19.133 - 2026-10-20
 
 ### Fixed

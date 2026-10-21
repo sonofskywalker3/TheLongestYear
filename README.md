@@ -8,7 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.133`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
+This is a **beta** (`0.19.135`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
 
 **This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
 
@@ -25,7 +25,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.133
+## What's New in 0.19.135
+
+**Fixed: Artichoke, Garlic and Red Cabbage asks fit what you can grow.** Without the upgrade that has Pierre sell year-two seeds, these three crops only come from Mixed Seeds, but a bundle could still ask for dozens of them. Now a bundle, a weekly goal or a dish made from them asks for at most 2 on Easy, 3 on Normal, 4 on Hard and 5 on Extreme, going by your Stack Size setting. Once you own the Pierre upgrade they are asked for like any other crop. A board already in play keeps its counts until your next rewind.
+
+**Clearer Junimo Points setting.** The tooltip now says what each step gives: Easy 1.5x, Normal 1x, Hard 0.75x and Extreme 0.5x. Harder settings give fewer points, so upgrades take more loops to afford.
 
 **Everything that counts toward Perfection now starts over each year.** The rewind clears your shipping collection, your money earned, the fish you have caught, the dishes you have cooked and the Monster Slayer goals. Since money earned starts from zero, the letters from Mom or Dad and the Tribune's "up and coming" story come again each year. Anything you bought a keep for in the upgrade menu still comes back. Since the fish collection starts over, the first fish you catch each year is the easy beginner catch again, and bobber styles unlock again as you catch new kinds of fish, the same as in a new game.
 
