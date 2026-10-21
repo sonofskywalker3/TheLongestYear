@@ -273,6 +273,9 @@ namespace TheLongestYear.Loop
                 // A capped item asks for one, whatever the passes above made of its stack
                 // (vanilla's "5 Mystery Box" on a kept Helper's, the stack dial, the quantity pass).
                 composed = Core.CappedAsks.ClampBundle(composed);
+                // The year-two crop cap holds whatever the passes above made of a stack, the
+                // stack dial on an unbanded slot included.
+                composed = Core.YearTwoCrops.ClampBundle(composed, _difficulty.EffectiveYearTwoCropAskCap(), _hasUpgrade, Availability);
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
 

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TheLongestYear.Core.Availability;
 
 namespace TheLongestYear.Core;
 
@@ -37,13 +39,13 @@ public static class YearTwoCrops
     public const string RedCabbage = "(O)266";
     public const string Artichoke = "(O)274";
 
-    /// <summary>Weekly ask basis for each of the three crops when the player does not own
-    /// <see cref="PierreUpgrade"/>. Without the Pierre buy, Mixed Seeds are the only route, and the
-    /// generated shop-seed basis of 99 let a Fall board ask for 49 Artichokes (JazzDaxx, Nexus;
-    /// Jeff, 2026-10-21).</summary>
-    public const double MixedSeedsOnlyAskBasis = 5;
+    /// <summary>The most any one ask may want of the three crops while <see cref="PierreUpgrade"/>
+    /// is not owned, by the Stack Size step. Without the Pierre buy, Mixed Seeds are the only
+    /// route, and the shop-seed basis of 99 let a Fall board ask for 49 Artichokes (JazzDaxx,
+    /// Nexus; Jeff, 2026-10-21). The band roll still runs; a roll under the cap stands.</summary>
+    public const int AskCapEasy = 2, AskCapNormal = 3, AskCapHard = 4, AskCapExtreme = 5;
 
-    private static readonly IReadOnlySet<string> CropIds =
+    public static readonly IReadOnlySet<string> CropIds =
         new HashSet<string>(StringComparer.Ordinal) { Garlic, RedCabbage, Artichoke };
 
     /// <summary>The seeds behind those three crops. Their "YEAR 2" shop lines are TLY's own
@@ -69,12 +71,80 @@ public static class YearTwoCrops
         return excluded;
     }
 
-    /// <summary>The ask basis for <paramref name="qualifiedId"/>'s crop-table row: <see
-    /// cref="MixedSeedsOnlyAskBasis"/> for one of the three crops while <see cref="PierreUpgrade"/>
-    /// is not owned, the table's own value otherwise. A null <paramref name="hasUpgrade"/> (no save
-    /// in hand) keeps the table value.</summary>
-    public static double CropAskBasis(string qualifiedId, double tableBasis, Func<string, bool>? hasUpgrade)
-        => hasUpgrade != null && CropIds.Contains(qualifiedId) && !hasUpgrade(PierreUpgrade)
-            ? MixedSeedsOnlyAskBasis
-            : tableBasis;
+    /// <summary>The crop ask cap for a Stack Size step (resolved into
+    /// <see cref="DifficultyProfile.YearTwoCropAskCap"/>).</summary>
+    public static int AskCapFor(DifficultyStep stackSize) => stackSize switch
+    {
+        DifficultyStep.Easy => AskCapEasy,
+        DifficultyStep.Hard => AskCapHard,
+        DifficultyStep.Extreme => AskCapExtreme,
+        _ => AskCapNormal,
+    };
+
+    /// <summary>True when the cap applies: a save is in hand and it does not own
+    /// <see cref="PierreUpgrade"/>. A cultivation upgrade adds a Mixed Seeds route, not a shop, so
+    /// it does not lift the cap. A null <paramref name="hasUpgrade"/> caps nothing.</summary>
+    public static bool IsCapped(Func<string, bool>? hasUpgrade)
+        => hasUpgrade != null && !hasUpgrade(PierreUpgrade);
+
+    /// <summary>A count ask held to the cap: <paramref name="cap"/> for one of the three crops when
+    /// <see cref="IsCapped"/>, and for a dish the model lists in
+    /// <see cref="ItemAvailabilityModel.YearTwoCropDishUnits"/> the cap over the crops one dish
+    /// takes, never below one. Anything else keeps its stack.</summary>
+    public static int ClampAsk(string? itemId, int stack, int cap, Func<string, bool>? hasUpgrade, ItemAvailabilityModel? model)
+    {
+        if (itemId == null) return stack;
+        string id = BundleParsing.NormalizeItemId(itemId);
+        if (CropIds.Contains(id))
+            return IsCapped(hasUpgrade) ? Math.Min(stack, cap) : stack;
+        return model != null && model.YearTwoCropDishUnits.TryGetValue(id, out int units)
+            ? Math.Min(stack, PerUnit(cap, units))
+            : stack;
+    }
+
+    /// <summary>The cap for something made from <paramref name="units"/> of one of the crops.</summary>
+    public static int PerUnit(int cap, int units) => Math.Max(1, cap / Math.Max(1, units));
+
+    /// <summary><see cref="ClampAsk"/> over every slot of a finished bundle. Returns the same
+    /// reference when no slot changed.</summary>
+    public static BundleSpec ClampBundle(BundleSpec spec, int cap, Func<string, bool>? hasUpgrade, ItemAvailabilityModel? model)
+    {
+        if (spec == null) throw new ArgumentNullException(nameof(spec));
+        List<BundleSlotSpec>? clamped = null;
+        for (int i = 0; i < spec.Slots.Count; i++)
+        {
+            BundleSlotSpec slot = spec.Slots[i];
+            int stack = ClampAsk(slot.ItemId, slot.Stack, cap, hasUpgrade, model);
+            if (stack == slot.Stack) continue;
+            clamped ??= spec.Slots.ToList();
+            clamped[i] = slot with { Stack = stack };
+        }
+        return clamped == null ? spec : spec with { Slots = clamped };
+    }
+
+    /// <summary>Dishes every recipe of which takes one of the three crops by id, to the fewest of
+    /// them any one recipe takes. Empty when the cap does not apply. A category ingredient (any
+    /// vegetable) never counts: something else fills it.</summary>
+    public static IReadOnlyDictionary<string, int> DishUnits(EffortData data, Func<string, bool>? hasUpgrade)
+    {
+        if (data == null) throw new ArgumentNullException(nameof(data));
+        var units = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (!IsCapped(hasUpgrade)) return units;
+        foreach (IGrouping<string, RawCookingRecipe> dish in data.CookingRecipes.GroupBy(r => r.OutputItemId, StringComparer.Ordinal))
+        {
+            int? fewest = null;
+            foreach (RawCookingRecipe recipe in dish)
+            {
+                int most = 0;
+                for (int i = 0; i < recipe.IngredientIds.Count; i++)
+                    if (CropIds.Contains(BundleParsing.NormalizeItemId(recipe.IngredientIds[i])))
+                        most = Math.Max(most, recipe.CountOf(i));
+                if (most == 0) { fewest = null; break; }
+                fewest = fewest == null ? most : Math.Min(fewest.Value, most);
+            }
+            if (fewest is int n)
+                units[BundleParsing.NormalizeItemId(dish.Key)] = n;
+        }
+        return units;
+    }
 }

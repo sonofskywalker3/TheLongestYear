@@ -55,6 +55,7 @@ public static class DifficultyResolver
             RarityBias = Pick(settings.ItemRarity, RarityEasy, RarityNormal, RarityHard, RarityExtreme),
             OncePerLoopAsksOne = config.OncePerLoopAsksOne,
             WeeklyGoalStackDiscount = WeeklyGoalDiscountFor(settings.StackSize),
+            YearTwoCropAskCap = YearTwoCrops.AskCapFor(settings.StackSize),
             BundleCount = BundleCountRule.For(settings.BundleCount),
 
             JpEarnedFactor = Pick(settings.JpEarned, JpEasy, JpNormal, JpHard, JpExtreme),

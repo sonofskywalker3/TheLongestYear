@@ -786,7 +786,7 @@
     "gmcm.difficulty.item-rarity.name": "Item rarity (TLY Custom only)",
     "gmcm.difficulty.item-rarity.tooltip": "Weights bundles toward harder items: rarer, later in the year, or needing a keg or a press. This one does nothing on vanilla Standard or Remixed boards, because changing which item a vanilla bundle asks for would be changing the bundle.",
     "gmcm.difficulty.jp-earned.name": "Junimo Points earned",
-    "gmcm.difficulty.jp-earned.tooltip": "Scales every JP award: donations, bundle and room completions, the weekly quest, season checkpoints and vault payments. Lower means slower progress across loops. The season ramp keeps its shape, so late-season donating is still worth the most.",
+    "gmcm.difficulty.jp-earned.tooltip": "Scales every JP award: donations, bundle and room completions, the weekly quest, season checkpoints and vault payments. Easy gives 1.5x, Normal 1x, Hard 0.75x and Extreme 0.5x. Harder settings give fewer points, so upgrades take more loops to afford. The season ramp keeps its shape, so late-season donating is still worth the most.",
     "gmcm.difficulty.shrine-prices.name": "Upgrade prices",
     "gmcm.difficulty.shrine-prices.tooltip": "Scales what upgrades cost in the upgrade menu. Same points, less to show for them.",
     "gmcm.difficulty.starting-gold.name": "Starting gold",

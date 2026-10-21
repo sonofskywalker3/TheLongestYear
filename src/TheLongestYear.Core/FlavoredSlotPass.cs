@@ -31,7 +31,8 @@ public static class FlavoredSlotPass
     /// <param name="flavors">Slot index to the input id that slot now names. Empty when the
     /// bundle has no flavored slot, or when nothing was reachable in time for one.</param>
     /// <param name="model">Passed through to the quantity lookup for the generated dish table.</param>
-    /// <param name="hasUpgrade">Passed through to the quantity lookup for the year-two crop bases.</param>
+    /// <param name="hasUpgrade">The save's owned upgrades: a slot that names one of the year-two
+    /// crops holds its count to the crop cap over the crops one good takes.</param>
     public static BundleSpec Apply(
         BundleSpec spec,
         int seed,
@@ -70,7 +71,7 @@ public static class FlavoredSlotPass
             var bases = new Dictionary<string, double>(StringComparer.Ordinal);
             foreach (string candidate in FlavoredSlotRules.CandidatesFor(baseId, pools, weekOf, deadlineWeek))
             {
-                if (QuantityAskPass.BasisByDeadline(candidate, deadlineFor(candidate), model, hasUpgrade) is not double b) continue;
+                if (QuantityAskPass.BasisByDeadline(candidate, deadlineFor(candidate), model) is not double b) continue;
                 sizeable.Add(candidate);
                 bases[candidate] = b;
             }
@@ -86,6 +87,8 @@ public static class FlavoredSlotPass
 
             var rng = new Random(seed ^ (spec.Index * StackSalt) ^ (i + 1));
             int stack = AskBands.Roll(basis, profile, rng);
+            if (YearTwoCrops.CropIds.Contains(input) && YearTwoCrops.IsCapped(hasUpgrade))
+                stack = Math.Min(stack, YearTwoCrops.PerUnit(profile.EffectiveYearTwoCropAskCap(), FlavoredSlotRules.InputRatioFor(baseId)));
             // The id is rewritten even when the stack happens to come out the same: a flavored
             // slot MUST be written as vanilla's PreserveType name or the flavor cannot resolve.
 

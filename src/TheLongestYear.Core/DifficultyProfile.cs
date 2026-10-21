@@ -51,6 +51,16 @@ public sealed class DifficultyProfile
     public double EffectiveWeeklyGoalStackDiscount()
         => WeeklyGoalStackDiscount ?? DifficultyResolver.WeeklyGoalDiscountFor(Steps?.StackSize ?? DifficultyStep.Normal);
 
+    /// <summary>The most one ask may want of Garlic, Red Cabbage or Artichoke while Pierre's
+    /// year-2 seeds are not owned (<see cref="YearTwoCrops.AskCapFor"/>). Resolved from the Stack
+    /// Size step. Null on a profile stamped before the cap existed; read it through
+    /// <see cref="EffectiveYearTwoCropAskCap"/>.</summary>
+    public int? YearTwoCropAskCap { get; set; }
+
+    /// <summary>The stamped cap, or for an older stamp the one its own Stack Size step resolves to.</summary>
+    public int EffectiveYearTwoCropAskCap()
+        => YearTwoCropAskCap ?? YearTwoCrops.AskCapFor(Steps?.StackSize ?? DifficultyStep.Normal);
+
     /// <summary>How many bundles each themed room of a TLY Custom board holds. Null on a profile
     /// stamped before the dial existed: such a board keeps every room exactly as it was, so its
     /// load-time re-derivation is unchanged.</summary>

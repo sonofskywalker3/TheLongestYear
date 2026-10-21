@@ -120,7 +120,8 @@ namespace TheLongestYear
                     _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
                     hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
                     weekOverrides: _config.AvailabilityWeekOverrides,
-                    mode: TheLongestYear.Core.WeekModes.For(step), step: step),
+                    mode: TheLongestYear.Core.WeekModes.For(step), step: step,
+                    hasUpgrade: _meta.State.HasUpgrade),
                 this.Helper.DirectoryPath, args);
 
         /// <summary>Jeff, 2026-08-28: "define can't exist; list all of the items in all of the bundles

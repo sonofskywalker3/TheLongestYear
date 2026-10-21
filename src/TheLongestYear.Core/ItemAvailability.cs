@@ -93,6 +93,11 @@ public sealed class ItemAvailabilityModel
     /// only for ids with no <see cref="SeasonalAskBasis"/> hand row.</summary>
     public IReadOnlyDictionary<string, double[]> DishBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
 
+    /// <summary>Dishes that cannot be cooked without Garlic, Red Cabbage or Artichoke, to the
+    /// fewest of them one dish takes (<see cref="YearTwoCrops.DishUnits"/>). Built only while the
+    /// save does not own Pierre's year-2 seeds; the quantity pass caps these asks with the crops.</summary>
+    public IReadOnlyDictionary<string, int> YearTwoCropDishUnits { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,

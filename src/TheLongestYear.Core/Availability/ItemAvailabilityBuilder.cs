@@ -24,7 +24,8 @@ public static class ItemAvailabilityBuilder
         bool hasKitchen = false,
         IReadOnlyDictionary<string, int>? weekOverrides = null,
         WeekMode mode = WeekMode.Pacing,
-        DifficultyStep step = DifficultyStep.Normal)
+        DifficultyStep step = DifficultyStep.Normal,
+        Func<string, bool>? hasUpgrade = null)
     {
         if (pools == null) throw new ArgumentNullException(nameof(pools));
 
@@ -106,8 +107,10 @@ public static class ItemAvailabilityBuilder
             id => model.IsPlaced(id) ? model.For(id) : null,
             (id, s) => QuantityAskPass.BasisByDeadline(id, s),
             kitchenFree.EffortOf);
+        // hasUpgrade is read like hasKitchen: once, here. Upgrades are only bought before a reset,
+        // and every reset rebuilds the model, so the set is the one the board is generated under.
         return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { DishBases = dishBases };
+            { DishBases = dishBases, YearTwoCropDishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade) };
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

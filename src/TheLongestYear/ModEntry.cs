@@ -511,7 +511,8 @@ namespace TheLongestYear
             _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
                 _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
                 hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
-                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step);
+                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step,
+                hasUpgrade: _meta.State.HasUpgrade);
             if (_runController != null) _runController.Availability = _availability;
             if (_boardBuilder != null) _boardBuilder.Availability = _availability;
             return _availability;

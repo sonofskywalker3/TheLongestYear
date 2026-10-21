@@ -216,8 +216,8 @@ namespace TheLongestYear.Loop
         /// <summary>Save-specific pool exclusions (YearTwoCrops.ExcludedFor). Part of the
         /// generation inputs: reset and reload must pass the same set.</summary>
         private readonly IReadOnlySet<string> _extraExcludedIds;
-        /// <summary>The save's owned upgrades, read by the quantity pass for the year-two crop
-        /// bases (YearTwoCrops.CropAskBasis). Generation input like the exclusions: reset and
+        /// <summary>The save's owned upgrades, read for the year-two crop cap
+        /// (YearTwoCrops.ClampAsk). Generation input like the exclusions: reset and
         /// reload must pass the same save.</summary>
         private readonly Func<string, bool> _hasUpgrade;
 

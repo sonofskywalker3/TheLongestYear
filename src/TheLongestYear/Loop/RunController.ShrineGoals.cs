@@ -83,9 +83,11 @@ namespace TheLongestYear.Loop
             Random rng = RollSeed.Rng(Run.Seed, week, ShrineGoalRules.StackSalt, (int)theme);
             ItemAvailabilityModel model = Availability;
             List<ShrineGoal> goals = ShrineGoalRules.Build(picked, list, profile, rng,
-                id => QuantityAskPass.Covers(id, model) ? QuantityAskPass.BasisByDeadline(id, season, model, _store.State.HasUpgrade) : null,
+                id => QuantityAskPass.Covers(id, model) ? QuantityAskPass.BasisByDeadline(id, season, model) : null,
                 (id, s) => CappedAsks.ClampStack(id, UnstackableAsks.ClampStack(id,
-                    OncePerLoopAsks.ClampStack(id, s, profile.OncePerLoopAsksOne))),
+                    OncePerLoopAsks.ClampStack(id,
+                        YearTwoCrops.ClampAsk(id, s, profile.EffectiveYearTwoCropAskCap(), _store.State.HasUpgrade, model),
+                        profile.OncePerLoopAsksOne))),
                 _store.State.BoardDifficulty(_config).EffectiveWeeklyGoalStackDiscount());
             Run.CurrentWeekShrineGoals.AddRange(goals);
 
