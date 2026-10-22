@@ -39,7 +39,11 @@ namespace TheLongestYear.Loop
                 _store.State.VictoryAcknowledged = false;
                 _store.State.Year2WallArmed = false;
                 _store.Save();
-                FinalizeReset("year 2 wall");
+                // The upgrade menu and the books, then the reset. Resetting straight from here wiped
+                // the year's recipes and herd animals unbanked and left its JP unspent. No hold
+                // question: the board was finished. Deferred a tick because the DialogueBox is
+                // still the active menu inside this callback.
+                DeferContinue(() => TryOpenShrineThenContinue(ContinueAfterResetSpend, focusRows: true));
             });
         }
 
