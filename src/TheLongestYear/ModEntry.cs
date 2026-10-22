@@ -274,14 +274,9 @@ namespace TheLongestYear
             _bookFurniture = new BookFurniture(this.Monitor, helper);
             // View-only planning shrine — registers its furniture + auto-places near the stash.
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
-            // Finding 1 fallback (2026-09-16 expanded-opening review): OnSaveCreating turned out to
-            // fire too late for a brand-new game started through tly_newgame (and, by the same
-            // save-write timing, a real new game too), landing right alongside OnSaveLoaded, AFTER
-            // the tour has already spoken about the stash and shrine. Give the script its own event
-            // command instead: tlyPlaceGifts, inserted right after the tour's "changeLocation Farm",
-            // does the same two placement calls at the one moment guaranteed to be before the tour's
-            // dialogue. OnSaveCreating's own attempt (ModEntry.OnSaveCreating) is left in place as a
-            // harmless, idempotent belt-and-braces call for whichever path fires first.
+            // The opening tour talks about the stash and the shrine, so they must exist before its
+            // dialogue. SaveCreating fires too late for that (alongside SaveLoaded), so the script
+            // places them itself: tlyPlaceGifts runs right after the tour's "changeLocation Farm".
             StardewValley.Event.RegisterCommand("tlyPlaceGifts", (evt, args, context) =>
             {
                 try
