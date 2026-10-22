@@ -11,10 +11,9 @@ namespace TheLongestYear.Integration
     /// 2026-09-10). Built at load from the game's own Portraits/Morris, so no copyrighted art ships
     /// in the mod, and served as "Portraits/Morris_Dark" for tlySay's portrait override.
     ///
-    /// The sprite sheet's iris colour is a known constant; the portrait is drawn at a different
-    /// scale and may not use the same one, so this matches a small set of candidates and logs how
-    /// many pixels it hit. A zero there means the eyes stayed dark and the constant needs the
-    /// portrait's real colour.</summary>
+    /// Morris's eyes sit behind his glasses, so the glow goes on the lenses: the two cyan shades
+    /// vanilla's portrait fills them with (read from Portraits/Morris, all four frames). The log
+    /// says how many pixels it lit; a zero means another mod repainted the portrait.</summary>
     internal sealed class MorrisDarkPortrait
     {
         public const string AssetName = "Portraits/" + PortraitName;
@@ -22,13 +21,11 @@ namespace TheLongestYear.Integration
         public const string PortraitName = "Morris_Dark";
         private const string SourceAsset = "Portraits/Morris";
 
-        // The sprite sheet's iris colour, plus the two neighbouring shades a 64x64 portrait
-        // typically uses for the same feature. Anything that matches becomes the glow.
+        // The lens fill and its highlight in vanilla's Portraits/Morris. Anything that matches becomes the glow.
         private static readonly Color[] EyeColours =
         {
-            new Color(147, 202, 219),
-            new Color(114, 171, 197),
-            new Color(88, 141, 173),
+            new Color(115, 169, 188),
+            new Color(103, 225, 219),
         };
         private static readonly Color RedEye = new Color(255, 40, 30);
         private const float Shadow = 0.22f;   // darker than the sprite: the portrait is big enough to take it
