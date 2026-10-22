@@ -17,7 +17,8 @@ public static class WardIds
     public const long CropsWinterCost = 300;
 
     /// <summary>Circle of Warding (Jeff, 2026-09-09): a placeable 3x3 circle, bought up to three
-    /// times on an escalating ladder. Crops and chests on its tiles are beyond the darkness.</summary>
+    /// times on an escalating ladder. Chests and machines on its tiles are beyond the darkness;
+    /// crops are not (a rug and a crop cannot share a tile, see BlightPass.LiveCropTiles).</summary>
     public const string Circle1 = "ward_circle_1";
     public const string Circle2 = "ward_circle_2";
     public const string Circle3 = "ward_circle_3";

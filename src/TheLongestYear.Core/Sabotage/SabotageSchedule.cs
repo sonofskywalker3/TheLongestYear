@@ -6,8 +6,10 @@ namespace TheLongestYear.Core.Sabotage;
 /// <summary>The three fronts the darkness opens across the year (spec 2026-09-09 darkness pushback).</summary>
 public enum SabotageKind { Blight, Reversion, Tampering }
 
-/// <summary>Every number the darkness runs on, in one place so Jeff can retune without a hunt.
-/// All values are the 2026-09-09 opening assumptions.</summary>
+/// <summary>The darkness's calendar, cap and fairness numbers, in one place so Jeff can retune
+/// without a hunt. What the Darkness dial changes (blight share and per-strike caps, Summer
+/// 8/10/12/14 and Fall or Winter 12/15/18/21 from Easy to Extreme; the unmoderated chance) lives
+/// in <see cref="DarknessLevels"/>.</summary>
 public static class SabotageTuning
 {
     // Blight: crops on the farm die, and the thief steals from a chest, in the night. Summer, Fall
