@@ -33,8 +33,21 @@ public static class JojaOffer
 
     public static bool IsRejected(MetaState meta) => meta.JojaRejectedLoop > 0;
 
+    /// <summary>This loop's year is won, and Morris's offer is over until the next loop (Jeff,
+    /// 2026-10-22): from the win night (the ending armed for the morning) through Keep playing
+    /// (VictoryAcknowledged, cleared by the next loop). No letters, no scene, no TLY refusal at the
+    /// till, no bad ending. EndingSeen is per save, so it says nothing about this year.</summary>
+    public static bool YearWon(RunState run, MetaState meta)
+        => meta.VictoryAcknowledged || run.EndingArmed;
+
+    /// <summary>No more Morris letters this year, and any unread one comes out of the mailbox.
+    /// <paramref name="winPending"/> is a repeat win's choice owed this morning: a save that has
+    /// seen the ending arms no event for it, only the choice.</summary>
+    public static bool LettersOver(RunState run, MetaState meta, bool winPending)
+        => winPending || YearWon(run, meta);
+
     public static bool ShouldPlayScene(RunState run, MetaState meta, bool busy)
-        => !busy && !IsRejected(meta) && run.JojaSceneSeenDay < 0;
+        => !busy && !IsRejected(meta) && !YearWon(run, meta) && run.JojaSceneSeenDay < 0;
 
     public static bool SceneSkippable(MetaState meta) => meta.JojaOfferEverSeen;
 
@@ -125,10 +138,13 @@ public static class JojaOffer
     /// already mid-year when the letters first ship (an old save) starts at letter 1 on the next
     /// slot at the normal cadence instead of catching up on every slot it missed. The planned
     /// list is stored, so its index IS the letter number minus one. A stored plan whose letters
-    /// still to come break the week rule (rolled before it existed) is re-planned here too.</summary>
-    public static JojaLetter MorningLetter(RunState run, MetaState meta, int today, bool rewindPending)
+    /// still to come break the week rule (rolled before it existed) is re-planned here too.
+    ///
+    /// Nothing once the year is won (<see cref="LettersOver"/>), the ending morning included.</summary>
+    public static JojaLetter MorningLetter(RunState run, MetaState meta, int today, bool rewindPending,
+        bool winPending = false)
     {
-        if (rewindPending) return JojaLetter.None;
+        if (rewindPending || LettersOver(run, meta, winPending)) return JojaLetter.None;
         if (run.JojaLetterDays == null || run.JojaLetterDays.Count == 0)
             run.JojaLetterDays = PlanLetterDays(LetterSeed(run.Seed)).Where(d => d >= today).ToList();
         else if (!KeepsTheWeek(run.JojaLetterDays, run.JojaLettersSent))

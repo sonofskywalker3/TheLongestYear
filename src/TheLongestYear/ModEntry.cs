@@ -583,8 +583,10 @@ namespace TheLongestYear
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
             // Before the run controller (it reads the game's date, see the method), but told about a
-            // pending rewind so the old loop's last morning sends nothing.
-            _jojaLetters?.OnDayStarted(rewindPending: _runController?.IsRewindChainRunning == true);
+            // pending rewind so the old loop's last morning sends nothing, and about a repeat win's
+            // choice so a won year's morning sends nothing either.
+            _jojaLetters?.OnDayStarted(rewindPending: _runController?.IsRewindChainRunning == true,
+                winPending: _runController?.IsRepeatWinChoicePending == true);
             _runController?.OnDayStarted(sender, e);
             // A basement focus card's Cellar, once the night's house upgrade has landed.
             _focus?.Delivery.OnDayStarted();

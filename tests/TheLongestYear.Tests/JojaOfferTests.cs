@@ -491,4 +491,101 @@ public class JojaOfferTests
         Assert.False(JojaOffer.IsRejected(meta));
         Assert.False(meta.JojaOfferEverSeen);
     }
+
+    /// <summary>Jeff, 2026-10-22: once this loop's year is won the offer is over for the rest of
+    /// that year, from the win night (ending armed) through Keep playing.</summary>
+    [Fact]
+    public void A_won_year_ends_the_offer_from_the_win_night_on()
+    {
+        var (run, meta) = Fresh();
+        Assert.False(JojaOffer.YearWon(run, meta));
+        run.EndingArmed = true;
+        Assert.True(JojaOffer.YearWon(run, meta));
+        run.EndingArmed = false;
+        meta.VictoryAcknowledged = true;
+        Assert.True(JojaOffer.YearWon(run, meta));
+    }
+
+    [Fact]
+    public void Ending_seen_alone_is_not_a_won_year()
+    {
+        var (run, meta) = Fresh();
+        meta.EndingSeen = true;
+        Assert.False(JojaOffer.YearWon(run, meta));
+        Assert.True(JojaOffer.ShouldPlayScene(run, meta, busy: false));
+    }
+
+    [Fact]
+    public void A_won_year_plays_no_scene()
+    {
+        var (run, meta) = Fresh();
+        meta.VictoryAcknowledged = true;
+        Assert.False(JojaOffer.ShouldPlayScene(run, meta, busy: false));
+        meta.VictoryAcknowledged = false;
+        run.EndingArmed = true;
+        Assert.False(JojaOffer.ShouldPlayScene(run, meta, busy: false));
+    }
+
+    [Fact]
+    public void A_won_year_sends_no_letters_and_the_fourth_decision_letter_cannot_reject()
+    {
+        var (run, meta) = Fresh();
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        meta.VictoryAcknowledged = true;
+        Assert.True(JojaOffer.LettersOver(run, meta, winPending: false));
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 20, rewindPending: false));
+
+        JojaOffer.MarkSceneSeen(run, meta, 10);
+        run.JojaDecisionLettersSent = 3;
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 38, rewindPending: false));
+        Assert.False(JojaOffer.IsRejected(meta));
+    }
+
+    [Fact]
+    public void No_letter_on_the_ending_morning()
+    {
+        var (run, meta) = Fresh();
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        run.EndingArmed = true;
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 20, rewindPending: false));
+    }
+
+    /// <summary>A repeat win on a save that has seen the ending arms no event, only the morning's
+    /// choice, so the game side passes that pending choice in.</summary>
+    [Fact]
+    public void No_letter_on_a_repeat_win_morning()
+    {
+        var (run, meta) = Fresh();
+        meta.EndingSeen = true;
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        Assert.True(JojaOffer.LettersOver(run, meta, winPending: true));
+        Assert.Equal(JojaLetter.None, JojaOffer.MorningLetter(run, meta, 20, rewindPending: false, winPending: true));
+        Assert.False(JojaOffer.LettersOver(run, meta, winPending: false));
+    }
+
+    [Fact]
+    public void A_new_loop_after_a_won_year_brings_the_offer_back()
+    {
+        var (run, meta) = Fresh();
+        meta.VictoryAcknowledged = true;
+        meta.EndingSeen = true;
+        Assert.True(TheLongestYear.Core.Day28.VoluntaryRestart.ClearWonRun(meta));
+        run.BeginNewRun(seed: 9);
+        Assert.False(JojaOffer.YearWon(run, meta));
+        Assert.True(JojaOffer.ShouldPlayScene(run, meta, busy: false));
+        run.JojaLetterDays = new List<int> { 5, 20, 33, 50, 60, 70, 90, 100 };
+        Assert.Equal(new JojaLetter(JojaLetterKind.Come, 1, false), JojaOffer.MorningLetter(run, meta, 5, false));
+    }
+
+    [Fact]
+    public void A_new_loop_after_a_won_year_keeps_an_earlier_rejection()
+    {
+        var (run, meta) = Fresh();
+        JojaOffer.Reject(meta, run.RunNumber);
+        meta.VictoryAcknowledged = true;
+        TheLongestYear.Core.Day28.VoluntaryRestart.ClearWonRun(meta);
+        run.BeginNewRun(seed: 9);
+        Assert.False(JojaOffer.ShouldPlayScene(run, meta, busy: false));
+        Assert.Equal(JojaCashierLine.Refused, JojaOffer.CashierLine(meta));
+    }
 }
