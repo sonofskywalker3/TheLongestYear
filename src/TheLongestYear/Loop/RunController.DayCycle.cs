@@ -277,6 +277,10 @@ namespace TheLongestYear.Loop
         /// quitting that night loses the prompt, and the next win re-arms it.</summary>
         private bool _pendingChoice;
 
+        /// <summary>A repeat win's choice is owed this morning: the year is won though no ending is
+        /// armed. Read by Morris's letters, which run before OnDayStarted consumes it.</summary>
+        public bool IsRepeatWinChoicePending => _pendingChoice;
+
         /// <summary>Clear skies for the ending morning's Town scene (and for a morning the event was
         /// deferred past). Same three-write idiom the boost effects use.</summary>
         private void ForceTomorrowSunny()

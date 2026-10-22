@@ -37,14 +37,23 @@ namespace TheLongestYear.Loop
         ///
         /// <paramref name="rewindPending"/> is RunController.IsRewindChainRunning: on the morning a
         /// loop ends, DayStarted fires with the OLD loop's state before the rewind chain begins the
-        /// new one, so no letter goes out (JojaOffer.MorningLetter owns that rule).</summary>
-        public void OnDayStarted(bool rewindPending)
+        /// new one, so no letter goes out (JojaOffer.MorningLetter owns that rule).
+        ///
+        /// <paramref name="winPending"/> is RunController.IsRepeatWinChoicePending. Once the year is
+        /// won the offer is over: no letter, and an unread one still in the mailbox is removed.</summary>
+        public void OnDayStarted(bool rewindPending, bool winPending)
         {
             if (!RunActivation.IsActive || Game1.player == null) return;
             RunState run = _meta.Run;
             MetaState meta = _meta.State;
             int today = Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth);
 
+            if (JojaOffer.LettersOver(run, meta, winPending))
+            {
+                int purged = PurgeFromMail(Game1.player);
+                if (purged > 0) _monitor.Log($"Joja: the year is won; removed {purged} unread letter(s).", LogLevel.Info);
+                return;
+            }
             JojaLetter letter = JojaOffer.MorningLetter(run, meta, today, rewindPending);
             if (letter.Kind == JojaLetterKind.None) return;
             Deliver((letter.Kind == JojaLetterKind.Come ? ComePrefix : DecidePrefix) + letter.Number);

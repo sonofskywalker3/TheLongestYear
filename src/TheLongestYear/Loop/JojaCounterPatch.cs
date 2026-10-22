@@ -10,7 +10,8 @@ namespace TheLongestYear.Loop
     /// <summary>Morris's offer at the store (spec 2026-09-25-joja-offer-design): Morris's counter
     /// (tile action JoinJoja) asks for the answer or turns the player away, and the cashier (tile
     /// action JojaShop) sells nothing until the player has answered, and nothing ever after a No.
-    /// Joja never helps the player anywhere in the mod.</summary>
+    /// Joja never helps the player anywhere in the mod. Once this loop's year is won
+    /// (JojaOffer.YearWon) the offer is over and both fall through to vanilla.</summary>
     internal static class JojaCounterPatch
     {
         private static IMonitor _monitor;
@@ -72,6 +73,7 @@ namespace TheLongestYear.Loop
             private static bool Prefix(JojaMart __instance, xTile.Dimensions.Location tileLocation, ref bool __result)
             {
                 if (!RunActivation.IsActive || _meta == null) return true;
+                if (JojaOffer.YearWon(_meta.Run, _meta.State)) return true;   // the offer is over: vanilla
                 if (__instance.doesTileHaveProperty(tileLocation.X, tileLocation.Y, "Action", "Buildings") != "JoinJoja") return true;
                 if (JojaMart.Morris == null) return true;
                 OpenCounter();
@@ -86,6 +88,12 @@ namespace TheLongestYear.Loop
             NPC morris = JojaMart.Morris;
             if (index == 0)
             {
+                if (JojaOffer.YearWon(_meta.Run, _meta.State))
+                {
+                    // The year was won while the question was open: the offer is over, no bad ending.
+                    _monitor.Log("Joja: a Yes after the year was won; the offer is over, no bad ending.", LogLevel.Info);
+                    return true;
+                }
                 _monitor.Log("Joja: the player accepted Morris's offer; bad ending.", LogLevel.Info);
                 // Leave the dialogue box first; the ending starts on the next tick.
                 DelayedAction.functionAfterDelay(() => _startBadEnding?.Invoke(), 100);
@@ -106,6 +114,7 @@ namespace TheLongestYear.Loop
             private static bool Prefix(GameLocation __instance, string[] action, ref bool __result)
             {
                 if (!RunActivation.IsActive || _meta == null) return true;
+                if (JojaOffer.YearWon(_meta.Run, _meta.State)) return true;   // the offer is over: vanilla
                 if (__instance is not JojaMart || action == null || action.Length == 0 || action[0] != "JojaShop") return true;
                 OpenCashier();
                 __result = true;
