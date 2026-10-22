@@ -8,9 +8,7 @@ A roguelite time-loop for Stardew Valley (PC).
 
 **The Longest Year** turns Stardew Valley's first year into a roguelite loop. Each season asks you to give back enough of the land's bounty to the old Community Center hall. Fall short by a season's end and the Junimos turn time back to Spring 1 — the world resets, but the strength you've earned (and the power your offerings bank) can carry forward. Restore the whole Center inside one year to break the loop for good.
 
-This is a **beta** (`0.19.135`). It is feature-complete for v1 and stable in testing; what it most needs now is feedback on **difficulty, pricing, and pacing**. See [Giving feedback](#giving-feedback) below.
-
-**This is the last big engine update.** From here the plan is bug fixes and balance passes driven by your feedback, and then work begins on the story. So this is the version to tell me what is wrong with.
+**Version 1.0.** The full first year, story and all. Bug reports and balance feedback are still very welcome; see [Giving feedback](#giving-feedback) below.
 
 ---
 
@@ -25,7 +23,23 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 0.19.135
+## What's New in 1.0.0: the story
+
+**The Longest Year is out of beta.** Version 1.0 adds the story: a new opening, a rewind you watch happen, Morris and his offer, a darkness that fights back from Summer on, and a real ending. Everything below is new since 0.19.135.
+
+**A new opening.** Grandpa's deathbed scene now leaves you a sealed envelope and a warning about the emptiness. Robin meets you off the bus and walks you up to the farm, where Morris from Joja hands Lewis a contract: the Community Center becomes a Joja warehouse unless it is restored before Spring 1 of next year. Lewis takes you to the hall, the Junimos tell you what happened to the valley and how the year works, and then they show you their gifts on the farm: the stash, the statue, the Cookbook, the Craftbook, the Bundle Log and the Herd Book. Replaces the old porch intro.
+
+**The rewind is a scene now.** When a season comes up short, night falls in your bedroom, the darkness closes in and the Junimos gather round your bed to turn the year back. The town runs backwards through the seasons to a spring sunrise, and you wake on Spring 1. From the second time on you can skip it.
+
+**Morris makes you an offer.** Through the year Morris writes asking you to come to JojaMart. Walk in and he offers to buy your farm and make you his assistant manager. Until you answer, the cashier won't sell to you. Say yes and Joja wins: you see what becomes of the valley, and the game goes back to the title without saving. Say no, or keep him waiting too long, and you are banned from JojaMart.
+
+**The darkness fights back.** From Summer, something dark strikes the farm at night. Crows kill crops, a thief from the mines raids a chest, in Fall a figure in the Community Center undoes a donation, and in Winter a cloud taints an item a bundle was waiting for, and the Junimos ask for something else instead. The first strike of each kind in a loop plays its own short scene, and a message the next morning tells you what was lost. Linus and Shane saw some of it and will tell you about it. A Ward of the Fields from the Junimo statue keeps the crows away for a season. The new Darkness setting under Difficulty sets how hard it hits, and three switches under Features turn each kind off.
+
+**The Junimos meet you at each new season.** On Summer 1, Fall 1 and Winter 1 after a passed season, the Junimos wait on your porch with a warning about what is coming next.
+
+**A real ending.** Finishing the Community Center now ends the year the next morning, whatever the date. The town gathers at the hall, a villager who half-remembers you speaks up, Morris closes the store, the Junimos give their warning, and a candle lights at grandpa's shrine. Then loop again, or keep playing to the end of the year. Replaces the old win card and vanilla's completion ceremony.
+
+## 0.19.135
 
 **Fixed: Artichoke, Garlic and Red Cabbage asks fit what you can grow.** Without the upgrade that has Pierre sell year-two seeds, these three crops only come from Mixed Seeds, but a bundle could still ask for dozens of them. Now a bundle, a weekly goal or a dish made from them asks for at most 2 on Easy, 3 on Normal, 4 on Hard and 5 on Extreme, going by your Stack Size setting. Once you own the Pierre upgrade they are asked for like any other crop. A board already in play keeps its counts until your next rewind.
 
@@ -173,10 +187,10 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
 - **Randomizer.** An optional settings section that adds chance to the weekly themes, goals, bundle rewards and the cart. Everything in it starts off.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
-- **A real intro.** Lewis greets you on the porch; a Junimo explains the loop. Then the run begins.
+- **A story.** A new opening with grandpa, Robin, Lewis, Morris and the Junimos; a rewind you watch happen; Junimos at every season turn; Morris's offer; a darkness that strikes the farm from Summer on; and a real ending when you finish the Center.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
 - **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. From the second loop, festivals stir it up too. At most festivals one villager half-remembers something you did there in an earlier loop: the egg hunt you won, the dance you shared, what you put in the soup. Talk to people to find out who. Win the egg hunt and someone will bring it up at the next Egg Festival, and everyone you have danced with may remember it when you ask again. No gameplay effect, and it never explains itself. Toggle in Features.
-- **Break the loop.** Finish the Center in a year to win — then keep playing or start fresh.
+- **Break the loop.** Finish the Center in a year and the year ends the next morning. Then loop again or keep playing to the end of the year.
 
 ## Requirements
 
@@ -206,7 +220,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **JP Boosts.** The Junimo statue on the farm sells this-loop edges for JP any day (weather, luck, a free late night, stacking bonuses, a temporary skill level, an elevator stop) and shows what is running on its Active tab.
 - **Carryover surfaces on the farm.** A **Cookbook** (kitchen) and **Craftbook** (table) let you bank recipes to keep; a **Junimo Stash** chest preserves a few items across resets.
 - **Restarting.** Want a fresh loop before the season runs out? The Junimo Shrine's **Restart the year** button ends the day and runs a Fail night without the Junimo scene: keep or reshuffle your bundles, spend JP, bank recipes, and wake on Spring 1. It counts as a loop, and it works after Keep playing too.
-- **Winning.** Restore the entire Community Center within a year to break the loop. You can then choose to keep playing that run or start a fresh loop.
+- **Winning.** Restore the entire Community Center within a year to break the loop. The year ends the next morning; then loop again or keep playing to the end of the year.
 
 ## Difficulty
 
@@ -257,7 +271,7 @@ The **Features** section of the settings menu turns individual parts of the mod 
 
 ![The Features section of the settings menu](release-notes/settings-features.png)
 
-All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning during the beta:
+All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning:
 
 | Setting | Default | What it controls |
 |---|---|---|
@@ -317,13 +331,12 @@ Fixed since 0.16.7. Tools and weapons in the stash keep their enchantments, forg
 
 Anything not on this list, please do report - the bugs tab on Nexus is read.
 
-## Limitations (beta)
+## Limitations
 
 - **PC only.** No Android port yet.
 - **Other mods are not officially supported.** TLY Custom boards ask only for vanilla items unless you turn on Allow mod items in custom bundles (off on new games; saves from before 0.19.4 start with it on), so by default other mods' items are left out and the balance holds. Normal or Remixed with other mods (including other bundle mods) is allowed, but the bundles may not reshuffle each loop and may ask for items you can't get. If something goes wrong with a specific mod, report it and I will take a look.
 - **Farm types are balanced as a set, not individually.** The bundle asks are sized from Standard farm yields. Each other type trades one thing for another (Riverland and Beach: more fish, less field; Forest: more forage; Hilltop: more ore; Wilderness: more monsters; Meadowlands: easier animals), so the year is a little easier in some bundles and a little harder in others. Beach farm's no-sprinklers rule makes its crop bundles a real step harder. Custom farm maps that replace a vanilla slot load fine but are untested for balance.
 - **Start on a new save.** A run can only begin from a new game; other saves load normally and are left untouched.
-- Intro cutscene and dialogue are a first pass.
 - Multiplayer is untested.
 
 ## Giving feedback
