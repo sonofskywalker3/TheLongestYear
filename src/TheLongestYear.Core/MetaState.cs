@@ -202,6 +202,53 @@ public sealed class MetaState
     /// </summary>
     public bool VictoryAcknowledged { get; set; }
 
+    /// <summary>Year One Ending: the staged ending event has played once on this save. A later win
+    /// skips the event and goes straight to the shrine and the choice.</summary>
+    public bool EndingSeen { get; set; }
+
+    /// <summary>Junimo scenes that have played at least once on this save: the season turns
+    /// (SeasonTurn.SeenName values) and the rewind (Rewind.RewindSkipRule.SeenName). A seen scene is
+    /// skippable next time.</summary>
+    public HashSet<string> SeasonTurnsSeen { get; set; } = new();
+
+    /// <summary>Strike scenes (DarknessEvent names) that have ever played on this save. A seen scene
+    /// can be skipped (spec 2026-09-21).</summary>
+    public HashSet<string> StrikeScenesSeen { get; set; } = new();
+
+    /// <summary>Morris's offer scene has played at least once on this save, so it is skippable.</summary>
+    public bool JojaOfferEverSeen { get; set; }
+
+    /// <summary>The loop (RunState.RunNumber) Morris and the player parted ways in: a No at his
+    /// counter or the fourth unanswered letter. 0 = never. Permanent: no reset clears it.</summary>
+    public int JojaRejectedLoop { get; set; }
+
+    /// <summary>The rejection came from the fourth "make a decision" letter, not a No at Morris's
+    /// counter. False on a save rejected before this was recorded, which counts as in person.</summary>
+    public bool JojaRejectedByLetter { get; set; }
+
+    /// <summary>Morris has said his once-only line after a rejection by letter ("You must not have
+    /// read my letter").</summary>
+    public bool JojaLetterRefusalShown { get; set; }
+
+    /// <summary>Unused since 2026-09-21 (the first-strike letters were replaced by the overnight
+    /// scenes). Kept so a save written before then still loads.</summary>
+    public HashSet<string> SabotageLettersSent { get; set; } = new();
+
+    /// <summary>This save has already reached a Winter (spec 2026-09-15 Part B, 2.6): the first
+    /// Winter a save reaches has its guaranteed tamper on Winter 1, every later Winter on a random
+    /// night of week 1. Set the first time a Winter night of day 7 or later runs, or the moment the
+    /// guaranteed tamper lands, whichever comes first, so a first Winter that never found a fair
+    /// target still counts as reached. Per save, never reset by a loop.</summary>
+    public bool FirstWinterTamperSeen { get; set; }
+
+    /// <summary>Year One Ending: the player chose Keep playing on this version or later. Spring 1 of
+    /// year 2 shows the "Year 2 is coming" wall until <see cref="Year2Started"/> is set by the Year 2
+    /// update. Cleared, with VictoryAcknowledged, when the wall's Loop again runs.</summary>
+    public bool Year2WallArmed { get; set; }
+
+    /// <summary>Reserved for the Year 2 update. Never set by this version.</summary>
+    public bool Year2Started { get; set; }
+
     /// <summary>
     /// True once the player has completed the day-1 Lewis-porch + CC-Junimo intro cutscene
     /// (or skipped it via Esc). Set by <c>IntroEventInjector</c> in <c>OnSaving</c> whenever
@@ -263,6 +310,10 @@ public sealed class MetaState
     /// (internal name) across EVERY loop. Talk +1, gift +3, heart event +10, rolled up nightly by
     /// FamiliarityRollup. Hearts themselves still reset; this is the only thing that remembers.</summary>
     public Dictionary<string, int> VillagerFamiliarity { get; set; } = new();
+
+    /// <summary>Year One Ending: per-villager counts behind the score (talks, gifts, birthday gifts,
+    /// heart events, and the loops each happened in). Feeds the ending's assembled line.</summary>
+    public Dictionary<string, VillagerMemory> VillagerMemory { get; set; } = new();
 
     /// <summary>Festival memories (deja-vu phase 2, spec 2026-10-09): the latest record of each
     /// festival from earlier loops, by festival id. Merged from RunState.FestivalLog at every rewind

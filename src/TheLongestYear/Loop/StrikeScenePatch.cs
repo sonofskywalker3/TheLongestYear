@@ -1,0 +1,192 @@
+using System;
+using System.Reflection;
+using HarmonyLib;
+using Netcode;
+using StardewModdingAPI;
+using StardewValley;
+using StardewValley.Events;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Sabotage;
+
+namespace TheLongestYear.Loop
+{
+    /// <summary>Hands tonight's strike scene to the overnight slot (spec 2026-09-21). A random
+    /// vanilla event (fairy, witch, meteorite, owl, capsule) gives way: it comes round again. A
+    /// wedding, a WorldChangeEvent, the day-31 earthquake, the raccoon windstorm or anything
+    /// unrecognised wins the slot. An empty slot is not free either: vanilla reads it again for
+    /// another mod's farmEventOverride and for a personal farm event (a birth, a couple's birth, a
+    /// pregnancy question), and those win it too. When something else wins, the strike is
+    /// postponed: neither its effect nor its scene happens tonight (Jeff, 2026-10-07: "we don't
+    /// delay scenes without delaying the effect of them"). The decision is
+    /// <see cref="StrikeSlot.Decide"/>; this class only reads the game.
+    ///
+    /// <see cref="FarmEventSuppressionPatch"/> postfixes the same method and nulls the event on a
+    /// fail night. Either order is safe: this one asks the same fail-night question itself and
+    /// returns without touching anything. <see cref="WildcardNightEventPatch"/> also postfixes it;
+    /// on a Wildcard night_event night the twist keeps the slot whichever runs first, because this
+    /// one reads the run's twist rather than the result.</summary>
+    [HarmonyPatch(typeof(Utility), nameof(Utility.pickFarmEvent))]
+    [HarmonyPriority(Priority.Last)]
+    internal static class StrikeScenePatch
+    {
+        /// <summary>Set by ModEntry: tonight's scene, or null when none is waiting.</summary>
+        internal static Func<FarmEvent> SceneFor;
+
+        /// <summary>Set by ModEntry: a strike is waiting for its scene tonight.</summary>
+        internal static Func<bool> StrikeWaiting;
+
+        /// <summary>Set by ModEntry: postpone the waiting strike, effect and scene both.</summary>
+        internal static Action<string> Postpone;
+
+
+        /// <summary>Set by ModEntry: true on a fail night (the same test the suppression patch uses).</summary>
+        internal static Func<bool> FailNight;
+
+        internal static IMonitor Monitor;
+
+        /// <summary>SoundInTheNightEvent's behaviour values that a random roll can produce. The
+        /// earthquake (4) is the scripted day-31 one and the windstorm (5) is the raccoon stump, so
+        /// neither gives up its night.</summary>
+        private const int SoundCapsule = 0;
+        private const int SoundMeteorite = 1;
+        private const int SoundDogs = 2;
+        private const int SoundOwl = 3;
+
+        /// <summary>QuestionEvent's barn birth: a per-animal roll that comes round again. Its 1 and 3
+        /// are the pregnancy questions, which do not.</summary>
+        private const int QuestionBarnBirth = 2;
+
+        /// <summary>SoundInTheNightEvent keeps which one it is in a private net field.</summary>
+        private static readonly FieldInfo SoundBehaviorField = AccessTools.Field(typeof(SoundInTheNightEvent), "behavior");
+
+        /// <summary>QuestionEvent keeps which one it is in a private int field.</summary>
+        private static readonly FieldInfo QuestionField = AccessTools.Field(typeof(QuestionEvent), "whichQuestion");
+
+        private static bool IsRandom(FarmEvent e)
+        {
+            if (e is FairyEvent || e is WitchEvent) return true;
+            if (e is SoundInTheNightEvent sound)
+            {
+                int which = SoundBehaviorOf(sound);
+                return which == SoundCapsule || which == SoundMeteorite || which == SoundDogs || which == SoundOwl;
+            }
+            if (e is QuestionEvent question)
+                return QuestionOf(question) == QuestionBarnBirth;
+            return false;
+        }
+
+        /// <summary>Which sound-in-the-night this is, or -1 when it cannot be read. Unknown counts as
+        /// scripted, so the doubtful case keeps its night and the strike is postponed.</summary>
+        private static int SoundBehaviorOf(SoundInTheNightEvent sound)
+        {
+            try
+            {
+                return SoundBehaviorField?.GetValue(sound) is NetInt behavior ? behavior.Value : -1;
+            }
+            catch (Exception ex)
+            {
+                Monitor?.Log($"Darkness: could not read which sound-in-the-night tonight's event is, so it keeps the slot. {ex}", LogLevel.Trace);
+                return -1;
+            }
+        }
+
+        /// <summary>Which question this is, or -1 when it cannot be read. Unknown keeps its night.</summary>
+        private static int QuestionOf(QuestionEvent question)
+        {
+            try
+            {
+                return QuestionField?.GetValue(question) is int which ? which : -1;
+            }
+            catch (Exception ex)
+            {
+                Monitor?.Log($"Darkness: could not read which question tonight's event is, so it keeps the slot. {ex}", LogLevel.Trace);
+                return -1;
+            }
+        }
+
+        /// <summary>Would vanilla play a personal farm event tonight that cannot simply come round
+        /// again? A birth, a couple's birth or a pregnancy question keeps its night. The barn birth
+        /// and the dogs are rolled fresh every night, so they give way like the fairy does.
+        ///
+        /// Vanilla only reaches <c>pickPersonalFarmEvent</c> when <c>pickFarmEvent</c> came back null
+        /// (Game1.cs:8134), so a scene that takes an empty slot would eat a birth, a couple's birth or
+        /// a pregnancy question outright. The probe is safe to call: <c>pickPersonalFarmEvent</c>
+        /// (Utility.cs:4496) seeds its own Random from the date and the save and reads friendship,
+        /// the spouse and a game state query. Its one write is idempotent: the spouse's
+        /// <c>canGetPregnant</c> sets the NPC's defaultMap, the same value vanilla writes when it
+        /// asks again a moment later. The four events it can build have trivial constructors. It also never returns null outside a wedding, because it falls
+        /// through to the barn birth or the dogs, which is why the answer is classified rather than
+        /// null-checked.</summary>
+        private static bool PersonalEventHasTheSlot()
+        {
+            try
+            {
+                FarmEvent personal = Utility.pickPersonalFarmEvent();
+                return personal != null && !IsRandom(personal);
+            }
+            catch (Exception ex)
+            {
+                // The doubtful case keeps vanilla's night and the strike is postponed.
+                Monitor?.Log($"Darkness: could not tell whether a personal farm event is due tonight, so the night is left to vanilla. {ex}", LogLevel.Error);
+                return true;
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming (Harmony convention).
+        // ReSharper disable once UnusedMember.Local (discovered by the patch pass).
+        private static void Postfix(ref FarmEvent __result)
+        {
+            if (!RunActivation.IsActive || SceneFor == null) return;
+            // Nothing waiting: vanilla's night is untouched, and the personal-event probe is not run.
+            if (StrikeWaiting == null || !StrikeWaiting()) return;
+            FarmEvent picked = __result;
+            OvernightEvent kind = picked == null ? OvernightEvent.None
+                : IsRandom(picked) ? OvernightEvent.Random
+                : OvernightEvent.Scripted;
+            // A fail night is rewound in the morning, so nothing overnight runs (and RunController
+            // runs no night pass on one). A Wildcard night_event night belongs to the twist: the
+            // player was told that morning that something will happen on the farm, and it is asked
+            // of the run state, not of __result, because WildcardNightEventPatch postfixes the same
+            // method. An empty slot is read again by vanilla for a wedding, farmEventOverride and a
+            // personal farm event (Game1.cs:8122 and 8134).
+            StrikeSlotVerdict verdict = StrikeSlot.Decide(
+                failNight: FailNight != null && FailNight(),
+                wildcardTwist: StrikeScenes.WildcardTwistHasTheSlot(WildcardDayService.NightTwist(), suppressed: false),
+                picked: kind,
+                wedding: Game1.weddingToday,
+                farmEventOverride: Game1.farmEventOverride != null,
+                personalEventOwns: PersonalEventHasTheSlot);
+            switch (verdict)
+            {
+                case StrikeSlotVerdict.LeaveAlone:
+                    return;
+                case StrikeSlotVerdict.Postpone:
+                    Postpone?.Invoke(OwnerOfTheSlot(kind, picked));
+                    return;
+            }
+            FarmEvent scene = SceneFor();
+            if (scene == null) return;
+            Monitor?.Log(
+                picked == null
+                    ? "Darkness: the strike scene takes tonight's empty overnight slot."
+                    : $"Darkness: the strike scene takes the overnight slot from {picked.GetType().Name}, which comes round again.",
+                LogLevel.Trace);
+            // Not committed here: the strike commits only when vanilla's setUp actually stages the
+            // scene (StrikeSceneBase.setUp). A scene whose setUp cannot stage it is broken and lands
+            // the strike bare there; another mod replacing the event after this postfix means setUp
+            // never runs, and the net postpones and queues it as a conflict (Jeff, 2026-10-08).
+            __result = scene;
+        }
+
+        /// <summary>Who has the slot tonight, for the log line of a postponed strike.</summary>
+        private static string OwnerOfTheSlot(OvernightEvent kind, FarmEvent picked)
+        {
+            if (StrikeScenes.WildcardTwistHasTheSlot(WildcardDayService.NightTwist(), suppressed: false))
+                return "the wildcard night event has the overnight slot";
+            if (kind == OvernightEvent.Scripted) return $"{picked.GetType().Name} has the overnight slot";
+            if (Game1.weddingToday) return "a wedding has the overnight slot";
+            if (Game1.farmEventOverride != null) return "another mod's farm event override has the overnight slot";
+            return "a personal farm event has the overnight slot";
+        }
+    }
+}

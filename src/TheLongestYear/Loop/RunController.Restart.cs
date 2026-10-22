@@ -30,7 +30,8 @@ namespace TheLongestYear.Loop
         private RestartSituation RestartSituationNow() => new(
             DayOfMonth: Game1.dayOfMonth,
             EventUp: Game1.eventUp || Game1.CurrentEvent != null || Game1.farmEvent != null || Game1.isFestival(),
-            ResetRunning: IsRewindChainRunning || Game1.newDay);
+            // An armed Year One Ending owns the next morning (or this one, until the event plays).
+            ResetRunning: IsRewindChainRunning || Game1.newDay || Run.EndingArmed);
 
         /// <summary>Why the shrine's Restart the year button is hidden right now (None = shown).</summary>
         public RestartBlock VoluntaryRestartBlock() => VoluntaryRestart.BlockedBy(RestartSituationNow());

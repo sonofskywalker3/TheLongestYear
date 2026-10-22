@@ -25,13 +25,13 @@ namespace TheLongestYear.UI
         private const int PanelWidth = 1100;
         private const int PanelHeight = 700;
         private const int TabWidth = 200;
-        private const int TabHeight = 56;
-        private const int TabSpacing = 8;
+        private const int TabHeight = 52;   // 10 tabs (Animals and Wards) must fit the 700px panel
+        private const int TabSpacing = 4;
         private const int RowHeight = 96;
         private const int RowSpacing = 8;
         private const int PanelPadding = 32;
 
-        private const int TabIdBase = 6100;          // one id per UpgradeCategory (9 tabs: 6100..6108)
+        private const int TabIdBase = 6100;          // one id per UpgradeCategory (10 tabs: 6100..6109)
         private const int RowIdBase = 7000;          // one id per visible row slot
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;

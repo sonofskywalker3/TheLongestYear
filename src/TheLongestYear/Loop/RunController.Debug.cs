@@ -37,15 +37,14 @@ namespace TheLongestYear.Loop
             _pendingCutscene = Day28Branch.Continue;
         }
 
-        /// <summary>Debug: queue the WIN screen so a playtest can watch the win → shrine →
-        /// keep-playing flow without grinding to a real Winter-28 win. Sets the pending branch;
-        /// the Day28CutsceneDriver opens VictoryMenu this tick and OnCutsceneEnded opens the JP
-        /// shrine then the keep-playing choice. Bypasses the VictoryAcknowledged "first win only"
-        /// gate (that lives in OnDayEnding), so it is re-runnable from any loaded save.</summary>
+        /// <summary>Debug: arm the Year One Ending for tomorrow morning so a playtest can watch the
+        /// whole event → shrine → choice flow without grinding to a real board completion. Same
+        /// entry point the win night uses (<see cref="ArmEnding"/>), so the morning behaves exactly
+        /// as it would after a real win: sleep, then step outside.</summary>
         public void DebugForceWin()
         {
-            _monitor.Log("tly_win: queuing the WIN screen (Junimos → shrine → keep-playing choice).", LogLevel.Info);
-            _pendingCutscene = Day28Branch.Win;
+            _monitor.Log("tly_win: arming the ending for tomorrow morning (sleep, then step outside).", LogLevel.Info);
+            ArmEnding("tly_win");
         }
 
         /// <summary>Debug: jump the in-game date to <paramref name="day"/> of the current season so a

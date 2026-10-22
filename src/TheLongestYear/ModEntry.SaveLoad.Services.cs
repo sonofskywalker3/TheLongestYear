@@ -36,11 +36,10 @@ namespace TheLongestYear
             farmerReset.RepairOrphanedMarriage(Game1.player);
             var professionPicker = new ProfessionPickerScheduler(this.Monitor);
             _stashService = new JunimoStashService(this.Monitor, _meta.State, _config);
-            JunimoStashService.SetTextureLoader(
-                () => this.Helper.ModContent.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("assets/junimo_stash.png"));
             _meta.AttachStashService(_stashService);
             JunimoStashCapPatch.Connect(this.Monitor, _meta.State);
             JunimoStashCapacityPatch.Connect(_meta.State);
+            JojaCounterPatch.Connect(this.Monitor, _meta, () => Integration.JojaBadEnding.Start(this.Monitor));
             XpMultiplierPatch.Connect(_meta.State);
             TheLongestYear.Loop.DejaVuDialoguePatch.Enabled = _config.EnableDejaVuDialogue;
             TheLongestYear.Loop.AnimalDoubleProductPatch.Connect(() => _meta.Run);
@@ -60,6 +59,7 @@ namespace TheLongestYear
                 this.Helper.DirectoryPath, farmerReset, professionPicker,
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 ctx.ItemSeasonPins, ctx.BundleQuotas, this.Helper.GameContent);
+            _reset.ReconcileCircles = () => _circles.Reconcile();
             // Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
             _reset.TechBundles = new TheLongestYear.Loop.TechCrossModBundlesTarget(this.Helper.ModRegistry);
         }
@@ -97,6 +97,7 @@ namespace TheLongestYear
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
+            BuildObtainabilityModel();
             this.Monitor.Log(
                 $"Item availability model built from live pools: "
                 + $"{_availability.DerivedCount} id(s) derived, "
@@ -228,6 +229,23 @@ namespace TheLongestYear
             // the profiles come from the same pools the board was generated from.
             _runController.GoalSourceOf = ItemSourceIndex.From(_enginePools).For;
             _runController.AttachQuestService(_questService);
+            // Darkness pushback (spec 2026-09-09): the night pass and the morning report.
+            _sabotage = new TheLongestYear.Loop.SabotageService(
+                this.Monitor, _meta, _config,
+                () => _runController?.Requirements ?? _requirements,
+                () => _availability,
+                () => _enginePools,
+                () => _obtainability,
+                RebuildBoardDerivedState);
+            _sabotage.AfterGoalsChanged = () => _questService?.OnItemDonated();
+            _sabotage.StartTamperScene = (oldName, oldIsMass, newName, newIsPlural, done) => _seasonTurnDriver.StartTamperAtPorch(oldName, oldIsMass, newName, newIsPlural, done);
+            // The morning boxes wait out the Junimos' tamper scene and any season turn.
+            TheLongestYear.Loop.MorningBox.Monitor = this.Monitor;
+            TheLongestYear.Loop.MorningBox.SceneRunning = () => _seasonTurnDriver?.Running ?? false;
+            // Whether tonight's strike has anything for its scene to play against (spec 2026-09-21).
+            _sabotage.SceneCanPlay = TheLongestYear.Scenes.StrikeSceneFactory.CanPlay;
+            _sabotage.SceneCanStage = TheLongestYear.Scenes.StrikeSceneFactory.CanStage;
+            _runController.AttachSabotage(_sabotage);
             _wildcardDays = new TheLongestYear.Loop.WildcardDayService(this.Monitor, () => _meta.Run);
             TheLongestYear.Loop.WildcardDayService.GrowthNight = () => _meta.Run.WildcardGrowthNight;
             TheLongestYear.Loop.WildcardDayService.NightRun = () => _meta.Run;
@@ -256,6 +274,9 @@ namespace TheLongestYear
                     this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
                 if (id == TheLongestYear.Core.AnimalPowers.LoyalPet)
                     _animalPowers.RefreshPets("bought");
+                // A bought circle is handed over on the spot, not at the next loop.
+                if (id.StartsWith("ward_circle_", System.StringComparison.Ordinal))
+                    _circles.Reconcile();
             };
             _focus = new TheLongestYear.Focus.FocusService(this.Monitor, _meta, _config, _purchases);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);
@@ -264,6 +285,7 @@ namespace TheLongestYear
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);
+            _witness = new TheLongestYear.Loop.WitnessDialogueService(this.Monitor, _meta);
             _boostPurchases = new BoostPurchaseService(this.Monitor, _meta, _boostEffects);
             _boostPurchases.Bought = id =>
             {
@@ -294,6 +316,7 @@ namespace TheLongestYear
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
             _bookFurniture.ReconcileInventory();
+            _circles.Reconcile();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
             // not just after reset. AddIntroQuest is idempotent against the questLog, so this
             // safely surfaces quests added in code rounds that pre-date this save (e.g. the

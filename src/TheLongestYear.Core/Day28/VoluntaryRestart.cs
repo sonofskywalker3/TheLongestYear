@@ -37,11 +37,13 @@ namespace TheLongestYear.Core.Day28
 
         /// <summary>After "Keep playing" the won-run flag silences later wins. A restart starts a
         /// loop that can be won again, like "Start a new loop" on the win screen. Returns whether
-        /// the flag was set (and is now cleared).</summary>
+        /// the flag was set (and is now cleared). The Year 2 wall is disarmed with it, as the wall's
+        /// own Loop again does: the restarted loop's Spring 1 is not the start of year 2.</summary>
         public static bool ClearWonRun(MetaState meta)
         {
             if (!meta.VictoryAcknowledged) return false;
             meta.VictoryAcknowledged = false;
+            meta.Year2WallArmed = false;
             return true;
         }
 

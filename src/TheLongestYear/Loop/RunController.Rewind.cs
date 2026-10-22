@@ -59,8 +59,26 @@ namespace TheLongestYear.Loop
             watch.onContinue();
         }
 
+        /// <summary>The season-turn porch scene owed to the next Farm arrival, or none
+        /// (<see cref="SeasonTurnArrival"/>).</summary>
+        public SeasonTurnKind? SeasonTurnOwed => SeasonTurnArrival.Owed(Run.PendingSeasonTurn);
+
+        /// <summary>The Continue morning: the porch scene waits for the farmer's first arrival on the
+        /// Farm instead of playing on waking (Jeff, 2026-10-08).</summary>
+        public void OweSeasonTurn(SeasonTurnKind kind)
+        {
+            if (SeasonTurnOwed is SeasonTurnKind older && older != kind)
+                _monitor.Log($"Season turn: the {older} scene was never watched; the {kind} scene replaces it.", LogLevel.Info);
+            Run.PendingSeasonTurn = SeasonTurnArrival.Owe(kind);
+            _monitor.Log($"Season turn: the {kind} scene waits for the farmer's first arrival on the farm.", LogLevel.Info);
+        }
+
+        /// <summary>The owed scene has started; it plays once.</summary>
+        public void ClearSeasonTurnOwed() => Run.PendingSeasonTurn = "";
+
         /// <summary>Called by the <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> when the
-        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart.
+        /// day-28 bedtime cutscene has finished, or directly (no scene) for a voluntary Restart and for a
+        /// Continue morning, whose porch scene waits for the first Farm arrival (Jeff, 2026-10-08).
         /// Clears the pending branch and runs its continuation: FAIL → JP shop, then on close PerformReset + forced full save
         /// (ContinueAfterResetSpend); CONTINUE → roll straight into the next season's day-start
         /// flow (no shop, no reset).</summary>
@@ -97,12 +115,6 @@ namespace TheLongestYear.Loop
                 case Day28Branch.Continue:
                     DoDayStartSeasonAndHub();
                     break;
-                case Day28Branch.Win:
-                    // After the win screen closes: open the JP-spend shrine (the player spends the JP
-                    // banked across the run), then ask "start a new loop" vs "keep playing". Same order as the
-                    // old _pendingWinChoice path, with the win screen now in front of it.
-                    TryOpenShrineThenContinue(ShowKeepPlayingChoice, focusRows: false);
-                    break;
                 case Day28Branch.None:
                 default:
                     // Defensive: driver fired with nothing queued. Fall back to the normal flow
@@ -117,10 +129,8 @@ namespace TheLongestYear.Loop
         /// recipe banking, reset.</summary>
         private void StartRewindChain()
         {
-            // Hide the day/time HUD across the choice -> shop -> reset so the stale
-            // (pre-rewind) calendar date isn't shown while the player decides and shops.
-            // FinalizeReset restores it once the world is back on Spring 1.
-            Game1.displayHUD = false;
+            // No HUD hiding here: on a Fail night RewindSpringPaint already holds the date at
+            // Spring 1 through this window, and FinalizeReset no longer turns the HUD back on.
             // Vanilla mode's reset regenerates the board via loadForNewGame and never
             // consults BundleSeedLoop, so holding would be a no-op that still charges JP.
             // Read the save's chosen source, not its BundleSource stamp: PerformReset
@@ -233,8 +243,9 @@ namespace TheLongestYear.Loop
         {
             _monitor.Log(
                 $"FinalizeReset ({reason}): applying reset (eventUp={Game1.eventUp}, " +
-                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Game1.season} {Game1.dayOfMonth}).",
+                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
+            var timing = new ResetTiming(_monitor, "FinalizeReset");
             // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
             // early then does heavy world work; if it threw mid-way the old code swallowed it up the
             // stack and the game limped on in a half-reset state. Log the full exception, then
@@ -248,6 +259,19 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"FinalizeReset ({reason}): PerformReset threw — reset NOT applied: {ex}", LogLevel.Error);
                 throw;
             }
+            finally
+            {
+                // Let go of the rewind cutscene's cosmetic Spring 1 hold (spec 2026-09-11). It has
+                // been re-writing season/day/timeOfDay every tick since the pan ended so the choice
+                // and the shrine both read Spring 1; PerformReset has now set those
+                // for real (WorldResetService sets Game1.timeOfDay = 600 itself), so the handoff is
+                // seamless. In a finally because a hold that is never released freezes the save at
+                // Spring 1 6:00am forever, which must not be the price of a throwing reset.
+                // No-op on every path that never painted (the debug tly_reset entry, the Continue
+                // branch): Release is idempotent.
+                TheLongestYear.Integration.RewindSpringPaint.Release();
+            }
+            timing.Mark("PerformReset");
             // Re-inject the manifest PerformReset just generated for the new loop -- before
             // DoDayStartSeasonAndHub below, which samples goal slots from _requirements. Null only
             // if PerformReset somehow returned without generating (shouldn't happen post-wiring;
@@ -263,6 +287,7 @@ namespace TheLongestYear.Loop
                     $"FinalizeReset ({reason}): WorldResetService.LastGeneratedRequirements was null — " +
                     "keeping the previous requirement manifest.",
                     LogLevel.Warn);
+            timing.Mark("ReplaceRequirements");
             // Festival memories: this loop's festivals become the next loop's half-memories. Every
             // rewind path comes through here; BeginNewRun clears the log right after.
             int festivals = Run.FestivalLog?.Count ?? 0;
@@ -279,6 +304,9 @@ namespace TheLongestYear.Loop
             // the stale on-disk meta from before the shrine was opened — refunding the JP the player
             // just spent and dropping their purchases (2026-06-01 playtest: "it refunded all my JP").
             _store.Save();
+            timing.Mark("festival memories, BeginNewRun, meta save");
+            // The save itself settles on a later tick (ResetSave logs it), so the stopwatch ends here.
+            timing.Total();
             // The full save runs through the game's save menu so SMAPI raises Saving and Saved for
             // every mod (see ResetSave). The rest of the reset waits for it: the planning hub and
             // the profession pickers would otherwise replace the save menu.
@@ -318,9 +346,6 @@ namespace TheLongestYear.Loop
             // (2026-06-08 playtest "double-pick theme on reset"). Saving the now-set marker makes
             // the deferred reload read it back as presented, so the day-start guard skips the re-fire.
             _store.Save();
-            // Restore the HUD hidden for the FAIL cutscene's shop→reset window (OnCutsceneEnded).
-            // Safe/no-op on the non-cutscene paths that also call this (post-win, debug, fallback).
-            Game1.displayHUD = true;
         }
     }
 }

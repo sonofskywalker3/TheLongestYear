@@ -64,7 +64,6 @@ public class VoluntaryRestartTests
     [InlineData(Day28Branch.Restart, true)]
     [InlineData(Day28Branch.None, false)]
     [InlineData(Day28Branch.Continue, false)]
-    [InlineData(Day28Branch.Win, false)]
     public void Fail_and_restart_are_the_rewind_branches(Day28Branch branch, bool rewinds)
         => Assert.Equal(rewinds, VoluntaryRestart.IsRewind(branch));
 
@@ -76,7 +75,7 @@ public class VoluntaryRestartTests
         Assert.Equal(0, (int)Day28Branch.None);
         Assert.Equal(1, (int)Day28Branch.Fail);
         Assert.Equal(2, (int)Day28Branch.Continue);
-        Assert.Equal(3, (int)Day28Branch.Win);
+        Assert.False(System.Enum.IsDefined(typeof(Day28Branch), 3));   // was Win; retired, kept unused
         Assert.Equal(4, (int)Day28Branch.Restart);
     }
 

@@ -40,6 +40,25 @@ namespace TheLongestYear.Loop
                 return;
             }
 
+            // Year One Ending (spec 2026-09-06 section 5): Spring 1 of year 2 on a keep-playing
+            // save shows the wall until the Year 2 update sets Year2Started. Checked before the
+            // repeat-win shortcut below since a wall save has no pending choice to consume.
+            if (TheLongestYear.Core.Ending.Year2WallRule.ShouldShow(Game1.year, _store.State.Year2WallArmed, _store.State.Year2Started))
+            {
+                ShowYear2Wall();
+                return;
+            }
+
+            // Year One Ending (spec 2026-09-06 section 1): a repeat win on a save that has already
+            // seen the event skips straight to the shrine + choice on the wake frame. Armed in
+            // ArmEnding the night before; consumed here, before the normal season/hub flow.
+            if (_pendingChoice)
+            {
+                _pendingChoice = false;
+                TryOpenShrineThenContinue(ShowEndingChoice, focusRows: false);
+                return;
+            }
+
             DoDayStartSeasonAndHub();
         }
 
@@ -49,6 +68,14 @@ namespace TheLongestYear.Loop
         /// through a JP-spend popup and still re-enter this same logic via the menu's
         /// exitFunction callback.</summary>
         private void DoDayStartSeasonAndHub()
+        {
+            // What the darkness took in the night, before the hub can cover it. A changed board's
+            // report waits for the Junimos' scene at the farmhouse door; the morning goes on at once.
+            _sabotage?.ShowMorning();
+            DoDayStartSeasonAndHubCore();
+        }
+
+        private void DoDayStartSeasonAndHubCore()
         {
             // Sync state from the game date; a new month clears the month's selections (the
             // previous-day's Sunday-night day-28 pre-pick is consumed inside BeginNewMonth →
@@ -165,9 +192,10 @@ namespace TheLongestYear.Loop
                     Game1.addHUDMessage(new HUDMessage(
                         Strings.Get("hud.checkpoint-award", new Dictionary<string, string> { ["jp"] = checkpointJp.ToString() }),
                         HUDMessage.newQuest_type));
-                    // Queue the "great job, next season" Junimo cutscene for the morning. The
-                    // game still advances the date; OnCutsceneEnded → DoDayStartSeasonAndHub
-                    // clears the month's selections and opens the planning hub after the scene.
+                    // Queue the Continue outcome for the morning (its porch scene waits for the first
+                    // Farm arrival). The game still advances the date; OnCutsceneEnded runs
+                    // DoDayStartSeasonAndHub, which
+                    // clears the month's selections and opens the planning hub on waking.
                     _pendingCutscene = Day28Branch.Continue;
                     break;
 
@@ -183,24 +211,85 @@ namespace TheLongestYear.Loop
                     break;
 
                 case RunAction.Win:
-                    // 2026-05-29 continue-after-victory: only award the win-JP + queue the
-                    // post-win choice popup on the FIRST win this playthrough. Subsequent
-                    // Winter 28 wins (after the player chose Keep playing) re-fire RunAction.Win
-                    // but should be silent — we don't want to double-pay JP or re-ask the
-                    // question we already answered.
-                    if (!_store.State.VictoryAcknowledged)
-                    {
-                        // Queue the win screen for the morning. Routes through the same
-                        // Day28CutsceneDriver/OnCutsceneEnded path as Fail/Continue (the driver
-                        // opens VictoryMenu for the Win branch); OnCutsceneEnded then opens the
-                        // JP shrine and the keep-playing choice. Replaces the old _pendingWinChoice.
-                        _pendingCutscene = Day28Branch.Win;
-                    }
+                    // Winter 28 with a complete board: the same win night as any other date (below).
                     break;
             }
+
+            // Year One Ending (spec 2026-09-06 section 1): the night the board completes is the win
+            // night, whatever the date. RunAction.Win (Winter 28) lands here too.
+            bool boardDone = BundleGate.IsFullyDone(Run.DonatedLedger(), _requirements);
+            if (action != RunAction.FailReset
+                && TheLongestYear.Core.Ending.WinNightRule.ShouldArm(boardDone, _store.State.VictoryAcknowledged, Run.EndingArmed))
+            {
+                ArmEnding("board complete");
+                // The ending supersedes the season-turn beat: a board completed on a day 28 that is
+                // not Winter 28 queued the CONTINUE cutscene above, and playing both would put the
+                // "great job, next season" Junimos in front of the ending. The checkpoint JP was
+                // already paid, so only the scene is dropped. (Fail can't reach here; guarded above.)
+                if (_pendingCutscene == Day28Branch.Continue)
+                    _pendingCutscene = Day28Branch.None;
+            }
+            else if (Run.EndingArmed)
+            {
+                ForceTomorrowSunny();   // a festival deferred us; keep tomorrow clear too
+            }
+
+            // Darkness pushback (spec 2026-09-09): only an ordinary night. A day 28 belongs to the
+            // gate (it judges what the player actually had), the win night to the ending.
+            if (action == RunAction.Continue && !Run.EndingArmed)
+                _sabotage?.RunNight();
+            else
+                _monitor.Log($"Darkness: no night roll (action={action}, endingArmed={Run.EndingArmed}).", LogLevel.Trace);
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
         }
+
+        /// <summary>Arm the Year One Ending for tomorrow morning: the run flag and a sunny forecast
+        /// for the Town scene. Idempotent.</summary>
+        public void ArmEnding(string reason)
+        {
+            if (Run.EndingArmed)
+            {
+                _monitor.Log($"Win night ({reason}): ending already armed.", LogLevel.Trace);
+                return;
+            }
+            if (_store.State.EndingSeen)
+            {
+                // The event already played on this save: a later win goes straight to the shrine
+                // and the choice on the wake frame (spec section 1, "once per save, choice every time").
+                _monitor.Log($"Win night ({reason}): ending already seen, queuing shrine + choice for the morning.", LogLevel.Info);
+                _pendingChoice = true;
+                return;
+            }
+            // The ending owns the next Farm arrival; a season turn never watched is dropped, not
+            // played after the ending.
+            if (SeasonTurnOwed is SeasonTurnKind dropped)
+            {
+                Run.PendingSeasonTurn = "";
+                _monitor.Log($"Win night: the {dropped} season-turn scene was still owed; the ending replaces it.", LogLevel.Info);
+            }
+            Run.EndingArmed = true;
+            ForceTomorrowSunny();
+            _monitor.Log($"Win night ({reason}): ending armed for tomorrow morning, weather forced sunny.", LogLevel.Info);
+        }
+
+        /// <summary>A repeat win's shrine + choice, owed to the next OnDayStarted. In-memory only:
+        /// quitting that night loses the prompt, and the next win re-arms it.</summary>
+        private bool _pendingChoice;
+
+        /// <summary>Clear skies for the ending morning's Town scene (and for a morning the event was
+        /// deferred past). Same three-write idiom the boost effects use.</summary>
+        private void ForceTomorrowSunny()
+        {
+            const string sunny = "Sun";
+            Game1.weatherForTomorrow = sunny;
+            Game1.netWorldState.Value.WeatherForTomorrow = sunny;
+            Game1.netWorldState.Value.GetWeatherForLocation(DefaultWeatherContext).WeatherForTomorrow = sunny;
+        }
+
+        /// <summary>The net world state's location-weather context every non-island location shares
+        /// (same key WeatherModificationsPatch and BoostEffectsService write).</summary>
+        private const string DefaultWeatherContext = "Default";
 
         /// <summary>Remove this-night's CC room-restoration mail so the matching overnight
         /// WorldChangeEvent doesn't play on a fail loop (the rewind un-restores the room, so the

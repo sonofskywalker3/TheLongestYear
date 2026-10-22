@@ -7,6 +7,7 @@ using StardewValley;
 using TheLongestYear.Core;
 using CoreSeason = TheLongestYear.Core.Season;
 using TheLongestYear.Core.Day28;
+using TheLongestYear.Core.Ending;
 
 namespace TheLongestYear.Loop
 {
@@ -49,8 +50,17 @@ namespace TheLongestYear.Loop
 
         /// <summary>Exposed for the driver's per-tick decision.</summary>
         public Day28Branch PendingCutscene => _pendingCutscene;
+
+        /// <summary>The season <c>Run.Season</c> currently reflects. Exposed so
+        /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can hand
+        /// <c>RewindPanScene.Start</c> the season that just failed: by the time the FAIL cutscene
+        /// opens, <c>Game1.season</c> has already rolled over to the next season overnight, while
+        /// <c>Run.Season</c> stays at the failed season until the real reset (FinalizeReset) runs,
+        /// well after the rewind sequence completes.</summary>
+        public CoreSeason CurrentSeason => Run.Season;
         private TheLongestYear.UI.MenuLauncher _launcher;
         private WeeklyThemeQuestService _questService;
+        private SabotageService _sabotage;
 
         /// <summary>A planning-hub offer that couldn't open because the menu surface was busy
         /// (e.g. the post-win keep-playing <c>DialogueBox</c> still closing when the new loop's
@@ -120,9 +130,9 @@ namespace TheLongestYear.Loop
         /// keeps Mixed at its Bulletin Board room until the game data is available.</summary>
         public Func<string, ItemKind> ItemKindOf { get; set; } = _ => ItemKind.Other;
 
-        /// <summary>The current attempt count (loop the player is on / won), surfaced so the
-        /// <see cref="TheLongestYear.Integration.Day28CutsceneDriver"/> can pass it into the
-        /// <see cref="TheLongestYear.UI.VictoryMenu"/> loop-count line.</summary>
+        /// <summary>The current attempt count (loop the player is on / won), surfaced for the
+        /// integration layer and the ending choice's loop-count line
+        /// (<see cref="TheLongestYear.Core.WinSummary.LoopLine"/>).</summary>
         public int CurrentRunNumber => Run.RunNumber;
 
         /// <summary>Called from OnSaveLoaded: ensure the run has a seed.</summary>
@@ -343,6 +353,9 @@ namespace TheLongestYear.Loop
         /// quest in the player's quest log — created on theme selection, refreshed on donation,
         /// auto-completed when every goal slot is complete.</summary>
         public void AttachQuestService(WeeklyThemeQuestService quest) => _questService = quest;
+        /// <summary>Darkness pushback (spec 2026-09-09): the night pass rolls from OnDayEnding on a
+        /// Continue verdict, the morning report shows from the normal day start.</summary>
+        public void AttachSabotage(SabotageService sabotage) => _sabotage = sabotage;
 
         private WildcardDayService _wildcard;
 

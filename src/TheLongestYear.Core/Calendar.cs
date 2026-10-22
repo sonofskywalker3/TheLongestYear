@@ -21,7 +21,7 @@ public static class Calendar
 
     public static bool IsWeekEnd(int dayOfMonth) => dayOfMonth % DaysPerWeek == 0;
 
-    /// <summary>True on days 1, 8, 15, 22 — the morning of each in-month week.</summary>
+    /// <summary>True on days 1, 8, 15, 22, the morning of each in-month week.</summary>
     public static bool IsWeekStart(int dayOfMonth) => dayOfMonth % DaysPerWeek == 1;
 
     public static bool IsMonthEnd(int dayOfMonth) => dayOfMonth == DaysPerMonth;
@@ -36,6 +36,9 @@ public static class Calendar
     public static int DayOfYear(int monthIndex, int dayOfMonth) => monthIndex * DaysPerMonth + dayOfMonth;
 
     public static Season SeasonOfDay(int dayOfYear) => (Season)((dayOfYear - 1) / DaysPerMonth);
+
+    /// <summary>1-based day of the month for a 1-based day of the year.</summary>
+    public static int DayOfMonthOf(int dayOfYear) => (dayOfYear - 1) % DaysPerMonth + 1;
 
     /// <summary>Last day of the 7-day block containing <paramref name="dayOfYear"/>.</summary>
     public static int LastDayOfWeek(int dayOfYear) => ((dayOfYear - 1) / DaysPerWeek + 1) * DaysPerWeek;

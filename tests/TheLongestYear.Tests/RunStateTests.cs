@@ -545,7 +545,7 @@ public class RunStateTests
     [Theory]
     [InlineData(TheLongestYear.Core.Day28.Day28Branch.Continue)]
     [InlineData(TheLongestYear.Core.Day28.Day28Branch.Fail)]
-    [InlineData(TheLongestYear.Core.Day28.Day28Branch.Win)]
+    [InlineData(TheLongestYear.Core.Day28.Day28Branch.Restart)]
     public void BeginNewRun_clears_a_pending_day28_outcome(TheLongestYear.Core.Day28.Day28Branch branch)
     {
         var run = new RunState { PendingDay28 = branch };

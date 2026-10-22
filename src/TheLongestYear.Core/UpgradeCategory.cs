@@ -15,6 +15,8 @@ public enum UpgradeCategory
     Buildings,      // Keep Coop / Kitchen / Barn, Start with [animal] (added 2026-05-26)
     Gifts,          // Gifts of the Junimos: keep a CC room's world reward (greenhouse, quarry bridge,
                     // boulder, minecarts, bus) across loops; shared price ladder (added 2026-08-29)
-    Animals         // Animal powers and the animal keeps: horse, pet, coop/barn/silo chains, Start with,
+    Animals,        // Animal powers and the animal keeps: horse, pet, coop/barn/silo chains, Start with,
                     // Herd Book (spec 2026-10-09). Appended so the older tabs keep their index.
+    Wards           // Darkness pushback counters: Ward of the Fields per season, Ward of the Hall
+                    // per item room (spec 2026-09-09)
 }

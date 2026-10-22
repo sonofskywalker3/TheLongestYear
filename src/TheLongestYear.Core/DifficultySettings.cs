@@ -1,8 +1,11 @@
+using System;
+using System.Linq;
+
 namespace TheLongestYear.Core;
 
-/// <summary>The ten configured difficulty modifiers, serialized into
-/// <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
-/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets all ten, and a dial edited
+/// <summary>The configured difficulty modifiers: the nine original dials plus Bundle Count and
+/// Darkness, serialized into <see cref="GameplayConfig.Difficulty"/>. Each one is independent. <see cref="Overall"/> is a
+/// setup shortcut, not a tier (Jeff, 2026-09-14): picking it sets every dial, and a dial edited
 /// afterwards simply keeps its own value. Nothing reads Overall to decide gameplay.
 ///
 /// Every property defaults to <see cref="DifficultyStep.Normal"/>, and Normal is the mod's
@@ -21,7 +24,7 @@ public sealed class DifficultySettings
     /// setup only; see <see cref="SetAll"/>. Excluded from <see cref="IsAllNormal"/>.</summary>
     public DifficultyStep Overall { get; set; } = DifficultyStep.Normal;
 
-    /// <summary>Set the lever and all ten dials to one level.</summary>
+    /// <summary>Set the lever and every dial to one level.</summary>
     public void SetAll(DifficultyStep step)
     {
         Overall = step;
@@ -34,6 +37,7 @@ public sealed class DifficultySettings
         StartingGold = step;
         CartSlots = step;
         HoldPrices = step;
+        Darkness = step;
         BundleCount = step;
     }
 
@@ -78,7 +82,39 @@ public sealed class DifficultySettings
     /// Normal or Remixed board, the Vault or The Missing Bundle. Spec 2026-10-09-bundle-count-dial.</summary>
     public DifficultyStep BundleCount { get; set; } = DifficultyStep.Normal;
 
-    // A tenth dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
+    // ---- The darkness (spec 2026-09-15 darkness-obtainability-wiring, section 2.3) ----
+
+    /// <summary>How hard the darkness hits from Summer on: blight share and caps, the fairness
+    /// picker's level, the unmoderated roll. NULLABLE in the JSON on purpose: a config written
+    /// before the dial existed has no key, and <see cref="MigrateDarkness"/> must be able to tell
+    /// that apart from a player who chose Normal. NO initializer: a C# initializer would fill the
+    /// missing key with Normal and hide the old config. Read through <see cref="DarknessOrLowest"/>.</summary>
+    public DifficultyStep? Darkness { get; set; }
+
+    /// <summary>The dial as gameplay reads it: the value, or the lowest of the nine when unset.</summary>
+    public DifficultyStep DarknessOrLowest => Darkness ?? LowestDial();
+
+    /// <summary>The lowest of the NINE original dials (never the lever, never Bundle Count, never
+    /// Darkness itself). Nine: SeasonPity was removed, see the note below this class's properties.</summary>
+    public DifficultyStep LowestDial()
+        => new[]
+        {
+            StackSize, QualityAsks, RequiredSlots, ItemRarity, JpEarned, ShrinePrices, StartingGold,
+            CartSlots, HoldPrices,
+        }.Min();
+
+    /// <summary>Migration (Jeff, 2026-09-14): a config from before the dial sets Darkness AND the
+    /// overall lever to the lowest of the nine existing dials. True when something changed.</summary>
+    public bool MigrateDarkness()
+    {
+        if (Darkness != null) return false;
+        DifficultyStep lowest = LowestDial();
+        Darkness = lowest;
+        Overall = lowest;
+        return true;
+    }
+
+    // Another dial, SeasonPity, was removed with the season pity feature (2026-09-24). Old
     // config.json files that still carry it load fine; SMAPI skips the unknown key.
 
     /// <summary>True when every modifier is Normal, i.e. this build behaves exactly as a
@@ -90,7 +126,8 @@ public sealed class DifficultySettings
            && StartingGold == DifficultyStep.Normal
            && CartSlots == DifficultyStep.Normal
            && HoldPrices == DifficultyStep.Normal
-           && BundleCount == DifficultyStep.Normal;
+           && BundleCount == DifficultyStep.Normal
+           && DarknessOrLowest == DifficultyStep.Normal;
 
     /// <summary>True when the three modifiers a Vanilla board can honour are all Normal. Gates
     /// the Vanilla post-pass, so the default Vanilla path keeps its current zero-write behaviour.
@@ -116,5 +153,6 @@ public sealed class DifficultySettings
         CartSlots = CartSlots,
         HoldPrices = HoldPrices,
         BundleCount = BundleCount,
+        Darkness = Darkness,
     };
 }

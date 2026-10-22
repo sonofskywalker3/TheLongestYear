@@ -31,22 +31,27 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             yield return new DebugCommand("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             yield return new DebugCommand("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
-            yield return new DebugCommand("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [custom|standard|remixed] [name]", this.CmdNewGame);
+            yield return new DebugCommand("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", this.CmdNewGame);
             yield return new DebugCommand("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
             yield return new DebugCommand("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
-            yield return new DebugCommand("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count]", this.CmdAddItem);
+            yield return new DebugCommand("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count] | query <item query>", this.CmdAddItem);
             yield return new DebugCommand("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);
             yield return new DebugCommand("tly_reset", "Force an in-place reset to Spring 1 (debug). An optional seed loop pins the board the new run generates (same number tly_genbundles takes), so two runs can be played on the same board. Usage: tly_reset [seedLoop]", this.ForceReset);
             yield return new DebugCommand("tly_setday", "Jump the in-game date to <day> of the current season so you can sleep straight into that day's gate (e.g. day 28) without grinding a month. Sleep to trigger it. Usage: tly_setday <day>", this.CmdSetDay);
             yield return new DebugCommand("tly_failreset", "Simulate a day-28 gate-miss reset: opens the JP shrine, then resets to Spring 1 on close (debug — exercises the natural loop-reset path the JP-refund bug lived in).", this.CmdFailReset);
+            yield return new DebugCommand("tly_win", "Arm the Year One Ending for tomorrow morning (debug; sleep, then step outside).", this.CmdForceWin);
+            yield return new DebugCommand("tly_remember", "Seed the save's memory of a villager so they qualify as the ending's speaker (debug). Usage: tly_remember <Name> [tier 1-4]", this.CmdRemember);
+            yield return new DebugCommand("tly_seasonturn", "Replay a season-turn Junimo scene now, no continuation (debug). Usage: tly_seasonturn <summer|fall|winter>", this.CmdSeasonTurn);
+            yield return new DebugCommand("tly_ending", "Replay the Year One Ending event now, no continuation (debug). Usage: tly_ending [speaker <Name>]", this.CmdEnding);
+            yield return new DebugCommand("tly_sabotage", "Darkness pushback (debug). Usage: tly_sabotage status | arm <blight|revert|tamper> | blight [crops] [spoil] | revert | tamper | fair <itemId> [level] | travelcheck [save] | report | scene crows | scene thief | scene hall | scene cloud | scene [old] [new] [mass] | fixture [scarecrow [scarecrows=2]] [rows=<n>] [here [junimo]] [confirm] | edge | giftbox | circle | breakscene <crows|thief|hall|cloud|off> [pick|setup]. 'arm' strikes on tonight's real roll (sleep into it); the others strike at once.", this.CmdSabotage);
+            yield return new DebugCommand("tly_year2wall", "Show the Spring 1 year-2 wall dialog now (debug).", (c, a) => { if (Context.IsWorldReady) _runController?.DebugShowYear2Wall(); else this.Monitor.Log("Load a save first.", LogLevel.Warn); });
             yield return new DebugCommand("tly_restart", "Debug: press the Junimo Shrine's Restart the year button. Opens the same yes/no (tly_answer 0 = Yes, 1 = No); refuses and logs why when the button would be hidden.", this.CmdRestart);
             yield return new DebugCommand("tly_answer", "Pick a response on the open question dialogue without the mouse (debug). Usage: tly_answer <n> (0-based), or tly_answer key [n] for the Escape/N key path.", this.CmdAnswer);
-            yield return new DebugCommand("tly_win", "Open the basic win screen, then the JP shrine + keep-playing choice (debug — bypasses the first-win-only gate, re-runnable).", this.CmdForceWin);
             yield return new DebugCommand("tly_resetif", "Reset only if the loaded farmer's name matches. Usage: tly_resetif <name>", this.ResetIfNameMatches);
             yield return new DebugCommand("tly_leaktest", "Reset twice and report any state that leaks between runs (debug).", this.LeakTest);
             yield return new DebugCommand("tly_select", "Select a theme. With the planning hub open this is the card click (any theme, hub closes); otherwise it forces the theme for the current week. Usage: tly_select <theme> [left|right]", this.CmdSelect);
             yield return new DebugCommand("tly_offer", "Show this week's selection offer.", this.CmdOffer);
-            yield return new DebugCommand("tly_skipscene", "Finish the open day-28 Junimo scene as if clicked through (debug/automation).", this.CmdSkipScene);
+            yield return new DebugCommand("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call; 'all' presses the rewind's skip button (debug/automation).", this.CmdSkipScene);
             yield return new DebugCommand("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             yield return new DebugCommand("tly_runstate", "Print the current run state.", this.CmdRunState);
             yield return new DebugCommand("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
@@ -68,7 +73,8 @@ namespace TheLongestYear
             yield return new DebugCommand(TheLongestYear.DebugCommands.ModelDumpCommand.Name, TheLongestYear.DebugCommands.ModelDumpCommand.Description,
                 (c, a) => this.CmdDumpModel(a));
             yield return new DebugCommand("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
-            yield return new DebugCommand("tly_difficulty", "Read-only: print the ten configured difficulty steps, the ten this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
+            yield return new DebugCommand("tly_obtain", "Item obtainability model (phase 2, not used by gameplay). Usage: tly_obtain <itemId> [startDay 1-112] | tly_obtain compare [fileName]", this.CmdObtain);
+            yield return new DebugCommand("tly_difficulty", "Read-only: print the configured difficulty steps, the steps this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             yield return new DebugCommand("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             yield return new DebugCommand("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);
             yield return new DebugCommand("tly_genbundles", "Generate (diagnostics only) the engine bundle set for a loop: nothing written or persisted. Logs each room's picked bundles + slot counts, the manifest classification summary, and a determinism self-check (regenerates off the same seed and diffs). Requires a loaded save (the seed uses Game1.player.UniqueMultiplayerID). Usage: tly_genbundles [seedLoop] [custom|standard|remixed] (default: the current board's seed loop, custom = the TLY engine set; standard/remixed audit the board vanilla would build for that Advanced Options choice)", this.CmdGenBundles);
@@ -94,7 +100,7 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_favour", "Debug: force this week's favoured goal (double per-item JP) onto a committed goal, clear every flag, or just log the flags. Usage: tly_favour [itemId|clear]", this.CmdFavour);
             yield return new DebugCommand("tly_wildcard", "Debug: show this week's wildcard day and twist, or set today's twist (headless twist checks). Usage: tly_wildcard [twistId|clear]", this.CmdWildcard);
             yield return new DebugCommand("tly_boostexpire", "Debug: run the boosts' day-start pass now (prune expired entries, re-apply buffs, lucky day).", (cmd, a) => _boostEffects?.OnDayStarted());
-            yield return new DebugCommand("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
+            yield return new DebugCommand("tly_dismiss", "Debug: dismiss the active menu headlessly (a LevelUpMenu via its OK button, a dialogue box via its own close, anything else via exitThisMenu). Lets the bridge get past end-of-night menus.", this.CmdDismiss);
             yield return new DebugCommand("tly_openshrine", "Debug: open the planning shrine on a tab (active|boosts|focus|plan|donate) exactly as the statue does, so every tab's rows build and draw headlessly. Donate shows only on weeks with shrine goals. Usage: tly_openshrine [active|boosts|focus|plan|donate]", this.CmdOpenShrine);
             yield return new DebugCommand("tly_tv", "Debug: run the Queen of Sauce weekly-recipe lookup the TV uses (no mouse needed) and log the returned dialogue plus whether the recipe landed in cookingRecipes. Exercises the Sneak Peek boost patch. NOT read-only: this is the real grant path, so it teaches the player that episode's recipe exactly as watching the TV would.", this.CmdTv);
             yield return new DebugCommand("tly_dejavu", "Deja-vu dialogue debug. Usage: tly_dejavu [status | set <npc> <n> | force <npc> | reset]", this.CmdDejaVu);
@@ -103,6 +109,8 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_readbook","Debug: mark a power book as read (sets its Book_* stat). No args lists every Book_* stat. Usage: tly_readbook [Book_Id]", this.CmdReadBook);
             yield return new DebugCommand("tly_ordersboard", TheLongestYear.DebugCommands.OrdersBoardCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.OrdersBoardCommand.Run(this.Monitor, a));
+            yield return new DebugCommand("tly_openbundle", TheLongestYear.DebugCommands.OpenBundleCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.OpenBundleCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_bundlecount", TheLongestYear.DebugCommands.BundleCountDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.MenuShotCommand.Name, TheLongestYear.DebugCommands.MenuShotCommand.Usage,
@@ -122,6 +130,10 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_payvault", "Mark a Vault bundle as paid this run (debug; a real payment is picked up by VaultPaymentSync). Usage: tly_payvault <season|index>", this.CmdPayVault);
             yield return new DebugCommand("tly_hold", "Debug: apply the Fail-night hold choice in memory without a fail night. Usage: tly_hold keep|reshuffle|status. keep deducts JP per the config curve; the next reset (tly_reset) then honours it. Must be followed by tly_reset before sleeping; a real Fail night after tly_hold keep charges the next tier again.", this.CmdHold);
             yield return new DebugCommand("tly_here", "Print the player's current tile coords (debug — useful for tuning interactable tile coords).", this.CmdHere);
+            yield return new DebugCommand("tly_lights", "Debug: dump every light source in the current location with its context, colour, alpha, radius and fadeOut, plus the ambient and the lighting thresholds.", this.CmdLights);
+            yield return new DebugCommand("tly_tiles", "Debug: print the tile index on every layer for a rectangle of the current map (tly_tiles x y [w] [h]). Diff two runs of it to find what the game swaps and when.", this.CmdTiles);
+            yield return new DebugCommand("tly_witness", "Debug: the strike-scene witness lines. Usage: tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <Linus|Shane> | fresh <npc>. 'talk' runs the NPC's real checkAction for the player (the player must be in his location and free to move) and logs what opened; 'show' just opens his top dialogue; 'click' pages an open dialogue box on (skipping the typing and the safety timer) and logs what it shows; 'arm' records his witness line as if he saw last night's scene and makes this morning's call now (queued, or held for a day when he has not been met); 'fresh' re-arms his first-meeting Introduction so the held-for-a-day path can be replayed.", this.CmdWitness);
+            yield return new DebugCommand("tly_eventstep", "Debug: report the running event's current command, its actors and any dialogue box, and click a speak box on so a headless run can step through an event.", this.CmdEventStep);
             yield return new DebugCommand("tly_opencookbook",
                 "Open the Cookbook menu directly (debug).",
                 this.CmdOpenCookbook);
@@ -135,6 +147,11 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.AnimalPowersDebugCommand.Run(this.Monitor, _meta?.State, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.HerdBookDebugCommand.Name, TheLongestYear.DebugCommands.HerdBookDebugCommand.Description,
                 (cmd, a) => TheLongestYear.DebugCommands.HerdBookDebugCommand.Run(this.Monitor, _meta?.State, a));
+            yield return new DebugCommand(TheLongestYear.DebugCommands.JojaDebugCommand.Name, TheLongestYear.DebugCommands.JojaDebugCommand.Description,
+                (cmd, a) => TheLongestYear.DebugCommands.JojaDebugCommand.Run(this.Monitor, _meta, a, _jojaOffer));
+            yield return new DebugCommand("tly_hud",
+                "Log the HUD and fade state (displayHUD, eventUp, freezeControls, fade, menu, time, day). Read-only debug.",
+                this.CmdHud);
             yield return new DebugCommand("tly_activeeffects",
                 "Print the currently active theme bonus and liability.",
                 this.CmdActiveEffects);
@@ -153,8 +170,11 @@ namespace TheLongestYear
                 "(some services cache the MetaState reference). DESTRUCTIVE.",
                 this.CmdWipeMeta);
             yield return new DebugCommand("tly_replayintro",
-                "Clear MetaState.HasSeenIntro + per-run intro mail flags so the day-1 Lewis+Junimo " +
-                "intro chain re-fires on the next Spring 1. Pair with tly_reset to test immediately.",
+                "Replay the opening: clears the intro flags, then starts the arrival event directly at the bus stop " +
+                "(warps there first and asks to be run again if not already there, since the vanilla dayOfMonth==0 " +
+                "precondition can't be re-triggered by warping alone). Debug only: not reliable past the bus stop, " +
+                "and a tly_reset after a stalled replay strands the save. Use a fresh tly_newgame <type> arrival " +
+                "farm to watch the whole opening.",
                 this.CmdReplayIntro);
             yield return new DebugCommand("tly_addpet",
                 "Debug: add a pet to the Farm, or list every pet with its location and bowl. " +
@@ -169,6 +189,7 @@ namespace TheLongestYear
                 "Junimo Stash chest, or print every stashed tool's slots + enchantments. " +
                 "Usage: tly_stashrod | tly_stashrod check",
                 this.CmdStashRod);
+            yield return new DebugCommand("tly_dumpsprite", "Write Characters/<Name> to test-output/sprite-<Name>.png so its colours can be read (debug). Usage: tly_dumpsprite Morris", this.CmdDumpSprite);
             yield return new DebugCommand("tly_stashnest",
                 "Debug: exercise the stash nesting rule and item identity. Usage: tly_stashnest <hats|ring|gear|legacy|fill|wear|worn|check>",
                 (cmd, a) => { if (Context.IsWorldReady) StashNestingDebug.Run(a, this.Monitor, _stashService); });
@@ -218,6 +239,8 @@ namespace TheLongestYear
                 helper.ConsoleCommands.Add(c.Name, c.Help, c.Run);
                 _debugCommands[c.Name] = c.Run;
             }
+            // Console only: a one-off probe of the Town map for the rewind pan's endpoints.
+            Integration.TownRouteProbe.Register(helper, this.Monitor);
         }
 
         /// <summary>Debug: the day-28 CONTINUE cutscene without a passing day 28.</summary>

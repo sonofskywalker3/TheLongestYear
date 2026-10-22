@@ -79,7 +79,11 @@ namespace TheLongestYear
         /// <summary>Title-screen only. Mirrors what the character screen + TitleMenu.createdNewCharacter
         /// do for a "Skip intro" new game, so an unattended run can start a farm of any type. Goes
         /// through the same SaveCreating/SaveLoaded path as a real new game, so TLY activates and
-        /// the Advanced Options bundle choice defaults to TLY Custom.</summary>
+        /// the Advanced Options bundle choice defaults to TLY Custom. With no argument it plays the
+        /// true vanilla chain (deathbed, cubicle minigame, bus ride) for a human at the keyboard;
+        /// `arrival` skips straight to the bus ride's own handoff so the arrival event can be
+        /// exercised headless, since the deathbed/cubicle minigame needs a real click and isn't the
+        /// mod's to test.</summary>
         private void CmdNewGame(string command, string[] args)
         {
             if (Context.IsWorldReady)
@@ -89,16 +93,24 @@ namespace TheLongestYear
             }
             if (args.Length < 1 || !NewGameFarmTypes.TryGetValue(args[0], out int farmType))
             {
-                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [custom|standard|remixed] [name]", LogLevel.Info);
+                this.Monitor.Log("Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", LogLevel.Info);
                 return;
             }
             bool skipIntro = args.Skip(1).Any(a => a.Equals("skipintro", StringComparison.OrdinalIgnoreCase));
+            bool arrival = args.Skip(1).Any(a => a.Equals("arrival", StringComparison.OrdinalIgnoreCase));
+            if (skipIntro && arrival)
+            {
+                this.Monitor.Log("tly_newgame: skipintro and arrival cannot be combined.", LogLevel.Warn);
+                return;
+            }
             // Optional Advanced Options bundle choice (custom / standard / remixed); the default
             // stays TLY Custom. Standard keeps another bundle mod's board, as a player would pick.
             string bundleToken = args.Skip(1).FirstOrDefault(a => BundleOptionPatch.TryParseChoice(a, out _));
             if (bundleToken != null && BundleOptionPatch.TryParseChoice(bundleToken, out var bundleChoice))
                 BundleOptionPatch.SetChoice(bundleChoice);
-            string name = args.Skip(1).FirstOrDefault(a => !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
+            string name = args.Skip(1).FirstOrDefault(a =>
+                !a.Equals("skipintro", StringComparison.OrdinalIgnoreCase)
+                && !a.Equals("arrival", StringComparison.OrdinalIgnoreCase)
                 && !BundleOptionPatch.TryParseChoice(a, out _)) ?? "Rodger";
 
             Game1.resetPlayer();
@@ -126,16 +138,40 @@ namespace TheLongestYear
             // What the character screen's OK does with Skip intro on (TitleMenu.createdNewCharacter),
             // routed through our own prefix so the checkbox choice is recorded the same way.
             Loop.SkipIntroChoicePatch.Choice.Record(skipIntro);
-            this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}.", LogLevel.Info);
+            // This session made the farm, so it is a throwaway and the test fixtures may dig it up.
+            _saveMadeThisSession = true;
+            this.Monitor.Log($"tly_newgame: creating '{name}' on farm type {farmType} ({args[0]}), skipIntro={skipIntro}, arrival={arrival}.", LogLevel.Info);
             if (Game1.activeClickableMenu is TitleMenu)
                 TitleMenu.subMenu = null;
-            Game1.game1.loadForNewGame();
-            Game1.saveOnNewDay = true;
-            Game1.player.eventsSeen.Add("60367");
-            Game1.player.currentLocation = Utility.getHomeOfFarmer(Game1.player);
-            Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
-            Game1.player.isInBed.Value = true;
-            Game1.NewDay(0f);
+            if (skipIntro)
+            {
+                // Mirrors TitleMenu.createdNewCharacter(true): bed, Spring 1, arrival marked seen.
+                Game1.game1.loadForNewGame();
+                Game1.saveOnNewDay = true;
+                Game1.player.eventsSeen.Add("60367");
+                Game1.player.currentLocation = Utility.getHomeOfFarmer(Game1.player);
+                Game1.player.Position = new Microsoft.Xna.Framework.Vector2(9f, 9f) * 64f;
+                Game1.player.isInBed.Value = true;
+                Game1.NewDay(0f);
+                Game1.exitActiveMenu();
+                Game1.setGameMode(3);
+                return;
+            }
+            if (arrival)
+            {
+                // Mirrors the bus ride's handoff (Intro.cs 416, 517): the save loads, the farmer lands at the
+                // bus stop on day 0, and the arrival event fires on its own precondition.
+                Game1.game1.loadForNewGame();
+                Game1.saveOnNewDay = true;
+                Game1.warpFarmer("BusStop", 22, 11, false);
+                Game1.exitActiveMenu();
+                Game1.setGameMode(3);
+                return;
+            }
+            // Mirrors TitleMenu.update's transition for createdNewCharacter(false): the deathbed and
+            // cubicle minigame, which hands off to the bus ride, which calls loadForNewGame itself
+            // (GrandpaStory.cs 105/119, Intro.cs 416) and lands the player at the bus stop for 60367.
+            Game1.currentMinigame = new StardewValley.Minigames.GrandpaStory();
             Game1.exitActiveMenu();
             Game1.setGameMode(3);
         }
@@ -176,9 +212,19 @@ namespace TheLongestYear
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (ok != null) { ok.Invoke(levelUp, null); this.Monitor.Log($"tly_dismiss: {name} OK clicked.", LogLevel.Info); return; }
             }
+            if (menu is UI.JojaGameOverMenu)
+            {
+                // Its own key path (exit to the title, no save); exitThisMenu would strand the event.
+                menu.receiveKeyPress(Microsoft.Xna.Framework.Input.Keys.Enter);
+                this.Monitor.Log($"tly_dismiss: {name} sent Enter.", LogLevel.Info);
+                return;
+            }
             // A DialogueBox must close through its own closeDialogue (the click path): exitThisMenu
             // leaves Game1.dialogueUp set, which freezes every fade-to-clear (ScreenFade.UpdateFadeAlpha)
             // and hung a crop fairy night forever (smoke 2026-10-06: the fairy waits on !fadeToBlack).
+            // It also leaves Game1.currentSpeaker set, and the next night's NPC dialogue reset then
+            // empties the speaker's stack under it: drawDialogueBox's Peek throws "Stack empty" every
+            // frame and the game dies (live 2026-09-25, Morris's counter line, then a sleep).
             if (menu is StardewValley.Menus.DialogueBox box)
             {
                 box.closeDialogue();
@@ -198,9 +244,6 @@ namespace TheLongestYear
             menu.exitThisMenu(playSound: false);
             this.Monitor.Log($"tly_dismiss: {name} closed.", LogLevel.Info);
         }
-
-        /// <summary>Debug: open the basic win screen → JP shrine → keep-playing choice, the real
-        /// win-path flow. See <see cref="RunController.DebugForceWin"/>.</summary>
 
         /// <summary>Debug: pick a response on the open question dialogue without the mouse, for the
         /// headless runbook (e.g. the loop-again/keep-playing choice after the Year One Ending, or
@@ -298,24 +341,45 @@ namespace TheLongestYear
         private void CmdSkipScene(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            // The CONTINUE branch's card.
             if (Game1.activeClickableMenu is TheLongestYear.UI.Day28CutsceneMenu scene)
             {
                 scene.SkipToEnd();
                 this.Monitor.Log("tly_skipscene: finished the day-28 scene.", LogLevel.Info);
                 return;
             }
-            if (Game1.activeClickableMenu is TheLongestYear.UI.VictoryMenu victory)
+            // "all": the player's whole-rewind skip, exactly as the skip button starts it.
+            if (args.Length > 0 && string.Equals(args[0], "all", StringComparison.OrdinalIgnoreCase))
             {
-                // The win screen finishes on any click; closing it any other way makes the
-                // day-28 driver re-arm it (headless keep-playing runbook, Nexus bug 1130863).
-                victory.receiveLeftClick(0, 0, playSound: false);
-                this.Monitor.Log("tly_skipscene: finished the win screen.", LogLevel.Info);
+                bool started = TheLongestYear.Integration.RewindSkip.TrySkip("tly_skipscene all");
+                this.Monitor.Log(started
+                    ? "tly_skipscene all: skipping the rest of the rewind."
+                    : "tly_skipscene all: no skippable rewind on screen (first rewind on this save, or no beat running).", LogLevel.Info);
+                return;
+            }
+            // The FAIL branch's rewind sequence, which the card no longer covers. Three separate
+            // per-scene entry points rather than one sequence-wide skip, so each beat can be skipped
+            // on its own: the two Junimo beats (RewindBedroomScene beats 1-9 and RewindMorningScene
+            // beats 11-12) share RewindJunimoScene.SkipToEnd, and the Town pan (beat 10) owns no menu
+            // at all, so it is asked separately. Run the command once per beat to step through the
+            // whole sequence, since finishing one beat is what starts the next.
+            if (Game1.activeClickableMenu is TheLongestYear.UI.RewindJunimoScene rewindScene)
+            {
+                rewindScene.SkipToEnd();
+                this.Monitor.Log(
+                    $"tly_skipscene: finished the {rewindScene.GetType().Name} beat of the rewind sequence.",
+                    LogLevel.Info);
+                return;
+            }
+            if (TheLongestYear.Integration.RewindPanScene.SkipToEnd())
+            {
+                this.Monitor.Log("tly_skipscene: fast-forwarded the rewind Town pan to its end.", LogLevel.Info);
                 return;
             }
             string blocking = Game1.activeClickableMenu is StardewValley.Menus.DialogueBox box
                 ? $" text=\"{box.getCurrentString()}\""
                 : "";
-            this.Monitor.Log($"tly_skipscene: no day-28 scene is open (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}{blocking}).", LogLevel.Info);
+            this.Monitor.Log($"tly_skipscene: no day-28 scene or rewind beat is running (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}{blocking}).", LogLevel.Info);
         }
 
         private void CmdOffer(string command, string[] args)

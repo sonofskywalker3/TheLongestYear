@@ -19,25 +19,34 @@ namespace TheLongestYear.Integration
             if (p == null) return;
 
             var previous = new HashSet<string>(run.EventsSeenAtDayStart);
-            var heartEventsToday = new Dictionary<string, int>();
+            var heartEventsToday = new Dictionary<string, List<string>>();
             foreach (string id in p.eventsSeen)
             {
                 if (previous.Contains(id)) continue;
                 string npc = RelationshipEventIndex.NpcFor(id);
                 if (npc == null) continue;
-                heartEventsToday.TryGetValue(npc, out int n);
-                heartEventsToday[npc] = n + 1;
+                if (!heartEventsToday.TryGetValue(npc, out List<string> ids))
+                    heartEventsToday[npc] = ids = new List<string>();
+                ids.Add(id);
             }
 
+            string seasonKey = Game1.currentSeason;   // "spring" .. "winter", the same key NPC.Birthday_Season uses
+            int day = Game1.dayOfMonth;
             var signals = new List<VillagerDaySignals>();
             foreach (string name in p.friendshipData.Keys)
             {
                 Friendship f = p.friendshipData[name];
-                heartEventsToday.TryGetValue(name, out int hearts);
-                signals.Add(new VillagerDaySignals(name, f.TalkedToToday, f.GiftsToday, hearts));
+                heartEventsToday.TryGetValue(name, out List<string> ids);
+                NPC npc = Game1.getCharacterFromName(name);
+                bool birthday = npc != null
+                    && string.Equals(npc.Birthday_Season, seasonKey, System.StringComparison.OrdinalIgnoreCase)
+                    && npc.Birthday_Day == day;
+                signals.Add(new VillagerDaySignals(name, f.TalkedToToday, f.GiftsToday, ids?.Count ?? 0,
+                    BirthdayGift: birthday && f.GiftsToday > 0, HeartEventIds: ids));
             }
 
-            int added = FamiliarityRollup.Apply(meta, signals);
+            int loopNumber = meta.CompletedResets + 1;
+            int added = FamiliarityRollup.Apply(meta, signals, loopNumber);
             run.EventsSeenAtDayStart = p.eventsSeen.ToList();
             if (added > 0)
             {

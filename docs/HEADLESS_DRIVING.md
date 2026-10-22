@@ -78,15 +78,257 @@ hub re-opens on day 8 (`Opened planning hub (week N, offer: A,B)`).
 
 ## Farm-type runs
 
-`tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro] [name]`
+`tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [name]`
 starts a farm of that type from the title screen with no character screen (same SaveCreating /
-SaveLoaded path as a real new game, TLY Custom bundles). `tly_totitle` exits to the title without
-saving so the next run can start. `tly_buildings` lists every farm building with its tile.
-`tools/farmtype-cycle.ps1 -FarmType <type> [-SkipIntro]` is the whole keep-and-rewind check (new
-game, `debug clearfarm`, coop + barn + silo via `debug build` on the first legal tiles, the three
-keeps, `tly_reset`, PASS when all three come back on their tiles); `tools/farmtype-intro.ps1`
-plays the opening on a type, prints the farmer's porch tile and ends the event with `debug ee`.
-Both exit to title when done. Delete the `<type>_<id>` save folders afterwards.
+SaveLoaded path as a real new game, TLY Custom bundles). With no argument it plays the true vanilla
+chain (deathbed, cubicle minigame, bus ride) for a human at the keyboard; the deathbed and cubicle
+are vanilla scenes that need a real click partway through (`GrandpaStory`'s scene 6 waits on a
+`receiveLeftClick` on Grandpa's letter, with no bridge equivalent) and are not the mod's to test.
+`arrival` enters at the bus ride's own handoff instead (`Game1.game1.loadForNewGame()` then
+`Game1.warpFarmer("BusStop", 22, 11, false)`, mirroring `Intro.cs` 416/517) so the arrival event can
+be exercised headless. `tly_totitle` exits to the title without saving so the next run can start.
+`tly_buildings` lists every farm building with its tile. `tools/farmtype-cycle.ps1 -FarmType <type>
+[-SkipIntro]` is the whole keep-and-rewind check (new game, `debug clearfarm`, coop + barn + silo
+via `debug build` on the first legal tiles, the three keeps, `tly_reset`, PASS when all three come
+back on their tiles); `tools/farmtype-intro.ps1 -FarmType <type> [-SkipIntro]` plays the whole
+opening on a type (sending `arrival` when `-SkipIntro` isn't passed). With `-SkipIntro` it takes the
+character-creation checkbox's bed shortcut straight to the planning hub with no arrival event; the
+result table's `NoEvent` should read `ok`. Without it, `arrival` warps straight to the bus stop at
+`Game1.dayOfMonth == 0` and the arrival event (vanilla's `60367`, replaced with the mod's own
+script) starts immediately. Step it with `tly_eventstep` (it clicks an open dialogue box on) until
+`Opened planning hub (week 1` appears. **The event runs before `Run N ready`, not after.** SMAPI
+holds `Context.IsWorldReady` false for the whole `dayOfMonth == 0` window on purpose ("wait until
+new-game intro finishes"), and the mod's own `Run N ready` / Junimo Stash / planning shrine lines
+come from its `SaveLoaded` handler, which SMAPI only raises once `IsWorldReady` flips true: that
+only happens once the event's `end beginGame` moves `dayOfMonth` off 0. `tly_eventstep` itself no
+longer requires `Context.IsWorldReady`; it only needs a location's `currentEvent` to be set, so it
+can still step the event during this pre-Day-1 window (previously it bailed with "Load a save
+first." here, deadlocking headless testing of `arrival` entirely). Every mod-side driver
+(`IntroSequenceDriver` included) is gated on `RunActivation.IsActive`, which is set by
+`OnSaveLoaded` and so is equally false for the whole pre-Day-1 window: nothing the mod itself logs
+can mark "the event started", so `farmtype-intro.ps1` treats the first real `tly_eventstep` `cmd[N]`
+line (as opposed to `no event`) as the start. Both exit to title when done. Delete the `<type>_<id>`
+save folders afterwards.
+
+`tly_replayintro` clears the intro flags, then starts the arrival event directly instead of relying
+on the vanilla precondition: the event's vanilla key is `60367/u 0`, and precondition `u` is
+`DayOfMonth`, so it only fires while `Game1.dayOfMonth == 0`, a state that exists only during the
+pre-Day-1 setup, which warping alone can't reproduce on an already-loaded save. If the farmer isn't
+already at the bus stop, `tly_replayintro` warps there and logs asking to be run again; run it a
+second time once there and it calls `Game1.currentLocation.startEvent(...)` with the same script
+`OpeningEventInjector` would inject, the way `tly_ending` starts the ending event directly. The
+event ends with a new day, the same as the real arrival does. **It is not reliable past the bus
+stop**: the hand-started event loses its location request at the first `changeLocation`, so it can
+stall partway through instead of finishing. A `tly_reset` run after a stalled replay strands that
+save (no event, no hub, forever); the reliable way to watch the whole opening is a fresh
+`tly_newgame <type> arrival` farm, not a replay.
+
+## The Year One Ending
+
+Arm, sleep, step outside, watch. Use the throwaway save (memory: the Rodger save is disposable).
+Before the first launch: Jeff's yes (see Rules).
+
+    n = count; send "tly_win"                          # arms the ending; log: "Win night (tly_win): ending armed"
+    send "debug sleep"  (or walk to bed)                # log next morning: "Ending: starting (speaker=..."
+    send "debug warp Farm 64 16"                        # step outside if the wake put you indoors
+    wait -Pattern "Ending: event finished" -TimeoutSec 240
+
+The shrine opens, then the choice. Answer a question box only with `tly_answer`: `tly_answer 1`
+takes Keep playing, `tly_answer 0` takes Loop again, and `tly_answer 0` answers the Year 2 wall.
+Wait about 2 seconds after the log shows the choice opened before sending it. Do NOT use
+`tly_dismiss` on a question box: it calls `exitThisMenu`, which never runs `answerDialogue`, so it
+closes the box without taking any response.
+
+**An event's `speak` waits for a click, so the ending never advances on its own.** Poll
+`tly_eventstep` about every 4 s for the whole event: it logs the current command index and text,
+every actor's tile and whether it is moving, the open menu, and it clicks an open dialogue box on.
+It is also how you tell a hang from a wait: `tly_eventstep: no event` plus
+`tly_ending: the game is busy (eventUp,locationRequest)` is a stuck location change, not a pause.
+A vanilla farm event (Evelyn's Garden Pot on this save) counts as busy and defers the ending until
+it is stepped out; step it the same way.
+
+Replay the event alone: `tly_ending` (current location, no continuation); force a voice:
+`tly_ending speaker Shane`. Wall: `tly_year2wall` on any keep-playing save.
+
+Verified live 2026-09-06: Morris's `move` path along the Town row `HallY + 2` walks clear, and the
+speaker's one-tile move at the crack scene lands (Shane went 52,22 -> 52,23). No warp workaround is
+needed. Never wrap a `changeLocation` in `globalFade` / `globalFadeToClear`: `changeLocation` warps
+through `Game1.warpFarmer`, which fades on its own, and the extra global fade leaves
+`Game1.locationRequest` pending forever.
+
+Checks before a release: whole flow once on Standard; scenes 1 and 6 once on Meadowlands
+(`tly_newgame meadowlands skipintro`, then `tly_win`); the log line "Morris_Dark: recoloured N"
+with N > 0; every crowd member present on the steps; both branches of the choice; the wall on
+Spring 1 year 2 of a keep-playing save; a loop-again reset leaves the shrine dark.
+
+## The rewind (Fail night)
+
+`tly_failreset` queues it (close the planning hub first with `tly_select`). `tly_skipscene` finishes
+one beat per call (bedroom, Town pan, morning); `tly_skipscene all` presses the player's skip button,
+which is offered from a save's second rewind (or any save with a finished loop) and runs to the
+keep-or-release question. Answer with `tly_answer`, close the shrine with `tly_dismiss`. The pan's
+walkers log as `RewindReversedExtras: <name> (<n> tiles, (x,y) back to (x,y))`; the second point is
+always a door or the map edge. Right after a reset nobody has a schedule yet, so a rewind queued
+before sleeping plays with no walkers.
+
+## Season turns
+
+`tly_seasonturn <summer|fall|winter>` replays the porch scene alone (no continuation) from
+wherever the farmer stands; it starts under black and moves to the doorstep. Step it with
+`tly_eventstep` (it clicks the speech box on); `tly_eventstep` reports "no event" for a tick or
+two during the location change, so wait for two in a row before calling the scene over. The real
+path: `tly_playseason quarter 4` (the gate would pass), `tly_setday 28`, `debug sleep`; the log
+shows `Season turn: starting Summer`, then `scene finished`, then `Opened planning hub`.
+
+## The night order at day end (verified 2026-09-21, PC 1.6 decompile)
+
+Read this before hooking anything into the overnight flow. The order is:
+
+1. **SMAPI raises `GameLoop.DayEnding`.** `Game1.newDayAfterFade` (Game1.cs:7259) wraps its whole
+   new-day work in `hooks.OnGame1_NewDayAfterFade(...)`, and SMAPI's SModHooks override
+   (`BeforeNewDayAfterFade`) raises DayEnding before calling the game's delegate. So DayEnding fires
+   before the `_newDayAfterFade()` enumerator has run a single line.
+2. **`RunController.OnDayEnding` runs `SabotageService.RunNight`**, which PICKS tonight's strike and
+   parks it in `SabotageService.Pending` (spec 2026-09-21).
+3. **`Utility.pickFarmEvent()`** (Game1.cs:8122), deep inside `_newDayAfterFade()`. Anything patched
+   on it therefore finds `Pending` already set.
+4. **The farm event plays**, if one was picked (`farmEvent.setUp()`, Game1.cs:8138).
+5. **`showEndOfNightStuff()` → `SaveGameMenu`.** `_newDayAfterFade` only calls it directly when
+   `farmEvent == null` (Game1.cs:8185); with a farm event it runs from the event's completion
+   callback instead (Game1.cs:3834), so **the save is deferred until the event ends**.
+6. **SMAPI raises `Saving`**, where `ModEntry.OnSaving` calls `_sabotage.ApplyPendingIfAny("saving")`.
+
+The practical consequence: a pending strike is always applied before the night's save, whether its
+scene played, another overnight event won the slot, or nothing happened at all. Nothing pending ever
+crosses a save boundary.
+
+## Darkness strike scenes (story, verified 2026-10-07)
+
+The first strike of each kind in a loop plays its overnight scene (crows for crop blight, the thief
+for chest blight, the hall for reversion, the cloud for tampering); later strikes of that kind that
+loop are popup only. A scene is not skippable the first time it ever plays on the save.
+
+Commands:
+
+- `tly_sabotage scene crows|thief|hall|cloud` plays a scene now against a fresh pick, without
+  sleeping (stand on the Farm with no event up). `tly_sabotage scene [old] [new] [mass]` plays the Junimos'
+  "tainted" scene at the porch and puts the farmer back on his tile after (`mass` picks the
+  "touched it" middle line, for an uncountable item such as Wood; without it, "touched them").
+- `tly_sabotage fixture [scarecrow] [rows=<1..5>]` plants ten in-season crops per row in front of the
+  house and drops a chest with 20 Parsnip and 10 Copper Ore beside them (refuses on a save this
+  session did not create unless you add `confirm`); `fixture here` drops only the chest beside the
+  farmer, for the thief in a shed, cellar or farmhouse; `fixture here junimo` stands a Junimo Chest
+  there instead (the shared stock gets 20 Parsnip + 10 Copper Ore only while it is empty, and the
+  log prints the shared stock, so a second one shows the same items).
+- `tly_sabotage edge` crosses the current map's own warp onto the Farm (door or map edge).
+- `tly_sabotage arm blight crops|chest`, `arm revert`, `arm tamper` make tonight's roll strike with
+  that kind, and the real scene plays in the night. An arm beats the every-loop guarantee for that
+  night.
+- `tly_sabotage status` adds, under the usual lines: `units in chests (stash excluded): N, of which
+  the thief can take tonight: M` (M counts only chests on the Farm, FarmHouse, Cellar and Sheds while
+  the thief scene is due), `Scenes played this loop`, `Scenes seen on save`, `Queued for the next
+  free night` (postponed strikes, oldest first), `Struck this loop`, `Owed tonight` (the guarantee's kinds still owed from day 15 of their debut
+  season; a kind listed there is only forced if it can act, so a warded Summer still lists
+  CropBlight), `Witness lines pending` (npc, scene day of year, last day of the window), the tamper
+  targets (an item asked twice in its one bundle shows `xN slots`) and the items two or more bundles
+  ask for, which are never tampered.
+- `tly_sabotage aurachest` opens a loose chest with every tainted item (and an untainted flavour
+  beside a flavoured one) to look at the dark aura.
+- `tly_witness list | peek <npc> | show <npc> | talk <npc> | click | arm <npc> | fresh <npc>` reads and plays the Linus / Shane line. `arm` records a line as if he saw last night's scene and makes the morning's call at once: `Hold` when he has not been met (the line waits a day), else `Say`. `fresh` re-arms his Introduction.
+
+The overnight slot (see the night order above): our scene replaces a random vanilla night event
+(fairy, witch, meteorite, owl, capsule), which comes round again. A wedding, a `WorldChangeEvent`
+(the Community Center's repairs and Joja's), a farm event override from another mod, a personal
+farm event (birth, pregnancy question) or a Wildcard night_event twist keeps the night: that is a
+conflict, and the strike is postponed, effect and scene both, with nothing of it recorded (Jeff,
+2026-10-08: "we push back one day"). It is queued and fires with its scene on the next free night,
+instead of the roll; a queued kind that cannot act that night stays queued and the night rolls
+normally. Another mod replacing our scene before its setUp runs is a conflict too (`... another mod
+replaced the scene before it was set up ... it is queued for the next free night`). A broken scene
+is not a conflict: when the scene cannot stage at the pick (`<Kind>'s scene cannot stage tonight`
+or `cannot show tonight's pick`), or its `Stage()` says no or setUp throws, the strike lands at once
+without it (`tonight's <Kind> lands now without its scene (...); the scene stays due for a later
+strike`, or `the <Scene> scene failed and was ended. The strike still lands, without its scene`),
+is recorded like any strike, and is never queued. The thief still skips chests he cannot stand
+beside while his scene is due. A strike never handed the slot (a fail night, the first night of a
+save, when vanilla runs no `pickFarmEvent`) is postponed by the save net without queuing.
+
+Each morning HUD line the darkness shows is also logged at Trace: `Darkness: morning HUD line: ...`.
+
+`tly_sabotage breakscene <crows|thief|hall|cloud> [pick|setup]` breaks that scene on purpose (in
+memory, until `tly_sabotage breakscene off` or a relaunch): `pick` (the default) fails its pick-time
+staging check, `setup` makes its setUp throw before staging.
+
+The Junimo "tainted" scene does not play on waking. It starts the first time the farmer arrives on
+the Farm by any route (Jeff, 2026-10-07): the log reads `starting the board-changed scene at the
+porch (x,y); the farmer arrived at (x,y) facing f and goes back there after`. It is staged at the
+porch behind black and, when it ends or is skipped, vanilla's event end warps him back to the
+arrival tile and facing (`tlyReturnTo` sets `positionBeforeEvent`, which vanilla's event end warps
+to), logged as `after the board-changed scene the farmer is at (x,y) facing f`. Headless,
+`tly_sabotage edge` takes the current map's own warp onto the Farm, the same `Farmer.warpFarmer`
+call vanilla makes on the edge tile: from the FarmHouse it is the door (porch (64,15)), from
+`debug warp BusStop 20 23` the Bus Stop edge (arrives (78,17)), from `debug warp Forest 68 8` the
+Forest edge (arrives (40,64)). Step the three Junimo lines with `tly_eventstep`.
+
+**The collision recipe** (verified 2026-10-07 on a throwaway farm). In Summer, `tly_sabotage fixture
+scarecrow rows=3`, `tly_sabotage arm blight crops`, then `send-smapi-command.ps1 "debug mft ccVault"`
+(queues the bus repair, `WorldChangeEvent(7)`, for tonight) and `debug sleep`. The log reads
+`Darkness: tonight's CropBlight is postponed (WorldChangeEvent has the overnight slot): ... it is
+queued for the next free night`, the live crop count does NOT drop, `Scenes played this loop` and
+`Struck this loop` stay `none`, the chance tonight is unchanged, and status reads `Queued for the
+next free night (...): CropBlight`. Sleep again with nothing armed: `the postponed CropBlight fires
+tonight (Summer N) instead of the roll`, the crows play (`the CrowsScene scene takes tonight's
+overnight slot for CropBlight`), `the postponed CropBlight has struck, so it leaves the queue`, and
+the crops die at their beat.
+
+**The broken-scene recipe** (verified 2026-10-08 on a throwaway farm). Summer 6 with the fixture:
+`tly_sabotage breakscene crows`, `tly_sabotage arm blight crops`, `debug sleep`: `CropBlight's scene
+cannot stage tonight.`, `tonight's CropBlight lands now without its scene (...); the scene stays due
+for a later strike`, `committed and recorded`, `2 crop(s) struck down`, then `morning HUD line: 2
+crops were struck down by the darkness overnight.`; status shows `Scenes played this loop: none`,
+`Struck this loop: CropBlight` and a lower chance. For setUp: `tly_sabotage breakscene thief setup`,
+`arm blight chest`, sleep: `the ThiefScene scene failed and was ended. The strike still lands,
+without its scene.` (an ERROR line, on purpose), `2 stored unit(s) spoiled, 1 gone missing`, and the
+two HUD lines. `tly_sabotage breakscene off` afterwards.
+
+**The thief's draw while his scene is due** (verified 2026-10-07). On the Farm, `debug forcebuild
+Barn 42 14` (`debug build` refuses on an uncleared farm), `debug warp Barn 8 10`, `tly_sabotage
+fixture here`: status reads `units in chests ...: 75, of which the thief can take tonight: 45` (the
+barn's 30 are out). `debug warp Farm 64 15`, `tly_sabotage arm blight chest`, sleep: `the thief is
+staged on a chest at (69,21) on Farm`. Afterwards `75 -> 72, of which the thief can take tonight:
+72`: the barn chest kept its 30 and is in the draw again now the scene has played.
+
+**The guarantee recipe.** `Run.Season` only syncs at day start, so after `debug season summer` set
+`tly_setday 13` and sleep once (a real gate pass with `tly_playseason` works too). On Summer 14 with
+crops and a chest, three sleeps: night 14 is an ordinary roll, night 15 logs `CropBlight has not struck
+this loop by Summer 15, so it is forced tonight.`, night 16 the same for ChestBlight. With the Summer
+Ward of the Fields owned (`tly_addjp 2000`, `tly_buyupgrade ward_crops_summer`) the thief is forced on
+15 and no crows come. Reversion debuts in Fall from 15 and is quiet from day 25, so it is never forced
+on nights 25 to 28.
+
+**Predicting a night's roll.** The roll is `new Random(hash)` with `hash = seed*397 ^ doy*7919`, then
+`hash*397 ^ 15485863` (`SabotageSchedule.Rng`), and the first `NextDouble()` against the chance
+(Summer 25%, Fall and Winter 35%) decides strike or quiet. `seed` is the `Run N ready (seed X)` log
+line, `doy` is `season*28 + day` (Spring 0). A save is always written after a night roll, so to hand
+over a clean "nothing struck yet" save, pick a farm whose draw on that night is quiet.
+
+**Handoff farms (2026-10-08).** What lands on disk is the state at the night's save, so set a
+farm up on the day BEFORE the morning you hand over, and make that night quiet (predict it from the
+seed, or leave nothing the night can act on). Gotchas: `debug sleep` saves the farmer where he
+stands, so a farm slept from the Farm loads with him already outside and the owed porch or Junimo
+scene waits for an arrival that never comes; `debug warp FarmHouse 9 9` before every `debug sleep`.
+The farmhouse starter gift box is a chest the thief can pick: `tly_sabotage giftbox` opens it (items
+to the bag). `tly_sabotage fixture scarecrow scarecrows=2 rows=5` adds a second scarecrow below the
+chest. To rehearse a plan without spending the save, copy the save folder, play the nights, go to the
+title with `tly_totitle` and copy the folder back (TLY's run state lives inside the save file).
+`tly_openbundle <name|index>` opens one bundle's page in the Community Center note (close it with
+`tly_dismiss`).
+
+**Screenshots without the desktop.** A minimized window cannot be captured. Restore it without
+activating it and park it far off every monitor (`ShowWindow` 4, then `SetWindowPos` with
+`HWND_BOTTOM`, `SWP_NOACTIVATE|SWP_NOSIZE`, x = -12000): PrintWindow flag 2 then renders the full
+frame and nothing appears on Jeff's screens. Check the monitor bounds first; at -5000 the window
+still overlapped his left monitor and half the captures were stale.
 
 **Animal powers (2026-10-09).** `tly_animalpowers` lists the owned powers and every farm animal (age, daysOwned,
 daysSinceLastLay, produce days with Busy Coop / Busy Barn, friendship, happiness, wasAutoPet). Subcommands: `produce <type>
@@ -132,6 +374,7 @@ remixed audit the board vanilla would build for that Advanced Options choice),
 `tly_fishspots [itemId]` (per Data/Locations fish row, the deepest clear water a level 10 cast reaches where it bites, and which fish never get a quality star; `tly_fishspots grid <location> <x> <y> <w> <h>` prints the game's own fishable / clear-water / standable grid; `tly_fishspots plant <bundleKey>` turns that bundle's first slot into a gold Goby on the live and stored board, so a save and reload shows the load-time repair),
 `tly_boost list` (the boost roster with each row's state and price), `tly_activeeffects` (running boosts, stacks per modifier), `tly_itemmodel <id|bundle>`, `tly_dumpeffort` (writes `item-effort-model.md` in the mod folder;
 copy to `docs/`, it is gitignored), `tly_dumpbundles`, `tly_meta`, `tly_runstate`.
+`tly_hud` logs `displayHUD`, `eventUp`, `freezeControls`, `fadeToBlack`, `fadeAlpha`, the open menu, time and day (poll it to catch the clock HUD drawing over a black screen).
 
 ## Menus that block a sleep
 

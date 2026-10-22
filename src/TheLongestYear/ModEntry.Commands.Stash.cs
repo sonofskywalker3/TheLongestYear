@@ -225,7 +225,8 @@ namespace TheLongestYear
                     $"tly_ringtest [{id}] type={item.GetType().Name} bundle={asking.name} (area {area}) vanillaHighlight={vanilla} liveHighlight={live} " +
                     $"liveBoardHasNonObjectSlots={TheLongestYear.Patches.BundleDonationPatches.LiveBoardHasNonObjectSlots} enableNonObjectDonations={_config.EnableNonObjectDonations}",
                     live ? LogLevel.Info : LogLevel.Warn);
-                Game1.exitActiveMenu();
+                // "keep" leaves the bundle page open (used to look at it on screen).
+                if (!args.Any(x => x.Equals("keep", StringComparison.OrdinalIgnoreCase))) Game1.exitActiveMenu();
                 return;
             }
             this.Monitor.Log($"tly_ringtest [{id}] type={item.GetType().Name} vanillaHighlight={vanilla}: no bundle on the live board asks for it.", LogLevel.Info);
@@ -318,10 +319,25 @@ namespace TheLongestYear
                 LogLevel.Warn);
         }
 
+        /// <summary>Debug: replay the opening's arrival event. The vanilla key's own precondition
+        /// (dayOfMonth == 0) never recurs on a loaded save, so warping alone can't re-fire it: this
+        /// starts the same script directly, the way <see cref="Integration.EndingEventDriver"/>
+        /// starts the ending. Warps to the bus stop first if not already there. Debug only, and not
+        /// reliable past the bus stop; see the console description for the caveats.</summary>
         private void CmdReplayIntro(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             _introInjector?.ClearIntroState();
+            if (Game1.currentLocation?.Name != "BusStop")
+            {
+                Game1.warpFarmer("BusStop", 22, 11, false);
+                this.Monitor.Log("tly_replayintro: flags cleared, warped to the bus stop; run tly_replayintro again to start the opening.", LogLevel.Info);
+                return;
+            }
+            Game1.currentLocation.startEvent(new Event(
+                TheLongestYear.Core.Intro.OpeningScript.Build(Integration.OpeningEventInjector.EventText, TheLongestYear.Core.Intro.IntroEventKeys.CcSeenMail),
+                null, "60367"));
+            this.Monitor.Log("tly_replayintro: starting the opening's arrival event at the bus stop (it ends with a new day, as the real one does).", LogLevel.Info);
         }
     }
 }

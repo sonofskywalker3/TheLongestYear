@@ -1,0 +1,103 @@
+using System.Collections.Generic;
+using System.Linq;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Obtainability;
+
+namespace TheLongestYear.Tests;
+
+public class ObtainabilityMineTests
+{
+    [Fact]
+    public void Ores_are_dependable_from_their_floors_and_iridium_needs_skull_cavern()
+    {
+        var nodes = MineSources.Nodes().ToList();
+        var copper = nodes.Single(n => n.ItemId == "(O)378").Source;
+        Assert.Equal(Reliability.Dependable, copper.Reliability);
+        Assert.Equal(DayTable.Always, copper.Lands);
+        Assert.Contains("mines:floor 1", copper.Conditions.Requires);
+        Assert.Contains("location:SkullCave", nodes.Single(n => n.ItemId == "(O)386").Source.Conditions.Requires);
+    }
+
+    [Fact]
+    public void The_diamond_node_stays_chance()
+        => Assert.Equal(Reliability.Chance, MineSources.Nodes().Single(n => n.ItemId == "(O)72").Source.Reliability);
+
+    [Fact]
+    public void A_common_monster_drop_is_dependable_and_a_rare_one_is_chance()
+    {
+        var rows = new[]
+        {
+            new MonsterDropRow("Grub", "(O)684", 0.6),
+            new MonsterDropRow("Grub", "(O)717", 0.1),
+        };
+        var objects = new Dictionary<string, ObjInfo>
+        {
+            ["(O)684"] = new("(O)684", "Bug Meat", -28, 8, new List<string>(), false),
+            ["(O)717"] = new("(O)717", "Crab", -4, 100, new List<string>(), false),
+        };
+        var drops = MineSources.MonsterDrops(rows, objects).ToDictionary(d => d.ItemId, d => d.Source);
+        Assert.Equal(Reliability.Dependable, drops["(O)684"].Reliability);
+        Assert.Equal(Reliability.Chance, drops["(O)717"].Reliability);
+    }
+
+    [Fact]
+    public void Geodes_from_stones_are_dependable()
+    {
+        var nodes = MineSources.Nodes().Where(n => n.ItemId == "(O)535").Select(n => n.Source).ToList();
+        Assert.Contains(nodes, s => s.Reliability == Reliability.Dependable);
+    }
+
+    [Fact]
+    public void Monster_drops_carry_the_monster_floor()
+    {
+        var rows = new[]
+        {
+            new MonsterDropRow("Dust Spirit", "(O)382", 0.5),
+            new MonsterDropRow("Some Modded Beast", "(O)766", 0.1),
+        };
+        var list = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).ToList();
+        Assert.Equal(Reliability.Dependable, list[0].Source.Reliability);  // 0.5 >= RepeatableDropChance
+        Assert.Equal(Reliability.Chance, list[1].Source.Reliability);     // 0.1 < RepeatableDropChance
+        Assert.Contains("mines:floor 40", list[0].Source.Conditions.Requires);
+        Assert.Contains("monster:Some Modded Beast", list[1].Source.Conditions.Requires);
+        Assert.Equal("floor 1", MineSources.MonsterFloor("Green Slime"));
+        Assert.Null(MineSources.MonsterFloor("Some Modded Beast"));
+    }
+
+    [Fact]
+    public void A_common_drop_from_an_unplaced_monster_stays_chance_but_a_placed_one_is_dependable()
+    {
+        var rows = new[]
+        {
+            new MonsterDropRow("Magma Duggy", "(O)829", 0.5),
+            new MonsterDropRow("Skeleton", "(O)881", 0.5),
+        };
+        var drops = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).ToDictionary(d => d.ItemId, d => d.Source);
+        Assert.Equal(Reliability.Chance, drops["(O)829"].Reliability);        // Magma Duggy has no known floor
+        Assert.Equal(Reliability.Dependable, drops["(O)881"].Reliability);    // Skeleton is floor 70
+    }
+
+    [Fact]
+    public void Treasure_is_complete_chance_and_gated_where_the_game_gates_it()
+    {
+        var all = MineSources.FishingTreasure().ToList();
+        var treasure = all.Where(t => !t.ItemId.StartsWith(ItemQueries.UnresolvedPrefix)).ToList();
+        Assert.All(treasure, t => Assert.Equal(SourceKind.FishingTreasure, t.Source.Kind));
+        Assert.Contains(treasure, t => t.ItemId == "(O)Book_Roe");
+        Assert.Contains(treasure, t => t.ItemId == "(O)TroutDerbyTag");
+        Assert.Contains(treasure, t => t.ItemId == "(O)812" && t.Source.Conditions.Requires.Contains("book:Book_Roe"));
+        Assert.All(treasure, t => Assert.Equal(Reliability.Chance, t.Source.Reliability));
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), treasure.Single(t => t.ItemId == "(O)273").Source.Lands);
+        Assert.Contains(treasure, t => t.ItemId == "(O)774" && t.Source.Conditions.Requires.Contains("recipe:Wild Bait"));
+        Assert.True(treasure.Single(t => t.ItemId == "(O)890").Source.Conditions.GingerIsland);   // Qi beans need Qi's orders
+        Assert.Contains(treasure, t => t.ItemId == "(W)14");
+        Assert.Contains(treasure, t => t.ItemId == "(B)504");
+        Assert.Contains(treasure, t => t.ItemId == "(O)SkillBook_0");
+        Assert.Contains(treasure, t => t.ItemId == "(O)119");
+        Assert.Contains(treasure, t => t.ItemId == "(O)StardropTea" && t.Source.Conditions.Requires.Contains("fishing:golden treasure chest"));
+    }
+
+    [Fact]
+    public void Fishing_treasure_no_longer_reports_the_raccoon_seed_as_unresolved()
+        => Assert.DoesNotContain(MineSources.FishingTreasure(), s => s.ItemId.StartsWith(ItemQueries.UnresolvedPrefix));
+}

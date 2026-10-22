@@ -33,6 +33,12 @@ public sealed partial class RunState
     /// <see cref="PendingDay28"/> so a quit after the night save still resets without re-asking.</summary>
     public bool RestartMenusDone { get; set; }
 
+    /// <summary>The season-turn porch scene owed to the farmer's next arrival on the Farm
+    /// (<see cref="SeasonTurnArrival"/>, Jeff 2026-10-08): the kind's name, empty when none. Set on
+    /// the Continue morning, cleared when the scene starts. Persisted so a day spent without
+    /// stepping on the Farm still owes it.</summary>
+    public string PendingSeasonTurn { get; set; } = "";
+
     /// <summary>True when a load should run the month rollover itself: the calendar moved on
     /// since the run-state was saved AND no day-28 outcome is waiting to decide what happens
     /// instead. A pending Fail rewinds rather than advances, so it must never roll over.</summary>
@@ -299,6 +305,76 @@ public sealed partial class RunState
     /// cleared on DayEnding (before the next night's update) and on a run reset.</summary>
     public List<DoubleProduceRecord> DoubleProduceToday { get; set; } = new();
 
+    /// <summary>Year One Ending (spec 2026-09-06): set at bedtime on the night the board completes.
+    /// The EndingEventDriver plays the ending the first time the player steps onto the farm the next
+    /// morning, then clears it. Survives a quit overnight.</summary>
+    public bool EndingArmed { get; set; }
+
+    // ---- Darkness pushback (spec 2026-09-09) ----
+    /// <summary>Week of the year the blight counter below belongs to; -1 until blight first strikes.</summary>
+    public int BlightWeek { get; set; } = -1;
+    /// <summary>Nights blight has struck in <see cref="BlightWeek"/>.</summary>
+    public int BlightNightsThisWeek { get; set; }
+    /// <summary>Week of the year a donation last came undone; -1 until it happens.</summary>
+    public int LastReversionWeek { get; set; } = -1;
+    /// <summary>Days of the year (Winter) a requirement was rewritten this loop.</summary>
+    public List<int> TamperDays { get; set; } = new();
+    /// <summary>Every rewrite this loop, for tly_sabotage status and the log.</summary>
+    public List<Sabotage.TamperRecord> Tampers { get; set; } = new();
+    /// <summary>Morning HUD lines the night pass queued; drained by the next OnDayStarted.</summary>
+    public List<Sabotage.SabotageReport> PendingSabotageReports { get; set; } = new();
+
+    // ---- Darkness rework (spec 2026-09-15 Part B) ----
+    /// <summary>Week of the year <see cref="DarknessChance"/> belongs to; -1 until the first roll.</summary>
+    public int DarknessChanceWeek { get; set; } = -1;
+    /// <summary>The week's current strike chance, after this week's decay. Meaningless when
+    /// <see cref="DarknessChanceWeek"/> is not the current week.</summary>
+    public double DarknessChance { get; set; }
+    /// <summary>This loop's one unmoderated reversion has fired (Hard and Extreme).</summary>
+    public bool UnmoderatedReversionSpent { get; set; }
+    /// <summary>This loop's one unmoderated tamper has fired (Hard and Extreme).</summary>
+    public bool UnmoderatedTamperSpent { get; set; }
+    /// <summary>This Winter's guaranteed week-1 tamper has landed.</summary>
+    public bool GuaranteedTamperDone { get; set; }
+    /// <summary>This Winter's guaranteed tamper was postponed by a collision (Jeff, 2026-10-07): it
+    /// stays owed past week 1 until it lands.</summary>
+    public bool GuaranteedTamperPostponed { get; set; }
+    /// <summary>DarknessEvent names of strikes postponed because their scene could not have the
+    /// night, waiting for the next free night (designer, 2026-10-07; see
+    /// <see cref="Sabotage.StrikeQueue"/>). Oldest first. Cleared at the loop reset.</summary>
+    public List<string> QueuedStrikes { get; set; } = new();
+    /// <summary>Names of the DarknessEvent values that have struck this loop (spec 2026-09-21: the
+    /// guarantee and the once-per-loop scenes both read it).</summary>
+    public HashSet<string> StruckEvents { get; set; } = new();
+    /// <summary>DarknessEvent names whose overnight strike scene has already played this loop
+    /// (spec 2026-09-21): a kind's scene is due only the first time it strikes in a loop.</summary>
+    public HashSet<string> StrikeScenesPlayed { get; set; } = new();
+
+    /// <summary>Villagers who saw a strike scene and still owe the player one line about it
+    /// (see <see cref="Sabotage.WitnessLines"/>). Cleared at the loop reset.</summary>
+    public List<Sabotage.WitnessRecord> WitnessLines { get; set; } = new();
+
+    /// <summary>Bundle slots a reversion emptied and the player has not filled again: the bundle
+    /// menu marks each in the tainted purple (designer, 2026-10-08). Rules in
+    /// <see cref="Sabotage.DarkenedSlots"/>. Cleared at the loop reset.</summary>
+    public List<DonatedSlot> DarkenedSlots { get; set; } = new();
+
+    // ---- Morris's offer (spec 2026-09-25-joja-offer-design). Per loop: a rewind starts all four over. ----
+
+    /// <summary>Day of year (1..112) the offer scene played this loop, -1 = not yet this loop.</summary>
+    public int JojaSceneSeenDay { get; set; } = -1;
+
+    /// <summary>This loop's "come see me" letter days (day of year), planned on the first morning
+    /// that needs them and keeping only the days from that morning on (eight on a fresh loop,
+    /// fewer on a run first planned mid-year). Entry i is letter i+1. Empty = not planned yet.</summary>
+    public List<int> JojaLetterDays { get; set; } = new();
+
+    /// <summary>How many "come see me" letters went out this loop.</summary>
+    public int JojaLettersSent { get; set; }
+
+    /// <summary>How many "make a decision" letters went out this loop.</summary>
+    public int JojaDecisionLettersSent { get; set; }
+
     /// <summary>Record that an animal is owed a second product today. Idempotent per animal.</summary>
     public void RecordDoubleProduce(long animalId, string produceId)
     {
@@ -551,6 +627,33 @@ public sealed partial class RunState
         WeatherOverride = null;
         YearTwoSeedsWeek = -1;
         SneakPeekSeason = -1;
+        // A new run cannot have a win night pending: a reset taken while the ending was armed
+        // (tly_reset the same night, or a fail-night reset racing a win) left the flag set for
+        // the whole next loop, which forced every night sunny and, since 2026-09-09, silenced the
+        // darkness (live run, 2026-09-09).
+        EndingArmed = false;
+        BlightWeek = -1;
+        BlightNightsThisWeek = 0;
+        LastReversionWeek = -1;
+        (TamperDays ??= new()).Clear();
+        (Tampers ??= new()).Clear();
+        (PendingSabotageReports ??= new()).Clear();
+        PendingSeasonTurn = "";
+        DarknessChanceWeek = -1;
+        DarknessChance = 0.0;
+        UnmoderatedReversionSpent = false;
+        UnmoderatedTamperSpent = false;
+        GuaranteedTamperDone = false;
+        GuaranteedTamperPostponed = false;
+        (QueuedStrikes ??= new()).Clear();
+        (StruckEvents ??= new()).Clear();
+        (StrikeScenesPlayed ??= new()).Clear();
+        (WitnessLines ??= new()).Clear();
+        (DarkenedSlots ??= new()).Clear();
+        JojaSceneSeenDay = -1;
+        (JojaLetterDays ??= new()).Clear();
+        JojaLettersSent = 0;
+        JojaDecisionLettersSent = 0;
         // Deja-vu caps are per loop. The weekly stamp is a DaysPlayed value, which the rewind puts
         // back to 1, so a kept stamp would block every line until the new loop passed the old one.
         DejaVuRules.ResetForNewLoop(this);

@@ -153,6 +153,23 @@ namespace TheLongestYear
                 name: () => Strings.Get("gmcm.non-object.name"),
                 tooltip: () => Strings.Get("gmcm.non-object.tooltip"));
 
+            // Darkness pushback (spec 2026-09-09): one switch per front, read live by SabotageService.
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableBlight,
+                setValue: v => _config.EnableBlight = v,
+                name: () => Strings.Get("gmcm.blight.name"),
+                tooltip: () => Strings.Get("gmcm.blight.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableBundleReversion,
+                setValue: v => _config.EnableBundleReversion = v,
+                name: () => Strings.Get("gmcm.reversion.name"),
+                tooltip: () => Strings.Get("gmcm.reversion.tooltip"));
+            gmcm.AddBoolOption(this.ModManifest,
+                getValue: () => _config.EnableRequirementTampering,
+                setValue: v => _config.EnableRequirementTampering = v,
+                name: () => Strings.Get("gmcm.tampering.name"),
+                tooltip: () => Strings.Get("gmcm.tampering.tooltip"));
+
             gmcm.AddNumberOption(this.ModManifest,
                 getValue: () => (float)_config.SelectionBonusMultiplier,
                 setValue: v => _config.SelectionBonusMultiplier = v,
@@ -242,6 +259,10 @@ namespace TheLongestYear
                 () => _config.Difficulty.BundleCount, v => _config.Difficulty.BundleCount = v,
                 () => Strings.Get("gmcm.difficulty.bundle-count.name"),
                 () => Strings.Get("gmcm.difficulty.bundle-count.tooltip"));
+            AddDifficultyOption(
+                () => _config.Difficulty.DarknessOrLowest, v => _config.Difficulty.Darkness = v,
+                () => Strings.Get("gmcm.difficulty.darkness.name"),
+                () => Strings.Get("gmcm.difficulty.darkness.tooltip"));
 
             gmcm.AddSectionTitle(this.ModManifest, () => Strings.Get("gmcm.randomizer.section"));
             gmcm.AddParagraph(this.ModManifest, () => Strings.Get("gmcm.randomizer.blurb"));

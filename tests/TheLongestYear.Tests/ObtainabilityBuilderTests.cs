@@ -1,0 +1,280 @@
+using System.Collections.Generic;
+using System.Linq;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Obtainability;
+
+namespace TheLongestYear.Tests;
+
+public class ObtainabilityBuilderTests
+{
+    private static ObtainabilityInputs Farm() => new()
+    {
+        Objects = new Dictionary<string, ObjInfo>
+        {
+            ["(O)24"] = new ObjInfo("(O)24", "Parsnip", -75, 35, new[] { "category_vegetable" }, false),
+            ["(O)142"] = new ObjInfo("(O)142", "Carp", -4, 30, new[] { "fish_carp" }, false),
+            ["(O)812"] = new ObjInfo("(O)812", "Roe", -4, 30, new[] { "roe_item" }, false),
+        },
+        Shops = new[] { new ShopRow("SeedShop", "(O)472", "SEASON Spring", false) },
+        Crops = new[] { new CropRow("(O)472", "(O)24", new[] { Season.Spring }, 4, 0) },
+        Machines = new[]
+        {
+            new MachineRow("(BC)15", null, new[] { "category_vegetable" }, null, new[] { new MachineOutput("FLAVORED_ITEM Pickle DROP_IN_ID", null, null) }, 4000, -1),
+            new MachineRow("(BC)Preserves", null, new[] { "roe_item" }, null, new[] { new MachineOutput("(O)447", null, null) }, 0, 3),
+        },
+        LocationFish = new[] { new LocationSpawn("Forest", "(O)142", Season.Fall, null, 1.0, 0, false, 0) },
+        FishRows = new Dictionary<string, FishRow> { ["(O)142"] = new FishRow("(O)142", false, "both", 0, "600 2600") },
+        Ponds = new[] { new PondRow("Carp", new[] { "fish_carp" }, 0, new[] { new PondProduct("(O)812", 1, 1.0, null) }) },
+    };
+
+    [Fact]
+    public void A_chain_resolves_shop_seed_to_crop_to_pickles()
+    {
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
+        Assert.False(build.HitPassCap);
+        Assert.True(build.Passes >= 2);
+        DayTable parsnip = build.Model.Table("(O)24", ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } });
+        Assert.Equal(5, parsnip.Lands(1));
+        Assert.Null(parsnip.Lands(25));
+        // 4000 minutes = 3 days: greenhouse parsnip bought Spring 28 lands Summer 4 (day 32), pickles day 35.
+        Assert.Equal(8, build.Model.Lands("(O)342", 1, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
+        Assert.Equal(35, build.Model.Lands("(O)342", 28, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
+    }
+
+    [Fact]
+    public void A_queen_of_sauce_dish_lands_in_its_episode_week_through_the_builder()
+    {
+        ObtainabilityInputs inputs = Farm() with
+        {
+            Recipes = new[] { new RecipeRow("Chocolate Cake", new[] { "(O)24" }, "(O)220", "l 0", true) },
+            CookingChannel = new Dictionary<string, int> { ["Chocolate Cake"] = 14 },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        // The parsnip is dependable from day 5; the episode airs day 98, the Sunday of week 14.
+        Assert.Equal(14, build.Model.LandingWeekFromDay1("(O)220", ObtainFilter.DependableOnly with { IncludeUnresolved = false }));
+    }
+
+    [Fact]
+    public void A_pond_chain_settles()
+    {
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(Farm());
+        // Carp lands in Fall (day 57), population 1, spawn time default 1: the roe lands that same day.
+        Assert.Equal(57, build.Model.Lands("(O)812", 1, ObtainFilter.Any with { Kinds = new[] { SourceKind.FishPond } }));
+        // Roe lands day 57 (dependably, from the pond), then 3 days through the Preserves Jar to Aged
+        // Roe; DependableOnly excludes the separate, much earlier treasure-chest Aged Roe chance source.
+        Assert.Equal(60, build.Model.Lands("(O)447", 1, ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Machine } }));
+    }
+
+    [Fact]
+    public void A_true_dependency_cycle_settles_without_looping()
+    {
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                ["(O)1"] = new ObjInfo("(O)1", "A", -2, 1, new[] { "tag_a" }, false),
+                ["(O)2"] = new ObjInfo("(O)2", "B", -2, 1, new[] { "tag_b" }, false),
+            },
+            Forage = new[] { new LocationSpawn("Town", "(O)1", null, "SEASON Summer", 1.0, 0, false, 0) },
+            Machines = new[]
+            {
+                new MachineRow("(BC)A", null, new[] { "tag_a" }, null, new[] { new MachineOutput("(O)2", null, null) }, 0, 0),
+                new MachineRow("(BC)B", null, new[] { "tag_b" }, null, new[] { new MachineOutput("(O)1", null, null) }, 0, 0),
+            },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        Assert.False(build.HitPassCap);
+        // (O)1 forages starting Summer 1 (day 29); both zero-day machines pass that day through unchanged.
+        Assert.Equal(29, build.Model.Lands("(O)1", 1, ObtainFilter.Any));
+        Assert.Equal(29, build.Model.Lands("(O)2", 1, ObtainFilter.Any));
+    }
+
+    [Fact]
+    public void An_island_only_bait_bought_by_barter_still_reaches_the_fish_it_gates()
+    {
+        // Mr Qi's Qi Gem shop sells Magic Bait for a Qi Gem, both island. Every link of the chain is
+        // island flagged and none of it may vanish: the Beach row that needs the bait must still be
+        // in the model, flagged island, rather than dropped for want of an input.
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                ["(O)908"] = new ObjInfo("(O)908", "Magic Bait", -21, 20, new string[0], false),
+                ["(O)798"] = new ObjInfo("(O)798", "Midnight Squid", -4, 100, new string[0], false),
+            },
+            Shops = new[]
+            {
+                new ShopRow("IslandTrade", "(O)QiGem", null, false),
+                new ShopRow("QiGemShop", "(O)908", null, false, false, "(O)QiGem"),
+            },
+            LocationFish = new[] { new LocationSpawn("Beach", "(O)798", null, "SEASON Winter", 1.0, 0, true, 0) },
+            FishRows = new Dictionary<string, FishRow> { ["(O)798"] = new FishRow("(O)798", false, "both", 0, "600 2600") },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        var bait = build.Model.Sources("(O)908").ToList();
+        Assert.NotEmpty(bait);
+        Assert.All(bait, b => Assert.True(b.Conditions.GingerIsland));
+        var squid = build.Model.Sources("(O)798").Where(x => x.Kind == SourceKind.Fish).ToList();
+        Assert.NotEmpty(squid);
+        Assert.All(squid, x => Assert.True(x.Conditions.GingerIsland));
+        Assert.All(squid, x => Assert.False(x.Conditions.Unresolved));     // the bait was found, so nothing is guessed
+        Assert.Equal(85, build.Model.Lands("(O)798", 1, ObtainFilter.Any with { IncludeGingerIsland = true }));
+        Assert.Null(build.Model.Lands("(O)798", 1, ObtainFilter.Any));     // island sources are never counted by default
+    }
+
+    [Fact]
+    public void A_derived_item_under_any_filter_answers_from_its_input_read_under_that_same_filter()
+    {
+        // The property Derived.cs exists to keep: for any filter F, the derived item's table under F is
+        // what deriving from the input's own table under F gives. The seed here is plain-unreachable,
+        // year 2 dependable and island dependable a season later, so all three answers differ.
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                ["(O)476"] = new ObjInfo("(O)476", "Garlic Seeds", -74, 40, new string[0], false),
+                ["(O)248"] = new ObjInfo("(O)248", "Garlic", -75, 60, new string[0], false),
+            },
+            Shops = new[]
+            {
+                new ShopRow("SeedShop", "(O)476", "YEAR 2, SEASON Spring", false),
+                new ShopRow("IslandTrade", "(O)476", "SEASON Summer", false),
+            },
+            Crops = new[] { new CropRow("(O)476", "(O)248", new[] { Season.Spring, Season.Summer }, 4, 0) },
+        };
+        ObtainabilityModel model = ObtainabilityBuilder.Build(inputs).Model;
+        ObtainFilter crops = ObtainFilter.DependableOnly with { Kinds = new[] { SourceKind.Crop } };
+
+        foreach (ObtainFilter f in new[]
+        {
+            crops,
+            crops with { IncludeYearTwo = true },
+            crops with { IncludeGingerIsland = true },
+            crops with { IncludeYearTwo = true, IncludeGingerIsland = true },
+        })
+        {
+            ObtainFilter seedFilter = ObtainFilter.DependableOnly with
+            {
+                IncludeYearTwo = f.IncludeYearTwo, IncludeGingerIsland = f.IncludeGingerIsland,
+            };
+            DayTable expected = model.Table("(O)476", seedFilter).Then(GrowSources.PlantTable(new[] { Season.Spring, Season.Summer }, 4));
+            Assert.Equal(expected, model.Table("(O)248", f));
+        }
+
+        Assert.Null(model.Lands("(O)248", 1, crops));                                     // no plain route
+        Assert.Equal(5, model.Lands("(O)248", 1, crops with { IncludeYearTwo = true }));  // Pierre, year 2
+        Assert.Equal(33, model.Lands("(O)248", 1, crops with { IncludeGingerIsland = true }));   // the island shop, Summer
+    }
+
+    [Fact]
+    public void A_derived_item_honours_the_owned_only_flag_the_same_way_as_island_and_year_two()
+    {
+        // Mirrors the invariant above for the third Derived variant flag added for the animal
+        // ruling (2026-09-16, controller fix round): an owned-only source (a not-sold animal's
+        // produce) must thread through a derived route the same way an island or year 2 source
+        // does, rather than silently vanishing under the default filters.
+        var plain = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 10), Reliability.Dependable, ObtainConditions.None, "plain");
+        var island = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 20), Reliability.Dependable, ObtainConditions.None with { GingerIsland = true }, "island");
+        var yearTwo = new ObtainSource(SourceKind.Crop, DayTable.Available(d => d >= 30), Reliability.Dependable, ObtainConditions.None with { YearTwo = true }, "year2");
+        var owned = new ObtainSource(SourceKind.Animal, DayTable.Available(d => d >= 5), Reliability.Dependable, ObtainConditions.None with { OwnedOnly = true }, "owned");
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)1"] = new[] { plain, island, yearTwo, owned },
+        });
+
+        Derived.Input input = Derived.Of(snapshot, "(O)1");
+        var derived = input.Emit(SourceKind.Machine, t => t.Delay(1), ObtainConditions.None, "derived").ToList();
+        var model = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>> { ["(O)2"] = derived });
+
+        foreach (bool includeIsland in new[] { false, true })
+            foreach (bool includeYearTwo in new[] { false, true })
+                foreach (bool includeOwned in new[] { false, true })
+                {
+                    ObtainFilter filter = ObtainFilter.DependableOnly with
+                    {
+                        IncludeGingerIsland = includeIsland, IncludeYearTwo = includeYearTwo, IncludeOwnedOnly = includeOwned,
+                    };
+                    DayTable expected = snapshot.Table("(O)1", filter).Delay(1);
+                    Assert.Equal(expected, model.Table("(O)2", filter));
+                }
+    }
+
+    [Fact]
+    public void Unresolved_queries_go_to_diagnostics_not_the_model()
+    {
+        var inputs = new ObtainabilityInputs
+        {
+            Forage = new[] { new LocationSpawn("Beach", "LOCATION_FISH Beach BOBBER_X", null, null, 1.0, 0, false, 0) },
+        };
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        Assert.Contains(build.Unresolved, u => u.Contains("LOCATION_FISH Beach BOBBER_X"));
+        Assert.DoesNotContain(build.Model.ItemIds, id => id.StartsWith(ItemQueries.UnresolvedPrefix));
+    }
+
+    [Fact]
+    public void Direct_code_sources_are_always_present()
+    {
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(new ObtainabilityInputs());
+        Assert.False(build.Model.Table("(O)378", ObtainFilter.DependableOnly).IsEmpty);   // copper ore node
+        Assert.False(build.Model.Table("(O)168", ObtainFilter.Any).IsEmpty);              // fishing trash
+    }
+
+    [Fact]
+    public void Location_fish_delegation_copies_the_named_locations_rows()
+    {
+        var rows = new List<LocationSpawn>
+        {
+            new("Forest", "(O)142", Season.Fall, null, 1.0, 0, false, 0),
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+            new("Town", "(O)138", Season.Summer, null, 1.0, 0, false, 0),
+            new("Farm_Riverland", "LOCATION_FISH Forest BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+            new("Beach", "LOCATION_FISH Nowhere BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+        };
+        var expanded = SpawnSources.ExpandLocationFish(rows);
+        Assert.DoesNotContain(expanded, r => r.ItemId.StartsWith("LOCATION_FISH"));
+        Assert.Contains(expanded, r => r.Location == "Farm_Riverland" && r.ItemId == "(O)142" && r.Season == Season.Fall);
+        Assert.Contains(expanded, r => r.Location == "Farm_Riverland" && r.ItemId == "(O)138");   // through Forest's own delegation to Town
+        Assert.Contains(expanded, r => r.Location == "Forest" && r.ItemId == "(O)138");
+        Assert.DoesNotContain(expanded, r => r.Location == "Beach");
+    }
+
+    [Fact]
+    public void A_delegating_row_keeps_its_own_season_and_condition_on_every_copy()
+    {
+        var rows = new List<LocationSpawn>
+        {
+            new("Town", "(O)138", null, "WEATHER Here Rain", 1.0, 0, false, 3),
+            new("Town", "(O)142", Season.Summer, null, 1.0, 0, false, 0),
+            new("Town", "(O)898", null, null, 1.0, 0, false, 0, CanBeInherited: false),   // legendary-style row
+            // Two delegations to the same target from one location: the second must expand too.
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", Season.Fall, "SEASON fall", 1.0, 0, true, 5),
+            new("Forest", "LOCATION_FISH Town BOBBER_X BOBBER_Y WATER_DEPTH", null, null, 1.0, 0, false, 0),
+        };
+        var expanded = SpawnSources.ExpandLocationFish(rows);
+        var forest = expanded.Where(r => r.Location == "Forest").ToList();
+        Assert.Equal(4, forest.Count);                                          // both delegations expanded, two rows each
+        Assert.DoesNotContain(forest, r => r.ItemId == "(O)898");               // a row that cannot be inherited is not copied
+
+        // Through the gated delegation: its season fills a seasonless row, its condition is ANDed on.
+        LocationSpawn gated138 = forest.Single(r => r.ItemId == "(O)138" && r.Condition != null && r.Condition.Contains("SEASON fall"));
+        Assert.Equal(Season.Fall, gated138.Season);
+        Assert.Equal("SEASON fall, WEATHER Here Rain", gated138.Condition);
+        Assert.Equal(5, gated138.MinFishingLevel);                              // the higher of the two levels
+        Assert.True(gated138.RequireMagicBait);                                 // the delegating row's bait gate carries
+        LocationSpawn gated142 = forest.Single(r => r.ItemId == "(O)142" && r.Condition == "SEASON fall");
+        Assert.Equal(Season.Summer, gated142.Season);                           // the copied row's own season wins
+
+        // Through the plain delegation: nothing is added that the copied row did not already say.
+        Assert.Contains(forest, r => r.ItemId == "(O)138" && r.Season == null && r.Condition == "WEATHER Here Rain"
+            && r.MinFishingLevel == 3 && !r.RequireMagicBait);
+        Assert.Contains(forest, r => r.ItemId == "(O)142" && r.Season == Season.Summer && r.Condition == null);
+    }
+
+    [Fact]
+    public void A_read_failure_names_its_sections()
+    {
+        var ex = new ObtainabilityReadException(new[] { "Data/Crops", "Data/Shops" });
+        Assert.Equal(2, ex.FailedSections.Count);
+        Assert.Contains("Data/Crops", ex.Message);
+    }
+}

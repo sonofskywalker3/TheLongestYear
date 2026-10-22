@@ -22,12 +22,15 @@ namespace TheLongestYear.Loop
             _lastDomains.Clear();
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
+            var timing = _monitor != null ? new ResetTiming(_monitor, "BundleEngine.Generate") : null;
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter);
+            timing?.Mark("GameDataPools.Build");
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
             // same instance, so the default path is untouched.
             itemPools = Core.RarityBias.Apply(itemPools, _difficulty.RarityBias, _thresholds);
             LastDerivedSeasonPins = itemPools.DerivedSeasonPins;
+            timing?.Mark("RarityBias.Apply");
 
             // Board-level legendary allowance (LegendaryFishRules.BoardAllowance): how many
             // legendaries this whole board may hold at this step. Rolled off its own salt so it
@@ -41,8 +44,10 @@ namespace TheLongestYear.Loop
             int cappedAllowance = Core.CappedAsks.BoardAllowance(_difficulty.Steps?.StackSize ?? Core.DifficultyStep.Normal);
             _monitor?.Log($"BundleEngine: Prismatic Shard / Mystery Box allowance for this board: {cappedAllowance} each.", LogLevel.Trace);
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools = VanillaRoomPools();
+            timing?.Mark("BuildRoomPools");
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> pools =
                 WidenWithAuthoredBundles(roomPools, itemPools, seed, legendaryAllowance, cappedAllowance);
+            timing?.Mark("WidenWithAuthoredBundles");
 
             var allPicks = new List<BundleSpec>();
             // "bundleIndex:slotIndex" -> the input a flavored slot names. Persisted beside the
@@ -188,15 +193,20 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
             }
 
+            timing?.Mark("pass 1 classify + RecipeFor");
+
             // Pass 2: re-roll, tightest pool first (2026-08-28, no item asked twice across the
             // board). Each fill leaves out everything already asked and adds its own picks, so a
             // bundle with few candidates (Night Fishing) is not the one left holding the repeat
             // fallback because a roomy bundle drew its fish first. Per-pick rng streams are
             // salted on the absolute index, so the fill order does not change them.
-            foreach (PickRecord record in picked
-                         .Where(r => r.Composed == null)
-                         .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability, r.Recipe))
-                         .ThenBy(r => r.Pick.Index))
+            List<PickRecord> fillOrder = picked
+                .Where(r => r.Composed == null)
+                .OrderBy(r => BundleSlotFiller.CandidateCount(r.Pick, r.Match, itemPools, Availability, r.Recipe))
+                .ThenBy(r => r.Pick.Index)
+                .ToList();
+            timing?.Mark("pass 2 ordering (CandidateCount)");
+            foreach (PickRecord record in fillOrder)
             {
                 BundleSpec pick = record.Pick;
                 if (record.Recipe != null)
@@ -234,6 +244,8 @@ namespace TheLongestYear.Loop
                 AddAskedItems(asked, composed);
                 record.Composed = composed;
             }
+
+            timing?.Mark("pass 2 fills");
 
             // Pass 3: emit in the original room/position order (name uniquification and the
             // fixed write-key space depend on it).
@@ -278,6 +290,9 @@ namespace TheLongestYear.Loop
                 composed = Core.YearTwoCrops.ClampBundle(composed, _difficulty.EffectiveYearTwoCropAskCap(), _hasUpgrade, Availability);
                 allPicks.Add(Uniquify(composed, usedNameCounts));
             }
+
+            timing?.Mark("pass 3 emit");
+            timing?.Total();
 
             // Guard, not the rule: the fill budgets above are what hold the allowance.
             List<BundleSpec> themed = allPicks.Where(b => !CappedCountSkipsRoom(b.Room)).ToList();

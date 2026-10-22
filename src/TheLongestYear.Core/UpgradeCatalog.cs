@@ -304,6 +304,18 @@ public static class UpgradeCatalog
             metaRequirement: null, runReachRequirement: "room:BoilerRoom"),
         new UpgradeDefinition(VaultRules.KeepBusUnlockedId, UpgradeCategory.Gifts, GiftLadder.BaseCost,
             metaRequirement: null, runReachRequirement: VaultRules.BusReachMetric),
+
+        // Wards (spec 2026-09-09 darkness pushback, Jeff's ruling the same day): the Junimos can
+        // protect your crops, one Ward of the Fields per blighted season. They cannot protect the
+        // Community Center: reversion and tampering answer only to their config switches. A ward
+        // covers crops in the ground, not chests. No prerequisites, no reach gate.
+        new UpgradeDefinition(Sabotage.WardIds.CropsSummer, UpgradeCategory.Wards, Sabotage.WardIds.CropsSummerCost),
+        new UpgradeDefinition(Sabotage.WardIds.CropsFall, UpgradeCategory.Wards, Sabotage.WardIds.CropsFallCost),
+        new UpgradeDefinition(Sabotage.WardIds.CropsWinter, UpgradeCategory.Wards, Sabotage.WardIds.CropsWinterCost),
+        // Circle of Warding: three on a ladder, each tier needs the one before.
+        new UpgradeDefinition(Sabotage.WardIds.Circle1, UpgradeCategory.Wards, Sabotage.WardIds.Circle1Cost),
+        new UpgradeDefinition(Sabotage.WardIds.Circle2, UpgradeCategory.Wards, Sabotage.WardIds.Circle2Cost, Sabotage.WardIds.Circle1),
+        new UpgradeDefinition(Sabotage.WardIds.Circle3, UpgradeCategory.Wards, Sabotage.WardIds.Circle3Cost, Sabotage.WardIds.Circle2),
         };
         // Animals tab (spec 2026-10-09): the animal powers, then the moved animal keeps (Keep Pet,
         // Keep Horse, Coop / Barn / Silo, Start with, Herd Book), ids and prices unchanged.

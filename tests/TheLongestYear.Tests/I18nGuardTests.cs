@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Ending;
+using TheLongestYear.Core.Intro;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -41,6 +43,25 @@ public class I18nGuardTests
     /// distinctive prefix instead of whitelisting the family wholesale.</summary>
     private static readonly Regex EggColorKeyLiteral = new(@"""(?<key>egg-color\.[a-z0-9\-]+)""", RegexOptions.Compiled);
 
+    /// <summary>OpeningStrings.Replacements maps vanilla string ids to <c>"opening.grandpa-1-m"</c> and the
+    /// like; the values are resolved through a Func at the editor, so LiteralKey never sees them at a
+    /// Strings.Get call. Catch the family by its distinctive prefix, as EggColorKeyLiteral does.</summary>
+    private static readonly Regex OpeningStringsKeyLiteral = new(@"""(?<key>opening\.[a-z0-9\-]+)""", RegexOptions.Compiled);
+
+    /// <summary>EndingEventInjector routes every script line through its local <c>EventText()</c>
+    /// sanitiser instead of calling <see cref="Strings.Get"/> directly (a translated '"' or '/' would
+    /// break the '/'-joined event script), so <see cref="LiteralKey"/> cannot see those keys at the
+    /// call site. They are still literal arguments, just to a different method; match that call the
+    /// same way. The name is deliberately distinctive so no unrelated <c>Text(...)</c> call is
+    /// mistaken for a key reference.</summary>
+    private static readonly Regex EventTextKey = new(@"EventText\(\s*""(?<key>[a-z0-9.\-]+)""", RegexOptions.Compiled);
+
+    /// <summary>OpeningScript.LineKeys builds its keys as <c>Prefix + "robin-1"</c>; the prefix is "event.opening.".
+    /// The leading negative lookbehind is required: without it, a bare "Prefix" match also fires inside
+    /// SeasonTurn.cs's <c>KeyPrefix + "winter-2"</c> and OpeningStrings.cs's <c>VanillaPrefix + "12026"</c>
+    /// (both end in the substring "Prefix"), producing bogus event.opening.* keys.</summary>
+    private static readonly Regex OpeningKey = new(@"(?<![A-Za-z])Prefix\s*\+\s*""(?<key>[a-z0-9\-]+)""", RegexOptions.Compiled);
+
     private static IEnumerable<string> AllSourceFiles()
         => Directory.EnumerateFiles(SrcRoot, "*.cs", SearchOption.AllDirectories)
             .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")
@@ -55,6 +76,9 @@ public class I18nGuardTests
         }
         foreach (Match m in I18nToken.Matches(text)) into.Add(m.Groups["key"].Value);
         foreach (Match m in EggColorKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in OpeningStringsKeyLiteral.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in EventTextKey.Matches(text)) into.Add(m.Groups["key"].Value);
+        foreach (Match m in OpeningKey.Matches(text)) into.Add("event.opening." + m.Groups["key"].Value);
     }
 
     /// <summary>
@@ -117,6 +141,8 @@ public class I18nGuardTests
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
+            foreach (string key in TheLongestYear.Core.Sabotage.WitnessLines.AllKeys)
+                _ = Strings.Get(key);
             // festmem.* is resolved from the key set at runtime too (FestivalMemoryLines).
             foreach (string key in FestivalMemoryLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
@@ -125,10 +151,36 @@ public class I18nGuardTests
                 _ = ReachText.Describe(def.RunReachRequirement);
             foreach (string metric in new[] { "rod", "backpack", "mastery", "book", "mail", "event", "stardrop_mines", "scythe", "house", "pet", "shortcuts", "bus", "room" })
                 _ = Strings.Get("reach." + metric);
+            // event.ending.crack.* is built from the tier + npc (EndingLine.MiddleKey); walk every
+            // tier for every voice-override npc plus one generic (non-overridden) npc.
+            var endingNpcs = EndingLine.VoiceOverrides.Append("Pierre");
+            foreach (EndingLineTier tier in Enum.GetValues<EndingLineTier>())
+                foreach (string npc in endingNpcs)
+                    _ = Strings.Get(EndingLine.MiddleKey(npc, tier));
+            _ = Strings.Get(EndingLine.OpenKey);
+            _ = Strings.Get(EndingLine.CloseKey);
+            // event.ending.scene.* is resolved by event id through EndingLine.SceneTable, never a literal.
+            foreach (string sceneKey in EndingLine.SceneTable.Values)
+                _ = Strings.Get(sceneKey);
             // bundle-slot.* keys are looked up by item id (FlavorlessBundleSlots) and only ever
             // reach Strings.Get through a variable, so walk the rule's own key set.
             foreach (string key in FlavorlessBundleSlots.AllLabelKeys)
                 _ = Strings.Get(key);
+            foreach (string key in FlavorlessBundleSlots.AllAskNameKeys)
+                _ = Strings.Get(key);
+            // event.turn.* keys: the Summer closer picks its key with a ternary inside the
+            // KeyPrefix concatenation (KeyPrefix + (rewound ? "summer-3-again" : "summer-3")),
+            // so the literal-scanning regex above can never see either half. Walk the exhaustive
+            // key list instead.
+            foreach (string key in SeasonTurn.AllLineKeys)
+                _ = Strings.Get(key);
+            // mail.joja.come-N / mail.joja.decide-N are built as $"mail.joja.come-{i}" /
+            // $"mail.joja.decide-{i}" in JojaLetterService.OnAssetRequested, over the fixed
+            // counts JojaOffer.ComeLetters/DecisionLetters; walk the same ranges.
+            for (int i = 1; i <= TheLongestYear.Core.Joja.JojaOffer.ComeLetters; i++)
+                _ = Strings.Get($"mail.joja.come-{i}");
+            for (int i = 1; i <= TheLongestYear.Core.Joja.JojaOffer.DecisionLetters; i++)
+                _ = Strings.Get($"mail.joja.decide-{i}");
             // wildcard.twist.* is built from the twist id (WildcardText.Name); walk the pool.
             foreach (string twist in WildcardSchedule.AllTwists)
                 Assert.NotEqual(twist, WildcardText.Name(twist));
@@ -157,6 +209,20 @@ public class I18nGuardTests
                     missing.Add($"{key} ({Path.GetFileName(file)})");
         }
         Assert.True(missing.Count == 0, "Keys referenced but missing from default.json:\n" + string.Join("\n", missing.Distinct()));
+    }
+
+    [Fact]
+    public void Both_tamper_middle_lines_exist_and_are_referenced()
+    {
+        // Designer, 2026-10-08: "touched them" after a counted item, "touched it" after an
+        // uncountable one (ItemPlurals.TaintedReadsAsMass).
+        HashSet<string> referenced = ReferencedKeys();
+        foreach (string key in new[] { "event.darkness.tamper-2", "event.darkness.tamper-2-mass" })
+        {
+            Assert.True(_fixture.Map.ContainsKey(key), key);
+            Assert.Contains(key, referenced);
+        }
+        Assert.Equal("The darkness has touched it. We can no longer use it for our restoration.", _fixture.Map["event.darkness.tamper-2-mass"]);
     }
 
     [Fact]
@@ -222,7 +288,13 @@ public class I18nGuardTests
     /// already asserts no "{{" survives in resolved catalog output, which is strictly stronger proof
     /// for that family than a per-key token match here would be.</summary>
     private static readonly string[] ExcludedTokenFamilies =
-        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "festmem." };   // reach.*: ReachText builds the key from the metric (ReachTextTests covers it); festmem.*: FestivalMemoryLines picks the key from the key set and drops a line with an unfilled token (FestivalMemoryLinesTests covers it)
+        { "upgrade.", "upgrade-tpl.", "tier.", "tool.", "skill.", "reach.", "event.ending.crack.tier", "festmem." };
+    // reach.*: ReachText builds the key from the metric (ReachTextTests covers it).
+    // event.ending.crack.tier*: the {{scene}} token is supplied at a call site whose key is a
+    // variable (the ending injector builds it via EndingLine.MiddleKey), so the literal-scanning
+    // token check above can never see that call site.
+    // festmem.*: FestivalMemoryLines picks the key from the key set and drops a line with an
+    // unfilled token (FestivalMemoryLinesTests covers it).
 
     /// <summary>
     /// For every default.json value containing a <c>{{token}}</c> placeholder (outside the
@@ -279,5 +351,36 @@ public class I18nGuardTests
                          $"(closest call site supplied {{{string.Join(",", closest)}}})");
         }
         Assert.True(problems.Count == 0, "Token round-trip guard failures:\n" + string.Join("\n", problems));
+    }
+
+    /// <summary>The opening's letter keys must keep vanilla's own {0}/{1} (name/farm) placeholders so
+    /// the substituted text still reads correctly. This checks only the mod's own side of the swap
+    /// (our default.json values against vanilla's placeholder shape); vanilla's own string is not on
+    /// the test path here, since OpeningStrings.Apply is what actually writes into vanilla's data at
+    /// runtime, and that is covered separately by OpeningStringsTests.</summary>
+    [Fact]
+    public void The_letter_keeps_vanillas_name_and_farm_tokens()
+    {
+        foreach (string key in new[] { "opening.letter-m", "opening.letter-f" })
+            Assert.True(OpeningStrings.PlaceholdersMatch("Dear {0}, {1} Farm", _fixture.Map[key]), key);
+    }
+
+    /// <summary>Event-script safety: an event is one string whose commands are joined with '/', and a
+    /// <c>speak</c> / <c>message</c> payload is wrapped in double quotes. An <c>event.</c> value
+    /// containing either character would split the script into bogus commands or unbalance the quotes
+    /// and break the ending outright. <c>EndingEventInjector.Text</c> sanitises both at runtime for
+    /// translations we do not control; this guard keeps our own English source clean.</summary>
+    [Fact]
+    public void NoEventKeyValue_ContainsAScriptBreakingCharacter()
+    {
+        var problems = _fixture.Map
+            .Where(kv => kv.Key.StartsWith("event.", StringComparison.Ordinal))
+            .Where(kv => kv.Value.Contains('"') || kv.Value.Contains('/'))
+            .Select(kv => $"{kv.Key}: {kv.Value}")
+            .ToList();
+
+        Assert.True(problems.Count == 0,
+            "event.* values must contain no '\"' (unbalances the speak/message quotes) and no '/' " +
+            "(splits the '/'-joined event script):\n" + string.Join("\n", problems));
     }
 }

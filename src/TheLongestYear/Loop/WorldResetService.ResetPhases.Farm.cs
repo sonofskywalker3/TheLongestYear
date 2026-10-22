@@ -244,6 +244,8 @@ namespace TheLongestYear.Loop
 
             // Books are inventory items wiped by FarmerReset; re-grant exactly one of each.
             RestoreStep("books", () => _bookFurniture?.ReconcileInventory());
+            // Circles of Warding likewise (owned count, spec 2026-09-09).
+            RestoreStep("circles of warding", () => ReconcileCircles?.Invoke());
         }
     }
 }

@@ -1,13 +1,11 @@
 namespace TheLongestYear.Core.Intro
 {
     /// <summary>
-    /// Identifiers for the day-1 narrative intro. The intro is a single event the driver starts
-    /// explicitly (it uses the in-event <c>changeLocation</c> command to move from the farm porch
-    /// to the Community Center), so there are no Data/Events preconditions to get wrong anymore.
-    ///
-    /// <para><see cref="CcSeenMail"/> is added at the end of the event and promoted to the
-    /// cross-run <c>MetaState.HasSeenIntro</c> on save; <see cref="IntroDoneMail"/> is the legacy
-    /// per-run suppression flag kept for <c>tly_replayintro</c> bookkeeping.</para>
+    /// Cross-run bookkeeping flags for the opening. <see cref="IntroEventId"/> is recorded in
+    /// player.eventsSeen by <c>ClearIntroState</c> for <c>tly_replayintro</c> cleanup.
+    /// <see cref="CcSeenMail"/> is added when the opening finishes and promoted to the cross-run
+    /// <c>MetaState.HasSeenIntro</c> on save; <see cref="IntroDoneMail"/> is the legacy
+    /// per-run suppression flag kept for replay bookkeeping.
     /// </summary>
     public static class IntroEventKeys
     {

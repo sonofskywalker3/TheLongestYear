@@ -197,6 +197,97 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_dumpavailability: wrote {path} ({sb.Length:N0} chars, {requirements.Count} bundles, {judgement.Count} judgement row(s), {unknown.Count} unknown item(s)).", LogLevel.Info);
         }
 
+        private void BuildObtainabilityModel()
+        {
+            try
+            {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
+                var inputs = new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build();
+                long readMs = timer.ElapsedMilliseconds;
+                var build = _obtainabilityCache.Get(inputs, out bool reused);
+                _obtainability = build.Model;
+                _obtainabilityUnresolved = build.Unresolved;
+                _obtainabilityFailure = null;
+                this.Monitor.Log(
+                    $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{(reused ? ", unchanged data, reused" : "")}), {build.Passes} pass(es), " +
+                    $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
+                    build.HitPassCap ? LogLevel.Warn : LogLevel.Info);
+            }
+            catch (TheLongestYear.Core.Obtainability.ObtainabilityReadException rex)
+            {
+                _obtainability = null;
+                _obtainabilityUnresolved = System.Array.Empty<string>();
+                _obtainabilityFailure = rex.Message;
+                this.Monitor.Log(rex.Message, LogLevel.Warn);
+            }
+            catch (Exception ex)
+            {
+                _obtainability = null;
+                _obtainabilityUnresolved = System.Array.Empty<string>();
+                _obtainabilityFailure = null;   // not a read failure; an older run's section list would be a lie
+                this.Monitor.Log($"Obtainability model: build failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+            }
+        }
+
+        /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>
+        private void CmdObtain(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _obtainability == null)
+            {
+                this.Monitor.Log(_obtainability == null && _obtainabilityFailure != null
+                    ? _obtainabilityFailure                              // already starts "Obtainability: no model published..."
+                    : "Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
+                return;
+            }
+            if (args.Length == 0)
+            {
+                this.Monitor.Log("Usage: tly_obtain <itemId> [startDay 1-112] | tly_obtain compare [fileName]", LogLevel.Info);
+                return;
+            }
+            if (args[0] == "compare")
+            {
+                if (_availability == null || _enginePools == null)
+                {
+                    this.Monitor.Log("tly_obtain compare: the existing item model is not built yet.", LogLevel.Warn);
+                    return;
+                }
+                TheLongestYear.Core.ItemPools pools = _enginePools;
+                IEnumerable<string> poolIds = new[]
+                    {
+                        pools.Crops, pools.Fish, pools.CrabPot, pools.Forage, pools.MonsterDrops, pools.Metals,
+                        pools.ArtisanGoods, pools.Artifacts, pools.Books, pools.Saplings, pools.GeodeMinerals,
+                        pools.Cooking, pools.TapperGoods, pools.WinterOnly,
+                    }
+                    .SelectMany(list => list).Select(item => item.ItemId);
+                var rows = TheLongestYear.Core.ObtainabilityComparison.Compare(
+                    _availability.KnownIds.Concat(poolIds),
+                    id => _availability.IsPlaced(id),
+                    id => { var a = _availability.For(id); return (a.PacingWeek, a.HardWeekOrPacing, a.Basis); },
+                    _obtainability);
+                string report = TheLongestYear.Core.ObtainabilityComparison.Render(
+                    rows, _obtainability, _obtainabilityUnresolved, id => ItemRegistry.GetData(id)?.DisplayName,
+                    this.ModManifest.Version.ToString());
+                string fileName = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "obtainability-compare.md";
+                string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
+                System.IO.File.WriteAllText(path, report);
+                string counts = string.Join(", ", rows.GroupBy(r => r.Verdict).Select(g => $"{g.Key} {g.Count()}"));
+                this.Monitor.Log($"tly_obtain compare: wrote {path} ({rows.Count} items: {counts}; {_obtainabilityUnresolved.Count} unresolved).", LogLevel.Info);
+                return;
+            }
+            int startDay = 1;
+            if (args.Length > 1)
+            {
+                if (!int.TryParse(args[1], out startDay) || startDay < 1 || startDay > TheLongestYear.Core.Obtainability.DayTable.Days)
+                {
+                    this.Monitor.Log($"tly_obtain: startDay must be an integer 1-{TheLongestYear.Core.Obtainability.DayTable.Days}.", LogLevel.Warn);
+                    return;
+                }
+            }
+            this.Monitor.Log(
+                TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName, startDay),
+                LogLevel.Info);
+        }
+
         /// <summary><c>tly_dumpeffort [fileName]</c>: the item effort review document, written to the
         /// mod folder like tly_dumpbundles (copy to docs/item-effort-model.md; gitignored).</summary>
         private void CmdDumpEffort(string command, string[] args)

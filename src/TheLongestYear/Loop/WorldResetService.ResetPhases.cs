@@ -55,7 +55,8 @@ namespace TheLongestYear.Loop
                     $"JP {_meta.Difficulty.Steps.JpEarned}, prices {_meta.Difficulty.Steps.ShrinePrices}, " +
                     $"gold {_meta.Difficulty.Steps.StartingGold} ({_meta.Difficulty.StartingGold}g), " +
                     $"cart {_meta.Difficulty.Steps.CartSlots} ({_meta.Difficulty.StartingCartSlots} slots), " +
-                    $"holds {_meta.Difficulty.Steps.HoldPrices}, bundles per room {_meta.Difficulty.Steps.BundleCount}.",
+                    $"holds {_meta.Difficulty.Steps.HoldPrices}, bundles per room {_meta.Difficulty.Steps.BundleCount}" +
+                    $", darkness {_meta.Difficulty.Darkness}.",
                     LogLevel.Info);
 
             // The availability model's week mode is a function of the same step (item rarity is
@@ -67,6 +68,7 @@ namespace TheLongestYear.Loop
                 AvailabilityModel = RebuildAvailabilityModel(step);
                 TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
                 _monitor.Log($"Availability model rebuilt for {step} ({mode}).", LogLevel.Info);
+                _timing.Mark("0 availability model rebuild");
             }
         }
 

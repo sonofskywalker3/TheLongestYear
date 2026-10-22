@@ -38,6 +38,8 @@ namespace TheLongestYear.Loop
         private readonly JunimoStashService _stashService;
         private readonly MountainUnlock _mountainUnlock;
         private readonly TheLongestYear.Integration.BookFurniture _bookFurniture;
+        /// <summary>Re-grants the owned Circles of Warding after the wipe (CircleOfWardingService.Reconcile).</summary>
+        public System.Action ReconcileCircles { get; set; }
         private readonly TheLongestYear.UI.PlanningShrineService _planningShrine;
         private readonly IReadOnlyDictionary<string, CoreSeason> _itemSeasonPins;
         private readonly IReadOnlyDictionary<string, int[]> _bundleQuotas;
@@ -47,6 +49,10 @@ namespace TheLongestYear.Loop
         /// <see cref="CleanupAbandonedSaveFolder"/> only after the post-reset full save confirms the
         /// new canonical folder. Null when there's nothing to clean up.</summary>
         private string _abandonedSaveFolder;
+
+        /// <summary>Per-stage stopwatch for the last <see cref="PerformReset"/> (freeze investigation,
+        /// TODO "Closing the post-loop shrine freezes the game"). Rebuilt at the top of each reset.</summary>
+        private ResetTiming _timing;
 
         public ProfessionPickerScheduler ProfessionPicker => _professionPicker;
 
@@ -119,7 +125,9 @@ namespace TheLongestYear.Loop
             // One-time safety backup before the first destructive reset (a failed backup is logged and the reset goes ahead).
             // Lands inside the mod folder (not in Stardew's Saves dir) so it doesn't appear as a second
             // save on the title screen.
+            _timing = new ResetTiming(_monitor, "PerformReset");
             SaveBackup.BackupOnce(_meta, _monitor, _modDirectory);
+            _timing.Mark("0 backup");
 
             _monitor.Log("In-place reset: starting.", LogLevel.Info);
 
@@ -131,7 +139,9 @@ namespace TheLongestYear.Loop
             CaptureCarryovers(ctx);
 
             // 1. The game's own new-game initializer rebuilds the world + regenerates CC bundles.
+            _timing.Mark("0 stamps, snapshots, reseed");
             Game1.game1.loadForNewGame(loadedGame: false);
+            _timing.Mark("1 loadForNewGame");
 
             // 1-display. Put the zoom + UI scale back on the new Options instance. Game1.Update
             // notices the change on its next tick and calls refreshWindowSettings itself.
@@ -146,21 +156,30 @@ namespace TheLongestYear.Loop
 
             ResetCommunityCenterState();
             ResetWorldStateCollections();
+            _timing.Mark("1a-1d CC bundles, museum, books, netWorldState wipes");
             RewindCalendar();
+            _timing.Mark("2 calendar, weather, netWorldState sync");
             ResetFarmer(ctx);
+            _timing.Mark("3-7 farmer reset, professions, mine, robin, cellar");
             RestoreKeptFarm(ctx);
 
+            _timing.Mark("8-10 kept buildings, horse, animals, pet");
             // 11. Bump CompletedResets — the single producer for the season:N meta-requirement.
             _meta.CompletedResets += 1;
 
             WriteBoard(ctx);
+            _timing.Mark("11a board generation (engine or vanilla)");
             RestoreGiftsAndIntros(ctx);
             RestoreFarmAndHouse(ctx);
+            _timing.Mark("11b-13 kept gifts, book quests, stash chest, shrine, decor");
             ReapplyWorldUnlocks();
 
+            _timing.Mark("14 player placement, furniture, books, circles");
             // Money earned rewinds with the year. Last, so the starting gold and any gold a restore
             // step hands out are not counted as this year's earnings.
             RestoreStep("money earned", _farmerReset.ResetMoneyEarned);
+            _timing.Mark("15 money earned");
+            _timing.Total();
 
             _monitor.Log(
                 $"In-place reset: complete. {Game1.season} {Game1.dayOfMonth}, money {Game1.player.Money}. " +

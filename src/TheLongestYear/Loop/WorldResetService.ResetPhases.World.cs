@@ -84,6 +84,12 @@ namespace TheLongestYear.Loop
                     LogLevel.Trace);
             }
 
+            // Year One Ending: the ending lights one shrine candle (Farm.grandpaScore = 1). A loop
+            // starts with the shrine dark again; vanilla's year-3 judgement also keys off zero.
+            Farm farm = Game1.getFarm();
+            if (farm != null)
+                farm.grandpaScore.Value = 0;
+
             // 1a-mail. Purge any PENDING CC room-restoration mail from mailForTomorrow. The block
             // above clears mailReceived (the "already restored" record), but a ccVault/ccGreenhouse/…
             // queued the day the reset fires sits in mailForTomorrow, which the rewind never touched —
@@ -99,6 +105,10 @@ namespace TheLongestYear.Loop
                     $"In-place reset: purged {purged.Count} stale CC restoration mail from mailForTomorrow " +
                     $"([{string.Join(", ", purged)}]) so no phantom room-fix scene fires on the fresh run.",
                     LogLevel.Info);
+            // Morris's letters are per loop: an unread one from the old loop must not greet the new.
+            int jojaPurged = JojaLetterService.PurgeFromMail(Game1.player);
+            if (jojaPurged > 0)
+                _monitor.Log($"In-place reset: purged {jojaPurged} unread Morris letter(s) from the old loop.", LogLevel.Info);
         }
 
         /// <summary>Reset phase (steps 1b to 1d): the museum, lost books and the rest of NetWorldState.</summary>

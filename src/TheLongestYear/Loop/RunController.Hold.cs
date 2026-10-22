@@ -7,42 +7,70 @@ using StardewValley;
 using TheLongestYear.Core;
 using CoreSeason = TheLongestYear.Core.Season;
 using TheLongestYear.Core.Day28;
+using TheLongestYear.Core.Ending;
 
 namespace TheLongestYear.Loop
 {
     internal sealed partial class RunController
     {
-        /// <summary>Post-win choice dialog: after the shrine menu closes, ask the player
-        /// whether to start a new loop (triggers PerformReset) or keep playing this run
-        /// indefinitely (sets VictoryAcknowledged + falls through to the normal day-start
-        /// flow with no reset). Uses vanilla's <c>createQuestionDialogue</c> so the prompt
-        /// renders identically to other in-world Y/N choices the player has seen.</summary>
-        private void ShowKeepPlayingChoice()
+        /// <summary>Year One Ending (spec 2026-09-06 section 5): after the event and the shrine spend.
+        /// Loop again resets right here; Keep playing marks the win, hands vanilla its post-completion
+        /// world, arms the Spring 1 year-2 wall, and lets the Junimos say what comes next.</summary>
+        public void OnEndingFinished() => TryOpenShrineThenContinue(ShowEndingChoice, focusRows: false);
+
+        /// <summary>The Year 2 wall: one response, Loop again. ESC also selects the last (only)
+        /// response, so there is no way past it on this version; quitting re-shows it next load.</summary>
+        public void ShowYear2Wall()
+        {
+            GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
+            if (loc == null)
+            {
+                // No location on this frame means the wall cannot be drawn, but the day still has to
+                // start: returning here left the player on a Spring 1 with no season roll and no
+                // planning hub. Year2WallArmed is untouched, so the wall re-asks next morning.
+                _monitor.Log("Year 2 wall: no location yet; will retry next morning.", LogLevel.Warn);
+                DoDayStartSeasonAndHub();
+                return;
+            }
+            var responses = new[] { new StardewValley.Response("loop", Strings.Get("dialog.year2wall.loop")) };
+            loc.createQuestionDialogue(Strings.Get("dialog.year2wall.prompt"), responses, (Farmer who, string key) =>
+            {
+                _monitor.Log("Year 2 wall: Loop again.", LogLevel.Info);
+                _store.State.VictoryAcknowledged = false;
+                _store.State.Year2WallArmed = false;
+                _store.Save();
+                FinalizeReset("year 2 wall");
+            });
+        }
+
+        public void DebugShowYear2Wall() => ShowYear2Wall();
+
+        /// <summary>The ending's continuation choice: start a new loop (PerformReset) or keep playing
+        /// this year. Uses vanilla's <c>createQuestionDialogue</c> so the prompt renders identically to
+        /// other in-world Y/N choices the player has seen.</summary>
+        private void ShowEndingChoice()
         {
             var responses = new[]
             {
-                new StardewValley.Response("newLoop",     Strings.Get("dialog.win.new-loop")),
-                new StardewValley.Response("keepPlaying", Strings.Get("dialog.win.keep-playing"))
+                new StardewValley.Response("newLoop",     Strings.Get("dialog.ending.new-loop")),
+                new StardewValley.Response("keepPlaying", Strings.Get("dialog.ending.keep-playing")),
             };
-            string loopLine = WinSummary.LoopLine(Run.RunNumber);
-            string prompt = Strings.Get("dialog.win.prompt",
-                new Dictionary<string, string> { ["loopline"] = loopLine });
-
+            string prompt = Strings.Get("dialog.ending.prompt",
+                new Dictionary<string, string> { ["loopline"] = WinSummary.LoopLine(Run.RunNumber) });
             GameLocation loc = Game1.currentLocation ?? Game1.player?.currentLocation;
             if (loc == null)
             {
                 // Defensive: no location to host the dialogue. Default to keep-playing
-                // (the safer choice — never destroys the won run's state silently).
-                _monitor.Log("Post-win choice: no currentLocation available, defaulting to 'Keep playing'.", LogLevel.Warn);
+                // (the safer choice, it never destroys the won run's state silently).
+                _monitor.Log("Ending choice: no currentLocation, defaulting to Keep playing.", LogLevel.Warn);
                 ApplyKeepPlaying();
                 return;
             }
-
             loc.createQuestionDialogue(prompt, responses, (Farmer who, string key) =>
             {
                 if (key == "newLoop")
                 {
-                    _monitor.Log("Post-win choice: 'Start a new loop' — triggering reset.", LogLevel.Info);
+                    _monitor.Log("Ending choice: Loop again.", LogLevel.Info);
                     // Inside the answer callback the DialogueBox is still the active menu, so the
                     // books would be refused and the reset would wipe recipes and herd animals
                     // unbanked. The shrine already ran before this question; defer the rest a tick.
@@ -50,20 +78,31 @@ namespace TheLongestYear.Loop
                 }
                 else
                 {
-                    _monitor.Log("Post-win choice: 'Keep playing this run' — VictoryAcknowledged set.", LogLevel.Info);
+                    _monitor.Log("Ending choice: Keep playing.", LogLevel.Info);
                     ApplyKeepPlaying();
                 }
             });
         }
 
-        /// <summary>"Keep playing" branch of the post-win choice. Marks VictoryAcknowledged
-        /// (suppresses the popup on subsequent Winter 28 wins) and runs the normal day-start
-        /// flow so the player lands on Spring 1 Year 2 with the planning hub.</summary>
+        /// <summary>"Keep playing" branch of the ending choice. Marks VictoryAcknowledged (no further
+        /// win nights), arms the Spring 1 year-2 wall, gives vanilla its post-completion world via the
+        /// CC-completed event flag, then runs the normal day-start flow once the Junimo lines close.</summary>
         private void ApplyKeepPlaying()
         {
             _store.State.VictoryAcknowledged = true;
-            _store.Save();   // persist immediately — no save-scum revert
-            DoDayStartSeasonAndHub();
+            _store.State.Year2WallArmed = true;
+            // Vanilla's post-completion world for THIS year only (spec section 3). PostCompletionEvents
+            // keeps the id out of SeenEventsEver and out of the next loop's re-seed.
+            if (!Game1.player.eventsSeen.Contains(PostCompletionEvents.CeremonyEventId))
+                Game1.player.eventsSeen.Add(PostCompletionEvents.CeremonyEventId);
+            _store.Save();   // persist immediately, no save-scum revert
+            // One box only: the second line (the Spring 1 promise) was cut, the Junimos now
+            // close the hall scene with it (Jeff, 2026-09-10).
+            var lines = new List<string> { Strings.Get("dialog.ending.keep-1") };
+            Game1.afterDialogues = () => { Game1.afterDialogues = null; DoDayStartSeasonAndHub(); };
+            // drawObjectDialogue, not a raw DialogueBox assignment: vanilla sets dialogueUp, blocks
+            // movement, and emergency-shuts-down whatever menu was up before the box opens.
+            Game1.drawObjectDialogue(lines);
         }
 
         /// <summary>Fail-night "hold the town's wishes" choice (spec 2026-08-24). Asked BEFORE the

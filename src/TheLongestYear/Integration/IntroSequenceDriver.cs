@@ -8,15 +8,9 @@ using TheLongestYear.UI;
 namespace TheLongestYear.Integration
 {
     /// <summary>
-    /// Plays the day-1 intro on a fresh run the vanilla way: it starts ONE event
-    /// (<see cref="IntroEventInjector.BuildIntroEvent"/>) once the world is settled, and that event
-    /// moves itself from the farm porch to the Community Center via the in-event
-    /// <c>changeLocation</c> command. No mod-side <c>warpFarmer</c> and no per-tick loop — the
-    /// earlier version warped the player every tick and fought the engine's own placement, which
-    /// never stuck and re-fired (the "disco" flicker).
-    ///
-    /// When the event ends it has set the cc-seen flag; the driver then opens the theme picker.
-    /// Decision logic is the pure <see cref="IntroSequenceDecider"/>; this is the Game1 glue.
+    /// Opens the theme picker on the first morning of a fresh run once the cc-seen flag is present.
+    /// The flag is planted by the arrival event's end (OpeningEventInjector) or by OnSaveLoaded when
+    /// Skip intro was ticked. This class never starts an event.
     /// </summary>
     internal sealed class IntroSequenceDriver
     {
@@ -26,8 +20,11 @@ namespace TheLongestYear.Integration
         private System.Func<MenuLauncher> _launcher;
 
         private bool _finished;
-        private bool _introStartedThisMorning;
-        private int _cooldownUntilTick;
+
+        // Vanilla's own arrival event id (without the "/u 0" precondition suffix), as it lands in
+        // player.eventsSeen once the event finishes. Used only by the WaitForOpening fallback below.
+        private const string VanillaArrivalEventId = "60367";
+        private bool _plantedMissingCcSeenFlag;
 
         public IntroSequenceDriver(IMonitor monitor, MetaStore meta, GameplayConfig config)
         {
@@ -48,10 +45,7 @@ namespace TheLongestYear.Integration
             if (!RunActivation.IsActive) return; // dormant on non-TLY saves — no intro
             // Re-arm for a (possibly replayed) fresh morning.
             if (IntroGate.IsFreshIntroMorning(_meta.State.HasSeenIntro, _meta.Run.Season, _meta.Run.DayOfMonth))
-            {
                 _finished = false;
-                _introStartedThisMorning = false;
-            }
         }
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -62,7 +56,6 @@ namespace TheLongestYear.Integration
             // Only act on a settled frame — never during the load fade (acting then fights the
             // game's own player placement).
             if (Game1.fadeToBlackAlpha > 0f) return;
-            if (Game1.ticks < _cooldownUntilTick) return;
 
             var p = Game1.player;
             if (p == null) return;
@@ -78,29 +71,6 @@ namespace TheLongestYear.Integration
 
             switch (IntroSequenceDecider.Next(snap))
             {
-                case IntroAction.StartIntro:
-                    var loc = Game1.currentLocation;
-                    if (loc != null && Game1.activeClickableMenu == null)
-                    {
-                        if (_introStartedThisMorning)
-                        {
-                            // We already started the intro this morning, yet the decider is asking
-                            // to start it again — meaning the event ended WITHOUT setting the cc-seen
-                            // flag (an interrupted/edge-case end; the event itself isn't skippable, and the
-                            // character-creation Skip intro checkbox plants the flag before we get here). Force the flag so we proceed to the picker
-                            // instead of re-firing forever (the 2026-06-01 dialog-loop guard).
-                            _monitor.Log("Intro: event ended without the cc-seen flag — forcing it to avoid a re-fire loop.", LogLevel.Warn);
-                            p.mailReceived.Add(IntroEventKeys.CcSeenMail);
-                            Bump();
-                            break;
-                        }
-                        _monitor.Log("Intro: starting the Lewis -> Junimo cutscene.", LogLevel.Info);
-                        loc.startEvent(new Event(IntroEventInjector.BuildIntroEvent(), null, IntroEventKeys.IntroEventId));
-                        _introStartedThisMorning = true;
-                        Bump();
-                    }
-                    break;
-
                 case IntroAction.OpenPicker:
                     if (Game1.activeClickableMenu == null)
                     {
@@ -111,10 +81,24 @@ namespace TheLongestYear.Integration
                             _monitor.Log("Intro: cutscene done, theme picker open.", LogLevel.Info);
                             _finished = true;
                         }
-                        else
-                        {
-                            Bump();
-                        }
+                    }
+                    break;
+
+                case IntroAction.WaitForOpening:
+                    // Glue-level fallback, not a decider change: on a save from an older build (or
+                    // one where the arrival somehow got skipped) the event already ran and is in
+                    // player.eventsSeen, but the cc-seen flag it plants was never carried over, so
+                    // the decider would otherwise wait for an event that will never happen again.
+                    // Plant the flag once so the next tick's WaitForOpening resolves to OpenPicker.
+                    if (!_plantedMissingCcSeenFlag
+                        && Context.IsWorldReady && Game1.dayOfMonth >= 1
+                        && p.eventsSeen.Contains(VanillaArrivalEventId))
+                    {
+                        p.mailReceived.Add(IntroEventKeys.CcSeenMail);
+                        _plantedMissingCcSeenFlag = true;
+                        _monitor.Log(
+                            "Opening: arrival already seen but the cc-seen flag is missing; planting it so the picker opens.",
+                            LogLevel.Warn);
                     }
                     break;
 
@@ -124,7 +108,5 @@ namespace TheLongestYear.Integration
                     break;
             }
         }
-
-        private void Bump() => _cooldownUntilTick = Game1.ticks + 30; // ~0.5s at 60fps
     }
 }

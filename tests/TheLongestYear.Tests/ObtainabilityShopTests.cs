@@ -1,0 +1,191 @@
+using System.Collections.Generic;
+using System.Linq;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Obtainability;
+
+namespace TheLongestYear.Tests;
+
+public class ObtainabilityShopTests
+{
+    private static readonly Dictionary<string, FestivalDates> Festivals = new()
+    {
+        ["NightMarket"] = new FestivalDates("NightMarket", Season.Winter, 15, 17),
+        ["SquidFest"] = new FestivalDates("SquidFest", Season.Winter, 12, 13),
+        ["TroutDerby"] = new FestivalDates("TroutDerby", Season.Summer, 20, 21),
+        ["DesertFestival"] = new FestivalDates("DesertFestival", Season.Spring, 15, 17),
+        ["summer11"] = new FestivalDates("summer11", Season.Summer, 11, 11),
+        ["winter8"] = new FestivalDates("winter8", Season.Winter, 8, 8),
+    };
+
+    private static readonly Dictionary<string, ObjInfo> Objects = new()
+    {
+        ["(O)24"] = new ObjInfo("(O)24", "Parsnip", -75, 35, new[] { "category_vegetable" }, false),
+        ["(O)775"] = new ObjInfo("(O)775", "Glacierfish", -4, 1000, new string[0], true),
+        ["(O)Moss"] = new ObjInfo("(O)Moss", "Moss", -81, 5, new string[0], false),
+    };
+
+    private static List<(string ItemId, ObtainSource Source)> Stock(params ShopRow[] rows)
+        => ShopSources.Stock(rows, Objects, Festivals).ToList();
+
+    [Fact]
+    public void A_seasonal_seed_row_is_dependable_in_its_season()
+    {
+        var (id, s) = Stock(new ShopRow("SeedShop", "(O)472", "SEASON Spring", false)).Single();
+        Assert.Equal("(O)472", id);
+        Assert.Equal(SourceKind.Shop, s.Kind);
+        Assert.Equal(Reliability.Dependable, s.Reliability);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), s.Lands);
+        Assert.Contains("shop:SeedShop", s.Conditions.Requires);
+    }
+
+    [Fact]
+    public void The_traveling_cart_expands_its_random_query_as_chance()
+    {
+        var ids = Stock(new ShopRow("Traveler", "RANDOM_ITEMS (O) 2 789 @isRandomSale @requirePrice", null, false));
+        Assert.Equal(new[] { "(O)24" }, ids.Select(x => x.ItemId).ToArray());
+        Assert.All(ids, x => Assert.Equal(SourceKind.Cart, x.Source.Kind));
+        Assert.All(ids, x => Assert.Equal(Reliability.Chance, x.Source.Reliability));
+    }
+
+    [Fact]
+    public void Festival_shops_open_on_their_festival_days_from_data()
+    {
+        var luau = Stock(new ShopRow("Festival_Luau_Pierre", "(O)Moss", null, false)).Single().Source;
+        Assert.Equal(39, luau.Lands.Lands(1));                                    // Summer 11
+        Assert.Null(luau.Lands.Lands(40));
+        Assert.Equal(SourceKind.Festival, luau.Kind);
+        Assert.True(luau.Conditions.FewDays);
+
+        var boat = Stock(new ShopRow("Festival_NightMarket_MagicBoat_Day2", "(O)Moss", null, false)).Single().Source;
+        Assert.Equal(99, boat.Lands.Lands(1));                                    // Winter 15-17
+        Assert.Equal(101, boat.Lands.Lands(101));
+        Assert.Null(boat.Lands.Lands(102));
+        Assert.Equal(SourceKind.NightMarket, boat.Kind);
+
+        var ice = Stock(new ShopRow("Festival_FestivalOfIce_TravelingMerchant", "RANDOM_ITEMS (O) 2 789 @isRandomSale", null, false)).Single().Source;
+        Assert.Equal(92, ice.Lands.Lands(1));                                     // Winter 8
+        Assert.Null(ice.Lands.Lands(93));
+        Assert.Equal(Reliability.Chance, ice.Reliability);
+
+        // The real Desert Festival stalls carry no "Festival_" prefix (DesertFestival.cs 777 opens
+        // "DesertFestival_EggShop"); the festival name before the first "_" places them all the same.
+        var desert = Stock(new ShopRow("DesertFestival_Pam", "(O)Moss", null, false)).Single().Source;
+        Assert.Equal(15, desert.Lands.Lands(1));                                  // Spring 15-17 from the passive festival id
+        Assert.Equal(17, desert.Lands.Lands(17));
+        Assert.Null(desert.Lands.Lands(18));
+        Assert.Equal(SourceKind.Festival, desert.Kind);
+        Assert.True(desert.Conditions.FewDays);
+        Assert.False(desert.Conditions.Unresolved);
+    }
+
+    [Fact]
+    public void A_sparse_shop_condition_inside_a_festival_window_is_a_true_intersection()
+    {
+        var s = Stock(new ShopRow("DesertFestival_EggShop", "(O)Moss", "DAY_OF_MONTH 16", false)).Single().Source;
+        Assert.Equal(16, s.Lands.Lands(1));      // Spring 16 is the only day both the row and the festival are open
+        Assert.Null(s.Lands.Lands(17));
+    }
+
+    [Fact]
+    public void An_unplaceable_festival_shop_is_unresolved_not_a_fact()
+    {
+        var s = Stock(new ShopRow("Festival_SomeModFair_Booth", "(O)Moss", null, false)).Single().Source;
+        Assert.True(s.Conditions.Unresolved);
+        Assert.Equal(DayTable.Always, s.Lands);
+    }
+
+    [Fact]
+    public void Island_shops_and_year_two_rows_are_flagged()
+    {
+        Assert.True(Stock(new ShopRow("IslandTrade", "(O)Moss", null, false)).Single().Source.Conditions.GingerIsland);
+        Assert.True(ShopSources.IsIslandShop("VolcanoShop"));
+        Assert.False(ShopSources.IsIslandShop("SeedShop"));
+        Assert.True(Stock(new ShopRow("SeedShop", "(O)476", "YEAR 2, SEASON Spring", false)).Single().Source.Conditions.YearTwo);
+    }
+
+    [Fact]
+    public void A_barter_paid_for_with_an_island_only_item_is_recorded_island_flagged_not_dropped()
+    {
+        // Island and year 2 sources are recorded but never counted by default, so reading the trade
+        // item through the default filters would find no input and drop the barter entirely.
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)QiGem"] = new[]
+            {
+                new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable,
+                    ObtainConditions.None with { GingerIsland = true }, "shop QiGemShop"),
+            },
+        });
+        var rows = new[] { new ShopRow("QiGemShop", "(O)908", null, false, false, "(O)QiGem") };
+        var bait = ShopSources.Barter(rows, Objects, Festivals, snapshot).Single();
+        Assert.Equal("(O)908", bait.ItemId);
+        Assert.True(bait.Source.Conditions.GingerIsland);
+        Assert.Contains("trade:(O)QiGem", bait.Source.Conditions.Requires);
+        Assert.Equal(1, bait.Source.Lands.Lands(1));
+    }
+
+    [Fact]
+    public void A_barter_whose_trade_item_has_no_source_is_listed_unresolved()
+    {
+        var rows = new[] { new ShopRow("SeedShop", "(O)472", null, false, false, "(O)NeverMade") };
+        var (id, source) = ShopSources.Barter(rows, Objects, Festivals,
+            new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>())).Single();
+        Assert.StartsWith(ItemQueries.UnresolvedPrefix, id);
+        Assert.True(source.Conditions.Unresolved);
+        Assert.Contains("(O)NeverMade", source.Detail);
+    }
+
+    [Fact]
+    public void Recipe_rows_teach_rather_than_sell_and_year_two_rows_never_teach()
+    {
+        var rows = new[]
+        {
+            new ShopRow("Saloon", "(O)196", "SEASON Fall", true),
+            new ShopRow("Saloon", "(O)197", "YEAR 2", true),
+            new ShopRow("IslandTrade", "(O)198", null, true),
+        };
+        Assert.Empty(ShopSources.Stock(rows, Objects, Festivals));
+        var taught = ShopSources.RecipeWeeks(rows, Festivals);
+        Assert.Equal(WeekMask.ForSeason(Season.Fall), taught["(O)196"]);
+        Assert.False(taught.ContainsKey("(O)197"));
+        Assert.False(taught.ContainsKey("(O)198"));
+    }
+
+    [Fact]
+    public void Squid_fest_and_trout_derby_rewards_use_their_festival_dates_and_their_odds()
+    {
+        var rewards = ShopSources.FestivalRewards(Festivals).ToList();
+        var book = rewards.Single(r => r.ItemId == "(O)Book_Crabbing").Source;
+        Assert.Equal(96, book.Lands.Lands(1));                                    // Winter 12-13
+        Assert.Equal(97, book.Lands.Lands(97));
+        Assert.Null(book.Lands.Lands(98));
+        Assert.True(book.Conditions.FewDays);
+        Assert.Equal(Reliability.Dependable, book.Reliability);
+        var tent = rewards.Single(r => r.ItemId == "(O)TentKit").Source;
+        Assert.Equal(48, tent.Lands.Lands(1));                                    // Summer 20-21
+        Assert.Equal(49, tent.Lands.Lands(49));
+        Assert.Null(tent.Lands.Lands(50));
+        Assert.Equal(Reliability.Dependable, tent.Reliability);         // the first tag always gives it
+        Assert.Equal(Reliability.Chance, rewards.Single(r => r.ItemId == "(O)710").Source.Reliability);   // a spin
+        Assert.Contains(rewards, r => r.ItemId == "(O)498" && r.Source.Reliability == Reliability.Chance); // a 50/50
+    }
+
+    [Fact]
+    public void A_random_shop_alternative_is_chance()
+        => Assert.Equal(Reliability.Chance, Stock(new ShopRow("SeedShop", "(O)472", null, false, IsRandom: true)).Single().Source.Reliability);
+
+    [Fact]
+    public void A_barter_row_is_only_had_in_weeks_its_trade_item_is()
+    {
+        var row = new ShopRow("DesertTrade", "(O)Moss", null, false, TradeItemId: "(O)24");
+        Assert.Empty(Stock(row));
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)24"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), Reliability.Dependable, ObtainConditions.None, "seeds") },
+        });
+        var (id, source) = ShopSources.Barter(new[] { row }, Objects, Festivals, snapshot).Single();
+        Assert.Equal("(O)Moss", id);
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Spring)), source.Lands);
+        Assert.Contains("trade:(O)24", source.Conditions.Requires);
+    }
+}

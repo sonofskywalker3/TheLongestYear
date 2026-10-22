@@ -30,6 +30,16 @@ namespace TheLongestYear
         private UpgradePurchaseService _purchases;
         private BoostPurchaseService _boostPurchases;
         private TheLongestYear.Loop.BoostEffectsService _boostEffects;
+        private TheLongestYear.Loop.WitnessDialogueService _witness;
+        private TheLongestYear.Loop.SabotageService _sabotage;
+        private TheLongestYear.Loop.CircleOfWardingService _circles;
+        /// <summary>Debug only: plays one overnight strike scene mid-day (tly_sabotage scene crows).</summary>
+        private TheLongestYear.Scenes.ScenePreview _scenePreview;
+
+        /// <summary>True once <c>tly_newgame</c> has made a farm in this session, so the save now
+        /// loaded is a throwaway. <c>tly_sabotage fixture</c> rewrites the ground it stands on and
+        /// will not do that to a save it did not create.</summary>
+        private bool _saveMadeThisSession;
         private MenuLauncher _launcher;
         private SeasonResolver _seasonResolver;
         private IReadOnlyList<CcItem> _catalog = new List<CcItem>();
@@ -47,6 +57,20 @@ namespace TheLongestYear
         /// kept for tly_dumpeffort and tly_itemmodel. Null before a save is loaded.</summary>
         private TheLongestYear.Core.Availability.EffortData _effortData;
         private TheLongestYear.Core.ItemPools _enginePools;
+        /// <summary>Phase 1 item obtainability model (spec 2026-09-14): built blind from game data at
+        /// save load. Nothing reads it for gameplay; tly_obtain is its only reader. Null before a save
+        /// is loaded or when the build failed.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityModel _obtainability;
+        /// <summary>Session cache: a save load whose game data is unchanged (the reload after a loop
+        /// reset) reuses the last build instead of paying for it again.</summary>
+        private readonly TheLongestYear.Core.Obtainability.ObtainabilityCache _obtainabilityCache = new();
+        /// <summary>Sources the obtainability build could not read (unsupported item queries, machine
+        /// output methods), for tly_obtain compare.</summary>
+        private IReadOnlyList<string> _obtainabilityUnresolved = System.Array.Empty<string>();
+        /// <summary>The message from an <see cref="TheLongestYear.Core.Obtainability.ObtainabilityReadException"/>
+        /// when the last build refused to publish a model (a data section failed to read). Null when
+        /// the model built cleanly or has not been built yet.</summary>
+        private string _obtainabilityFailure;
         /// <summary>The reachability verdicts <see cref="_enginePools"/> were built from, for tly_dumpmodel.</summary>
         private TheLongestYear.Core.Availability.SourceReachability _engineReachability;
         /// <summary>The curated season pins the availability model was last built with, kept so a
@@ -61,12 +85,21 @@ namespace TheLongestYear
         private WeeklyThemeQuestService _questService;
         private TheLongestYear.Loop.WildcardDayService _wildcardDays;
         private IntroEventInjector _introInjector;
+        private OpeningStringsEditor _openingStrings;
+        private OpeningEventInjector _openingEvent;
         private IntroSequenceDriver _introDriver;
         private Day28CutsceneDriver _day28Driver;
+        private Integration.SeasonTurnDriver _seasonTurnDriver;
+        private EndingEventDriver _endingDriver;
         private BookFurniture _bookFurniture;
         private UI.PlanningShrineService _planningShrine;
         private TheLongestYear.Loop.OnboardingMailService _onboardingMail;
+        private TheLongestYear.Loop.JojaLetterService _jojaLetters;
+        private Integration.JojaOfferDriver _jojaOffer;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
+        private Integration.MorrisDarkSprite _morrisDark;
+        private Integration.MorrisDarkPortrait _morrisDarkPortrait;
+        private Integration.JunimoPortrait _junimoPortrait;
         private TheLongestYear.Loop.PastSeasonSpawnsService _pastSeasonSpawns;
         private TheLongestYear.Loop.AnimalPowersService _animalPowers;
         private TheLongestYear.Loop.SneakPeekChannelService _sneakPeekChannel;
@@ -139,6 +172,14 @@ namespace TheLongestYear
             }
             if (stashTileMigrated)
                 this.Monitor.Log("Migrated config.json: applied new default tile coords.", LogLevel.Info);
+            // Darkness dial (spec 2026-09-15 Part B, 2.3): a config from before the dial sets it,
+            // and the overall lever, to the lowest of the nine existing dials (Jeff, 2026-09-14).
+            // The && is the quiet path for a FRESH config: every dial Normal migrates to Normal, which
+            // changes nothing the player would recognise, so it says nothing.
+            if (_config.Difficulty.MigrateDarkness() && !_config.Difficulty.IsAllNormal())
+            {
+                this.Monitor.Log($"Migrated config.json: Darkness dial set to {_config.Difficulty.Darkness} (the lowest existing dial).", LogLevel.Info);
+            }
 
             // Always write the config back on Entry so any newly-added fields (Enabled, new
             // tile defaults, future tuning knobs) become visible in config.json for the
@@ -148,6 +189,28 @@ namespace TheLongestYear
             helper.WriteConfig(_config);
 
             _meta = new MetaStore(helper.Data);
+            GrandpaCandleCommand.Register(this.Monitor);
+            Integration.EndingEventCommands.Register(this.Monitor, helper);
+            Integration.OpeningEventCommands.Register(this.Monitor, helper);
+            Integration.JojaBadEndingCommands.Register(this.Monitor, helper);
+            // The stash's Junimo-chest sprite. Wired at Entry, not on save load: the opening tour
+            // places the stash before a new game's save exists, and without the loader the draw
+            // patch fell back to a plain purple-tinted chest (Jeff, 2026-09-25).
+            JunimoStashService.SetTextureLoader(
+                () => this.Helper.ModContent.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("assets/junimo_stash.png"));
+            // Rewind cutscene (spec 2026-09-11-rewind-cutscene, task 7): REQUIRED WIRING for all
+            // scenes the day-28 FAIL branch chains together. Without these, the menu-steal teardown
+            // shared by RewindBedroomScene and RewindMorningScene is dead code, RewindPanScene's own
+            // UpdateTicked never subscribes (the pan would start and then never advance), and
+            // RewindSpringPaint's per-tick hold never subscribes either (the paint would apply once
+            // and immediately go stale, and never release).
+            UI.RewindJunimoScene.Register(this.Monitor, helper);
+            Integration.RewindPanScene.Register(this.Monitor, helper, _meta, _config);
+            Integration.RewindSkip.Register(this.Monitor, helper, _meta);
+            Integration.RewindSpringPaint.Register(this.Monitor, helper);
+            Integration.RewindNightPaint.Register(this.Monitor, helper);
+            Integration.RewindNightLight.Register(this.Monitor, helper);
+            Integration.RewindBlackout.Register(this.Monitor, helper);
             // v1.1 narrative intro — porch + CC events injected via asset edit. Constructed at
             // Entry (not OnSaveLoaded) so AssetRequested is hooked before the first asset load.
             // The edit handlers themselves don't touch MetaState; the mail-flag plumbing fires
@@ -159,8 +222,15 @@ namespace TheLongestYear
             _introDriver.Attach(helper, () => _launcher);
             // Day-28 bedtime Junimo cutscene (FAIL → shop+reset, CONTINUE → next season). Attached
             // once here; _runController is built on save load, so resolve it lazily like the picker.
+            _seasonTurnDriver = new Integration.SeasonTurnDriver(this.Monitor, _meta);
+            _seasonTurnDriver.Attach(helper);
             _day28Driver = new Day28CutsceneDriver(this.Monitor);
-            _day28Driver.Attach(helper, () => _runController);
+            _day28Driver.Attach(helper, () => _runController, () => _seasonTurnDriver);
+            // Year One Ending: starts the ending event on the first step outside on an armed
+            // morning, waits for the seen mail, then hands off to RunController. _runController
+            // isn't built until OnSaveLoaded, so resolve it lazily like the driver above.
+            _endingDriver = new EndingEventDriver(this.Monitor, _meta, _config);
+            _endingDriver.Attach(helper, () => _runController);
             // Skip the overnight FarmEvent on nights whose morning rewinds (Fail or a voluntary restart): its end-of-event warp orphans the Fail
             // scene and drops the reset (see FarmEventSuppressionPatch). _runController is built on
             // save load, so resolve it lazily like the driver does.
@@ -168,19 +238,98 @@ namespace TheLongestYear
                 () => TheLongestYear.Core.Day28.VoluntaryRestart.IsRewind(
                     _runController?.PendingCutscene ?? TheLongestYear.Core.Day28.Day28Branch.None);
             FarmEventSuppressionPatch.Monitor = this.Monitor;
+            // The overnight slot (spec 2026-09-21): tonight's strike scene takes it from a random
+            // vanilla event, and anything scripted keeps it while the strike is postponed, effect
+            // and scene both (Jeff, 2026-10-07). _sabotage is built on save load, so resolve it
+            // lazily the way the driver above does.
+            StrikeScenePatch.Monitor = this.Monitor;
+            StrikeScenePatch.FailNight = () => FarmEventSuppressionPatch.SuppressTonight?.Invoke() == true;
+            StrikeScenePatch.Postpone = why => _sabotage?.PostponePendingIfAny(why, TheLongestYear.Core.Sabotage.PostponeCause.SlotTaken);
+            StrikeScenePatch.StrikeWaiting = () => _sabotage?.Pending is { Applied: false };
+            StrikeScenePatch.SceneFor = () =>
+            {
+                PendingStrike strike = _sabotage?.Pending;
+                if (strike == null || strike.Applied) return null;
+                bool skippable = TheLongestYear.Core.Sabotage.StrikeScenes.IsSkippable(
+                    strike.Event, _meta.State.StrikeScenesSeen ??= new());
+                var scene = TheLongestYear.Scenes.StrikeSceneFactory.Create(
+                    strike, skippable, this.Monitor,
+                    onFinished: shown =>
+                    {
+                        if (!shown) return;
+                        TheLongestYear.Core.Sabotage.StrikeScenes.MarkPlayed(strike.Event, _meta.Run, _meta.State);
+                        // Shown covers finished and skipped; a scene that could not be staged
+                        // returned above (its strike landed bare), so nobody saw anything, no
+                        // witness is recorded and the scene stays due.
+                        _witness?.OnScenePlayed(strike.Event);
+                    });
+                // The postfix hands this scene the slot straight after. If its setUp then never
+                // runs, another mod replaced it: a conflict, queued by the net (Jeff, 2026-10-08).
+                if (scene != null) strike.OnHandedSlot();
+                return scene;
+            };
             TheLongestYear.Loop.WildcardNightEventPatch.Monitor = this.Monitor;
             WeatherScheduleWriterPatch.Monitor = this.Monitor;
             // Placeable book furniture (Cookbook/Craftbook/Bundle-log) — registers via asset edit.
             _bookFurniture = new BookFurniture(this.Monitor, helper);
             // View-only planning shrine — registers its furniture + auto-places near the stash.
             _planningShrine = new UI.PlanningShrineService(this.Monitor, helper);
+            // Finding 1 fallback (2026-09-16 expanded-opening review): OnSaveCreating turned out to
+            // fire too late for a brand-new game started through tly_newgame (and, by the same
+            // save-write timing, a real new game too), landing right alongside OnSaveLoaded, AFTER
+            // the tour has already spoken about the stash and shrine. Give the script its own event
+            // command instead: tlyPlaceGifts, inserted right after the tour's "changeLocation Farm",
+            // does the same two placement calls at the one moment guaranteed to be before the tour's
+            // dialogue. OnSaveCreating's own attempt (ModEntry.OnSaveCreating) is left in place as a
+            // harmless, idempotent belt-and-braces call for whichever path fires first.
+            StardewValley.Event.RegisterCommand("tlyPlaceGifts", (evt, args, context) =>
+            {
+                try
+                {
+                    var openingStash = new JunimoStashService(this.Monitor, _meta.State, _config);
+                    openingStash.PlaceChest();
+                    _planningShrine.Place(openingStash.LastPlacedTile);
+                    this.Monitor.Log("Opening: placed the stash and shrine for the tour.", LogLevel.Info);
+                }
+                catch (Exception ex)
+                {
+                    this.Monitor.Log(
+                        $"tlyPlaceGifts: could not place the stash/shrine ({ex.GetType().Name}: {ex.Message}); OnSaveLoaded will place them after the tour instead.",
+                        LogLevel.Warn);
+                }
+                evt.CurrentCommand++;
+            });
             // First-loop Spring-1 onboarding letter. Constructed at Entry so AssetRequested is
             // hooked before the first asset load (same reason as _introInjector above).
             _onboardingMail = new TheLongestYear.Loop.OnboardingMailService(this.Monitor, _meta);
             helper.Events.Content.AssetRequested += _onboardingMail.OnAssetRequested;
+            // Morris's letters (spec 2026-09-25-joja-offer-design): "come see me" then "make a decision" mail.
+            _jojaLetters = new TheLongestYear.Loop.JojaLetterService(this.Monitor, _meta);
+            helper.Events.Content.AssetRequested += _jojaLetters.OnAssetRequested;
+            // Morris's offer scene on the first visit to JojaMart each loop (same spec).
+            _jojaOffer = new Integration.JojaOfferDriver(this.Monitor, _meta);
+            _jojaOffer.Attach(helper);
+            // The opening's deathbed and letter text (spec 2026-09-16). Hooked at Entry so the very first
+            // Strings/StringsFromCSFiles load already carries it; the minigame reads it before any save exists.
+            _openingStrings = new OpeningStringsEditor(this.Monitor, () => _config.Enabled);
+            helper.Events.Content.AssetRequested += _openingStrings.OnAssetRequested;
+            _openingEvent = new OpeningEventInjector(this.Monitor, () => _config.Enabled);
+            helper.Events.Content.AssetRequested += _openingEvent.OnAssetRequested;
+            // Circle of Warding furniture (Data/Furniture row + texture), granted per loop below.
+            _circles = new TheLongestYear.Loop.CircleOfWardingService(this.Monitor, _meta, helper);
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
+            // Year One Ending scene 4: changeSprite Morris Dark loads Characters/Morris_Dark, built
+            // here at load time with the irises recoloured red (spec 2026-09-06 §4).
+            _morrisDark = new Integration.MorrisDarkSprite(this.Monitor);
+            helper.Events.Content.AssetRequested += _morrisDark.OnAssetRequested;
+            _morrisDarkPortrait = new Integration.MorrisDarkPortrait(this.Monitor);
+            helper.Events.Content.AssetRequested += _morrisDarkPortrait.OnAssetRequested;
+            // Junimo temporary actors speak in the ending and intro; with no Portraits/Junimo* asset the
+            // dialogue box retried the failed portrait load every frame (live run 2026-09-06).
+            _junimoPortrait = new Integration.JunimoPortrait(this.Monitor);
+            helper.Events.Content.AssetRequested += _junimoPortrait.OnAssetRequested;
             // Spring/Summer/Fall Returns: Data/Locations copies of a past season's fish and forage.
             _pastSeasonSpawns = new TheLongestYear.Loop.PastSeasonSpawnsService(this.Monitor, helper);
             helper.Events.Content.AssetRequested += _pastSeasonSpawns.OnAssetRequested;
@@ -195,6 +344,7 @@ namespace TheLongestYear
             // (TLY's board has to win over the one it writes at load), normal otherwise.
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedNormal;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedLate;
+            helper.Events.Player.Warped += this.OnWarpedForFarmArrivalScene;
             // Festival memories: the golden pumpkin is seen as it lands in the inventory (no chest patch).
             helper.Events.Player.InventoryChanged += TheLongestYear.Loop.FestivalMemoryRecorder.OnInventoryChanged;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;
@@ -263,6 +413,16 @@ namespace TheLongestYear
                         LogLevel.Error);
                 }
             }
+            // The dark aura on tainted items: manual patch so a signature mismatch fails loudly.
+            var taintedItems = new TheLongestYear.Core.Sabotage.TaintedItems();
+            TheLongestYear.Loop.TaintedAuraPatch.Tainted = () =>
+            {
+                taintedItems.Refresh(_meta?.Run?.Tampers);
+                return taintedItems;
+            };
+            TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
+            // The same glow marks a bundle slot the darkness emptied, until it is filled again.
+            TheLongestYear.Loop.DarkenedSlotMarkPatch.Marks = () => _meta?.Run?.DarkenedSlots;
             this.Monitor.Log(
                 $"Harmony: {patched} patch class(es) applied, {failed} failed.",
                 failed > 0 ? LogLevel.Warn : LogLevel.Info);
@@ -297,7 +457,11 @@ namespace TheLongestYear
 
         /// <summary>Merge the run's seen vanilla events into the cross-loop SeenEventsEver memory so a
         /// scene watched in any run stays suppressed on later loops (event-gating Phase 1). Called
-        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.</summary>
+        /// from OnSaving before the meta-state persists; FarmerReset re-seeds eventsSeen from it.
+        /// <para>Current-run hand-off ids (<see cref="TheLongestYear.Core.Ending.PostCompletionEvents"/>)
+        /// are skipped: the ending's Keep-playing branch writes the CC ceremony id into eventsSeen so
+        /// vanilla flips its post-completion world for THIS year, and recording it here would carry the
+        /// destroyed JojaMart / Pierre Wednesdays / storm cutscene into every later loop.</para></summary>
         private void RecordSeenEvents()
         {
             if (!Context.IsWorldReady || Game1.player?.eventsSeen == null)
@@ -307,12 +471,31 @@ namespace TheLongestYear
             var known = new System.Collections.Generic.HashSet<string>(seen, System.StringComparer.Ordinal);
             int added = 0;
             foreach (string id in Game1.player.eventsSeen)
+            {
+                if (TheLongestYear.Core.Ending.PostCompletionEvents.IsHandedOffOnly(id)) continue;
                 if (known.Add(id)) { seen.Add(id); added++; }
+            }
 
             if (added > 0)
                 this.Monitor.Log(
                     $"Recorded {added} newly-seen event id(s) to SeenEventsEver (total {seen.Count}).",
                     LogLevel.Trace);
+        }
+
+        /// <summary>Heal a save whose SeenEventsEver already banked a current-run hand-off id. Builds
+        /// before the RecordSeenEvents skip existed banked the CC ceremony id the first time a player
+        /// took "Keep playing", which would then be re-seeded into eventsSeen on every later reset.
+        /// Called from OnSaveLoaded right after MetaStore.Load.</summary>
+        private void PurgeHandedOffEvents()
+        {
+            System.Collections.Generic.List<string> seen = _meta.State.SeenEventsEver;
+            if (seen == null) return;
+            int removed = seen.RemoveAll(TheLongestYear.Core.Ending.PostCompletionEvents.IsHandedOffOnly);
+            if (removed > 0)
+                this.Monitor.Log(
+                    $"Removed {removed} current-run hand-off event id(s) from SeenEventsEver " +
+                    "(the CC ceremony flag must not survive a loop).",
+                    LogLevel.Info);
         }
 
         /// <summary>The exclusion seed for the replayable-cutscene scan: events we explicitly suppress
@@ -333,6 +516,37 @@ namespace TheLongestYear
 
         /// <summary>Today as a 1..112 day of year from the game's own date (the run calendar syncs
         /// later on cutscene mornings); the run calendar only before a save is loaded.</summary>
+        /// <summary>Debug: dump a Characters/&lt;Name&gt; sprite sheet to test-output as a PNG so its
+        /// pixel colours can be read with an image viewer (used to find Morris_Dark's iris colour).</summary>
+        private void CmdDumpSprite(string command, string[] args)
+        {
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_dumpsprite <Name>", LogLevel.Warn); return; }
+            try
+            {
+                var tex = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>("Characters/" + args[0]);
+                string dir = System.IO.Path.Combine(this.Helper.DirectoryPath, "test-output");
+                System.IO.Directory.CreateDirectory(dir);
+                string path = System.IO.Path.Combine(dir, $"sprite-{args[0]}.png");
+                using var fs = System.IO.File.Create(path);
+                tex.SaveAsPng(fs, tex.Width, tex.Height);
+                this.Monitor.Log($"Wrote {path} ({tex.Width}x{tex.Height}).", LogLevel.Info);
+            }
+            catch (Microsoft.Xna.Framework.Content.ContentLoadException ex)
+            {
+                this.Monitor.Log($"No sprite named {args[0]}: {ex.Message}", LogLevel.Warn);
+            }
+        }
+
+        private void CmdHud(string command, string[] args)
+        {
+            string menu = Game1.activeClickableMenu?.GetType().Name ?? "none";
+            this.Monitor.Log(
+                $"displayHUD={Game1.displayHUD} eventUp={Game1.eventUp} freezeControls={Game1.freezeControls} " +
+                $"fadeToBlack={Game1.fadeToBlack} fadeAlpha={Game1.fadeToBlackAlpha:0.00} " +
+                $"menu={menu} time={Game1.timeOfDay} day={Game1.dayOfMonth}",
+                LogLevel.Info);
+        }
+
         private int TodayDayOfYear() => Context.IsWorldReady
             ? TheLongestYear.Core.Calendar.DayOfYear((int)Game1.season, Game1.dayOfMonth)
             : TheLongestYear.Core.Calendar.DayOfYear((int)_meta.Run.Season, _meta.Run.DayOfMonth);
@@ -368,12 +582,22 @@ namespace TheLongestYear
             TheLongestYear.Loop.AnimalSpeciesRecorder.Record(_meta.State, this.Monitor);
             ReclassifyIfBoardChanged();
             _onboardingMail?.OnDayStarted();
+            // Before the run controller (it reads the game's date, see the method), but told about a
+            // pending rewind so the old loop's last morning sends nothing.
+            _jojaLetters?.OnDayStarted(rewindPending: _runController?.IsRewindChainRunning == true);
             _runController?.OnDayStarted(sender, e);
             // A basement focus card's Cellar, once the night's house upgrade has landed.
             _focus?.Delivery.OnDayStarted();
             // After the run controller: it syncs Run.Season/DayOfMonth to the new day, and the
             // boosts' "today" (expiry, lucky day, buffs) is read from the run's calendar.
             _boostEffects?.OnDayStarted();
+            _witness?.OnDayStarted();
+            // A darkened slot the player filled again loses its mark (designer, 2026-10-08).
+            TheLongestYear.Core.Sabotage.DarkenedSlots.ClearFilled(_meta.Run?.DarkenedSlots, (bundle, slot) =>
+            {
+                bool[] state = TheLongestYear.Loop.RunController.SlotStateForBundle(bundle);
+                return state != null && slot < state.Length && state[slot];
+            });
             _pastSeasonSpawns?.Refresh(TodayDayOfYear());
             // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
             // being a rerun, so the label has to go back with it.
@@ -397,6 +621,8 @@ namespace TheLongestYear
         [EventPriority(EventPriority.High)]
         private void OnDayEnding(object sender, StardewModdingAPI.Events.DayEndingEventArgs e)
         {
+            // Today's morning boxes do not carry into tomorrow.
+            TheLongestYear.Loop.MorningBox.Clear();
             if (!RunActivation.IsActive) return;
             // The rewind's ground drops are ordinary ground items from the first night on.
             TheLongestYear.Core.ResetGroundDrops.ForgetAtNight(_meta.State);
@@ -438,6 +664,9 @@ namespace TheLongestYear
                 // hub are gone so they don't expire unseen. Runs after the deferred offer so a hub
                 // that opens this tick keeps them waiting.
                 Loop.HerdBookService.ShowWaitingHud(this.Monitor);
+
+                // The darkness's morning boxes, one at a time, held while anything holds the screen.
+                TheLongestYear.Loop.MorningBox.Tick();
 
                 // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).
                 // Has to be every tick, not just on the DebugPollTicks cadence, so we eject right at the

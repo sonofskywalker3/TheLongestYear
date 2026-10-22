@@ -184,6 +184,7 @@ namespace TheLongestYear
             LogStep("cart slots", configured.CartSlots, live.Steps.CartSlots);
             LogStep("hold prices", configured.HoldPrices, live.Steps.HoldPrices);
             LogStep("bundles per room", configured.BundleCount, live.Steps.BundleCount);
+            LogStep("darkness", configured.DarknessOrLowest, live.Darkness);
 
             this.Monitor.Log("  Resolved values in force:", LogLevel.Info);
             this.Monitor.Log(

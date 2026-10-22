@@ -88,6 +88,17 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_additem <qualifiedId> [count]", LogLevel.Warn); return; }
 
+            // "query <item query>" adds the first result, e.g. "query FLAVORED_ITEM Jelly (O)258"
+            // for a flavoured Jelly (a ColoredObject), which a plain id cannot make.
+            if (args[0].Equals("query", StringComparison.OrdinalIgnoreCase))
+            {
+                var found = StardewValley.Internal.ItemQueryResolver.TryResolve(string.Join(" ", args.Skip(1)), null);
+                if (found.Length == 0) { this.Monitor.Log("tly_additem query: no result.", LogLevel.Warn); return; }
+                Item queried = found[0].Item as Item;
+                Game1.player.addItemByMenuIfNecessary(queried);
+                this.Monitor.Log($"tly_additem: granted {queried.DisplayName} ({queried.GetType().Name}, {queried.QualifiedItemId}).", LogLevel.Info);
+                return;
+            }
             int count = args.Length > 1 && int.TryParse(args[1], out int c) ? c : 1;
             Item item;
             try { item = ItemRegistry.Create(args[0], count); }

@@ -7,7 +7,8 @@ namespace TheLongestYear.Core.Day28
         None,
         Fail,     // gate closed → rewind dialogue → JP shop → reset to Spring 1
         Continue, // gate open → congratulations → roll into the next season
-        Win,      // loop completed (CC restored) → win screen → JP shop → keep-playing choice
-        Restart   // voluntary restart from the Junimo Shrine → no scene → the Fail chain (hold, upgrades, books, reset)
+        // 3 was Win (the win card), retired by the Year One Ending. PendingDay28 is persisted, so the
+        // number stays unused: an old save holding 3 must never read back as a Restart.
+        Restart = 4 // voluntary restart from the Junimo Shrine → no scene → the Fail chain (hold, upgrades, books, reset)
     }
 }

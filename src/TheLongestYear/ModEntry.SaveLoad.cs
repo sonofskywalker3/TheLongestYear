@@ -72,6 +72,9 @@ namespace TheLongestYear
             this.Monitor.Log($"Farm type: {Game1.whichFarm} ({Game1.GetFarmTypeID()}).", LogLevel.Info);
 
             _meta.Load();
+            // Heal saves that banked the ending's current-run hand-off id before RecordSeenEvents
+            // learned to skip it (spec section 3).
+            this.PurgeHandedOffEvents();
 
             if (!DecideActivation(out bool wasNewGame))
                 return;
@@ -310,12 +313,21 @@ namespace TheLongestYear
                 // Save data not writable yet on this platform: the load-time adoption rule covers it.
                 this.Monitor.Log($"Could not stamp the run marker at save creation ({ex.Message}); a quit before the first night will be adopted on reload instead.", LogLevel.Warn);
             }
+
         }
 
         /// <summary>Returning to title means the loaded save is gone — drop the runtime gate so no
         /// stale state leaks into the next save the player loads.</summary>
         private void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
-            => DeactivateTly();
+        {
+            // Whatever loads next may be a real save, so the fixture guard has to earn its yes again.
+            _saveMadeThisSession = false;
+            // A scene always puts its chest lid back, but a save left mid-scene would keep a dead
+            // Chest alive in a static for the rest of the session.
+            TheLongestYear.Scenes.SceneChestLid.Forget();
+            TheLongestYear.Loop.MorningBox.Clear();
+            DeactivateTly();
+        }
 
         /// <summary>Put TLY fully to sleep: clear the master runtime gate and null every static
         /// provider so no Harmony patch, HUD draw, or tick handler does anything until a TLY save
@@ -376,9 +388,44 @@ namespace TheLongestYear
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
         }
 
+        /// <summary>The farmer's arrival on the Farm by any route starts the porch scene owed to it
+        /// (TamperPorchRule, SeasonTurnArrival): the season turn after a passed gate (Jeff,
+        /// 2026-10-08) first, else the Junimos' "tainted" scene after a tamper (Jeff, 2026-10-07).
+        /// Staged at the porch, then he is put back where he arrived. An arrival while something
+        /// else is up keeps the scene for the next one; a tamper scene owed on the same arrival as a
+        /// season turn waits for the next arrival (the turn's own return to his tile is one).</summary>
+        private void OnWarpedForFarmArrivalScene(object sender, WarpedEventArgs e)
+        {
+            if (!RunActivation.IsActive || _seasonTurnDriver == null) return;
+            TheLongestYear.Core.SeasonTurnKind? turn = _runController?.SeasonTurnOwed;
+            bool tamper = _sabotage?.TamperSceneOwed ?? false;
+            if (turn == null && !tamper) return;
+            bool busy = Game1.eventUp || Game1.farmEvent != null || Game1.activeClickableMenu != null
+                        || _seasonTurnDriver.Running;
+            var pick = TheLongestYear.Core.SeasonTurnArrival.Pick(
+                turn, tamper, _meta.Run.EndingArmed, e.NewLocation?.Name, e.IsLocalPlayer, busy,
+                TheLongestYear.Integration.SeasonTurnDriver.FarmPorch());
+            switch (pick)
+            {
+                case TheLongestYear.Core.FarmArrivalScene.SeasonTurn:
+                    TheLongestYear.Core.SeasonTurnKind kind = turn.Value;
+                    if (_seasonTurnDriver.StartAtPorch(kind, () => this.Monitor.Log($"Season turn: the {kind} scene is over.", LogLevel.Info)))
+                        _runController.ClearSeasonTurnOwed();
+                    break;
+                case TheLongestYear.Core.FarmArrivalScene.Tamper:
+                    _sabotage.TryStartTamperScene();
+                    break;
+            }
+        }
+
         /// <summary>Commit meta-state as part of the game's save — never eagerly, to prevent save-scumming.</summary>
         private void OnSaving(object sender, SavingEventArgs e)
         {
+            // Nothing pending ever crosses a save boundary: a strike whose scene had the overnight
+            // slot lands now, and one whose scene never had it (the first night of a save runs no
+            // pickFarmEvent) is postponed, never applied without its scene.
+            _sabotage?.SettlePendingIfAny("saving");
+
             // If this save opened without TLY setup (disabled in config),
             // _meta.Load() never ran and State/Run are empty defaults — persisting them would wipe
             // the player's banked progression. Skip the save entirely in that case.
