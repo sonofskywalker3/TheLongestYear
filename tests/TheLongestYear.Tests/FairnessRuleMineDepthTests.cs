@@ -223,7 +223,7 @@ public class FairnessRuleMineDepthTests
     public void A_machine_on_a_two_route_input_keeps_its_verdict(
         bool mineBlocked, int otherLands, int deepest, int landing, int added)
     {
-        const string Unusable = "mail:neverSent";
+        const string Unusable = "mail:ccPantry";   // a fairness condition this save has not met
         ObtainSource mine = MineRoute();
         if (mineBlocked)
             mine = mine with { Conditions = mine.Conditions with { Requires = mine.Conditions.Requires.Append(Unusable).ToList() } };

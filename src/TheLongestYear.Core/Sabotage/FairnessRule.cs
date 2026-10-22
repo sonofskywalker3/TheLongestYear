@@ -42,6 +42,14 @@ public static class FairnessRule
     private const string AnimalPrefix = "animal:";
     private const string NotSoldSuffix = " (not sold)";
     private const string MailPrefix = "mail:";
+    /// <summary>The mail flags that are fairness conditions. ccPantry (the greenhouse) is the one
+    /// spec 1.2 names; beachBridgeFixed gates the tide pools, the one dependable route behind a
+    /// flag added since. Any other mail note (lostBookFound, Farm_Eternal on fishing treasure)
+    /// counts as met, like every condition the table does not name.</summary>
+    private static readonly IReadOnlySet<string> FairnessMailFlags = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "ccPantry", "beachBridgeFixed",
+    };
     private const string MineFloorPrefix = MineDepth.FloorPrefix;
     private const string SkullCavern = MineDepth.SkullCavernRequirement;
     private const string Desert = "location:Desert";
@@ -272,7 +280,7 @@ public static class FairnessRule
             if (r.StartsWith(MailPrefix, StringComparison.Ordinal))
             {
                 string flag = r.Substring(MailPrefix.Length);
-                if (save.MailFlags.Contains(flag)) continue;
+                if (!FairnessMailFlags.Contains(flag) || save.MailFlags.Contains(flag)) continue;
                 return $"needs {flag}";
             }
             if (r.StartsWith(MineFloorPrefix, StringComparison.Ordinal))
@@ -324,7 +332,7 @@ public static class FairnessRule
                 // route is unprovable below Extreme and rules out (spec 1.2's "pond" row).
                 return "fish pond contents are not modelled";
             }
-            // item:, guild:, tapper on tree, other location: and unlock: notes count as met.
+            // item:, guild:, tapper on tree, other location:, other mail: and unlock: notes count as met.
             // "skill:<Name> N" strings from MineSources are not parsed: every such source is Chance today.
         }
 

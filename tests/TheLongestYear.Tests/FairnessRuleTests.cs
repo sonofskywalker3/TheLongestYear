@@ -296,6 +296,12 @@ public class FairnessRuleTests
         Assert.True(Counts(DifficultyStep.Normal, Save(mail: new[] { "ccPantry" }), route));
     }
 
+    [Theory]
+    [InlineData("mail:lostBookFound")]
+    [InlineData("mail:Farm_Eternal")]
+    public void A_mail_flag_that_is_not_a_fairness_condition_counts_as_met(string flag)
+        => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(requires: new[] { flag })));
+
     [Fact]
     public void Conditions_the_table_does_not_name_count_as_met()
         => Assert.True(Counts(DifficultyStep.Easy, Save(), Route(requires: new[] { "item:(O)472", "guild:Slimes 1000 kills", "location:Beach", "tapper on tree 1, 7 days" })));
