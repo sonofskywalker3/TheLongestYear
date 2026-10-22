@@ -226,8 +226,8 @@ namespace TheLongestYear.Integration
             }
             if (triesLeft <= 0)
             {
-                // Never leave the player in the store after a Yes. Task 7 routes this through
-                // JojaGameOverMenu instead of going straight to the title.
+                // Never leave the player in the store after a Yes. FailClosed exits straight to the
+                // title without saving; the Game Over screen is only for the scene's own end.
                 JojaBadEndingCommands.FailClosed("the bad ending could not start (the game stayed busy)");
                 return;
             }
