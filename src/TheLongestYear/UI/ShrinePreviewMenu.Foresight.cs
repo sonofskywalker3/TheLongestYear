@@ -21,7 +21,10 @@ namespace TheLongestYear.UI
         private void BuildForesight()
         {
             int weatherTier = _state.HighestKeptTier("weather_sage_", 6);
-            _weatherDays = weatherTier > 0
+            var blocks = ForesightBlocks.For(weatherTier,
+                cartOwned: _state.HasUpgrade("cart_whisper_1") && CartCatalogIntegration.Available(Game1.player),
+                resetPending: _resetPending);
+            _weatherDays = blocks.Weather
                 ? WeatherForecast.Build(
                     (int)Game1.uniqueIDForThisGame, (int)Game1.stats.DaysPlayed,
                     Game1.dayOfMonth, (int)Game1.season, weatherTier,
@@ -35,8 +38,7 @@ namespace TheLongestYear.UI
             _cartItems.Clear();
             _cartHeader = null;
             _cartEmptyNote = null;
-            _showCartBlock = _state.HasUpgrade("cart_whisper_1")
-                && CartCatalogIntegration.Available(Game1.player);
+            _showCartBlock = blocks.Cart;
             if (!_showCartBlock)
                 return;
 

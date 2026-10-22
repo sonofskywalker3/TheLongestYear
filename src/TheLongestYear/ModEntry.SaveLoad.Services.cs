@@ -304,6 +304,7 @@ namespace TheLongestYear
             _planningShrine.AttachRestart(
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart());
+            _planningShrine.AttachResetPending(() => _runController?.IsRewindChainRunning == true);
             _planningShrine.AttachDonate(() => ShrineDonationService.Active);
             _planningShrine.AttachFocus(() => _focus);
             TheLongestYear.UI.WeeklyHubMenu.FocusCards = () => _focus?.ChosenCards();
