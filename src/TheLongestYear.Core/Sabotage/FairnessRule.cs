@@ -26,6 +26,17 @@ public static class FairnessRule
     private const string CraftingPrefix = "crafting:";
     private const string UnlockShop = "unlock:shop";
     private const string UnlockTv = "unlock:Queen of Sauce";
+    /// <summary>The eight dishes the Queen of Sauce only teaches in year 2 (spec 1.2): their
+    /// Data/CookingRecipes unlock is "l 100", which no player reaches, so a year-2 episode
+    /// (Data/TV/CookingChannel 22 and 24 to 29, 31) is their only source. Shrimp Cocktail is the
+    /// ninth such dish, but its episode (32) has no Sneak Peek Wednesday inside the run
+    /// (AvailabilityWeeks.YearTwoLastReachableEpisode). Every other year-2 episode repeats a dish
+    /// a shop, skill or friendship also teaches, and that route has to qualify on its own.</summary>
+    private static readonly IReadOnlySet<string> YearTwoTvOnlyDishes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "Maple Bar", "Roasted Hazelnuts", "Fruit Salad", "Blackberry Cobbler",
+        "Crab Cakes", "Fiddlehead Risotto", "Poppyseed Muffin", "Bruschetta",
+    };
     private const string MachinePrefix = "machine:";
     private const string BuildingPrefix = "building:";
     private const string AnimalPrefix = "animal:";
@@ -107,6 +118,9 @@ public static class FairnessRule
         {
             bool tv = source.Kind == SourceKind.Cooking && c.Requires.Any(r => r.StartsWith(UnlockTv, StringComparison.Ordinal));
             if (!tv) return Out(source, "year 2 route");
+            bool tvOnly = c.Requires.Any(r => r.StartsWith(RecipePrefix, StringComparison.Ordinal)
+                && YearTwoTvOnlyDishes.Contains(r.Substring(RecipePrefix.Length)));
+            if (!tvOnly) return Out(source, "year 2 Queen of Sauce episode of a dish taught another way");
             if (!policy.YearTwoTv) return Out(source, "year 2 Queen of Sauce episode (Hard and Extreme only)");
         }
         if (source.Reliability == Reliability.Chance && !policy.AllowChance) return Out(source, "chance route");

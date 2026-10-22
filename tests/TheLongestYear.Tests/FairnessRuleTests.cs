@@ -55,6 +55,28 @@ public class FairnessRuleTests
         => Assert.Equal(counts, Counts(level, Save(), Route(SourceKind.Cooking, yearTwo: true,
             requires: new[] { "recipe:Bruschetta", "unlock:Queen of Sauce episode 31 (Sunday of week 31)" })));
 
+    [Theory]
+    [InlineData("Maple Bar", 22)]
+    [InlineData("Roasted Hazelnuts", 24)]
+    [InlineData("Fruit Salad", 25)]
+    [InlineData("Blackberry Cobbler", 26)]
+    [InlineData("Crab Cakes", 27)]
+    [InlineData("Fiddlehead Risotto", 28)]
+    [InlineData("Poppyseed Muffin", 29)]
+    [InlineData("Bruschetta", 31)]
+    public void Each_of_the_eight_tv_only_dishes_counts_through_its_year_two_episode_on_hard(string dish, int episode)
+        => Assert.True(Counts(DifficultyStep.Hard, Save(), Route(SourceKind.Cooking, yearTwo: true,
+            requires: new[] { "recipe:" + dish, $"unlock:Queen of Sauce episode {episode} (Sunday of week {episode})" })));
+
+    [Theory]
+    [InlineData("Pizza", 17, DifficultyStep.Hard)]
+    [InlineData("Lobster Bisque", 30, DifficultyStep.Hard)]
+    [InlineData("Complete Breakfast", 19, DifficultyStep.Extreme)]
+    [InlineData("Shrimp Cocktail", 32, DifficultyStep.Extreme)]
+    public void A_year_two_episode_outside_the_eight_never_counts(string dish, int episode, DifficultyStep level)
+        => Assert.False(Counts(level, Save(), Route(SourceKind.Cooking, yearTwo: true,
+            requires: new[] { "recipe:" + dish, $"unlock:Queen of Sauce episode {episode} (Sunday of week {episode})" })));
+
     [Fact]
     public void A_route_landing_after_the_deadline_does_not_count()
         => Assert.False(Counts(DifficultyStep.Extreme, Save(), Route(available: d => d >= 113)));
