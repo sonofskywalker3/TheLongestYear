@@ -234,12 +234,12 @@ namespace TheLongestYear.Loop
                 ForceTomorrowSunny();   // a festival deferred us; keep tomorrow clear too
             }
 
-            // Darkness pushback (spec 2026-09-09): only an ordinary night. A day 28 belongs to the
-            // gate (it judges what the player actually had), the win night to the ending.
-            if (action == RunAction.Continue && !Run.EndingArmed)
+            // Darkness pushback (spec 2026-09-09): only an ordinary night of a year not yet won.
+            bool yearWon = TheLongestYear.Core.Joja.JojaOffer.YearWon(Run, _store.State);
+            if (TheLongestYear.Core.Sabotage.NightRoll.Rolls(action == RunAction.Continue, yearWon, _pendingChoice))
                 _sabotage?.RunNight();
             else
-                _monitor.Log($"Darkness: no night roll (action={action}, endingArmed={Run.EndingArmed}).", LogLevel.Trace);
+                _monitor.Log($"Darkness: no night roll (action={action}, yearWon={yearWon}, repeatWin={_pendingChoice}).", LogLevel.Trace);
             // Hub trigger now lives in OnDayStarted (above) — see note there. Sunday-night
             // DayEnding fires while the player can't open menus.
         }

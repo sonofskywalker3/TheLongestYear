@@ -22,6 +22,15 @@ public class NightRollTests
     }
 
     [Theory]
+    [InlineData(true, false, false, true)]
+    [InlineData(false, false, false, false)]   // a day 28 or a fail night belongs to the gate
+    [InlineData(true, true, false, false)]     // the ending is armed, or Keep playing was chosen
+    [InlineData(true, false, true, false)]     // a repeat win's choice is owed tomorrow morning
+    public void The_darkness_rolls_only_on_an_ordinary_night_of_a_year_not_yet_won(
+        bool ordinaryNight, bool yearWon, bool repeatWinPending, bool expected)
+        => Assert.Equal(expected, NightRoll.Rolls(ordinaryNight, yearWon, repeatWinPending));
+
+    [Theory]
     [InlineData(Season.Spring, 0.0)]
     [InlineData(Season.Summer, 0.25)]
     [InlineData(Season.Fall, 0.35)]

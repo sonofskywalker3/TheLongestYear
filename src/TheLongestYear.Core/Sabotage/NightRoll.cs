@@ -18,6 +18,13 @@ public static class NightRoll
     /// lives in, and the day from which a Winter counts as reached (spec 2.6).</summary>
     public const int Week1Nights = 7;
 
+    /// <summary>Whether tonight rolls at all: only an ordinary night (a day 28 belongs to the gate),
+    /// and never once the year is won (Jeff, 2026-10-22: the darkness moves on to other places in
+    /// year 2). Won covers the win night, the ending morning, Keep playing and a repeat win's owed
+    /// choice; a new loop clears all of them.</summary>
+    public static bool Rolls(bool ordinaryNight, bool yearWon, bool repeatWinPending)
+        => ordinaryNight && !yearWon && !repeatWinPending;
+
     public static double SeasonChance(Season season) => season switch
     {
         Season.Summer => SabotageTuning.NightChanceSummer,
