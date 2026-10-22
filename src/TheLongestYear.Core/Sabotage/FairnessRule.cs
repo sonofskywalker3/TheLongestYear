@@ -26,11 +26,30 @@ public static class FairnessRule
     private const string CraftingPrefix = "crafting:";
     private const string UnlockShop = "unlock:shop";
     private const string UnlockTv = "unlock:Queen of Sauce";
+    /// <summary>The eight dishes the Queen of Sauce only teaches in year 2 (spec 1.2): their
+    /// Data/CookingRecipes unlock is "l 100", which no player reaches, so a year-2 episode
+    /// (Data/TV/CookingChannel 22 and 24 to 29, 31) is their only source. Shrimp Cocktail is the
+    /// ninth such dish, but its episode (32) has no Sneak Peek Wednesday inside the run
+    /// (AvailabilityWeeks.YearTwoLastReachableEpisode). Every other year-2 episode repeats a dish
+    /// a shop, skill or friendship also teaches, and that route has to qualify on its own.</summary>
+    private static readonly IReadOnlySet<string> YearTwoTvOnlyDishes = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "Maple Bar", "Roasted Hazelnuts", "Fruit Salad", "Blackberry Cobbler",
+        "Crab Cakes", "Fiddlehead Risotto", "Poppyseed Muffin", "Bruschetta",
+    };
     private const string MachinePrefix = "machine:";
     private const string BuildingPrefix = "building:";
     private const string AnimalPrefix = "animal:";
     private const string NotSoldSuffix = " (not sold)";
     private const string MailPrefix = "mail:";
+    /// <summary>The mail flags that are fairness conditions. ccPantry (the greenhouse) is the one
+    /// spec 1.2 names; beachBridgeFixed gates the tide pools, the one dependable route behind a
+    /// flag added since. Any other mail note (lostBookFound, Farm_Eternal on fishing treasure)
+    /// counts as met, like every condition the table does not name.</summary>
+    private static readonly IReadOnlySet<string> FairnessMailFlags = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "ccPantry", "beachBridgeFixed",
+    };
     private const string MineFloorPrefix = MineDepth.FloorPrefix;
     private const string SkullCavern = MineDepth.SkullCavernRequirement;
     private const string Desert = "location:Desert";
@@ -107,6 +126,9 @@ public static class FairnessRule
         {
             bool tv = source.Kind == SourceKind.Cooking && c.Requires.Any(r => r.StartsWith(UnlockTv, StringComparison.Ordinal));
             if (!tv) return Out(source, "year 2 route");
+            bool tvOnly = c.Requires.Any(r => r.StartsWith(RecipePrefix, StringComparison.Ordinal)
+                && YearTwoTvOnlyDishes.Contains(r.Substring(RecipePrefix.Length)));
+            if (!tvOnly) return Out(source, "year 2 Queen of Sauce episode of a dish taught another way");
             if (!policy.YearTwoTv) return Out(source, "year 2 Queen of Sauce episode (Hard and Extreme only)");
         }
         if (source.Reliability == Reliability.Chance && !policy.AllowChance) return Out(source, "chance route");
@@ -258,7 +280,7 @@ public static class FairnessRule
             if (r.StartsWith(MailPrefix, StringComparison.Ordinal))
             {
                 string flag = r.Substring(MailPrefix.Length);
-                if (save.MailFlags.Contains(flag)) continue;
+                if (!FairnessMailFlags.Contains(flag) || save.MailFlags.Contains(flag)) continue;
                 return $"needs {flag}";
             }
             if (r.StartsWith(MineFloorPrefix, StringComparison.Ordinal))
@@ -310,7 +332,7 @@ public static class FairnessRule
                 // route is unprovable below Extreme and rules out (spec 1.2's "pond" row).
                 return "fish pond contents are not modelled";
             }
-            // item:, guild:, tapper on tree, other location: and unlock: notes count as met.
+            // item:, guild:, tapper on tree, other location:, other mail: and unlock: notes count as met.
             // "skill:<Name> N" strings from MineSources are not parsed: every such source is Chance today.
         }
 
