@@ -196,7 +196,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 4. **Start a new game** on any farm type. Leave **Skip intro** off the first time: the mod's own opening plays in place of the vanilla one and explains the loop. Tick it on later farms to go straight to the theme picker.
 5. **Community Center Bundles** under **New → Advanced Options** defaults to **TLY Custom**: every loop rolls a fresh board from the vanilla + remix pools plus the mod's own authored bundles, using vanilla items only unless you turn on Allow mod items in custom bundles. Prefer the game's own board (or another bundle mod's)? Pick **Normal** or **Remixed** there instead. The mod keeps that board and re-rolls it the same way on every reset. With other mods installed, those bundles may not reshuffle each loop and may ask for items you can't get. (You can change this later: `Bundle source` in GMCM switches an existing save between all three, applying at its next loop.)
 
-   ![New game → Advanced Options → Community Center Bundles showing TLY Custom](release-notes/advanced-options-tly-custom.png)
+   ![New game → Advanced Options → Community Center Bundles showing TLY Custom](docs/images/advanced-options-tly-custom.png)
 
 ## How it works
 
@@ -218,7 +218,7 @@ Ten difficulty dials live in the mod's settings menu (GMCM) under **Difficulty**
 
 **Changes take effect on your next loop, not straight away.** The dials are stamped onto your save when a loop begins, so the year you are already playing keeps the rules it started under.
 
-![The Difficulty section of the settings menu, every dial on Normal](release-notes/settings-difficulty.png)
+![The Difficulty section of the settings menu, every dial on Normal](docs/images/settings-difficulty.png)
 
 **What the bundles ask for**
 
@@ -259,7 +259,7 @@ Like the difficulty dials, a switch applies at your **next loop**, not straight 
 
 The **Features** section of the settings menu turns individual parts of the mod off or tunes them, and changes there apply straight away:
 
-![The Features section of the settings menu](release-notes/settings-features.png)
+![The Features section of the settings menu](docs/images/settings-features.png)
 
 All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The values most worth tuning:
 

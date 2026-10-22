@@ -1,9 +1,0 @@
-0.19.97 - Island-only items from other mods' maps, and the rewind save
-
-Covers everything since 0.19.95.
-
-Fixed
-- Fish and forage from spots you can only reach through Ginger Island stay off the board, whichever mod adds them (for example the rainforest in Forager's Nooks and Crannies). Items sold only at the island shops stay off too. A board that already asks for one gets the slot swapped on load. Thanks to iroeny.
-- The save right after a rewind works with other mods again. With mods like Unlockable Bundles it used to fail and leave the old save folder behind; it now saves the way a night does.
-
-Full changelog: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md

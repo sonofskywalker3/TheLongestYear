@@ -1,5 +1,0 @@
-1.0.0: The Longest Year is out of beta.
-
-This is the story update. It's best found in the game, so start a new farm with Skip intro off and play.
-
-There are also new options under Difficulty and Features in the mod's settings.
