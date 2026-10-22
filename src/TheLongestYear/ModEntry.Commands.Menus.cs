@@ -289,7 +289,8 @@ namespace TheLongestYear
                 (id, skill) => _boostPurchases.TryBuy(id, skill),
                 () => _runController?.IsVoluntaryRestartOffered() == true,
                 () => _runController?.AskVoluntaryRestart(),
-                ShrineDonationService.Active, _focus);
+                ShrineDonationService.Active, _focus,
+                () => _runController?.IsRewindChainRunning == true);
             if (!menu.ShowTab(tab))
             {
                 this.Monitor.Log($"tly_openshrine: no {tab} tab here (Donate needs shrine goals this week); opened on Active.", LogLevel.Warn);

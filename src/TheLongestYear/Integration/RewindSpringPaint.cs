@@ -119,18 +119,12 @@ namespace TheLongestYear.Integration
     ///         is what FinalizeReset's PerformReset performs, and that lands the real Spring 1 before
     ///         these could read anything painted). SAFE: not reachable without player control or a day
     ///         transition, neither of which the window allows.
-    /// - UI/ShrinePreviewMenu.cs (BuildForesight, lines ~141/158/163): reads Game1.dayOfMonth /
-    ///   Game1.season DIRECTLY for the Weather Sage forecast seed and the Traveling Cart schedule,
-    ///   while the rest of this same class (its own Today property) deliberately reads
-    ///   _run.Season/_run.DayOfMonth (the real, not-yet-reset loop state) for everything else. This
-    ///   IS the shrine open during the paint window. CONCERN (reported, not guarded): the forecast is
-    ///   also seeded from Game1.uniqueIDForThisGame/Game1.stats.DaysPlayed, which stay the OLD
-    ///   pre-reset values until PerformReset actually runs, so mixing the old id with the newly
-    ///   painted Spring-1 date produces a seed combination that never really occurs in play (it did
-    ///   not match before this task either, when it mixed the old id with the stale pre-rewind date,
-    ///   so this is not a new break, just a different wrong forecast). The obvious-looking fix, read
-    ///   _run.Season/_run.DayOfMonth here too to match Today, touches UI/ShrinePreviewMenu.cs, which
-    ///   is outside this task's file list, so it is reported for a ruling rather than patched here.
+    /// - UI/ShrinePreviewMenu.cs (BuildForesight): reads Game1.dayOfMonth / Game1.season and
+    ///   Game1.uniqueIDForThisGame for the Weather Sage forecast and the Traveling Cart stock. This
+    ///   is the statue's planning view, not the rewind's upgrade menu (that is JunimoShrineMenu,
+    ///   which has no foresight), so the chain never opens it. SAFE anyway: BuildForesight hides
+    ///   both rows whenever RunController.IsRewindChainRunning (ForesightBlocks), since the next
+    ///   loop's seed, run seed and board are only rolled inside PerformReset.
     /// - UI/WeeklyHubMenu.cs (lines ~149/150): same WeatherForecast.Build call, but only opened by
     ///   DoDayStartSeasonAndHub, which always runs after the real reset has already landed. SAFE.
     /// </summary>

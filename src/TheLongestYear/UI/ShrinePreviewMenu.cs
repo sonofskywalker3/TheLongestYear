@@ -118,6 +118,7 @@ namespace TheLongestYear.UI
         private readonly List<(ISalable Item, int Price, string Name)> _cartItems = new();
         private string _cartHeader;
         private bool _showCartBlock;
+        private readonly bool _resetPending;
         private string _cartEmptyNote;
         private readonly List<(Rectangle Bounds, ForecastDay Day)> _weatherCells = new();
         private readonly List<(Rectangle Bounds, ISalable Item, int Price, string Name)> _cartCells = new();
@@ -135,7 +136,8 @@ namespace TheLongestYear.UI
         public ShrinePreviewMenu(MetaState state, double priceFactor = 1.0, RunState run = null,
             Func<BoostId, int, BoostPurchase.Result> buyBoost = null,
             Func<bool> restartOffered = null, Action requestRestart = null,
-            ShrineDonationService donations = null, FocusService focus = null)
+            ShrineDonationService donations = null, FocusService focus = null,
+            Func<bool> resetPending = null)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _state = state;
@@ -151,6 +153,9 @@ namespace TheLongestYear.UI
             // rule reads can change before the menu closes.
             _requestRestart = requestRestart;
             _showRestart = requestRestart != null && (restartOffered?.Invoke() ?? false);
+            // Read once at open, for the same reason: foresight stays hidden while a reset is
+            // queued, because the next loop's seed, dates and board do not exist yet.
+            _resetPending = resetPending?.Invoke() ?? false;
             BuildForesight();
             BuildRows();
             RecomputeBoundsAndLayout();
