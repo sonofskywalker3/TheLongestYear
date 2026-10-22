@@ -1,0 +1,11 @@
+1.0.0: The Longest Year is out of beta. This is the story update.
+
+New
+- A new opening. Grandpa leaves you a sealed envelope and a warning about the emptiness. Robin walks you up to the farm, where Morris from Joja hands Lewis a contract: the Community Center becomes a Joja warehouse unless it is restored before Spring 1 of next year. The Junimos tell you what happened to the valley and how the year works, then show you their gifts on the farm.
+- The rewind is a scene. When a season comes up short, the darkness closes in on your bedroom, the Junimos gather round your bed, and the town runs backwards to a spring sunrise. Skippable from the second time on.
+- Morris makes you an offer. He writes through the year asking you to come to JojaMart. Say yes and Joja wins (Game Over, back to the title without saving). Say no, or ignore him, and you are banned from JojaMart. Once you finish the Community Center he gives up for the rest of that year.
+- The darkness fights back. From Summer, crows kill crops, a thief raids a chest, in Fall a figure in the Community Center undoes a donation, and in Winter a cloud taints an item a bundle was waiting for. Each kind plays its own short scene the first time it strikes in a loop, and a message the next morning tells you what was lost. Linus and Shane saw some of it. Wards from the Junimo statue keep the crows and the thief away. A new Darkness setting under Difficulty sets how hard it hits, and three switches under Features turn each kind off.
+- The Junimos meet you on your porch on Summer 1, Fall 1 and Winter 1 after a passed season.
+- A real ending. Finishing the Community Center ends the year the next morning, whatever the date: the town at the hall, a villager who half-remembers you, Morris closing the store, the Junimos' warning and a candle at grandpa's shrine. Then loop again, or keep playing to the end of the year. Replaces the win card and vanilla's completion ceremony.
+
+Full list of changes: https://github.com/sonofskywalker3/TheLongestYear/blob/master/CHANGELOG.md
