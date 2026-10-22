@@ -23,21 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.0.0: the story
+## What's New in 1.0.0
 
-**The Longest Year is out of beta.** Version 1.0 adds the story: a new opening, a rewind you watch happen, Morris and his offer, a darkness that fights back from Summer on, and a real ending. Everything below is new since 0.19.135.
+**The Longest Year is out of beta.** This is the story update. It's best found in the game, so start a new farm with Skip intro off and play.
 
-**A new opening.** Grandpa's deathbed scene now leaves you a sealed envelope and a warning about the emptiness. Robin meets you off the bus and walks you up to the farm, where Morris from Joja hands Lewis a contract: the Community Center becomes a Joja warehouse unless it is restored before Spring 1 of next year. Lewis takes you to the hall, the Junimos tell you what happened to the valley and how the year works, and then they show you their gifts on the farm: the stash, the statue, the Cookbook, the Craftbook, the Bundle Log and the Herd Book. Replaces the old porch intro.
-
-**The rewind is a scene now.** When a season comes up short, night falls in your bedroom, the darkness closes in and the Junimos gather round your bed to turn the year back. The town runs backwards through the seasons to a spring sunrise, and you wake on Spring 1. From the second time on you can skip it.
-
-**Morris makes you an offer.** Through the year Morris writes asking you to come to JojaMart. Walk in and he offers to buy your farm and make you his assistant manager. Until you answer, the cashier won't sell to you. Say yes and Joja wins: you see what becomes of the valley, and the game goes back to the title without saving. Say no, or keep him waiting too long, and you are banned from JojaMart.
-
-**The darkness fights back.** From Summer, something dark strikes the farm at night. Crows kill crops, a thief from the mines raids a chest, in Fall a figure in the Community Center undoes a donation, and in Winter a cloud taints an item a bundle was waiting for, and the Junimos ask for something else instead. The first strike of each kind in a loop plays its own short scene, and a message the next morning tells you what was lost. Linus and Shane saw some of it and will tell you about it. A Ward of the Fields from the Junimo statue keeps the crows away for a season. The new Darkness setting under Difficulty sets how hard it hits, and three switches under Features turn each kind off.
-
-**The Junimos meet you at each new season.** On Summer 1, Fall 1 and Winter 1 after a passed season, the Junimos wait on your porch with a warning about what is coming next.
-
-**A real ending.** Finishing the Community Center now ends the year the next morning, whatever the date. The town gathers at the hall, a villager who half-remembers you speaks up, Morris closes the store, the Junimos give their warning, and a candle lights at grandpa's shrine. Then loop again, or keep playing to the end of the year. Replaces the old win card and vanilla's completion ceremony.
+There are also new options under Difficulty and Features in the mod's settings.
 
 ## 0.19.135
 
@@ -187,7 +177,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 - **Weekly themes.** Each week, pick one of two themes (Foraging, Farming, Fishing, Mining, Mixed, Spelunking, Artisan, Kitchen) for a bonus and a paired liability. Goals follow the season gate and the weekly bonus is paid per goal.
 - **Randomizer.** An optional settings section that adds chance to the weekly themes, goals, bundle rewards and the cart. Everything in it starts off.
 - **Carryover surfaces.** A **Bundle Log** book that tracks each season's goals, a Cookbook and Craftbook to bank recipes, a **Herd Book** that brings your registered animals back with their hearts, and a Junimo Stash chest that survives resets.
-- **A story.** A new opening with grandpa, Robin, Lewis, Morris and the Junimos; a rewind you watch happen; Junimos at every season turn; Morris's offer; a darkness that strikes the farm from Summer on; and a real ending when you finish the Center.
+- **A story.** Play it to find out.
 - **A starved Traveling Cart.** Joja has squeezed the merchant's suppliers — the cart carries **one item** per visit until you unlock more stalls with the **Cart Stall** upgrades (and Cart Whisperer previews what's coming). Prefer the full vanilla cart? Turn off `LimitTravelingCartStock`.
 - **The town half-remembers.** Villagers you have spent a lot of time with across loops occasionally say something uncanny. From the second loop, festivals stir it up too. At most festivals one villager half-remembers something you did there in an earlier loop: the egg hunt you won, the dance you shared, what you put in the soup. Talk to people to find out who. Win the egg hunt and someone will bring it up at the next Egg Festival, and everyone you have danced with may remember it when you ask again. No gameplay effect, and it never explains itself. Toggle in Features.
 - **Break the loop.** Finish the Center in a year and the year ends the next morning. Then loop again or keep playing to the end of the year.
@@ -210,7 +200,7 @@ Every 0.18 change, with who reported it, is in [CHANGELOG.md](CHANGELOG.md).
 
 ## How it works
 
-- **The opening.** On a fresh game, grandpa, Robin, Lewis, Morris and the Junimos set up the year: the Community Center has until Spring 1 next year, and the Junimos explain the loop. You wake on Spring 1 and pick your first **weekly theme**.
+- **The opening.** A new game starts with the mod's own opening, which explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose one of two offered themes. Room themes (Foraging, Farming, Fishing, Mining) take goals from their Community Center room; Spelunking, Artisan and Kitchen take goals by item kind from anywhere on the board, and Mixed takes anything. Goals follow what the season gate demands first; the weekly JP bonus is paid goal by goal and the drawback lifts when every goal is done. The planning hub opens at the start of each week.
 - **Seasonal goals.** The **Bundle Log** book (click to open) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
 - **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. This works on every bundle source.
