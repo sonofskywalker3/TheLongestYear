@@ -17,7 +17,9 @@ namespace TheLongestYear.Integration
     /// portrait's real colour.</summary>
     internal sealed class MorrisDarkPortrait
     {
-        public const string AssetName = "Portraits/Morris_Dark";
+        public const string AssetName = "Portraits/" + PortraitName;
+        /// <summary>The name an event script passes to tlySay: a "/" would split the command.</summary>
+        public const string PortraitName = "Morris_Dark";
         private const string SourceAsset = "Portraits/Morris";
 
         // The sprite sheet's iris colour, plus the two neighbouring shades a 64x64 portrait

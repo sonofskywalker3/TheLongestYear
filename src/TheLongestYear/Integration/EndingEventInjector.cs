@@ -198,7 +198,7 @@ namespace TheLongestYear.Integration
                 "playSound shadowDie",
                 "pause 400",
                 // The darkened face, not Morris's own: the shadow is on him for this line only.
-                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-5")}\" {MorrisDarkPortrait.AssetName}",
+                $"{EndingEventCommands.SayName} Morris \"{EventText("event.ending.morris-5")}\" {MorrisDarkPortrait.PortraitName}",
                 "pause 700",
                 "stopGlowing",
                 "pause 300",

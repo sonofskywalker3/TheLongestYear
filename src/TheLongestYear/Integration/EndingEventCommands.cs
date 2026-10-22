@@ -231,10 +231,12 @@ namespace TheLongestYear.Integration
                 if (pages.Count == 0) { evt.CurrentCommand++; return; }
                 NPC actor = evt.getActorByName(name, out _) ?? Game1.getCharacterFromName(name);
                 Microsoft.Xna.Framework.Graphics.Texture2D portrait = null;
-                // Optional third arg: a portrait asset to show instead of the speaker's own, for a
-                // face the actor never wears in the world (Morris_Dark at the end of scene 4).
-                if (ArgUtility.TryGet(args, 3, out string portraitAsset, out _, allowBlank: false))
+                // Optional third arg: a portrait under Portraits/ to show instead of the speaker's
+                // own, for a face the actor never wears in the world (Morris_Dark at the end of
+                // scene 4). Named without the folder, since a "/" ends an event command.
+                if (ArgUtility.TryGet(args, 3, out string portraitName, out _, allowBlank: false))
                 {
+                    string portraitAsset = "Portraits/" + portraitName;
                     try { portrait = Game1.content.Load<Microsoft.Xna.Framework.Graphics.Texture2D>(portraitAsset); }
                     catch (Exception ex)
                     {
