@@ -71,14 +71,31 @@ public static class NightRoll
     /// <summary>True on the guaranteed night and on every later week-1 night until it lands (a night
     /// with no fair replacement is skipped and retried, spec 2.6). A guaranteed tamper postponed by
     /// a collision stays owed past week 1, every night until it lands (Jeff, 2026-10-07: a
-    /// postponed strike leaves its guarantee owed).</summary>
+    /// postponed strike leaves its guarantee owed), up to <see cref="GuaranteedTamperLastNight"/>.</summary>
     public static bool IsGuaranteedTamperNight(RunState run, bool firstWinterEver, Season season, int dayOfMonth)
     {
         if (run is null) throw new ArgumentNullException(nameof(run));
         if (season != Season.Winter || run.GuaranteedTamperDone) return false;
+        if (dayOfMonth > GuaranteedTamperLastNight(run)) return false;
         if (run.GuaranteedTamperPostponed) return true;
-        if (dayOfMonth > Week1Nights) return false;
         return dayOfMonth >= GuaranteedTamperDay(run.Seed, firstWinterEver);
+    }
+
+    /// <summary>The last Winter night the guaranteed tamper may still land: the end of week 1, or,
+    /// once a collision has postponed it, the night before tampering goes quiet, so the player
+    /// always keeps the last week to answer a tampered bundle.</summary>
+    public static int GuaranteedTamperLastNight(RunState run)
+    {
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        return run.GuaranteedTamperPostponed ? SabotageTuning.TamperQuietFromDay - 1 : Week1Nights;
+    }
+
+    /// <summary>True on the one night the guaranteed tamper, still owed, has just run out of
+    /// nights: the first night after <see cref="GuaranteedTamperLastNight"/>. The caller logs it.</summary>
+    public static bool GuaranteedTamperLapsesTonight(RunState run, Season season, int dayOfMonth)
+    {
+        if (run is null) throw new ArgumentNullException(nameof(run));
+        return season == Season.Winter && !run.GuaranteedTamperDone && dayOfMonth == GuaranteedTamperLastNight(run) + 1;
     }
 
     /// <summary>Does this hit ignore the fairness picker? Hard 10%, Extreme 30%, never on Easy or

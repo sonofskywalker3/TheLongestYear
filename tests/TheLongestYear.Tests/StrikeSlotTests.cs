@@ -185,6 +185,33 @@ public class StrikeSlotTests
         Assert.False(run.GuaranteedTamperPostponed);
     }
 
+    [Fact]
+    public void A_postponed_guaranteed_winter_tamper_is_owed_until_the_quiet_week_then_lapses()
+    {
+        // Tampering is quiet from Winter 21 so the player has a week to react: a tamper still owed
+        // then is not a guaranteed night, and lapses once, on the first quiet night.
+        var run = new RunState { GuaranteedTamperPostponed = true };
+        int quiet = SabotageTuning.TamperQuietFromDay;
+        Assert.Equal(quiet - 1, NightRoll.GuaranteedTamperLastNight(run));
+        Assert.True(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: false, Season.Winter, quiet - 1));
+        Assert.False(NightRoll.IsGuaranteedTamperNight(run, firstWinterEver: false, Season.Winter, quiet));
+        Assert.False(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, quiet - 1));
+        Assert.True(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, quiet));
+        Assert.False(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, quiet + 1));
+        Assert.False(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Fall, quiet));
+        run.GuaranteedTamperDone = true;
+        Assert.False(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, quiet));
+    }
+
+    [Fact]
+    public void A_guaranteed_winter_tamper_never_postponed_lapses_after_week_one()
+    {
+        var run = new RunState();
+        Assert.Equal(NightRoll.Week1Nights, NightRoll.GuaranteedTamperLastNight(run));
+        Assert.False(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, NightRoll.Week1Nights));
+        Assert.True(NightRoll.GuaranteedTamperLapsesTonight(run, Season.Winter, NightRoll.Week1Nights + 1));
+    }
+
     [Theory]
     [InlineData(DarknessEvent.CropBlight, SabotageKind.Blight)]
     [InlineData(DarknessEvent.ChestBlight, SabotageKind.Blight)]

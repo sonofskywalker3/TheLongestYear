@@ -86,6 +86,11 @@ namespace TheLongestYear.Loop
             // The flag says a Winter has already been reached, so "first Winter ever" is its negation.
             bool guaranteedTonight = Enabled(SabotageKind.Tampering)
                 && NightRoll.IsGuaranteedTamperNight(Run, !Meta.FirstWinterTamperSeen, season, day);
+            // Owed but out of nights: week 1 had no fair target, or collisions held it until
+            // tampering went quiet. The quiet week stands, so this Winter goes without it.
+            if (Enabled(SabotageKind.Tampering) && NightRoll.GuaranteedTamperLapsesTonight(Run, season, day))
+                _monitor.Log($"Darkness: the guaranteed Winter tamper never found a free night by Winter {NightRoll.GuaranteedTamperLastNight(Run)}"
+                    + $"{(Run.GuaranteedTamperPostponed ? " (postponed by other overnight events)" : " (no fair target in week 1)")}, so it lapses this Winter.", LogLevel.Info);
             // Tonight's decision is made above with the old flag, so the flag can be set as soon as
             // week 1 is spent: a first Winter that found no fair target still counts as reached, and
             // every later Winter rolls the random week-1 date instead of Winter 1.
@@ -286,10 +291,10 @@ namespace TheLongestYear.Loop
             }
 
             /// <summary>Is tonight's Tampering slot still owed to the guaranteed Winter tamper? True
-            /// through week 1 of a Winter that has not had it yet.</summary>
+            /// through week 1 of a Winter that has not had it yet, and to the quiet week once postponed.</summary>
             private bool GuaranteedTamperReserved()
                 => _season == CoreSeason.Winter && !Run.GuaranteedTamperDone
-                   && (_day <= NightRoll.Week1Nights || Run.GuaranteedTamperPostponed);
+                   && _day <= NightRoll.GuaranteedTamperLastNight(Run);
 
             private DonatedSlot PlanReversion()
             {
