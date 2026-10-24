@@ -40,7 +40,7 @@ namespace TheLongestYear
                 save: () =>
                 {
                     difficultyLever?.Clear();
-                    this.Helper.WriteConfig(_config);
+                    this.WriteConfigWithBackup();
                 });
             difficultyLever = new DifficultyLever(this.Helper, gmcm, this.ModManifest, this.Monitor);
 

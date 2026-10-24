@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.0.1 - unreleased
+
+### Fixed
+
+- **Updating no longer resets your settings.** Mod managers replace the whole mod folder on an update, which took config.json with it. The mod now keeps a copy of your settings outside the mod folder and puts them back when config.json goes missing. Thanks to tanky24u for the report.
+
 ## 1.0.0 - 2026-10-22
 
 ### Added

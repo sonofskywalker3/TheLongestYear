@@ -149,7 +149,7 @@ namespace TheLongestYear
             // Vanilla item display names for catalog rows that use the item: token (Keep <book>).
             TheLongestYear.Core.Strings.InitItemNames(id => ItemRegistry.GetDataOrErrorItem(id).DisplayName);
 
-            _config = helper.ReadConfig<GameplayConfig>();
+            _config = this.ReadConfigWithBackup(helper);
             _config.Randomizer ??= new RandomizerSettings();
             CartSlotLimitPatch.Enabled = _config.LimitTravelingCartStock;
             TheLongestYear.Loop.FestivalTimeFlow.Enabled = _config.FestivalTimeFlows;
@@ -186,7 +186,7 @@ namespace TheLongestYear
             // player to edit. Existing customizations were already deserialized into _config
             // and are preserved by the write. SMAPI's WriteConfig is idempotent for
             // unchanged values.
-            helper.WriteConfig(_config);
+            this.WriteConfigWithBackup();
 
             _meta = new MetaStore(helper.Data);
             GrandpaCandleCommand.Register(this.Monitor);

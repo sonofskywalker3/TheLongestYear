@@ -93,7 +93,7 @@ namespace TheLongestYear
             int dy = Game1.player.FacingDirection == 2 ? 1 : Game1.player.FacingDirection == 0 ? -1 : 0;
             _config.StashTileX = (int)Game1.player.Tile.X + dx;
             _config.StashTileY = (int)Game1.player.Tile.Y + dy;
-            this.Helper.WriteConfig(_config);
+            this.WriteConfigWithBackup();
             this.Monitor.Log(
                 $"Junimo Stash anchored to ({_config.StashTileX}, {_config.StashTileY}). Saved to config.json.",
                 LogLevel.Info);
