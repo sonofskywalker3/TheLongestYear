@@ -25,6 +25,7 @@ public class UpgradeCatalogTests
     [InlineData(UpgradeCategory.Buildings)]
     [InlineData(UpgradeCategory.Gifts)]
     [InlineData(UpgradeCategory.Animals)]
+    [InlineData(UpgradeCategory.Gear)]
     public void Every_category_has_at_least_one_entry(UpgradeCategory category)
         => Assert.NotEmpty(UpgradeCatalog.ByCategory(category));
 
