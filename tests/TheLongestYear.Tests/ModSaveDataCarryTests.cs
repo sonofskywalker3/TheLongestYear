@@ -112,6 +112,21 @@ public class ModSaveDataCarryTests : IDisposable
     }
 
     [Fact]
+    public void Farm_Type_Manager_settings_carry_but_its_spawn_record_starts_fresh()
+    {
+        string data = Dir("Mods", "FarmTypeManager", "data");
+        File.WriteAllText(Path.Combine(data, OldName + ".json"), "farm settings");
+        File.WriteAllText(Path.Combine(data, OldName + "_SaveData.save"), "spawned objects");
+
+        var result = new SaveDataCarryResult();
+        ModSaveDataCopier.CarryKeyedEntries(new[] { P("Mods") }, Rename, Array.Empty<string>(), result);
+
+        Assert.True(File.Exists(Path.Combine(data, NewName + ".json")));
+        Assert.False(File.Exists(Path.Combine(data, NewName + "_SaveData.save")));
+        Assert.Single(result.CopiedSources);
+    }
+
+    [Fact]
     public void An_existing_new_key_is_not_overwritten()
     {
         string data = Dir("Mods", "UIInfoSuite2", "data");

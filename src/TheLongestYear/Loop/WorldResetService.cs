@@ -52,7 +52,7 @@ namespace TheLongestYear.Loop
 
         /// <summary>Other mods' save data copied to the new save key in <see cref="PerformReset"/>;
         /// the old-keyed copies go with the old save folder in <see cref="CleanupAbandonedSaveFolder"/>.</summary>
-        private SaveDataCarryResult _carriedModData;
+        private ModSaveDataCarryover.Carried _carriedModData;
 
         /// <summary>Every loaded mod's folder, searched for per-save data keyed on the old save
         /// (ModSaveDataCarryover). Set by ModEntry; null searches only SMAPI's global mod data.</summary>
@@ -230,7 +230,7 @@ namespace TheLongestYear.Loop
         /// different folder than the one just saved; a defensive id check skips it anyway.</summary>
         public void CleanupAbandonedSaveFolder()
         {
-            ModSaveDataCarryover.DeleteOldCopies(_monitor, _carriedModData);
+            ModSaveDataCarryover.FinishAfterSave(_monitor, _carriedModData);
             _carriedModData = null;
 
             string old = _abandonedSaveFolder;

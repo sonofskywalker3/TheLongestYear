@@ -47,8 +47,8 @@ public static class ModSaveDataCopier
 
     /// <summary>Copy everything in the old save folder that the game did not write itself (files
     /// a mod keeps beside the save) into the new save folder, renaming names keyed on the old
-    /// save. The game writes its own files on the next save; the old folder is deleted after
-    /// that save, so without this the mod files would go with it.</summary>
+    /// save. Run it after the new save is written (an early new folder makes the game pick a
+    /// "&lt;farm&gt;2" name) and before the old folder is deleted, or the mod files go with it.</summary>
     public static void CarrySaveFolderExtras(
         string oldSaveFolder, string newSaveFolder, SaveKeyRename rename, SaveDataCarryResult result)
     {
@@ -61,7 +61,7 @@ public static class ModSaveDataCopier
         {
             string name = Path.GetFileName(entry);
             bool isDir = Directory.Exists(entry);
-            if (!isDir && SaveKeyRename.IsVanillaSaveFile(name, rename.OldId))
+            if (!isDir && (SaveKeyRename.IsVanillaSaveFile(name, rename.OldId) || SaveKeyRename.IsWorldState(name)))
                 continue;
             string target = Path.Combine(newSaveFolder, rename.Rename(name) ?? name);
             Copy(entry, target, isDir, result, recordSource: false);
@@ -100,9 +100,12 @@ public static class ModSaveDataCopier
             if (isDir && IsLink(full))
                 continue;
 
-            string? renamed = rename.Rename(Path.GetFileName(full));
+            string name = Path.GetFileName(full);
+            string? renamed = rename.Rename(name);
             if (renamed != null)
             {
+                if (SaveKeyRename.IsWorldState(name))
+                    continue;
                 Copy(full, Path.Combine(dir, renamed), isDir, result, recordSource: true);
                 continue;
             }

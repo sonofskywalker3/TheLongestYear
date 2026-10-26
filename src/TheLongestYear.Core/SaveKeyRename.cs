@@ -20,6 +20,26 @@ public sealed class SaveKeyRename
 
     private static readonly string[] VanillaInfoNames = { "SaveGameInfo", "SaveGameInfo_old" };
 
+    /// <summary>Per-save files that record the old world rather than the player's choices. The
+    /// rewind rebuilds the world, so these start fresh with it instead of being carried. Farm Type
+    /// Manager's "&lt;save&gt;_SaveData.save" lists the objects it spawned, which it removes or
+    /// puts back by tile; carried, it would put last year's spawns into the new Spring 1. (Its
+    /// "&lt;save&gt;.json" farm settings are carried.)</summary>
+    private static readonly string[] WorldStateSuffixes = { "_SaveData.save" };
+
+    /// <summary>True for a file that records the old world (see <see cref="WorldStateSuffixes"/>).</summary>
+    public static bool IsWorldState(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+        foreach (string suffix in WorldStateSuffixes)
+        {
+            if (name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
+    }
+
     private readonly string _oldFolder;
     private readonly string _newFolder;
     private readonly string _newId;
