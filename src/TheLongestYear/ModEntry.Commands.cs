@@ -115,6 +115,8 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.BundleCountDebugCommand.Run(this.Monitor, _config, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.MenuShotCommand.Name, TheLongestYear.DebugCommands.MenuShotCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, a));
+            yield return new DebugCommand(TheLongestYear.DebugCommands.WorldShotCommand.Name, TheLongestYear.DebugCommands.WorldShotCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.WorldShotCommand.Run(this.Monitor, this.Helper, a));
             yield return new DebugCommand("tly_wallet", TheLongestYear.DebugCommands.WalletDebugCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.WalletDebugCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_cropprobe", TheLongestYear.DebugCommands.CropProbeCommand.Usage,

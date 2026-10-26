@@ -54,10 +54,11 @@
     "dialog.joja": "The Junimos shake their heads. Something about \"a debt to the land\" they want you to settle yourself.",
     // -- Morris's offer (spec 2026-09-25-joja-offer-design); Jeff made this wording the script 2026-10-02 --
     // Jeff's lines (2026-10-26): Morris, turned away from the shop, talking to someone the player cannot see.
-    "event.joja-offer.aside-1": "I know, I know. I'm doing my best.",
+    // $1 is the pursed frown (portrait cell 1): he is under pressure here, not smiling.
+    "event.joja-offer.aside-1": "I know, I know. I'm doing my best.$1",
     // -m / -f: the farmer's gender, as the opening's grandpa lines.
-    "event.joja-offer.aside-2-m": "Here he is, I promise I'll get him to agree.",
-    "event.joja-offer.aside-2-f": "Here she is, I promise I'll get her to agree.",
+    "event.joja-offer.aside-2-m": "Here he is, I promise I'll get him to agree.$1",
+    "event.joja-offer.aside-2-f": "Here she is, I promise I'll get her to agree.$1",
     "event.joja-offer.morris-1": "@. I hoped you'd come by. My offer still stands, and I got approval to sweeten it.",
     "event.joja-offer.morris-2": "Joja will buy your farm outright, for more money than it will ever make you. We'll turn the land into a meat processing plant.",
     "event.joja-offer.morris-3": "You'd be my assistant manager. Company housing, transportation, excellent benefits. The whole package. Think about it.",
@@ -69,8 +70,8 @@
     // Every line after a No ends in $u (the reconsider question aside, see below): Morris's scowl (portrait cell 3). Untagged lines show his smile.
     "joja.morris.refuse": "I'm sorry to hear that. Joja reserves the right to refuse service to anyone, for any reason. I'm afraid you may not shop here anymore, and you won't be working for Joja again.$u",
     // Jeff's lines (2026-10-26): talking to Morris again after a No asks once more. The question
-    // carries $1, the pursed frown (cell 1): no smile after a No, and no scowl while he asks.
-    "joja.morris.reconsider": "Sorry, I'm under a lot of pressure to make this farm deal happen, are you sure you won't reconsider?$1",
+    // is a question box, which shows no portrait (as the first ask), so it carries no tag.
+    "joja.morris.reconsider": "Sorry, I'm under a lot of pressure to make this farm deal happen, are you sure you won't reconsider?",
     "joja.morris.refuse-final": "Then I'm afraid I still can't do any other business with you. Good day.$u",
     // Jeff's line (2026-10-02): the first visit after the fourth decision letter turned the player away.
     "joja.morris.refuse-letter": "You must not have read my letter. You're no longer welcome here. Leave.$u",

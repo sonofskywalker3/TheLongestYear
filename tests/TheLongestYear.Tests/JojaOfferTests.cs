@@ -434,12 +434,14 @@ public class JojaOfferTests
         Assert.EndsWith("$u", _fixture.Map[key]);
     }
 
-    /// <summary>Asking again after a No (Jeff, 2026-10-26): still no smile, but the pursed frown
-    /// (cell 1), not the scowl, while he asks.</summary>
-    [Fact]
-    public void Morris_asks_again_with_the_pursed_frown()
+    /// <summary>Morris's asides before the offer (Jeff, 2026-10-26) show the pursed frown (cell 1).</summary>
+    [Theory]
+    [InlineData("event.joja-offer.aside-1")]
+    [InlineData("event.joja-offer.aside-2-m")]
+    [InlineData("event.joja-offer.aside-2-f")]
+    public void Morris_frowns_while_talking_to_himself(string key)
     {
-        Assert.EndsWith("$1", _fixture.Map["joja.morris.reconsider"]);
+        Assert.EndsWith("$1", _fixture.Map[key]);
     }
 
     [Fact]
