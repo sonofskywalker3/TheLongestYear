@@ -77,6 +77,39 @@ public static class AuthoredBundleComposer
             Slots: slots);
     }
 
+    /// <summary>Every item one slot of a composed authored bundle could ask for instead, in a
+    /// weighted order drawn from <paramref name="rng"/>, for the board-wide no-repeat pass
+    /// (<see cref="BoardNoRepeats"/>): the def's own source, minus <paramref name="banned"/>, the
+    /// legendaries, the capped items and whatever the bundle already asks for. A season-spread
+    /// bundle (Four Seasons Sampler) only takes an item that covers every season the old one did,
+    /// so a swap can never thin out its spread.</summary>
+    public static IReadOnlyList<string> ReplacementOptions(
+        AuthoredBundleDef def, BundleSpec composed, int slotIndex, ItemPools pools,
+        bool nonObjectDonationsEnabled, IReadOnlySet<string>? banned, Random rng)
+    {
+        if (def == null || composed == null || pools == null || rng == null) return Array.Empty<string>();
+        if (slotIndex < 0 || slotIndex >= composed.Slots.Count) return Array.Empty<string>();
+        IReadOnlyList<PoolItem> candidates = def.Name == GilTrophiesBundleName
+            ? TrophyCandidates(nonObjectDonationsEnabled)
+            : SourceCandidates(def, pools);
+        var asked = new HashSet<string>(composed.Slots.Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? "")), StringComparer.Ordinal);
+        string current = BundleParsing.NormalizeItemId(composed.Slots[slotIndex].ItemId ?? "");
+        PoolItem? was = candidates.FirstOrDefault(p => p.ItemId == current);
+        List<PoolItem> pool = candidates
+            .Where(p => !asked.Contains(p.ItemId)
+                        && !(banned != null && banned.Contains(p.ItemId))
+                        && !LegendaryFishRules.IsLegendary(p.ItemId)
+                        && !CappedAsks.IsCapped(p.ItemId)
+                        && (!def.SeasonSpread || was == null || CoversSeasonsOf(p, was)))
+            .ToList();
+        return WeightedSampler.Sample(pool, pool.Count, rng).Select(p => p.ItemId).ToList();
+    }
+
+    /// <summary>An any-season item covers everything; otherwise every season of the old item.</summary>
+    private static bool CoversSeasonsOf(PoolItem candidate, PoolItem old)
+        => candidate.Seasons.Count == 0
+           || (old.Seasons.Count > 0 && old.Seasons.All(s => candidate.Seasons.Contains(s)));
+
     private static List<PoolItem> TrophyCandidates(bool nonObjectDonationsEnabled)
     {
         IReadOnlyList<string> ids = nonObjectDonationsEnabled

@@ -163,7 +163,7 @@ namespace TheLongestYear.Loop
                         // Kept vanilla slots: the same per-pick rng stream the filler would have
                         // received, of which a None-domain fill consumes nothing.
                         BundleSpec trimmed = SlotTrimmer.Trim(pick, new Random(seed ^ (pick.Index * SlotSaltPrime)));
-                        picked.Add(new PickRecord(pick, match, trimmed));
+                        picked.Add(new PickRecord(pick, match, trimmed) { KeptVanilla = true });
                         AddAskedItems(asked, trimmed);
                         continue;
                     }
@@ -240,12 +240,16 @@ namespace TheLongestYear.Loop
                         "filtered pool couldn't fill every slot — keeping vanilla slots.",
                         LogLevel.Trace);
                     composed = SlotTrimmer.Trim(pick, slotRng);
+                    record.KeptVanilla = true;
                 }
                 AddAskedItems(asked, composed);
                 record.Composed = composed;
             }
 
             timing?.Mark("pass 2 fills");
+
+            SeparateRepeats(picked, itemPools, seed);
+            timing?.Mark("no-repeat pass");
 
             // Pass 3: emit in the original room/position order (name uniquification and the
             // fixed write-key space depend on it).
@@ -315,6 +319,38 @@ namespace TheLongestYear.Loop
                 $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
                 LogLevel.Info);
             return new GeneratedBundleSet(rewarded, flavors);
+        }
+
+        /// <summary>No item asked twice across the board, held for every bundle at once. The fills
+        /// above only PREFER items no earlier bundle asked for: a fill whose pool the earlier
+        /// bundles have eaten into gives that preference up and repeats (Spring Foraging takes the
+        /// Common Mushroom, the Four Seasons Sampler a Blackberry and a Hazelnut, and Fall
+        /// Foraging is left with fewer than four fresh items), and the authored bundles are
+        /// composed before the board exists, blind to each other (Mineral and Rockhound's share a
+        /// pool). <see cref="Core.BoardNoRepeatPass"/> swaps each repeat out through the shortest
+        /// chain of like-for-like swaps; a repeat it cannot separate is logged.</summary>
+        private void SeparateRepeats(List<PickRecord> picked, ItemPools itemPools, int seed)
+        {
+            var entries = picked.Select(r =>
+            {
+                Core.AuthoredBundleDef authored = AuthoredBundleNames.Contains(r.Pick.Name)
+                    ? AuthoredBundleCatalog.All.First(d => d.Name == r.Pick.Name)
+                    : null;
+                DomainMatch match = authored != null || r.KeptVanilla ? null : r.Match;
+                return new Core.NoRepeatEntry(r.Composed, r.Pick, match, r.Recipe, authored);
+            }).ToList();
+            Core.DifficultyStep step = Availability?.Step ?? Core.DifficultyStep.Normal;
+            IReadOnlyList<BundleSpec> separated = Core.BoardNoRepeatPass.Apply(
+                entries, itemPools, Availability, _tuning, _nonObjectDonationsEnabled,
+                Core.BookRouteRules.BannedFor(step), seed,
+                msg => _monitor?.Log("BundleEngine: " + msg, LogLevel.Info),
+                out IReadOnlyList<string> stillRepeated);
+            for (int i = 0; i < picked.Count; i++)
+                picked[i].Composed = separated[i];
+            if (stillRepeated.Count > 0)
+                _monitor?.Log(
+                    $"BundleEngine: no swap could separate {string.Join(", ", stillRepeated)}; asked by more than one bundle on this board (seed {seed}).",
+                    LogLevel.Warn);
         }
 
         /// <summary>The bundle-count dial for one room: drops or adds bundles to reach the room's

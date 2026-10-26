@@ -32,7 +32,50 @@ public static partial class BundleSlotFiller
         BundleGenerationTuning tuning, Random rng, IReadOnlySet<string> avoid,
         ItemAvailabilityModel? availability, PoolRecipe? knownRecipe, Action<string>? log = null)
     {
-        if (spec == null || pools == null || rng == null || match == null) return null;
+        if (rng == null) return null;
+        List<PoolItem>? pool = ReplacementPool(spec, slotIndex, match, pools, availability, knownRecipe, log);
+        if (pool == null) return null;
+        if (avoid != null)
+            pool = pool.Where(p => !avoid.Contains(p.ItemId)).ToList();
+        if (pool.Count == 0) return null;
+        List<PoolItem> picked = WeightedSampler.Sample(pool, 1, rng);
+        return picked.Count > 0 ? picked[0] : null;
+    }
+
+    /// <summary>Every item one slot of an existing bundle could ask for instead, in a weighted
+    /// order drawn from <paramref name="rng"/>: the same pool and recipe part as
+    /// <see cref="ReplacementFor"/>, nothing the bundle already asks for, no legendary, no capped
+    /// item. With a model it also keeps the slot's job in the bundle: a hard item gives way only
+    /// to another hard item, and a stretch line only to a stretch line for the same season, so a
+    /// swap cannot undo the hard-item rule or the stretch rule <see cref="Fill"/> applied. The
+    /// board-wide no-repeat pass (<see cref="BoardNoRepeats"/>) reads it.</summary>
+    public static IReadOnlyList<string> ReplacementOptions(
+        BundleSpec spec, int slotIndex, DomainMatch match, ItemPools pools,
+        ItemAvailabilityModel? availability, PoolRecipe? knownRecipe, Random rng)
+    {
+        List<PoolItem>? pool = ReplacementPool(spec, slotIndex, match, pools, availability, knownRecipe, log: null);
+        if (pool == null || pool.Count == 0) return Array.Empty<string>();
+        string current = BundleParsing.NormalizeItemId(spec.Slots[slotIndex].ItemId ?? "");
+        if (availability != null && match.Season == null && availability.IsPlaced(current))
+        {
+            ItemAvailability was = availability.For(current);
+            if (EffortTiers.IsHard(was.Effort))
+                pool = pool.Where(p => EffortTiers.IsHard(availability.For(p.ItemId).Effort)).ToList();
+            if (StretchRule.Applies(availability))
+                foreach (Season season in StretchRule.StretchSeasons)
+                    if (StretchRule.IsStretchFor(was, season))
+                        pool = pool.Where(p => StretchRule.IsStretchFor(availability.For(p.ItemId), season)).ToList();
+        }
+        return WeightedSampler.Sample(pool, pool.Count, rng).Select(p => p.ItemId).ToList();
+    }
+
+    /// <summary>The draw <see cref="ReplacementFor"/> samples from before its avoid set: null when
+    /// the slot cannot be replaced at all.</summary>
+    private static List<PoolItem>? ReplacementPool(
+        BundleSpec spec, int slotIndex, DomainMatch match, ItemPools pools,
+        ItemAvailabilityModel? availability, PoolRecipe? knownRecipe, Action<string>? log)
+    {
+        if (spec == null || pools == null || match == null) return null;
         if (match.Domain == PoolDomain.None) return null;
         if (slotIndex < 0 || slotIndex >= spec.Slots.Count) return null;
 
@@ -76,7 +119,6 @@ public static partial class BundleSlotFiller
 
         List<PoolItem> pool = candidates
             .Where(p => !taken.Contains(p.ItemId)
-                        && !(avoid != null && avoid.Contains(p.ItemId))
                         && !LegendaryFishRules.IsLegendary(p.ItemId)
                         && !CappedAsks.IsCapped(p.ItemId))
             .ToList();
@@ -94,9 +136,7 @@ public static partial class BundleSlotFiller
                 pool = pool.Where(p => !capped(p)).ToList();
         }
 
-        if (pool.Count == 0) return null;
-        List<PoolItem> picked = WeightedSampler.Sample(pool, 1, rng);
-        return picked.Count > 0 ? picked[0] : null;
+        return pool;
     }
 
     /// <summary>Which recipe part a given slot index belongs to, walking the parts in the same

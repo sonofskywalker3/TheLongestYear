@@ -274,6 +274,10 @@ namespace TheLongestYear.Loop
             /// <summary>This pick's pool recipe, built once in pass 1 (null for every domain but
             /// Recipe). Shared by the fill-order count, the diagnostics line and the fill.</summary>
             public Core.PoolRecipe Recipe { get; init; }
+
+            /// <summary>True when the pick kept its vanilla slots (a money bundle, or a pool too
+            /// small to fill): those slots never move in the no-repeat pass.</summary>
+            public bool KeptVanilla { get; set; }
         }
 
         /// <summary>A gold ask (a money slot), or a bundle with nothing to re-roll at all. These
