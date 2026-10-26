@@ -18,6 +18,10 @@ internal static class UpgradeCatalogGenerators
 
     private static readonly string[] ToolSlugs = { "hoe", "pickaxe", "axe", "watering_can" };
 
+    // Copper, Steel, Gold, Iridium. Cheaper than the tools: the can only trades back part of what
+    // you throw away.
+    private static readonly long[] TrashCanTierCosts = { 50, 100, 175, 300 };
+
     // Tier 1=Copper, 2=Steel, 3=Gold, 4=Iridium. Matches Tool.UpgradeLevel
     // (StardewValley\StardewValley\Tool.cs:167) which is 0=base/rusty, 1=copper, ...
     // Display names live in default.json as tier.1..tier.4 (see UpgradeDefinition ResolveTokens).
@@ -34,7 +38,7 @@ internal static class UpgradeCatalogGenerators
         ("keep_fishing_rod_2", 425, "keep_fishing_rod_1", "rod:3"),
     };
 
-    /// <summary>Yield all Loadout keep-tier entries (16 tools + 2 fishing rod = 18 rows).</summary>
+    /// <summary>Yield all Loadout keep-tier entries (16 tools + 4 trash can + 3 fishing rod rows).</summary>
     public static IEnumerable<UpgradeDefinition> LoadoutToolKeeps()
     {
         foreach (var slug in ToolSlugs)
@@ -53,6 +57,20 @@ internal static class UpgradeCatalogGenerators
                     ToolTierCosts[tier - 1], prereq,
                     metaRequirement: null, runReachRequirement: $"tool:{slug}:{tier}");
             }
+
+        for (int tier = 1; tier <= 4; tier++)
+        {
+            var tokens = new Dictionary<string, string>
+            {
+                ["tier"] = $"i18n:tier.{tier}",
+                ["tool"] = $"i18n:tool.{TrashCanKeep.Slug}",
+            };
+            yield return new UpgradeDefinition(
+                $"keep_{TrashCanKeep.Slug}_{tier}", UpgradeCategory.Loadout,
+                "upgrade-tpl.keep-tool.name", "upgrade-tpl.keep-tool.desc", tokens,
+                TrashCanTierCosts[tier - 1], tier == 1 ? null : $"keep_{TrashCanKeep.Slug}_{tier - 1}",
+                metaRequirement: null, runReachRequirement: $"{TrashCanKeep.ReachMetric}:{tier}");
+        }
 
         foreach (var (id, cost, prereq, reach) in FishingRodTiers)
             yield return new UpgradeDefinition(

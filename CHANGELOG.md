@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.0.24 - unreleased
+
+### Added
+
+- **Keep Trash Can.** Four new Loadout upgrades (Copper, Steel, Gold, Iridium) let you start each loop with your trash can at the tier you keep, instead of always back at the basic one. Each tier opens once you have upgraded the can that far in the current loop. Thanks to tanky24u, whose trash can report led to this.
+
 ## 1.0.23 - 2026-10-26
 
 ### Added

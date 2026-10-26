@@ -348,6 +348,9 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 1) { this.Monitor.Log("Usage: tly_buyupgrade <id>", LogLevel.Warn); return; }
+            string reach = UpgradeCatalog.TryGet(args[0])?.RunReachRequirement;
+            if (!string.IsNullOrEmpty(reach))
+                this.Monitor.Log($"tly_buyupgrade: reach '{reach}' met={Integration.RunReachEvaluator.Meets(reach)} (the shrine hides the row until it is met).", LogLevel.Info);
             _purchases?.TryPurchase(args[0]);
         }
 

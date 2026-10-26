@@ -368,4 +368,18 @@ public class RunBaselineBuilderTests
         var b = RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500);
         Assert.Contains(b.StartingAnimals, a => a.VanillaType == "Ostrich" && a.HousingType == "Barn");
     }
+
+    [Fact]
+    public void Trash_can_level_is_the_highest_owned_keep_tier()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_trash_can_1", "keep_trash_can_2" } };
+        Assert.Equal(2, RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500).TrashCanLevel);
+    }
+
+    [Fact]
+    public void Trash_can_level_is_zero_without_a_keep()
+    {
+        var meta = new MetaState { OwnedUpgrades = { "keep_hoe_1" } };
+        Assert.Equal(0, RunBaselineBuilder.Build(meta, new RunState(), PlayerSnapshot.Empty, 500).TrashCanLevel);
+    }
 }

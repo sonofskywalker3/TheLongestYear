@@ -68,9 +68,9 @@ namespace TheLongestYear.Loop
             p.daysLeftForToolUpgrade.Value = 0;
 
             // The trash can is not a tool item: its tier is the plain Farmer.trashCanLevel field, so
-            // neither the inventory wipe nor ApplyToolTiers touches it. No keep upgrade covers it,
-            // so it always drops back to the basic can (Nexus, tanky24u, 1.0.0).
-            p.trashCanLevel = 0;
+            // neither the inventory wipe nor ApplyToolTiers touches it. It drops back to the basic
+            // can unless a keep_trash_can_N is owned (Nexus, tanky24u, 1.0.0).
+            p.trashCanLevel = baseline.TrashCanLevel;
 
             // Marlon's item recovery reads Farmer.itemsLostLastDeath, which vanilla only clears on
             // the NEXT pass-out. Left alone, the Adventurer's Guild sells last loop's dropped loot
@@ -370,7 +370,7 @@ namespace TheLongestYear.Loop
 
             _monitor.Log(
                 $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +
-                $"tools=[{string.Join(",", baseline.ToolTiers)}], " +
+                $"tools=[{string.Join(",", baseline.ToolTiers)}], trashCan={p.trashCanLevel}, " +
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
                 $"shortcuts={baseline.ShortcutsUnlocked}, mastery={baseline.MasteryLevel}, " +

@@ -452,7 +452,7 @@
     "upgrade-tpl.xp-mult.name": "{{skill}} Experience +{{percent}}%",
     "upgrade.xp_mult_all.name": "Junimo Insight",
     "tier.1": "Copper", "tier.2": "Steel", "tier.3": "Gold", "tier.4": "Iridium",
-    "tool.hoe": "Hoe", "tool.pickaxe": "Pickaxe", "tool.axe": "Axe", "tool.watering_can": "Watering Can",
+    "tool.hoe": "Hoe", "tool.pickaxe": "Pickaxe", "tool.axe": "Axe", "tool.watering_can": "Watering Can", "tool.trash_can": "Trash Can",
     "skill.farming": "Farming", "skill.mining": "Mining", "skill.foraging": "Foraging",
     "skill.fishing": "Fishing", "skill.combat": "Combat",
 
@@ -844,6 +844,7 @@
     "reach.skill": "unlocked at {{key}} {{value}}",
     "reach.tool": "unlocked with a {{key}}",
     "reach.rod": "unlocked with a better rod",
+    "reach.trash_can": "unlocked with a better trash can",
     "reach.backpack": "unlocked after the backpack upgrade",
     "reach.mine": "unlocked at floor {{value}}",
     "reach.mastery": "unlocked at {{value}} Mastery",

@@ -99,6 +99,8 @@ public static class RunBaselineBuilder
                 toolTiers[slug] = owned;
         }
 
+        int trashCanLevel = meta.HighestKeptTier($"keep_{TrashCanKeep.Slug}_", maxTier: 4);
+
         // Fishing rod — explicit keep-id → UpgradeLevel mapping (HighestKeptTier can't see the
         // tier-0 Bamboo keep). FishingRod.UpgradeLevel: 0=bamboo, 2=fiberglass, 3=iridium
         // (1=Training Rod, no keep). -1 is the "no rod keep owned" sentinel (distinct from bamboo 0).
@@ -175,6 +177,7 @@ public static class RunBaselineBuilder
             StartingGold = gold,
             MaxItems = maxItems,
             ToolTiers = toolTiers,
+            TrashCanLevel = trashCanLevel,
             SkillLevels = skillLevels,
             ProfessionPickerSkillsToRequeue = requeue,
             MineElevatorFloor = ownedFloor,

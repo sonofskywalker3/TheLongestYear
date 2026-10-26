@@ -25,6 +25,10 @@ public sealed class RunBaseline
     public IReadOnlyDictionary<string, int> ToolTiers { get; init; }
         = new Dictionary<string, int>();
 
+    /// <summary>Farmer.trashCanLevel to set at run start: the highest owned keep_trash_can_N
+    /// (1=Copper .. 4=Iridium), 0 when none is owned.</summary>
+    public int TrashCanLevel { get; init; }
+
     /// <summary>Vanilla skill-index (0=Farming, 1=Fishing, 2=Foraging, 3=Mining, 4=Combat)
     /// → level 1..10 to restore at run start. XP is floored to that level's threshold via
     /// <c>Farmer.getBaseExperienceForLevel</c>.</summary>

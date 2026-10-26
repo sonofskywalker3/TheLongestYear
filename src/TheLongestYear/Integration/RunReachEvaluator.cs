@@ -35,7 +35,7 @@ namespace TheLongestYear.Integration
             foreach ((string slug, Tool tool, string source) in ToolTierScan.OwnedTools(p))
                 sb.Append($"{slug}(L{tool.UpgradeLevel}@{source}) ");
             sb.Append($"| ToolLevel resolves: hoe={ToolLevel(p, "hoe")} pickaxe={ToolLevel(p, "pickaxe")} ")
-              .Append($"axe={ToolLevel(p, "axe")} watering_can={ToolLevel(p, "watering_can")} rod={RodLevel(p)}");
+              .Append($"axe={ToolLevel(p, "axe")} watering_can={ToolLevel(p, "watering_can")} rod={RodLevel(p)} trash_can={p.trashCanLevel}");
             DebugLog(sb.ToString());
         }
 
@@ -74,6 +74,7 @@ namespace TheLongestYear.Integration
             {
                 "tool"     => ToolLevel(p, r.Key),
                 "rod"      => RodLevel(p),
+                TrashCanKeep.ReachMetric => p.trashCanLevel,
                 "backpack" => BackpackTier(p),
                 "skill"    => SkillLevel(p, r.Key),
                 "mine"     => p.deepestMineLevel,

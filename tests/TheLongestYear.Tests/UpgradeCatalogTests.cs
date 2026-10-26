@@ -447,4 +447,21 @@ public class UpgradeCatalogTests
         Assert.Null(UpgradeCatalog.TryGet("herdbook_0"));
         Assert.Null(UpgradeCatalog.TryGet("herdbook_18"));
     }
+
+    [Fact]
+    public void Trash_can_keep_chain_has_four_priced_chained_reach_gated_tiers()
+    {
+        long[] costs = { 50, 100, 175, 300 };
+        for (int t = 1; t <= 4; t++)
+        {
+            var u = UpgradeCatalog.TryGet($"keep_trash_can_{t}");
+            Assert.NotNull(u);
+            Assert.Equal(UpgradeCategory.Loadout, u!.Category);
+            Assert.Equal(costs[t - 1], u.Cost);
+            Assert.Equal(t == 1 ? null : $"keep_trash_can_{t - 1}", u.PrerequisiteId);
+            Assert.Equal($"trash_can:{t}", u.RunReachRequirement);
+            Assert.Equal(t, RunReachRequirement.Parse(u.RunReachRequirement)!.Threshold);
+        }
+        Assert.Null(UpgradeCatalog.TryGet("keep_trash_can_5"));
+    }
 }
