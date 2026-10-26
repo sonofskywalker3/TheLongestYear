@@ -69,38 +69,6 @@ namespace TheLongestYear.Loop
     }
 
     /// <summary>
-    /// Live refresh for Gear upgrades whose effect sits on items that already exist. Runs after every
-    /// successful purchase (shrine, debug command, focus card) and once on save load.
-    /// </summary>
-    internal static class GearRefresh
-    {
-        private const string GearPrefix = "gear_";
-
-        internal static void AfterPurchase(string upgradeId)
-        {
-            if (upgradeId == null || !upgradeId.StartsWith(GearPrefix, StringComparison.Ordinal)) return;
-            if (upgradeId.StartsWith(GearPowers.Can + "_", StringComparison.Ordinal)) RefreshCans();
-        }
-
-        internal static void OnSaveLoaded() => RefreshCans();
-
-        private static void RefreshCans()
-        {
-            int count = 0;
-            Utility.ForEachItem(item =>
-            {
-                if (item is WateringCan can)
-                {
-                    GearReach.RefreshCan(can);
-                    count++;
-                }
-                return true;
-            });
-            GearReach.Monitor?.Log($"Gear: refreshed {count} watering can(s).", LogLevel.Trace);
-        }
-    }
-
-    /// <summary>
     /// Wide Reach: vanilla keeps charging while <c>upgradeLevel + (Reaching ? 1 : 0) &gt; toolPower</c>
     /// (Game1.UpdateControlInput, inside the delegate it hands to the mod hooks, so the code lives in a
     /// compiler-generated method). The transpiler runs the Reaching value through
