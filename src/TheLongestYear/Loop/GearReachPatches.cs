@@ -29,15 +29,24 @@ namespace TheLongestYear.Loop
         /// The extra charge levels the held tool gets past its upgrade level. Vanilla passes 1 with a
         /// Reaching enchantment and 0 without; owning Wide Reach raises it, never lowers it.
         /// </summary>
-        internal static int ChargeBonus(int vanillaBonus)
+        internal static int ChargeBonus(int vanillaBonus) => ChargeBonusFor(Game1.player?.CurrentTool, vanillaBonus);
+
+        private static int ChargeBonusFor(Tool tool, int vanillaBonus)
         {
-            Tool tool = Game1.player?.CurrentTool;
             if (tool == null) return vanillaBonus;
             int tier = UpgradeChecker.GetTier(GearPowers.Reach, GearPowers.ReachTiers);
             if (tier <= 0 || !GearPowers.Fits(GearPowers.Reach, GearToolKind.KindOf(tool))) return vanillaBonus;
             int level = tool.UpgradeLevel;
             return Math.Max(vanillaBonus, GearPowers.MaxChargePower(level, vanillaBonus > 0, tier) - level);
         }
+
+        /// <summary>
+        /// The upgrade level <c>Tool.beginUsing</c> compares against 0. Vanilla ends a basic tool's use at
+        /// once (no charge); a basic hoe or can that Wide Reach lets charge reads as level 1 for that one
+        /// comparison only, so it starts charging like a copper tool. The tool itself is not changed.
+        /// </summary>
+        internal static int BeginUsingLevel(int level, Tool tool)
+            => level <= 0 && ChargeBonusFor(tool, 0) > 0 ? 1 : level;
 
         /// <summary>Deep Can I: called after vanilla has set <c>waterCanMax</c> for the can's level.</summary>
         internal static void ApplyCapacity(WateringCan can)
@@ -167,6 +176,48 @@ namespace TheLongestYear.Loop
         private static bool IsReachingCheck(CodeInstruction code)
             => code.operand is MethodInfo { Name: nameof(Tool.hasEnchantmentOfType), IsGenericMethod: true } method
                && method.GetGenericArguments()[0] == typeof(ReachingToolEnchantment);
+    }
+
+    /// <summary>
+    /// Wide Reach on a basic tool: <c>Tool.beginUsing</c> ends the use of any non-rod tool whose
+    /// <c>upgradeLevel &lt;= 0</c> before charging starts. The transpiler runs that one level read through
+    /// <see cref="GearReach.BeginUsingLevel"/>, which answers vanilla's level unless Wide Reach applies.
+    /// Raising <c>upgradeLevel</c> itself is not an option: the can's level event refills it.
+    /// </summary>
+    [HarmonyPatch(typeof(Tool), nameof(Tool.beginUsing))]
+    internal static class GearReachBasicToolPatch
+    {
+        private static readonly FieldInfo UpgradeLevelField = AccessTools.Field(typeof(Tool), nameof(Tool.upgradeLevel));
+        private static readonly MethodInfo BeginUsingLevel
+            = AccessTools.Method(typeof(GearReach), nameof(GearReach.BeginUsingLevel));
+
+        // ReSharper disable once UnusedMember.Local: Harmony.
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            // ldarg.0; ldfld upgradeLevel; callvirt get_Value; ldc.i4.0; bgt: the basic-tool early exit.
+            int read = -1;
+            for (int i = 0; i + 2 < codes.Count; i++)
+            {
+                if (codes[i].LoadsField(UpgradeLevelField)
+                    && codes[i + 1].operand is MethodInfo { Name: "get_Value" }
+                    && codes[i + 2].opcode == OpCodes.Ldc_I4_0)
+                {
+                    read = i + 1;
+                    break;
+                }
+            }
+            if (read < 0)
+            {
+                GearReach.Monitor?.Log(
+                    "Wide Reach: could not find the basic tool check in Tool.beginUsing; a basic hoe or watering can will not charge.",
+                    LogLevel.Warn);
+                return codes;
+            }
+            codes.Insert(read + 1, new CodeInstruction(OpCodes.Ldarg_0));
+            codes.Insert(read + 2, new CodeInstruction(OpCodes.Call, BeginUsingLevel));
+            return codes;
+        }
     }
 
     /// <summary>
