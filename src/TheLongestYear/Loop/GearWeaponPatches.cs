@@ -42,29 +42,31 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class GearKeenEdge
     {
-        private static bool _active;
+        private static readonly KeenEdgeGuard Guard = new KeenEdgeGuard();
 
-        internal static (int Min, int Max) Begin(MeleeWeapon weapon)
+        internal static KeenEdgeGuard.State Begin(MeleeWeapon weapon)
+            => Guard.Begin(() => ExtraFor(weapon), (min, max) =>
+            {
+                weapon.minDamage.Value += min;
+                weapon.maxDamage.Value += max;
+            });
+
+        internal static void End(MeleeWeapon weapon, KeenEdgeGuard.State state)
+            => Guard.End(state, (min, max) =>
+            {
+                weapon.minDamage.Value -= min;
+                weapon.maxDamage.Value -= max;
+            });
+
+        private static (int Min, int Max) ExtraFor(MeleeWeapon weapon)
         {
-            if (_active || GearToolKind.KindOf(weapon) != ToolKind.MeleeWeapon) return (0, 0);
+            if (GearToolKind.KindOf(weapon) != ToolKind.MeleeWeapon) return (0, 0);
             int tier = UpgradeChecker.GetTier(GearPowers.Edge, GearPowers.EdgeTiers);
             var data = weapon.GetData();
             if (tier <= 0 || data == null) return (0, 0);
 
             int ruby = GearWeaponEffectsPatch.GemLevel<RubyEnchantment>(weapon);
-            var extra = (GearPowers.ExtraDamage(tier, ruby, data.MinDamage), GearPowers.ExtraDamage(tier, ruby, data.MaxDamage));
-            weapon.minDamage.Value += extra.Item1;
-            weapon.maxDamage.Value += extra.Item2;
-            _active = true;
-            return extra;
-        }
-
-        internal static void End(MeleeWeapon weapon, (int Min, int Max) state)
-        {
-            if (state == (0, 0)) return;
-            weapon.minDamage.Value -= state.Min;
-            weapon.maxDamage.Value -= state.Max;
-            _active = false;
+            return (GearPowers.ExtraDamage(tier, ruby, data.MinDamage), GearPowers.ExtraDamage(tier, ruby, data.MaxDamage));
         }
     }
 
@@ -72,19 +74,19 @@ namespace TheLongestYear.Loop
     internal static class GearWeaponDamagePatch
     {
         // ReSharper disable once InconsistentNaming: Harmony convention.
-        private static void Prefix(MeleeWeapon __instance, out (int Min, int Max) __state) => __state = GearKeenEdge.Begin(__instance);
+        private static void Prefix(MeleeWeapon __instance, out KeenEdgeGuard.State __state) => __state = GearKeenEdge.Begin(__instance);
 
         // ReSharper disable once InconsistentNaming: Harmony convention.
-        private static void Finalizer(MeleeWeapon __instance, (int Min, int Max) __state) => GearKeenEdge.End(__instance, __state);
+        private static void Finalizer(MeleeWeapon __instance, KeenEdgeGuard.State __state) => GearKeenEdge.End(__instance, __state);
     }
 
     [HarmonyPatch(typeof(MeleeWeapon), nameof(MeleeWeapon.triggerClubFunction))]
     internal static class GearClubSpecialPatch
     {
         // ReSharper disable once InconsistentNaming: Harmony convention.
-        private static void Prefix(MeleeWeapon __instance, out (int Min, int Max) __state) => __state = GearKeenEdge.Begin(__instance);
+        private static void Prefix(MeleeWeapon __instance, out KeenEdgeGuard.State __state) => __state = GearKeenEdge.Begin(__instance);
 
         // ReSharper disable once InconsistentNaming: Harmony convention.
-        private static void Finalizer(MeleeWeapon __instance, (int Min, int Max) __state) => GearKeenEdge.End(__instance, __state);
+        private static void Finalizer(MeleeWeapon __instance, KeenEdgeGuard.State __state) => GearKeenEdge.End(__instance, __state);
     }
 }
