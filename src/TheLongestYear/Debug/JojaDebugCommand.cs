@@ -14,7 +14,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_joja";
         public const string Description =
-            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject [letter] | unreject | counter | cashier | scene | badending [floorId] [razehouse]";
+            "Debug: Morris's offer. Usage: tly_joja status | letter come <n> | letter decide <n> | seen | unseen | reject [letter] | unreject | counter | cashier | scene | gender m|f | badending [floorId] [razehouse]";
 
         private const int MinArgsLetter = 3;
         private const string RejectByLetterArg = "letter";
@@ -61,6 +61,11 @@ namespace TheLongestYear.DebugCommands
                     break;
                 case "cashier":
                     JojaCounterPatch.DebugCashier();
+                    break;
+                case "gender" when args.Length > 1:
+                    // Flip the farmer's gender to check the offer scene's gendered line.
+                    Game1.player.changeGender(args[1].ToLowerInvariant() != "f");
+                    m.Log($"tly_joja: farmer is now {(Game1.player.IsMale ? "male" : "female")}.", LogLevel.Info);
                     break;
                 case "scene" when offerDriver != null:
                     offerDriver.DebugReplay();

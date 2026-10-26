@@ -5,8 +5,9 @@ using System.Linq;
 namespace TheLongestYear.Core.Joja;
 
 /// <summary>What Morris says when the player walks up to his counter. RefuseAfterLetter is the
-/// first visit after a rejection by the fourth decision letter (the player never heard him say no).</summary>
-public enum JojaMorrisLine { Ask, RefuseAgain, PositionFilled, RefuseAfterLetter }
+/// first visit after a rejection by the fourth decision letter (the player never heard him say no).
+/// Reconsider is any later visit in the loop that refused him: he asks once more.</summary>
+public enum JojaMorrisLine { Ask, Reconsider, PositionFilled, RefuseAfterLetter }
 
 /// <summary>What the cashier says when the player tries to shop.</summary>
 public enum JojaCashierLine { Undecided, Refused }
@@ -188,7 +189,7 @@ public static class JojaOffer
         if (!IsRejected(meta)) return JojaMorrisLine.Ask;
         if (runNumber != meta.JojaRejectedLoop) return JojaMorrisLine.PositionFilled;
         return meta.JojaRejectedByLetter && !meta.JojaLetterRefusalShown
-            ? JojaMorrisLine.RefuseAfterLetter : JojaMorrisLine.RefuseAgain;
+            ? JojaMorrisLine.RefuseAfterLetter : JojaMorrisLine.Reconsider;
     }
 
     /// <summary>Morris has said a line at his counter; the letter refusal is said only once.</summary>
