@@ -3,11 +3,15 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.13 - unreleased
+## 1.0.14 - unreleased
 
 ### Added
 
 - **A new Gear tab in Junimo Upgrades.** Nine new upgrade chains give your tools and weapons the effect of a Forge enchantment without forging: faster swings, cheaper energy, harder hits, wider charges, a bigger watering can, a steadier fishing line, and weapon damage, speed and defense. A tool that already carries the real enchantment gets the better of the two, never both. Thanks to tanky24u for the suggestion.
+
+### Changed
+
+- **Pierre's Year 2 Seeds now costs 5,000 JP, down from 10,000.** Bundles don't always need those crops any more, so the old price wasn't worth it. Thanks to tanky24u for the feedback.
 
 ### Fixed
 

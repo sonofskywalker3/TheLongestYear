@@ -23,11 +23,11 @@ public class UpgradePricingTests
     }
 
     [Fact]
-    public void Pierre_year2_seeds_is_the_10000_sure_thing_with_no_prerequisite()
+    public void Pierre_year2_seeds_is_the_5000_sure_thing_with_no_prerequisite()
     {
         var def = UpgradeCatalog.TryGet("pierre_year2_seeds");
         Assert.NotNull(def);
-        Assert.Equal(10000, def!.Cost);
+        Assert.Equal(5000, def!.Cost);
         Assert.Equal(UpgradeCategory.Obtainability, def.Category);
         Assert.Null(def.PrerequisiteId);
     }

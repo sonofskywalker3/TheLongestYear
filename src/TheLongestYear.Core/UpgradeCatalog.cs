@@ -158,14 +158,15 @@ public static class UpgradeCatalog
         //   cult_red_cabbage was 5,000; the 2026-08-21 ruling priced it as the only RNG route
         //   worth selling, before the Traveling Cart's guaranteed year-1 Red Cabbage (which this
         //   mod's own cart cap throttles) and Garlic's total absence of one were spotted.
-        //   pierre_year2_seeds 10,000 — the sure thing: Pierre sells his year-2 seeds
+        //   pierre_year2_seeds 5,000 (was 10,000; Jeff 2026-10-26, tanky24u: not worth it once bundles
+        //   stopped always needing these crops) — the sure thing: Pierre sells his year-2 seeds
         //   (Garlic / Red Cabbage / Artichoke) in year 1 (PierreYear2SeedsService).
         //   NO cult_artichoke — vanilla's Fall Mixed Seeds roll already yields Artichoke Seeds at
         //   25% in any year, so there is no RNG to buy off, the same reason cult_starfruit was
         //   REMOVED (anyone can reach the desert).
         new UpgradeDefinition("cult_garlic", UpgradeCategory.Obtainability, 3000),
         new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 3000),
-        new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 10000),
+        new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 5000),
         new UpgradeDefinition("keep_garden_pot", UpgradeCategory.Obtainability, 750),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),
 
