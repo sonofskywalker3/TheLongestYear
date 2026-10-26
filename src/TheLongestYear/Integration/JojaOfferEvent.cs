@@ -26,8 +26,9 @@ namespace TheLongestYear.Integration
     }
 
     /// <summary>Morris's offer (spec 2026-09-25-joja-offer-design): the scene on the first visit to
-    /// JojaMart each loop. Morris steps out from his counter, walks up to the farmer at the door and
-    /// makes the offer. Skippable from the second showing on the save.</summary>
+    /// JojaMart each loop. Morris stands at the end of his counter with his back to the shop, talking
+    /// to someone the player cannot see, glances at the door and promises the farmer will agree. Then
+    /// he walks up to the farmer at the door and makes the offer. Skippable from the second showing on the save.</summary>
     internal static class JojaOfferEvent
     {
         public const string LocationName = "JojaMart";
@@ -36,7 +37,8 @@ namespace TheLongestYear.Integration
         internal const int MorrisStartX = 18, MorrisStartY = 24;
         // Relative advancedMove legs: down 2 to 18,26, then west 5 to 13,26.
         internal const string RouteLegs = "0 2 -5 0";
-        private const int FaceUp = 0, FaceDown = 2;
+        private const int FaceUp = 0, FaceRight = 1, FaceDown = 2, FaceLeft = 3;
+        private const int AsideGlanceMs = 700;
         private const int ViewportRowsAboveDoor = 3;
         private const int WalkTimeoutMs = 6000;
         private const int FadeInMs = 800;
@@ -57,6 +59,8 @@ namespace TheLongestYear.Integration
                 Sanitise(Strings.Get("event.joja-offer.morris-1")),
                 Sanitise(Strings.Get("event.joja-offer.morris-2")),
                 Sanitise(Strings.Get("event.joja-offer.morris-3")));
+            string aside1 = Sanitise(Strings.Get("event.joja-offer.aside-1"));
+            string aside2 = Sanitise(Strings.Get(Game1.player.IsMale ? "event.joja-offer.aside-2-m" : "event.joja-offer.aside-2-f"));
             // Staged behind black (Jeff, 2026-10-02: the room showed Morris at his counter, then he
             // blinked to the floor). The driver already holds the overlay black; tlyBlack keeps the
             // script whole on its own, and tlyFadeIn reveals the room only once Morris is placed.
@@ -67,10 +71,21 @@ namespace TheLongestYear.Integration
             if (skippable) s.Add("skippable");
             s.AddRange(new[]
             {
-                $"addTemporaryActor Morris 16 32 {MorrisStartX} {MorrisStartY} {FaceDown} true Character",
+                // Placed facing his counter (east), his back to the shop floor and the door.
+                $"addTemporaryActor Morris 16 32 {MorrisStartX} {MorrisStartY} {FaceRight} true Character",
                 $"viewport {DoorX} {DoorY - ViewportRowsAboveDoor} clamp",
                 $"{EndingEventCommands.FadeInName} {FadeInMs}",
                 "pause 400",
+                // Talking to "himself" (Jeff, 2026-10-26): a line, a look at the door, then back.
+                $"speak Morris \"{aside1}\"",
+                $"faceDirection Morris {FaceLeft}",
+                $"pause {AsideGlanceMs}",
+                $"faceDirection Morris {FaceRight}",
+                "pause 300",
+                $"speak Morris \"{aside2}\"",
+                "pause 400",
+                $"faceDirection Morris {FaceDown}",
+                "pause 300",
                 // Morris comes out from behind the counter to meet the farmer.
                 $"advancedMove Morris false {RouteLegs}",
                 $"{OpeningEventCommands.WaitWalkName} Morris {WalkTimeoutMs}",

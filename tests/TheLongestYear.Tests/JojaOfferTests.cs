@@ -363,7 +363,7 @@ public class JojaOfferTests
         var (run, meta) = Fresh();
         Assert.Equal(JojaMorrisLine.Ask, JojaOffer.MorrisLine(run, meta, run.RunNumber));
         JojaOffer.Reject(meta, run.RunNumber);
-        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        Assert.Equal(JojaMorrisLine.Reconsider, JojaOffer.MorrisLine(run, meta, run.RunNumber));
         run.BeginNewRun(3);
         Assert.Equal(JojaMorrisLine.PositionFilled, JojaOffer.MorrisLine(run, meta, run.RunNumber));
     }
@@ -381,7 +381,7 @@ public class JojaOfferTests
         Assert.Equal(JojaMorrisLine.RefuseAfterLetter, JojaOffer.MorrisLine(run, meta, run.RunNumber));
 
         JojaOffer.MarkMorrisLineShown(meta, JojaMorrisLine.RefuseAfterLetter);
-        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        Assert.Equal(JojaMorrisLine.Reconsider, JojaOffer.MorrisLine(run, meta, run.RunNumber));
         run.BeginNewRun(4);
         Assert.Equal(JojaMorrisLine.PositionFilled, JojaOffer.MorrisLine(run, meta, run.RunNumber));
     }
@@ -401,7 +401,7 @@ public class JojaOfferTests
         var (run, meta) = Fresh();
         JojaOffer.Reject(meta, run.RunNumber);
         Assert.False(meta.JojaRejectedByLetter);
-        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        Assert.Equal(JojaMorrisLine.Reconsider, JojaOffer.MorrisLine(run, meta, run.RunNumber));
         JojaOffer.Reject(meta, run.RunNumber, byLetter: true);   // the first rejection stands
         Assert.False(meta.JojaRejectedByLetter);
     }
@@ -411,7 +411,7 @@ public class JojaOfferTests
     {
         var run = Newtonsoft.Json.JsonConvert.DeserializeObject<RunState>("{\"RunNumber\":2}")!;
         var meta = Newtonsoft.Json.JsonConvert.DeserializeObject<MetaState>("{\"JojaRejectedLoop\":2}")!;
-        Assert.Equal(JojaMorrisLine.RefuseAgain, JojaOffer.MorrisLine(run, meta, run.RunNumber));
+        Assert.Equal(JojaMorrisLine.Reconsider, JojaOffer.MorrisLine(run, meta, run.RunNumber));
     }
 
     [Fact]
@@ -426,12 +426,20 @@ public class JojaOfferTests
     /// after a rejection carries $u (cell 3).</summary>
     [Theory]
     [InlineData("joja.morris.refuse")]
-    [InlineData("joja.morris.refuse-again")]
+    [InlineData("joja.morris.refuse-final")]
     [InlineData("joja.morris.refuse-letter")]
     [InlineData("joja.morris.position-filled")]
     public void Morris_scowls_on_every_line_after_a_no(string key)
     {
         Assert.EndsWith("$u", _fixture.Map[key]);
+    }
+
+    /// <summary>Asking again after a No (Jeff, 2026-10-26): still no smile, but the pursed frown
+    /// (cell 1), not the scowl, while he asks.</summary>
+    [Fact]
+    public void Morris_asks_again_with_the_pursed_frown()
+    {
+        Assert.EndsWith("$1", _fixture.Map["joja.morris.reconsider"]);
     }
 
     [Fact]

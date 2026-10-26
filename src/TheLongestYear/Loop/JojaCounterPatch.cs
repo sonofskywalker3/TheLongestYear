@@ -37,17 +37,15 @@ namespace TheLongestYear.Loop
             switch (line)
             {
                 case JojaMorrisLine.Ask:
-                    string q = $"$y '{Strings.Get("joja.morris.ask")}_{Strings.Get("joja.morris.accept")}_ _{Strings.Get("joja.morris.decline")}_ '";
-                    var ask = new Dialogue(morris, null, q);
-                    ask.answerQuestionBehavior = Answer;
-                    morris.setNewDialogue(ask);
+                    morris.setNewDialogue(Question(morris, Strings.Get("joja.morris.ask"), Answer));
                     break;
                 case JojaMorrisLine.RefuseAfterLetter:
                     // The fourth decision letter turned the player away; he never said it to their face.
                     morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.refuse-letter")));
                     break;
-                case JojaMorrisLine.RefuseAgain:
-                    morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.refuse-again")));
+                case JojaMorrisLine.Reconsider:
+                    // After a No in this loop he asks once more each visit; Yes is still the bad ending.
+                    morris.setNewDialogue(Question(morris, Strings.Get("joja.morris.reconsider"), AnswerReconsider));
                     break;
                 default:
                     morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.position-filled")));
@@ -82,29 +80,54 @@ namespace TheLongestYear.Loop
             }
         }
 
-        /// <summary>0 = accept, 1 = decline (the order the $y answers were written in).</summary>
+        private const int AcceptIndex = 0;
+
+        /// <summary>Morris's Yes/No question: accept first, decline second (see <see cref="AcceptIndex"/>).
+        /// The empty quick replies leave the answer to <paramref name="answer"/>.</summary>
+        private static Dialogue Question(NPC morris, string question, Dialogue.onAnswerQuestion answer)
+        {
+            string q = $"$y '{question}_{Strings.Get("joja.morris.accept")}_ _{Strings.Get("joja.morris.decline")}_ '";
+            return new Dialogue(morris, null, q) { answerQuestionBehavior = answer };
+        }
+
+        /// <summary>The first ask: a No turns the player away for this loop.</summary>
         private static bool Answer(int index)
         {
-            NPC morris = JojaMart.Morris;
-            if (index == 0)
-            {
-                if (JojaOffer.YearWon(_meta.Run, _meta.State))
-                {
-                    // The year was won while the question was open: the offer is over, no bad ending.
-                    _monitor.Log("Joja: a Yes after the year was won; the offer is over, no bad ending.", LogLevel.Info);
-                    return true;
-                }
-                _monitor.Log("Joja: the player accepted Morris's offer; bad ending.", LogLevel.Info);
-                // Leave the dialogue box first; the ending starts on the next tick.
-                DelayedAction.functionAfterDelay(() => _startBadEnding?.Invoke(), 100);
-                return true;
-            }
+            if (index == AcceptIndex) return Accept();
             RunState run = _meta.Run;
             JojaOffer.Reject(_meta.State, run.RunNumber);
             _monitor.Log($"Joja: the player turned Morris down in loop {run.RunNumber}; refused service for good.", LogLevel.Info);
-            morris.setNewDialogue(new Dialogue(morris, null, Strings.Get("joja.morris.refuse")));
+            return Say(Strings.Get("joja.morris.refuse"));
+        }
+
+        /// <summary>Asked again after a No: Yes is the bad ending, No keeps the ban.</summary>
+        private static bool AnswerReconsider(int index)
+        {
+            if (index == AcceptIndex) return Accept();
+            _monitor.Log("Joja: the player turned Morris down again.", LogLevel.Info);
+            return Say(Strings.Get("joja.morris.refuse-final"));
+        }
+
+        private static bool Say(string line)
+        {
+            NPC morris = JojaMart.Morris;
+            morris.setNewDialogue(new Dialogue(morris, null, line));
             Game1.drawDialogue(morris);
             return false;
+        }
+
+        private static bool Accept()
+        {
+            if (JojaOffer.YearWon(_meta.Run, _meta.State))
+            {
+                // The year was won while the question was open: the offer is over, no bad ending.
+                _monitor.Log("Joja: a Yes after the year was won; the offer is over, no bad ending.", LogLevel.Info);
+                return true;
+            }
+            _monitor.Log("Joja: the player accepted Morris's offer; bad ending.", LogLevel.Info);
+            // Leave the dialogue box first; the ending starts on the next tick.
+            DelayedAction.functionAfterDelay(() => _startBadEnding?.Invoke(), 100);
+            return true;
         }
 
         [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.performAction),
