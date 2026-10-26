@@ -339,7 +339,13 @@ namespace TheLongestYear
             if (shotAt >= 0) words.RemoveRange(shotAt, words.Count - shotAt);
             bool Has(string word) => words.Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
 
-            var menu = new GameMenu(GameMenu.collectionsTab, -1, playOpeningSound: false);
+            // notes: build the page as if a secret note had been read, so vanilla adds its Secret Notes
+            // tab and the column holds all nine; the note is taken back once the page is built.
+            bool fakeNote = Has("notes") && Game1.player.secretNotesSeen.Count == 0;
+            if (fakeNote) Game1.player.secretNotesSeen.Add(1);
+            GameMenu menu;
+            try { menu = new GameMenu(GameMenu.collectionsTab, -1, playOpeningSound: false); }
+            finally { if (fakeNote) Game1.player.secretNotesSeen.Remove(1); }
             Game1.activeClickableMenu = menu;
             CollectionsPage page = BundleLogSideTab.CollectionsOf(menu);
             ClickableTextureComponent tab = BundleLogSideTab.TabOn(page);

@@ -51,6 +51,33 @@ namespace TheLongestYear.Core.Interactables
         public static bool Fits(int tabY, int menuBottom, int screenHeight)
             => tabY + TabSize <= menuBottom && tabY + TabSize <= screenHeight;
 
+        /// <summary>Least distance between tab tops the column is squeezed to; below this the tabs would
+        /// hide too much of each other, and the column is left to run long instead.</summary>
+        public const int MinPitch = 48;
+
+        /// <summary>Distance between the tops of neighbouring tabs in a column of <paramref name="count"/>
+        /// tabs starting at <paramref name="firstTop"/> that must end by <paramref name="bottomLimit"/>
+        /// (the menu box's bottom, or the screen's if that is higher up). Vanilla's spacing (one tab
+        /// height, tabs touching) whenever the column fits that way; otherwise just tight enough that
+        /// the last tab ends at the limit, never under <see cref="MinPitch"/>.</summary>
+        public static int Pitch(int count, int firstTop, int bottomLimit)
+        {
+            if (count <= 1) return TabSize;
+            int room = bottomLimit - firstTop - TabSize;
+            int pitch = room / (count - 1);
+            if (pitch >= TabSize) return TabSize;
+            return pitch < MinPitch ? MinPitch : pitch;
+        }
+
+        /// <summary>Top edge of each of <paramref name="count"/> tabs, spaced by <see cref="Pitch"/>.</summary>
+        public static int[] ColumnTops(int count, int firstTop, int bottomLimit)
+        {
+            int pitch = Pitch(count, firstTop, bottomLimit);
+            var tops = new int[System.Math.Max(0, count)];
+            for (int i = 0; i < tops.Length; i++) tops[i] = firstTop + i * pitch;
+            return tops;
+        }
+
         /// <summary>A vanilla side-tab frame with its picture taken out. <paramref name="tabs"/> are the
         /// vanilla side-tab sprites (packed colours, <see cref="SpriteSize"/> squared, row by row): they
         /// share one frame and differ only where their pictures are, so a pixel all of them agree on is

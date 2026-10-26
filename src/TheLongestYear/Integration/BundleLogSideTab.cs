@@ -23,6 +23,7 @@ namespace TheLongestYear.Integration
     /// The tab is a real entry in the page's <c>sideTabs</c> (with an empty collection beside it), so
     /// vanilla selects it, shifts it out when selected and shows its hover label like its own tabs;
     /// this class only shows the log while it is the current tab and passes it the page's input.
+    /// When all nine tabs show and would not fit the box, the column closes up (see FitColumn).
     /// </summary>
     internal static class BundleLogSideTab
     {
@@ -76,10 +77,6 @@ namespace TheLongestYear.Integration
             List<ClickableTextureComponent> column = page.sideTabs.Values.ToList();
             int y = BundleLogSideTabRules.TabY(column.Select(t => t.bounds.Y).ToList(),
                 page.yPositionOnScreen + BundleLogSideTabRules.TabSize * FirstSlotTiles);
-            if (!BundleLogSideTabRules.Fits(y, page.yPositionOnScreen + page.height, Game1.uiViewport.Height))
-                Monitor?.Log($"Bundle Log side tab at y {y}-{y + BundleLogSideTabRules.TabSize} runs past the menu box " +
-                    $"(bottom {page.yPositionOnScreen + page.height}) or the screen ({Game1.uiViewport.Height}).", LogLevel.Trace);
-
             // The tab above in the column: vanilla ends its column there and points nowhere further down.
             ClickableTextureComponent above = column.OrderByDescending(t => t.bounds.Y).FirstOrDefault();
             Texture2D icon = Icon();
@@ -101,6 +98,23 @@ namespace TheLongestYear.Integration
             page.collections[BundleLogSideTabRules.TabKey] = new List<List<ClickableTextureComponent>> { new() };
             States.AddOrUpdate(page, new State { Tab = tab });
             page.allClickableComponents?.Add(tab);
+            FitColumn(page);
+        }
+
+        /// <summary>With every vanilla tab showing (Secret Notes too), one more tab would run past the
+        /// bottom of the menu box; the column then closes up just enough to end inside it. Only the tops
+        /// move: sizes, the selected tab's shift and the hover label stay vanilla's. With room to spare
+        /// the column keeps vanilla's spacing.</summary>
+        private static void FitColumn(CollectionsPage page)
+        {
+            List<ClickableTextureComponent> column = page.sideTabs.Values.OrderBy(t => t.bounds.Y).ToList();
+            if (column.Count == 0) return;
+            int limit = System.Math.Min(page.yPositionOnScreen + page.height, Game1.uiViewport.Height);
+            int[] tops = BundleLogSideTabRules.ColumnTops(column.Count, column[0].bounds.Y, limit);
+            for (int i = 0; i < column.Count; i++) column[i].bounds.Y = tops[i];
+            int bottom = tops[^1] + BundleLogSideTabRules.TabSize;
+            if (bottom > limit)
+                Monitor?.Log($"Bundle Log side tab: {column.Count} tabs still end at {bottom}, past the menu box or screen ({limit}).", LogLevel.Trace);
         }
 
         /// <summary>The tab's picture: a vanilla side-tab frame with the Bundle Log's cover on it. Built

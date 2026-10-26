@@ -50,6 +50,33 @@ public class BundleLogSideTabRulesTests
         Assert.False(BundleLogSideTabRules.Fits(20 + 640, 700, 720));   // after Secret Notes: the 9th tab
     }
 
+    [Fact]
+    public void Pitch_keeps_vanilla_spacing_while_the_column_fits()
+    {
+        // Page top 20 on a 720 screen: box bottom 700, first tab at 148. Eight tabs end at 660.
+        Assert.Equal(64, BundleLogSideTabRules.Pitch(8, 148, 700));
+        Assert.Equal(64, BundleLogSideTabRules.Pitch(1, 148, 700));
+    }
+
+    [Fact]
+    public void Pitch_closes_up_nine_tabs_to_end_inside_the_box()
+    {
+        int pitch = BundleLogSideTabRules.Pitch(9, 148, 700);
+        Assert.Equal(61, pitch);
+        int[] tops = BundleLogSideTabRules.ColumnTops(9, 148, 700);
+        Assert.Equal(148, tops[0]);
+        Assert.True(tops[8] + BundleLogSideTabRules.TabSize <= 700);
+        Assert.Equal(pitch, tops[1] - tops[0]);
+    }
+
+    [Fact]
+    public void Pitch_never_squeezes_past_the_floor()
+        => Assert.Equal(BundleLogSideTabRules.MinPitch, BundleLogSideTabRules.Pitch(20, 148, 700));
+
+    [Fact]
+    public void ColumnTops_handles_an_empty_column()
+        => Assert.Empty(BundleLogSideTabRules.ColumnTops(0, 148, 700));
+
     private static uint[] Tab(int pictureX, int pictureY, uint picture)
     {
         var t = new uint[N];
