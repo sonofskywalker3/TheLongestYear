@@ -101,20 +101,23 @@ namespace TheLongestYear.Integration
             FitColumn(page);
         }
 
-        /// <summary>With every vanilla tab showing (Secret Notes too), one more tab would run past the
-        /// bottom of the menu box; the column then closes up just enough to end inside it. Only the tops
+        /// <summary>With every vanilla tab showing (Secret Notes too), one more tab would hang below the
+        /// menu box; the whole stack then moves up, keeping vanilla's spacing, until its last tab ends on
+        /// the box's bottom edge (closing up only if it would rise past the box's top). Only the tops
         /// move: sizes, the selected tab's shift and the hover label stay vanilla's. With room to spare
-        /// the column keeps vanilla's spacing.</summary>
+        /// the column stays where vanilla put it.</summary>
         private static void FitColumn(CollectionsPage page)
         {
             List<ClickableTextureComponent> column = page.sideTabs.Values.OrderBy(t => t.bounds.Y).ToList();
             if (column.Count == 0) return;
-            int limit = System.Math.Min(page.yPositionOnScreen + page.height, Game1.uiViewport.Height);
-            int[] tops = BundleLogSideTabRules.ColumnTops(column.Count, column[0].bounds.Y, limit);
+            int bottom = System.Math.Min(page.yPositionOnScreen + page.height - BundleLogSideTabRules.BoxBottomInset,
+                Game1.uiViewport.Height);
+            int top = page.yPositionOnScreen + BundleLogSideTabRules.BoxTopInset;
+            int[] tops = BundleLogSideTabRules.ColumnTops(column.Count, column[0].bounds.Y, bottom, top);
             for (int i = 0; i < column.Count; i++) column[i].bounds.Y = tops[i];
-            int bottom = tops[^1] + BundleLogSideTabRules.TabSize;
-            if (bottom > limit)
-                Monitor?.Log($"Bundle Log side tab: {column.Count} tabs still end at {bottom}, past the menu box or screen ({limit}).", LogLevel.Trace);
+            int end = tops[^1] + BundleLogSideTabRules.TabSize;
+            if (end > bottom)
+                Monitor?.Log($"Bundle Log side tab: {column.Count} tabs still end at {end}, past the menu box or screen ({bottom}).", LogLevel.Trace);
         }
 
         /// <summary>The tab's picture: a vanilla side-tab frame with the Bundle Log's cover on it. Built

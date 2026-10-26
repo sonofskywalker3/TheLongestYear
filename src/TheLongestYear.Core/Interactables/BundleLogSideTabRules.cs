@@ -51,30 +51,41 @@ namespace TheLongestYear.Core.Interactables
         public static bool Fits(int tabY, int menuBottom, int screenHeight)
             => tabY + TabSize <= menuBottom && tabY + TabSize <= screenHeight;
 
+        /// <summary>The menu box's drawn frame sits inside the page's bounds: its outer edge is this far
+        /// below the page's top (the tab row stands above it) ...</summary>
+        public const int BoxTopInset = 80;
+
+        /// <summary>... and this far above the page's bottom (the frame's corner sprites end in clear
+        /// pixels). Measured on the live 1.6 game menu.</summary>
+        public const int BoxBottomInset = 16;
+
         /// <summary>Least distance between tab tops the column is squeezed to; below this the tabs would
         /// hide too much of each other, and the column is left to run long instead.</summary>
         public const int MinPitch = 48;
 
-        /// <summary>Distance between the tops of neighbouring tabs in a column of <paramref name="count"/>
-        /// tabs starting at <paramref name="firstTop"/> that must end by <paramref name="bottomLimit"/>
-        /// (the menu box's bottom, or the screen's if that is higher up). Vanilla's spacing (one tab
-        /// height, tabs touching) whenever the column fits that way; otherwise just tight enough that
-        /// the last tab ends at the limit, never under <see cref="MinPitch"/>.</summary>
-        public static int Pitch(int count, int firstTop, int bottomLimit)
+        /// <summary>Top edge of each of <paramref name="count"/> tabs in a column that starts at
+        /// <paramref name="firstTop"/>. When the column ends by <paramref name="bottomLimit"/> (the box's
+        /// drawn bottom edge, or the screen's if higher up) it is left exactly as vanilla placed it.
+        /// Otherwise the whole stack keeps vanilla's spacing (one tab height, tabs touching) and moves up
+        /// until the last tab's bottom lines up with the limit. Only if that would lift the first tab
+        /// above <paramref name="topLimit"/> (the box's drawn top edge) does the column start there and
+        /// close up just enough to end at the limit, never under <see cref="MinPitch"/>.</summary>
+        public static int[] ColumnTops(int count, int firstTop, int bottomLimit, int topLimit)
         {
-            if (count <= 1) return TabSize;
-            int room = bottomLimit - firstTop - TabSize;
-            int pitch = room / (count - 1);
-            if (pitch >= TabSize) return TabSize;
-            return pitch < MinPitch ? MinPitch : pitch;
-        }
-
-        /// <summary>Top edge of each of <paramref name="count"/> tabs, spaced by <see cref="Pitch"/>.</summary>
-        public static int[] ColumnTops(int count, int firstTop, int bottomLimit)
-        {
-            int pitch = Pitch(count, firstTop, bottomLimit);
             var tops = new int[System.Math.Max(0, count)];
-            for (int i = 0; i < tops.Length; i++) tops[i] = firstTop + i * pitch;
+            if (tops.Length == 0) return tops;
+            int first = firstTop, pitch = TabSize;
+            if (firstTop + count * TabSize > bottomLimit)
+            {
+                first = bottomLimit - count * TabSize;
+                if (first < topLimit)
+                {
+                    first = topLimit;
+                    if (count > 1)
+                        pitch = System.Math.Max(MinPitch, System.Math.Min(TabSize, (bottomLimit - topLimit - TabSize) / (count - 1)));
+                }
+            }
+            for (int i = 0; i < tops.Length; i++) tops[i] = first + i * pitch;
             return tops;
         }
 
