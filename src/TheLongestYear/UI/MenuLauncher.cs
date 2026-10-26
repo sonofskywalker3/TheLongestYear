@@ -114,6 +114,9 @@ namespace TheLongestYear.UI
 
             Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, focusRows ? _focus : null);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
+            // The XP hand-over runs just before the rewind shrine, so its refund is spendable here.
+            if (NoticeMenu.ShowXpHandoverIfPending(_store.State, Game1.activeClickableMenu))
+                _monitor.Log("Showed the XP hand-over notice over the Junimo Shrine.", LogLevel.Info);
         }
 
         public void OpenCookbook(string subtitle = null)

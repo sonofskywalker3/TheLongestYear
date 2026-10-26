@@ -184,42 +184,28 @@ internal static class UpgradeCatalogGenerators
         }
     }
 
-    // XP multiplier costs, indexed [1..4] (tier N = +25N% on one skill). Rebalanced
-    // 2026-08-30 after gazumbrado's report: the old ladder started at x2 for 100 JP, which
-    // halved every climb to level 5 for pocket change, and 500 JP bought it across all five
-    // skills. Doubling is now the END of a chain, not its entry price: one skill doubled is
-    // 2150 JP, all five 10,750, and the capstone's +50% on top makes the ceiling x2.5 rather
-    // than the old x10. Keeps still set your starting floor; multipliers set your re-leveling
-    // slope (spec 2026-07-14 economy Change 3).
-    private static readonly long[] XpMultCosts = { 0, 150, 350, 650, 1000 };
+    // Exp Boost costs, indexed [1..5] (Jeff, 2026-10-26, after tanky24u's feedback). One chain
+    // for all five skills replaces the 20 per-skill rows and Junimo Insight (retired, see
+    // XpUpgradeHandover): I +25%, II +50%, III +75%, IV +100%, V +150%, highest tier wins.
+    // The first four keep the old per-skill prices, so one purchase now buys what five did.
+    private static readonly long[] ExpBoostCosts = { 0, 150, 350, 650, 1000, 2000 };
 
-    private static readonly string[] XpMultSkillSlugs = { "farming", "fishing", "foraging", "mining", "combat" };
+    // Mastery Boost costs, indexed [1..2]: +50% then +100% on Mastery XP only (the part Junimo
+    // Insight used to boost), independent of Exp Boost.
+    private static readonly long[] MasteryBoostCosts = { 0, 500, 1000 };
 
-    /// <summary>Yield the 20 per-skill xp_mult tiers + the xp_mult_all capstone (21 rows).</summary>
-    public static IEnumerable<UpgradeDefinition> EfficiencyXpMultipliers()
+    /// <summary>Exp Boost I to V, then Mastery Boost I and II (7 Efficiency rows). Names and
+    /// descriptions are per id in default.json (upgrade.{id}.name/.desc).</summary>
+    public static IEnumerable<UpgradeDefinition> EfficiencyExpBoosts()
     {
-        foreach (var slug in XpMultSkillSlugs)
-            for (int tier = 1; tier <= 4; tier++)
-            {
-                string id = $"xp_mult_{slug}_{tier}";
-                string? prereq = tier == 1 ? null : $"xp_mult_{slug}_{tier - 1}";
-                var tokens = new Dictionary<string, string>
-                {
-                    ["skill"] = $"i18n:skill.{slug}",
-                    ["percent"] = (XpMultiplierRules.PercentPerTier * tier).ToString(),
-                };
-                yield return new UpgradeDefinition(
-                    id, UpgradeCategory.Efficiency,
-                    "upgrade-tpl.xp-mult.name", "upgrade-tpl.xp-mult.desc", tokens,
-                    XpMultCosts[tier], prereq,
-                    metaRequirement: null, runReachRequirement: null);
-            }
+        for (int tier = 1; tier <= XpMultiplierRules.ExpBoostTiers; tier++)
+            yield return new UpgradeDefinition(
+                XpMultiplierRules.ExpBoostId(tier), UpgradeCategory.Efficiency, ExpBoostCosts[tier],
+                tier == 1 ? null : XpMultiplierRules.ExpBoostId(tier - 1));
 
-        yield return new UpgradeDefinition(
-            "xp_mult_all", UpgradeCategory.Efficiency,
-            "upgrade.xp_mult_all.name", "upgrade.xp_mult_all.desc", tokens: null,
-            3000, null,
-            metaRequirement: "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
-            runReachRequirement: null);
+        for (int tier = 1; tier <= XpMultiplierRules.MasteryBoostTiers; tier++)
+            yield return new UpgradeDefinition(
+                XpMultiplierRules.MasteryBoostId(tier), UpgradeCategory.Efficiency, MasteryBoostCosts[tier],
+                tier == 1 ? null : XpMultiplierRules.MasteryBoostId(tier - 1));
     }
 }

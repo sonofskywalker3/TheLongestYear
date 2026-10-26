@@ -351,6 +351,29 @@ namespace TheLongestYear
             _purchases?.TryPurchase(args[0]);
         }
 
+        /// <summary>Debug: the retired XP upgrades can no longer be bought, so this hands them to the
+        /// save directly (no JP charged) to set up the hand-over, or reports what it would refund.</summary>
+        private void CmdRetiredXp(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var state = _meta.State;
+            if (args.Length >= 2 && args[0].Equals("grant", System.StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (string id in args.Skip(1))
+                {
+                    if (!XpUpgradeHandover.IsRetired(id)) { this.Monitor.Log($"tly_retiredxp: '{id}' is not a retired XP upgrade id.", LogLevel.Warn); continue; }
+                    if (!state.HasUpgrade(id)) state.OwnedUpgrades.Add(id);
+                }
+            }
+            double factor = state.EffectiveDifficulty(_config).ShrinePriceFactor;
+            var owned = state.OwnedUpgrades.Where(XpUpgradeHandover.IsRetired).ToList();
+            long refund = owned.Sum(id => XpUpgradeHandover.RefundOf(id, factor));
+            this.Monitor.Log(
+                $"tly_retiredxp: owned retired [{string.Join(", ", owned)}]; the next rewind refunds {refund} JP " +
+                $"(price factor x{factor}). Notice pending: {state.PendingXpHandoverNotice != null}.",
+                LogLevel.Info);
+        }
+
         /// <summary>Debug: run the shrine board's boost purchase without clicking it, so the
         /// headless bridge can exercise the same callback the Buy button uses.
         /// Usage: tly_boost &lt;yeartwoseeds|sneakpeek&gt;</summary>

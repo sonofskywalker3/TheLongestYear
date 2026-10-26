@@ -6,12 +6,11 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Applies the xp_mult upgrade family (spec 2026-07-14, rebalanced 2026-08-30):
-    /// prefix on Farmer.gainExperience scaling howMuch by XpMultiplierRules.PercentFor.
-    /// Below the all-skills-10 line the per-skill tiers apply (+25% each, up to
-    /// +100%, plus the capstone's +50%). At Level >= 25 vanilla routes the SAME
-    /// howMuch into MasteryExp and skill levels are capped, so only the capstone's
-    /// +50% applies there (user ruling: per-skill tiers never touch Mastery).
+    /// Applies the XP upgrades (Exp Boost, Mastery Boost, and the retired per-skill chains and
+    /// Junimo Insight until their hand-over): prefix on Farmer.gainExperience scaling howMuch by
+    /// XpMultiplierRules.PercentFor. Below the all-skills-10 line Exp Boost applies to all five
+    /// skills. At Level >= 25 vanilla routes the SAME howMuch into MasteryExp and skill levels are
+    /// capped, so only Mastery Boost (or a still-owned Junimo Insight, whichever is better) applies.
     ///
     /// MetaState is reached via the same explicit <see cref="Connect"/> wiring
     /// JunimoStashCapacityPatch/JunimoStashCapPatch use (ModEntry.OnSaveLoaded) —

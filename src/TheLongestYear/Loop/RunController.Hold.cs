@@ -38,6 +38,7 @@ namespace TheLongestYear.Loop
                 _monitor.Log("Year 2 wall: Loop again.", LogLevel.Info);
                 _store.State.VictoryAcknowledged = false;
                 _store.State.Year2WallArmed = false;
+                HandOverRetiredXpUpgrades("year 2 wall");
                 _store.Save();
                 // The upgrade menu and the books, then the reset. Resetting straight from here wiped
                 // the year's recipes and herd animals unbanked and left its JP unspent. No hold
@@ -78,7 +79,12 @@ namespace TheLongestYear.Loop
                     // Inside the answer callback the DialogueBox is still the active menu, so the
                     // books would be refused and the reset would wipe recipes and herd animals
                     // unbanked. The shrine already ran before this question; defer the rest a tick.
-                    DeferContinue(ContinueAfterResetSpend);
+                    // Retired XP upgrades are handed over now that the loop is ending, and the
+                    // shrine opens once more so the refund can be spent on Exp Boost.
+                    if (HandOverRetiredXpUpgrades("loop again after the win"))
+                        DeferShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
+                    else
+                        DeferContinue(ContinueAfterResetSpend);
                 }
                 else
                 {

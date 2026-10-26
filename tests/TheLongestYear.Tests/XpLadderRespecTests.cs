@@ -36,7 +36,7 @@ public class XpLadderRespecTests
     {
         var meta = With(25,
             "xp_mult_farming_1", "xp_mult_farming_2", "xp_mult_farming_3", "xp_mult_farming_4",
-            XpMultiplierRules.CapstoneId);
+            XpMultiplierRules.LegacyInsightId);
 
         long refund = XpLadderRespec.Respec(meta, out int cleared);
 

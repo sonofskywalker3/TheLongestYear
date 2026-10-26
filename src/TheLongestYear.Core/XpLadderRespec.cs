@@ -16,6 +16,10 @@ namespace TheLongestYear.Core;
 /// strength / nerf and refund): refund. Grandfathering would have meant carrying two ladders in
 /// MetaState and in the shrine display indefinitely.
 ///
+/// The +25% ladder itself was retired on 2026-10-26 for Exp Boost (<see cref="XpUpgradeHandover"/>).
+/// This respec still runs first on a save from before 2026-08-30, so that save is refunded at the
+/// prices it actually paid and the hand-over then finds nothing left to take.
+///
 /// Refunds are at the OLD prices, because that is what was actually paid. Nobody comes out ahead:
 /// the same JP buys strictly less than it used to, which is the point of the rebalance.</summary>
 public static class XpLadderRespec
@@ -65,7 +69,7 @@ public static class XpLadderRespec
     public static long OldCostOf(string? id)
     {
         if (id == null) return 0;
-        if (string.Equals(id, XpMultiplierRules.CapstoneId, StringComparison.Ordinal))
+        if (string.Equals(id, XpMultiplierRules.LegacyInsightId, StringComparison.Ordinal))
             return OldCapstoneCost;
 
         int underscore = id.LastIndexOf('_');

@@ -129,6 +129,9 @@ namespace TheLongestYear.Loop
         /// recipe banking, reset.</summary>
         private void StartRewindChain()
         {
+            // The loop is over: hand the retired XP upgrades over now, before the hold question and
+            // the upgrade menu, so the refund is spendable on Exp Boost at this very shrine.
+            HandOverRetiredXpUpgrades("rewind chain");
             // No HUD hiding here: on a Fail night RewindSpringPaint already holds the date at
             // Spring 1 through this window, and FinalizeReset no longer turns the HUD back on.
             // Vanilla mode's reset regenerates the board via loadForNewGame and never
@@ -226,6 +229,24 @@ namespace TheLongestYear.Loop
             onContinue();
         }
 
+        /// <summary>The 2026-10-26 XP hand-over (<see cref="XpUpgradeHandover"/>): at the end of a
+        /// loop, remove the retired per-skill XP upgrades and Junimo Insight and refund their JP at
+        /// this loop's shrine price factor. The next shrine to open shows the notice. Returns true
+        /// when something was handed over.</summary>
+        private bool HandOverRetiredXpUpgrades(string when)
+        {
+            MetaState meta = _store.State;
+            if (!XpUpgradeHandover.IsOwed(meta)) return false;
+            double factor = meta.EffectiveDifficulty(_config).ShrinePriceFactor;
+            XpUpgradeHandover.Result result = XpUpgradeHandover.Apply(meta, factor);
+            _monitor.Log(
+                $"XP hand-over ({when}): removed {result.Removed.Count} retired XP upgrade(s) " +
+                $"[{string.Join(", ", result.Removed)}] and refunded {result.Refund} JP " +
+                $"(catalog base price x{factor} shrine price factor). Exp Boost and Mastery Boost replace them.",
+                LogLevel.Info);
+            return true;
+        }
+
         /// <summary>
         /// THE one loop-reset finalizer (tech-debt consolidation, 2026-06-10). Every path that
         /// rewinds the world to Spring 1 of a new run MUST route through here so cross-cutting
@@ -246,6 +267,10 @@ namespace TheLongestYear.Loop
                 $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"}, season was {Run.Season} {Run.DayOfMonth}).",
                 LogLevel.Info);
             var timing = new ResetTiming(_monitor, "FinalizeReset");
+            // Backstop for a reset that skipped the rewind shrine (the debug tly_reset entry, a
+            // shrine that could not open). Before PerformReset, so the refund is priced at the
+            // outgoing loop's stamped profile like every other hand-over. A no-op when done.
+            HandOverRetiredXpUpgrades($"finalize reset ({reason})");
             // Capture a partial-reset failure explicitly. PerformReset changes uniqueIDForThisGame
             // early then does heavy world work; if it threw mid-way the old code swallowed it up the
             // stack and the game limped on in a half-reset state. Log the full exception, then

@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.20 - unreleased
+## 1.0.21 - unreleased
 
 ### Added
 
@@ -12,6 +12,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **The skill experience upgrades are now one chain, Exp Boost I to V, in the Efficiency tab.** Each tier boosts all five skills at once: +25%, +50%, +75%, double and +150%, for 150, 350, 650, 1,000 and 2,000 JP. Mastery Boost I and II give +50% and double Mastery experience for 500 and 1,000 JP. If you owned the old per-skill upgrades or Junimo Insight, they keep working until your next rewind. Then they are removed, every JP you spent on them comes back, and a note tells you what changed. Thanks to tanky24u for the feedback.
 - **Morris's JojaMart offer has a new opening, and turning him down is a little more polite.** If you talk to him again after saying no, he asks once more whether you'll reconsider. Thanks to tanky24u for the feedback.
 - **Pierre's Year 2 Seeds now costs 5,000 JP, down from 10,000.** Bundles don't always need those crops any more, so the old price wasn't worth it. Thanks to tanky24u for the feedback.
 - **The Garlic and Red Cabbage Mixed Seeds upgrades now cost 2,000 JP each, down from 3,000,** so leaving it to luck stays the cheaper way to get those crops.
