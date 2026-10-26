@@ -110,7 +110,7 @@ namespace TheLongestYear.Loop
                 && Game1.activeClickableMenu.GetChildMenu() == null)
             {
                 _monitor.Log("CharacterCreationWatcher: Skip intro ticked; showing the watch-it-first notice.", LogLevel.Info);
-                Game1.activeClickableMenu.SetChildMenu(new TheLongestYear.UI.IntroSkipNoticeMenu());
+                Game1.activeClickableMenu.SetChildMenu(new TheLongestYear.UI.NoticeMenu(TheLongestYear.Core.Strings.Get("intro.skip-notice")));
             }
             _lastSkipIntro = now;
         }

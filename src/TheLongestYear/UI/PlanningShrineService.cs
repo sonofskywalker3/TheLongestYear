@@ -88,6 +88,7 @@ namespace TheLongestYear.UI
             Game1.activeClickableMenu = new ShrinePreviewMenu(
                 state, _priceFactor?.Invoke() ?? 1.0, _run?.Invoke(), _buyBoost,
                 _restartOffered, _requestRestart, _donations?.Invoke(), _focus?.Invoke(), _resetPending);
+            NoticeMenu.ShowXpHandoverIfPending(state, Game1.activeClickableMenu);
             return true;
         }
 

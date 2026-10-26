@@ -376,32 +376,32 @@ public class UpgradeCatalogTests
         Assert.Equal(VaultRules.BusReachMetric, def!.RunReachRequirement);
     }
 
-    [Fact]
-    public void XpMultFamily_IsInCatalogWithChainAndCapstoneGate()
+    /// <summary>Exp Boost I to V and Mastery Boost I and II (Jeff, 2026-10-26) replace the 20
+    /// per-skill rows and Junimo Insight, which can no longer be bought.</summary>
+    [Theory]
+    [InlineData("exp_boost_1", 150, null)]
+    [InlineData("exp_boost_2", 350, "exp_boost_1")]
+    [InlineData("exp_boost_3", 650, "exp_boost_2")]
+    [InlineData("exp_boost_4", 1000, "exp_boost_3")]
+    [InlineData("exp_boost_5", 2000, "exp_boost_4")]
+    [InlineData("mastery_boost_1", 500, null)]
+    [InlineData("mastery_boost_2", 1000, "mastery_boost_1")]
+    public void ExpAndMasteryBoost_RowsPricesAndChain(string id, long cost, string? prereq)
     {
-        string[] slugs = { "farming", "fishing", "foraging", "mining", "combat" };
-        foreach (var slug in slugs)
-        {
-            for (int tier = 1; tier <= 4; tier++)
-            {
-                var def = UpgradeCatalog.TryGet($"xp_mult_{slug}_{tier}");
-                Assert.NotNull(def);
-                Assert.Equal(UpgradeCategory.Efficiency, def!.Category);
-                Assert.Equal(tier == 1 ? null : $"xp_mult_{slug}_{tier - 1}", def.PrerequisiteId);
-            }
-            // Rebalanced 2026-08-30: 150/350/650/1000, so one skill doubled costs 2,150 JP.
-            Assert.Equal(150, UpgradeCatalog.TryGet($"xp_mult_{slug}_1")!.Cost);
-            Assert.Equal(350, UpgradeCatalog.TryGet($"xp_mult_{slug}_2")!.Cost);
-            Assert.Equal(650, UpgradeCatalog.TryGet($"xp_mult_{slug}_3")!.Cost);
-            Assert.Equal(1000, UpgradeCatalog.TryGet($"xp_mult_{slug}_4")!.Cost);
-        }
+        var def = UpgradeCatalog.TryGet(id);
+        Assert.NotNull(def);
+        Assert.Equal(UpgradeCategory.Efficiency, def!.Category);
+        Assert.Equal(cost, def.Cost);
+        Assert.Equal(prereq, def.PrerequisiteId);
+        Assert.Null(def.MetaRequirement);
+    }
 
-        var capstone = UpgradeCatalog.TryGet("xp_mult_all");
-        Assert.NotNull(capstone);
-        Assert.Equal(3000, capstone!.Cost);
-        Assert.Equal(
-            "upgrades:xp_mult_farming_4,xp_mult_fishing_4,xp_mult_foraging_4,xp_mult_mining_4,xp_mult_combat_4",
-            capstone.MetaRequirement);
+    [Fact]
+    public void RetiredXpRows_AreGoneFromTheShop()
+    {
+        Assert.DoesNotContain(UpgradeCatalog.All, u => u.Id.StartsWith("xp_mult", System.StringComparison.Ordinal));
+        Assert.Equal(5, UpgradeCatalog.All.Count(u => u.Id.StartsWith("exp_boost_", System.StringComparison.Ordinal)));
+        Assert.Equal(2, UpgradeCatalog.All.Count(u => u.Id.StartsWith("mastery_boost_", System.StringComparison.Ordinal)));
     }
 
     [Fact]

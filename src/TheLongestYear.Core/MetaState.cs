@@ -36,6 +36,11 @@ public sealed class MetaState
     /// only thing stopping the refund paying out twice.</summary>
     public bool XpLadderRespecDone { get; set; }
 
+    /// <summary>Set by the 2026-10-26 XP hand-over (<see cref="XpUpgradeHandover"/>) when it
+    /// removes and refunds the retired XP upgrades; the next shrine to open shows it once and
+    /// clears it. Null when nothing is owed to the player.</summary>
+    public XpHandoverNotice? PendingXpHandoverNotice { get; set; }
+
     /// <summary>
     /// Animal species the player has ever owned across all runs in this playthrough.
     /// Drives "Start with [animal]" upgrade availability via the species: meta-requirement
@@ -433,7 +438,7 @@ public sealed class MetaState
             "species" => AnimalSpeciesEverOwned.Any(owned => AnimalSpecies.Matches(owned, value)),
             "upgrade" => OwnedUpgrades.Contains(value, StringComparer.Ordinal),
             // "upgrades" = conjunction: EVERY comma-separated id must be owned. Added for the
-            // xp_mult_all capstone (spec 2026-07-14 economy Change 3).
+            // retired xp_mult_all capstone (spec 2026-07-14 economy Change 3).
             "upgrades" => value.Length > 0 && value
                 .Split(',')
                 .All(id => OwnedUpgrades.Contains(id.Trim(), StringComparer.Ordinal)),

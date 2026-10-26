@@ -1,37 +1,58 @@
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// Factor math for the xp_mult upgrade family (spec 2026-07-14 economy Change 3, rebalanced
-/// 2026-08-30). Per-skill chains xp_mult_&lt;slug&gt;_1..4 add +25% per tier to that skill's XP,
-/// so the full chain is +100% (double). The xp_mult_all capstone adds a further +50% and is the
-/// ONLY tier that touches Mastery XP. Mastery accrues inside Farmer.gainExperience only once
-/// every skill is 10 (Farmer.Level &gt;= 25) - at that point per-skill scaling is moot (levels
-/// capped), so the mastery phase uses the capstone's +50% alone.
+/// Factor math for the XP upgrades.
 ///
-/// WHY QUARTER STEPS, not the old x2..x5 (Nexus, gazumbrado, 29 Aug 2026): "the double XP for
-/// skills might be too cheap. I bought all of them for 100 JP each and by day 4 of a new save I
-/// had level 5 in Fishing, Forage and Mining". He was right. Level 5 is 2,150 XP in vanilla, so
-/// the old 100 JP first rung halved every climb on its own, and 500 JP bought that across the
-/// board. Doubling is now where the chain ENDS (1,000 JP for the last tier, 2,150 JP for one
-/// skill doubled) instead of where it starts. Jeff, 2026-08-30.
+/// EXP BOOST (Jeff, 2026-10-26, after tanky24u's feedback): one chain, exp_boost_1..5, and every
+/// tier applies to all five skills at once: +25 / +50 / +75 / +100 / +150%. Highest owned tier
+/// wins; the tiers do not add up. It never touches Mastery.
 ///
-/// The percentages ADD rather than compound: a full chain plus the capstone is +150%, i.e. x2.5,
-/// not x3. Deliberate, so the ceiling stays somewhere a player can reason about.
+/// MASTERY BOOST (same day): mastery_boost_1..2, +50 / +100% on Mastery XP only, highest tier
+/// wins, independent of Exp Boost. Mastery accrues inside Farmer.gainExperience only once every
+/// skill is 10 (Farmer.Level &gt;= 25), so <paramref name="allSkillsMaxed"/> picks which chain
+/// applies to a gain.
+///
+/// RETIRED (still honoured until the hand-over, <see cref="XpUpgradeHandover"/>): the per-skill
+/// chains xp_mult_&lt;slug&gt;_1..4 (+25% per tier on that skill) and the Junimo Insight capstone
+/// xp_mult_all (+50% on every skill and on Mastery). A save holding them keeps them working until
+/// the end of the loop. If such a player also owns Exp Boost or Mastery Boost, each gain takes
+/// the better of the old and the new bonus, never both added (controller ruling, 2026-10-26).
 ///
 /// Pure Core: no Stardew dependencies, deterministic, unit-tested.
 /// </summary>
 public static class XpMultiplierRules
 {
-    public const string CapstoneId = "xp_mult_all";
+    public const string ExpBoostPrefix = "exp_boost_";
+    public const string MasteryBoostPrefix = "mastery_boost_";
 
-    /// <summary>Percent added per per-skill tier owned (tier N = +25N%).</summary>
-    public const int PercentPerTier = 25;
+    /// <summary>Exp Boost percent by tier, indexed [1..5].</summary>
+    private static readonly int[] ExpBoostPercents = { 0, 25, 50, 75, 100, 150 };
 
-    /// <summary>Percent the capstone adds on top of the per-skill total.</summary>
-    public const int CapstonePercent = 50;
+    /// <summary>Mastery Boost percent by tier, indexed [1..2].</summary>
+    private static readonly int[] MasteryBoostPercents = { 0, 50, 100 };
 
-    /// <summary>Highest per-skill tier, so a full chain is +100% (double).</summary>
-    public const int MaxTier = 4;
+    public static int ExpBoostTiers => ExpBoostPercents.Length - 1;
+    public static int MasteryBoostTiers => MasteryBoostPercents.Length - 1;
+
+    public static string ExpBoostId(int tier) => ExpBoostPrefix + tier;
+    public static string MasteryBoostId(int tier) => MasteryBoostPrefix + tier;
+
+    public static int ExpBoostPercent(int tier) => ExpBoostPercents[tier];
+    public static int MasteryBoostPercent(int tier) => MasteryBoostPercents[tier];
+
+    /// <summary>The retired Junimo Insight capstone.</summary>
+    public const string LegacyInsightId = "xp_mult_all";
+
+    /// <summary>Retired per-skill chain: percent added per tier owned (tier N = +25N%).</summary>
+    public const int LegacyPercentPerTier = 25;
+
+    /// <summary>Retired Junimo Insight: percent added on every skill and on Mastery.</summary>
+    public const int LegacyInsightPercent = 50;
+
+    /// <summary>Highest retired per-skill tier.</summary>
+    public const int LegacyMaxTier = 4;
+
+    public static string LegacySkillId(string slug, int tier) => $"xp_mult_{slug}_{tier}";
 
     /// <summary>Vanilla Farmer.gainExperience skill indices (0=farming, 1=fishing,
     /// 2=foraging, 3=mining, 4=combat; 5=luck is dead in 1.6). Null for anything else.</summary>
@@ -46,31 +67,58 @@ public static class XpMultiplierRules
     };
 
     /// <summary>Percent to scale an XP gain to: 100 means unchanged, 125 means +25%. Always
-    /// &gt;= 100. Percent rather than a factor because the steps are now fractional and integer
+    /// &gt;= 100. Percent rather than a factor because the steps are fractional and integer
     /// percent keeps the maths exact - see <see cref="Apply"/> for the rounding.</summary>
     public static int PercentFor(MetaState meta, int which, bool allSkillsMaxed)
     {
         if (meta == null) return 100;
-        bool capstone = meta.HasUpgrade(CapstoneId);
         if (allSkillsMaxed)
-            return capstone ? 100 + CapstonePercent : 100;
+            return 100 + System.Math.Max(MasteryBoostBonus(meta), LegacyMasteryBonus(meta));
 
         string? slug = SlugForVanillaSkill(which);
         if (slug == null) return 100;
-
-        int percent = 100;
-        for (int tier = MaxTier; tier >= 1; tier--)
-            if (meta.HasUpgrade($"xp_mult_{slug}_{tier}"))
-            {
-                percent += PercentPerTier * tier;
-                break;
-            }
-        if (capstone) percent += CapstonePercent;
-        return percent;
+        return 100 + System.Math.Max(ExpBoostBonus(meta), LegacySkillBonus(meta, slug));
     }
 
+    /// <summary>Exp Boost's bonus: the highest owned tier's percent, 0 without any.</summary>
+    public static int ExpBoostBonus(MetaState meta)
+    {
+        for (int tier = ExpBoostTiers; tier >= 1; tier--)
+            if (meta.HasUpgrade(ExpBoostId(tier)))
+                return ExpBoostPercents[tier];
+        return 0;
+    }
+
+    /// <summary>Mastery Boost's bonus: the highest owned tier's percent, 0 without any.</summary>
+    public static int MasteryBoostBonus(MetaState meta)
+    {
+        for (int tier = MasteryBoostTiers; tier >= 1; tier--)
+            if (meta.HasUpgrade(MasteryBoostId(tier)))
+                return MasteryBoostPercents[tier];
+        return 0;
+    }
+
+    /// <summary>The retired upgrades' bonus on one skill: highest per-skill tier times 25, plus
+    /// Junimo Insight's 50 (the old rule added them).</summary>
+    public static int LegacySkillBonus(MetaState meta, string slug)
+    {
+        int bonus = 0;
+        for (int tier = LegacyMaxTier; tier >= 1; tier--)
+            if (meta.HasUpgrade(LegacySkillId(slug, tier)))
+            {
+                bonus = LegacyPercentPerTier * tier;
+                break;
+            }
+        if (meta.HasUpgrade(LegacyInsightId)) bonus += LegacyInsightPercent;
+        return bonus;
+    }
+
+    /// <summary>The retired upgrades' bonus on Mastery: Junimo Insight's 50 only.</summary>
+    public static int LegacyMasteryBonus(MetaState meta)
+        => meta.HasUpgrade(LegacyInsightId) ? LegacyInsightPercent : 0;
+
     /// <summary>Scale one XP gain by a percent, rounding to nearest and never below the raw
-    /// amount. Rounding matters now that the steps are fractional: a 3 XP nibble at +25% is 3.75,
+    /// amount. Rounding matters because the steps are fractional: a 3 XP nibble at +25% is 3.75,
     /// and truncating every one of those to 3 would quietly erase the whole first tier on the
     /// small, frequent gains that make up most of a day.</summary>
     public static int Apply(int amount, int percent)

@@ -7,13 +7,13 @@ using TheLongestYear.Core;
 
 namespace TheLongestYear.UI
 {
-    /// <summary>One-button notice shown when the player ticks "Skip intro" on character creation:
-    /// the opening cutscene is the only in-game explanation of the loop, so first-timers are
-    /// advised to watch it. Attached as a CHILD of the active menu (the title menu) rather than
-    /// replacing it, because <c>Game1.updateActiveMenu</c> and the menu draw loop both walk the
-    /// child chain, while a vanilla <c>DialogueBox</c> only closes when it IS the active menu.
-    /// The checkbox keeps whatever the player set; OK just dismisses.</summary>
-    internal sealed class IntroSkipNoticeMenu : IClickableMenu
+    /// <summary>One-button notice attached as a CHILD of the active menu rather than replacing it,
+    /// because <c>Game1.updateActiveMenu</c> and the menu draw loop both walk the child chain, while
+    /// a vanilla <c>DialogueBox</c> only closes when it IS the active menu. OK just dismisses.
+    /// Used for the "Skip intro" advice on character creation (the opening cutscene is the only
+    /// in-game explanation of the loop) and for the XP hand-over notice over the Junimo Shrine
+    /// (<see cref="XpUpgradeHandover"/>).</summary>
+    internal sealed class NoticeMenu : IClickableMenu
     {
         private const int BoxWidth = 900;
         private const int Pad = 32;
@@ -23,9 +23,19 @@ namespace TheLongestYear.UI
         private readonly string _text;
         private readonly ClickableTextureComponent _ok;
 
-        public IntroSkipNoticeMenu()
+        /// <summary>Show the pending XP hand-over notice over <paramref name="host"/> (a shrine
+        /// that just opened) and clear it, so it shows once. False when nothing is pending.</summary>
+        public static bool ShowXpHandoverIfPending(MetaState state, IClickableMenu host)
         {
-            _text = Game1.parseText(Strings.Get("intro.skip-notice"), Game1.dialogueFont, BoxWidth - Pad * 2);
+            if (state?.PendingXpHandoverNotice == null || host == null) return false;
+            XpHandoverNotice notice = XpUpgradeHandover.TakeNotice(state);
+            host.SetChildMenu(new NoticeMenu(XpUpgradeHandover.NoticeText(notice)));
+            return true;
+        }
+
+        public NoticeMenu(string text)
+        {
+            _text = Game1.parseText(text, Game1.dialogueFont, BoxWidth - Pad * 2);
             int textHeight = (int)Game1.dialogueFont.MeasureString(_text).Y;
             width = BoxWidth;
             height = Pad * 2 + textHeight + TextToButtonGap + OkSize;

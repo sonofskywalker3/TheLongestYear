@@ -138,6 +138,11 @@ public class I18nGuardTests
                 _ = Strings.Get(boost.NameKey);
                 _ = Strings.Get(boost.DescKey);
             }
+            // The retired XP upgrades are named in the hand-over notice from ids, not literals.
+            foreach (string id in XpUpgradeHandover.RetiredIds)
+                _ = XpUpgradeHandover.RetiredName(id);
+            _ = XpUpgradeHandover.NoticeText(new XpHandoverNotice { HadInsight = false });
+            _ = XpUpgradeHandover.NoticeText(new XpHandoverNotice { HadInsight = true });
             // dejavu.* is resolved from the key set at runtime (DejaVuLines); execute the same walk.
             foreach (string key in DejaVuLines.AllKeys(map.Keys.ToList()))
                 _ = Strings.Get(key);
