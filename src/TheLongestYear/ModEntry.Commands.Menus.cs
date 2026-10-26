@@ -356,6 +356,10 @@ namespace TheLongestYear
                 $"screen height {Game1.uiViewport.Height}.", LogLevel.Info);
             if (Has("snapcheck")) LogBundleTabSnaps(page, tab);
             if (Has("log")) SelectSideTab(page, tab);
+            // scroll <n>: move the shown log n rows down, as the mouse wheel does.
+            int scrollAt = words.FindIndex(w => w.Equals("scroll", StringComparison.OrdinalIgnoreCase));
+            if (scrollAt >= 0 && scrollAt + 1 < words.Count && int.TryParse(words[scrollAt + 1], out int rows))
+                for (int i = 0; i < rows; i++) BundleLogSideTab.LogOn(page)?.receiveScrollWheelAction(-1);
 
             if (shotAt < 0) return;
             if (!Has("hover"))
