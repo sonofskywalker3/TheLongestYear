@@ -283,7 +283,7 @@ namespace TheLongestYear
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
-            TheLongestYear.Integration.BundleLogTab.AttachLauncher(() => _launcher);
+            TheLongestYear.Integration.BundleLogButton.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);

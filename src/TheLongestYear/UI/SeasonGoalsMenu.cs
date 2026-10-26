@@ -46,7 +46,7 @@ namespace TheLongestYear.UI
         // in place of item sprites, one per still-owed payment.
         private static readonly Rectangle CoinIconSource = new Rectangle(280, 410, 16, 16);
 
-        // Page mode (the Bundle Log tab inside the game menu): the menu's own box is drawn by the
+        // Page mode (shown inside the game menu from the inventory page's Bundle Log button): the menu's own box is drawn by the
         // game menu, the tab row sits above it, and the content keeps inside its border.
         private const int PageSideInset = 48;
         private const int PageTitleY = 108;
@@ -73,7 +73,7 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
 
-        // True when this is the Bundle Log tab's page inside the game menu rather than its own menu.
+        // True when this is the log shown inside the game menu (from the inventory page's Bundle Log button) rather than its own menu.
         private readonly bool _asPage;
         private readonly Rectangle _pageBounds;
 
@@ -98,7 +98,7 @@ namespace TheLongestYear.UI
                 this.snapToDefaultClickableComponent();
         }
 
-        /// <summary>The same log as a page of the game menu (the Bundle Log tab).
+        /// <summary>The same log as a page of the game menu, shown in place of the inventory by its Bundle Log button.
         /// <paramref name="pageBounds"/> is the game menu's own box; the game menu draws the box,
         /// the tabs, the close button and the cursor.</summary>
         public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
@@ -117,8 +117,8 @@ namespace TheLongestYear.UI
             RecomputeBoundsAndLayout();
         }
 
-        /// <summary>Re-reads the ledger when the tab is shown. The page is built with the game menu
-        /// (every time it opens), so this catches donations made since, as the book does on open.</summary>
+        /// <summary>Re-reads the ledger when the log is shown. The page is built each time it opens,
+        /// and this catches donations made since, as the book does on open.</summary>
         internal void Refresh()
         {
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_run);
@@ -288,8 +288,8 @@ namespace TheLongestYear.UI
                     "row-" + i)
                 {
                     myID = RowIdBase + i,
-                    // On the tab page, up from the top row goes to the Bundle Log tab.
-                    upNeighborID = i == 0 ? (_asPage ? BundleLogTabRules.TabComponentId : ScrollUpId) : RowIdBase + i - 1,
+                    // Inside the game menu, up from the top row goes to the inventory tab.
+                    upNeighborID = i == 0 ? (_asPage ? GameMenu.region_inventoryTab : ScrollUpId) : RowIdBase + i - 1,
                     downNeighborID = i == _rowsPerPage - 1 ? ScrollDownId : RowIdBase + i + 1,
                     rightNeighborID = ScrollUpId
                 };
@@ -302,7 +302,7 @@ namespace TheLongestYear.UI
                 Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f)
             {
                 myID = ScrollUpId,
-                upNeighborID = _asPage ? BundleLogTabRules.TabComponentId : -1,
+                upNeighborID = _asPage ? GameMenu.region_inventoryTab : -1,
                 downNeighborID = ScrollDownId,
                 leftNeighborID = RowIdBase
             };

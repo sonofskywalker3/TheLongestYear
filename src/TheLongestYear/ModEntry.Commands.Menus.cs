@@ -333,48 +333,74 @@ namespace TheLongestYear
         private void CmdBundleTab(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
-            var words = new System.Collections.Generic.List<string>(args);
-            int shotAt = words.FindIndex(w => w.Equals("shot", System.StringComparison.OrdinalIgnoreCase));
-            string[] shotPath = shotAt >= 0 ? words.Skip(shotAt + 1).ToArray() : System.Array.Empty<string>();
+            var words = new List<string>(args);
+            int shotAt = words.FindIndex(w => w.Equals("shot", StringComparison.OrdinalIgnoreCase));
+            string[] shotPath = shotAt >= 0 ? words.Skip(shotAt + 1).ToArray() : Array.Empty<string>();
             if (shotAt >= 0) words.RemoveRange(shotAt, words.Count - shotAt);
-            bool stayOnInventory = words.Any(w => w.Equals("inventory", System.StringComparison.OrdinalIgnoreCase));
-            bool hover = words.Any(w => w.Equals("hover", System.StringComparison.OrdinalIgnoreCase));
+            bool Has(string word) => words.Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
 
             Game1.activeClickableMenu = null;
-            StardewValley.Menus.GameMenu menu = TheLongestYear.Integration.BundleLogTab.OpenOnTab(!stayOnInventory);
-            if (menu == null) { this.Monitor.Log("tly_bundletab: no Bundle Log tab (is a run active?).", LogLevel.Warn); return; }
-            int index = TheLongestYear.Integration.BundleLogTab.IndexIn(menu);
-            // The label as if the cursor were on the tab; the next hover update clears it.
-            if (hover) menu.hoverText = menu.tabs[index].label;
-            this.Monitor.Log($"tly_bundletab: tab {index} of {menu.tabs.Count} at {menu.tabs[index].bounds}, open tab {menu.currentTab}.", LogLevel.Info);
-            if (words.Any(w => w.Equals("snapcheck", System.StringComparison.OrdinalIgnoreCase)))
-                LogBundleTabSnaps(menu, index);
-            if (shotAt >= 0) TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
+            GameMenu menu = BundleLogButton.OpenForDebug(showLog: false);
+            InventoryPage page = BundleLogButton.InventoryOf(menu);
+            ClickableTextureComponent button = BundleLogButton.ButtonOn(page);
+            if (menu == null || button == null) { this.Monitor.Log("tly_bundletab: no Bundle Log button (is a run active?).", LogLevel.Warn); return; }
+            this.Monitor.Log($"tly_bundletab: button at {button.bounds}, bag at {page.organizeButton?.bounds}, " +
+                $"Junimo note at {page.junimoNoteIcon?.bounds}, trash at {page.trashCan?.bounds}.", LogLevel.Info);
+            if (Has("snapcheck")) LogBundleButtonSnaps(menu, page, button);
+            if (Has("log")) BundleLogButton.OpenLog(menu, playSound: false);
+
+            if (shotAt < 0) return;
+            if (!Has("hover") || BundleLogButton.IsLogOpen(menu))
+            {
+                TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
+                return;
+            }
+            // The label as if the cursor were on the button: the tooltip follows the last mouse
+            // position, so that is set for this one draw (the real mouse is not moved) and put back.
+            Microsoft.Xna.Framework.Input.MouseState mouse = Game1.oldMouseState;
+            try
+            {
+                float scale = Game1.options.uiScale;
+                Microsoft.Xna.Framework.Point at = button.bounds.Center;
+                Game1.oldMouseState = new Microsoft.Xna.Framework.Input.MouseState(
+                    (int)(at.X * scale), (int)(at.Y * scale), mouse.ScrollWheelValue,
+                    mouse.LeftButton, mouse.MiddleButton, mouse.RightButton, mouse.XButton1, mouse.XButton2);
+                page.performHoverAction(at.X, at.Y);
+                TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
+            }
+            finally
+            {
+                Game1.oldMouseState = mouse;
+            }
         }
 
         /// <summary>Follows the controller neighbours by id without moving the cursor (snapping moves the
-        /// real mouse): the log page's top row up, the tab left and right, and the triggers.</summary>
-        private void LogBundleTabSnaps(StardewValley.Menus.GameMenu menu, int index)
+        /// real mouse), then opens the log, checks its top row leads to the inventory tab, and sends the
+        /// menu key to check it comes back to the inventory.</summary>
+        private void LogBundleButtonSnaps(GameMenu menu, InventoryPage page, ClickableTextureComponent button)
         {
-            string Name(StardewValley.Menus.IClickableMenu page, int id)
-                => page?.getComponentWithID(id) is { } c ? $"{c.name}({c.myID})" : $"none({id})";
+            string Name(IClickableMenu p, int id)
+                => p?.getComponentWithID(id) is { } c ? $"{c.name}({c.myID})" : $"none({id})";
 
-            menu.changeTab(index, playSound: false);
-            StardewValley.Menus.IClickableMenu page = menu.GetCurrentPage();
-            StardewValley.Menus.ClickableComponent tab = menu.tabs[index];
-            StardewValley.Menus.ClickableComponent row0 = page.allClickableComponents.FirstOrDefault(c => c.name == "row-0");
-            StardewValley.Menus.ClickableComponent before = menu.tabs[index - 1];
-            this.Monitor.Log($"tly_bundletab snap: row-0 up -> {Name(page, row0?.upNeighborID ?? -1)}; tab left -> {Name(page, tab.leftNeighborID)}; " +
-                $"tab down -> {tab.downNeighborID} (-99999 = the page's default, {page.GetType().Name}); {before.name} right -> {Name(page, before.rightNeighborID)}.", LogLevel.Info);
+            this.Monitor.Log($"tly_bundletab snap: button up -> {Name(page, button.upNeighborID)}, down -> {Name(page, button.downNeighborID)}, " +
+                $"left -> {Name(page, button.leftNeighborID)}; bag down -> {Name(page, page.organizeButton?.downNeighborID ?? -1)}; " +
+                $"trash up -> {Name(page, page.trashCan?.upNeighborID ?? -1)}; in the page's list: {page.allClickableComponents?.Contains(button)}.", LogLevel.Info);
 
-            menu.changeTab(index - 1, playSound: false);
-            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.RightTrigger);
-            int afterRight = menu.currentTab;
-            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.RightTrigger);
-            int afterSecondRight = menu.currentTab;
-            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.LeftTrigger);
-            this.Monitor.Log($"tly_bundletab snap: right trigger from tab {index - 1} -> {afterRight}, again -> {afterSecondRight}, left trigger -> {menu.currentTab}.", LogLevel.Info);
-            menu.changeTab(index, playSound: false);
+            bool opened = BundleLogButton.OpenLog(menu, playSound: false);
+            IClickableMenu log = menu.GetCurrentPage();
+            ClickableComponent row0 = log?.allClickableComponents?.FirstOrDefault(c => c.name == "row-0");
+            this.Monitor.Log($"tly_bundletab snap: opened {opened}, page {log?.GetType().Name}, row-0 up -> {Name(log, row0?.upNeighborID ?? -1)}, " +
+                $"inventory tab down -> {menu.tabs[GameMenu.inventoryTab].downNeighborID} (-99999 = the page's default).", LogLevel.Info);
+
+            Microsoft.Xna.Framework.Input.Keys back = Game1.options.getFirstKeyboardKeyFromInputButtonList(Game1.options.menuButton);
+            menu.receiveKeyPress(back);
+            this.Monitor.Log($"tly_bundletab snap: {back} -> menu still open {Game1.activeClickableMenu == menu}, page {menu.GetCurrentPage()?.GetType().Name}, " +
+                $"log open {BundleLogButton.IsLogOpen(menu)}.", LogLevel.Info);
+
+            BundleLogButton.OpenLog(menu, playSound: false);
+            menu.changeTab(1, playSound: false);
+            menu.changeTab(GameMenu.inventoryTab, playSound: false);
+            this.Monitor.Log($"tly_bundletab snap: log, then Skills, then Inventory -> page {menu.GetCurrentPage()?.GetType().Name}.", LogLevel.Info);
         }
 
         private void CmdOpenShop(string command, string[] args)
