@@ -166,6 +166,7 @@ namespace TheLongestYear.Loop
             // ourselves from the old path: keep everything before the last underscore (the player
             // name component), append the new uniqueID.
             string oldSavePath = Constants.CurrentSavePath;
+            ulong oldId = Game1.uniqueIDForThisGame;
             Game1.uniqueIDForThisGame = Utility.NewUniqueIdForThisGame();
             Game1.weatherForTomorrow = "Sun";
 
@@ -184,6 +185,13 @@ namespace TheLongestYear.Loop
             _monitor.Log(
                 $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
                 LogLevel.Trace);
+
+            // Other mods' per-save data keyed on the old folder or id moves to the new key now,
+            // before SMAPI raises the SaveLoaded the rebuilt world owes them (they read it there).
+            _carriedModData = null;
+            RestoreStep("other mods' save data", () =>
+                _carriedModData = ModSaveDataCarryover.Carry(
+                    _monitor, _abandonedSaveFolder, oldId, OtherModFolders?.Invoke(), _modDirectory));
         }
 
         /// <summary>Reset phase (steps 0a to 0h): capture everything the rebuild would wipe that a keep upgrade carries over.</summary>
