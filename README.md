@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.0.23
+## What's New in 1.0.24
+
+**New: Keep Trash Can.** Four new Loadout upgrades (Copper, Steel, Gold and Iridium, 50 / 100 / 175 / 300 JP) let you start each loop with your trash can at the tier you keep, instead of back at the basic one. Each tier opens once you have upgraded the can that far in the current loop. Thanks to tanky24u, whose trash can report led to this.
+
+## 1.0.23
 
 **New: a Gear tab in Junimo Upgrades.** Nine new upgrade chains give your tools and weapons the effect of a Forge enchantment, no Volcano needed: faster swings, cheaper energy, harder hits, wider charges, a bigger watering can, a steadier fishing line, and weapon damage, speed and defense. Each one covers every tool it fits at once. Gear that already has the real enchantment gets the better of the two, never both. Thanks to tanky24u for the suggestion.
 
