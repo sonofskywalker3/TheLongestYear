@@ -59,7 +59,7 @@ namespace TheLongestYear.Loop
     [HarmonyPatch(typeof(Tool), nameof(Tool.AnimationSpeedModifier), MethodType.Getter)]
     internal static class GearSwingSpeedPatch
     {
-        // ReSharper disable once InconsistentNaming — Harmony convention.
+        // ReSharper disable once InconsistentNaming: Harmony convention.
         private static void Postfix(Tool __instance, ref float __result)
         {
             int tier = UpgradeChecker.GetTier(GearPowers.Swift, GearPowers.SwiftTiers);

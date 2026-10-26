@@ -91,4 +91,50 @@ public class GearPowersTests
         Assert.False(GearPowers.Fits(GearPowers.Light, ToolKind.Other));
         Assert.True(GearPowers.Fits(GearPowers.Light, ToolKind.FishingRod));
     }
+
+    [Fact]
+    public void Can_and_line_tiers()
+    {
+        Assert.Equal(80, GearPowers.CanCapacity(40, 1));
+        Assert.Equal(40, GearPowers.CanCapacity(40, 0));
+        Assert.False(GearPowers.CanBottomless(1));
+        Assert.True(GearPowers.CanBottomless(2));
+        Assert.False(GearPowers.LineSavesBait(0));
+        Assert.True(GearPowers.LineSavesBait(1));
+        Assert.True(GearPowers.LineSavesBait(2));
+        Assert.False(GearPowers.LineAutoHook(1));
+        Assert.True(GearPowers.LineAutoHook(2));
+    }
+
+    [Fact]
+    public void Each_chain_fits_only_its_tools()
+    {
+        Assert.True(GearPowers.Fits(GearPowers.Heavy, ToolKind.Pickaxe));
+        Assert.True(GearPowers.Fits(GearPowers.Heavy, ToolKind.Axe));
+        Assert.False(GearPowers.Fits(GearPowers.Heavy, ToolKind.Hoe));
+        Assert.True(GearPowers.Fits(GearPowers.Reach, ToolKind.Hoe));
+        Assert.True(GearPowers.Fits(GearPowers.Reach, ToolKind.WateringCan));
+        Assert.False(GearPowers.Fits(GearPowers.Reach, ToolKind.Pickaxe));
+        Assert.True(GearPowers.Fits(GearPowers.Can, ToolKind.WateringCan));
+        Assert.False(GearPowers.Fits(GearPowers.Can, ToolKind.Hoe));
+        Assert.True(GearPowers.Fits(GearPowers.Line, ToolKind.FishingRod));
+        Assert.False(GearPowers.Fits(GearPowers.Line, ToolKind.WateringCan));
+        Assert.True(GearPowers.Fits(GearPowers.Quick, ToolKind.MeleeWeapon));
+        Assert.False(GearPowers.Fits(GearPowers.Quick, ToolKind.Scythe));
+        Assert.True(GearPowers.Fits(GearPowers.Guard, ToolKind.MeleeWeapon));
+        Assert.False(GearPowers.Fits(GearPowers.Guard, ToolKind.Scythe));
+    }
+
+    [Fact]
+    public void Quickness_is_the_better_of_the_tier_and_the_emerald_in_swing_time()
+    {
+        // No Emerald: the tier as is.
+        Assert.Equal(0.45f, GearPowers.ExtraWeaponSpeed(3, 0, 0), 4);
+        // Speed-0 sword with one Emerald is speed 5 (200 ms) against a 400 ms swing at tier 3 (220 ms): the gem wins.
+        Assert.Equal(0f, GearPowers.ExtraWeaponSpeed(3, 1, 5), 4);
+        // Club (speed -8, 720 ms) with one Emerald is speed -3 (520 ms): the tier (396 ms) still beats it.
+        float m = GearPowers.ExtraWeaponSpeed(3, 1, -3);
+        Assert.True(m > 0f);
+        Assert.Equal(720f * 0.55f, 520f * (1f - m), 2);
+    }
 }

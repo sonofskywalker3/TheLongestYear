@@ -209,7 +209,12 @@ namespace TheLongestYear.Loop
     internal static class GearCanNewPatch
     {
         // ReSharper disable once InconsistentNaming: Harmony convention.
-        private static void Postfix(WateringCan __instance) => GearReach.ApplyCapacity(__instance);
+        private static void Postfix(WateringCan __instance)
+        {
+            bool wasFull = __instance.WaterLeft == __instance.waterCanMax;
+            GearReach.ApplyCapacity(__instance);
+            if (wasFull) __instance.WaterLeft = __instance.waterCanMax;
+        }
     }
 
     /// <summary>

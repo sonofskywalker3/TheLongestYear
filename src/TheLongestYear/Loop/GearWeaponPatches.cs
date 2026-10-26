@@ -25,7 +25,7 @@ namespace TheLongestYear.Loop
             int guard = UpgradeChecker.GetTier(GearPowers.Guard, GearPowers.GuardTiers);
 
             if (quick > 0)
-                effects.WeaponSpeedMultiplier.Value += GearPowers.ExtraWeaponSpeed(quick, GemLevel<EmeraldEnchantment>(__instance));
+                effects.WeaponSpeedMultiplier.Value += GearPowers.ExtraWeaponSpeed(quick, GemLevel<EmeraldEnchantment>(__instance), __instance.speed.Value);
             if (guard > 0)
                 effects.Defense.Value += GearPowers.ExtraDefense(guard, GemLevel<TopazEnchantment>(__instance));
         }

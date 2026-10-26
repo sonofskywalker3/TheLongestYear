@@ -50,15 +50,15 @@ public static class GearPowers
     private const float DamagePerRubyLevel = 0.10f;
 
     /// <summary>
-    /// What one Emerald level is worth in WeaponSpeedMultiplier terms. Emerald adds 5 to the weapon's
-    /// speed per level and a swing takes (400 - speed * 40) ms (MeleeWeapon.setFarmerAnimating), so one
-    /// level cuts 200 ms. The multiplier cuts swipeSpeed * multiplier, so 200 ms is 0.50 for a speed-0
-    /// weapon and more for faster ones. 0.50 is the floor, which keeps the Junimo bonus from ever
-    /// out-stacking the gem.
+    /// A swing takes (400 - speed * 40) ms times (1 - WeaponSpeedMultiplier) (MeleeWeapon.setFarmerAnimating),
+    /// and each Emerald level adds 5 speed, so it saves 200 ms of the base swing. The swing times are
+    /// compared directly in <see cref="ExtraWeaponSpeed"/>.
     /// </summary>
-    private const float EmeraldInSpeedMultiplier = 0.50f;
+    private const int BaseSwingMs = 400;
+    private const int SwingMsPerSpeed = 40;
+    private const int EmeraldSpeedPerLevel = 5;
 
-    /// <summary>Quickness tiers 0..3 as WeaponSpeedMultiplier. Tier 3 (0.45) sits just under one Emerald (0.50).</summary>
+    /// <summary>Quickness tiers 0..3 as WeaponSpeedMultiplier. </summary>
     private static readonly float[] QuickSteps = { 0f, 0.15f, 0.30f, 0.45f };
 
     private static readonly float[] Swing = { 1.0f, 0.90f, 0.80f, 0.70f };
@@ -119,8 +119,20 @@ public static class GearPowers
     public static int ExtraDamage(int tier, int rubyLevel, int baseDamage)
         => Math.Max(0, tier - rubyLevel) * Math.Max(1, (int)(baseDamage * DamagePerRubyLevel));
 
-    public static float ExtraWeaponSpeed(int tier, int emeraldLevel)
-        => Math.Max(0f, QuickSteps[Math.Clamp(tier, 0, QuickTiers)] - EmeraldInSpeedMultiplier * emeraldLevel);
+    /// <summary>
+    /// Multiplier Quickness adds on top of the weapon's own gems so the swing is the better of the two, never
+    /// both. <paramref name="weaponSpeed"/> is the weapon's current speed (gems included). With G the swing
+    /// time as it is and B the swing time without the Emerald, the tier alone would give B * (1 - q);
+    /// the extra m solves G * (1 - m) = B * (1 - q), floored at 0.
+    /// </summary>
+    public static float ExtraWeaponSpeed(int tier, int emeraldLevel, int weaponSpeed)
+    {
+        float q = QuickSteps[Math.Clamp(tier, 0, QuickTiers)];
+        float with = BaseSwingMs - weaponSpeed * SwingMsPerSpeed;
+        if (with <= 0f) return 0f;
+        float without = BaseSwingMs - (weaponSpeed - EmeraldSpeedPerLevel * emeraldLevel) * SwingMsPerSpeed;
+        return Math.Max(0f, 1f - without * (1f - q) / with);
+    }
 
     public static int ExtraDefense(int tier, int topazLevel) => Math.Max(0, tier - topazLevel);
 
