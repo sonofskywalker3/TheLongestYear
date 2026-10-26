@@ -3,12 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.19 - unreleased
+## 1.0.20 - unreleased
 
 ### Added
 
 - **A new Gear tab in Junimo Upgrades.** Nine new upgrade chains give your tools and weapons the effect of a Forge enchantment without forging: faster swings, cheaper energy, harder hits, wider charges, a bigger watering can, a steadier fishing line, and weapon damage, speed and defense. A tool that already carries the real enchantment gets the better of the two, never both. Thanks to tanky24u for the suggestion.
-- **The Bundle Log has its own tab in the inventory menu,** after the last tab, so you can check which bundle items you still need this season from anywhere without going back to the book. Thanks to Nijah for the idea.
+- **The Bundle Log has its own button on the inventory page,** right under the organize button. Click it, or press A on it, to check which bundle items you still need this season from anywhere, without going back to the book; Escape, B or the inventory tab takes you back. Thanks to Nijah for the idea.
 
 ### Changed
 
