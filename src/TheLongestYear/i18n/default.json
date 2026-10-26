@@ -68,7 +68,7 @@
     "joja.morris.accept": "I accept",
     "joja.morris.decline": "No thanks",
     // Every line after a No ends in $u (the reconsider question aside, see below): Morris's scowl (portrait cell 3). Untagged lines show his smile.
-    "joja.morris.refuse": "I'm sorry to hear that. Joja reserves the right to refuse service to anyone, for any reason. I'm afraid you may not shop here anymore, and you won't be working for Joja again.$u",
+    "joja.morris.refuse": "Then I'm afraid I can't do any other business with you. Good day.$u",
     // Jeff's lines (2026-10-26): talking to Morris again after a No asks once more. The question
     // is a question box, which shows no portrait (as the first ask), so it carries no tag.
     "joja.morris.reconsider": "Sorry, I'm under a lot of pressure to make this farm deal happen, are you sure you won't reconsider?",
