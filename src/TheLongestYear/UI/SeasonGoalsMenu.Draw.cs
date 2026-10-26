@@ -142,7 +142,10 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            int drawCount = Math.Min(e.MissingItems.Count, maxIcons);
+            // Leave room for the "+N more" note inside the row's box when not every icon fits.
+            int drawCount = IconRowFit.Shown(e.MissingItems.Count, slot.bounds.Width - 32,
+                IngredientIconSize, IngredientIconSize + IngredientIconGap,
+                hidden => (int)Math.Ceiling(Game1.smallFont.MeasureString(MoreNote(hidden)).X));
             for (int k = 0; k < drawCount; k++)
             {
                 string itemId = e.MissingItems[k];
@@ -176,14 +179,16 @@ namespace TheLongestYear.UI
             // "+N more" overflow indicator if the row can't hold all missing icons.
             if (e.MissingItems.Count > drawCount)
             {
-                string more = Strings.Get("menu.goals.more", new Dictionary<string, string>
-                    { ["count"] = (e.MissingItems.Count - drawCount).ToString() });
+                string more = MoreNote(e.MissingItems.Count - drawCount);
                 Utility.drawTextWithShadow(b, more, Game1.smallFont,
                     new Vector2(iconRowX + drawCount * (IngredientIconSize + IngredientIconGap),
                                 iconRowY + 20),
                     Game1.textColor);
             }
         }
+
+        private static string MoreNote(int hidden)
+            => Strings.Get("menu.goals.more", new Dictionary<string, string> { ["count"] = hidden.ToString() });
 
         /// <summary>Right-aligned status badge: "checkpoint met" once the season's quota is
         /// satisfied; "needs N before {NextSeason} 1" otherwise; Winter swaps to "by run end"
