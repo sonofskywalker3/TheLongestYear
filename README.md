@@ -23,7 +23,27 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.0.0
+## What's New in 1.0.23
+
+**New: a Gear tab in Junimo Upgrades.** Nine new upgrade chains give your tools and weapons the effect of a Forge enchantment, no Volcano needed: faster swings, cheaper energy, harder hits, wider charges, a bigger watering can, a steadier fishing line, and weapon damage, speed and defense. Each one covers every tool it fits at once. Gear that already has the real enchantment gets the better of the two, never both. Thanks to tanky24u for the suggestion.
+
+**New: a Bundle Log tab on the Collections page.** Check which bundle items you still need this season from anywhere, without going back to the book. Thanks to Nijah for the idea.
+
+**Changed: one Exp Boost chain for all skills.** Exp Boost I to V in the Efficiency tab boosts all five skills at once: +25%, +50%, +75%, double and +150%, for 150, 350, 650, 1,000 and 2,000 JP. Mastery Boost I and II give +50% and double Mastery experience for 500 and 1,000 JP. If you owned the old per-skill upgrades or Junimo Insight, they keep working until your next rewind, then they are removed and every JP you spent on them comes back. Thanks to tanky24u for the feedback.
+
+**Changed: cheaper year-two seeds.** Pierre's Year 2 Seeds costs 5,000 JP (was 10,000), and the Garlic and Red Cabbage Mixed Seeds upgrades cost 2,000 each (were 3,000). Thanks to tanky24u.
+
+**Fixed: the first save after a rewind could fail.** With Farm Type Manager packs (Stardew Valley Expanded has one), the game could get stuck on the saving screen the first night after a rewind and lose the day. The rewind now waits for every mod to finish starting the new day before it saves, and anything another mod leaves lying around that the game can't save is set aside for the save instead of losing the day. Thanks to tanky24u and SylviaStormsinger.
+
+**Fixed: updating no longer resets your settings.** Mod managers replace the whole mod folder on an update, which took your settings with it. The mod now keeps a copy and puts it back. This one update still resets them once, since older versions never kept a copy. Thanks to tanky24u.
+
+**Fixed: other mods keep their settings through a rewind.** Mods that save settings per farm (UI Info Suite 2, for example) went back to their defaults every loop. Now they carry over. Thanks to Nijah.
+
+**Fixed: no more repeated items across bundles.** TLY Custom boards could ask for the same item in two bundles, such as a Common Mushroom in both Spring and Fall Foraging. Thanks to Nijah.
+
+**Fixed: the trash can resets.** It was the only tool that kept its upgrade through the rewind. Thanks to tanky24u.
+
+## 1.0.0
 
 **The Longest Year is out of beta.** This is the story update. It's best found in the game, so start a new farm with Skip intro off and play.
 
