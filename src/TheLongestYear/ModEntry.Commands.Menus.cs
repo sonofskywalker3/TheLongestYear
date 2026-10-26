@@ -339,33 +339,35 @@ namespace TheLongestYear
             if (shotAt >= 0) words.RemoveRange(shotAt, words.Count - shotAt);
             bool Has(string word) => words.Any(w => w.Equals(word, StringComparison.OrdinalIgnoreCase));
 
-            Game1.activeClickableMenu = null;
-            GameMenu menu = BundleLogButton.OpenForDebug(showLog: false);
-            InventoryPage page = BundleLogButton.InventoryOf(menu);
-            ClickableTextureComponent button = BundleLogButton.ButtonOn(page);
-            if (menu == null || button == null) { this.Monitor.Log("tly_bundletab: no Bundle Log button (is a run active?).", LogLevel.Warn); return; }
-            this.Monitor.Log($"tly_bundletab: button at {button.bounds}, bag at {page.organizeButton?.bounds}, " +
-                $"Junimo note at {page.junimoNoteIcon?.bounds}, trash at {page.trashCan?.bounds}.", LogLevel.Info);
-            if (Has("snapcheck")) LogBundleButtonSnaps(menu, page, button);
-            if (Has("log")) BundleLogButton.OpenLog(menu, playSound: false);
+            var menu = new GameMenu(GameMenu.collectionsTab, -1, playOpeningSound: false);
+            Game1.activeClickableMenu = menu;
+            CollectionsPage page = BundleLogSideTab.CollectionsOf(menu);
+            ClickableTextureComponent tab = BundleLogSideTab.TabOn(page);
+            if (page == null || tab == null) { this.Monitor.Log("tly_bundletab: no Bundle Log side tab (is a run active?).", LogLevel.Warn); return; }
+            if (menu.GetCurrentPage() != page) this.Monitor.Log($"tly_bundletab: the menu opened on {menu.GetCurrentPage()?.GetType().Name}, not the Collections page.", LogLevel.Warn);
+            string column = string.Join(", ", page.sideTabs.Values.OrderBy(t => t.bounds.Y).Select(t => $"{t.name}@{t.bounds.Y}"));
+            this.Monitor.Log($"tly_bundletab: tab at {tab.bounds}; column {column}; page box y {page.yPositionOnScreen}-{page.yPositionOnScreen + page.height}, " +
+                $"screen height {Game1.uiViewport.Height}.", LogLevel.Info);
+            if (Has("snapcheck")) LogBundleTabSnaps(page, tab);
+            if (Has("log")) SelectSideTab(page, tab);
 
             if (shotAt < 0) return;
-            if (!Has("hover") || BundleLogButton.IsLogOpen(menu))
+            if (!Has("hover"))
             {
                 TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
                 return;
             }
-            // The label as if the cursor were on the button: the tooltip follows the last mouse
+            // The label as if the cursor were on the tab: the tooltip follows the last mouse
             // position, so that is set for this one draw (the real mouse is not moved) and put back.
             Microsoft.Xna.Framework.Input.MouseState mouse = Game1.oldMouseState;
             try
             {
                 float scale = Game1.options.uiScale;
-                Microsoft.Xna.Framework.Point at = button.bounds.Center;
+                Microsoft.Xna.Framework.Point at = tab.bounds.Center;
                 Game1.oldMouseState = new Microsoft.Xna.Framework.Input.MouseState(
                     (int)(at.X * scale), (int)(at.Y * scale), mouse.ScrollWheelValue,
                     mouse.LeftButton, mouse.MiddleButton, mouse.RightButton, mouse.XButton1, mouse.XButton2);
-                page.performHoverAction(at.X, at.Y);
+                menu.performHoverAction(at.X, at.Y);
                 TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
             }
             finally
@@ -374,33 +376,34 @@ namespace TheLongestYear
             }
         }
 
+        /// <summary>Selects a side tab the way a click on it does (through the page's own click).</summary>
+        private static void SelectSideTab(CollectionsPage page, ClickableTextureComponent tab)
+            => page.receiveLeftClick(tab.bounds.Center.X, tab.bounds.Center.Y, playSound: false);
+
         /// <summary>Follows the controller neighbours by id without moving the cursor (snapping moves the
-        /// real mouse), then opens the log, checks its top row leads to the inventory tab, and sends the
-        /// menu key to check it comes back to the inventory.</summary>
-        private void LogBundleButtonSnaps(GameMenu menu, InventoryPage page, ClickableTextureComponent button)
+        /// real mouse): down from the last vanilla side tab, into the log and back, then away to
+        /// another collection.</summary>
+        private void LogBundleTabSnaps(CollectionsPage page, ClickableTextureComponent tab)
         {
             string Name(IClickableMenu p, int id)
                 => p?.getComponentWithID(id) is { } c ? $"{c.name}({c.myID})" : $"none({id})";
 
-            this.Monitor.Log($"tly_bundletab snap: button up -> {Name(page, button.upNeighborID)}, down -> {Name(page, button.downNeighborID)}, " +
-                $"left -> {Name(page, button.leftNeighborID)}; bag down -> {Name(page, page.organizeButton?.downNeighborID ?? -1)}; " +
-                $"trash up -> {Name(page, page.trashCan?.upNeighborID ?? -1)}; in the page's list: {page.allClickableComponents?.Contains(button)}.", LogLevel.Info);
+            ClickableTextureComponent above = page.sideTabs.Values.Where(t => t != tab).OrderByDescending(t => t.bounds.Y).FirstOrDefault();
+            this.Monitor.Log($"tly_bundletab snap: last vanilla tab {above?.name} down -> {Name(page, above?.downNeighborID ?? -1)}; " +
+                $"tab up -> {Name(page, tab.upNeighborID)}, down -> {tab.downNeighborID}, right -> {tab.rightNeighborID}; " +
+                $"in the page's list: {page.allClickableComponents?.Contains(tab)}.", LogLevel.Info);
 
-            bool opened = BundleLogButton.OpenLog(menu, playSound: false);
-            IClickableMenu log = menu.GetCurrentPage();
-            ClickableComponent row0 = log?.allClickableComponents?.FirstOrDefault(c => c.name == "row-0");
-            this.Monitor.Log($"tly_bundletab snap: opened {opened}, page {log?.GetType().Name}, row-0 up -> {Name(log, row0?.upNeighborID ?? -1)}, " +
-                $"inventory tab down -> {menu.tabs[GameMenu.inventoryTab].downNeighborID} (-99999 = the page's default).", LogLevel.Info);
+            SelectSideTab(page, tab);
+            SeasonGoalsMenu log = BundleLogSideTab.LogOn(page);
+            ClickableComponent row0 = page.getComponentWithID(SeasonGoalsMenu.FirstRowId);
+            this.Monitor.Log($"tly_bundletab snap: selected {page.currentTab == TheLongestYear.Core.Interactables.BundleLogSideTabRules.TabKey}, " +
+                $"log {(log != null ? "shown" : "missing")}, tab x {tab.bounds.X}; tab right -> {Name(page, tab.rightNeighborID)}; " +
+                $"row-0 left -> {Name(page, row0?.leftNeighborID ?? -1)}, up -> {Name(page, row0?.upNeighborID ?? -1)}.", LogLevel.Info);
 
-            Microsoft.Xna.Framework.Input.Keys back = Game1.options.getFirstKeyboardKeyFromInputButtonList(Game1.options.menuButton);
-            menu.receiveKeyPress(back);
-            this.Monitor.Log($"tly_bundletab snap: {back} -> menu still open {Game1.activeClickableMenu == menu}, page {menu.GetCurrentPage()?.GetType().Name}, " +
-                $"log open {BundleLogButton.IsLogOpen(menu)}.", LogLevel.Info);
-
-            BundleLogButton.OpenLog(menu, playSound: false);
-            menu.changeTab(1, playSound: false);
-            menu.changeTab(GameMenu.inventoryTab, playSound: false);
-            this.Monitor.Log($"tly_bundletab snap: log, then Skills, then Inventory -> page {menu.GetCurrentPage()?.GetType().Name}.", LogLevel.Info);
+            ClickableTextureComponent first = page.sideTabs.Values.OrderBy(t => t.bounds.Y).First();
+            SelectSideTab(page, first);
+            this.Monitor.Log($"tly_bundletab snap: clicked {first.name} -> current tab {page.currentTab}, log {(BundleLogSideTab.LogOn(page) != null ? "still shown" : "gone")}, " +
+                $"row-0 in the list {page.getComponentWithID(SeasonGoalsMenu.FirstRowId) != null}, tab x {tab.bounds.X}.", LogLevel.Info);
         }
 
         private void CmdOpenShop(string command, string[] args)

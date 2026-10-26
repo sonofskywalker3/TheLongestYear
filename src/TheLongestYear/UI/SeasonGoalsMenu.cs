@@ -46,14 +46,16 @@ namespace TheLongestYear.UI
         // in place of item sprites, one per still-owed payment.
         private static readonly Rectangle CoinIconSource = new Rectangle(280, 410, 16, 16);
 
-        // Page mode (shown inside the game menu from the inventory page's Bundle Log button): the menu's own box is drawn by the
-        // game menu, the tab row sits above it, and the content keeps inside its border.
+        // Page mode (shown on the game menu's Collections page from its Bundle Log side tab): the menu's own box is drawn by the
+        // game menu, the tab row sits above it, the side tabs to its left, and the content keeps inside its border.
         private const int PageSideInset = 48;
         private const int PageTitleY = 108;
         private const int PageListTop = 168;
         private const int PageBottomInset = 40;
 
         private const int RowIdBase = 8000;
+        /// <summary>Snap id of the top row, where the Bundle Log side tab leads right.</summary>
+        internal const int FirstRowId = RowIdBase;
         private const int ScrollUpId = 8900;
         private const int ScrollDownId = 8901;
 
@@ -73,7 +75,7 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
 
-        // True when this is the log shown inside the game menu (from the inventory page's Bundle Log button) rather than its own menu.
+        // True when this is the log shown inside the game menu (from the Collections page's Bundle Log side tab) rather than its own menu.
         private readonly bool _asPage;
         private readonly Rectangle _pageBounds;
 
@@ -98,9 +100,9 @@ namespace TheLongestYear.UI
                 this.snapToDefaultClickableComponent();
         }
 
-        /// <summary>The same log as a page of the game menu, shown in place of the inventory by its Bundle Log button.
-        /// <paramref name="pageBounds"/> is the game menu's own box; the game menu draws the box,
-        /// the tabs, the close button and the cursor.</summary>
+        /// <summary>The same log shown on the game menu's Collections page in place of the collection grid,
+        /// by its Bundle Log side tab. <paramref name="pageBounds"/> is the Collections page's own box; the
+        /// game menu draws the box, the tabs, the close button and the cursor, the page its side tabs.</summary>
         public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
             IReadOnlyList<BundleRequirement> requirements, Rectangle pageBounds)
             : base(pageBounds.X, pageBounds.Y, pageBounds.Width, pageBounds.Height, showUpperRightCloseButton: false)
@@ -288,8 +290,10 @@ namespace TheLongestYear.UI
                     "row-" + i)
                 {
                     myID = RowIdBase + i,
-                    // Inside the game menu, up from the top row goes to the inventory tab.
-                    upNeighborID = i == 0 ? (_asPage ? GameMenu.region_inventoryTab : ScrollUpId) : RowIdBase + i - 1,
+                    // On the Collections page, up from the top row goes to the Collections tab and
+                    // left goes back to the Bundle Log side tab.
+                    upNeighborID = i == 0 ? (_asPage ? GameMenu.region_collectionsTab : ScrollUpId) : RowIdBase + i - 1,
+                    leftNeighborID = _asPage ? TheLongestYear.Core.Interactables.BundleLogSideTabRules.TabComponentId : -1,
                     downNeighborID = i == _rowsPerPage - 1 ? ScrollDownId : RowIdBase + i + 1,
                     rightNeighborID = ScrollUpId
                 };
@@ -302,7 +306,7 @@ namespace TheLongestYear.UI
                 Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f)
             {
                 myID = ScrollUpId,
-                upNeighborID = _asPage ? GameMenu.region_inventoryTab : -1,
+                upNeighborID = _asPage ? GameMenu.region_collectionsTab : -1,
                 downNeighborID = ScrollDownId,
                 leftNeighborID = RowIdBase
             };
@@ -323,7 +327,7 @@ namespace TheLongestYear.UI
         }
 
         /// <summary>The base version only finds public fields by reflection, so it would drop the
-        /// rows and arrows. The game menu calls this on every tab change, then adds its tabs.</summary>
+        /// rows and arrows. On the Collections page they are added to the page's own list.</summary>
         public override void populateClickableComponentList()
         {
             allClickableComponents = new List<ClickableComponent>();
@@ -332,8 +336,6 @@ namespace TheLongestYear.UI
             if (_scrollDown != null) allClickableComponents.Add(_scrollDown);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
-            if (_asPage && Game1.activeClickableMenu is GameMenu gameMenu && gameMenu.GetCurrentPage() == this)
-                gameMenu.AddTabsToClickableComponents(this);
         }
 
         public override void snapToDefaultClickableComponent()
