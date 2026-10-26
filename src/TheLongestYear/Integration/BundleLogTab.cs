@@ -153,9 +153,10 @@ namespace TheLongestYear.Integration
         [HarmonyPatch(typeof(GameMenu), nameof(GameMenu.receiveGamePadButton))]
         internal static class RightTriggerPatch
         {
-            private static bool Prefix(GameMenu __instance, Buttons b)
+            // __0: the parameter is "button" in the live DLL and "b" in older decompiles.
+            private static bool Prefix(GameMenu __instance, Buttons __0)
             {
-                if (b != Buttons.RightTrigger) return true;
+                if (__0 != Buttons.RightTrigger) return true;
                 int? target = BundleLogTabRules.RightTriggerTarget(__instance.currentTab, IndexIn(__instance), GameMenu.numberOfTabs);
                 if (target == null || !__instance.pages[__instance.currentTab].readyToClose()) return true;
                 __instance.changeTab(target.Value);
