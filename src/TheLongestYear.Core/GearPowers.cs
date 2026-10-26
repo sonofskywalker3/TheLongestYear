@@ -46,7 +46,7 @@ public static class GearPowers
     /// <summary>Axe power is worth twice pickaxe power per level, as vanilla Powerful has it.</summary>
     private const int AxePowerPerLevel = 2;
 
-    /// <summary>Share of weapon damage one Ruby level adds (+10% base damage per level).</summary>
+    /// <summary>Share of base damage one Ruby level adds (+10% per level, at least 1).</summary>
     private const float DamagePerRubyLevel = 0.10f;
 
     /// <summary>
@@ -112,8 +112,12 @@ public static class GearPowers
     public static bool LineSavesBait(int tier) => tier >= 1;
     public static bool LineAutoHook(int tier) => tier >= 2;
 
-    public static float ExtraAttack(int tier, int rubyLevel)
-        => Math.Max(0f, DamagePerRubyLevel * tier - DamagePerRubyLevel * rubyLevel);
+    /// <summary>
+    /// Damage Keen Edge adds to one end (min or max) of a weapon's range, by Ruby's own rule: each level
+    /// beyond the weapon's Ruby level adds 10% of the base damage, at least 1.
+    /// </summary>
+    public static int ExtraDamage(int tier, int rubyLevel, int baseDamage)
+        => Math.Max(0, tier - rubyLevel) * Math.Max(1, (int)(baseDamage * DamagePerRubyLevel));
 
     public static float ExtraWeaponSpeed(int tier, int emeraldLevel)
         => Math.Max(0f, QuickSteps[Math.Clamp(tier, 0, QuickTiers)] - EmeraldInSpeedMultiplier * emeraldLevel);

@@ -66,9 +66,21 @@ public class GearPowersTests
     [Fact]
     public void Weapon_bonuses_never_stack_with_gems()
     {
-        Assert.Equal(0f, GearPowers.ExtraAttack(3, 3));
-        Assert.Equal(0.2, GearPowers.ExtraAttack(3, 1), 5);
+        Assert.Equal(0, GearPowers.ExtraDamage(3, 3, 40));
+        Assert.Equal(8, GearPowers.ExtraDamage(3, 1, 40));
         Assert.Equal(0, GearPowers.ExtraDefense(2, 3));
+    }
+
+    [Fact]
+    public void Keen_edge_raises_a_low_damage_weapon_at_every_tier()
+    {
+        // Rusty Sword (base 2-5): Ruby's rule adds at least 1 per level to each end, so tier 1 is 3-6 and tier 3 is 5-8.
+        Assert.Equal(1, GearPowers.ExtraDamage(1, 0, 2));
+        Assert.Equal(1, GearPowers.ExtraDamage(1, 0, 4));
+        Assert.Equal(3, GearPowers.ExtraDamage(3, 0, 2));
+        Assert.Equal(3, GearPowers.ExtraDamage(3, 0, 4));
+        Assert.Equal(0, GearPowers.ExtraDamage(0, 0, 4));
+        Assert.Equal(4, GearPowers.ExtraDamage(1, 0, 40));
     }
 
     [Fact]
