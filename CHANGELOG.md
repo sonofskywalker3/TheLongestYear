@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.14 - unreleased
+## 1.0.15 - unreleased
 
 ### Added
 
@@ -15,6 +15,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **TLY Custom boards no longer ask for the same item in two bundles,** for example a Common Mushroom in both Spring Foraging and Fall Foraging, or the same mineral in Mineral and Rockhound's. When one bundle's pool runs short, another bundle gives up the shared item and asks for something else. Thanks to Nijah for the report.
 - **The trash can goes back to basic on a rewind.** It was the only tool that kept its copper, steel or gold upgrade through the rewind. Thanks to tanky24u for the report.
 - **The first night after a rewind no longer fails to save with Farm Type Manager.** With Farm Type Manager packs installed (Stardew Valley Expanded has one), the rewind made it spawn its forage and buried items twice on the new Spring 1 and lose track of the first batch. That batch was still lying around at bedtime, so the game got stuck on the saving screen and the day was lost. The rewind now saves only after every mod has finished starting the new day, so nothing gets spawned twice. As a safety net, if another mod ever leaves something in the world that the game cannot save, the mod now sets it aside for the save and puts it back after, instead of losing the day. Thanks to tanky24u and SylviaStormsinger for the reports.
 - **Updating no longer resets your settings.** Mod managers replace the whole mod folder on an update, which took config.json with it. The mod now keeps a copy of your settings outside the mod folder and puts them back when config.json goes missing. Thanks to tanky24u for the report.
