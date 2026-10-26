@@ -14,11 +14,11 @@ public class UpgradePricingTests
     [Theory]
     [InlineData("cult_garlic")]
     [InlineData("cult_red_cabbage")]
-    public void A_cultivation_roll_costs_3000(string id)
+    public void A_cultivation_roll_costs_2000(string id)
     {
         var def = UpgradeCatalog.TryGet(id);
         Assert.NotNull(def);
-        Assert.Equal(3000, def!.Cost);
+        Assert.Equal(2000, def!.Cost);
         Assert.Equal(UpgradeCategory.Obtainability, def.Category);
     }
 

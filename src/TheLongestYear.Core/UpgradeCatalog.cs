@@ -151,9 +151,9 @@ public static class UpgradeCatalog
         // Obtainability — year-2 crops. Re-costed 2026-09-10 (Jeff) after checking the game data:
         // only the SHOP listing is year-gated, and the three crops do not share a year-1 route
         // (the reasoning lives in YearTwoCrops, which is the authority).
-        //   cult_garlic 3,000 and cult_red_cabbage 3,000 — the random route. One price for both,
+        //   cult_garlic 2,000 and cult_red_cabbage 2,000 (were 3,000; cut 2026-10-26 with Pierre) — the random route. One price for both,
         //   because both buy the same thing: a 10% Mixed Seeds substitution for a crop with no
-        //   free random route of its own. Buying both costs 6,000, deliberately under Pierre, so
+        //   free random route of its own. Buying both costs 4,000, deliberately under Pierre, so
         //   luck stays the cheap option even for a player who wants every crop.
         //   cult_red_cabbage was 5,000; the 2026-08-21 ruling priced it as the only RNG route
         //   worth selling, before the Traveling Cart's guaranteed year-1 Red Cabbage (which this
@@ -164,8 +164,8 @@ public static class UpgradeCatalog
         //   NO cult_artichoke — vanilla's Fall Mixed Seeds roll already yields Artichoke Seeds at
         //   25% in any year, so there is no RNG to buy off, the same reason cult_starfruit was
         //   REMOVED (anyone can reach the desert).
-        new UpgradeDefinition("cult_garlic", UpgradeCategory.Obtainability, 3000),
-        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 3000),
+        new UpgradeDefinition("cult_garlic", UpgradeCategory.Obtainability, 2000),
+        new UpgradeDefinition("cult_red_cabbage", UpgradeCategory.Obtainability, 2000),
         new UpgradeDefinition("pierre_year2_seeds", UpgradeCategory.Obtainability, 5000),
         new UpgradeDefinition("keep_garden_pot", UpgradeCategory.Obtainability, 750),
         new UpgradeDefinition("fortune_rare_fish", UpgradeCategory.Obtainability, 525),
