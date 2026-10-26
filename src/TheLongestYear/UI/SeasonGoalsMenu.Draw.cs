@@ -17,11 +17,19 @@ namespace TheLongestYear.UI
     {
         // ---------- drawing ----------
 
+        private const int BadgeGap = 24;        // least space between the headline and the badge
+        private const int TwoLineHeadY = 6;     // row offsets when the badge takes its own line
+        private const int TwoLineBadgeY = 34;
+
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
-                Color.Black * 0.5f);
-            IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
+            // As the game menu's tab page, the game menu has already drawn the dim and the box.
+            if (!_asPage)
+            {
+                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+                    Color.Black * 0.5f);
+                IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
+            }
 
             // Title bar.
             // NOTE: each Strings.Get() call below keeps its own inline token-dictionary literal
@@ -46,8 +54,11 @@ namespace TheLongestYear.UI
                     ["season"] = season,
                     ["day"] = day,
                 });
-            SpriteText.drawStringHorizontallyCenteredAt(b, title,
-                xPositionOnScreen + width / 2, yPositionOnScreen + 24);
+            if (_asPage)
+                DrawPageTitle(b, title);
+            else
+                SpriteText.drawStringHorizontallyCenteredAt(b, title,
+                    xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
             // Visible rows (the Vault/bus-repair goal is now one of these rows, added in BuildEntries).
             int visibleCount = Math.Min(_rowsPerPage, Math.Max(0, _entries.Count - _scrollIndex));
@@ -58,11 +69,24 @@ namespace TheLongestYear.UI
             _scrollUp.draw(b, _scrollIndex > 0 ? Color.White : Color.Gray, 1f);
             _scrollDown.draw(b, _scrollIndex + _rowsPerPage < _entries.Count ? Color.White : Color.Gray, 1f);
 
-            base.draw(b);
+            if (!_asPage)
+                base.draw(b);
             if (!string.IsNullOrEmpty(_hoverText))
                 HoverText.Draw(b, _hoverText);
+            if (_asPage) return;    // the game menu draws the cursor
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
+        }
+
+        /// <summary>The page is narrower than the book's own menu, so the title uses the dialogue
+        /// font, dropping to the small font when a long title would not fit.</summary>
+        private void DrawPageTitle(SpriteBatch b, string title)
+        {
+            int room = width - PageSideInset * 2;
+            SpriteFont font = Game1.dialogueFont.MeasureString(title).X <= room ? Game1.dialogueFont : Game1.smallFont;
+            Vector2 size = font.MeasureString(title);
+            Utility.drawTextWithShadow(b, title, font,
+                new Vector2(xPositionOnScreen + (width - size.X) / 2f, yPositionOnScreen + PageTitleY), Game1.textColor);
         }
 
 
@@ -82,18 +106,18 @@ namespace TheLongestYear.UI
                 ["need"] = e.Need.ToString(),
             });
             Color headColor = satisfiedThisSeason ? Color.DarkGreen : Game1.textColor;
-            Utility.drawTextWithShadow(b, headline, Game1.smallFont,
-                new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), headColor);
-
-            // Badge on the right side of the top line.
             string badge = BadgeFor(e);
-            {
-                Vector2 badgeSize = Game1.smallFont.MeasureString(badge);
-                Color badgeColor = satisfiedThisSeason ? Color.DarkGreen : new Color(160, 34, 34);
-                Utility.drawTextWithShadow(b, badge, Game1.smallFont,
-                    new Vector2(slot.bounds.X + slot.bounds.Width - 16 - badgeSize.X, slot.bounds.Y + 12),
-                    badgeColor);
-            }
+            Vector2 badgeSize = Game1.smallFont.MeasureString(badge);
+            // The badge sits on the right of the top line; when the headline would run into it (the
+            // narrower tab page, long bundle names) it drops to a second line above the icons.
+            bool badgeFits = Game1.smallFont.MeasureString(headline).X + BadgeGap + badgeSize.X <= slot.bounds.Width - 32;
+            int headY = slot.bounds.Y + (badgeFits ? 12 : TwoLineHeadY);
+            int badgeY = badgeFits ? headY : slot.bounds.Y + TwoLineBadgeY;
+            Utility.drawTextWithShadow(b, headline, Game1.smallFont,
+                new Vector2(slot.bounds.X + 16, headY), headColor);
+            Color badgeColor = satisfiedThisSeason ? Color.DarkGreen : new Color(160, 34, 34);
+            Utility.drawTextWithShadow(b, badge, Game1.smallFont,
+                new Vector2(slot.bounds.X + slot.bounds.Width - 16 - badgeSize.X, badgeY), badgeColor);
 
             // Bottom line: missing-item icons (or a "done" marker).
             if (satisfiedThisSeason) return;

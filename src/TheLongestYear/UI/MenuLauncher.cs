@@ -152,6 +152,14 @@ namespace TheLongestYear.UI
                 LogLevel.Info);
         }
 
+        /// <summary>The Bundle Log tab's page for a game menu whose box is <paramref name="bounds"/>:
+        /// the same log the book opens. Null before a save is loaded.</summary>
+        public SeasonGoalsMenu CreateBundleLogPage(Microsoft.Xna.Framework.Rectangle bounds)
+        {
+            if (!Context.IsWorldReady || _store.Run == null) return null;
+            return new SeasonGoalsMenu(_monitor, _store.Run, _store.State, _runController.Requirements, bounds);
+        }
+
         private bool CanOpen()
         {
             if (!Context.IsWorldReady)

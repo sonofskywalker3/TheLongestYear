@@ -330,6 +330,53 @@ namespace TheLongestYear
             _launcher?.OpenSeasonGoals();
         }
 
+        private void CmdBundleTab(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var words = new System.Collections.Generic.List<string>(args);
+            int shotAt = words.FindIndex(w => w.Equals("shot", System.StringComparison.OrdinalIgnoreCase));
+            string[] shotPath = shotAt >= 0 ? words.Skip(shotAt + 1).ToArray() : System.Array.Empty<string>();
+            if (shotAt >= 0) words.RemoveRange(shotAt, words.Count - shotAt);
+            bool stayOnInventory = words.Any(w => w.Equals("inventory", System.StringComparison.OrdinalIgnoreCase));
+            bool hover = words.Any(w => w.Equals("hover", System.StringComparison.OrdinalIgnoreCase));
+
+            Game1.activeClickableMenu = null;
+            StardewValley.Menus.GameMenu menu = TheLongestYear.Integration.BundleLogTab.OpenOnTab(!stayOnInventory);
+            if (menu == null) { this.Monitor.Log("tly_bundletab: no Bundle Log tab (is a run active?).", LogLevel.Warn); return; }
+            int index = TheLongestYear.Integration.BundleLogTab.IndexIn(menu);
+            // The label as if the cursor were on the tab; the next hover update clears it.
+            if (hover) menu.hoverText = menu.tabs[index].label;
+            this.Monitor.Log($"tly_bundletab: tab {index} of {menu.tabs.Count} at {menu.tabs[index].bounds}, open tab {menu.currentTab}.", LogLevel.Info);
+            if (words.Any(w => w.Equals("snapcheck", System.StringComparison.OrdinalIgnoreCase)))
+                LogBundleTabSnaps(menu, index);
+            if (shotAt >= 0) TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
+        }
+
+        /// <summary>Follows the controller neighbours by id without moving the cursor (snapping moves the
+        /// real mouse): the log page's top row up, the tab left and right, and the triggers.</summary>
+        private void LogBundleTabSnaps(StardewValley.Menus.GameMenu menu, int index)
+        {
+            string Name(StardewValley.Menus.IClickableMenu page, int id)
+                => page?.getComponentWithID(id) is { } c ? $"{c.name}({c.myID})" : $"none({id})";
+
+            menu.changeTab(index, playSound: false);
+            StardewValley.Menus.IClickableMenu page = menu.GetCurrentPage();
+            StardewValley.Menus.ClickableComponent tab = menu.tabs[index];
+            StardewValley.Menus.ClickableComponent row0 = page.allClickableComponents.FirstOrDefault(c => c.name == "row-0");
+            StardewValley.Menus.ClickableComponent before = menu.tabs[index - 1];
+            this.Monitor.Log($"tly_bundletab snap: row-0 up -> {Name(page, row0?.upNeighborID ?? -1)}; tab left -> {Name(page, tab.leftNeighborID)}; " +
+                $"tab down -> {tab.downNeighborID} (-99999 = the page's default, {page.GetType().Name}); {before.name} right -> {Name(page, before.rightNeighborID)}.", LogLevel.Info);
+
+            menu.changeTab(index - 1, playSound: false);
+            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.RightTrigger);
+            int afterRight = menu.currentTab;
+            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.RightTrigger);
+            int afterSecondRight = menu.currentTab;
+            menu.receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons.LeftTrigger);
+            this.Monitor.Log($"tly_bundletab snap: right trigger from tab {index - 1} -> {afterRight}, again -> {afterSecondRight}, left trigger -> {menu.currentTab}.", LogLevel.Info);
+            menu.changeTab(index, playSound: false);
+        }
+
         private void CmdOpenShop(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }

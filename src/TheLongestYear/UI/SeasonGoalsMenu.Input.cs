@@ -82,7 +82,9 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
-            if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
+            // On the tab page, A arrives as a click (the game menu has no pad handling of its own),
+            // so scrolling here as well would move two rows.
+            if (!_asPage && b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
                 if (id == ScrollUpId) { Scroll(-1); return; }
