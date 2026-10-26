@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.16 - unreleased
+## 1.0.17 - unreleased
 
 ### Added
 
@@ -11,6 +11,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Morris's JojaMart offer has a new opening, and turning him down is a little more polite.** If you talk to him again after saying no, he asks once more whether you'll reconsider. Thanks to tanky24u for the feedback.
 - **Pierre's Year 2 Seeds now costs 5,000 JP, down from 10,000.** Bundles don't always need those crops any more, so the old price wasn't worth it. Thanks to tanky24u for the feedback.
 - **The Garlic and Red Cabbage Mixed Seeds upgrades now cost 2,000 JP each, down from 3,000,** so leaving it to luck stays the cheaper way to get those crops.
 
