@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
+using StardewModdingAPI.Enums;
+using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Network;
+using TheLongestYear.Core;
 
 namespace TheLongestYear.Loop
 {
@@ -52,7 +55,11 @@ namespace TheLongestYear.Loop
     /// Static, not on the RunController: the deferred SaveLoaded that follows an in-place reset
     /// rebuilds the controller and the reset service, and a save still queued then must survive it.
     /// The old save folder is deleted only after a confirmed write; a failed or skipped save leaves
-    /// the inner-file rename as the fallback (the save stays loadable, the next sleep rewrites it).</summary>
+    /// the inner-file rename as the fallback (the save stays loadable, the next sleep rewrites it).
+    ///
+    /// It opens only after SMAPI's deferred SaveLoaded and DayStarted for the rebuilt world (see
+    /// <see cref="ResetSaveGate"/>), so the reset's tail always runs first and the save behaves like
+    /// any mid-day save to the other mods.</summary>
     internal static class ResetSave
     {
         /// <summary>A save menu that closed before it wrote anything is reopened this many times.</summary>
@@ -62,6 +69,11 @@ namespace TheLongestYear.Loop
         private static ResetSaveMenu _menu;
         private static bool _queued;
         private static int _attempts;
+        /// <summary>SMAPI's load stage, from Specialized.LoadStageChanged (Context.LoadStage is not public).</summary>
+        private static LoadStage _loadStage = LoadStage.None;
+
+        /// <summary>SMAPI's Specialized.LoadStageChanged.</summary>
+        public static void OnLoadStageChanged(object sender, LoadStageChangedEventArgs e) => _loadStage = e.NewStage;
         private static Action _onWritten;
         private static Action _after;
 
@@ -86,7 +98,8 @@ namespace TheLongestYear.Loop
             if (!TryOpen())
             {
                 monitor.Log(
-                    $"Day-28 save: waiting for a clear screen (activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, " +
+                    $"Day-28 save: waiting for the world reload and a clear screen (load stage {_loadStage}, " +
+                    $"activeClickableMenu={Game1.activeClickableMenu?.GetType().Name ?? "none"}, " +
                     $"eventUp={Game1.eventUp}); the reset carries on and the save follows.", LogLevel.Info);
                 RunAfter();
             }
@@ -101,9 +114,9 @@ namespace TheLongestYear.Loop
                 Settle("tick");
         }
 
-        /// <summary>SMAPI's GameLoop.Saved. Runs before the DayStarted SMAPI raises with it, and
-        /// before the deferred SaveLoaded, so the reset's tail (the planning hub, the meta save)
-        /// lands before either reads the run state.</summary>
+        /// <summary>SMAPI's GameLoop.Saved. Runs before the DayStarted SMAPI raises with it. The
+        /// reset's tail (the planning hub, the meta save) has already run by then: the save waits
+        /// for the deferred SaveLoaded, so Start always hands the tail over first.</summary>
         public static void OnSaved()
         {
             if (_menu != null && !ReferenceEquals(Game1.activeClickableMenu, _menu))
@@ -123,7 +136,10 @@ namespace TheLongestYear.Loop
 
         private static bool TryOpen()
         {
-            if (Game1.activeClickableMenu != null || Game1.eventUp || Game1.currentMinigame != null)
+            // SMAPI's load stage leaves Ready when the reset calls loadForNewGame and comes back
+            // when SMAPI raises the SaveLoaded and DayStarted it owes for the rebuilt world.
+            bool reloadFinished = _loadStage == LoadStage.Ready;
+            if (!ResetSaveGate.CanOpen(Game1.activeClickableMenu != null, Game1.eventUp, Game1.currentMinigame != null, reloadFinished))
                 return false;
             _queued = false;
             _attempts++;

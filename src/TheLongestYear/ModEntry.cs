@@ -347,6 +347,12 @@ namespace TheLongestYear
             helper.Events.GameLoop.Saving += this.OnSaving;
             // Settles the post-reset save (ResetSave) before the DayStarted SMAPI raises with Saved.
             helper.Events.GameLoop.Saved += (_, _) => TheLongestYear.Loop.ResetSave.OnSaved();
+            helper.Events.Specialized.LoadStageChanged += TheLongestYear.Loop.ResetSave.OnLoadStageChanged;
+            // A foreign object the save cannot write is set aside for the write instead of failing it.
+            TheLongestYear.Loop.UnsaveableObjectGuard.Init(this.Monitor);
+            helper.Events.GameLoop.Saving += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaving;
+            helper.Events.GameLoop.Saved += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaved;
+            helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.UnsaveableObjectGuard.OnReturnedToTitle;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
