@@ -60,6 +60,8 @@ namespace TheLongestYear
                 _stashService, _mountainUnlock, _bookFurniture, _planningShrine,
                 ctx.ItemSeasonPins, ctx.BundleQuotas, this.Helper.GameContent);
             _reset.ReconcileCircles = () => _circles.Reconcile();
+            // Other mods' per-save files are carried to the new save key on each rewind.
+            _reset.OtherModFolders = () => ModSaveDataCarryover.LoadedModFolders(this.Helper.ModRegistry, this.Monitor);
             // Normal and Remixed roll a fresh Tech's Cross-Mod Bundles board each loop when that mod is loaded.
             _reset.TechBundles = new TheLongestYear.Loop.TechCrossModBundlesTarget(this.Helper.ModRegistry);
         }
@@ -283,7 +285,7 @@ namespace TheLongestYear
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);
             _runController.AttachLauncher(_launcher);
             _bookFurniture.AttachLauncher(() => _launcher);
-            TheLongestYear.Integration.BundleLogTab.AttachLauncher(() => _launcher);
+            TheLongestYear.Integration.BundleLogButton.AttachLauncher(() => _launcher);
             _planningShrine.AttachState(() => _meta.State);
             _planningShrine.AttachPriceFactor(() => _meta.State.EffectiveDifficulty(_config).ShrinePriceFactor);
             _boostEffects = new TheLongestYear.Loop.BoostEffectsService(this.Monitor, _meta);

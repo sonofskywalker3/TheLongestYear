@@ -50,6 +50,14 @@ namespace TheLongestYear.Loop
         /// new canonical folder. Null when there's nothing to clean up.</summary>
         private string _abandonedSaveFolder;
 
+        /// <summary>Other mods' save data copied to the new save key in <see cref="PerformReset"/>;
+        /// the old-keyed copies go with the old save folder in <see cref="CleanupAbandonedSaveFolder"/>.</summary>
+        private ModSaveDataCarryover.Carried _carriedModData;
+
+        /// <summary>Every loaded mod's folder, searched for per-save data keyed on the old save
+        /// (ModSaveDataCarryover). Set by ModEntry; null searches only SMAPI's global mod data.</summary>
+        public Func<IEnumerable<string>> OtherModFolders { get; set; }
+
         /// <summary>Per-stage stopwatch for the last <see cref="PerformReset"/> (freeze investigation,
         /// TODO "Closing the post-loop shrine freezes the game"). Rebuilt at the top of each reset.</summary>
         private ResetTiming _timing;
@@ -222,6 +230,9 @@ namespace TheLongestYear.Loop
         /// different folder than the one just saved; a defensive id check skips it anyway.</summary>
         public void CleanupAbandonedSaveFolder()
         {
+            ModSaveDataCarryover.FinishAfterSave(_monitor, _carriedModData);
+            _carriedModData = null;
+
             string old = _abandonedSaveFolder;
             _abandonedSaveFolder = null;
             if (string.IsNullOrEmpty(old) || !Directory.Exists(old))

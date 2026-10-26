@@ -3,12 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.18 - unreleased
+## 1.0.20 - unreleased
 
 ### Added
 
 - **A new Gear tab in Junimo Upgrades.** Nine new upgrade chains give your tools and weapons the effect of a Forge enchantment without forging: faster swings, cheaper energy, harder hits, wider charges, a bigger watering can, a steadier fishing line, and weapon damage, speed and defense. A tool that already carries the real enchantment gets the better of the two, never both. Thanks to tanky24u for the suggestion.
-- **The Bundle Log has its own tab in the inventory menu,** after the last tab, so you can check which bundle items you still need this season from anywhere without going back to the book. Thanks to Nijah for the idea.
+- **The Bundle Log has its own button on the inventory page,** right under the organize button. Click it, or press A on it, to check which bundle items you still need this season from anywhere, without going back to the book; Escape, B or the inventory tab takes you back. Thanks to Nijah for the idea.
 
 ### Changed
 
@@ -18,6 +18,7 @@ aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Other mods' per-farm settings carry over when the year rewinds.** The rewind starts a fresh save behind the scenes, so mods that keep their own settings per save (UI Info Suite 2, for example) went back to their defaults every loop. Their files now follow your farm to the new save. Thanks to Nijah for helping us find this.
 - **TLY Custom boards no longer ask for the same item in two bundles,** for example a Common Mushroom in both Spring Foraging and Fall Foraging, or the same mineral in Mineral and Rockhound's. When one bundle's pool runs short, another bundle gives up the shared item and asks for something else. Thanks to Nijah for the report.
 - **The trash can goes back to basic on a rewind.** It was the only tool that kept its copper, steel or gold upgrade through the rewind. Thanks to tanky24u for the report.
 - **The first night after a rewind no longer fails to save with Farm Type Manager.** With Farm Type Manager packs installed (Stardew Valley Expanded has one), the rewind made it spawn its forage and buried items twice on the new Spring 1 and lose track of the first batch. That batch was still lying around at bedtime, so the game got stuck on the saving screen and the day was lost. The rewind now saves only after every mod has finished starting the new day, so nothing gets spawned twice. As a safety net, if another mod ever leaves something in the world that the game cannot save, the mod now sets it aside for the save and puts it back after, instead of losing the day. Thanks to tanky24u and SylviaStormsinger for the reports.

@@ -155,7 +155,7 @@ namespace TheLongestYear.UI
                 LogLevel.Info);
         }
 
-        /// <summary>The Bundle Log tab's page for a game menu whose box is <paramref name="bounds"/>:
+        /// <summary>The Bundle Log page the inventory's Bundle Log button shows inside a game menu whose box is <paramref name="bounds"/>:
         /// the same log the book opens. Null before a save is loaded.</summary>
         public SeasonGoalsMenu CreateBundleLogPage(Microsoft.Xna.Framework.Rectangle bounds)
         {
