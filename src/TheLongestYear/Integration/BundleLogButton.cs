@@ -31,6 +31,12 @@ namespace TheLongestYear.Integration
         // The Bundle Log's cover in assets/books.png (third 16x16 cover, the green one).
         private static readonly Rectangle BookCoverSource = new Rectangle(32, 0, 16, 16);
         private const float ButtonScale = 4f;
+        // The button's frame is the organize button's own (Cursors 162,440), with its 10px picture
+        // painted over in this fill and the book drawn on top, so it matches the bag and Junimo note.
+        private static readonly Rectangle FrameSource = new Rectangle(162, 440, 16, 16);
+        private const int FrameBorder = 3;
+        private static readonly Color FrameFill = new Color(0xF7, 0xE3, 0xC8);
+        private const float BookScaleOfButton = 0.5f;
 
         private static readonly ConditionalWeakTable<InventoryPage, ClickableTextureComponent> Buttons = new();
         // Inventory pages put aside while their game menu shows the log.
@@ -174,6 +180,25 @@ namespace TheLongestYear.Integration
             return true;
         }
 
+        /// <summary>Draws the framed button around its centre, growing with the hover scale as vanilla's
+        /// side buttons do.</summary>
+        private static void DrawButton(SpriteBatch b, ClickableTextureComponent button)
+        {
+            float scale = button.scale;
+            float depth = 0.86f + button.bounds.Y / 20000f;
+            Vector2 centre = new Vector2(button.bounds.Center.X, button.bounds.Center.Y);
+            Vector2 frameOrigin = new Vector2(FrameSource.Width / 2f, FrameSource.Height / 2f);
+            b.Draw(Game1.mouseCursors, centre, FrameSource, Color.White, 0f, frameOrigin, scale, SpriteEffects.None, depth);
+            int inner = FrameSource.Width - FrameBorder * 2;
+            var innerRect = new Rectangle(
+                (int)(centre.X - inner * scale / 2f), (int)(centre.Y - inner * scale / 2f),
+                (int)(inner * scale), (int)(inner * scale));
+            b.Draw(Game1.staminaRect, innerRect, null, FrameFill, 0f, Vector2.Zero, SpriteEffects.None, depth + 0.0001f);
+            b.Draw(button.texture, centre, button.sourceRect, Color.White, 0f,
+                new Vector2(button.sourceRect.Width / 2f, button.sourceRect.Height / 2f),
+                scale * BookScaleOfButton, SpriteEffects.None, depth + 0.0002f);
+        }
+
         private static bool OpensLog(InventoryPage page, int x, int y)
             => ButtonOn(page) is { } button && button.containsPoint(x, y) && Game1.player.CursorSlotItem == null
                && Game1.activeClickableMenu is GameMenu menu && menu.GetCurrentPage() == page;
@@ -212,7 +237,9 @@ namespace TheLongestYear.Integration
         internal static class DrawPatch
         {
             private static void Postfix(InventoryPage __instance, SpriteBatch __0)
-                => ButtonOn(__instance)?.draw(__0);
+            {
+                if (ButtonOn(__instance) is { } button) DrawButton(__0, button);
+            }
         }
 
         [HarmonyPatch(typeof(InventoryPage), nameof(InventoryPage.performHoverAction))]
