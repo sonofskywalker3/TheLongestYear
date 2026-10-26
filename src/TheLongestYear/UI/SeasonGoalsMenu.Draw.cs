@@ -19,9 +19,13 @@ namespace TheLongestYear.UI
 
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
-                Color.Black * 0.5f);
-            IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
+            // As the game menu's tab page, the game menu has already drawn the dim and the box.
+            if (!_asPage)
+            {
+                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+                    Color.Black * 0.5f);
+                IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
+            }
 
             // Title bar.
             // NOTE: each Strings.Get() call below keeps its own inline token-dictionary literal
@@ -46,8 +50,11 @@ namespace TheLongestYear.UI
                     ["season"] = season,
                     ["day"] = day,
                 });
-            SpriteText.drawStringHorizontallyCenteredAt(b, title,
-                xPositionOnScreen + width / 2, yPositionOnScreen + 24);
+            if (_asPage)
+                DrawPageTitle(b, title);
+            else
+                SpriteText.drawStringHorizontallyCenteredAt(b, title,
+                    xPositionOnScreen + width / 2, yPositionOnScreen + 24);
 
             // Visible rows (the Vault/bus-repair goal is now one of these rows, added in BuildEntries).
             int visibleCount = Math.Min(_rowsPerPage, Math.Max(0, _entries.Count - _scrollIndex));
@@ -58,11 +65,24 @@ namespace TheLongestYear.UI
             _scrollUp.draw(b, _scrollIndex > 0 ? Color.White : Color.Gray, 1f);
             _scrollDown.draw(b, _scrollIndex + _rowsPerPage < _entries.Count ? Color.White : Color.Gray, 1f);
 
-            base.draw(b);
+            if (!_asPage)
+                base.draw(b);
             if (!string.IsNullOrEmpty(_hoverText))
                 HoverText.Draw(b, _hoverText);
+            if (_asPage) return;    // the game menu draws the cursor
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
+        }
+
+        /// <summary>The page is narrower than the book's own menu, so the title uses the dialogue
+        /// font, dropping to the small font when a long title would not fit.</summary>
+        private void DrawPageTitle(SpriteBatch b, string title)
+        {
+            int room = width - PageSideInset * 2;
+            SpriteFont font = Game1.dialogueFont.MeasureString(title).X <= room ? Game1.dialogueFont : Game1.smallFont;
+            Vector2 size = font.MeasureString(title);
+            Utility.drawTextWithShadow(b, title, font,
+                new Vector2(xPositionOnScreen + (width - size.X) / 2f, yPositionOnScreen + PageTitleY), Game1.textColor);
         }
 
 

@@ -330,6 +330,26 @@ namespace TheLongestYear
             _launcher?.OpenSeasonGoals();
         }
 
+        private void CmdBundleTab(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            var words = new System.Collections.Generic.List<string>(args);
+            int shotAt = words.FindIndex(w => w.Equals("shot", System.StringComparison.OrdinalIgnoreCase));
+            string[] shotPath = shotAt >= 0 ? words.Skip(shotAt + 1).ToArray() : System.Array.Empty<string>();
+            if (shotAt >= 0) words.RemoveRange(shotAt, words.Count - shotAt);
+            bool stayOnInventory = words.Any(w => w.Equals("inventory", System.StringComparison.OrdinalIgnoreCase));
+            bool hover = words.Any(w => w.Equals("hover", System.StringComparison.OrdinalIgnoreCase));
+
+            Game1.activeClickableMenu = null;
+            StardewValley.Menus.GameMenu menu = TheLongestYear.Integration.BundleLogTab.OpenOnTab(!stayOnInventory);
+            if (menu == null) { this.Monitor.Log("tly_bundletab: no Bundle Log tab (is a run active?).", LogLevel.Warn); return; }
+            int index = TheLongestYear.Integration.BundleLogTab.IndexIn(menu);
+            // The label as if the cursor were on the tab; the next hover update clears it.
+            if (hover) menu.hoverText = menu.tabs[index].label;
+            this.Monitor.Log($"tly_bundletab: tab {index} of {menu.tabs.Count} at {menu.tabs[index].bounds}, open tab {menu.currentTab}.", LogLevel.Info);
+            if (shotAt >= 0) TheLongestYear.DebugCommands.MenuShotCommand.Run(this.Monitor, shotPath);
+        }
+
         private void CmdOpenShop(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }

@@ -726,6 +726,7 @@
     "menu.goals.vault-hover-unmet": "Pay any Vault bundle at the Community Center to repair the bus.",
     "menu.goals.row-headline": "{{title}}  ({{theme}})   {{have}}/{{need}}",
     "menu.goals.qty-suffix": " x{{count}}",
+    "menu.goals.tab-label": "Bundle Log",
     "weather.green-rain": "Green Rain",
 
     // -- quests / composed fragments / tags -----------------------------------------

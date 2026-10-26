@@ -8,6 +8,7 @@ using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Interactables;
 using TheLongestYear.Loop;
 using CoreSeason = TheLongestYear.Core.Season;
 
@@ -45,6 +46,13 @@ namespace TheLongestYear.UI
         // in place of item sprites, one per still-owed payment.
         private static readonly Rectangle CoinIconSource = new Rectangle(280, 410, 16, 16);
 
+        // Page mode (the Bundle Log tab inside the game menu): the menu's own box is drawn by the
+        // game menu, the tab row sits above it, and the content keeps inside its border.
+        private const int PageSideInset = 48;
+        private const int PageTitleY = 108;
+        private const int PageListTop = 168;
+        private const int PageBottomInset = 40;
+
         private const int RowIdBase = 8000;
         private const int ScrollUpId = 8900;
         private const int ScrollDownId = 8901;
@@ -65,6 +73,10 @@ namespace TheLongestYear.UI
 
         private string _hoverText = "";
 
+        // True when this is the Bundle Log tab's page inside the game menu rather than its own menu.
+        private readonly bool _asPage;
+        private readonly Rectangle _pageBounds;
+
         // The CC's board as of BuildEntries, and its stacks per bundle index (filled on first use).
         private IReadOnlyDictionary<string, string> _liveBoard;
         private readonly Dictionary<int, IReadOnlyDictionary<string, int>> _liveStacks = new();
@@ -84,6 +96,36 @@ namespace TheLongestYear.UI
 
             if (Game1.options.snappyMenus && Game1.options.gamepadControls)
                 this.snapToDefaultClickableComponent();
+        }
+
+        /// <summary>The same log as a page of the game menu (the Bundle Log tab).
+        /// <paramref name="pageBounds"/> is the game menu's own box; the game menu draws the box,
+        /// the tabs, the close button and the cursor.</summary>
+        public SeasonGoalsMenu(IMonitor monitor, RunState run, MetaState meta,
+            IReadOnlyList<BundleRequirement> requirements, Rectangle pageBounds)
+            : base(pageBounds.X, pageBounds.Y, pageBounds.Width, pageBounds.Height, showUpperRightCloseButton: false)
+        {
+            _monitor = monitor;
+            _run = run;
+            _meta = meta;
+            _requirements = requirements ?? new List<BundleRequirement>();
+            _season = run.Season;
+            _asPage = true;
+            _pageBounds = pageBounds;
+
+            BuildEntries();
+            RecomputeBoundsAndLayout();
+        }
+
+        /// <summary>Re-reads the ledger when the tab is shown. The page is built with the game menu
+        /// (every time it opens), so this catches donations made since, as the book does on open.</summary>
+        internal void Refresh()
+        {
+            TheLongestYear.Integration.VaultPaymentSync.Reconcile(_run);
+            TheLongestYear.Integration.ItemDonationSync.Reconcile(_run);
+            BuildEntries();
+            ClampScroll();
+            CompleteFireplaceIntroQuest();
         }
 
         public override void gameWindowSizeChanged(Rectangle oldBounds, Rectangle newBounds)
@@ -213,15 +255,29 @@ namespace TheLongestYear.UI
 
         private void RecomputeBoundsAndLayout()
         {
-            width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64);
-            height = Math.Min(PanelHeight, Game1.uiViewport.Height - 64);
-            xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
-            yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
-
-            int listX = xPositionOnScreen + PanelPadding;
-            int listY = yPositionOnScreen + TitleBarHeight;
-            int listWidth = width - PanelPadding * 2 - 56;     // leave room for scroll arrows
-            int listHeight = height - TitleBarHeight - PanelPadding;
+            int listX, listY, listWidth, listHeight;
+            if (_asPage)
+            {
+                xPositionOnScreen = _pageBounds.X;
+                yPositionOnScreen = _pageBounds.Y;
+                width = _pageBounds.Width;
+                height = _pageBounds.Height;
+                listX = xPositionOnScreen + PageSideInset;
+                listY = yPositionOnScreen + PageListTop;
+                listWidth = width - PageSideInset * 2 - 56;    // leave room for scroll arrows
+                listHeight = height - PageListTop - PageBottomInset;
+            }
+            else
+            {
+                width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64);
+                height = Math.Min(PanelHeight, Game1.uiViewport.Height - 64);
+                xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
+                yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
+                listX = xPositionOnScreen + PanelPadding;
+                listY = yPositionOnScreen + TitleBarHeight;
+                listWidth = width - PanelPadding * 2 - 56;     // leave room for scroll arrows
+                listHeight = height - TitleBarHeight - PanelPadding;
+            }
             _rowsPerPage = Math.Max(1, listHeight / (RowHeight + RowSpacing));
 
             _rowSlots.Clear();
@@ -232,7 +288,8 @@ namespace TheLongestYear.UI
                     "row-" + i)
                 {
                     myID = RowIdBase + i,
-                    upNeighborID = i == 0 ? ScrollUpId : RowIdBase + i - 1,
+                    // On the tab page, up from the top row goes to the Bundle Log tab.
+                    upNeighborID = i == 0 ? (_asPage ? BundleLogTabRules.TabComponentId : ScrollUpId) : RowIdBase + i - 1,
                     downNeighborID = i == _rowsPerPage - 1 ? ScrollDownId : RowIdBase + i + 1,
                     rightNeighborID = ScrollUpId
                 };
@@ -245,6 +302,7 @@ namespace TheLongestYear.UI
                 Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f)
             {
                 myID = ScrollUpId,
+                upNeighborID = _asPage ? BundleLogTabRules.TabComponentId : -1,
                 downNeighborID = ScrollDownId,
                 leftNeighborID = RowIdBase
             };
@@ -257,17 +315,25 @@ namespace TheLongestYear.UI
                 leftNeighborID = RowIdBase + _rowsPerPage - 1
             };
 
-            this.initializeUpperRightCloseButton();
+            if (!_asPage)
+                this.initializeUpperRightCloseButton();
 
-            // populateClickableComponentList defaults to public-only via reflection — fill manually.
+            populateClickableComponentList();
+            ClampScroll();
+        }
+
+        /// <summary>The base version only finds public fields by reflection, so it would drop the
+        /// rows and arrows. The game menu calls this on every tab change, then adds its tabs.</summary>
+        public override void populateClickableComponentList()
+        {
             allClickableComponents = new List<ClickableComponent>();
             allClickableComponents.AddRange(_rowSlots);
-            allClickableComponents.Add(_scrollUp);
-            allClickableComponents.Add(_scrollDown);
+            if (_scrollUp != null) allClickableComponents.Add(_scrollUp);
+            if (_scrollDown != null) allClickableComponents.Add(_scrollDown);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
-
-            ClampScroll();
+            if (_asPage && Game1.activeClickableMenu is GameMenu gameMenu && gameMenu.GetCurrentPage() == this)
+                gameMenu.AddTabsToClickableComponents(this);
         }
 
         public override void snapToDefaultClickableComponent()
