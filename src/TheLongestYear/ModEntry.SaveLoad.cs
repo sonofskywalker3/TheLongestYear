@@ -248,6 +248,8 @@ namespace TheLongestYear
                 && TheLongestYear.Core.DejaVuRules.RepairStaleCaps(_meta.Run, (int)Game1.stats.DaysPlayed))
                 this.Monitor.Log("Deja-vu: cleared caps left over from an earlier loop.", LogLevel.Info);
             UpgradeChecker.HasUpgrade = id => _meta.State.HasUpgrade(id);
+            // Watering cans load before the upgrade check is wired, so they still hold vanilla's capacity.
+            TheLongestYear.Loop.GearRefresh.OnSaveLoaded();
             _animalPowers.RefreshPets("save load");
             BoostChecker.YearTwoSeedsActive = () => TheLongestYear.Core.BoostState.YearTwoSeedsActive(_meta.Run, TodayDayOfYear());
             TheLongestYear.Loop.PastSeasonSpawnsService.BoostedOn = day => TheLongestYear.Core.PastSeasonBoosts.Active(_meta.Run, day);

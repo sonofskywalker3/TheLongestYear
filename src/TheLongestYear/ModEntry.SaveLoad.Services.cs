@@ -277,6 +277,7 @@ namespace TheLongestYear
                 // A bought circle is handed over on the spot, not at the next loop.
                 if (id.StartsWith("ward_circle_", System.StringComparison.Ordinal))
                     _circles.Reconcile();
+                TheLongestYear.Loop.GearRefresh.AfterPurchase(id);
             };
             _focus = new TheLongestYear.Focus.FocusService(this.Monitor, _meta, _config, _purchases);
             _launcher = new MenuLauncher(this.Monitor, _config, _meta, _runController, _purchases, _focus);

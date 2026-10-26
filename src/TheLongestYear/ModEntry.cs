@@ -389,6 +389,7 @@ namespace TheLongestYear
             // Snow day animals: other mods' helpers the transpilers found get hooked once every
             // mod's Entry has patched (see WildcardAnimalPatch).
             TheLongestYear.Loop.WildcardAnimalPatch.Monitor = this.Monitor;
+            TheLongestYear.Loop.GearReach.Monitor = this.Monitor;
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
             int patched = 0, failed = 0;
             foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
