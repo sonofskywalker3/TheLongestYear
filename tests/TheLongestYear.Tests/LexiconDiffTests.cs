@@ -86,4 +86,19 @@ public sealed class LexiconDiffTests
         Assert.DoesNotContain("Bar_Thing", report);
         Assert.Contains("unreached map: Mod_Cave", report);
     }
+
+    [Fact]
+    public void GapsAttributesMapsAndUnresolvedText()
+    {
+        var v = Variant(unreached: new[] { "BathHouse_Entry", "Mod_Cave" }) with
+        {
+            Unresolved = new[] { "RECIPE (O)Foo_Pie | none", "LOCATION_FISH Beach X | Forage at Beach" },
+        };
+        string report = LexiconGaps.Report(v, new ObtainabilityInputs());
+        Assert.Contains("## vanilla (1)", report);
+        Assert.Contains("## Mod (1)", report);
+        Assert.Contains("## Foo (1)", report);
+        Assert.Contains("## unattributed (1)", report);
+        Assert.DoesNotContain("## BathHouse", report);
+    }
 }

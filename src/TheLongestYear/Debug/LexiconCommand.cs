@@ -159,17 +159,29 @@ namespace TheLongestYear.DebugCommands
             Resolved current = service.Current;
             // Exactly what a cache miss builds: the composed layers' extra sources, this save's weeks and shops.
             var extra = context.Layers?.Set.ExtraDirectSources;
-            ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs, extraDirect: extra);
-            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs), extraDirect: extra);
-            AnswerVariant cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
-                with { Availability = context.Availability() };
-            IReadOnlyList<string> lines = LexiconDiff.Compare(service.Variant, cold);
+            AnswerVariant cold;
+            IReadOnlyList<string> lines;
+            try
+            {
+                ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs, extraDirect: extra);
+                ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs), extraDirect: extra);
+                cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
+                    with { Availability = context.Availability() };
+                lines = LexiconDiff.Compare(service.Variant, cold);
+            }
+            catch (Exception e)
+            {
+                monitor.Log($"tly_lexicon diff: the cold build failed ({e.GetType().Name}: {e.Message}).", LogLevel.Warn);
+                return;
+            }
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("# Lexicon diff").AppendLine();
             sb.AppendLine($"Current answers ('base') vs a cold build of this save's data ('live'). {service.OriginLine}; key {Short(current.Key)}; {lines.Count} difference(s).");
             if (current.Origin == AnswerOrigin.Computed)
                 sb.AppendLine("The current answers were computed this session by the same build, so this comparison is trivially empty; run it on a load that served shipped or cached answers.");
+            if (service.ComputedAvailabilityKeys.Count > 0)
+                sb.AppendLine($"Availability key(s) computed this session ({JoinOrNone(service.ComputedAvailabilityKeys)}) come from the same build, so they are trivially equal.");
             sb.AppendLine($"Compared: obtain and year-sort sources per id (including their inputs), unresolved sources, map and shop weeks, unreached maps, and availability answers for {cold.Availability.Count} key(s) (the inputs stamp is ignored).").AppendLine();
             foreach (string line in lines) sb.AppendLine($"- {line}");
             string path = Path.Combine(modDirectory, FileArg(args, DefaultDiffFileName));

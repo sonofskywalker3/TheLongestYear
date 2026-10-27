@@ -13,7 +13,24 @@ namespace TheLongestYear.Core.Lexicon;
 public static class LexiconGaps
 {
     private const string ObjectRowPrefix = "obj|";
-    private const string MapRowPrefix = "map|";
+    public const string Unattributed = "unattributed";
+    private static readonly System.Text.RegularExpressions.Regex QualifiedId = new(@"\([A-Za-z]+\)[^\s|,;]+");
+    private static readonly char[] PrefixEnd = { '.', '_' };
+
+    /// <summary>A vanilla Data/Locations key is vanilla (even with an underscore); any other is owned by its prefix.</summary>
+    private static string MapOwner(string map)
+    {
+        if (VanillaLocationKeys.All.Contains(map)) return RowHashes.Vanilla;
+        int end = map.IndexOfAny(PrefixEnd);
+        return end > 0 ? map[..end] : map;
+    }
+
+    /// <summary>An unresolved source is free text: attributed by the qualified item ids in it, else <see cref="Unattributed"/>.</summary>
+    private static string SourceOwner(string source)
+    {
+        var ids = QualifiedId.Matches(source).Select(m => m.Value).ToList();
+        return ids.Count == 0 ? Unattributed : RowHashes.Owner(ObjectRowPrefix + string.Join("|", ids));
+    }
 
     public static string Report(AnswerVariant variant, ObtainabilityInputs inputs)
     {
@@ -29,9 +46,9 @@ public static class LexiconGaps
         foreach (string id in variant.Obtain.Where(p => p.Value.Count == 0).Select(p => p.Key).OrderBy(k => k, StringComparer.Ordinal))
             Add(RowHashes.Owner(ObjectRowPrefix + id), $"no route: {id}");
         foreach (string map in variant.UnreachedMaps.OrderBy(m => m, StringComparer.Ordinal))
-            Add(RowHashes.Owner(MapRowPrefix + map), $"unreached map: {map}");
+            Add(MapOwner(map), $"unreached map: {map}");
         foreach (string source in variant.Unresolved.OrderBy(u => u, StringComparer.Ordinal))
-            Add(RowHashes.Owner(MapRowPrefix + source.Replace('|', ' ')),$"unresolved source: {source}");
+            Add(SourceOwner(source), $"unresolved source: {source}");
 
         var sb = new StringBuilder();
         int total = byOwner.Values.Sum(l => l.Count);
