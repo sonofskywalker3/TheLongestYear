@@ -75,6 +75,11 @@ namespace TheLongestYear
         /// when the last build refused to publish a model (a data section failed to read). Null when
         /// the model built cleanly or has not been built yet.</summary>
         private string _obtainabilityFailure;
+        /// <summary>The inputs the last obtainability build read from the live game data, for
+        /// tly_lexicon dumpinputs. Null until a build has read them.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityInputs _lastObtainabilityInputs;
+        /// <summary>The last obtainability build's stage times (read, build, year sort), for the load timing line.</summary>
+        private long _obtainabilityReadMs, _obtainabilityBuildMs, _yearSortMs;
         /// <summary>The reachability verdicts <see cref="_enginePools"/> were built from, for tly_dumpmodel.</summary>
         private TheLongestYear.Core.Availability.SourceReachability _engineReachability;
         /// <summary>The curated season pins the availability model was last built with, kept so a

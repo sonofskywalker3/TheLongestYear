@@ -199,16 +199,22 @@ namespace TheLongestYear
 
         private void BuildObtainabilityModel()
         {
+            _obtainabilityReadMs = _obtainabilityBuildMs = _yearSortMs = 0;
             try
             {
                 var timer = System.Diagnostics.Stopwatch.StartNew();
                 var inputs = new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build();
+                _lastObtainabilityInputs = inputs;
                 long readMs = timer.ElapsedMilliseconds;
+                _obtainabilityReadMs = readMs;
                 var build = _obtainabilityCache.Get(inputs, out bool reused);
+                _obtainabilityBuildMs = timer.ElapsedMilliseconds - readMs;
                 _obtainability = build.Model;
                 _obtainabilityUnresolved = build.Unresolved;
                 _obtainabilityFailure = null;
+                long sortStartMs = timer.ElapsedMilliseconds;
                 _yearSortModel = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out bool sortReused).Model;
+                _yearSortMs = timer.ElapsedMilliseconds - sortStartMs;
                 this.Monitor.Log($"Year sort model: {_yearSortModel.Count} items{(sortReused ? ", reused" : "")} ({timer.ElapsedMilliseconds} ms total).", LogLevel.Trace);
                 this.Monitor.Log(
                     $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{(reused ? ", unchanged data, reused" : "")}), {build.Passes} pass(es), " +

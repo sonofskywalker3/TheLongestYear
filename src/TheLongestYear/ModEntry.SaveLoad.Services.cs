@@ -75,11 +75,13 @@ namespace TheLongestYear
             // Held in a local (rather than the old new-and-Build one-liner) so its
             // LastReachability survives the call: the board repair below re-checks the LIVE board
             // against exactly the verdicts these pools were built from.
+            var stageTimer = System.Diagnostics.Stopwatch.StartNew();
             ctx.EnginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             ctx.EnginePools =
                 ctx.EnginePoolReader.Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity));
+            long poolsMs = stageTimer.ElapsedMilliseconds;
             _seasonResolver = new SeasonResolver(
                 TheLongestYear.Core.SpawnSeasonMap.FromPools(ctx.EnginePools));
             // Derived item model: earliest-possible season and effort per item, from the same
@@ -91,15 +93,23 @@ namespace TheLongestYear
             // and Normal answer with the pacing week, Hard moves gates to the hard week, Extreme
             // moves gates and cards both. WorldResetService.RebuildAvailabilityModel rebuilds it
             // at the same point a reset re-resolves the difficulty for the new run.
+            stageTimer.Restart();
             _effortData = new TheLongestYear.Loop.GameEffortData(this.Monitor)
                 .Build(_config.PoolTuning.ExcludedLocationMarkers);
+            long effortMs = stageTimer.ElapsedMilliseconds;
             _enginePools = ctx.EnginePools;
             _engineReachability = ctx.EnginePoolReader.LastReachability;
             _itemSeasonPins = ctx.ItemSeasonPins;
+            stageTimer.Restart();
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
+            long availabilityMs = stageTimer.ElapsedMilliseconds;
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
             BuildObtainabilityModel();
+            this.Monitor.Log(
+                $"Load timing: pools {poolsMs} ms, effort {effortMs} ms, availability {availabilityMs} ms, "
+                + $"obtainability read {_obtainabilityReadMs} ms build {_obtainabilityBuildMs} ms, year sort {_yearSortMs} ms.",
+                LogLevel.Trace);
             this.Monitor.Log(
                 $"Item availability model built from live pools: "
                 + $"{_availability.DerivedCount} id(s) derived, "
