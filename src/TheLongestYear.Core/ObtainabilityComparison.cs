@@ -66,10 +66,11 @@ public static class ObtainabilityComparison
 
     public static string Render(
         IReadOnlyList<CompareRow> rows, ObtainabilityModel model, IReadOnlyList<string> unresolved,
-        Func<string, string?> nameOf, string version)
+        Func<string, string?> nameOf, string version, string origin)
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Item obtainability comparison").AppendLine();
+        sb.AppendLine(origin).AppendLine();
         sb.AppendLine($"Mod version {version}. Existing weeks are the current item model's pacing and hard weeks. New weeks are the blind obtainability model's landing week starting from Spring 1: dependable sources only, then any source. The verdict compares the existing hard week with the new dependable week; LuckOnly means only a chance source (the cart, a drop) reaches it. Weeks mean: start from nothing on the day, when does it first land.").AppendLine();
         sb.AppendLine("| Verdict | Items |").AppendLine("|---|---|");
         foreach (CompareVerdict v in SectionOrder)

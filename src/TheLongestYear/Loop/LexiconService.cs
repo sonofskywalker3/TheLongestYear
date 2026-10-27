@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StardewModdingAPI;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Lexicon;
@@ -33,6 +34,8 @@ namespace TheLongestYear.Loop
         private AnswerVariant _variant;
         /// <summary>The computed entry the resolver asked to write and that is not on disk yet.</summary>
         private string _pendingKey;
+        /// <summary>The availability keys computed (not served) since the last resolve.</summary>
+        private readonly HashSet<string> _computedKeys = new(StringComparer.Ordinal);
 
         /// <param name="build">The answers for live data nothing has (the cold build, for now), given the
         /// layers' extra direct sources to add.</param>
@@ -69,17 +72,47 @@ namespace TheLongestYear.Loop
         public Resolved Resolve(ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion)
         {
             Forget();
+            _computedKeys.Clear();
             Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers);
             _current = r;
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";
             if (r.Origin == AnswerOrigin.Computed)
-                line += r.DirtyOwners.Count > 0
-                    ? $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})"
-                    : " — no shipped answers";
+                line += ComputedReason(r, Loaded.Set.Composed, pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant, gameVersion);
             _monitor.Log(line + ".", LogLevel.Info);
             return r;
         }
+
+        /// <summary>Why a computed answer was needed, as the tail of the INFO line.</summary>
+        internal static string ComputedReason(Resolved r, AnswerSet shipped, string variantName, string gameVersion)
+        {
+            if (r.DirtyOwners.Count > 0)
+                return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})";
+            if (shipped == null) return " — no shipped answers";
+            if (shipped.GameVersion != gameVersion)
+                return $" — 0 data rows differ; shipped game version {shipped.GameVersion} ≠ live {gameVersion}";
+            if (!shipped.Variants.ContainsKey(variantName))
+                return $" — variant '{variantName}' not in the shipped answers";
+            return " — 0 data rows differ from the shipped answers";
+        }
+
+        /// <summary>The last resolve, or null before one (and after <see cref="Forget"/>).</summary>
+        public Resolved Current => _current;
+
+        /// <summary>The current answers with the availability answers added since the resolve; null with none.</summary>
+        public AnswerVariant Variant => _variant;
+
+        /// <summary>The availability keys computed (not served from the answers) since the last resolve.</summary>
+        public IReadOnlyCollection<string> ComputedAvailabilityKeys => _computedKeys;
+
+        /// <summary>One line naming where the answers came from, for the top of a dump:
+        /// <c>origin: shipped|cache|computed; layers: vanilla[, id...]</c>.</summary>
+        public string OriginLine
+            => $"origin: {(_current == null ? "none" : _current.Origin.ToString().ToLowerInvariant())}; layers: "
+               + string.Join(", ", new[] { RowHashes.Vanilla }.Concat(Loaded.Set.Ids));
+
+        /// <summary>The disk cache's entries, newest first.</summary>
+        public IReadOnlyList<CacheFileInfo> CacheFiles() => _cache.Files();
 
         /// <summary>Drops the last resolved answers (a load whose inputs could not be read has none),
         /// writing a still-pending computed entry first.</summary>
@@ -115,6 +148,7 @@ namespace TheLongestYear.Loop
         public void StoreAvailability(string key, AvailabilityAnswers answers)
         {
             if (_variant == null) return;
+            _computedKeys.Add(key);
             _variant = _variant with
             {
                 Availability = new Dictionary<string, AvailabilityAnswers>(_variant.Availability, StringComparer.Ordinal) { [key] = answers },

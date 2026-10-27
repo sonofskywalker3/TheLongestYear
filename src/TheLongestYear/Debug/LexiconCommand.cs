@@ -18,7 +18,7 @@ namespace TheLongestYear.DebugCommands
         bool PierreYear2Owned, LocationWeeks Maps, ShopWeeks Shops, IReadOnlyCollection<string> AllMaps,
         string GameVersion, string ModVersion,
         Func<IReadOnlyDictionary<string, AvailabilityAnswers>> Availability,
-        TheLongestYear.Loop.LoadedLayers Layers, AnswerSet Vanilla);
+        TheLongestYear.Loop.LoadedLayers Layers, AnswerSet Vanilla, TheLongestYear.Loop.LexiconService Service);
 
     /// <summary><c>tly_lexicon &lt;sub-command&gt;</c>: tooling for the shipped path lexicon.
     /// <c>dumpinputs [fileName]</c> writes the obtainability inputs the last save load read from the
@@ -30,23 +30,36 @@ namespace TheLongestYear.DebugCommands
     /// <c>write &lt;UniqueID&gt;</c> (or <c>write &lt;A&gt;+&lt;B&gt;</c>) cold-builds the live answers with
     /// the active layers' extra sources and writes that layer's answers delta (<see cref="LayerDelta.Write"/>)
     /// to <c>assets/lexicon/layers/</c>, keeping the file's other variant. Run it with only the named
-    /// mods (and TLY) installed, so nothing else's rows or routes land in the delta.</summary>
+    /// mods (and TLY) installed, so nothing else's rows or routes land in the delta.
+    /// <c>status</c> logs where the current answers came from, the layers and the cache folder.
+    /// <c>diff [file]</c> cold-builds the answers the way a cache miss would and compares them to the
+    /// current ones (<see cref="LexiconDiff"/>), writing <c>lexicon-diff.md</c>; <c>gaps [file]</c> writes
+    /// <c>lexicon-gaps.md</c> (<see cref="LexiconGaps"/>).</summary>
     internal static class LexiconCommand
     {
         public const string Name = "tly_lexicon";
         public const string Description =
-            "Path lexicon tooling. Usage: tly_lexicon dumpinputs [fileName] (writes the obtainability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed)";
+            "Path lexicon tooling. Usage: tly_lexicon status (origin, layers, cache files) | tly_lexicon diff [file] (cold build vs the current answers; writes lexicon-diff.md) | tly_lexicon gaps [file] (items with no route, unreached maps, unresolved sources; writes lexicon-gaps.md) | tly_lexicon dumpinputs [fileName] (writes the obtainability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed)";
 
+        private const int KeyPrefixLength = 8;
+        private const string StatusVerb = "status";
+        private const string DiffVerb = "diff";
+        private const string GapsVerb = "gaps";
+        private const string DefaultDiffFileName = "lexicon-diff.md";
+        private const string DefaultGapsFileName = "lexicon-gaps.md";
         private const string DumpInputs = "dumpinputs";
         private const string WriteVerb = "write";
         private const string VanillaTarget = "vanilla";
         private const string DefaultInputsFileName = "obtainability-inputs.json";
-        private const string Usage = "Usage: tly_lexicon dumpinputs [fileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>]";
+        private const string Usage = "Usage: tly_lexicon status | tly_lexicon diff [file] | tly_lexicon gaps [file] | tly_lexicon dumpinputs [fileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>]";
         private static readonly string[] VanillaLayers = { RowHashes.Vanilla };
 
         public static void Run(
             IMonitor monitor, ObtainabilityInputs inputs, string modDirectory, string[] args, Func<LexiconSaveContext> saveContext)
         {
+            if (args.Length >= 1 && IsVerb(args[0], StatusVerb)) { Status(monitor, saveContext); return; }
+            if (args.Length >= 1 && IsVerb(args[0], DiffVerb)) { Diff(monitor, inputs, modDirectory, args, saveContext); return; }
+            if (args.Length >= 1 && IsVerb(args[0], GapsVerb)) { Gaps(monitor, inputs, modDirectory, args, saveContext); return; }
             if (args.Length >= 2 && string.Equals(args[0], WriteVerb, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(args[1], VanillaTarget, StringComparison.OrdinalIgnoreCase))
             {
@@ -77,6 +90,107 @@ namespace TheLongestYear.DebugCommands
             File.WriteAllText(path, json);
             monitor.Log(
                 $"tly_lexicon dumpinputs: wrote {path} ({json.Length:N0} chars; {inputs.Objects.Count} objects, {inputs.Shops.Count} shop rows).",
+                LogLevel.Info);
+        }
+
+        private static bool IsVerb(string arg, string verb) => string.Equals(arg, verb, StringComparison.OrdinalIgnoreCase);
+
+        private static string FileArg(string[] args, string fallback)
+            => args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : fallback;
+
+        private static string Short(string key) => key.Length > KeyPrefixLength ? key[..KeyPrefixLength] : key;
+
+        private static string JoinOrNone(IEnumerable<string> items)
+        {
+            var list = items.OrderBy(k => k, StringComparer.Ordinal).ToList();
+            return list.Count == 0 ? "none" : string.Join(", ", list);
+        }
+
+        private static void Status(IMonitor monitor, Func<LexiconSaveContext> saveContext)
+        {
+            TheLongestYear.Loop.LexiconService service = saveContext()?.Service;
+            if (service == null)
+            {
+                monitor.Log("tly_lexicon status: no lexicon yet; load a save first.", LogLevel.Warn);
+                return;
+            }
+            Resolved r = service.Current;
+            if (r == null)
+                monitor.Log("tly_lexicon status: no answers resolved (the last load could not read its inputs).", LogLevel.Warn);
+            else
+            {
+                monitor.Log($"tly_lexicon status: {service.OriginLine}; key {Short(r.Key)}, resolved in {r.Ms} ms.", LogLevel.Info);
+                monitor.Log($"tly_lexicon status: items {r.Variant.RoutedCount()} routed of {r.Variant.Obtain.Count}; {r.Variant.MapWeeks.Count} maps reached, {r.Variant.UnreachedMaps.Count} unreached, {r.Variant.ShopWeeks.Count} shops, {r.Variant.Unresolved.Count} unresolved.", LogLevel.Info);
+                if (r.Origin == AnswerOrigin.Computed)
+                    monitor.Log($"tly_lexicon status: {r.DirtyCount} data row(s) differ from the shipped answers ({JoinOrNone(r.DirtyOwners)}).", LogLevel.Info);
+            }
+            var layers = service.Loaded.Inputs;
+            if (layers.Count == 0)
+                monitor.Log("tly_lexicon status: layers: none applied (vanilla only).", LogLevel.Info);
+            foreach (var layer in layers)
+            {
+                string installed = service.Loaded.InstalledVersionOf(layer.UniqueId) ?? "unknown";
+                bool same = string.Equals(layer.CheckedVersion, installed, StringComparison.Ordinal);
+                monitor.Log($"tly_lexicon status: layer {layer.UniqueId}: checked {layer.CheckedVersion}, installed {installed}, applied" +
+                    (same ? "" : " (versions differ; changed rows are recomputed)") + ".", LogLevel.Info);
+            }
+            if (service.Loaded.Set.UnmappedPairs.Count > 0)
+                monitor.Log($"tly_lexicon status: layer pairs not mapped: {string.Join(", ", service.Loaded.Set.UnmappedPairs)}.", LogLevel.Info);
+            var present = service.Variant?.Availability.Keys ?? (IEnumerable<string>)Array.Empty<string>();
+            monitor.Log($"tly_lexicon status: availability keys present: {JoinOrNone(present)}; computed this session: {JoinOrNone(service.ComputedAvailabilityKeys)}.", LogLevel.Info);
+            var files = service.CacheFiles();
+            monitor.Log($"tly_lexicon status: cache {TheLongestYear.Loop.LexiconService.CacheFolder}: {files.Count} file(s).", LogLevel.Info);
+            foreach (CacheFileInfo f in files)
+                monitor.Log($"tly_lexicon status: cache {f.KeyPrefix}: {f.Bytes:N0} bytes, written {f.LastWriteUtc.ToLocalTime():yyyy-MM-dd HH:mm}.", LogLevel.Info);
+        }
+
+        private static void Diff(
+            IMonitor monitor, ObtainabilityInputs inputs, string modDirectory, string[] args, Func<LexiconSaveContext> saveContext)
+        {
+            if (inputs == null) { monitor.Log("tly_lexicon diff: no obtainability inputs yet; load a save first.", LogLevel.Warn); return; }
+            LexiconSaveContext context = saveContext();
+            TheLongestYear.Loop.LexiconService service = context?.Service;
+            if (service?.Current == null || service.Variant == null)
+            {
+                monitor.Log("tly_lexicon diff: no resolved answers; load a save first.", LogLevel.Warn);
+                return;
+            }
+            var timer = Stopwatch.StartNew();
+            Resolved current = service.Current;
+            // Exactly what a cache miss builds: the composed layers' extra sources, this save's weeks and shops.
+            var extra = context.Layers?.Set.ExtraDirectSources;
+            ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs, extraDirect: extra);
+            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs), extraDirect: extra);
+            AnswerVariant cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
+                with { Availability = context.Availability() };
+            IReadOnlyList<string> lines = LexiconDiff.Compare(service.Variant, cold);
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("# Lexicon diff").AppendLine();
+            sb.AppendLine($"Current answers ('base') vs a cold build of this save's data ('live'). {service.OriginLine}; key {Short(current.Key)}; {lines.Count} difference(s).");
+            if (current.Origin == AnswerOrigin.Computed)
+                sb.AppendLine("The current answers were computed this session by the same build, so this comparison is trivially empty; run it on a load that served shipped or cached answers.");
+            sb.AppendLine($"Compared: obtain and year-sort sources per id (including their inputs), unresolved sources, map and shop weeks, unreached maps, and availability answers for {cold.Availability.Count} key(s) (the inputs stamp is ignored).").AppendLine();
+            foreach (string line in lines) sb.AppendLine($"- {line}");
+            string path = Path.Combine(modDirectory, FileArg(args, DefaultDiffFileName));
+            File.WriteAllText(path, sb.ToString());
+            monitor.Log($"tly_lexicon diff: {lines.Count} difference(s), wrote {path} ({service.OriginLine}; {timer.ElapsedMilliseconds} ms).", LogLevel.Info);
+        }
+
+        private static void Gaps(
+            IMonitor monitor, ObtainabilityInputs inputs, string modDirectory, string[] args, Func<LexiconSaveContext> saveContext)
+        {
+            TheLongestYear.Loop.LexiconService service = saveContext()?.Service;
+            if (inputs == null || service?.Variant == null)
+            {
+                monitor.Log("tly_lexicon gaps: no resolved answers; load a save first.", LogLevel.Warn);
+                return;
+            }
+            AnswerVariant v = service.Variant;
+            string path = Path.Combine(modDirectory, FileArg(args, DefaultGapsFileName));
+            File.WriteAllText(path, LexiconGaps.Report(v, inputs));
+            monitor.Log(
+                $"tly_lexicon gaps: {v.Obtain.Count(p => p.Value.Count == 0)} item(s) with no route, {v.UnreachedMaps.Count} unreached map(s), {v.Unresolved.Count} unresolved source(s); wrote {path}.",
                 LogLevel.Info);
         }
 

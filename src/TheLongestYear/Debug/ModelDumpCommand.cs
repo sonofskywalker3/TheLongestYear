@@ -32,7 +32,8 @@ namespace TheLongestYear.DebugCommands
             SourceReachability reachability,
             Func<DifficultyStep, ItemAvailabilityModel> buildDetached,
             string modDirectory,
-            string[] args)
+            string[] args,
+            string originLine)
         {
             if (!Context.IsWorldReady || pools == null || effortData == null)
             {
@@ -45,6 +46,7 @@ namespace TheLongestYear.DebugCommands
             foreach (string id in AvailabilityWeeks.GuildRewardWeeks.Keys) ids.Add(id);
 
             var sb = new StringBuilder();
+            sb.AppendLine("# " + originLine);
             sb.AppendLine("section\tid\tvanilla\tstep\tplaced\tpacing\thard\tgate\teffort\tsource\tbasis");
             foreach (DifficultyStep step in Enum.GetValues(typeof(DifficultyStep)))
             {

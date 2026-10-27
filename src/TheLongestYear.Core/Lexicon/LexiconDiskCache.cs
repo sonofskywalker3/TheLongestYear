@@ -139,7 +139,29 @@ public sealed class LexiconDiskCache
         }
     }
 
+    /// <summary>The entries on disk, newest first: key prefix, size and last write. Empty when the
+    /// folder is absent or cannot be listed.</summary>
+    public IReadOnlyList<CacheFileInfo> Files()
+    {
+        try
+        {
+            if (!Directory.Exists(_directory)) return Array.Empty<CacheFileInfo>();
+            return new DirectoryInfo(_directory).GetFiles("*" + Extension)
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .Select(f => new CacheFileInfo(Short(Path.GetFileNameWithoutExtension(f.Name)), f.Length, f.LastWriteTimeUtc))
+                .ToList();
+        }
+        catch (Exception e) when (IsWriteFailure(e))
+        {
+            _trace($"Lexicon: could not list the cache folder ({e.GetType().Name}: {e.Message}).");
+            return Array.Empty<CacheFileInfo>();
+        }
+    }
+
     private string PathFor(string key) => Path.Combine(_directory, key + Extension);
 
     private static string Short(string key) => key.Length > KeyPrefixLength ? key[..KeyPrefixLength] : key;
 }
+
+/// <summary>One cache entry as <c>tly_lexicon status</c> lists it.</summary>
+public sealed record CacheFileInfo(string KeyPrefix, long Bytes, DateTime LastWriteUtc);

@@ -122,7 +122,7 @@ namespace TheLongestYear
                     weekOverrides: AvailabilityWeekOverrides(),
                     mode: TheLongestYear.Core.WeekModes.For(step), step: step,
                     hasUpgrade: _meta.State.HasUpgrade),
-                this.Helper.DirectoryPath, args);
+                this.Helper.DirectoryPath, args, OriginLine());
 
         /// <summary>Jeff, 2026-08-28: "define can't exist; list all of the items in all of the bundles
         /// and when the first possible time you can get them is." One row per ingredient of every
@@ -280,8 +280,11 @@ namespace TheLongestYear
             return new TheLongestYear.DebugCommands.LexiconSaveContext(
                 _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
                 _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
-                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers, _lexicon?.Loaded, _lexicon?.Vanilla);
+                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers, _lexicon?.Loaded, _lexicon?.Vanilla, _lexicon);
         }
+
+        /// <summary>The "origin: ...; layers: ..." line the model dumps start with.</summary>
+        private string OriginLine() => _lexicon?.OriginLine ?? "origin: none; layers: vanilla";
 
         /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>
         private void CmdObtain(string command, string[] args)
@@ -320,7 +323,7 @@ namespace TheLongestYear
                     _obtainability);
                 string report = TheLongestYear.Core.ObtainabilityComparison.Render(
                     rows, _obtainability, _obtainabilityUnresolved, id => ItemRegistry.GetData(id)?.DisplayName,
-                    this.ModManifest.Version.ToString());
+                    this.ModManifest.Version.ToString(), OriginLine());
                 string fileName = args.Length > 1 && !string.IsNullOrWhiteSpace(args[1]) ? args[1] : "obtainability-compare.md";
                 string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
                 System.IO.File.WriteAllText(path, report);
@@ -338,7 +341,8 @@ namespace TheLongestYear
                 }
             }
             this.Monitor.Log(
-                TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName, startDay),
+                OriginLine() + System.Environment.NewLine
+                + TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName, startDay),
                 LogLevel.Info);
         }
 

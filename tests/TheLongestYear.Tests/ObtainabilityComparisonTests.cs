@@ -60,7 +60,7 @@ public class ObtainabilityComparisonTests
         Assert.Equal(1, row.NewDependable);                 // the headline week, unresolved source included
         Assert.Equal(6, row.NewDependableKnown);            // the earliest week a source the model read reaches
         Assert.Equal(CompareVerdict.NewEarlier, row.Verdict);   // the verdict still rests on NewDependable
-        string text = ObtainabilityComparison.Render(Rows(), Model, new string[0], id => "Name " + id, "0.18.4");
+        string text = ObtainabilityComparison.Render(Rows(), Model, new string[0], id => "Name " + id, "0.18.4", "origin: shipped; layers: vanilla");
         Assert.Contains("| Dependable only through an unresolved source | 1 |", text);
         Assert.Contains("- new dependable 1 (unresolved; known-source week 6), any 1", text);
         Assert.Contains("- new dependable 3, any 3", text);   // (O)6: both agree, so no parenthesis
@@ -69,8 +69,9 @@ public class ObtainabilityComparisonTests
     [Fact]
     public void The_report_details_only_the_verdicts_that_need_a_ruling_and_lists_only_new_by_name()
     {
-        string text = ObtainabilityComparison.Render(Rows(), Model, new[] { "LOCATION_FISH Beach X | Forage at Beach" }, id => "Name " + id, "0.18.4");
+        string text = ObtainabilityComparison.Render(Rows(), Model, new[] { "LOCATION_FISH Beach X | Forage at Beach" }, id => "Name " + id, "0.18.4", "origin: shipped; layers: vanilla");
         Assert.Contains("# Item obtainability comparison", text);
+        Assert.Contains("origin: shipped; layers: vanilla", text);
         Assert.Contains("| NewLater | 1 |", text);
         Assert.Contains("| LuckOnly | 1 |", text);
         Assert.Contains("| OnlyNew | 1 |", text);
