@@ -15,7 +15,8 @@ namespace TheLongestYear.Loop
     /// cap is per day: the first build of the day picks the visible ids and remembers them on the
     /// live RunState; every later build that day (e.g. reopening the cart after a purchase) is
     /// filtered to those same ids, so buying an item leaves a gap for the rest of the day instead
-    /// of the next item sliding into view. No-op when no TLY run is loaded
+    /// of the next item sliding into view. Before the cap, <see cref="CartSlotArrangement"/> puts
+    /// vanilla's fixed extras in random slots and may give one slot to a Year 2 item. No-op when no TLY run is loaded
     /// (UpgradeChecker.HasUpgrade == null) so it never touches non-TLY saves.
     /// </summary>
     [HarmonyPatch(typeof(ShopBuilder), nameof(ShopBuilder.GetShopStock), new[] { typeof(string), typeof(ShopData) })]
@@ -38,7 +39,7 @@ namespace TheLongestYear.Loop
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
-        private static void Postfix(string shopId, ref Dictionary<ISalable, ItemStockInformation> __result)
+        private static void Postfix(string shopId, ShopData shop, ref Dictionary<ISalable, ItemStockInformation> __result)
         {
             if (!Enabled) return;                                // config kill-switch
             if (UpgradeChecker.HasUpgrade == null) return;       // dormant on non-TLY saves
@@ -58,18 +59,53 @@ namespace TheLongestYear.Loop
                 return;
             }
 
+            int day = Game1.Date.TotalDays;
             var entries = __result.ToList();
             var ids = entries
                 .Select(kv => CartDayStock.KeyFor(kv.Key.QualifiedItemId, kv.Key.IsRecipe))
                 .ToList();
-            var keep = new HashSet<string>(CartDayStock.Select(run, Game1.Date.TotalDays, ids, allowed), StringComparer.Ordinal);
+            if (RunActivation.IsActive)
+                Arrange(shop, run, day, allowed, entries, ref ids);
+            var keep = new HashSet<string>(CartDayStock.Select(run, day, ids, allowed), StringComparer.Ordinal);
             __result.Clear();
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var kv in entries)
+            var byKey = entries
+                .GroupBy(kv => CartDayStock.KeyFor(kv.Key.QualifiedItemId, kv.Key.IsRecipe), StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+            foreach (string key in ids)
             {
-                string key = CartDayStock.KeyFor(kv.Key.QualifiedItemId, kv.Key.IsRecipe);
-                if (keep.Contains(key) && seen.Add(key))
+                if (keep.Contains(key) && seen.Add(key) && byKey.TryGetValue(key, out var kv))
                     __result.Add(kv.Key, kv.Value);
+            }
+        }
+
+        /// <summary>Reorders <paramref name="ids"/> by <see cref="CartSlotArrangement"/> (extras in
+        /// random slots, the Year 2 slot) and adds the Year 2 item to <paramref name="entries"/>
+        /// when vanilla did not stock it.</summary>
+        private static void Arrange(ShopData shop, RunState run, int day, int allowed,
+            List<KeyValuePair<ISalable, ItemStockInformation>> entries, ref List<string> ids)
+        {
+            try
+            {
+                CartArrangement arranged = CartSlotArrangement.Arrange(ids,
+                    CartYearTwoSlot.MainDrawCount(shop, ids), CartYearTwoSlot.GuaranteedKeys(shop),
+                    CartYearTwoSlot.Pool(day), allowed,
+                    CartYearTwoSlot.ShuffleRng(run.Seed, day), CartYearTwoSlot.YearTwoRng(run.Seed, day));
+                var order = arranged.Order.ToList();
+                if (arranged.Added != null)
+                {
+                    var built = CartYearTwoSlot.Build(arranged.Added, shop, CartYearTwoSlot.YearTwoRng(run.Seed, day));
+                    if (built is { } b)
+                        entries.Add(new KeyValuePair<ISalable, ItemStockInformation>(b.Item, b.Info));
+                    else
+                        order.Remove(arranged.Added);   // sold out today
+                }
+                ids = order;
+            }
+            catch (Exception ex)
+            {
+                PatchLog.WarnOnce("cart-arrange",
+                    $"Traveling Cart: could not arrange today's slots ({ex.GetType().Name}: {ex.Message}); showing vanilla's order.");
             }
         }
     }

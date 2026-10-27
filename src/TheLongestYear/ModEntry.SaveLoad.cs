@@ -273,6 +273,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.CommunityCenterCompletePatch.ResetLogGuards();
             // Ownership is per save: re-evaluate the Pierre year-2-seeds shop edit for this save.
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            TheLongestYear.Loop.CartYearTwoSlot.Invalidate();
             // Same for the Sneak Peek channel label: the Boost is per save and per season.
             this.RefreshSneakPeekChannelLabel();
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
@@ -372,6 +373,7 @@ namespace TheLongestYear
             _boardBuilder = null;
             _boardFingerprint = null;
             this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+            TheLongestYear.Loop.CartYearTwoSlot.Invalidate();
             // BoostChecker is null from here, so the channel edit no longer applies: drop the
             // relabelled string so a non-TLY save never shows a TLY channel name.
             if (_sneakPeekLabelActive)

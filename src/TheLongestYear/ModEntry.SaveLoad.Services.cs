@@ -274,6 +274,7 @@ namespace TheLongestYear
             {
                 if (id == TheLongestYear.Loop.PierreYear2SeedsService.UpgradeId)
                     this.Helper.GameContent.InvalidateCache(TheLongestYear.Loop.PierreYear2SeedsService.ShopAssetName);
+                    TheLongestYear.Loop.CartYearTwoSlot.Invalidate();
                 if (id == TheLongestYear.Core.AnimalPowers.LoyalPet)
                     _animalPowers.RefreshPets("bought");
                 // A bought circle is handed over on the spot, not at the next loop.

@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.0.25 - unreleased
+
+### Changed
+
+- **The Traveling Cart sometimes brings Year 2 items.** Every cart visit has a 1 in 10 chance that one of its slots holds something no shop sells before Year 2: Garlic, Red Cabbage or Artichoke Seeds, Rice Shoot, Quality Fertilizer or the Animal Catalogue, plus any Year 2 items your other mods add to a shop. It is one chance per visit, however many cart slots you have bought. Thanks to mysticalfairy25 for the idea.
+
+### Fixed
+
+- **The cart's special items show up again.** Rare Seed, Coffee Beans, the catalogues and the cart's other fixed items came after its random stock, so with TLY's cart slots they never made it onto the cart. Each one now takes a random slot like any other item. On the day the cart's guaranteed Red Cabbage Seeds visit comes up, the seeds always get a slot.
+
 ## 1.0.24 - 2026-10-26
 
 ### Added

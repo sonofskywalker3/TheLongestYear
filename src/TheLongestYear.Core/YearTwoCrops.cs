@@ -16,9 +16,9 @@ namespace TheLongestYear.Core;
 /// - <b>Garlic (476)</b> has no year-1 route at all. Spring's Mixed Seeds roll is
 ///   <c>Next(472, 476)</c>, which stops one short of it, and no cart entry lists it.
 /// - <b>Red Cabbage (485)</b> is guaranteed from the Traveling Cart once in year 1
-///   (<c>VisitsUntilY1Guarantee 0 0</c>) — but this mod caps the cart to the slots a player's
-///   cart_slot upgrades have unlocked (one by default, see CartSlotLimitPatch), which turns that
-///   guarantee back into luck.
+///   (<c>VisitsUntilY1Guarantee 0 0</c>), on saves that arm it. That line sits after the cart's
+///   10 random objects, so this mod's slot cap hid it until 1.0.25; it now takes a shown slot
+///   (CartSlotArrangement). Any other cart visit offers it only by the Year 2 slot's luck.
 /// - <b>Artichoke (489)</b> comes out of Fall's Mixed Seeds roll, <c>Next(487, 491)</c>, at 25%
 ///   per seed in any year, free and untouched by this mod. It is therefore NEVER excluded here.
 ///

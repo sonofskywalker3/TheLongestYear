@@ -54,6 +54,7 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_skipscene", "Finish whichever day-28 scene is on screen as if clicked through: the CONTINUE card, either rewind Junimo beat, or the rewind Town pan. One beat per call; 'all' presses the rewind's skip button (debug/automation).", this.CmdSkipScene);
             yield return new DebugCommand("tly_donate", "Simulate a CC donation. Usage: tly_donate <itemId>", this.CmdDonate);
             yield return new DebugCommand("tly_runstate", "Print the current run state.", this.CmdRunState);
+            yield return new DebugCommand("tly_cart", "Log the Traveling Cart's shown stock today, or 'sweep <n>' its Year 2 slot over n seeded days. Read-only.", this.CmdCart);
             yield return new DebugCommand("tly_netstate", "Print the NetWorldState fields the keep/wipe audit rules, for smoking a reset.", this.CmdNetState);
             yield return new DebugCommand("tly_gatecheck", "Audit the live board's season gates: for every bundle and every season, what the gate demands against what is actually obtainable by then. Flags anything IMPOSSIBLE (would brick the run) and anything FREE (gate demands nothing). Read-only.", this.CmdGateCheck);
             yield return new DebugCommand("tly_gateneeds", "Print, per bundle, what the current season's day-28 gate still needs (the same numbers the Season Goals page shows) plus the vault. Read-only.", this.CmdGateNeeds);
