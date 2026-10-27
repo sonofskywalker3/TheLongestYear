@@ -78,6 +78,12 @@ namespace TheLongestYear
         /// <summary>The inputs the last obtainability build read from the live game data, for
         /// tly_lexicon dumpinputs. Null until a build has read them.</summary>
         private TheLongestYear.Core.Obtainability.ObtainabilityInputs _lastObtainabilityInputs;
+        /// <summary>The path lexicon (shipped answers, disk cache, build), made at the first save load.</summary>
+        private TheLongestYear.Loop.LexiconService _lexicon;
+        /// <summary>The obtainability build the lexicon ran during the last load, and whether the
+        /// session memo reused it; null when the answers came from the shipped file or the cache.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityBuild _lastLexiconBuild;
+        private bool _lastLexiconBuildReused;
         /// <summary>The last obtainability build's stage times (read, build, year sort), for the load timing line.</summary>
         private long _obtainabilityReadMs, _obtainabilityBuildMs, _yearSortMs;
         /// <summary>The reachability verdicts <see cref="_enginePools"/> were built from, for tly_dumpmodel.</summary>

@@ -1,0 +1,112 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using TheLongestYear.Core.Obtainability;
+
+namespace TheLongestYear.Core.Lexicon;
+
+/// <summary>Where a resolved answer came from.</summary>
+public enum AnswerOrigin { Shipped, Cache, Computed }
+
+/// <summary>A resolved answer: the variant, where it came from, the cache key of the live data, how
+/// long resolving took, and for <see cref="AnswerOrigin.Computed"/> which mods' rows differed from
+/// the shipped answers and how many items were recomputed (all of them, for the cold build).</summary>
+public sealed record Resolved(
+    AnswerVariant Variant, AnswerOrigin Origin, string Key, long Ms, IReadOnlyList<string> DirtyOwners, int DirtyCount);
+
+/// <summary>Finds the answers for the live data, in order:
+/// <list type="number">
+/// <item>the shipped set, when its game version is the live one, it holds the save's variant
+/// (<c>pierre_year2_seeds</c> when owned, else <c>base</c>) and that variant's row hashes equal the
+/// live rows exactly (same keys, same hashes);</item>
+/// <item>the cache entry for <see cref="RowHashes.Key"/> of the live rows, layers and versions (an
+/// unreadable entry is a miss);</item>
+/// <item><c>build(live, shipped)</c>, written to the cache under that key.</item>
+/// </list>
+/// A cache entry is for one exact data set, so it holds one variant, always named
+/// <see cref="AnswerSet.BaseVariant"/> whatever the Pierre state was (that state is a row, so it is
+/// already in the key).</summary>
+public sealed class LexiconResolver
+{
+    private readonly AnswerSet? _shipped;
+    private readonly Func<string, AnswerSet?> _readCache;
+    private readonly Action<string, AnswerSet> _writeCache;
+    private readonly Func<ObtainabilityInputs, AnswerSet?, AnswerVariant> _build;
+
+    public LexiconResolver(
+        AnswerSet? shipped, Func<string, AnswerSet?> readCache, Action<string, AnswerSet> writeCache,
+        Func<ObtainabilityInputs, AnswerSet?, AnswerVariant> build)
+    {
+        _shipped = shipped;
+        _readCache = readCache ?? throw new ArgumentNullException(nameof(readCache));
+        _writeCache = writeCache ?? throw new ArgumentNullException(nameof(writeCache));
+        _build = build ?? throw new ArgumentNullException(nameof(build));
+    }
+
+    /// <summary>The set the last <see cref="Resolve"/> answered from: the shipped set, the cache entry
+    /// read, or the one just written. Null before the first call.</summary>
+    public AnswerSet? CurrentSet { get; private set; }
+
+    /// <summary>The variant name within <see cref="CurrentSet"/> the last answer is.</summary>
+    public string CurrentVariantName { get; private set; } = AnswerSet.BaseVariant;
+
+    public Resolved Resolve(
+        ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion, IReadOnlyList<string> layers)
+    {
+        if (live == null) throw new ArgumentNullException(nameof(live));
+        var timer = Stopwatch.StartNew();
+        IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, pierreOwned);
+        string key = RowHashes.Key(rows, layers, gameVersion, modVersion);
+        string variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
+
+        if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.Variants.ContainsKey(variantName)
+            && SameRows(_shipped.RowHashesFor(variantName), rows)
+            && _shipped.Resolve(variantName) is AnswerVariant shippedVariant)
+        {
+            CurrentSet = _shipped;
+            CurrentVariantName = variantName;
+            return new Resolved(shippedVariant, AnswerOrigin.Shipped, key, timer.ElapsedMilliseconds, Array.Empty<string>(), 0);
+        }
+
+        AnswerSet? cached = null;
+        try
+        {
+            cached = _readCache(key);
+        }
+        catch (Exception e) when (e is JsonException or IOException or FormatException)
+        {
+            cached = null;   // an unreadable entry is a miss; the reader logs it
+        }
+        if (cached?.Resolve(AnswerSet.BaseVariant) is AnswerVariant cachedVariant)
+        {
+            CurrentSet = cached;
+            CurrentVariantName = AnswerSet.BaseVariant;
+            return new Resolved(cachedVariant, AnswerOrigin.Cache, key, timer.ElapsedMilliseconds, Array.Empty<string>(), 0);
+        }
+
+        AnswerVariant built = _build(live, _shipped);
+        var set = new AnswerSet(gameVersion, modVersion, layers.ToList(), rows,
+            new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [AnswerSet.BaseVariant] = built });
+        _writeCache(key, set);
+        CurrentSet = set;
+        CurrentVariantName = AnswerSet.BaseVariant;
+        return new Resolved(built, AnswerOrigin.Computed, key, timer.ElapsedMilliseconds,
+            DirtyOwnersOf(_shipped?.RowHashesFor(variantName), rows), built.Obtain.Count);
+    }
+
+    private static bool SameRows(IReadOnlyDictionary<string, ulong> a, IReadOnlyDictionary<string, ulong> b)
+        => a.Count == b.Count && a.All(p => b.TryGetValue(p.Key, out ulong h) && h == p.Value);
+
+    /// <summary>The owners of every row that differs between the shipped and the live data, sorted;
+    /// empty with no shipped set.</summary>
+    private static IReadOnlyList<string> DirtyOwnersOf(IReadOnlyDictionary<string, ulong>? shippedRows, IReadOnlyDictionary<string, ulong> live)
+    {
+        if (shippedRows == null) return Array.Empty<string>();
+        var (added, removed, changed) = RowHashes.Diff(shippedRows, live);
+        return added.Concat(removed).Concat(changed).Select(RowHashes.Owner)
+            .Distinct(StringComparer.Ordinal).OrderBy(o => o, StringComparer.Ordinal).ToList();
+    }
+}

@@ -19,6 +19,18 @@ public sealed record AnswerVariant(
     /// Filled by <see cref="LexiconJson.Read"/> (and written by <see cref="LexiconJson.Write"/>, which
     /// builds its own pool); empty on a freshly built variant.</summary>
     public IReadOnlyList<string> Tables { get; init; } = Array.Empty<string>();
+
+    /// <summary>The obtainability model these answers stand for. Ids with no route (the empty
+    /// lists the snapshot keeps for every object) are left out, as the builder leaves them out, so
+    /// the model's <see cref="ObtainabilityModel.ItemIds"/> and <see cref="ObtainabilityModel.Count"/>
+    /// equal the cold build's.</summary>
+    public ObtainabilityModel ObtainModel() => ModelOf(Obtain);
+
+    /// <summary>The year-sort model these answers stand for (see <see cref="ObtainModel"/>).</summary>
+    public ObtainabilityModel YearSortModel() => ModelOf(YearSort);
+
+    private static ObtainabilityModel ModelOf(IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> sources)
+        => new(sources.Where(p => p.Value.Count > 0).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
 }
 
 /// <summary>The shipped or cached answer file: which game, mod and layers it was made for, the

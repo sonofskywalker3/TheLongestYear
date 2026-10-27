@@ -197,9 +197,13 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_dumpavailability: wrote {path} ({sb.Length:N0} chars, {requirements.Count} bundles, {judgement.Count} judgement row(s), {unknown.Count} unknown item(s)).", LogLevel.Info);
         }
 
+        /// <summary>Reads the obtainability inputs from the live game data and publishes the models
+        /// the path lexicon resolves them to: the shipped answers when the data is the unmodded game's,
+        /// else the disk cache entry for this exact data, else a build (<see cref="BuildLexiconVariant"/>).</summary>
         private void BuildObtainabilityModel()
         {
             _obtainabilityReadMs = _obtainabilityBuildMs = _yearSortMs = 0;
+            _lastLexiconBuild = null;
             try
             {
                 var timer = System.Diagnostics.Stopwatch.StartNew();
@@ -207,19 +211,24 @@ namespace TheLongestYear
                 _lastObtainabilityInputs = inputs;
                 long readMs = timer.ElapsedMilliseconds;
                 _obtainabilityReadMs = readMs;
-                var build = _obtainabilityCache.Get(inputs, out bool reused);
-                _obtainabilityBuildMs = timer.ElapsedMilliseconds - readMs;
-                _obtainability = build.Model;
-                _obtainabilityUnresolved = build.Unresolved;
+                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, BuildLexiconVariant);
+                TheLongestYear.Core.Lexicon.Resolved resolved = _lexicon.Resolve(
+                    inputs, _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId), Game1.version, this.ModManifest.Version.ToString());
+                _obtainability = resolved.Variant.ObtainModel();
+                _yearSortModel = resolved.Variant.YearSortModel();
+                _obtainabilityUnresolved = resolved.Variant.Unresolved;
                 _obtainabilityFailure = null;
-                long sortStartMs = timer.ElapsedMilliseconds;
-                _yearSortModel = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out bool sortReused).Model;
-                _yearSortMs = timer.ElapsedMilliseconds - sortStartMs;
-                this.Monitor.Log($"Year sort model: {_yearSortModel.Count} items{(sortReused ? ", reused" : "")} ({timer.ElapsedMilliseconds} ms total).", LogLevel.Trace);
+                _obtainabilityBuildMs = timer.ElapsedMilliseconds - readMs - _yearSortMs;
+                TheLongestYear.Core.Obtainability.ObtainabilityBuild built = _lastLexiconBuild;
+                string origin = resolved.Origin == TheLongestYear.Core.Lexicon.AnswerOrigin.Computed
+                    ? (_lastLexiconBuildReused ? ", unchanged data, reused" : "")
+                    : $", {resolved.Origin.ToString().ToLowerInvariant()} answers";
+                this.Monitor.Log($"Year sort model: {_yearSortModel.Count} items{origin} ({timer.ElapsedMilliseconds} ms total).", LogLevel.Trace);
+                bool hitCap = built?.HitPassCap == true;
                 this.Monitor.Log(
-                    $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{(reused ? ", unchanged data, reused" : "")}), {build.Passes} pass(es), " +
-                    $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
-                    build.HitPassCap ? LogLevel.Warn : LogLevel.Info);
+                    $"Obtainability model: {_obtainability.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{origin}), {resolved.Variant.Passes} pass(es), " +
+                    $"{_obtainabilityUnresolved.Count} unresolved source(s)" + (hitCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
+                    hitCap ? LogLevel.Warn : LogLevel.Info);
             }
             catch (TheLongestYear.Core.Obtainability.ObtainabilityReadException rex)
             {
@@ -239,12 +248,32 @@ namespace TheLongestYear
             }
         }
 
+        /// <summary>The lexicon's build for live data it has no answers for: the cold obtainability and
+        /// year-sort builds (each memoised for the session by input hash, so a reload of unchanged data
+        /// reuses them), snapshotted with this save's map and shop weeks.</summary>
+        private TheLongestYear.Core.Lexicon.AnswerVariant BuildLexiconVariant(
+            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.AnswerSet shipped)
+        {
+            var build = _obtainabilityCache.Get(inputs, out bool reused);
+            var sortTimer = System.Diagnostics.Stopwatch.StartNew();
+            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _);
+            _yearSortMs = sortTimer.ElapsedMilliseconds;
+            _lastLexiconBuild = build;
+            _lastLexiconBuildReused = reused;
+            return TheLongestYear.Core.Lexicon.AnswerVariantFactory.From(
+                build, yearSort, inputs, _enginePools?.LocationWeeks, DataLocationKeys(), _enginePools?.ShopWeeks);
+        }
+
+        /// <summary>Every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>
+        private static List<string> DataLocationKeys()
+            => Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations").Keys.ToList();
+
         /// <summary>The loaded save's facts <c>tly_lexicon write vanilla</c> composes in, or null with no save.
         /// The maps are every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>
         private TheLongestYear.DebugCommands.LexiconSaveContext LexiconSaveContextNow()
         {
             if (!Context.IsWorldReady || _meta?.State == null) return null;
-            var maps = Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations").Keys.ToList();
+            var maps = DataLocationKeys();
             return new TheLongestYear.DebugCommands.LexiconSaveContext(
                 _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
                 _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
