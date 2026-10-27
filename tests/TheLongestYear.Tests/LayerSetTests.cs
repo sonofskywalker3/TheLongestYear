@@ -325,4 +325,41 @@ public sealed class LayerSetTests
             .Resolve(live, false, Game, Mod, s.Layers, s.KeyLayers).Key;
         Assert.NotEqual(KeyOf(one), KeyOf(two));
     }
+
+    private const string NullExtraSource = @"{""UniqueId"": ""ModC"", ""CheckedVersion"": ""1.0.0"", ""ExtraSources"": {""(O)x"": null}}";
+
+    [Theory]
+    [InlineData(NullExtraSource, true)]
+    [InlineData(@"{""UniqueId"": ""ModC"", ""CheckedVersion"": ""1.0.0"", ""ExtraSources"": {""(O)x"": [null]}}", true)]
+    [InlineData(@"{""Mods"": [""ModC""], ""CheckedVersions"": ""ModC@1.0.0"", ""Deltas"": {""base"": null}}", false)]
+    [InlineData(@"{""Mods"": [""ModC""], ""CheckedVersions"": ""ModC@1.0.0"", ""VariantRowHashes"": {""base"": null}}", false)]
+    [InlineData(@"{""Mods"": [null]}", false)]
+    public void NullMembersInALayerFileAreRefused(string json, bool isInputs)
+        => Assert.Throws<System.Text.Json.JsonException>(() =>
+        {
+            if (isInputs) LayerFile.ReadInputs(json);
+            else LayerFile.ReadAnswers(json);
+        });
+
+    [Fact]
+    public void ALayerFileWithANullMemberIsSkippedWithAWarnNamingIt()
+    {
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tly-layers-" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(folder);
+        try
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModC.inputs.json"), NullExtraSource);
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, LayerFile.InputsFileName(A)), LayerFile.WriteInputs(In(A, extra: OliveSource())));
+            var warnings = new List<string>();
+            var (inputs, answers) = LayerFile.ReadFolder(folder, warnings.Add);
+            Assert.Contains(warnings, w => w.Contains("ModC.inputs.json", StringComparison.Ordinal));
+            Assert.Equal(new[] { A }, inputs.Select(i => i.UniqueId));
+            LayerSet set = LayerSet.Compose(VanillaSet(), inputs, answers, warnings.Add);
+            Assert.True(set.ExtraDirectSources.ContainsKey(Olive));
+        }
+        finally
+        {
+            System.IO.Directory.Delete(folder, recursive: true);
+        }
+    }
 }

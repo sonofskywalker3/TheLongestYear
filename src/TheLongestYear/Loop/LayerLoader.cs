@@ -16,14 +16,29 @@ namespace TheLongestYear.Loop
     /// the shipped vanilla answers (<see cref="LayerSet.Compose"/>). Only the mod registry calls live here.</summary>
     internal static class LayerLoader
     {
+        /// <summary>The layers for this game. Anything that goes wrong reading or composing them means
+        /// no layers (vanilla only), with one WARN naming the exception: a broken layer must never
+        /// cost the session its answers.</summary>
         public static LoadedLayers Load(string modFolder, AnswerSet vanilla, IModRegistry registry, Action<string> warn)
         {
             if (registry == null) throw new ArgumentNullException(nameof(registry));
             Func<string, bool> isLoaded = registry.IsLoaded;
             Func<string, string> installedVersionOf = id => registry.Get(id)?.Manifest.Version?.ToString();
-            var (allInputs, allAnswers) = LayerFile.ReadFolder(LayerFile.Folder(modFolder), warn);
-            var (inputs, answers) = LayerSet.Active(allInputs, allAnswers, isLoaded, installedVersionOf, warn);
-            return new LoadedLayers(LayerSet.Compose(vanilla, inputs, answers, warn), inputs, answers, installedVersionOf);
+            try
+            {
+                var (allInputs, allAnswers) = LayerFile.ReadFolder(LayerFile.Folder(modFolder), warn);
+                var (inputs, answers) = LayerSet.Active(allInputs, allAnswers, isLoaded, installedVersionOf, warn);
+                return new LoadedLayers(LayerSet.Compose(vanilla, inputs, answers, warn), inputs, answers, installedVersionOf);
+            }
+            catch (Exception e)   // any failure: no layers, logged, never a null model
+            {
+                warn($"Lexicon layers could not be loaded ({e.GetType().Name}: {e.Message}); using the vanilla answers only.");
+                return None(vanilla, installedVersionOf);
+            }
         }
+
+        private static LoadedLayers None(AnswerSet vanilla, Func<string, string> installedVersionOf)
+            => new(LayerSet.Compose(vanilla, Array.Empty<LayerInputs>(), Array.Empty<LayerAnswers>(), _ => { }),
+                Array.Empty<LayerInputs>(), Array.Empty<LayerAnswers>(), installedVersionOf);
     }
 }

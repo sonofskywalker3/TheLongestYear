@@ -66,11 +66,17 @@ public static class LayerFile
 
     public static string WriteInputs(LayerInputs inputs) => LexiconJson.WriteDocument(inputs, null);
 
-    /// <summary>A hand-written inputs file may leave out a map it has nothing for; it reads as empty.</summary>
+    /// <summary>A hand-written inputs file may leave out a map it has nothing for; it reads as empty.
+    /// A null inside one (<c>"ExtraSources": {"(O)x": null}</c>, a null source) is refused with a
+    /// <see cref="System.Text.Json.JsonException"/> naming it.</summary>
     public static LayerInputs ReadInputs(string json)
     {
         LayerInputs read = LexiconJson.ReadDocument<LayerInputs>(json, null);
         if (string.IsNullOrWhiteSpace(read.UniqueId)) throw new System.Text.Json.JsonException("A layer inputs file has no UniqueId.");
+        if (read.ExtraSources != null)
+            foreach (var (id, sources) in read.ExtraSources)
+                if (sources == null || sources.Any(src => src == null))
+                    throw new System.Text.Json.JsonException($"ExtraSources {id} is null or holds a null source.");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
@@ -94,6 +100,13 @@ public static class LayerFile
     {
         LayerAnswers read = LexiconJson.ReadDocument<LayerAnswers>(json, DeltasKey);
         if (read.Mods == null || read.Mods.Count == 0) throw new System.Text.Json.JsonException("A layer answers file names no Mods.");
+        if (read.Mods.Any(string.IsNullOrWhiteSpace)) throw new System.Text.Json.JsonException("A layer answers file names a null or empty mod.");
+        if (read.VariantRowHashes != null)
+            foreach (var (name, rows) in read.VariantRowHashes)
+                if (rows == null) throw new System.Text.Json.JsonException($"VariantRowHashes {name} is null.");
+        if (read.Deltas != null)
+            foreach (var (name, delta) in read.Deltas)
+                if (NullMember(delta) is string member) throw new System.Text.Json.JsonException($"Deltas {name}: {member} is null.");
         return read with
         {
             CheckedVersions = read.CheckedVersions ?? "",
@@ -103,15 +116,40 @@ public static class LayerFile
         };
     }
 
+    /// <summary>The first member of a read delta that is null (or holds a null), or null when none is.</summary>
+    private static string? NullMember(AnswerVariant? delta)
+    {
+        if (delta == null) return "the variant";
+        if (delta.Obtain == null || delta.Obtain.Values.Any(v => v == null || v.Any(src => src == null))) return "Obtain";
+        if (delta.YearSort == null || delta.YearSort.Values.Any(v => v == null || v.Any(src => src == null))) return "YearSort";
+        if (delta.Unresolved == null) return "Unresolved";
+        if (delta.MapWeeks == null || delta.MapWeeks.Values.Any(v => v == null)) return "MapWeeks";
+        if (delta.UnreachedMaps == null) return "UnreachedMaps";
+        if (delta.ShopWeeks == null || delta.ShopWeeks.Values.Any(v => v == null)) return "ShopWeeks";
+        if (delta.Availability == null || delta.Availability.Values.Any(v => v == null)) return "Availability";
+        return null;
+    }
+
     /// <summary>Every layer file in <paramref name="folder"/>, in ordinal file-name order (the compose
     /// order of single-mod deltas). A missing folder has none. A file that cannot be read or parsed is
-    /// reported to <paramref name="warn"/> and skipped, so one bad layer does not cost the others.</summary>
+    /// reported to <paramref name="warn"/> and skipped, so one bad layer does not cost the others; a
+    /// folder that cannot be listed is reported and has none.</summary>
     public static (IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers) ReadFolder(string folder, Action<string> warn)
     {
         var inputs = new List<LayerInputs>();
         var answers = new List<LayerAnswers>();
         if (!Directory.Exists(folder)) return (inputs, answers);
-        foreach (string path in Directory.GetFiles(folder).OrderBy(p => Path.GetFileName(p), StringComparer.Ordinal))
+        string[] files;
+        try
+        {
+            files = Directory.GetFiles(folder);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            warn($"Lexicon layer folder {folder} could not be listed ({e.GetType().Name}: {e.Message}); no layers applied.");
+            return (inputs, answers);
+        }
+        foreach (string path in files.OrderBy(p => Path.GetFileName(p), StringComparer.Ordinal))
         {
             string name = Path.GetFileName(path);
             bool isInputs = name.EndsWith(InputsSuffix, StringComparison.Ordinal);
