@@ -62,6 +62,14 @@ public class YearTwoCartPoolTests
     }
 
     [Fact]
+    public void Vanilla_rulings_override_the_model()
+    {
+        Assert.True(YearTwoCartPool.Offers(C("(W)57", YearTwoReason.NoRoute, objectType: null)));      // Dragontooth Cutlass
+        Assert.False(YearTwoCartPool.Offers(C("(O)460", YearTwoReason.NoRoute)));                       // Mermaid's Pendant
+        Assert.False(YearTwoCartPool.Offers(C("(O)73", YearTwoReason.NoRoute, price: 500)));            // Golden Walnut
+    }
+
+    [Fact]
     public void Pool_is_sorted_and_distinct()
         => Assert.Equal(new[] { "(O)830", "(O)831" }, YearTwoCartPool.Select(new[]
         {
