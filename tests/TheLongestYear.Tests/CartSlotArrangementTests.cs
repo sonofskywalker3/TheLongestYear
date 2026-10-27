@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core;
-using TheLongestYear.Core.Obtainability;
 using Xunit;
 
 namespace TheLongestYear.Tests;
@@ -130,44 +129,4 @@ public class CartSlotArrangementTests
             new Random(1), RollOf(true));
         Assert.Null(result.Added);
     }
-}
-
-public class YearTwoShopItemsTests
-{
-    private static IReadOnlyList<string> Find(params ShopRow[] rows) => YearTwoShopItems.Find(rows, _ => true);
-
-    [Fact]
-    public void Year_two_only_line_counts()
-        => Assert.Equal(new[] { "(O)476" }, Find(new ShopRow("SeedShop", "(O)476", "SEASON spring, YEAR 2", false)));
-
-    [Fact]
-    public void Item_also_sold_in_year_one_does_not_count()
-        => Assert.Empty(Find(
-            new ShopRow("Carpenter", "(BC)211", "YEAR 2", false),
-            new ShopRow("Carpenter", "(BC)211", "!YEAR 2, SEASON winter", false)));
-
-    [Fact]
-    public void Cart_lines_are_ignored_both_ways()
-    {
-        // The cart's Red Cabbage guarantee has no YEAR clause; it must not make the seed a year-1 item.
-        Assert.Equal(new[] { "(O)485" }, Find(
-            new ShopRow("SeedShop", "(O)485", "SEASON summer, YEAR 2", false),
-            new ShopRow("Traveler", "(O)485", "WORLD_STATE_FIELD VisitsUntilY1Guarantee 0 0", false)));
-        Assert.Empty(Find(new ShopRow("Traveler", "(O)999", "YEAR 2", false)));
-    }
-
-    [Fact]
-    public void Recipes_queries_and_unpriced_items_are_left_out()
-    {
-        Assert.Empty(Find(new ShopRow("Saloon", "(O)801", "YEAR 2", true)));
-        Assert.Empty(Find(new ShopRow("Mod", "RANDOM_ITEMS (O) 2 10", "YEAR 2", false)));
-        Assert.Empty(Find(new ShopRow("Mod", "(O)Mod_X", "YEAR 2", false, IsRandom: true)));
-        Assert.Empty(YearTwoShopItems.Find(new[] { new ShopRow("Mod", "(O)Mod_X", "YEAR 2", false) }, _ => false));
-    }
-
-    [Fact]
-    public void Modded_and_unqualified_ids_are_read()
-        => Assert.Equal(new[] { "(O)369", "(O)Mod.Seed" }, Find(
-            new ShopRow("SeedShop", "369", "YEAR 2", false),
-            new ShopRow("ModShop", "(O)Mod.Seed", "YEAR 3", false)));
 }

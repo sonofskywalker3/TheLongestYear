@@ -100,6 +100,30 @@ public class ObtainabilityConditionTests
         Assert.Equal(new[] { "shop:Sandy", "SOME_MOD_QUERY" }, c.Requires);
     }
 
+    [Theory]
+    [InlineData("IS_COMMUNITY_CENTER_COMPLETE")]
+    [InlineData("IS_JOJA_MART_COMPLETE, SYNCED_RANDOM day cart_jojaCatalogue 0.1")]
+    [InlineData("ANY \"IS_COMMUNITY_CENTER_COMPLETE\" \"IS_JOJA_MART_COMPLETE\"")]
+    [InlineData("PLAYER_HAS_MAIL Host ccIsComplete")]
+    [InlineData("PLAYER_HAS_MAIL Current ccMovieTheater Received")]
+    public void A_community_center_gate_is_year_two(string condition)
+        => Assert.True(Read(condition).YearTwo);
+
+    [Fact]
+    public void A_qi_order_rule_is_an_island_route()
+    {
+        Assert.True(Read("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS").IslandHint);
+        Assert.False(Read("!PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current DROP_QI_BEANS").IslandHint);
+        Assert.False(Read("PLAYER_SPECIAL_ORDER_RULE_ACTIVE Current SOME_TOWN_RULE").IslandHint);
+    }
+
+    [Theory]
+    [InlineData("!IS_COMMUNITY_CENTER_COMPLETE")]
+    [InlineData("ANY \"IS_COMMUNITY_CENTER_COMPLETE\" \"SEASON fall\"")]
+    [InlineData("PLAYER_HAS_MAIL Host ccPantry")]
+    public void Not_a_community_center_gate(string condition)
+        => Assert.False(Read(condition).YearTwo);
+
     [Fact]
     public void A_negated_island_clause_does_not_hint_the_island()
     {

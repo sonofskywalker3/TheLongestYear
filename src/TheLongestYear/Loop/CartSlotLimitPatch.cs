@@ -89,7 +89,7 @@ namespace TheLongestYear.Loop
             {
                 CartArrangement arranged = CartSlotArrangement.Arrange(ids,
                     CartYearTwoSlot.MainDrawCount(shop, ids), CartYearTwoSlot.GuaranteedKeys(shop),
-                    CartYearTwoSlot.Pool(day), allowed,
+                    CartYearTwoSlot.Pool(), allowed,
                     CartYearTwoSlot.ShuffleRng(run.Seed, day), CartYearTwoSlot.YearTwoRng(run.Seed, day));
                 var order = arranged.Order.ToList();
                 if (arranged.Added != null)

@@ -30,7 +30,7 @@ namespace TheLongestYear
             }
 
             var stock = ShopBuilder.GetShopStock(CartSlotLimitPatch.TravelerShopId);
-            var pool = new HashSet<string>(CartYearTwoSlot.Pool(Game1.Date.TotalDays), StringComparer.Ordinal);
+            var pool = new HashSet<string>(CartYearTwoSlot.Pool(), StringComparer.Ordinal);
             this.Monitor.Log($"tly_cart: day {Game1.Date.TotalDays}, {stock.Count} shown:", LogLevel.Info);
             foreach (var kv in stock)
                 this.Monitor.Log($"  {kv.Key.QualifiedItemId} {kv.Key.DisplayName} {kv.Value.Price}g x{kv.Value.Stock}"
@@ -49,7 +49,7 @@ namespace TheLongestYear
             int main = CartYearTwoSlot.MainDrawCount(shop, ids);
             int allowed = CartSlotRules.VisibleSlots(UpgradeChecker.GetTier("cart_slot", CartSlotRules.MaxSlots),
                 CartSlotLimitPatch.StartingSlotsProvider?.Invoke() ?? CartSlotRules.MinSlots);
-            IReadOnlyList<string> pool = CartYearTwoSlot.Pool(Game1.Date.TotalDays);
+            IReadOnlyList<string> pool = CartYearTwoSlot.Pool();
             var guaranteed = CartYearTwoSlot.GuaranteedKeys(shop);
             int seed = _meta.Run.Seed;
             int extraShown = 0, yearTwoShown = 0, built = 0, rolled = 0, rolledHidden = 0;
@@ -74,6 +74,47 @@ namespace TheLongestYear
                              $"{ids.Count - main} extras), pool {pool.Count}. Extra shown {extraShown}, Year 2 rolled {rolled} " +
                              $"(not shown {rolledHidden}), Year 2 shown {yearTwoShown}, " +
                              $"Year 2 built {built}. Seed {seed}. Samples: {string.Join("; ", samples)}", LogLevel.Info);
+        }
+
+        /// <summary>Debug: <c>tly_yeartwo [file]</c> sorts every registered item by
+        /// <see cref="YearTwoItems"/> and writes the counts per item type plus every year-2 item
+        /// with its reason, for reviewing the line between year 1 and year 2. Read-only.</summary>
+        private void CmdYearTwo(string command, string[] args)
+        {
+            if (!Context.IsWorldReady || _obtainability == null)
+            {
+                this.Monitor.Log("Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
+                return;
+            }
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"# Year 1 / Year 2 items ({this.ModManifest.Version})").AppendLine();
+            var rows = new List<(string Type, string Id, string Name, YearTwoReason Reason)>();
+            foreach (var type in ItemRegistry.ItemTypes)
+                foreach (string id in type.GetAllIds())
+                {
+                    string qualified = type.Identifier + id;
+                    rows.Add((type.Identifier, qualified, ItemRegistry.GetData(qualified)?.DisplayName ?? "?", YearTwoItems.Classify(_obtainability, qualified)));
+                }
+            sb.AppendLine("| Type | Items | " + string.Join(" | ", Enum.GetNames(typeof(YearTwoReason))) + " |");
+            sb.AppendLine("|---|---|" + string.Concat(Enum.GetNames(typeof(YearTwoReason)).Select(_ => "---|")));
+            foreach (var g in rows.GroupBy(r => r.Type))
+                sb.AppendLine($"| {g.Key} | {g.Count()} | " + string.Join(" | ",
+                    Enum.GetValues(typeof(YearTwoReason)).Cast<YearTwoReason>().Select(r => g.Count(x => x.Reason == r))) + " |");
+            foreach (var g in rows.Where(r => r.Reason != YearTwoReason.YearOne).GroupBy(r => r.Type))
+            {
+                sb.AppendLine().AppendLine($"## {g.Key}").AppendLine();
+                foreach (var r in g.OrderBy(r => r.Reason).ThenBy(r => r.Id, StringComparer.Ordinal))
+                {
+                    var item = ItemRegistry.Create(r.Id, allowNull: true);
+                    int price = item?.salePrice(ignoreProfitMargins: true) ?? 0;
+                    string kind = item is StardewValley.Object o ? $"{o.Type}/{o.Category}" : "";
+                    sb.AppendLine($"- {r.Id} {r.Name} [{r.Reason}] {price}g {kind}");
+                }
+            }
+            string fileName = args.Length > 0 && !string.IsNullOrWhiteSpace(args[0]) ? args[0] : "year-two-items.md";
+            string path = System.IO.Path.Combine(this.Helper.DirectoryPath, fileName);
+            System.IO.File.WriteAllText(path, sb.ToString());
+            this.Monitor.Log($"tly_yeartwo: wrote {path} ({rows.Count} items, {rows.Count(r => r.Reason != YearTwoReason.YearOne)} year 2).", LogLevel.Info);
         }
     }
 }

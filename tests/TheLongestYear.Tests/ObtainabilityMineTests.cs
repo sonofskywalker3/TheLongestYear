@@ -78,6 +78,21 @@ public class ObtainabilityMineTests
     }
 
     [Fact]
+    public void Volcano_and_dangerous_floor_monsters_drop_on_the_island()
+    {
+        var rows = new[]
+        {
+            new MonsterDropRow("Hot Head", "(O)833", 0.1),
+            new MonsterDropRow("Royal Serpent", "(O)896", 0.1),
+            new MonsterDropRow("Skeleton", "(O)881", 0.5),
+        };
+        var drops = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).ToDictionary(d => d.ItemId, d => d.Source);
+        Assert.True(drops["(O)833"].Conditions.GingerIsland);
+        Assert.True(drops["(O)896"].Conditions.GingerIsland);
+        Assert.False(drops["(O)881"].Conditions.GingerIsland);
+    }
+
+    [Fact]
     public void Treasure_is_complete_chance_and_gated_where_the_game_gates_it()
     {
         var all = MineSources.FishingTreasure().ToList();

@@ -31,6 +31,35 @@ public static class ConditionSeasons
         "ITEM_ID_PREFIX", "ITEM_NUMERIC_ID", "ITEM_OBJECT_TYPE", "ITEM_PRICE", "ITEM_QUALITY", "ITEM_STACK", "ITEM_TYPE",
     };
 
+    /// <summary>Queries that hold only once the Community Center (or JojaMart) is complete. TLY's
+    /// line between year 1 and year 2 (Jeff, 2026-10-27): anything that must wait for the CC is a
+    /// year-2 route, the same as a YEAR 2 clause.</summary>
+    private static readonly HashSet<string> CommunityCenterQueries = new(StringComparer.Ordinal)
+    {
+        "IS_COMMUNITY_CENTER_COMPLETE", "IS_JOJA_MART_COMPLETE",
+    };
+
+    /// <summary>Mail flags the game sends only once the CC or JojaMart is complete (the hall
+    /// ceremony, the movie theater, the abandoned JojaMart), read from PLAYER_HAS_MAIL.</summary>
+    private static readonly HashSet<string> CommunityCenterMail = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ccIsComplete", "ccMovieTheater", "ccMovieTheaterJoja", "abandonedJojaMartAccessible",
+    };
+
+    /// <summary>Special-order rules only Mr. Qi's Walnut Room orders switch on (Data/SpecialOrders,
+    /// SpecialOrder.cs SpecialOrderRuleActive callers). The Walnut Room is on Ginger Island, so a
+    /// route that needs one is an island route.</summary>
+    private static readonly HashSet<string> QiOrderRules = new(StringComparer.Ordinal)
+    {
+        "DROP_QI_BEANS", "MINE_HARD", "SC_HARD", "SC_NO_FOOD", "QI_COOKING", "QI_DOUBLE", "LEGENDARY_FAMILY",
+    };
+
+    private const string SpecialOrderRuleQuery = "PLAYER_SPECIAL_ORDER_RULE_ACTIVE";
+    private const int RuleNameToken = 2;
+    private const string AnyQuery = "ANY";
+    private const string HasMailQuery = "PLAYER_HAS_MAIL";
+    private const int MailIdToken = 2;
+
     /// <summary>Prefixes of whole query families that are all prerequisites (PLAYER_HEARTS, BUILDINGS_CONSTRUCTED...).</summary>
     private static readonly string[] PrerequisitePrefixes = { "PLAYER_", "BUILDINGS_" };
 
@@ -56,10 +85,17 @@ public static class ConditionSeasons
             if (clause.Length == 0) continue;
             bool negated = clause.StartsWith("!", StringComparison.Ordinal);
             if (!negated && clause.Contains(IslandMarker, StringComparison.OrdinalIgnoreCase)) island = true;
+            if (!negated && NamesQiRule(clause)) island = true;
             string[] tokens = (negated ? clause.Substring(1) : clause).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string key = tokens[0].ToUpperInvariant();
 
             WeekMask? clauseWeeks = null;
+            if (!negated && NeedsCommunityCenter(clause))
+            {
+                yearTwo = true;
+                other.Add(clause);
+                continue;
+            }
             switch (key)
             {
                 case "TRUE":
@@ -153,6 +189,42 @@ public static class ConditionSeasons
                 weeks &= negated ? WeekMask.All.Except(w) : w;
         }
         return new ConditionReading(weeks, yearTwo, fewDays, chance, rainOnly, unresolved, island, other, days);
+    }
+
+    /// <summary>True for an un-negated clause that holds only after the CC or JojaMart is complete:
+    /// one of <see cref="CommunityCenterQueries"/>, a PLAYER_HAS_MAIL for one of
+    /// <see cref="CommunityCenterMail"/>, or an ANY whose every alternative is one of those.</summary>
+    internal static bool NeedsCommunityCenter(string clause)
+    {
+        string[] tokens = clause.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return false;
+        string key = tokens[0].ToUpperInvariant();
+        if (CommunityCenterQueries.Contains(key)) return true;
+        if (key == HasMailQuery)
+            return tokens.Length > MailIdToken && CommunityCenterMail.Contains(tokens[MailIdToken]);
+        if (key != AnyQuery) return false;
+        var alternatives = QuotedArguments(clause.Trim().Substring(AnyQuery.Length)).ToList();
+        return alternatives.Count > 0
+               && alternatives.All(alt => SplitClauses(alt).Any(c => !c.Trim().StartsWith("!", StringComparison.Ordinal) && NeedsCommunityCenter(c)));
+    }
+
+    private static bool NamesQiRule(string clause)
+    {
+        string[] tokens = clause.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length > RuleNameToken
+               && tokens[0].Equals(SpecialOrderRuleQuery, StringComparison.OrdinalIgnoreCase)
+               && QiOrderRules.Contains(tokens[RuleNameToken]);
+    }
+
+    private static IEnumerable<string> QuotedArguments(string text)
+    {
+        int open = -1;
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (text[i] != '"') continue;
+            if (open < 0) open = i;
+            else { yield return text.Substring(open + 1, i - open - 1); open = -1; }
+        }
     }
 
     /// <summary>Whether one clause reading is open on <paramref name="day"/>: within

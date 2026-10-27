@@ -3,11 +3,11 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.25 - unreleased
+## 1.0.26 - unreleased
 
 ### Changed
 
-- **The Traveling Cart sometimes brings Year 2 items.** Every cart visit has a 1 in 10 chance that one of its slots holds something no shop sells before Year 2: Garlic, Red Cabbage or Artichoke Seeds, Rice Shoot, Quality Fertilizer or the Animal Catalogue, plus any Year 2 items your other mods add to a shop. It is one chance per visit, however many cart slots you have bought. Thanks to mysticalfairy25 for the idea.
+- **The Traveling Cart sometimes brings Year 2 items.** Every cart visit has a 1 in 10 chance that one of its slots holds something a loop normally can't get before the Community Center is done: Ginger Island crops, fish and fossils, Mr. Qi's goods, Year 2 seeds like Garlic and Red Cabbage, and the same kind of late-game items from your other mods. It is one chance per visit, however many cart slots you have bought. Thanks to mysticalfairy25 for the idea.
 
 ### Fixed
 

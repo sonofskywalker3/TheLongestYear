@@ -62,6 +62,16 @@ public static class MineSources
     /// with the gate the game checks. All chance. Line numbers per entry.</summary>
     private static readonly (string ItemId, string[] Requires, bool Island, string Note)[] TreasureTable = BuildTreasureTable();
 
+    /// <summary>Monsters that live only in the Ginger Island volcano (VolcanoDungeon.cs 909-1477) or
+    /// only on Mr. Qi's dangerous mine and Skull Cavern floors (his Walnut Room orders). Both open
+    /// only after the Community Center, so their drops are island routes, year 2 in TLY.</summary>
+    private static readonly HashSet<string> IslandMonsters = new(StringComparer.Ordinal)
+    {
+        "Tiger Slime", "Lava Lurk", "Hot Head", "Magma Sprite", "Magma Duggy", "Magma Sparker",
+        "False Magma Cap", "Dwarvish Sentry",
+        "Putrid Ghost", "Shadow Sniper", "Royal Serpent", "Blue Squid", "Skeleton Mage",
+    };
+
     public static string? MonsterFloor(string monster)
         => MonsterFloors.TryGetValue(monster, out int floor) ? (floor >= SkullCavernFloor ? SkullCavernName : $"floor {floor}") : null;
 
@@ -85,7 +95,7 @@ public static class MineSources
             var template = new ObtainSource(
                 SourceKind.MonsterDrop, DayTable.Always,
                 placed && row.Chance >= RepeatableDropChance ? Reliability.Dependable : Reliability.Chance,
-                ObtainConditions.None with { Requires = new[] { requires } },
+                ObtainConditions.None with { Requires = new[] { requires }, GingerIsland = IslandMonsters.Contains(row.Monster) },
                 $"{row.Monster} drop, chance {row.Chance:0.###}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;

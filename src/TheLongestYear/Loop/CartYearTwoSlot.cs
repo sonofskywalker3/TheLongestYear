@@ -5,15 +5,16 @@ using StardewValley;
 using StardewValley.GameData.Shops;
 using StardewValley.Internal;
 using TheLongestYear.Core;
+using StardewValley.ItemTypeDefinitions;
 using TheLongestYear.Core.Obtainability;
 
 namespace TheLongestYear.Loop
 {
     /// <summary>
     /// Game-side half of <see cref="CartSlotArrangement"/>: reads the Traveler shop's own lines to
-    /// split its stock into the main random draw and the extras, finds the Year 2 pool in
-    /// Data/Shops (<see cref="YearTwoShopItems"/>, once per day), and builds the Year 2 item when
-    /// vanilla did not stock it, priced and stock-limited by the cart's random-object line.
+    /// split its stock into the main random draw and the extras, sorts every registered item into
+    /// the Year 2 pool (<see cref="YearTwoCartPool"/>, once per save load), and builds the Year 2
+    /// item when vanilla did not stock it, priced and stock-limited by the cart's random-object line.
     /// </summary>
     internal static class CartYearTwoSlot
     {
@@ -22,7 +23,7 @@ namespace TheLongestYear.Loop
         private const int ShuffleSalt = 0x2C47;
         private const int YearTwoSalt = 0x5A1E;
 
-        private static int _poolDay = -1;
+        private static ObtainabilityModel _poolModel;
         private static IReadOnlyList<string> _pool = Array.Empty<string>();
 
         // RollSeed, not seed ^ day * prime: the legacy Random turns related seeds into related
@@ -62,22 +63,38 @@ namespace TheLongestYear.Loop
             return keys;
         }
 
-        public static IReadOnlyList<string> Pool(int day)
+        /// <summary>Set by ModEntry: the obtainability model built at save load (null when none).</summary>
+        internal static Func<ObtainabilityModel> ModelProvider;
+
+        /// <summary>Every item the Year 2 slot can offer (<see cref="YearTwoCartPool"/>), sorted once
+        /// per obtainability model: the model is rebuilt only when a save loads.</summary>
+        public static IReadOnlyList<string> Pool()
         {
-            if (_poolDay == day) return _pool;
-            var rows = new List<ShopRow>();
-            foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
-                foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
-                    foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(item?.ItemId, item?.RandomItemId))
-                        rows.Add(new ShopRow(kv.Key, ItemRegistry.QualifyItemId(entry) ?? entry, item.Condition, item.IsRecipe, random));
-            _pool = YearTwoShopItems.Find(rows, Sellable);
-            _poolDay = day;
+            ObtainabilityModel model = ModelProvider?.Invoke();
+            if (model == null)
+            {
+                PatchLog.WarnOnce("cart-year2-no-model", "Traveling Cart: no obtainability model, so no Year 2 slot today.");
+                return Array.Empty<string>();
+            }
+            if (ReferenceEquals(model, _poolModel)) return _pool;
+            var candidates = new List<CartCandidate>();
+            foreach (IItemDataDefinition type in ItemRegistry.ItemTypes)
+                foreach (string id in type.GetAllIds())
+                {
+                    string qualified = type.Identifier + id;
+                    if (ItemRegistry.Create(qualified, allowNull: true) is not Item item) continue;
+                    var obj = item as StardewValley.Object;
+                    candidates.Add(new CartCandidate(qualified, type.Identifier, item.salePrice(ignoreProfitMargins: true),
+                        obj?.Type, item.Category, YearTwoItems.Classify(model, qualified)));
+                }
+            _pool = YearTwoCartPool.Select(candidates);
+            _poolModel = model;
             PatchLog.Info($"Cart Year 2 pool ({_pool.Count}): {string.Join(", ", _pool)}");
             return _pool;
         }
 
-        /// <summary>Drops the cached pool (Data/Shops changed, e.g. Pierre's Year 2 Seeds bought).</summary>
-        public static void Invalidate() => _poolDay = -1;
+        /// <summary>Drops the cached pool (a save loaded or Data/Shops changed).</summary>
+        public static void Invalidate() => _poolModel = null;
 
         /// <summary>The Year 2 item and its stock entry, or null when it is sold out today or cannot
         /// be built.</summary>
@@ -96,9 +113,6 @@ namespace TheLongestYear.Loop
             Game1.player.team.synchronizedShopStock.UpdateLocalStockWithSyncedQuanitities(CartSlotLimitPatch.TravelerShopId, one);
             return one.TryGetValue(item, out info) ? (item, info) : null;
         }
-
-        private static bool Sellable(string id)
-            => ItemRegistry.Create(id, allowNull: true) is Item item && item.salePrice(ignoreProfitMargins: true) > 0;
 
         private static HashSet<string> FixedIds(ShopData shop)
         {
