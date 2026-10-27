@@ -24,8 +24,21 @@ public static class RowHashes
     private static readonly char[] PrefixEnd = { '.', '_' };
 
     public static IReadOnlyDictionary<string, ulong> Of(ObtainabilityInputs inputs, bool pierreYear2Owned)
+        => Of(Rows(inputs, pierreYear2Owned));
+
+    /// <summary>The hashes of rows already listed by <see cref="Rows"/>.</summary>
+    internal static IReadOnlyDictionary<string, ulong> Of(IReadOnlyList<(string Key, object Row)> listed)
     {
         var rows = new Dictionary<string, ulong>(StringComparer.Ordinal);
+        foreach (var (key, row) in listed) rows[key] = Hash(row);
+        return rows;
+    }
+
+    /// <summary>Every input row under its key (the rows <see cref="Of"/> hashes), in list order.</summary>
+    public static IReadOnlyList<(string Key, object Row)> Rows(ObtainabilityInputs inputs, bool pierreYear2Owned)
+    {
+        if (inputs is null) throw new ArgumentNullException(nameof(inputs));
+        var rows = new List<(string Key, object Row)>();
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
 
         // First occurrence keeps the plain key; a repeat gets |1, |2... in list order, so no row is dropped.
@@ -34,14 +47,14 @@ public static class RowHashes
         {
             seen.TryGetValue(key, out int dupes);
             seen[key] = dupes + 1;
-            rows[dupes == 0 ? key : key + "|" + dupes] = Hash(row);
+            rows.Add((dupes == 0 ? key : key + "|" + dupes, row));
         }
         // Rows that repeat under one key get a list-order suffix.
         void PutN(string key, object row)
         {
             counts.TryGetValue(key, out int n);
             counts[key] = n + 1;
-            rows[key + "|" + n] = Hash(row);
+            rows.Add((key + "|" + n, row));
         }
         static string S(Season? s) => s?.ToString() ?? "";
 

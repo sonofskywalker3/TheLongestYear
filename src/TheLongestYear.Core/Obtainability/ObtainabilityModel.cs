@@ -72,6 +72,22 @@ public sealed class ObtainabilityModel
                 StringComparer.Ordinal);
     }
 
+    /// <summary>A model whose every id outside <paramref name="dirty"/> has exactly
+    /// <paramref name="cleanFrom"/>'s sources (the incremental build's passes): its folds and input
+    /// reads for those ids are <paramref name="cleanFrom"/>'s own, memoised once across passes.</summary>
+    internal ObtainabilityModel(
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> sources, ObtainabilityModel cleanFrom, IReadOnlySet<string> dirty)
+        : this(sources)
+    {
+        _cleanFrom = cleanFrom ?? throw new ArgumentNullException(nameof(cleanFrom));
+        _dirty = dirty ?? throw new ArgumentNullException(nameof(dirty));
+    }
+
+    private readonly ObtainabilityModel? _cleanFrom;
+    private readonly IReadOnlySet<string>? _dirty;
+
+    private bool IsShared(string normalizedId) => _cleanFrom != null && !_dirty!.Contains(normalizedId);
+
     public IReadOnlyCollection<string> ItemIds => _sources.Keys.ToList();
 
     public int Count => _sources.Count;
@@ -91,6 +107,7 @@ public sealed class ObtainabilityModel
     private DayTable Folded(string itemId, ObtainFilter filter, bool undelayed)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
+        if (IsShared(id)) return _cleanFrom!.Folded(id, filter, undelayed);
         var key = (id, filter.Key, undelayed);
         if (_tables.TryGetValue(key, out DayTable? cached)) return cached;
         var accepted = new List<DayTable>();
@@ -101,7 +118,11 @@ public sealed class ObtainabilityModel
 
     /// <summary><see cref="Derived.Of"/>'s read of <paramref name="itemId"/>, made once per model.</summary>
     internal Derived.Input InputOf(string itemId, Func<ObtainabilityModel, string, Derived.Input> read)
-        => _inputs.TryGetValue(itemId, out Derived.Input? cached) ? cached : _inputs.GetOrAdd(itemId, read(this, itemId));
+    {
+        if (_inputs.TryGetValue(itemId, out Derived.Input? cached)) return cached;
+        if (IsShared(BundleParsing.NormalizeItemId(itemId))) return _cleanFrom!.InputOf(itemId, read);
+        return _inputs.GetOrAdd(itemId, read(this, itemId));
+    }
 
     public int? Lands(string itemId, int startDay, ObtainFilter filter) => Table(itemId, filter).Lands(startDay);
 

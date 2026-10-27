@@ -249,20 +249,51 @@ namespace TheLongestYear
             }
         }
 
-        /// <summary>The lexicon's build for live data it has no answers for: the cold obtainability and
+        /// <summary>The lexicon's build for live data it has no answers for. Over a shipped variant
+        /// (<paramref name="seed"/>) it is incremental: only the items the changed rows can reach are
+        /// recomputed (<see cref="TheLongestYear.Core.Lexicon.IncrementalBuilder"/>), for the obtainability
+        /// model and the year-sort model alike. With no shipped variant it is the cold obtainability and
         /// year-sort builds (each memoised for the session by input hash, so a reload of unchanged data
-        /// reuses them), snapshotted with this save's map and shop weeks.</summary>
-        private TheLongestYear.Core.Lexicon.AnswerVariant BuildLexiconVariant(
-            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.AnswerSet shipped)
+        /// reuses them). Either way the result is snapshotted with this save's map and shop weeks.</summary>
+        private TheLongestYear.Core.Lexicon.LexiconBuild BuildLexiconVariant(
+            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.IncrementalSeed seed)
         {
+            if (seed != null) return BuildLexiconVariantIncrementally(inputs, seed);
             var build = _obtainabilityCache.Get(inputs, out bool reused);
             var sortTimer = System.Diagnostics.Stopwatch.StartNew();
             var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _);
             _yearSortMs = sortTimer.ElapsedMilliseconds;
             _lastLexiconBuild = build;
             _lastLexiconBuildReused = reused;
-            return TheLongestYear.Core.Lexicon.AnswerVariantFactory.From(
-                build, yearSort, inputs, _enginePools?.LocationWeeks, DataLocationKeys(), _enginePools?.ShopWeeks);
+            return new TheLongestYear.Core.Lexicon.LexiconBuild(TheLongestYear.Core.Lexicon.AnswerVariantFactory.From(
+                build, yearSort, inputs, _enginePools?.LocationWeeks, DataLocationKeys(), _enginePools?.ShopWeeks));
+        }
+
+        private TheLongestYear.Core.Lexicon.LexiconBuild BuildLexiconVariantIncrementally(
+            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.IncrementalSeed seed)
+        {
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            var build = TheLongestYear.Core.Lexicon.IncrementalBuilder.BuildWithReport(inputs, seed, out var report);
+            long mainMs = timer.ElapsedMilliseconds;
+            var yearSort = TheLongestYear.Core.Lexicon.IncrementalBuilder.BuildYearSort(
+                TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), seed, report.Dirty, out var sortReport);
+            _yearSortMs = timer.ElapsedMilliseconds - mainMs;
+            _lastLexiconBuild = build;
+            _lastLexiconBuildReused = false;
+            this.Monitor.Log(
+                $"Lexicon: incremental build recomputed {report.DirtyCount} of {build.Model.Count} items in {mainMs} ms " +
+                $"(dirty set {report.DirtyMs} ms; {report.Passes} pass(es) over {report.RowsEvaluated} of {report.RowsTotal} derived rows, {report.PassMs} ms; " +
+                $"closing check {report.CheckMs} ms); year sort {sortReport.DirtyCount} of {yearSort.Model.Count} items in {_yearSortMs} ms.",
+                LogLevel.Trace);
+            if (report.RepairPasses > 0 || sortReport.RepairPasses > 0)
+                this.Monitor.Log(
+                    $"Lexicon: the incremental build's closing check changed answers ({report.RepairPasses} + {sortReport.RepairPasses} repair pass(es)); " +
+                    "they were finished with full passes, but the dirty set missed something. Please report this with your mod list.",
+                    LogLevel.Warn);
+            return new TheLongestYear.Core.Lexicon.LexiconBuild(
+                TheLongestYear.Core.Lexicon.AnswerVariantFactory.From(
+                    build, yearSort, inputs, _enginePools?.LocationWeeks, DataLocationKeys(), _enginePools?.ShopWeeks),
+                report.DirtyCount);
         }
 
         /// <summary>Every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>

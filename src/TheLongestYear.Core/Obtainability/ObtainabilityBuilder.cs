@@ -30,6 +30,31 @@ public static class ObtainabilityBuilder
     public static ObtainabilityBuild Build(ObtainabilityInputs inputs, bool mineTravel = true)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
+        List<(string ItemId, ObtainSource Source)> direct = DirectSources(inputs, mineTravel);
+        IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, inputs.Festivals);
+
+        ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
+        for (int pass = 1; pass <= MaxPasses; pass++)
+        {
+            var all = new List<(string ItemId, ObtainSource Source)>(direct);
+            all.AddRange(DerivedSources(inputs, current, recipeWeeks));
+            ObtainabilityModel next = Assemble(all, out List<string> unresolved);
+            if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
+            current = next;
+            lastUnresolved = unresolved;   // from the last full pass, derived sources included
+        }
+        return new ObtainabilityBuild(current, MaxPasses, true, lastUnresolved);
+    }
+
+    /// <summary>The incremental build over shipped answers (<see cref="Lexicon.IncrementalBuilder"/>).</summary>
+    public static ObtainabilityBuild Build(ObtainabilityInputs inputs, Lexicon.IncrementalSeed seed)
+        => Lexicon.IncrementalBuilder.Build(inputs, seed, out _);
+
+    /// <summary>Every source read straight out of the data, with no other item's table behind it:
+    /// built once per build, in this order (the order is part of every item's source list).</summary>
+    public static List<(string ItemId, ObtainSource Source)> DirectSources(ObtainabilityInputs inputs, bool mineTravel = true)
+    {
+        if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         var f = inputs.Festivals;
         var o = inputs.Objects;
         var direct = new List<(string ItemId, ObtainSource Source)>();
@@ -57,30 +82,54 @@ public static class ObtainabilityBuilder
         if (mineTravel)
             for (int i = 0; i < direct.Count; i++)
                 direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
-        IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
-
-        ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
-        for (int pass = 1; pass <= MaxPasses; pass++)
-        {
-            var all = new List<(string ItemId, ObtainSource Source)>(direct);
-            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current));
-            all.AddRange(GrowSources.Crops(inputs.Crops, current));
-            all.AddRange(GrowSources.TeaBush(current));
-            all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
-            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
-            all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
-            all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
-            all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
-            all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
-            ObtainabilityModel next = Assemble(all, out List<string> unresolved);
-            if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
-            current = next;
-            lastUnresolved = unresolved;   // from the last full pass, derived sources included
-        }
-        return new ObtainabilityBuild(current, MaxPasses, true, lastUnresolved);
+        return direct;
     }
 
-    private static ObtainabilityModel Assemble(
+    /// <summary>One pass of every derived rule (grown, made, bartered, pond and bait-gated fish
+    /// sources) over <paramref name="current"/>, in the order the build appends them.</summary>
+    public static List<(string ItemId, ObtainSource Source)> DerivedSources(
+        ObtainabilityInputs inputs, ObtainabilityModel current, IReadOnlyDictionary<string, WeekMask> recipeWeeks)
+        => DerivedSources(inputs, current, recipeWeeks, null);
+
+    /// <summary><see cref="DerivedSources(ObtainabilityInputs, ObtainabilityModel, IReadOnlyDictionary{string, WeekMask})"/>
+    /// over only the rows <paramref name="rows"/> keeps (null keeps every row). A rule whose rows read
+    /// each other (fish pond precedence) is always given every row.</summary>
+    internal static List<(string ItemId, ObtainSource Source)> DerivedSources(
+        ObtainabilityInputs inputs, ObtainabilityModel current, IReadOnlyDictionary<string, WeekMask> recipeWeeks,
+        DerivedRowFilter? rows, DerivedRowCache? memo = null)
+    {
+        if (inputs is null) throw new ArgumentNullException(nameof(inputs));
+        var f = inputs.Festivals;
+        var o = inputs.Objects;
+        var all = new List<(string ItemId, ObtainSource Source)>();
+        all.AddRange(SpawnSources.LocationFish(Keep(inputs.LocationFish, rows), inputs.FishRows, o, f, current));
+        all.AddRange(GrowSources.Crops(Keep(inputs.Crops, rows), current));
+        if (rows == null || rows.TeaBush) all.AddRange(GrowSources.TeaBush(current));
+        all.AddRange(GrowSources.FruitTrees(Keep(inputs.FruitTrees, rows), current, o, f));
+        all.AddRange(ShopSources.Barter(Keep(inputs.Shops, rows), o, f, current));
+        if (memo == null)
+        {
+            all.AddRange(MadeSources.Machines(Keep(inputs.Machines, rows), o, current, f, inputs.Crops));
+            all.AddRange(MadeSources.Recipes(Keep(inputs.Recipes, rows), o, recipeWeeks, current, inputs.CookingChannel));
+        }
+        else
+        {
+            // Both rules emit row by row in row order, so evaluating one row at a time and
+            // concatenating gives the same list.
+            foreach (MachineRow rule in Keep(inputs.Machines, rows))
+                all.AddRange(memo.Get(rule, current, () => MadeSources.Machines(new[] { rule }, o, current, f, inputs.Crops)));
+            foreach (RecipeRow recipe in Keep(inputs.Recipes, rows))
+                all.AddRange(memo.Get(recipe, current, () => MadeSources.Recipes(new[] { recipe }, o, recipeWeeks, current, inputs.CookingChannel)));
+        }
+        all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
+        all.AddRange(MadeSources.Geodes(Keep(inputs.GeodeDrops, rows), Keep(inputs.GeodesUsingDefaultTable, rows), o, current, f));
+        return all;
+    }
+
+    private static IReadOnlyCollection<T> Keep<T>(IReadOnlyCollection<T> rows, DerivedRowFilter? filter) where T : notnull
+        => filter == null ? rows : rows.Where(r => filter.Keeps(r)).ToList();
+
+    internal static ObtainabilityModel Assemble(
         IEnumerable<(string ItemId, ObtainSource Source)> sources, out List<string> unresolved)
     {
         var real = new List<(string ItemId, ObtainSource Source)>();
@@ -98,7 +147,7 @@ public static class ObtainabilityBuilder
             .ToDictionary(g => g.Key, g => (IReadOnlyList<ObtainSource>)g.Select(s => s.Source).ToList(), StringComparer.Ordinal));
     }
 
-    private static bool SameTables(ObtainabilityModel a, ObtainabilityModel b)
+    internal static bool SameTables(ObtainabilityModel a, ObtainabilityModel b)
     {
         if (a.Count != b.Count) return false;
         foreach (string id in b.ItemIds)

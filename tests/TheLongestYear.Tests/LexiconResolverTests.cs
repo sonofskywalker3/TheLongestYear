@@ -157,6 +157,21 @@ public sealed class LexiconResolverTests
         Assert.Equal(1, h.Builds);
     }
 
+    /// <summary>A build that says how many items it recomputed (the incremental one) is reported with
+    /// that count, and is told which variant the save needs.</summary>
+    [Fact]
+    public void MissReportsTheBuildsDirtyCountAndVariant()
+    {
+        ObtainabilityInputs live = WithShopChanged(Inputs.Value);
+        string? asked = null;
+        var resolver = new LexiconResolver(SetOf(RowHashes.Of(Inputs.Value, false), "shipped"), _ => null, (_, _) => { },
+            (_, _, variant) => { asked = variant; return new LexiconBuild(Marker("built"), 7); });
+        Resolved r = resolver.Resolve(live, true, Game, Mod, Vanilla);
+        Assert.Equal(AnswerOrigin.Computed, r.Origin);
+        Assert.Equal(7, r.DirtyCount);
+        Assert.Equal(AnswerSet.PierreVariant, asked);
+    }
+
     [Fact]
     public void KeyChangesWhenShopRowChanges()
     {
