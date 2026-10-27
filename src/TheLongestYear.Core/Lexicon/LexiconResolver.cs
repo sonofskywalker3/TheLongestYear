@@ -54,13 +54,17 @@ public sealed class LexiconResolver
     /// <summary>The variant name within <see cref="CurrentSet"/> the last answer is.</summary>
     public string CurrentVariantName { get; private set; } = AnswerSet.BaseVariant;
 
+    /// <param name="layers">The layer ids the answers are composed from, stored in a computed set.</param>
+    /// <param name="keyLayers">What the cache key names for the layers (<see cref="LayerSet.KeyLayers"/>:
+    /// the ids with their files' hashes); null uses <paramref name="layers"/>.</param>
     public Resolved Resolve(
-        ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion, IReadOnlyList<string> layers)
+        ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion, IReadOnlyList<string> layers,
+        IReadOnlyList<string>? keyLayers = null)
     {
         if (live == null) throw new ArgumentNullException(nameof(live));
         var timer = Stopwatch.StartNew();
         IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, pierreOwned);
-        string key = RowHashes.Key(rows, layers, gameVersion, modVersion);
+        string key = RowHashes.Key(rows, keyLayers ?? layers, gameVersion, modVersion);
         string variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
 
         if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.Variants.ContainsKey(variantName)

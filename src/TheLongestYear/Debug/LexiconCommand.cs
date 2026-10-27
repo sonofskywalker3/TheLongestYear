@@ -55,7 +55,9 @@ namespace TheLongestYear.DebugCommands
             }
             if (args.Length >= 2 && string.Equals(args[0], WriteVerb, StringComparison.OrdinalIgnoreCase))
             {
-                WriteLayer(monitor, inputs, modDirectory, args[1], saveContext);
+                // "write A+B", "write A + B" and "write B+A" all name the same layer.
+                WriteLayer(monitor, inputs, modDirectory, LayerFile.Name(string.Join("", args[1..])
+                    .Split(LayerFile.Joiner, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)), saveContext);
                 return;
             }
             if (args.Length == 0 || !string.Equals(args[0], DumpInputs, StringComparison.OrdinalIgnoreCase))
@@ -150,17 +152,35 @@ namespace TheLongestYear.DebugCommands
             string name = context.PierreYear2Owned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
 
             string path = Path.Combine(LayerFile.Folder(modDirectory), LayerFile.AnswersFileName(mods));
-            LayerAnswers existing = File.Exists(path) ? LayerFile.ReadAnswers(File.ReadAllText(path)) : null;
-            LayerAnswers answers = LayerDelta.Write(
-                target, context.Vanilla, context.Layers.Inputs, context.Layers.Answers, name, live,
-                RowHashes.Of(inputs, context.PierreYear2Owned), context.Layers.InstalledVersionOf, existing);
+            LayerAnswers existing;
+            try
+            {
+                existing = File.Exists(path) ? LayerFile.ReadAnswers(File.ReadAllText(path)) : null;
+            }
+            catch (JsonException e)
+            {
+                monitor.Log($"{verb}: the existing {path} could not be read ({e.Message}); fix or delete it, then run this again.", LogLevel.Warn);
+                return;
+            }
+            LayerAnswers answers;
+            try
+            {
+                answers = LayerDelta.Write(
+                    target, context.Vanilla, context.Layers.Inputs, context.Layers.Answers, name, live,
+                    RowHashes.Of(inputs, context.PierreYear2Owned), context.Layers.InstalledVersionOf, existing);
+            }
+            catch (InvalidOperationException e)
+            {
+                monitor.Log($"{verb}: no '{name}' variant to measure against ({e.Message}); write that variant of vanilla (and of each layer below) first.", LogLevel.Warn);
+                return;
+            }
             string json = LayerFile.WriteAnswers(answers);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, json);
             answers.Deltas.TryGetValue(name, out AnswerVariant delta);
             monitor.Log(
                 $"{verb}: wrote variant '{name}' to {path} ({json.Length:N0} chars; variants [{string.Join(", ", answers.Deltas.Keys)}]; " +
-                $"{delta?.Obtain.Count ?? 0} obtain ids differ, {answers.RowHashes.Count} rows; {answers.CheckedVersions}; {timer.ElapsedMilliseconds} ms).",
+                $"{delta?.Obtain.Count ?? 0} obtain ids differ, {(answers.VariantRowHashes.TryGetValue(name, out var rows) ? rows.Count : 0)} rows; {answers.CheckedVersions}; {timer.ElapsedMilliseconds} ms).",
                 LogLevel.Info);
         }
     }

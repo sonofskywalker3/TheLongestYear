@@ -18,9 +18,10 @@ public static class LayerDelta
     /// active layer; for an interaction, vanilla and its mods' single layers only. The delta holds the
     /// ids whose source list differs (compared as their <see cref="LexiconJson.Options"/> JSON, as
     /// <see cref="AnswerVariantDelta.Diff"/> does), the map and shop weeks, unresolved sources,
-    /// unreached maps and availability answers that differ, and the live passes. The row hashes are the
-    /// live rows missing from or differing from the baseline's, plus (for a single mod) every row
-    /// <see cref="RowHashes.Owner"/> gives that mod. An empty delta with no other variant on file
+    /// unreached maps and availability answers that differ, and the live passes. The variant's row hashes
+    /// are built fresh (nothing carried over from <paramref name="existing"/>, so a row the mod no longer
+    /// has is gone): the live rows missing from or differing from the baseline's, plus (for a single mod)
+    /// every row <see cref="RowHashes.Owner"/> gives that mod. The other variants' rows are kept as they were. An empty delta with no other variant on file
     /// writes <c>"Deltas": {}</c>; an existing empty map is not carried over, since it cannot say which
     /// save state it was made in.</para></summary>
     public static LayerAnswers Write(
@@ -46,19 +47,28 @@ public static class LayerDelta
             ?? throw new InvalidOperationException($"The answers below {name} have no '{variantName}' variant.");
         IReadOnlyDictionary<string, ulong> belowRows = baseline.RowHashesFor(variantName);
 
-        var rows = new Dictionary<string, ulong>(existing?.RowHashes ?? new Dictionary<string, ulong>(), StringComparer.Ordinal);
+        var rows = new Dictionary<string, ulong>(StringComparer.Ordinal);
         foreach (var (key, hash) in liveRows)
             if (!belowRows.TryGetValue(key, out ulong was) || was != hash || (single && RowHashes.Owner(key) == mods[0]))
                 rows[key] = hash;
 
         AnswerVariant delta = Diff(below, live);
         var deltas = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal);
+        var variantRows = new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal);
         if (existing != null)
             foreach (var (other, d) in existing.Deltas)
-                if (other != variantName) deltas[other] = d;
-        if (!IsEmpty(delta) || deltas.Count > 0) deltas[variantName] = delta;
+                if (other != variantName)
+                {
+                    deltas[other] = d;
+                    if (existing.VariantRowHashes.TryGetValue(other, out var otherRows)) variantRows[other] = otherRows;
+                }
+        // A variant that changes rows or answers, or sits beside another mapped variant, is written out;
+        // otherwise the file is the empty map that says "mapped, nothing changes".
+        if (!IsEmpty(delta) || rows.Count > 0 || deltas.Count > 0) deltas[variantName] = delta;
+        if (rows.Count > 0) variantRows[variantName] = rows;
 
-        return new LayerAnswers(mods, string.Join(LayerFile.Joiner, mods.Select(m => $"{m}@{installedVersionOf(m) ?? "unknown"}")), rows, deltas);
+        return new LayerAnswers(mods, string.Join(LayerFile.Joiner, mods.Select(m => $"{m}@{installedVersionOf(m) ?? "unknown"}")),
+            variantRows, deltas);
     }
 
     /// <summary>What <see cref="LayerSet.LayDelta"/> must lay over <paramref name="below"/> to give

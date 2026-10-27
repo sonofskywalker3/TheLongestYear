@@ -15,19 +15,32 @@ public sealed record LayerInputs(
     string UniqueId, string CheckedVersion,
     IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> ExtraSources,
     IReadOnlyDictionary<string, YearRuling> YearRulings,
-    IReadOnlyDictionary<string, int> WeekRulings, string Notes);
+    IReadOnlyDictionary<string, int> WeekRulings, string Notes)
+{
+    /// <summary>The first 8 hex digits of the SHA-256 of the file text this was read from (empty when
+    /// made in code); part of the cache key, so editing a layer file does not reuse a stale entry.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string TextHash { get; init; } = "";
+}
 
 /// <summary>A layer's answers: what changes over the answers composed without it. <see cref="Mods"/>
 /// is one id for a single mod's layer (<c>&lt;A&gt;.answers.json</c>) or several for the interaction
 /// of those mods (<c>&lt;A&gt;+&lt;B&gt;.answers.json</c>, ids sorted ordinally).
 /// <see cref="CheckedVersions"/> reads <c>"A@1.2.0"</c> or <c>"A@1.2.0+B@3.0.0"</c>.
-/// <see cref="RowHashes"/> are the input rows the layer adds or changes (laid over vanilla's for every
-/// variant). <see cref="Deltas"/> holds, per variant name, the delta over the composed answers below
+/// <see cref="VariantRowHashes"/> are, per variant name, the input rows the layer adds or changes in
+/// that save state (laid over vanilla's rows for the same variant, like <see cref="AnswerSet.RowHashesFor"/>),
+/// rewritten whole each time that variant is written. <see cref="Deltas"/> holds, per variant name, the delta over the composed answers below
 /// it (<see cref="LayerSet"/> says how it is laid on); an empty map means the layer was mapped and
 /// changes no answer in any variant. Written by <c>tly_lexicon write &lt;UniqueID&gt;</c>.</summary>
 public sealed record LayerAnswers(
     IReadOnlyList<string> Mods, string CheckedVersions,
-    IReadOnlyDictionary<string, ulong> RowHashes, IReadOnlyDictionary<string, AnswerVariant> Deltas);
+    IReadOnlyDictionary<string, IReadOnlyDictionary<string, ulong>> VariantRowHashes,
+    IReadOnlyDictionary<string, AnswerVariant> Deltas)
+{
+    /// <summary>See <see cref="LayerInputs.TextHash"/>.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string TextHash { get; init; } = "";
+}
 
 /// <summary>The layer files' names and formats. Both are <see cref="LexiconJson"/> text (sorted keys,
 /// enums as strings, day tables as run-length strings); an answers file pools its deltas' day tables
@@ -65,8 +78,15 @@ public static class LayerFile
             YearRulings = read.YearRulings ?? new Dictionary<string, YearRuling>(StringComparer.Ordinal),
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
+            TextHash = HashText(json),
         };
     }
+
+    private const int TextHashChars = 8;
+
+    /// <summary>The first <see cref="TextHashChars"/> lower-case hex digits of the SHA-256 of the UTF-8 text.</summary>
+    public static string HashText(string text)
+        => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text)))[..TextHashChars].ToLowerInvariant();
 
     public static string WriteAnswers(LayerAnswers answers) => LexiconJson.WriteDocument(answers, DeltasKey);
 
@@ -77,8 +97,9 @@ public static class LayerFile
         return read with
         {
             CheckedVersions = read.CheckedVersions ?? "",
-            RowHashes = read.RowHashes ?? new Dictionary<string, ulong>(StringComparer.Ordinal),
+            VariantRowHashes = read.VariantRowHashes ?? new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal),
             Deltas = read.Deltas ?? new Dictionary<string, AnswerVariant>(StringComparer.Ordinal),
+            TextHash = HashText(json),
         };
     }
 

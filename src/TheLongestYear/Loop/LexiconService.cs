@@ -69,7 +69,7 @@ namespace TheLongestYear.Loop
         public Resolved Resolve(ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion)
         {
             Forget();
-            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers);
+            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers);
             _current = r;
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";

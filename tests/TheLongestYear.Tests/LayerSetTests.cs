@@ -44,7 +44,11 @@ public sealed class LayerSetTests
             years ?? new Dictionary<string, YearRuling>(), weeks ?? new Dictionary<string, int>(), "");
 
     private static LayerAnswers Ans(IReadOnlyDictionary<string, AnswerVariant> deltas, IReadOnlyDictionary<string, ulong>? rows, params string[] mods)
-        => new(mods, string.Join("+", mods.Select(m => m + "@1.0.0")), rows ?? new Dictionary<string, ulong>(), deltas);
+        => new(mods, string.Join("+", mods.Select(m => m + "@1.0.0")),
+            rows == null
+                ? new Dictionary<string, IReadOnlyDictionary<string, ulong>>()
+                : new Dictionary<string, IReadOnlyDictionary<string, ulong>> { [AnswerSet.BaseVariant] = rows },
+            deltas);
 
     private static LayerAnswers Ans(string detail, params string[] mods)
         => Ans(new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [AnswerSet.BaseVariant] = Variant((Item, detail)) }, null, mods);
@@ -221,14 +225,14 @@ public sealed class LayerSetTests
         Assert.Equal("ModA@1.1.0", single.CheckedVersions);
         Assert.Equal(new[] { Olive }, single.Deltas[AnswerSet.BaseVariant].Obtain.Keys);
         // The mod's own row, and the vanilla row it edits.
-        Assert.Equal(new[] { "obj|" + Olive, "shop|SeedShop|(O)1|" }, single.RowHashes.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(new[] { "obj|" + Olive, "shop|SeedShop|(O)1|" }, single.VariantRowHashes[AnswerSet.BaseVariant].Keys.OrderBy(k => k, StringComparer.Ordinal));
 
         // Over vanilla + A, the pair adds nothing: an empty map, and the file says so.
         LayerAnswers pair = LayerDelta.Write(B + "+" + A, vanilla, new[] { In(A), In(B) }, new[] { single },
             AnswerSet.BaseVariant, live, liveRows, _ => "1.0.0", existing: null);
         Assert.Equal(new[] { A, B }, pair.Mods);
         Assert.Empty(pair.Deltas);
-        Assert.Empty(pair.RowHashes);
+        Assert.Empty(pair.VariantRowHashes);
         Assert.Contains("\"Deltas\": {}", LayerFile.WriteAnswers(pair));
 
         // Round trip, then the composed set with both is served as shipped data would be.
@@ -256,5 +260,69 @@ public sealed class LayerSetTests
         Assert.Empty(sparse.ExtraSources);
         Assert.Empty(sparse.YearRulings);
         Assert.Empty(sparse.WeekRulings);
+    }
+
+    [Fact]
+    public void RewriteAfterARemovedRowHoldsExactlyTheLiveRows()
+    {
+        var vanillaRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1 };
+        AnswerSet vanilla = VanillaSet(vanillaRows);
+        var oldRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|" + Olive] = 3, ["obj|(O)ModA.Retired"] = 9 };
+        LayerAnswers existing = Ans(new Dictionary<string, AnswerVariant>(StringComparer.Ordinal)
+            { [AnswerSet.BaseVariant] = Variant((Olive, "old")) }, oldRows, A);
+        // The mod's update dropped the Retired item.
+        var liveRows = new Dictionary<string, ulong>(vanillaRows, StringComparer.Ordinal) { ["obj|" + Olive] = 3 };
+
+        LayerAnswers rewritten = LayerDelta.Write(A, vanilla, new[] { In(A) }, Array.Empty<LayerAnswers>(),
+            AnswerSet.BaseVariant, Variant((Item, "vanilla"), (Olive, "grove")), liveRows, _ => "1.1.0", existing);
+        Assert.Equal(new[] { "obj|" + Olive }, rewritten.VariantRowHashes[AnswerSet.BaseVariant].Keys);
+
+        LayerSet set = LayerSet.Compose(vanilla, new[] { In(A) }, new[] { rewritten }, _ => { });
+        Assert.Equal(liveRows.OrderBy(p => p.Key), set.Composed!.RowHashesFor(AnswerSet.BaseVariant).OrderBy(p => p.Key));
+    }
+
+    [Fact]
+    public void EachVariantMatchesOnlyItsOwnLiveRows()
+    {
+        const string modRow = "obj|" + Olive;
+        var baseRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1, ["meta|pierre_year2"] = 100 };
+        var pierreRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1, ["meta|pierre_year2"] = 200 };
+        AnswerSet vanilla = AnswerSetMerge.With(null, AnswerSet.BaseVariant, Variant((Item, "vanilla")), baseRows, Game, Mod, new[] { RowHashes.Vanilla });
+        vanilla = AnswerSetMerge.With(vanilla, AnswerSet.PierreVariant, Variant((Item, "pierre")), pierreRows, Game, Mod, new[] { RowHashes.Vanilla });
+
+        // The mod's row reads differently in each Pierre state.
+        var liveBase = new Dictionary<string, ulong>(baseRows, StringComparer.Ordinal) { [modRow] = 10 };
+        var livePierre = new Dictionary<string, ulong>(pierreRows, StringComparer.Ordinal) { [modRow] = 11 };
+        LayerAnswers first = LayerDelta.Write(A, vanilla, new[] { In(A) }, Array.Empty<LayerAnswers>(),
+            AnswerSet.BaseVariant, Variant((Item, "vanilla"), (Olive, "base")), liveBase, _ => "1.0.0", null);
+        LayerAnswers both = LayerDelta.Write(A, vanilla, new[] { In(A) }, Array.Empty<LayerAnswers>(),
+            AnswerSet.PierreVariant, Variant((Item, "pierre"), (Olive, "pierre")), livePierre, _ => "1.0.0", first);
+        Assert.Equal(10UL, both.VariantRowHashes[AnswerSet.BaseVariant][modRow]);
+        Assert.Equal(11UL, both.VariantRowHashes[AnswerSet.PierreVariant][modRow]);
+
+        LayerSet set = LayerSet.Compose(vanilla, new[] { In(A) }, new[] { LayerFile.ReadAnswers(LayerFile.WriteAnswers(both)) }, _ => { });
+        Assert.Equal(liveBase.OrderBy(p => p.Key), set.Composed!.RowHashesFor(AnswerSet.BaseVariant).OrderBy(p => p.Key));
+        Assert.Equal(livePierre.OrderBy(p => p.Key), set.Composed!.RowHashesFor(AnswerSet.PierreVariant).OrderBy(p => p.Key));
+        Assert.Equal("pierre", set.Composed!.Resolve(AnswerSet.PierreVariant)!.Obtain[Olive].Single().Detail);
+    }
+
+    [Fact]
+    public void EditingALayerFileChangesTheCacheKeyNotTheLayers()
+    {
+        string text = LayerFile.WriteInputs(In(A));
+        LayerInputs before = LayerFile.ReadInputs(text);
+        LayerInputs after = LayerFile.ReadInputs(text.Replace("\"Notes\": \"\"", "\"Notes\": \"edited\""));
+        LayerSet one = LayerSet.Compose(VanillaSet(), new[] { before }, Array.Empty<LayerAnswers>(), _ => { });
+        LayerSet two = LayerSet.Compose(VanillaSet(), new[] { after }, Array.Empty<LayerAnswers>(), _ => { });
+
+        Assert.Equal(one.Composed!.Layers, two.Composed!.Layers);
+        Assert.Equal(new[] { RowHashes.Vanilla, A }, two.Composed!.Layers);
+        Assert.NotEqual(one.KeyLayers, two.KeyLayers);
+        Assert.StartsWith(A + "#", one.KeyLayers[1]);
+
+        ObtainabilityInputs live = Inputs.Value;
+        string KeyOf(LayerSet s) => new LexiconResolver(s.Composed, _ => null, (_, _) => { }, (_, _) => Variant())
+            .Resolve(live, false, Game, Mod, s.Layers, s.KeyLayers).Key;
+        Assert.NotEqual(KeyOf(one), KeyOf(two));
     }
 }

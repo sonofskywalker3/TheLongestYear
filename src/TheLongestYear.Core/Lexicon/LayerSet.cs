@@ -10,8 +10,8 @@ namespace TheLongestYear.Core.Lexicon;
 /// then each interaction delta by mod count ascending (file order within a count). A layer's answers
 /// apply only when every mod it names is active (has an inputs entry here). For every variant, a later
 /// delta wins per item id; see <see cref="LayDelta"/> for the other
-/// members. Row hashes: vanilla's, then each applied delta's <see cref="LayerAnswers.RowHashes"/> laid
-/// over, later winning, for every variant. Rulings (<see cref="LayerInputs.YearRulings"/>,
+/// members. Row hashes, per variant: vanilla's <see cref="AnswerSet.RowHashesFor"/>, then each applied
+/// delta's <see cref="LayerAnswers.VariantRowHashes"/> for that variant laid over, later winning. Rulings (<see cref="LayerInputs.YearRulings"/>,
 /// <see cref="LayerInputs.WeekRulings"/>) go in inputs order, later winning; two layers that rule one
 /// id differently are both named in a WARN.</para>
 /// <para><b>Mapped.</b> A layer whose <see cref="LayerAnswers.Deltas"/> names variants maps only
@@ -26,13 +26,15 @@ public sealed class LayerSet
     private readonly IReadOnlyDictionary<string, YearRuling> _yearRulings;
 
     private LayerSet(
-        AnswerSet? composed, AnswerSet? overlay, IReadOnlyList<string> layers, IReadOnlyList<string> ids, IReadOnlyList<string> unmappedPairs,
+        AnswerSet? composed, AnswerSet? overlay, IReadOnlyList<string> layers, IReadOnlyList<string> keyLayers,
+        IReadOnlyList<string> ids, IReadOnlyList<string> unmappedPairs,
         IReadOnlyDictionary<string, YearRuling> yearRulings, IReadOnlyDictionary<string, int> weekRulings,
         IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> extraDirect)
     {
         Composed = composed;
         Overlay = overlay;
         Layers = layers;
+        KeyLayers = keyLayers;
         Ids = ids;
         UnmappedPairs = unmappedPairs;
         _yearRulings = yearRulings;
@@ -52,6 +54,13 @@ public sealed class LayerSet
     /// <summary><c>["vanilla", ids…, "A+B"…]</c> in compose order: the layers the cache key names
     /// (<see cref="Composed"/>'s <see cref="AnswerSet.Layers"/>, and set without a vanilla set too).</summary>
     public IReadOnlyList<string> Layers { get; }
+
+    /// <summary>What the cache key names for the layers (<see cref="RowHashes.Key"/> only): <c>"vanilla"</c>,
+    /// each active inputs file as <c>id#&lt;hash&gt;</c>, then each applied answers file as
+    /// <c>name.answers#&lt;hash&gt;</c> in compose order, the hash being <see cref="LayerFile.HashText"/> of
+    /// the file text (of its written form for a layer made in code). Editing a layer file changes the
+    /// key, so a cache entry made with the old file is not reused; <see cref="Layers"/> stays plain ids.</summary>
+    public IReadOnlyList<string> KeyLayers { get; }
 
     /// <summary>The active layers' mod ids, in inputs order.</summary>
     public IReadOnlyList<string> Ids { get; }
@@ -130,6 +139,9 @@ public sealed class LayerSet
         var layers = new List<string> { RowHashes.Vanilla };
         layers.AddRange(ids);
         layers.AddRange(applied.Where(a => a.Mods.Distinct(StringComparer.Ordinal).Count() > 1).Select(a => LayerFile.Name(a.Mods)));
+        var keyLayers = new List<string> { RowHashes.Vanilla };
+        keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"));
+        keyLayers.AddRange(applied.Select(a => $"{LayerFile.Name(a.Mods)}.answers#{HashOf(a.TextHash, () => LayerFile.WriteAnswers(a))}"));
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)
         {
@@ -138,8 +150,11 @@ public sealed class LayerSet
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
-        return new LayerSet(composed, overlay, layers, ids, unmapped, years, weeks, extra);
+        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, years, weeks, extra);
     }
+
+    private static string HashOf(string textHash, Func<string> written)
+        => textHash.Length > 0 ? textHash : LayerFile.HashText(written());
 
     private static AnswerSet Lay(AnswerSet vanilla, IReadOnlyList<LayerAnswers> applied, IReadOnlyList<string> layers)
     {
@@ -158,7 +173,8 @@ public sealed class LayerSet
                     if (!layer.Deltas.TryGetValue(name, out AnswerVariant? delta)) { mapped = false; break; }
                     whole = LayDelta(whole, delta);
                 }
-                foreach (var (key, hash) in layer.RowHashes) rows[key] = hash;
+                if (layer.VariantRowHashes.TryGetValue(name, out var own))
+                    foreach (var (key, hash) in own) rows[key] = hash;
             }
             if (!mapped) continue;
             result = AnswerSetMerge.With(result, name, whole, rows, vanilla.GameVersion, vanilla.ModVersion, layers);
