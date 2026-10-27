@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,6 +25,25 @@ public sealed record ObtainFilter
            && (IncludeGingerIsland || !source.Conditions.GingerIsland)
            && (IncludeUnresolved || !source.Conditions.Unresolved)
            && (IncludeOwnedOnly || !source.Conditions.OwnedOnly);
+
+    /// <summary>The filter by content, for memo keys: the record's own equality compares the two
+    /// collections by reference, so two filters naming the same reliabilities would key apart.</summary>
+    internal FilterKey Key => new(
+        Reliabilities == null ? AllMembers : Bits(Reliabilities.Select(r => (int)r)),
+        Kinds == null ? AllMembers : Bits(Kinds.Select(k => (int)k)),
+        IncludeYearTwo, IncludeGingerIsland, IncludeUnresolved, IncludeOwnedOnly);
+
+    private const long AllMembers = -1;
+
+    private static long Bits(IEnumerable<int> members)
+    {
+        long bits = 0;
+        foreach (int m in members) bits |= 1L << m;
+        return bits;
+    }
+
+    internal readonly record struct FilterKey(
+        long Reliabilities, long Kinds, bool YearTwo, bool GingerIsland, bool Unresolved, bool OwnedOnly);
 }
 
 /// <summary>Every year-1 way to obtain every item, by start day: for each day the player could start
@@ -32,6 +52,14 @@ public sealed record ObtainFilter
 public sealed class ObtainabilityModel
 {
     private readonly IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> _sources;
+
+    /// <summary>Every table this model has folded, by item, filter and side: the model never changes
+    /// after construction, so each fold is done once. Concurrent because a built model is read from
+    /// more than one thread.</summary>
+    private readonly ConcurrentDictionary<(string ItemId, ObtainFilter.FilterKey Filter, bool Undelayed), DayTable> _tables = new();
+
+    /// <summary>Every <see cref="Derived.Of"/> read of this model, by the id as asked.</summary>
+    private readonly ConcurrentDictionary<string, Derived.Input> _inputs = new(StringComparer.Ordinal);
 
     public ObtainabilityModel(IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> sources)
     {
@@ -54,23 +82,26 @@ public sealed class ObtainabilityModel
             : Array.Empty<ObtainSource>();
 
     /// <summary>The earliest landing per start day over every accepted source.</summary>
-    public DayTable Table(string itemId, ObtainFilter filter)
-    {
-        DayTable table = DayTable.None;
-        foreach (ObtainSource source in Sources(itemId))
-            if (filter.Accepts(source)) table = table.Earliest(source.Lands);
-        return table;
-    }
+    public DayTable Table(string itemId, ObtainFilter filter) => Folded(itemId, filter, undelayed: false);
 
     /// <summary>The same Earliest over each accepted source's table with no mine travel
     /// (<see cref="ObtainSource.Undelayed"/>).</summary>
-    public DayTable UndelayedTable(string itemId, ObtainFilter filter)
+    public DayTable UndelayedTable(string itemId, ObtainFilter filter) => Folded(itemId, filter, undelayed: true);
+
+    private DayTable Folded(string itemId, ObtainFilter filter, bool undelayed)
     {
-        DayTable table = DayTable.None;
-        foreach (ObtainSource source in Sources(itemId))
-            if (filter.Accepts(source)) table = table.Earliest(source.Undelayed);
-        return table;
+        string id = BundleParsing.NormalizeItemId(itemId);
+        var key = (id, filter.Key, undelayed);
+        if (_tables.TryGetValue(key, out DayTable? cached)) return cached;
+        var accepted = new List<DayTable>();
+        foreach (ObtainSource source in Sources(id))
+            if (filter.Accepts(source)) accepted.Add(undelayed ? source.Undelayed : source.Lands);
+        return _tables.GetOrAdd(key, DayTable.EarliestOf(accepted));
     }
+
+    /// <summary><see cref="Derived.Of"/>'s read of <paramref name="itemId"/>, made once per model.</summary>
+    internal Derived.Input InputOf(string itemId, Func<ObtainabilityModel, string, Derived.Input> read)
+        => _inputs.TryGetValue(itemId, out Derived.Input? cached) ? cached : _inputs.GetOrAdd(itemId, read(this, itemId));
 
     public int? Lands(string itemId, int startDay, ObtainFilter filter) => Table(itemId, filter).Lands(startDay);
 

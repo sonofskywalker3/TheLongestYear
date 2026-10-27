@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TheLongestYear.Core.Obtainability;
@@ -60,7 +61,15 @@ public sealed class DayTable : IEquatable<DayTable>
     /// since waiting from day 1 reaches every later start. A table from <see cref="Except"/> is a
     /// per-start difference and can have a gap on an early day with real landings later, so this scans
     /// the whole table rather than trusting day 1 alone.</summary>
-    public bool IsEmpty => Array.TrueForAll(_lands, b => b == Never);
+    public bool IsEmpty
+    {
+        get
+        {
+            foreach (byte b in _lands)
+                if (b != Never) return false;
+            return true;
+        }
+    }
 
     public int? LandingWeek(int startDay) => Lands(startDay) is int l ? WeekMask.WeekOfDay(l) : null;
 
@@ -72,10 +81,46 @@ public sealed class DayTable : IEquatable<DayTable>
     public DayTable Then(DayTable next) => Map(l => next.Lands(l));
 
     /// <summary>Either route: the sooner landing per start day.</summary>
-    public DayTable Earliest(DayTable other) => Combine(other, (a, b) => a is null ? b : b is null ? a : Math.Min(a.Value, b.Value));
+    public DayTable Earliest(DayTable other)
+    {
+        var lands = new byte[Days];
+        for (int i = 0; i < Days; i++)
+        {
+            byte a = _lands[i], b = other._lands[i];
+            lands[i] = a == Never ? b : b == Never ? a : Math.Min(a, b);
+        }
+        return new DayTable(lands);
+    }
+
+    /// <summary>The <see cref="Earliest"/> of every table, folded in one buffer; <see cref="None"/> when
+    /// there are none.</summary>
+    public static DayTable EarliestOf(IReadOnlyList<DayTable> tables)
+    {
+        if (tables.Count == 0) return None;
+        var lands = (byte[])tables[0]._lands.Clone();
+        for (int t = 1; t < tables.Count; t++)
+        {
+            byte[] other = tables[t]._lands;
+            for (int i = 0; i < Days; i++)
+            {
+                byte a = lands[i], b = other[i];
+                lands[i] = a == Never ? b : b == Never ? a : Math.Min(a, b);
+            }
+        }
+        return new DayTable(lands);
+    }
 
     /// <summary>Both needed (a recipe's ingredients): the later landing per start day, never if either never.</summary>
-    public DayTable Latest(DayTable other) => Combine(other, (a, b) => a is null || b is null ? null : Math.Max(a.Value, b.Value));
+    public DayTable Latest(DayTable other)
+    {
+        var lands = new byte[Days];
+        for (int i = 0; i < Days; i++)
+        {
+            byte a = _lands[i], b = other._lands[i];
+            lands[i] = a == Never || b == Never ? Never : Math.Max(a, b);
+        }
+        return new DayTable(lands);
+    }
 
     /// <summary>The starts where this table lands and <paramref name="dependable"/> lands later or never:
     /// what luck alone adds. Deliberately not waiting-closed: this is a per-start difference ("what
@@ -83,7 +128,15 @@ public sealed class DayTable : IEquatable<DayTable>
     /// the way <see cref="Available"/>/<see cref="Exact"/> are. Folding it would make a Chance source
     /// claim a landing earlier than the Dependable one it was subtracted from.</summary>
     public DayTable Except(DayTable dependable)
-        => Combine(dependable, (a, d) => a is null ? null : d is null || d.Value > a.Value ? a : null);
+    {
+        var lands = new byte[Days];
+        for (int i = 0; i < Days; i++)
+        {
+            byte a = _lands[i], d = dependable._lands[i];
+            lands[i] = a != Never && (d == Never || d > a) ? a : Never;
+        }
+        return new DayTable(lands);
+    }
 
     public static int SeasonStartDay(Season season) => (int)season * Calendar.DaysPerMonth + 1;
 
@@ -92,18 +145,6 @@ public sealed class DayTable : IEquatable<DayTable>
         var lands = new byte[Days];
         for (int i = 0; i < Days; i++)
             if (_lands[i] != Never && f(_lands[i]) is int l && l >= FirstDay && l <= Days) lands[i] = (byte)l;
-        return new DayTable(lands);
-    }
-
-    private DayTable Combine(DayTable other, Func<int?, int?, int?> f)
-    {
-        var lands = new byte[Days];
-        for (int i = 0; i < Days; i++)
-        {
-            int? a = _lands[i] == Never ? null : _lands[i];
-            int? b = other._lands[i] == Never ? null : other._lands[i];
-            if (f(a, b) is int l) lands[i] = (byte)l;
-        }
         return new DayTable(lands);
     }
 

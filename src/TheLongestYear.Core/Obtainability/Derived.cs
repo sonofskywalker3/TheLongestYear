@@ -169,12 +169,21 @@ public static class Derived
         private Input Combine(
             Input other, Func<Tables, Tables, Tables> f, IReadOnlyList<IReadOnlyList<string>> groups)
         {
+            // Both sides plain only (no island, year 2 or owned-only source anywhere upstream, the
+            // usual case): every flag combination reads both plain variants, so all eight combine to
+            // the same tables and the trim keeps only the plain one. Build that one directly.
+            Variant a = PlainVariant, b = other.PlainVariant;
+            if (Variants.Count == 1 && other.Variants.Count == 1 && a.Named(Plain, Plain, Plain) && b.Named(Plain, Plain, Plain))
+            {
+                return new Input(new[] { new Variant(Plain, Plain, Plain, f(a.Delayed, b.Delayed), f(a.Undelayed, b.Undelayed)) })
+                    { Groups = groups };
+            }
             var built = new List<Variant>();
             foreach ((bool island, bool yearTwo, bool ownedOnly) in AllFlags)
             {
-                Variant a = For(island, yearTwo, ownedOnly);
-                Variant b = other.For(island, yearTwo, ownedOnly);
-                built.Add(new Variant(island, yearTwo, ownedOnly, f(a.Delayed, b.Delayed), f(a.Undelayed, b.Undelayed)));
+                Variant x = For(island, yearTwo, ownedOnly);
+                Variant y = other.For(island, yearTwo, ownedOnly);
+                built.Add(new Variant(island, yearTwo, ownedOnly, f(x.Delayed, y.Delayed), f(x.Undelayed, y.Undelayed)));
             }
             return new Input(Trim(built)) { Groups = groups };
         }
@@ -199,8 +208,17 @@ public static class Derived
     public static Input Of(ObtainabilityModel snapshot, string itemId)
     {
         if (snapshot is null) throw new ArgumentNullException(nameof(snapshot));
+        return snapshot.InputOf(itemId, Read);
+    }
+
+    private static Input Read(ObtainabilityModel snapshot, string itemId)
+    {
         var variants = new List<Variant>();
-        foreach ((bool island, bool yearTwo, bool owned) in AllFlags)
+        // With no island, year 2 or owned-only source, every variant counts exactly the plain one's
+        // sources, so the trim would keep the plain variant alone: read only that.
+        bool flagged = snapshot.Sources(itemId).Any(s =>
+            s.Conditions.GingerIsland || s.Conditions.YearTwo || s.Conditions.OwnedOnly);
+        foreach ((bool island, bool yearTwo, bool owned) in flagged ? AllFlags : AllFlags.Take(1))
         {
             ObtainFilter dependable = ObtainFilter.DependableOnly with
             {
