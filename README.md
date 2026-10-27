@@ -23,7 +23,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.0.27
+## What's New in 1.1.3
+
+**Changed: loading a save is faster.** The base game's item routes now ship with the mod instead of being worked out on every load, which took several seconds. Nothing about how a board is built changed. If your mods change the game's data, TLY still works the routes out itself once and remembers them. Supported mods will get their own shipped answers over time.
+
+**Changed: shipped item routes are tied to the mod version.** The routes that ship with the mod are only used by the TLY version they were made for. If the file and the mod ever disagree, TLY works the routes out itself once and remembers them, so an out-of-date file can never give a wrong board.
+
+## 1.0.27
 
 **New: the Traveling Cart brings Year 2 items.** Every cart visit has a 1 in 10 chance that one of its slots holds something a loop normally can't get before the Community Center is done: Garlic, Red Cabbage and Artichoke Seeds, Ginger Island crops and fish, Mr. Qi's goods, dishes whose recipe only airs in Year 2, and the same kinds of late-game items from your other mods. It is one chance per visit however many cart slots you have bought, and it only offers the kinds of things the cart already sells. Thanks to mysticalfairy25 for the idea.
 
