@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TheLongestYear.Core.Lexicon;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -17,6 +18,35 @@ public static class ItemAvailabilityBuilder
     private const string UnpooledFishNote = "out of the bundle pools (ExcludeFromRandomSale), placed from its spawn rows";
 
     public static ItemAvailabilityModel Build(
+        ItemPools pools,
+        IReadOnlyDictionary<string, Season>? seasonOverrides = null,
+        IReadOnlyDictionary<string, int>? effortOverrides = null,
+        EffortData? effortData = null,
+        bool hasKitchen = false,
+        IReadOnlyDictionary<string, int>? weekOverrides = null,
+        WeekMode mode = WeekMode.Pacing,
+        DifficultyStep step = DifficultyStep.Normal,
+        Func<string, bool>? hasUpgrade = null)
+        => BuildWithAnswers(pools, seasonOverrides, effortOverrides, effortData, hasKitchen, weekOverrides, mode, step, hasUpgrade).Model;
+
+    /// <summary>The model <see cref="FromAnswers"/> makes from <paramref name="answers"/> with these
+    /// overrides: the same model <see cref="Build"/> returns for the inputs the answers came from.</summary>
+    public static ItemAvailabilityModel FromAnswers(
+        AvailabilityAnswers answers,
+        IReadOnlyDictionary<string, Season>? seasonOverrides,
+        IReadOnlyDictionary<string, int>? weekOverrides,
+        WeekMode mode,
+        DifficultyStep step,
+        IReadOnlyDictionary<string, int>? effortOverrides = null)
+    {
+        if (answers == null) throw new ArgumentNullException(nameof(answers));
+        return new ItemAvailabilityModel(answers.Derived, seasonOverrides, effortOverrides, answers.EffortDerived, weekOverrides, mode, step)
+            { DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits };
+    }
+
+    /// <summary><see cref="Build"/>, also returning the computed answers the model was made from, for
+    /// the path lexicon to store (<see cref="AvailabilityAnswers.Inputs"/> is left for the caller).</summary>
+    public static (ItemAvailabilityModel Model, AvailabilityAnswers Answers) BuildWithAnswers(
         ItemPools pools,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,
         IReadOnlyDictionary<string, int>? effortOverrides = null,
@@ -90,8 +120,10 @@ public static class ItemAvailabilityBuilder
         }
 
         var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        var noEffort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         if (effortData == null)
-            return model;
+            return (model, new AvailabilityAnswers(derived, effortDerived ?? noEffort,
+                new Dictionary<string, double[]>(StringComparer.Ordinal), new Dictionary<string, int>(StringComparer.Ordinal)));
 
         // The dish table needs the model's placements, so it is built from this first model and
         // handed to the one returned. Its effort cap reads a composer that never counts the
@@ -109,8 +141,11 @@ public static class ItemAvailabilityBuilder
             kitchenFree.EffortOf);
         // hasUpgrade is read like hasKitchen: once, here. Upgrades are only bought before a reset,
         // and every reset rebuilds the model, so the set is the one the board is generated under.
-        return new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { DishBases = dishBases, YearTwoCropDishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade) };
+        // Built here, not through FromAnswers, so the tests comparing the two compare two constructions.
+        IReadOnlyDictionary<string, int> dishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade);
+        var built = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
+            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits };
+        return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits));
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

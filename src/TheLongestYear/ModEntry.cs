@@ -75,6 +75,17 @@ namespace TheLongestYear
         /// when the last build refused to publish a model (a data section failed to read). Null when
         /// the model built cleanly or has not been built yet.</summary>
         private string _obtainabilityFailure;
+        /// <summary>The inputs the last obtainability build read from the live game data, for
+        /// tly_lexicon dumpinputs. Null until a build has read them.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityInputs _lastObtainabilityInputs;
+        /// <summary>The path lexicon (shipped answers, disk cache, build), made at the first save load.</summary>
+        private TheLongestYear.Loop.LexiconService _lexicon;
+        /// <summary>The obtainability build the lexicon ran during the last load, and whether the
+        /// session memo reused it; null when the answers came from the shipped file or the cache.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityBuild _lastLexiconBuild;
+        private bool _lastLexiconBuildReused;
+        /// <summary>The last obtainability build's stage times (read, build, year sort), for the load timing line.</summary>
+        private long _obtainabilityReadMs, _obtainabilityBuildMs, _yearSortMs;
         /// <summary>The reachability verdicts <see cref="_enginePools"/> were built from, for tly_dumpmodel.</summary>
         private TheLongestYear.Core.Availability.SourceReachability _engineReachability;
         /// <summary>The curated season pins the availability model was last built with, kept so a
@@ -745,15 +756,92 @@ namespace TheLongestYear
         /// pre-reset model for the rest of the session.</summary>
         private TheLongestYear.Core.ItemAvailabilityModel BuildAvailabilityModelFor(TheLongestYear.Core.DifficultyStep step)
         {
+            // Served from the path lexicon when it holds answers for this step and kitchen state made
+            // from the same inputs (see AvailabilityAnswers.InputsHash); otherwise built and stored.
             TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
-            _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
-                _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
-                hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
-                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step,
-                hasUpgrade: _meta.State.HasUpgrade);
+            bool kitchen = _meta.State.HasUpgrade("keep_kitchen");
+            string key = TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key(step, kitchen);
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            string inputs = AvailabilityInputsHash();
+            long hashMs = timer.ElapsedMilliseconds;
+            string storedInputs = _lexicon?.StoredInputs(key) ?? "none";
+            TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
+            if (stored != null)
+                _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
+                    stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step);
+            else
+            {
+                var (model, answers) = AvailabilityBuild(step, kitchen);
+                _availability = model;
+                if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });
+            }
+            this.Monitor.Log(
+                $"Availability model {key}: {(stored != null ? "served from the lexicon" : "built")} in {timer.ElapsedMilliseconds} ms (inputs {inputs}, hashed in {hashMs} ms; stored {storedInputs}).",
+                LogLevel.Trace);
             if (_runController != null) _runController.Availability = _availability;
             if (_boardBuilder != null) _boardBuilder.Availability = _availability;
             return _availability;
+        }
+
+        /// <summary>The cold availability build for one step and kitchen state, with its answers.</summary>
+        private (TheLongestYear.Core.ItemAvailabilityModel Model, TheLongestYear.Core.Lexicon.AvailabilityAnswers Answers) AvailabilityBuild(
+            TheLongestYear.Core.DifficultyStep step, bool kitchen)
+            => TheLongestYear.Core.Availability.ItemAvailabilityBuilder.BuildWithAnswers(
+                _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData, hasKitchen: kitchen,
+                weekOverrides: AvailabilityWeekOverrides(), mode: TheLongestYear.Core.WeekModes.For(step), step: step,
+                hasUpgrade: _meta.State.HasUpgrade);
+
+        /// <summary><see cref="TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash"/> of the live
+        /// availability inputs, or null (nothing is served or stored) when they cannot be serialised.</summary>
+        private string AvailabilityInputsHash()
+        {
+            if (_enginePools == null) return null;
+            try
+            {
+                return AvailabilityInputsNow().Hash();
+            }
+            catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException or ArgumentException)
+            {
+                this.Monitor.Log($"Availability inputs could not be hashed ({ex.GetType().Name}: {ex.Message}); building without the lexicon.", LogLevel.Trace);
+                return null;
+            }
+        }
+
+        /// <summary>The live availability inputs (<see cref="TheLongestYear.Core.Lexicon.AvailabilityInputs"/>:
+        /// what <see cref="AvailabilityInputsHash"/> hashes and <c>tly_lexicon dumpinputs</c> writes), or
+        /// null before the engine pools are read.</summary>
+        private TheLongestYear.Core.Lexicon.AvailabilityInputs AvailabilityInputsNow()
+            => _enginePools == null
+                ? null
+                : TheLongestYear.Core.Lexicon.AvailabilityInputs.From(
+                    _enginePools, _effortData, _itemSeasonPins, null, AvailabilityWeekOverrides(),
+                    TheLongestYear.Core.YearTwoCrops.IsCapped(_meta.State.HasUpgrade));
+
+        /// <summary>The availability week overrides in force: the supported-mod layers' week rulings, with
+        /// the config's <c>AvailabilityWeekOverrides</c> laid over them (the config wins per id). Used for
+        /// the build, the served answers and their inputs hash alike, so a layer ruling counts in all three.</summary>
+        private Dictionary<string, int> AvailabilityWeekOverrides()
+        {
+            // No layer rulings: the config's own dictionary, so the inputs hash is the one it always was.
+            if (_lexicon?.Loaded.Set.WeekRulings is not { Count: > 0 } layers) return _config.AvailabilityWeekOverrides;
+            var merged = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var (id, week) in layers) merged[id] = week;
+            if (_config.AvailabilityWeekOverrides != null)
+                foreach (var (id, week) in _config.AvailabilityWeekOverrides) merged[id] = week;
+            return merged;
+        }
+
+        /// <summary>Every step's availability answers under both kitchen states, by
+        /// <see cref="TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key"/>, for <c>tly_lexicon write vanilla</c>.</summary>
+        private IReadOnlyDictionary<string, TheLongestYear.Core.Lexicon.AvailabilityAnswers> AllAvailabilityAnswers()
+        {
+            string inputs = AvailabilityInputsHash();
+            var all = new Dictionary<string, TheLongestYear.Core.Lexicon.AvailabilityAnswers>(StringComparer.Ordinal);
+            if (inputs == null) return all;
+            foreach (TheLongestYear.Core.DifficultyStep step in Enum.GetValues<TheLongestYear.Core.DifficultyStep>())
+                foreach (bool kitchen in new[] { false, true })
+                    all[TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key(step, kitchen)] = AvailabilityBuild(step, kitchen).Answers with { Inputs = inputs };
+            return all;
         }
 
         private static string DisplayName(string itemId)

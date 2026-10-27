@@ -27,7 +27,13 @@ public static class ObtainabilityBuilder
     /// <param name="mineTravel">Whether a direct mine route lands after the days it takes to reach its
     /// floor (the ruling, and the default). Off only for the debug check that the fairness rule gives the
     /// same answers either way.</param>
-    public static ObtainabilityBuild Build(ObtainabilityInputs inputs, bool mineTravel = true)
+    /// <param name="extraDirect">Routes the game data does not say, by qualified item id: a supported
+    /// mod's layer (<see cref="Lexicon.LayerSet.ExtraDirectSources"/>). They join the direct sources
+    /// before the mine travel and the passes, so everything made from them is derived as from any
+    /// other direct route. Null or empty changes nothing.</param>
+    public static ObtainabilityBuild Build(
+        ObtainabilityInputs inputs, bool mineTravel = true,
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         var f = inputs.Festivals;
@@ -51,6 +57,10 @@ public static class ObtainabilityBuilder
         direct.AddRange(CodeSources.GuildRewards(inputs.SlayerQuests));
         direct.AddRange(CodeSources.MagicBait());
         direct.AddRange(WorldSources.All());
+        if (extraDirect != null)
+            foreach (var (itemId, sources) in extraDirect.OrderBy(p => p.Key, StringComparer.Ordinal))
+                foreach (ObtainSource source in sources)
+                    direct.Add((itemId, source));
         // Mine depth goes into the landing day here, once, and only here: a direct route needing floor N
         // lands the days it takes to get there from nothing later (ruling 2026-09-16), and everything
         // made from it inherits that through its input's table, so no derived pass adds it again.

@@ -10,7 +10,7 @@ param(
 $ModDir = 'C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\Mods\TheLongestYear'
 $Bridge = Join-Path $ModDir 'tly_commands.txt'
 $Log = Join-Path $env:APPDATA 'StardewValley\ErrorLogs\SMAPI-latest.txt'
-$Repo = 'C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear'
+$Repo = 'C:\Users\Jeff\Documents\Personal\Stardee Valoo\TheLongestYear'
 
 function Send-Bridge([string[]]$cmds) {
     # Append-safe: if a previous batch is still unconsumed, merge rather than clobber.

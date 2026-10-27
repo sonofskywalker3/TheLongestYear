@@ -4,7 +4,7 @@
 # Precondition: the planning hub is open on day 1 of the season.
 set -u
 MODE="$1"; LABEL="$2"
-REPO="C:/Users/Jeff/Documents/Projects/Stardee Valoo/TheLongestYear"
+REPO="C:/Users/Jeff/Documents/Personal/Stardee Valoo/TheLongestYear"
 SP="$REPO/tools"
 LOG="$APPDATA/StardewValley/ErrorLogs/SMAPI-latest.txt"
 drv() { pwsh -NoProfile -File "$REPO/tools/bridge.ps1" "$@"; }

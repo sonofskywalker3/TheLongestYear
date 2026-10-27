@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.1.0)
+
+### Changed
+
+- **Loading a save is faster.** The base game's item routes now ship with the mod instead of being worked out on every load, which took several seconds. Nothing about how a board is built changed. If your mods change the game's data, TLY still works the routes out itself once and remembers them. Supported mods will get their own shipped answers over time.
+
+### Internal
+
+- `tly_lexicon` (`status`, `diff`, `gaps`, `write`) checks and regenerates the shipped answers; see `docs/lexicon-layers.md` for adding a supported mod.
+
 ## 1.0.27 - 2026-10-27
 
 ### Changed

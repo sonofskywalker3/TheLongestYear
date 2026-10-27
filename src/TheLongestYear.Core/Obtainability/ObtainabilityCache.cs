@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -14,20 +16,32 @@ public sealed class ObtainabilityCache
     private string? _key;
     private ObtainabilityBuild? _build;
 
-    public ObtainabilityBuild Get(ObtainabilityInputs inputs, out bool reused)
+    /// <param name="extraDirect">Passed to <see cref="ObtainabilityBuilder.Build"/>; part of the key.</param>
+    public ObtainabilityBuild Get(
+        ObtainabilityInputs inputs, out bool reused,
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
-        string key = Fingerprint(inputs);
+        string key = Fingerprint(inputs) + (extraDirect is { Count: > 0 } ? ExtraFingerprint(extraDirect) : "");
         if (_build != null && key == _key)
         {
             reused = true;
             return _build;
         }
 
-        _build = ObtainabilityBuilder.Build(inputs);
+        _build = ObtainabilityBuilder.Build(inputs, extraDirect: extraDirect);
         _key = key;
         reused = false;
         return _build;
+    }
+
+    private static string ExtraFingerprint(IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> extra)
+    {
+        var sorted = new SortedDictionary<string, IReadOnlyList<ObtainSource>>(
+            extra.ToDictionary(p => p.Key, p => p.Value), StringComparer.Ordinal);
+        byte[] json = JsonSerializer.SerializeToUtf8Bytes(sorted, Lexicon.LexiconJson.Options);
+        using var sha = SHA256.Create();
+        return "+" + Convert.ToHexString(sha.ComputeHash(json));
     }
 
     private static string Fingerprint(ObtainabilityInputs inputs)

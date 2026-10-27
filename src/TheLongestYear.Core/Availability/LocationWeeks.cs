@@ -48,6 +48,11 @@ public sealed class LocationWeeks
 
     private LocationWeeks(IReadOnlyDictionary<string, PlaceWeek> reached) => _reached = reached;
 
+    /// <summary>The walk's result as recorded (<see cref="Reached"/>), for an offline rebuild of the
+    /// availability inputs (<see cref="Lexicon.AvailabilityInputs"/>).</summary>
+    internal static LocationWeeks FromReached(IReadOnlyDictionary<string, PlaceWeek> reached)
+        => new(new Dictionary<string, PlaceWeek>(reached ?? throw new ArgumentNullException(nameof(reached)), StringComparer.Ordinal));
+
     /// <summary>Maps the walk reached from the farm, with their weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Reached => _reached;
 

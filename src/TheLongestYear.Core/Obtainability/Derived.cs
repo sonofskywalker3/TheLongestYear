@@ -150,6 +150,11 @@ public static class Derived
             return Combine(other, (a, b) => a.Earliest(b), Merge(Groups, other.Groups));
         }
 
+        /// <summary><see cref="Either"/> for two non-empty sides, leaving the groups to the caller
+        /// (<see cref="Derived.Sooner"/>).</summary>
+        internal Input EitherTablesOnly(Input other)
+            => Combine(other, (a, b) => a.Earliest(b), Array.Empty<IReadOnlyList<string>>());
+
         /// <summary>Both inputs are needed (a recipe's ingredients): variant by variant, the later
         /// landing, never when either side never lands, and both sides' groups kept side by side.</summary>
         public Input Both(Input other)
@@ -169,12 +174,21 @@ public static class Derived
         private Input Combine(
             Input other, Func<Tables, Tables, Tables> f, IReadOnlyList<IReadOnlyList<string>> groups)
         {
+            // Both sides plain only (no island, year 2 or owned-only source anywhere upstream, the
+            // usual case): every flag combination reads both plain variants, so all eight combine to
+            // the same tables and the trim keeps only the plain one. Build that one directly.
+            Variant a = PlainVariant, b = other.PlainVariant;
+            if (Variants.Count == 1 && other.Variants.Count == 1 && a.Named(Plain, Plain, Plain) && b.Named(Plain, Plain, Plain))
+            {
+                return new Input(new[] { new Variant(Plain, Plain, Plain, f(a.Delayed, b.Delayed), f(a.Undelayed, b.Undelayed)) })
+                    { Groups = groups };
+            }
             var built = new List<Variant>();
             foreach ((bool island, bool yearTwo, bool ownedOnly) in AllFlags)
             {
-                Variant a = For(island, yearTwo, ownedOnly);
-                Variant b = other.For(island, yearTwo, ownedOnly);
-                built.Add(new Variant(island, yearTwo, ownedOnly, f(a.Delayed, b.Delayed), f(a.Undelayed, b.Undelayed)));
+                Variant x = For(island, yearTwo, ownedOnly);
+                Variant y = other.For(island, yearTwo, ownedOnly);
+                built.Add(new Variant(island, yearTwo, ownedOnly, f(x.Delayed, y.Delayed), f(x.Undelayed, y.Undelayed)));
             }
             return new Input(Trim(built)) { Groups = groups };
         }
@@ -199,8 +213,17 @@ public static class Derived
     public static Input Of(ObtainabilityModel snapshot, string itemId)
     {
         if (snapshot is null) throw new ArgumentNullException(nameof(snapshot));
+        return snapshot.InputOf(itemId, Read);
+    }
+
+    private static Input Read(ObtainabilityModel snapshot, string itemId)
+    {
         var variants = new List<Variant>();
-        foreach ((bool island, bool yearTwo, bool owned) in AllFlags)
+        // With no island, year 2 or owned-only source, every variant counts exactly the plain one's
+        // sources, so the trim would keep the plain variant alone: read only that.
+        bool flagged = snapshot.Sources(itemId).Any(s =>
+            s.Conditions.GingerIsland || s.Conditions.YearTwo || s.Conditions.OwnedOnly);
+        foreach ((bool island, bool yearTwo, bool owned) in flagged ? AllFlags : AllFlags.Take(1))
         {
             ObtainFilter dependable = ObtainFilter.DependableOnly with
             {
@@ -217,7 +240,34 @@ public static class Derived
         return Input.FromVariants(variants, new IReadOnlyList<string>[] { new[] { itemId } });
     }
 
-    /// <summary>The sooner of several inputs (see <see cref="Input.Either"/>).</summary>
+    /// <summary>The sooner of several inputs: exactly the left fold of <see cref="Input.Either"/> from
+    /// <see cref="Input.Nothing"/>, with the merged id group built once at the end instead of re-merged
+    /// at every step (that re-merge made a machine taking hundreds of items quadratic). The groups
+    /// follow Either's rules step by step: an empty side is dropped whole (so the result is the other
+    /// side, groups and all), and two non-empty sides merge into one group of distinct ids in order.</summary>
     public static Input Sooner(IEnumerable<Input> inputs)
-        => inputs.Aggregate(Input.Nothing, (a, b) => a.Either(b));
+    {
+        Input acc = Input.Nothing;
+        IReadOnlyList<IReadOnlyList<string>> raw = acc.Groups;   // acc's groups while it is one input as given
+        List<string>? merged = null;                              // acc's one merged group, once two sides met
+        HashSet<string>? seen = null;
+        foreach (Input next in inputs)
+        {
+            if (acc.IsEmpty) { acc = next; raw = next.Groups; merged = null; seen = null; continue; }
+            if (next.IsEmpty) continue;
+            if (merged == null)
+            {
+                merged = new List<string>();
+                seen = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string id in raw.SelectMany(g => g)) if (seen.Add(id)) merged.Add(id);
+            }
+            foreach (string id in next.Groups.SelectMany(g => g)) if (seen!.Add(id)) merged.Add(id);
+            acc = acc.EitherTablesOnly(next);
+        }
+        if (merged == null) return acc;
+        IReadOnlyList<IReadOnlyList<string>> groups = merged.Count == 0
+            ? Array.Empty<IReadOnlyList<string>>()
+            : new IReadOnlyList<string>[] { merged };
+        return acc with { Groups = groups };
+    }
 }

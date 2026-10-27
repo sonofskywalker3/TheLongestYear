@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace TheLongestYear.Core;
 
@@ -18,18 +19,19 @@ public sealed record ItemAvailability(
     Season EarliestSeason, int Effort, string Basis, EffortSource Source = EffortSource.Derived,
     int EarliestWeek = 0, Season? GateSeason = null, int HardWeek = 0, WeekMode Mode = WeekMode.Pacing)
 {
+    // The computed weeks are ignored by System.Text.Json so the lexicon file stores only the record's own values.
     /// <summary>Pacing week: the week a normal player reasonably has the item. A record built from
     /// a season alone reads as that season's first week.</summary>
-    public int PacingWeek => EarliestWeek > 0 ? EarliestWeek : AvailabilityWeeks.FirstWeekOf(EarliestSeason);
+    [JsonIgnore] public int PacingWeek => EarliestWeek > 0 ? EarliestWeek : AvailabilityWeeks.FirstWeekOf(EarliestSeason);
     /// <summary>Hard week: the first week the item can exist at all (facts). Falls back to the
     /// pacing week when no hard week was placed.</summary>
-    public int HardWeekOrPacing => HardWeek > 0 ? HardWeek : PacingWeek;
+    [JsonIgnore] public int HardWeekOrPacing => HardWeek > 0 ? HardWeek : PacingWeek;
     /// <summary>The week a day-28 gate reads, by <see cref="Mode"/>.</summary>
-    public int Week => Mode == WeekMode.Pacing ? PacingWeek : HardWeekOrPacing;
+    [JsonIgnore] public int Week => Mode == WeekMode.Pacing ? PacingWeek : HardWeekOrPacing;
     /// <summary>The week a weekly card reads, by <see cref="Mode"/>.</summary>
-    public int GoalWeek => Mode == WeekMode.HardAll ? HardWeekOrPacing : PacingWeek;
+    [JsonIgnore] public int GoalWeek => Mode == WeekMode.HardAll ? HardWeekOrPacing : PacingWeek;
     /// <summary>Season a day-28 gate may first demand the item, by <see cref="Mode"/>.</summary>
-    public Season Gate => Mode == WeekMode.Pacing ? (GateSeason ?? EarliestSeason) : AvailabilityWeeks.SeasonOf(Week);
+    [JsonIgnore] public Season Gate => Mode == WeekMode.Pacing ? (GateSeason ?? EarliestSeason) : AvailabilityWeeks.SeasonOf(Week);
 }
 
 /// <summary>Where an item's effort number came from: a derivation rule, the price bucket

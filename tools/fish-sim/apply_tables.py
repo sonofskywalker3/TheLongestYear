@@ -1,5 +1,5 @@
 import sys, os
-root = r"C:\Users\Jeff\Documents\Projects\Stardee Valoo\TheLongestYear"
+root = r"C:\Users\Jeff\DocumentsPersonalStardee Valoo\TheLongestYear"
 gen = open(sys.argv[1], encoding='utf-8').read()
 
 head = '''using System;

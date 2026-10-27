@@ -106,6 +106,7 @@ public sealed record ObtainSource(
 
     /// <summary>The table with no mine travel: <see cref="UndelayedLands"/>, or <see cref="Lands"/> when
     /// none was kept.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public DayTable Undelayed => UndelayedLands ?? Lands;
 
     public override int GetHashCode()

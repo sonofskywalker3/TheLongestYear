@@ -23,6 +23,11 @@
     <Content Include="assets\**\*.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The shipped path lexicon (the unmodded game's obtainability answers). -->
+  <ItemGroup>
+    <Content Include="assets\lexicon\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- i18n localization files. -->
   <ItemGroup>
     <Content Include="i18n\**" CopyToOutputDirectory="PreserveNewest" />

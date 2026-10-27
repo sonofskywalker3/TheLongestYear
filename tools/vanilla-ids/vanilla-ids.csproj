@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Generator for src/TheLongestYear.Core/VanillaItemIds.Generated.cs and
-       VanillaBundleBoard.Generated.cs. Reads the UNMODDED game content straight from the
-       game's Content folder (no SMAPI, so no mod's asset edits). The run command is in the
+  <!-- Generator for src/TheLongestYear.Core/VanillaItemIds.Generated.cs,
+       VanillaBundleBoard.Generated.cs and VanillaLocationKeys.Generated.cs. Reads the UNMODDED
+       game content straight from the game's Content folder (no SMAPI, so no mod's asset edits). The run command is in the
        header of Program.cs. Both arguments are optional; the defaults are the Steam install
        path and the Core folder. -->
   <PropertyGroup>

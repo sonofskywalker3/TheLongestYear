@@ -87,6 +87,7 @@ namespace TheLongestYear
                 return;
             }
             var sb = new System.Text.StringBuilder();
+            sb.AppendLine(OriginLine()).AppendLine();
             sb.AppendLine($"# Year 1 / Year 2 items ({this.ModManifest.Version})").AppendLine();
             var rows = new List<(string Type, string Id, string Name, YearTwoReason Reason)>();
             foreach (var type in ItemRegistry.ItemTypes)
