@@ -29,7 +29,13 @@ public sealed class LexiconJsonTests
         foreach (DayTable t in tables)
             Assert.True(DayTableRuns.Read(DayTableRuns.Write(t)).Equals(t), DayTableRuns.Write(t));
 
-        Assert.Equal("1-112:0", DayTableRuns.Write(DayTable.None));
+        Assert.Equal("=0x112", DayTableRuns.Write(DayTable.None));
+        Assert.Equal("+0x112", DayTableRuns.Write(DayTable.Always));
+        Assert.Equal("=35x35,+0x77", DayTableRuns.Write(DayTable.Available(d => d >= 35)));
+        Assert.Equal("+5x107,=0x5", DayTableRuns.Write(DayTable.Exact(d => d + 5 <= 112 ? d + 5 : (int?)null)));
+        DayTable single = DayTable.Always.Except(DayTable.Exact(d => d == 50 ? 50 : (int?)null));   // a one-day gap
+        Assert.Equal("+0x49,=0x1,+0x62", DayTableRuns.Write(single));
+        Assert.True(DayTableRuns.Read(DayTableRuns.Write(single)).Equals(single));
     }
 
     [Theory]
@@ -41,6 +47,14 @@ public sealed class LexiconJsonTests
     [InlineData("1-112")]
     [InlineData("a-b:c")]
     [InlineData("1-113:0")]
+    [InlineData("=0x111")]
+    [InlineData("=0x113")]
+    [InlineData("=113x112")]
+    [InlineData("=5x112")]
+    [InlineData("+0x112,=0x1")]
+    [InlineData("+1x112")]
+    [InlineData("=0x0,=0x112")]
+    [InlineData("?3x112")]
     public void DayTableRunsRejectsMalformedText(string text)
         => Assert.Throws<FormatException>(() => DayTableRuns.Read(text));
 
@@ -69,6 +83,8 @@ public sealed class LexiconJsonTests
         _output.WriteLine($"serialised vanilla answer set: {new FileInfo(path).Length} bytes ({variant.Obtain.Count} obtain ids)");
 
         AnswerSet back = LexiconJson.Read(json);
+        Assert.True(back.Variants["base"].Tables.Count > 0);
+        Assert.Equal(back.Variants["base"].Tables.OrderBy(x => x, StringComparer.Ordinal), back.Variants["base"].Tables);
         AnswerVariant b = back.Variants["base"];
         Assert.Equal(set.GameVersion, back.GameVersion);
         Assert.Equal(set.Layers, back.Layers);

@@ -13,7 +13,13 @@ public sealed record AnswerVariant(
     IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> YearSort,
     IReadOnlyList<string> Unresolved, int Passes,
     IReadOnlyDictionary<string, PlaceWeek> MapWeeks, IReadOnlyList<string> UnreachedMaps,
-    IReadOnlyDictionary<string, PlaceWeek> ShopWeeks);
+    IReadOnlyDictionary<string, PlaceWeek> ShopWeeks)
+{
+    /// <summary>The distinct day-table run strings, ordinally sorted; the file refers to them by index.
+    /// Filled by <see cref="LexiconJson.Read"/> (and written by <see cref="LexiconJson.Write"/>, which
+    /// builds its own pool); empty on a freshly built variant.</summary>
+    public IReadOnlyList<string> Tables { get; init; } = Array.Empty<string>();
+}
 
 /// <summary>The shipped or cached answer file: which game, mod and layers it was made for, the
 /// row hashes it was checked against, and its variants ("base", "pierre_year2_seeds").</summary>

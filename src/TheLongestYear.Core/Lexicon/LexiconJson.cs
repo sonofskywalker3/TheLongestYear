@@ -14,12 +14,14 @@ namespace TheLongestYear.Core.Lexicon;
 public static class LexiconJson
 {
     private const string Indent = "  ";
+    private const int MaxInlineScalars = 8;
 
     public static JsonSerializerOptions Options { get; } = BuildOptions();
 
     public static string Write(AnswerSet s)
     {
         JsonNode? node = JsonSerializer.SerializeToNode(s, Options);
+        PoolTables(node);
         var sb = new StringBuilder();
         Emit(sb, node, 0, compact: false);
         sb.Append('\n');
@@ -27,12 +29,72 @@ public static class LexiconJson
     }
 
     public static AnswerSet Read(string json)
-        => JsonSerializer.Deserialize<AnswerSet>(json, Options)
-           ?? throw new JsonException("The answer file deserialised to null.");
+    {
+        JsonNode? node = JsonNode.Parse(json);
+        ResolveTables(node);
+        return node.Deserialize<AnswerSet>(Options)
+               ?? throw new JsonException("The answer file deserialised to null.");
+    }
+
+    private const string TablesKey = "Tables";
+    private static readonly string[] SourceTableKeys = { "Lands", "UndelayedLands" };
+    private static readonly string[] SourceMapKeys = { "Obtain", "YearSort" };
+
+    private static System.Collections.Generic.IEnumerable<JsonObject> Sources(JsonObject variant)
+    {
+        foreach (string mapKey in SourceMapKeys)
+            if (variant[mapKey] is JsonObject map)
+                foreach (var entry in map)
+                    if (entry.Value is JsonArray list)
+                        foreach (JsonNode? source in list)
+                            if (source is JsonObject o) yield return o;
+    }
+
+    private static System.Collections.Generic.IEnumerable<JsonObject> Variants(JsonNode? root)
+        => root?["Variants"] is JsonObject variants
+            ? variants.Select(p => p.Value).OfType<JsonObject>()
+            : Enumerable.Empty<JsonObject>();
+
+    /// <summary>Per variant: replaces each source's run strings with an index into a sorted pool of the
+    /// distinct strings, and writes the pool as the variant's <c>Tables</c>.</summary>
+    private static void PoolTables(JsonNode? root)
+    {
+        foreach (JsonObject variant in Variants(root))
+        {
+            var sources = Sources(variant).ToList();
+            var pool = sources.SelectMany(o => SourceTableKeys.Select(k => o[k]?.GetValue<string>()))
+                .Where(t => t != null).Select(t => t!).Distinct().OrderBy(t => t, StringComparer.Ordinal).ToList();
+            var index = pool.Select((t, i) => (t, i)).ToDictionary(p => p.t, p => p.i, StringComparer.Ordinal);
+            foreach (JsonObject source in sources)
+                foreach (string key in SourceTableKeys)
+                    if (source[key]?.GetValue<string>() is string runs) source[key] = index[runs];
+            variant[TablesKey] = new JsonArray(pool.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray());
+        }
+    }
+
+    private static void ResolveTables(JsonNode? root)
+    {
+        foreach (JsonObject variant in Variants(root))
+        {
+            if (variant[TablesKey] is not JsonArray tables) throw new JsonException("A variant has no Tables pool.");
+            foreach (JsonObject source in Sources(variant))
+                foreach (string key in SourceTableKeys)
+                {
+                    if (source[key] is not JsonValue v) continue;
+                    if (!v.TryGetValue(out int i) || i < 0 || i >= tables.Count)
+                        throw new JsonException($"Table index out of range in '{key}'.");
+                    source[key] = tables[i]!.GetValue<string>();
+                }
+        }
+    }
 
     private static JsonSerializerOptions BuildOptions()
     {
-        var options = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+        var options = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,   // "+" and non-ASCII stay readable
+        };
         options.Converters.Add(new JsonStringEnumConverter());
         options.Converters.Add(new DayTableConverter());
         return options;
@@ -51,7 +113,8 @@ public static class LexiconJson
     }
 
     /// <summary>Objects are one entry per line with sorted keys; an object that is an array element
-    /// (a source, a setup step) and every scalar array is written on one line.</summary>
+    /// (a source, a setup step) is written on one line, as is a short scalar array; a long one
+    /// (the table pool) takes a line per element.</summary>
     private static void Emit(StringBuilder sb, JsonNode? node, int depth, bool compact)
     {
         switch (node)
@@ -90,7 +153,7 @@ public static class LexiconJson
     private static void EmitArray(StringBuilder sb, JsonArray arr, int depth, bool compact)
     {
         if (arr.Count == 0) { sb.Append("[]"); return; }
-        bool hasObjects = arr.Any(e => e is JsonObject);
+        bool hasObjects = arr.Any(e => e is JsonObject) || arr.Count > MaxInlineScalars;
         sb.Append('[');
         if (!hasObjects || compact)
         {
