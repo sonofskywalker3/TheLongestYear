@@ -768,7 +768,7 @@ namespace TheLongestYear
             TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
             if (stored != null)
                 _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
-                    stored, _itemSeasonPins, _config.AvailabilityWeekOverrides, mode, step);
+                    stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step);
             else
             {
                 var (model, answers) = AvailabilityBuild(step, kitchen);
@@ -788,7 +788,7 @@ namespace TheLongestYear
             TheLongestYear.Core.DifficultyStep step, bool kitchen)
             => TheLongestYear.Core.Availability.ItemAvailabilityBuilder.BuildWithAnswers(
                 _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData, hasKitchen: kitchen,
-                weekOverrides: _config.AvailabilityWeekOverrides, mode: TheLongestYear.Core.WeekModes.For(step), step: step,
+                weekOverrides: AvailabilityWeekOverrides(), mode: TheLongestYear.Core.WeekModes.For(step), step: step,
                 hasUpgrade: _meta.State.HasUpgrade);
 
         /// <summary><see cref="TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash"/> of the live
@@ -799,7 +799,7 @@ namespace TheLongestYear
             try
             {
                 return TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash(
-                    _enginePools, _effortData, _itemSeasonPins, null, _config.AvailabilityWeekOverrides,
+                    _enginePools, _effortData, _itemSeasonPins, null, AvailabilityWeekOverrides(),
                     TheLongestYear.Core.YearTwoCrops.IsCapped(_meta.State.HasUpgrade));
             }
             catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException or ArgumentException)
@@ -807,6 +807,20 @@ namespace TheLongestYear
                 this.Monitor.Log($"Availability inputs could not be hashed ({ex.GetType().Name}: {ex.Message}); building without the lexicon.", LogLevel.Trace);
                 return null;
             }
+        }
+
+        /// <summary>The availability week overrides in force: the supported-mod layers' week rulings, with
+        /// the config's <c>AvailabilityWeekOverrides</c> laid over them (the config wins per id). Used for
+        /// the build, the served answers and their inputs hash alike, so a layer ruling counts in all three.</summary>
+        private Dictionary<string, int> AvailabilityWeekOverrides()
+        {
+            // No layer rulings: the config's own dictionary, so the inputs hash is the one it always was.
+            if (_lexicon?.Loaded.Set.WeekRulings is not { Count: > 0 } layers) return _config.AvailabilityWeekOverrides;
+            var merged = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var (id, week) in layers) merged[id] = week;
+            if (_config.AvailabilityWeekOverrides != null)
+                foreach (var (id, week) in _config.AvailabilityWeekOverrides) merged[id] = week;
+            return merged;
         }
 
         /// <summary>Every step's availability answers under both kitchen states, by

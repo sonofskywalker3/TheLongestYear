@@ -25,6 +25,11 @@ public static class YearTwoCartPool
 {
     private const string ObjectTypeId = "(O)";
 
+    /// <summary>The supported-mod layers' year rulings (<see cref="Lexicon.LayerSet.YearRuling"/>), set
+    /// by the game side once the layers are composed; consulted before <see cref="VanillaYearRulings"/>.
+    /// Null means vanilla rulings only.</summary>
+    public static Func<string, YearRuling?>? LayerRuling { get; set; }
+
     public static IReadOnlyList<string> Select(IEnumerable<CartCandidate> candidates)
         => (candidates ?? Array.Empty<CartCandidate>())
             .Where(Offers)
@@ -36,7 +41,7 @@ public static class YearTwoCartPool
     public static bool Offers(CartCandidate c)
     {
         if (!c.CartSellsKind) return false;
-        if (VanillaYearRulings.Ruling(c.QualifiedId) is YearRuling ruling)
+        if ((LayerRuling?.Invoke(c.QualifiedId) ?? VanillaYearRulings.Ruling(c.QualifiedId)) is YearRuling ruling)
             return ruling == YearRuling.YearTwo;
         return c.Reason switch
         {

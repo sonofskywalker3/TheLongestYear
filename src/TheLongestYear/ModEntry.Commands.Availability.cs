@@ -119,7 +119,7 @@ namespace TheLongestYear
                 step => TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
                     _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
                     hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
-                    weekOverrides: _config.AvailabilityWeekOverrides,
+                    weekOverrides: AvailabilityWeekOverrides(),
                     mode: TheLongestYear.Core.WeekModes.For(step), step: step,
                     hasUpgrade: _meta.State.HasUpgrade),
                 this.Helper.DirectoryPath, args);
@@ -212,7 +212,7 @@ namespace TheLongestYear
                 _lastObtainabilityInputs = inputs;
                 long readMs = timer.ElapsedMilliseconds;
                 _obtainabilityReadMs = readMs;
-                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, BuildLexiconVariant);
+                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
                 TheLongestYear.Core.Lexicon.Resolved resolved = _lexicon.Resolve(
                     inputs, _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId), Game1.version, this.ModManifest.Version.ToString());
                 _obtainability = resolved.Variant.ObtainModel();
@@ -251,13 +251,15 @@ namespace TheLongestYear
 
         /// <summary>The lexicon's build for live data it has no answers for: the cold obtainability and
         /// year-sort builds (each memoised for the session by input hash, so a reload of unchanged data
-        /// reuses them), snapshotted with this save's map and shop weeks.</summary>
+        /// reuses them) with the supported-mod layers' extra direct sources, snapshotted with this save's
+        /// map and shop weeks.</summary>
         private TheLongestYear.Core.Lexicon.AnswerVariant BuildLexiconVariant(
-            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.AnswerSet shipped)
+            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.AnswerSet shipped,
+            IReadOnlyDictionary<string, IReadOnlyList<TheLongestYear.Core.Obtainability.ObtainSource>> extraDirect)
         {
-            var build = _obtainabilityCache.Get(inputs, out bool reused);
+            var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect);
             var sortTimer = System.Diagnostics.Stopwatch.StartNew();
-            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _);
+            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _, extraDirect);
             _yearSortMs = sortTimer.ElapsedMilliseconds;
             _lastLexiconBuild = build;
             _lastLexiconBuildReused = reused;
@@ -278,7 +280,7 @@ namespace TheLongestYear
             return new TheLongestYear.DebugCommands.LexiconSaveContext(
                 _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
                 _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
-                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers);
+                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers, _lexicon?.Loaded, _lexicon?.Vanilla);
         }
 
         /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>

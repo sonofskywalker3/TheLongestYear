@@ -18,22 +18,32 @@ public static class LexiconJson
 
     public static JsonSerializerOptions Options { get; } = BuildOptions();
 
-    public static string Write(AnswerSet s)
+    private const string VariantsKey = "Variants";
+
+    public static string Write(AnswerSet s) => WriteDocument(s, VariantsKey);
+
+    public static AnswerSet Read(string json) => ReadDocument<AnswerSet>(json, VariantsKey);
+
+    /// <summary>Any value in this file format. When <paramref name="variantsKey"/> names a top-level
+    /// map of <see cref="AnswerVariant"/>s, each variant's day tables are pooled as in an answer set;
+    /// null pools nothing (a file small enough to carry its tables inline, such as a layer's inputs).</summary>
+    internal static string WriteDocument<T>(T value, string? variantsKey)
     {
-        JsonNode? node = JsonSerializer.SerializeToNode(s, Options);
-        PoolTables(node);
+        JsonNode? node = JsonSerializer.SerializeToNode(value, Options);
+        if (variantsKey != null) PoolTables(node, variantsKey);
         var sb = new StringBuilder();
         Emit(sb, node, 0, compact: false);
         sb.Append('\n');
         return sb.ToString();
     }
 
-    public static AnswerSet Read(string json)
+    /// <summary>Reads what <see cref="WriteDocument"/> wrote, with the same <paramref name="variantsKey"/>.</summary>
+    internal static T ReadDocument<T>(string json, string? variantsKey)
     {
         JsonNode? node = JsonNode.Parse(json);
-        ResolveTables(node);
-        return node.Deserialize<AnswerSet>(Options)
-               ?? throw new JsonException("The answer file deserialised to null.");
+        if (variantsKey != null) ResolveTables(node, variantsKey);
+        return node.Deserialize<T>(Options)
+               ?? throw new JsonException("The lexicon file deserialised to null.");
     }
 
     private const string TablesKey = "Tables";
@@ -50,16 +60,16 @@ public static class LexiconJson
                             if (source is JsonObject o) yield return o;
     }
 
-    private static System.Collections.Generic.IEnumerable<JsonObject> Variants(JsonNode? root)
-        => root?["Variants"] is JsonObject variants
+    private static System.Collections.Generic.IEnumerable<JsonObject> Variants(JsonNode? root, string key)
+        => root?[key] is JsonObject variants
             ? variants.Select(p => p.Value).OfType<JsonObject>()
             : Enumerable.Empty<JsonObject>();
 
     /// <summary>Per variant: replaces each source's run strings with an index into a sorted pool of the
     /// distinct strings, and writes the pool as the variant's <c>Tables</c>.</summary>
-    private static void PoolTables(JsonNode? root)
+    private static void PoolTables(JsonNode? root, string variantsKey)
     {
-        foreach (JsonObject variant in Variants(root))
+        foreach (JsonObject variant in Variants(root, variantsKey))
         {
             var sources = Sources(variant).ToList();
             var pool = sources.SelectMany(o => SourceTableKeys.Select(k => o[k]?.GetValue<string>()))
@@ -72,9 +82,9 @@ public static class LexiconJson
         }
     }
 
-    private static void ResolveTables(JsonNode? root)
+    private static void ResolveTables(JsonNode? root, string variantsKey)
     {
-        foreach (JsonObject variant in Variants(root))
+        foreach (JsonObject variant in Variants(root, variantsKey))
         {
             if (variant[TablesKey] is not JsonArray tables) throw new JsonException("A variant has no Tables pool.");
             foreach (JsonObject source in Sources(variant))

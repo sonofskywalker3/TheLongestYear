@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using StardewModdingAPI;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Lexicon;
 using TheLongestYear.Core.Obtainability;
 
@@ -12,13 +13,16 @@ namespace TheLongestYear.Loop
     /// used entries), and resolves the live data through <see cref="LexiconResolver"/>.
     /// <para>A computed entry is written once per load: the resolver's write is held until the load's
     /// availability answers are attached (<see cref="StoreAvailability"/>) or the load ends
-    /// (<see cref="FlushPending"/>).</para></summary>
+    /// (<see cref="FlushPending"/>).</para>
+    /// <para>Supported-mod layers (<see cref="LayerLoader"/>) are composed over the shipped answers
+    /// once, here: the resolver is given the composed set as its shipped answers and its layer names
+    /// for the cache key, the build gets the layers' extra direct sources, and the cart's year 2 slot
+    /// gets their year rulings (<see cref="YearTwoCartPool.LayerRuling"/>).</para></summary>
     internal sealed class LexiconService
     {
         public const string CacheFolder = "data/lexicon";
         public const int MaxCacheFiles = 3;
         private const int KeyPrefixLength = 8;
-        private static readonly string[] Layers = { RowHashes.Vanilla };
 
         private readonly IMonitor _monitor;
         private readonly LexiconDiskCache _cache;
@@ -30,23 +34,42 @@ namespace TheLongestYear.Loop
         /// <summary>The computed entry the resolver asked to write and that is not on disk yet.</summary>
         private string _pendingKey;
 
-        /// <param name="build">The answers for live data nothing has (the cold build, for now).</param>
-        public LexiconService(IMonitor monitor, string modFolder, Func<ObtainabilityInputs, AnswerSet, AnswerVariant> build)
+        /// <param name="build">The answers for live data nothing has (the cold build, for now), given the
+        /// layers' extra direct sources to add.</param>
+        public LexiconService(
+            IMonitor monitor, string modFolder, IModRegistry registry,
+            Func<ObtainabilityInputs, AnswerSet, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, AnswerVariant> build)
         {
+            if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             Action<string> warn = m => _monitor.Log(m, LogLevel.Warn);
             Action<string> trace = m => _monitor.Log(m, LogLevel.Trace);
             _cache = new LexiconDiskCache(System.IO.Path.Combine(modFolder, CacheFolder), MaxCacheFiles, warn, trace);
-            AnswerSet shipped = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
-            _resolver = new LexiconResolver(shipped, _cache.Read, (key, _) => _pendingKey = key, build);
+            Vanilla = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
+            Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
+            LayerSet layers = Loaded.Set;
+            YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;
+            if (layers.Ids.Count > 0)
+                _monitor.Log(
+                    $"Lexicon layers: {string.Join(", ", layers.Layers)}" +
+                    (layers.UnmappedPairs.Count > 0 ? $"; pairs not mapped yet ({string.Join(", ", layers.UnmappedPairs)}), so these answers are computed" : "") + ".",
+                    LogLevel.Info);
+            _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
+                (live, shipped) => build(live, shipped, layers.ExtraDirectSources));
         }
+
+        /// <summary>The shipped vanilla answers, or null when the file is absent or unreadable.</summary>
+        public AnswerSet Vanilla { get; }
+
+        /// <summary>The active supported-mod layers and the set composed from them.</summary>
+        public LoadedLayers Loaded { get; }
 
         /// <summary>The answers for the live data, logged as one INFO line. A computed result is
         /// written by <see cref="StoreAvailability"/> or <see cref="FlushPending"/>.</summary>
         public Resolved Resolve(ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion)
         {
             Forget();
-            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Layers);
+            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers);
             _current = r;
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";
