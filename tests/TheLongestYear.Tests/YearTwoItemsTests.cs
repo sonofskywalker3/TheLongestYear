@@ -30,43 +30,54 @@ public class YearTwoItemsTests
         => Assert.Equal(expected, YearTwoItems.Classify(Model, id));
 }
 
+public class YearTwoSortInputsTests
+{
+    [Fact]
+    public void Cart_random_stock_is_dropped_but_its_fixed_lines_stay()
+    {
+        var inputs = new ObtainabilityInputs
+        {
+            Shops = new[]
+            {
+                new ShopRow("Traveler", "RANDOM_ITEMS (O) 2 789 @requirePrice @isRandomSale", null, false),
+                new ShopRow("Traveler", "(O)347", "SEASON spring summer", false),
+                new ShopRow("SeedShop", "(O)476", "YEAR 2", false),
+            },
+        };
+        var shops = YearTwoItems.WithoutCartRandomStock(inputs).Shops;
+        Assert.Equal(new[] { "(O)347", "(O)476" }, System.Linq.Enumerable.Select(shops, r => r.ItemId));
+    }
+}
+
 public class YearTwoCartPoolTests
 {
-    private static CartCandidate C(string id, YearTwoReason reason, int price = 100, string? objectType = "Basic", int category = 0)
-        => new(id, id.Substring(0, id.IndexOf(')') + 1), price, objectType, category, reason);
+    private static CartCandidate C(string id, YearTwoReason reason, bool cartSellsKind = true)
+        => new(id, id.Substring(0, id.IndexOf(')') + 1), cartSellsKind, reason);
 
     [Fact]
-    public void Year_two_reasons_are_offered_for_every_type()
+    public void Year_two_items_of_a_kind_the_cart_sells_are_offered()
     {
         Assert.True(YearTwoCartPool.Offers(C("(O)830", YearTwoReason.IslandOnly)));
-        Assert.True(YearTwoCartPool.Offers(C("(BC)254", YearTwoReason.IslandOnly, objectType: null)));
         Assert.True(YearTwoCartPool.Offers(C("(O)476", YearTwoReason.YearTwoOnly)));
-    }
-
-    [Fact]
-    public void No_route_counts_only_for_objects()
-    {
         Assert.True(YearTwoCartPool.Offers(C("(O)Mod.LateGame", YearTwoReason.NoRoute)));
-        Assert.False(YearTwoCartPool.Offers(C("(W)Mod.Sword", YearTwoReason.NoRoute, objectType: null)));
-        Assert.False(YearTwoCartPool.Offers(C("(H)Mod.Hat", YearTwoReason.NoRoute, objectType: null)));
     }
 
     [Fact]
-    public void Year_one_unpriced_tools_litter_and_quest_items_are_never_offered()
+    public void Kinds_the_cart_never_sells_are_never_offered()
+    {
+        // A weapon, a ring, a fossil: year 2, but the cart sells none of them in year 1 either.
+        Assert.False(YearTwoCartPool.Offers(C("(W)57", YearTwoReason.NoRoute, cartSellsKind: false)));
+        Assert.False(YearTwoCartPool.Offers(C("(O)860", YearTwoReason.NoRoute, cartSellsKind: false)));
+        Assert.False(YearTwoCartPool.Offers(C("(O)820", YearTwoReason.IslandOnly, cartSellsKind: false)));
+    }
+
+    [Fact]
+    public void Year_one_and_ruled_items_are_not_offered()
     {
         Assert.False(YearTwoCartPool.Offers(C("(O)24", YearTwoReason.YearOne)));
-        Assert.False(YearTwoCartPool.Offers(C("(O)Mod.Free", YearTwoReason.NoRoute, price: 0)));
-        Assert.False(YearTwoCartPool.Offers(C("(T)Mod.Tool", YearTwoReason.IslandOnly, objectType: null)));
-        Assert.False(YearTwoCartPool.Offers(C("(O)Mod.Rock", YearTwoReason.NoRoute, objectType: "Litter", category: -999)));
-        Assert.False(YearTwoCartPool.Offers(C("(O)Mod.Letter", YearTwoReason.NoRoute, objectType: "Quest")));
-    }
-
-    [Fact]
-    public void Vanilla_rulings_override_the_model()
-    {
-        Assert.True(YearTwoCartPool.Offers(C("(W)57", YearTwoReason.NoRoute, objectType: null)));      // Dragontooth Cutlass
-        Assert.False(YearTwoCartPool.Offers(C("(O)460", YearTwoReason.NoRoute)));                       // Mermaid's Pendant
-        Assert.False(YearTwoCartPool.Offers(C("(O)73", YearTwoReason.NoRoute, price: 500)));            // Golden Walnut
+        Assert.False(YearTwoCartPool.Offers(C("(O)460", YearTwoReason.NoRoute)));   // Mermaid's Pendant, ruled year 1
+        Assert.False(YearTwoCartPool.Offers(C("(O)73", YearTwoReason.NoRoute)));    // Golden Walnut, never sold
+        Assert.True(YearTwoCartPool.Offers(C("(O)909", YearTwoReason.NoRoute)));    // Radioactive Ore, ruled year 2
     }
 
     [Fact]

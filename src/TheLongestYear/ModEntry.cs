@@ -64,6 +64,10 @@ namespace TheLongestYear
         /// <summary>Session cache: a save load whose game data is unchanged (the reload after a loop
         /// reset) reuses the last build instead of paying for it again.</summary>
         private readonly TheLongestYear.Core.Obtainability.ObtainabilityCache _obtainabilityCache = new();
+        /// <summary>The year 1 / year 2 sort's own model: the same data without the cart's random
+        /// stock (YearTwoItems.WithoutCartRandomStock). Null when the build failed.</summary>
+        private TheLongestYear.Core.Obtainability.ObtainabilityModel _yearSortModel;
+        private readonly TheLongestYear.Core.Obtainability.ObtainabilityCache _yearSortCache = new();
         /// <summary>Sources the obtainability build could not read (unsupported item queries, machine
         /// output methods), for tly_obtain compare.</summary>
         private IReadOnlyList<string> _obtainabilityUnresolved = System.Array.Empty<string>();

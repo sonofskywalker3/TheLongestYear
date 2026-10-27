@@ -20,6 +20,7 @@ namespace TheLongestYear.Loop
     {
         private const string GuaranteeField = "VisitsUntilY1Guarantee";
         private const string SyncedKey = "TLY_YearTwoSlot";
+        private const string ObjectTypeDefinitionId = "(O)";
         private const int ShuffleSalt = 0x2C47;
         private const int YearTwoSalt = 0x5A1E;
 
@@ -77,21 +78,31 @@ namespace TheLongestYear.Loop
                 return Array.Empty<string>();
             }
             if (ReferenceEquals(model, _poolModel)) return _pool;
+            string kindCondition = MainDrawLine(DataLoader.Shops(Game1.content).GetValueOrDefault(CartSlotLimitPatch.TravelerShopId))?.PerItemCondition;
             var candidates = new List<CartCandidate>();
             foreach (IItemDataDefinition type in ItemRegistry.ItemTypes)
                 foreach (string id in type.GetAllIds())
                 {
                     string qualified = type.Identifier + id;
                     if (ItemRegistry.Create(qualified, allowNull: true) is not Item item) continue;
-                    var obj = item as StardewValley.Object;
-                    candidates.Add(new CartCandidate(qualified, type.Identifier, item.salePrice(ignoreProfitMargins: true),
-                        obj?.Type, item.Category, YearTwoItems.Classify(model, qualified)));
+                    candidates.Add(new CartCandidate(qualified, type.Identifier, CartSellsKind(item, kindCondition),
+                        YearTwoItems.Classify(model, qualified)));
                 }
             _pool = YearTwoCartPool.Select(candidates);
             _poolModel = model;
             PatchLog.Info($"Cart Year 2 pool ({_pool.Count}): {string.Join(", ", _pool)}");
             return _pool;
         }
+
+        /// <summary>Whether the cart's random-stock line would sell this kind of item, by the line's
+        /// own rules (RANDOM_ITEMS (O) @requirePrice @isRandomSale plus its PerItemCondition): an
+        /// object with a price, not ExcludeFromRandomSale, passing the condition. The numeric id range
+        /// is left out so mod items (string ids) can qualify.</summary>
+        private static bool CartSellsKind(Item item, string kindCondition)
+            => item is StardewValley.Object && item.TypeDefinitionId == ObjectTypeDefinitionId
+               && item.salePrice(ignoreProfitMargins: true) > 0
+               && ItemRegistry.GetData(item.QualifiedItemId)?.ExcludeFromRandomSale != true
+               && GameStateQuery.CheckConditions(kindCondition, targetItem: item, inputItem: item);
 
         /// <summary>Drops the cached pool (a save loaded or Data/Shops changed).</summary>
         public static void Invalidate() => _poolModel = null;

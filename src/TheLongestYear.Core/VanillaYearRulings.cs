@@ -5,8 +5,8 @@ namespace TheLongestYear.Core;
 
 public enum YearRuling { YearOne, YearTwo, NeverSell }
 
-/// <summary>Hand-checked year rulings for vanilla items the obtainability model cannot read: routes
-/// that live in game code rather than data (volcano and mine chests, Mr. Qi's and the volcano
+/// <summary>Hand-checked year rulings for vanilla items the obtainability model cannot read, or reads
+/// past their intent: routes that live in game code rather than data (volcano and mine chests, Mr. Qi's and the volcano
 /// dwarf's shops, event and quest rewards, tailoring), checked against the decompiled 1.6 source
 /// (2026-10-27). <see cref="YearRuling.NeverSell"/> marks items no shop should offer: currencies and
 /// placeholders. Mod items never appear here; they go by the model's rule alone.</summary>
@@ -15,6 +15,11 @@ public static class VanillaYearRulings
     private static readonly IReadOnlyDictionary<string, YearRuling> Rulings =
         new Dictionary<string, YearRuling>(StringComparer.Ordinal)
         {
+            // Year 2 by design: Pierre sells them only from year 2. The model finds edge routes in year 1
+            // (Winter Star Garlic through a Seed Maker, the cart's rarely armed Red Cabbage guarantee).
+            ["(O)476"] = YearRuling.YearTwo,   // Garlic Seeds
+            ["(O)485"] = YearRuling.YearTwo,   // Red Cabbage Seeds
+            ["(O)489"] = YearRuling.YearTwo,   // Artichoke Seeds
             // Year 2: volcano chests and dwarf shop, Qi's shop and dangerous floors, the island, the Forge.
             ["(B)854"] = YearRuling.YearTwo,   // Mermaid Boots
             ["(B)855"] = YearRuling.YearTwo,   // Dragonscale Boots
@@ -50,6 +55,8 @@ public static class VanillaYearRulings
             ["(W)63"] = YearRuling.YearTwo,   // Infinity Gavel
             ["(W)64"] = YearRuling.YearTwo,   // Infinity Dagger
             // Year 1: mine drops and chests, events, tailoring, green rain, trains, the Forest pylon.
+            ["(O)399"] = YearRuling.YearOne,   // Spring Onion: Forest forage spawned in code
+            ["(O)445"] = YearRuling.YearOne,   // Caviar: Sturgeon Roe in a Preserves Jar
             ["(B)804"] = YearRuling.YearOne,   // Emily's Magic Boots
             ["(B)806"] = YearRuling.YearOne,   // Leprechaun Shoes
             ["(B)878"] = YearRuling.YearOne,   // Crystal Shoes

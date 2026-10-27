@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using TheLongestYear.Core.Obtainability;
 
 namespace TheLongestYear.Core;
@@ -22,8 +23,11 @@ public enum YearTwoReason
 
 /// <summary>TLY's year 1 / year 2 line for every item, base game and mods alike (Jeff, 2026-10-27):
 /// an item is year 1 when a loop can get it before the Community Center is complete, and year 2
-/// when it must wait for that. Read from the <see cref="ObtainabilityModel"/>, which is built from
-/// the installed game data at save load, so a mod's items are sorted by the same rule.
+/// when it must wait for that. Read from an <see cref="ObtainabilityModel"/> built from the installed
+/// game data at save load, so a mod's items are sorted by the same rule. That model must be built
+/// from <see cref="WithoutCartRandomStock"/>: the Traveling Cart's random draw can roll almost any
+/// object, so counting it as a route would make nearly every object year 1 (Garlic Seeds, and the
+/// Garlic a Seed Maker turns back into seeds), and the cart is what this sort feeds.
 ///
 /// A content pack that adds a source only once the CC is done (a Content Patcher <c>When</c> on
 /// <c>IsCommunityCenterComplete</c> or a CC mail flag) has no source in the data during a loop, so
@@ -33,6 +37,18 @@ public enum YearTwoReason
 public static class YearTwoItems
 {
     private const int FirstDay = 1;
+    private const string CartShopId = "Traveler";
+
+    /// <summary>The inputs without the cart's item-query lines (its random objects and furniture).
+    /// The cart's fixed lines (Rare Seed, Coffee Bean...) stay: they are real year-1 routes.</summary>
+    public static ObtainabilityInputs WithoutCartRandomStock(ObtainabilityInputs inputs)
+    {
+        if (inputs == null) throw new ArgumentNullException(nameof(inputs));
+        return inputs with
+        {
+            Shops = inputs.Shops.Where(r => !(r.ShopId == CartShopId && ItemQueries.IsQuery(r.ItemId))).ToList(),
+        };
+    }
 
     /// <summary>The year-1 question: every route except year-2, island and owned-only ones. Unread
     /// conditions still count, so a doubtful route keeps an item in year 1.</summary>

@@ -260,7 +260,7 @@ namespace TheLongestYear
             TheLongestYear.Patches.FlavoredSlotPatch.FlavorsProvider =
                 () => (IReadOnlyDictionary<string, string>)_meta.State.WrittenBoardFlavors;
             CartSlotLimitPatch.RunProvider = () => _meta.Run;
-            TheLongestYear.Loop.CartYearTwoSlot.ModelProvider = () => _obtainability;
+            TheLongestYear.Loop.CartYearTwoSlot.ModelProvider = () => _yearSortModel;
             CartDaysPatch.RunProvider = () => _meta.Run;
             // The x2 badge on the bundle page reads this week's stored goal lists.
             FavouredSlotBadgePatch.Run = () => _meta.Run;

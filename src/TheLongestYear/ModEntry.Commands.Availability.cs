@@ -208,6 +208,8 @@ namespace TheLongestYear
                 _obtainability = build.Model;
                 _obtainabilityUnresolved = build.Unresolved;
                 _obtainabilityFailure = null;
+                _yearSortModel = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out bool sortReused).Model;
+                this.Monitor.Log($"Year sort model: {_yearSortModel.Count} items{(sortReused ? ", reused" : "")} ({timer.ElapsedMilliseconds} ms total).", LogLevel.Trace);
                 this.Monitor.Log(
                     $"Obtainability model: {build.Model.Count} items in {timer.ElapsedMilliseconds} ms (read {readMs} ms{(reused ? ", unchanged data, reused" : "")}), {build.Passes} pass(es), " +
                     $"{build.Unresolved.Count} unresolved source(s)" + (build.HitPassCap ? ", STOPPED AT THE PASS CAP" : "") + ".",
@@ -216,6 +218,7 @@ namespace TheLongestYear
             catch (TheLongestYear.Core.Obtainability.ObtainabilityReadException rex)
             {
                 _obtainability = null;
+                _yearSortModel = null;
                 _obtainabilityUnresolved = System.Array.Empty<string>();
                 _obtainabilityFailure = rex.Message;
                 this.Monitor.Log(rex.Message, LogLevel.Warn);
@@ -223,6 +226,7 @@ namespace TheLongestYear
             catch (Exception ex)
             {
                 _obtainability = null;
+                _yearSortModel = null;
                 _obtainabilityUnresolved = System.Array.Empty<string>();
                 _obtainabilityFailure = null;   // not a read failure; an older run's section list would be a lie
                 this.Monitor.Log($"Obtainability model: build failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);

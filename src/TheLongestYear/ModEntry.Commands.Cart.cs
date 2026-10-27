@@ -81,9 +81,9 @@ namespace TheLongestYear
         /// with its reason, for reviewing the line between year 1 and year 2. Read-only.</summary>
         private void CmdYearTwo(string command, string[] args)
         {
-            if (!Context.IsWorldReady || _obtainability == null)
+            if (!Context.IsWorldReady || _yearSortModel == null)
             {
-                this.Monitor.Log("Load a save first (the obtainability model is built at save load).", LogLevel.Warn);
+                this.Monitor.Log("Load a save first (the year sort model is built at save load).", LogLevel.Warn);
                 return;
             }
             var sb = new System.Text.StringBuilder();
@@ -93,7 +93,7 @@ namespace TheLongestYear
                 foreach (string id in type.GetAllIds())
                 {
                     string qualified = type.Identifier + id;
-                    rows.Add((type.Identifier, qualified, ItemRegistry.GetData(qualified)?.DisplayName ?? "?", YearTwoItems.Classify(_obtainability, qualified)));
+                    rows.Add((type.Identifier, qualified, ItemRegistry.GetData(qualified)?.DisplayName ?? "?", YearTwoItems.Classify(_yearSortModel, qualified)));
                 }
             sb.AppendLine("| Type | Items | " + string.Join(" | ", Enum.GetNames(typeof(YearTwoReason))) + " |");
             sb.AppendLine("|---|---|" + string.Concat(Enum.GetNames(typeof(YearTwoReason)).Select(_ => "---|")));
