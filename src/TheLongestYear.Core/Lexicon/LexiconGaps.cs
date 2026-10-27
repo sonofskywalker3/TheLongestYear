@@ -14,7 +14,8 @@ public static class LexiconGaps
 {
     private const string ObjectRowPrefix = "obj|";
     public const string Unattributed = "unattributed";
-    private static readonly System.Text.RegularExpressions.Regex QualifiedId = new(@"\([A-Za-z]+\)[^\s|,;]+");
+    // An id in free text ends at whitespace or punctuation: "barter for (F)2176: trade item ..." names (F)2176.
+    private static readonly System.Text.RegularExpressions.Regex QualifiedId = new(@"\([A-Za-z]+\)[^\s|,;:]+");
     private static readonly char[] PrefixEnd = { '.', '_' };
 
     /// <summary>A vanilla Data/Locations key is vanilla (even with an underscore); any other is owned by its prefix.</summary>

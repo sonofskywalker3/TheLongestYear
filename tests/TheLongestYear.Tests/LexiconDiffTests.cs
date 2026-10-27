@@ -101,4 +101,24 @@ public sealed class LexiconDiffTests
         Assert.Contains("## unattributed (1)", report);
         Assert.DoesNotContain("## BathHouse", report);
     }
+
+    [Fact]
+    public void GapsIgnoresPunctuationAfterAnIdInUnresolvedText()
+    {
+        // A barter line ends the bought id with "barter for (F)2176:"; the colon is not part of the id.
+        var v = Variant() with
+        {
+            Unresolved = new[]
+            {
+                "trade (O)829 | shop IslandTrade barter for (F)2176: trade item (O)829 has no source",
+                "trade (O)Book_Mystery | shop BooksellerTrade barter for (O)MysteryBox: trade item (O)Book_Mystery has no source",
+                "trade (O)858 | shop Mod_Shop barter for (O)Foo_Gem: trade item (O)858 has no source",
+            },
+        };
+        string report = LexiconGaps.Report(v, new ObtainabilityInputs());
+        Assert.Contains("## vanilla (2)", report);
+        Assert.Contains("## Foo (1)", report);
+        Assert.DoesNotContain("## 2176", report);
+        Assert.DoesNotContain("## MysteryBox", report);
+    }
 }
