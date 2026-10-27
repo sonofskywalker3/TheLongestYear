@@ -5,6 +5,8 @@
 //                                   item type a bundle can ask for or give as a reward.
 //   VanillaBundleBoard.Generated.cs the unmodded Data/Bundles (the standard board), used when a
 //                                   bundle mod's template leaves a board position with nothing.
+//   VanillaLocationKeys.Generated.cs every Data/Locations key the unmodded game defines, so the
+//                                   shipped path lexicon can be checked to cover every vanilla map.
 //
 // Reads the game's own Content folder through a bare MonoGame ContentManager: no SMAPI runs, so
 // no mod's asset edit can reach what this reads. Re-run after every game update:
@@ -21,6 +23,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using StardewValley.GameData;
 using StardewValley.GameData.BigCraftables;
+using StardewValley.GameData.Locations;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Pants;
 using StardewValley.GameData.Shirts;
@@ -101,7 +104,28 @@ sb.AppendLine("    };");
 sb.AppendLine("}");
 Write(Path.Combine(outDir, "VanillaBundleBoard.Generated.cs"), sb);
 
-Console.WriteLine($"Stardew Valley {version}: {ids.Count} item ids ({string.Join(", ", counts)}); {board.Count} bundles.");
+var locations = content.Load<Dictionary<string, LocationData>>("Data/Locations").Keys
+    .OrderBy(k => k, StringComparer.Ordinal).ToList();
+sb.Clear();
+AppendHeader(sb, version, "every Data/Locations key the unmodded game defines.");
+sb.AppendLine($"// {locations.Count} keys.");
+sb.AppendLine("using System;");
+sb.AppendLine("using System.Collections.Generic;");
+sb.AppendLine();
+sb.AppendLine("namespace TheLongestYear.Core;");
+sb.AppendLine();
+sb.AppendLine("/// <summary>Every Data/Locations key the unmodded game defines, ordinal.</summary>");
+sb.AppendLine("public static class VanillaLocationKeys");
+sb.AppendLine("{");
+sb.AppendLine("    public static readonly IReadOnlySet<string> All = new HashSet<string>(StringComparer.Ordinal)");
+sb.AppendLine("    {");
+foreach (string key in locations)
+    sb.AppendLine($"        {Literal(key)},");
+sb.AppendLine("    };");
+sb.AppendLine("}");
+Write(Path.Combine(outDir, "VanillaLocationKeys.Generated.cs"), sb);
+
+Console.WriteLine($"Stardew Valley {version}: {ids.Count} item ids ({string.Join(", ", counts)}); {board.Count} bundles; {locations.Count} locations.");
 
 static void AppendHeader(StringBuilder sb, string version, string what)
 {
