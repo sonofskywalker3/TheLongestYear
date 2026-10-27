@@ -19,6 +19,17 @@ public sealed class DayTable : IEquatable<DayTable>
 
     private DayTable(byte[] lands) => _lands = lands;
 
+    /// <summary>Rebuilds a table from its 112 landing bytes (0 = never); for the lexicon file reader.</summary>
+    internal static DayTable FromLandings(byte[] lands)
+    {
+        if (lands == null) throw new ArgumentNullException(nameof(lands));
+        if (lands.Length != Days) throw new ArgumentException($"A day table has {Days} landings, not {lands.Length}.", nameof(lands));
+        return new DayTable((byte[])lands.Clone());
+    }
+
+    /// <summary>A copy of the 112 landing bytes (0 = never); for the lexicon file writer.</summary>
+    internal byte[] ToLandings() => (byte[])_lands.Clone();
+
     public static readonly DayTable None = new(new byte[Days]);
     public static readonly DayTable Always = Available(_ => true);
 
