@@ -46,7 +46,7 @@ Read the SMAPI log:
   year sort … ms.` (needs SMAPI's trace level.) The build and year sort figures are near zero when the
   answers were served.
 
-On the Task 10 test machine: 42 ms Shipped against 6,584 ms on 1.0.27; 643 ms Computed with
+On the development machine: 42 ms Shipped against 6,584 ms on 1.0.27; 643 ms Computed with
 Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms from the cache.
 
 ## Adding a supported mod
@@ -126,7 +126,7 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 
 - A layer cannot express a mod REMOVING a vanilla row. A mod set that does so computes live: correct,
   just not shipped.
-- `Unresolved`, map, shop and availability entries in a delta are add-only for that layer.
+- A delta cannot remove an `Unresolved`, map, shop or availability entry; a later delta can only add one or overwrite an existing key.
 - Owner names in `gaps` and in the INFO line are a prefix heuristic, not a record of which mod
   changed a row.
 - `vanilla.json` costs about 250 ms to read on a session's first load.

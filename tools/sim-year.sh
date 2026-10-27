@@ -15,7 +15,7 @@
 # unknown items; the full detail is in SMAPI-latest.txt.
 set -u
 MODE="${1:-goals}"; LABEL="${2:-sim}"; SEED="${3:-}"
-REPO="C:/Users/Jeff/Documents/Projects/Stardee Valoo/TheLongestYear"
+REPO="C:/Users/Jeff/Documents/Personal/Stardee Valoo/TheLongestYear"
 LOG="$APPDATA/StardewValley/ErrorLogs/SMAPI-latest.txt"
 DUMP="$REPO/docs/board-availability.md"
 drv() { pwsh -NoProfile -File "$REPO/tools/bridge.ps1" "$@"; }
