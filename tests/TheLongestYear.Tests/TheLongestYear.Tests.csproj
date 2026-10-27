@@ -27,6 +27,8 @@
 
   <ItemGroup>
     <None Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shipped path lexicon, read from the mod's own assets (one copy in the repo). -->
+    <None Include="..\..\src\TheLongestYear\assets\lexicon\**" Link="Fixtures\lexicon\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -77,7 +77,7 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_dumpeffort", "Write a Markdown review of the derived item effort model: every pool item by theme with its effort, tier (quartile within the theme's pool), source and game-data basis. Usage: tly_dumpeffort [fileName]", this.CmdDumpEffort);
             yield return new DebugCommand("tly_obtain", "Item obtainability model (phase 2, not used by gameplay). Usage: tly_obtain <itemId> [startDay 1-112] | tly_obtain compare [fileName]", this.CmdObtain);
             yield return new DebugCommand(TheLongestYear.DebugCommands.LexiconCommand.Name, TheLongestYear.DebugCommands.LexiconCommand.Description,
-                (c, a) => TheLongestYear.DebugCommands.LexiconCommand.Run(this.Monitor, _lastObtainabilityInputs, this.Helper.DirectoryPath, a));
+                (c, a) => TheLongestYear.DebugCommands.LexiconCommand.Run(this.Monitor, _lastObtainabilityInputs, this.Helper.DirectoryPath, a, this.LexiconSaveContextNow));
             yield return new DebugCommand("tly_difficulty", "Read-only: print the configured difficulty steps, the steps this loop is actually running under, and every resolved value. Attach this to any balance report.", this.CmdDifficulty);
             yield return new DebugCommand("tly_catalog", "Print the bundle-derived CC catalog summary.", this.CmdCatalog);
             yield return new DebugCommand("tly_classify", "Re-run bundle classification over the live BundleData and log the summary (diagnostics only — does not touch the active run). Pairs with 'debug ShuffleBundles' to exercise remixed classification in memory.", this.CmdClassify);

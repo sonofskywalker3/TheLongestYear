@@ -239,6 +239,18 @@ namespace TheLongestYear
             }
         }
 
+        /// <summary>The loaded save's facts <c>tly_lexicon write vanilla</c> composes in, or null with no save.
+        /// The maps are every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>
+        private TheLongestYear.DebugCommands.LexiconSaveContext LexiconSaveContextNow()
+        {
+            if (!Context.IsWorldReady || _meta?.State == null) return null;
+            var maps = Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations").Keys.ToList();
+            return new TheLongestYear.DebugCommands.LexiconSaveContext(
+                _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
+                _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
+                Game1.version, this.ModManifest.Version.ToString());
+        }
+
         /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>
         private void CmdObtain(string command, string[] args)
         {

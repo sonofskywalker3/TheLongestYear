@@ -23,6 +23,18 @@ internal static class ObtainabilityGolden
         return Convert.ToHexString(SHA256.HashData(bytes));
     }
 
+    /// <summary>The same fingerprint over a snapshot's id-to-sources map (an answer file's <c>Obtain</c>).</summary>
+    public static string Hash(IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> sources)
+    {
+        var lines = new List<string>();
+        foreach (var (id, list) in sources)
+            foreach (ObtainSource s in list)
+                lines.Add(Line(id, s));
+        lines.Sort(StringComparer.Ordinal);
+        byte[] bytes = Encoding.UTF8.GetBytes(string.Join("\n", lines));
+        return Convert.ToHexString(SHA256.HashData(bytes));
+    }
+
     private static string Line(string id, ObtainSource s)
         => $"{id}|{s.Kind}|{s.Reliability}|{s.Detail}|{Days(s.Lands)}|{Days(s.Undelayed)}|{Conditions(s.Conditions)}";
 
