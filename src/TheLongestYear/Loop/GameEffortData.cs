@@ -308,20 +308,24 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>Every full-grown wild tree standing in the live world (Tree.treeStage or more),
-        /// by type and map: the places WildTreeAvailability dates seeds, wood and chop drops by.</summary>
+        /// by type and map: the places WildTreeAvailability dates seeds, wood and chop drops by. Maps
+        /// in Game1.locations order, and within a map the tree types in ordinal order: the terrain
+        /// feature dictionary enumerates in a different order from one load of a save to the next,
+        /// and the list is part of the path lexicon's availability inputs hash.</summary>
         private static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
         {
-            var seen = new HashSet<(string, string)>();
             foreach (GameLocation location in Game1.locations)
             {
                 if (location?.Name == null) continue;
+                var types = new SortedSet<string>(StringComparer.Ordinal);
                 foreach (StardewValley.TerrainFeatures.TerrainFeature feature in location.terrainFeatures.Values)
                 {
                     if (feature is not StardewValley.TerrainFeatures.Tree tree) continue;
                     if (tree.growthStage.Value < StardewValley.TerrainFeatures.Tree.treeStage || tree.stump.Value) continue;
-                    if (seen.Add((tree.treeType.Value, location.Name)))
-                        yield return new RawWildTreeSpot(tree.treeType.Value, location.Name);
+                    if (tree.treeType.Value != null) types.Add(tree.treeType.Value);
                 }
+                foreach (string type in types)
+                    yield return new RawWildTreeSpot(type, location.Name);
             }
         }
 

@@ -76,7 +76,7 @@ public sealed class LexiconResolver
         {
             cached = _readCache(key);
         }
-        catch (Exception e) when (e is JsonException or IOException or FormatException)
+        catch (Exception e) when (LexiconDiskCache.IsReadFailure(e))
         {
             cached = null;   // an unreadable entry is a miss; the reader logs it
         }

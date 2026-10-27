@@ -33,6 +33,10 @@ public sealed record AnswerVariant(
     /// equal the cold build's.</summary>
     public ObtainabilityModel ObtainModel() => ModelOf(Obtain);
 
+    /// <summary>How many ids have at least one route: <see cref="ObtainModel"/>'s count, without building it.</summary>
+    public int RoutedCount() => Obtain.Where(p => p.Value.Count > 0)
+        .Select(p => BundleParsing.NormalizeItemId(p.Key)).Distinct(StringComparer.Ordinal).Count();
+
     /// <summary>The year-sort model these answers stand for (see <see cref="ObtainModel"/>).</summary>
     public ObtainabilityModel YearSortModel() => ModelOf(YearSort);
 

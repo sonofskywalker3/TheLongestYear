@@ -106,6 +106,8 @@ namespace TheLongestYear
             stageTimer.Restart();
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             long availabilityMs = stageTimer.ElapsedMilliseconds;
+            // A computed lexicon entry is written once, now that this load's availability answers are on it.
+            _lexicon?.FlushPending();
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
             this.Monitor.Log(

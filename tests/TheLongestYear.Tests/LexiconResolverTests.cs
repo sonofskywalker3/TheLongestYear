@@ -144,6 +144,19 @@ public sealed class LexiconResolverTests
         Assert.Single(h.Written);
     }
 
+    [Theory]
+    [InlineData(typeof(UnauthorizedAccessException))]
+    [InlineData(typeof(System.Security.SecurityException))]
+    [InlineData(typeof(NotSupportedException))]
+    public void DeniedCacheReadFallsBackToBuild(Type exception)
+    {
+        ObtainabilityInputs live = WithShopChanged(Inputs.Value);
+        var h = new Harness { Read = _ => throw (Exception)Activator.CreateInstance(exception)! };
+        Resolved r = h.Resolver(null).Resolve(live, false, Game, Mod, Vanilla);
+        Assert.Equal(AnswerOrigin.Computed, r.Origin);
+        Assert.Equal(1, h.Builds);
+    }
+
     [Fact]
     public void KeyChangesWhenShopRowChanges()
     {
@@ -194,6 +207,7 @@ public sealed class LexiconResolverTests
             new Dictionary<string, AnswerVariant> { [AnswerSet.BaseVariant] = variant });
         AnswerVariant read = LexiconJson.Read(LexiconJson.Write(set)).Resolve(AnswerSet.BaseVariant)!;
 
+        Assert.Equal(model.Model.Count, read.RoutedCount());   // the lexicon INFO line's item count
         AssertSameModel(model.Model, read.ObtainModel());
         AssertSameModel(yearSort.Model, read.YearSortModel());
         Assert.Equal(model.Unresolved, read.Unresolved);

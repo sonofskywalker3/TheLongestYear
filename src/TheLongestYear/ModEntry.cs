@@ -764,6 +764,7 @@ namespace TheLongestYear
             var timer = System.Diagnostics.Stopwatch.StartNew();
             string inputs = AvailabilityInputsHash();
             long hashMs = timer.ElapsedMilliseconds;
+            string storedInputs = _lexicon?.StoredInputs(key) ?? "none";
             TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
             if (stored != null)
                 _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
@@ -775,7 +776,7 @@ namespace TheLongestYear
                 if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });
             }
             this.Monitor.Log(
-                $"Availability model {key}: {(stored != null ? "served from the lexicon" : "built")} in {timer.ElapsedMilliseconds} ms (inputs hash {hashMs} ms).",
+                $"Availability model {key}: {(stored != null ? "served from the lexicon" : "built")} in {timer.ElapsedMilliseconds} ms (inputs {inputs}, hashed in {hashMs} ms; stored {storedInputs}).",
                 LogLevel.Trace);
             if (_runController != null) _runController.Availability = _availability;
             if (_boardBuilder != null) _boardBuilder.Availability = _availability;
