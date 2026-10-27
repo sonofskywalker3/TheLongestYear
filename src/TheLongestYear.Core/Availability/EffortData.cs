@@ -67,6 +67,9 @@ public sealed record RawTapItem(string TreeId, string ItemId, int Days);
 public sealed record RawCropGrowth(string HarvestItemId, int GrowthDays, bool Regrows, bool Trellis, IReadOnlyList<Season> Seasons,
     string? SeedItemId = null)
 {
+    /// <summary>Also the constructor JSON reads through (a record with two constructors needs one
+    /// named); the seasons and seed id are then set from their own properties.</summary>
+    [System.Text.Json.Serialization.JsonConstructor]
     public RawCropGrowth(string harvestItemId, int growthDays, bool regrows, bool trellis)
         : this(harvestItemId, growthDays, regrows, trellis, System.Array.Empty<Season>()) { }
 }

@@ -111,4 +111,39 @@ public class RowHashesTests
         foreach (string prefix in prefixes)
             Assert.True(keys.Any(k => k.StartsWith(prefix, System.StringComparison.Ordinal)), "no rows for " + prefix);
     }
+
+    /// <summary>Every public property of <see cref="ObtainabilityInputs"/>, mapped by hand to the key
+    /// prefix <see cref="RowHashes.Of"/> gives its rows. A property added to the inputs without rows
+    /// here (and in <see cref="RowHashes.Of"/>) would let its data change without changing the rows,
+    /// so the shipped answers would be served for data they were not built from.</summary>
+    private static readonly IReadOnlyDictionary<string, string> PrefixByProperty = new Dictionary<string, string>
+    {
+        ["Objects"] = "obj|", ["Festivals"] = "fest|", ["Forage"] = "forage|", ["LocationFish"] = "fish|",
+        ["FishRows"] = "fishrow|", ["ArtifactSpots"] = "spot|", ["Garbage"] = "garbage|", ["Shops"] = "shop|",
+        ["MonsterDrops"] = "drop|", ["Crops"] = "crop|", ["FruitTrees"] = "tree|", ["Machines"] = "machine|",
+        ["Recipes"] = "recipe|", ["Animals"] = "animal|", ["Ponds"] = "pond|", ["TapItems"] = "tap|",
+        ["GeodeDrops"] = "geode|", ["GeodesUsingDefaultTable"] = "geodedefault|", ["SlayerQuests"] = "slayer|",
+        ["Buildings"] = "building|", ["CookingChannel"] = "tv|",
+    };
+
+    [Fact]
+    public void EveryInputsPropertyHasRows()
+    {
+        var properties = typeof(ObtainabilityInputs)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Select(p => p.Name).OrderBy(n => n, System.StringComparer.Ordinal).ToList();
+        Assert.Equal(PrefixByProperty.Keys.OrderBy(n => n, System.StringComparer.Ordinal), properties);
+
+        var keys = RowHashes.Of(VanillaInputsFixture.Load(), false).Keys.ToList();
+        foreach (var (property, prefix) in PrefixByProperty)
+            Assert.True(keys.Any(k => k.StartsWith(prefix, System.StringComparison.Ordinal)), $"{property}: no rows under {prefix}");
+    }
+
+    [Fact]
+    public void CodeStampChangesKey()
+    {
+        var rows = RowHashes.Of(VanillaInputsFixture.Load(), false);
+        Assert.NotEqual(RowHashes.Key(rows, Layers, "g", "m", "a"), RowHashes.Key(rows, Layers, "g", "m", "b"));
+        Assert.NotEqual(RowHashes.Key(rows, Layers, "g", "m"), RowHashes.Key(rows, Layers, "g", "m", "a"));
+    }
 }

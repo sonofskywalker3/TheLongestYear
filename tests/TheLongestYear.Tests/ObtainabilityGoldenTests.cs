@@ -4,10 +4,10 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>Pins today's vanilla answers: any change to how the model is built that moves a single
-/// landing day, tag or source shows up here.</summary>
+/// landing day, tag, setup step, input group or source shows up here.</summary>
 public class ObtainabilityGoldenTests
 {
-    internal const string VanillaHash = "9EA0517DDC71AC23BC04686023A167C291021D777238ECEE17FCC3D8AF45C793";
+    internal const string VanillaHash = "FAFE977669F521FDC4F03871D587F6B18A746D1F33A8DBD8326298448E653817";
     private const int VanillaPasses = 7;
     private const int VanillaUnresolved = 45;
 

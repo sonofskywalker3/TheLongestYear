@@ -18,12 +18,14 @@ namespace TheLongestYear.DebugCommands
         bool PierreYear2Owned, LocationWeeks Maps, ShopWeeks Shops, IReadOnlyCollection<string> AllMaps,
         string GameVersion, string ModVersion,
         Func<IReadOnlyDictionary<string, AvailabilityAnswers>> Availability,
+        Func<AvailabilityInputs> AvailabilityInputs,
         TheLongestYear.Loop.LoadedLayers Layers, AnswerSet Vanilla, TheLongestYear.Loop.LexiconService Service);
 
     /// <summary><c>tly_lexicon &lt;sub-command&gt;</c>: tooling for the shipped path lexicon.
-    /// <c>dumpinputs [fileName]</c> writes the obtainability inputs the last save load read from the
-    /// live game data as JSON in the mod folder; run on an unmodded game, that file is the Core
-    /// tests' vanilla inputs fixture. <c>write vanilla</c> cold-builds the answers from the same
+    /// <c>dumpinputs [fileName] [availabilityFileName]</c> writes the obtainability inputs the last save
+    /// load read from the live game data as JSON in the mod folder, and the availability inputs
+    /// (<see cref="AvailabilityInputs"/>, the projection the availability answers' stamp hashes) beside
+    /// them; run on an unmodded game, the two files are the Core tests' vanilla inputs fixtures. <c>write vanilla</c> cold-builds the answers from the same
     /// inputs and writes (or merges) the save's variant into the shipped file
     /// <see cref="ShippedLexicon.VanillaRelativePath"/>: <c>pierre_year2_seeds</c> when the save owns
     /// that upgrade, else <c>base</c>. Run it on an unmodded game only.
@@ -39,7 +41,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_lexicon";
         public const string Description =
-            "Path lexicon tooling. Usage: tly_lexicon status (origin, layers, cache files) | tly_lexicon diff [file] (cold build vs the current answers; writes lexicon-diff.md) | tly_lexicon gaps [file] (items with no route, unreached maps, unresolved sources; writes lexicon-gaps.md) | tly_lexicon dumpinputs [fileName] (writes the obtainability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed)";
+            "Path lexicon tooling. Usage: tly_lexicon status (origin, layers, cache files) | tly_lexicon diff [file] (cold build vs the current answers; writes lexicon-diff.md) | tly_lexicon gaps [file] (items with no route, unreached maps, unresolved sources; writes lexicon-gaps.md) | tly_lexicon dumpinputs [fileName] [availabilityFileName] (writes the obtainability and availability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed)";
 
         private const int KeyPrefixLength = 8;
         private const string StatusVerb = "status";
@@ -51,7 +53,8 @@ namespace TheLongestYear.DebugCommands
         private const string WriteVerb = "write";
         private const string VanillaTarget = "vanilla";
         private const string DefaultInputsFileName = "obtainability-inputs.json";
-        private const string Usage = "Usage: tly_lexicon status | tly_lexicon diff [file] | tly_lexicon gaps [file] | tly_lexicon dumpinputs [fileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>]";
+        private const string DefaultAvailabilityInputsFileName = "availability-inputs.json";
+        private const string Usage = "Usage: tly_lexicon status | tly_lexicon diff [file] | tly_lexicon gaps [file] | tly_lexicon dumpinputs [fileName] [availabilityFileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>]";
         private static readonly string[] VanillaLayers = { RowHashes.Vanilla };
 
         public static void Run(
@@ -90,6 +93,20 @@ namespace TheLongestYear.DebugCommands
             File.WriteAllText(path, json);
             monitor.Log(
                 $"tly_lexicon dumpinputs: wrote {path} ({json.Length:N0} chars; {inputs.Objects.Count} objects, {inputs.Shops.Count} shop rows).",
+                LogLevel.Info);
+
+            AvailabilityInputs availability = saveContext()?.AvailabilityInputs();
+            if (availability == null)
+            {
+                monitor.Log("tly_lexicon dumpinputs: no availability inputs yet (the engine pools are not read); wrote the obtainability inputs only.", LogLevel.Warn);
+                return;
+            }
+            string availabilityFile = args.Length > 2 && !string.IsNullOrWhiteSpace(args[2]) ? args[2] : DefaultAvailabilityInputsFileName;
+            string availabilityPath = Path.Combine(modDirectory, availabilityFile);
+            string availabilityJson = JsonSerializer.Serialize(availability, LexiconJson.Options);
+            File.WriteAllText(availabilityPath, availabilityJson);
+            monitor.Log(
+                $"tly_lexicon dumpinputs: wrote {availabilityPath} ({availabilityJson.Length:N0} chars; inputs {availability.Hash()}, year-two crops capped {availability.YearTwoCapped}).",
                 LogLevel.Info);
         }
 
@@ -220,6 +237,11 @@ namespace TheLongestYear.DebugCommands
                 return;
             }
 
+            IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(inputs, context.PierreYear2Owned);
+            foreach (var owner in rows.Keys.GroupBy(RowHashes.Owner, StringComparer.Ordinal)
+                         .Where(g => g.Key != RowHashes.Vanilla).OrderBy(g => g.Key, StringComparer.Ordinal))
+                monitor.Log($"tly_lexicon write vanilla: writing vanilla.json from a game with other content: {owner.Count()} rows owned by {owner.Key}.", LogLevel.Warn);
+
             var timer = Stopwatch.StartNew();
             ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs);
             ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs));
@@ -230,8 +252,8 @@ namespace TheLongestYear.DebugCommands
             string path = ShippedLexicon.VanillaPath(modDirectory);
             AnswerSet existing = ShippedLexicon.LoadVanilla(modDirectory);
             AnswerSet merged = AnswerSetMerge.With(
-                existing, name, variant, RowHashes.Of(inputs, context.PierreYear2Owned),
-                context.GameVersion, context.ModVersion, VanillaLayers);
+                existing, name, variant, rows, context.GameVersion, context.ModVersion, VanillaLayers,
+                m => monitor.Log($"tly_lexicon write vanilla: {m}", LogLevel.Warn));
             string json = LexiconJson.Write(merged);
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             File.WriteAllText(path, json);

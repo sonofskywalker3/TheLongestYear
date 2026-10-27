@@ -55,10 +55,10 @@ public sealed class LexiconDiskCacheTests : IDisposable
         AnswerSet? shipped = LexiconDiskCache.LoadShipped(() => throw new UnauthorizedAccessException("denied"), _warns.Add, _traces.Add);
         ObtainabilityInputs live = VanillaInputsFixture.Load();
         LexiconDiskCache cache = Cache();
-        string key = RowHashes.Key(RowHashes.Of(live, false), new[] { RowHashes.Vanilla }, "1.6.15", "1.1.0");
+        string key = RowHashes.Key(RowHashes.Of(live, false), new[] { RowHashes.Vanilla }, "1.6.15", "1.1.0", LexiconResolver.CodeStamp);
         cache.Write(key, Set("cached"));
         int builds = 0;
-        var resolver = new LexiconResolver(shipped, cache.Read, cache.Write, (_, _) => { builds++; return Set("built").Variants[AnswerSet.BaseVariant]; });
+        var resolver = new LexiconResolver(shipped, cache.Read, cache.Write, _ => { builds++; return Set("built").Variants[AnswerSet.BaseVariant]; });
         Resolved r = resolver.Resolve(live, false, "1.6.15", "1.1.0", new[] { RowHashes.Vanilla });
         Assert.Equal(AnswerOrigin.Cache, r.Origin);
         Assert.True(r.Variant.Obtain.ContainsKey("cached"));

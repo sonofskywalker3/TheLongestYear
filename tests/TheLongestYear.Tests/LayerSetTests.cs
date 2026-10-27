@@ -146,7 +146,7 @@ public sealed class LayerSetTests
 
         LayerSet set = LayerSet.Compose(VanillaSet(vanillaRows), activeInputs, activeAnswers, warnings.Add);
         var resolver = new LexiconResolver(set.Composed, _ => null, (_, _) => { },
-            (inp, _) =>
+            inp =>
             {
                 ObtainabilityBuild built = ObtainabilityBuilder.Build(inp, extraDirect: set.ExtraDirectSources);
                 return AnswerVariantFactory.From(built, built, inp, null, Array.Empty<string>(), null);
@@ -321,7 +321,7 @@ public sealed class LayerSetTests
         Assert.StartsWith(A + "#", one.KeyLayers[1]);
 
         ObtainabilityInputs live = Inputs.Value;
-        string KeyOf(LayerSet s) => new LexiconResolver(s.Composed, _ => null, (_, _) => { }, (_, _) => Variant())
+        string KeyOf(LayerSet s) => new LexiconResolver(s.Composed, _ => null, (_, _) => { }, _ => Variant())
             .Resolve(live, false, Game, Mod, s.Layers, s.KeyLayers).Key;
         Assert.NotEqual(KeyOf(one), KeyOf(two));
     }

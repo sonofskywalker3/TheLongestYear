@@ -798,9 +798,7 @@ namespace TheLongestYear
             if (_enginePools == null) return null;
             try
             {
-                return TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash(
-                    _enginePools, _effortData, _itemSeasonPins, null, AvailabilityWeekOverrides(),
-                    TheLongestYear.Core.YearTwoCrops.IsCapped(_meta.State.HasUpgrade));
+                return AvailabilityInputsNow().Hash();
             }
             catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException or ArgumentException)
             {
@@ -808,6 +806,16 @@ namespace TheLongestYear
                 return null;
             }
         }
+
+        /// <summary>The live availability inputs (<see cref="TheLongestYear.Core.Lexicon.AvailabilityInputs"/>:
+        /// what <see cref="AvailabilityInputsHash"/> hashes and <c>tly_lexicon dumpinputs</c> writes), or
+        /// null before the engine pools are read.</summary>
+        private TheLongestYear.Core.Lexicon.AvailabilityInputs AvailabilityInputsNow()
+            => _enginePools == null
+                ? null
+                : TheLongestYear.Core.Lexicon.AvailabilityInputs.From(
+                    _enginePools, _effortData, _itemSeasonPins, null, AvailabilityWeekOverrides(),
+                    TheLongestYear.Core.YearTwoCrops.IsCapped(_meta.State.HasUpgrade));
 
         /// <summary>The availability week overrides in force: the supported-mod layers' week rulings, with
         /// the config's <c>AvailabilityWeekOverrides</c> laid over them (the config wins per id). Used for

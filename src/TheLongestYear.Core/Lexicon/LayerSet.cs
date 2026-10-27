@@ -74,8 +74,8 @@ public sealed class LayerSet
 
     /// <summary>Every layer's <see cref="LayerInputs.ExtraSources"/>, concatenated per id in inputs
     /// order: the direct sources the builder adds (<see cref="ObtainabilityBuilder.Build"/>'s
-    /// <c>extraDirect</c>). The plan named this <c>Inject(live)</c>; the builder takes the sources
-    /// beside the inputs rather than inside them, so the inputs (and their row hashes) stay the game's.</summary>
+    /// <c>extraDirect</c>). They are passed beside the inputs, never written into them, so the inputs
+    /// (and their row hashes) stay the game's.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> ExtraDirectSources { get; }
 
     /// <summary>The layers' year ruling for a qualified id, or null when no layer rules it.</summary>

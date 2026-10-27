@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text.Json;
 using TheLongestYear.Core.Availability;
 
 namespace TheLongestYear.Core.Lexicon;
@@ -22,7 +19,6 @@ public sealed record AvailabilityAnswers(
     IReadOnlyDictionary<string, double[]> DishBases,
     IReadOnlyDictionary<string, int> YearTwoCropDishUnits)
 {
-    private const int HashChars = 16;
     private const string Kitchen = "kitchen";
     private const string NoKitchen = "no_kitchen";
 
@@ -34,29 +30,13 @@ public sealed record AvailabilityAnswers(
     public static string Key(DifficultyStep step, bool hasKitchen) => $"{step}|{(hasKitchen ? Kitchen : NoKitchen)}";
 
     /// <summary>A hash of every input <see cref="ItemAvailabilityBuilder"/> reads besides the step and
-    /// the kitchen (which are the key): the pool lists and tables it reads, the effort data whole, the
-    /// season, effort and week overrides (the dish table reads the overridden model), and whether the
-    /// year-two crops are capped (the one thing <c>hasUpgrade</c> decides there). Serialised under
-    /// <see cref="LexiconJson.Options"/> in data order; the trap fish set is sorted.</summary>
+    /// the kitchen (which are the key): <see cref="AvailabilityInputs.Hash"/> of
+    /// <see cref="AvailabilityInputs.From"/> (the pool lists and tables it reads, the effort data whole,
+    /// the season, effort and week overrides, since the dish table reads the overridden model, and
+    /// whether the year-two crops are capped, the one thing <c>hasUpgrade</c> decides there).</summary>
     public static string InputsHash(
         ItemPools pools, EffortData? effortData,
         IReadOnlyDictionary<string, Season>? seasonOverrides, IReadOnlyDictionary<string, int>? effortOverrides,
         IReadOnlyDictionary<string, int>? weekOverrides, bool yearTwoCapped)
-    {
-        if (pools == null) throw new ArgumentNullException(nameof(pools));
-        var inputs = new
-        {
-            pools.Fish, pools.CrabPot, pools.UnpooledFish, pools.Metals,
-            TrapFishIds = pools.TrapFishIds?.OrderBy(id => id, StringComparer.Ordinal).ToList(),
-            pools.FishRows,
-            LocationWeeks = pools.LocationWeeks?.Reached,
-            ShopWeeks = pools.ShopWeeks?.Weeks,
-            pools.Saplings, pools.Artifacts, pools.Books,
-            EffortData = effortData,
-            SeasonOverrides = seasonOverrides, EffortOverrides = effortOverrides, WeekOverrides = weekOverrides,
-            YearTwoCapped = yearTwoCapped,
-        };
-        byte[] digest = SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(inputs, LexiconJson.Options));
-        return Convert.ToHexString(digest)[..HashChars].ToLowerInvariant();
-    }
+        => AvailabilityInputs.From(pools, effortData, seasonOverrides, effortOverrides, weekOverrides, yearTwoCapped).Hash();
 }

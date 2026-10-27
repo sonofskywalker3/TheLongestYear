@@ -254,7 +254,7 @@ namespace TheLongestYear
         /// reuses them) with the supported-mod layers' extra direct sources, snapshotted with this save's
         /// map and shop weeks.</summary>
         private TheLongestYear.Core.Lexicon.AnswerVariant BuildLexiconVariant(
-            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs, TheLongestYear.Core.Lexicon.AnswerSet shipped,
+            TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs,
             IReadOnlyDictionary<string, IReadOnlyList<TheLongestYear.Core.Obtainability.ObtainSource>> extraDirect)
         {
             var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect);
@@ -280,7 +280,7 @@ namespace TheLongestYear
             return new TheLongestYear.DebugCommands.LexiconSaveContext(
                 _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
                 _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
-                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers, _lexicon?.Loaded, _lexicon?.Vanilla, _lexicon);
+                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers, AvailabilityInputsNow, _lexicon?.Loaded, _lexicon?.Vanilla, _lexicon);
         }
 
         /// <summary>The "origin: ...; layers: ..." line the model dumps start with.</summary>

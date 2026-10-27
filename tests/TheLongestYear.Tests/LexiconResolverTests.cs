@@ -47,7 +47,7 @@ public sealed class LexiconResolverTests
         public Func<string, AnswerSet?> Read = _ => null;
 
         public LexiconResolver Resolver(AnswerSet? shipped)
-            => new(shipped, key => Read(key), (key, set) => Written[key] = set, (_, _) => { Builds++; return Marker("built"); });
+            => new(shipped, key => Read(key), (key, set) => Written[key] = set, _ => { Builds++; return Marker("built"); });
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public sealed class LexiconResolverTests
     {
         ObtainabilityInputs live = WithShopChanged(Inputs.Value);
         IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, false);
-        string key = RowHashes.Key(rows, Vanilla, Game, Mod);
+        string key = RowHashes.Key(rows, Vanilla, Game, Mod, LexiconResolver.CodeStamp);
         var h = new Harness();
         h.Read = k => k == key ? SetOf(rows, "cached") : null;
         Resolved r = h.Resolver(SetOf(RowHashes.Of(Inputs.Value, false), "shipped")).Resolve(live, false, Game, Mod, Vanilla);
@@ -117,7 +117,7 @@ public sealed class LexiconResolverTests
     {
         ObtainabilityInputs live = WithShopChanged(Inputs.Value);
         IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, false);
-        string key = RowHashes.Key(rows, Vanilla, Game, Mod);
+        string key = RowHashes.Key(rows, Vanilla, Game, Mod, LexiconResolver.CodeStamp);
         var h = new Harness();
         Resolved r = h.Resolver(SetOf(RowHashes.Of(Inputs.Value, false), "shipped")).Resolve(live, false, Game, Mod, Vanilla);
         Assert.Equal(AnswerOrigin.Computed, r.Origin);
@@ -229,6 +229,25 @@ public sealed class LexiconResolverTests
         AssertSameModel(yearSort.Model, read.YearSortModel());
         Assert.Equal(model.Unresolved, read.Unresolved);
         Assert.Equal(model.Passes, read.Passes);
+    }
+
+    [Fact]
+    public void CodeStampIsInTheCacheKeyOnly()
+    {
+        Assert.Equal(typeof(LexiconResolver).Assembly.ManifestModule.ModuleVersionId.ToString("N"), LexiconResolver.CodeStamp);
+        ObtainabilityInputs live = Inputs.Value;
+        ObtainabilityInputs changed = WithShopChanged(live);
+        AnswerSet shipped = SetOf(RowHashes.Of(live, false), "shipped");
+        LexiconResolver With(string stamp) => new(shipped, _ => null, (_, _) => { }, _ => Marker("built"), stamp);
+
+        // A computed (cache-keyed) answer: another code stamp is another cache entry.
+        string keyA = With("a").Resolve(changed, false, Game, Mod, Vanilla).Key;
+        Assert.NotEqual(keyA, With("b").Resolve(changed, false, Game, Mod, Vanilla).Key);
+        Assert.Equal(RowHashes.Key(RowHashes.Of(changed, false), Vanilla, Game, Mod, "a"), keyA);
+
+        // The shipped answers are served whatever the stamp.
+        foreach (string stamp in new[] { "a", "b", LexiconResolver.CodeStamp })
+            Assert.Equal(AnswerOrigin.Shipped, With(stamp).Resolve(live, false, Game, Mod, Vanilla).Origin);
     }
 
     private static void AssertSameModel(ObtainabilityModel expected, ObtainabilityModel actual)

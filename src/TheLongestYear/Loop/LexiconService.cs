@@ -41,7 +41,7 @@ namespace TheLongestYear.Loop
         /// layers' extra direct sources to add.</param>
         public LexiconService(
             IMonitor monitor, string modFolder, IModRegistry registry,
-            Func<ObtainabilityInputs, AnswerSet, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, AnswerVariant> build)
+            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, AnswerVariant> build)
         {
             if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
@@ -58,7 +58,7 @@ namespace TheLongestYear.Loop
                     (layers.UnmappedPairs.Count > 0 ? $"; pairs not mapped yet ({string.Join(", ", layers.UnmappedPairs)}), so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
-                (live, shipped) => build(live, shipped, layers.ExtraDirectSources));
+                live => build(live, layers.ExtraDirectSources));
         }
 
         /// <summary>The shipped vanilla answers, or null when the file is absent or unreadable.</summary>

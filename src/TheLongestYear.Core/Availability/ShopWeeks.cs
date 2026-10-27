@@ -33,6 +33,11 @@ public sealed class ShopWeeks
 
     private ShopWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks) => _weeks = weeks;
 
+    /// <summary>The shop weeks as recorded (<see cref="Weeks"/>), for an offline rebuild of the
+    /// availability inputs (<see cref="Lexicon.AvailabilityInputs"/>).</summary>
+    internal static ShopWeeks FromWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks)
+        => new(new Dictionary<string, PlaceWeek>(weeks ?? throw new ArgumentNullException(nameof(weeks)), StringComparer.Ordinal));
+
     /// <summary>Every item some walkable shop sells, with its earliest weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Weeks => _weeks;
 

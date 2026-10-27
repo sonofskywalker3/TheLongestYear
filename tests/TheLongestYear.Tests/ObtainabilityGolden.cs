@@ -8,8 +8,9 @@ using TheLongestYear.Core.Obtainability;
 namespace TheLongestYear.Tests;
 
 /// <summary>A fingerprint of every answer a model gives: SHA-256 over one line per source,
-/// <c>id|kind|reliability|detail|lands|undelayed|conditions</c>, ordinally sorted, so any change to a
-/// landing day, a source's tags or the set of sources changes the hash.</summary>
+/// <c>id|kind|reliability|detail|lands|undelayed|conditions|setup|inputs</c>, ordinally sorted, so any
+/// change to a landing day, a source's tags, its setup steps or input groups (which the fairness rule
+/// and the mine depth read) or the set of sources changes the hash.</summary>
 internal static class ObtainabilityGolden
 {
     public static string Hash(ObtainabilityModel model)
@@ -36,7 +37,9 @@ internal static class ObtainabilityGolden
     }
 
     private static string Line(string id, ObtainSource s)
-        => $"{id}|{s.Kind}|{s.Reliability}|{s.Detail}|{Days(s.Lands)}|{Days(s.Undelayed)}|{Conditions(s.Conditions)}";
+        => $"{id}|{s.Kind}|{s.Reliability}|{s.Detail}|{Days(s.Lands)}|{Days(s.Undelayed)}|{Conditions(s.Conditions)}"
+           + $"|setup={string.Join(",", s.Setup.Select(step => $"{step.Name}:{step.Days}"))}"
+           + $"|inputs={string.Join(";", s.Inputs.Select(group => string.Join("+", group)))}";
 
     /// <summary>The 112 landing days as hex bytes (00 = never).</summary>
     private static string Days(DayTable table)

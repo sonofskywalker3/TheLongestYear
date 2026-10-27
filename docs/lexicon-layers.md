@@ -114,8 +114,13 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    `tly_lexicon diff` must report 0 differences (it cold-builds and compares to what was served; on a
    computed load it is trivially empty, so check on a shipped one).
 6. **Keep it current.** After any change to a TLY rule that feeds the build, regenerate `vanilla.json`
-   (the test `BaseVariantMatchesFixtureColdBuild` fails until you do) and every layer's
-   `.answers.json`. After a mod update, review the layer's WARN, re-run `gaps`, adjust the inputs
+   (the tests in `VanillaLexiconCoverageTests` that rebuild it offline from the inputs fixtures fail
+   until you do: the obtainability and year-sort routes of both variants and every availability
+   answer) and every layer's `.answers.json`. After a change to what the game reads, dump the
+   fixtures again with `tly_lexicon dumpinputs <obtainability file> <availability file>` on an
+   unmodded game (`vanilla_obtainability_inputs.json` and `vanilla_availability_inputs.json` from a
+   fresh farm, `vanilla_obtainability_inputs_pierre.json` from one that owns Pierre's year 2 line)
+   and copy them to `tests/TheLongestYear.Tests/Fixtures/`. After a mod update, review the layer's WARN, re-run `gaps`, adjust the inputs
    file and its `CheckedVersion`, and write the answers again.
 7. **Interactions.** With both mods installed (and only those), run `tly_lexicon write <A>+<B>` (in
    either order; ids are sorted). An empty delta still counts as mapped: write it so the pair is
@@ -135,8 +140,8 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 
 ## Next: Cornucopia More Crops
 
-`docs/mod-support-unknowns.md` lists what TLY could not place with Cornucopia More Crops. Those are
-the likely `ExtraSources` entries:
+A local working note (not in this repository) lists what TLY could not place with Cornucopia More
+Crops. Those are the likely `ExtraSources` entries:
 
 - Custom Bush fruit: Juniper Berries, Raspberry, Olive, White Grape, Bay Leaves, Black Currants,
   Elderberries, Gooseberry, Shiitake, Chicken of the Woods, Vanilla (and Olive Oil and Sparkling Wine
@@ -148,5 +153,6 @@ the likely `ExtraSources` entries:
   the Nectarine, Pear and Persimmon saplings. These are correct by the data, so they may need
   `YearRulings` rather than a route.
 
-Stardew Valley Expanded comes after it. Its gaps run (`lexicon-gaps-sve.md`) lists 404 lines: 221
-vanilla rows, 110 under Custom, 53 under FlashShifter and 20 unattributed.
+Stardew Valley Expanded comes after it. The `tly_lexicon gaps` output on a game with SVE 1.15.11
+gave 404 gaps (205 items with no route, 154 unreached maps, 45 unresolved sources): 221 attributed
+to vanilla, 110 under Custom, 53 under FlashShifter and 20 unattributed.

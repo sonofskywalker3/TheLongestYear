@@ -133,13 +133,22 @@ public static class AnswerSetMerge
 {
     /// <summary>The set <paramref name="existing"/> (or a new one) with <paramref name="name"/> set to
     /// <paramref name="full"/>, built from input rows hashing to <paramref name="rowHashes"/>; the game
-    /// and mod versions and the layers are the new ones.</summary>
+    /// and mod versions and the layers are the new ones. When <paramref name="existing"/> was made for
+    /// another game or mod version, its other variants were built by other rules or from other data,
+    /// so they are dropped (each named to <paramref name="warn"/>) rather than relabelled as this
+    /// version's.</summary>
     public static AnswerSet With(
         AnswerSet? existing, string name, AnswerVariant full, IReadOnlyDictionary<string, ulong> rowHashes,
-        string gameVersion, string modVersion, IReadOnlyList<string> layers)
+        string gameVersion, string modVersion, IReadOnlyList<string> layers, Action<string>? warn = null)
     {
         var variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal);
         var hashes = new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal);
+        if (existing != null && (existing.GameVersion != gameVersion || existing.ModVersion != modVersion))
+        {
+            foreach (string other in existing.Variants.Keys.Where(k => k != name).OrderBy(k => k, StringComparer.Ordinal))
+                warn?.Invoke($"dropping variant '{other}': it was written for game {existing.GameVersion}, mod {existing.ModVersion}, not game {gameVersion}, mod {modVersion}; write it again on this version.");
+            existing = null;
+        }
         if (existing != null)
             foreach (string other in existing.Variants.Keys.Where(k => k != name))
             {

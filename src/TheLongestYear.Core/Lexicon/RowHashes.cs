@@ -70,12 +70,17 @@ public static class RowHashes
         return rows;
     }
 
-    public static string Key(IReadOnlyDictionary<string, ulong> rows, IReadOnlyList<string> layers, string gameVersion, string modVersion)
+    /// <summary>The disk cache key: the rows, the layers, the game and mod versions, and (when given)
+    /// the code stamp (<see cref="LexiconResolver.CodeStamp"/>).</summary>
+    public static string Key(
+        IReadOnlyDictionary<string, ulong> rows, IReadOnlyList<string> layers, string gameVersion, string modVersion,
+        string? codeStamp = null)
     {
         var lines = rows.Select(p => $"{p.Key}={p.Value:x16}").ToList();
         lines.Add("layers=" + string.Join(",", layers));
         lines.Add("game=" + gameVersion);
         lines.Add("mod=" + modVersion);
+        if (codeStamp != null) lines.Add("code=" + codeStamp);
         lines.Sort(StringComparer.Ordinal);
         byte[] digest = SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", lines)));
         return Convert.ToHexString(digest).ToLowerInvariant();

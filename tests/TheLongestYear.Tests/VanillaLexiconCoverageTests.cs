@@ -53,6 +53,66 @@ public sealed class VanillaLexiconCoverageTests
         => Assert.Equal(ObtainabilityGoldenTests.VanillaHash, ObtainabilityGolden.Hash(Variant(AnswerSet.BaseVariant).Obtain));
 
     [Fact]
+    public void ShippedYearSortMatchesFixtureColdBuild()
+        => Assert.Equal(
+            ObtainabilityGolden.Hash(ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(VanillaInputsFixture.Load())).Model),
+            ObtainabilityGolden.Hash(Variant(AnswerSet.BaseVariant).YearSort));
+
+    /// <summary>The Pierre variant against a cold build of the inputs dumped from a save that owns the
+    /// upgrade (TLY's Data/Shops edit is live only in the game, so it is in that fixture's shop rows).</summary>
+    [Fact]
+    public void PierreVariantMatchesPierreFixtureColdBuild()
+    {
+        ObtainabilityInputs pierre = VanillaInputsFixture.LoadPierre();
+        AnswerVariant shipped = Variant(AnswerSet.PierreVariant);
+        Assert.Equal(ObtainabilityGolden.Hash(ObtainabilityBuilder.Build(pierre).Model), ObtainabilityGolden.Hash(shipped.Obtain));
+        Assert.Equal(
+            ObtainabilityGolden.Hash(ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(pierre)).Model),
+            ObtainabilityGolden.Hash(shipped.YearSort));
+    }
+
+    /// <summary>The fixtures are the data the shipped answers were checked against, row for row, so the
+    /// cold-build comparisons here compare the same data.</summary>
+    [Fact]
+    public void FixtureRowsAreTheShippedRows()
+    {
+        static List<KeyValuePair<string, ulong>> Sorted(IReadOnlyDictionary<string, ulong> rows)
+            => rows.OrderBy(p => p.Key, StringComparer.Ordinal).ToList();
+        Assert.Equal(Sorted(Shipped.Value.RowHashesFor(AnswerSet.BaseVariant)), Sorted(RowHashes.Of(VanillaInputsFixture.Load(), false)));
+        Assert.Equal(Sorted(Shipped.Value.RowHashesFor(AnswerSet.PierreVariant)), Sorted(RowHashes.Of(VanillaInputsFixture.LoadPierre(), true)));
+    }
+
+    public static IEnumerable<object[]> AvailabilityCases()
+        => new[] { false, true }.SelectMany(pierre => Enum.GetValues<DifficultyStep>()
+            .SelectMany(step => new[] { new object[] { pierre, step, false }, new object[] { pierre, step, true } }));
+
+    /// <summary>Every shipped availability answer equals the one rebuilt offline from the availability
+    /// inputs fixture of the same save state: a rule change that moves an answer fails here until
+    /// <c>vanilla.json</c> is written again. The stamp is checked too, so the fixture is the projection
+    /// the live game hashes.</summary>
+    [Theory]
+    [MemberData(nameof(AvailabilityCases))]
+    public void VanillaAvailabilityAnswersMatchFixtureBuild(bool pierre, DifficultyStep step, bool kitchen)
+    {
+        AvailabilityInputs inputs = VanillaInputsFixture.LoadAvailability(pierre);
+        Assert.Equal(!pierre, inputs.YearTwoCapped);
+        string key = AvailabilityAnswers.Key(step, kitchen);
+        AnswerVariant variant = Variant(pierre ? AnswerSet.PierreVariant : AnswerSet.BaseVariant);
+        Assert.True(variant.Availability.TryGetValue(key, out AvailabilityAnswers? shipped), $"no shipped availability answers for {key}");
+        AvailabilityAnswers built = AvailabilityInputs.Answers(inputs, step, kitchen);
+        Assert.Equal(shipped!.Inputs, built.Inputs);
+
+        static AnswerVariant Only(string k, AvailabilityAnswers answers)
+            => new(new Dictionary<string, IReadOnlyList<ObtainSource>>(), new Dictionary<string, IReadOnlyList<ObtainSource>>(),
+                Array.Empty<string>(), 0, new Dictionary<string, PlaceWeek>(), Array.Empty<string>(), new Dictionary<string, PlaceWeek>())
+            {
+                Availability = new Dictionary<string, AvailabilityAnswers>(StringComparer.Ordinal) { [k] = answers },
+            };
+        IReadOnlyList<string> differences = LexiconDiff.Compare(Only(key, shipped), Only(key, built));
+        Assert.True(differences.Count == 0, $"{differences.Count} difference(s), first: " + string.Join("; ", differences.Take(5)));
+    }
+
+    [Fact]
     public void PierreVariantHasOwnEntries()
     {
         AnswerVariant baseline = Variant(AnswerSet.BaseVariant);
@@ -102,6 +162,39 @@ public sealed class VanillaLexiconCoverageTests
         // Rewriting base keeps the Pierre variant whole.
         set = AnswerSetMerge.With(set, AnswerSet.BaseVariant, baseline, baseRows, "g", "m", layers);
         Assert.Equal(2, set.Resolve(AnswerSet.PierreVariant)!.Obtain["(O)2"].Count);
+    }
+
+    [Theory]
+    [InlineData("g2", "m")]
+    [InlineData("g", "m2")]
+    public void MergeOverAnotherVersionKeepsOnlyTheWrittenVariant(string game, string mod)
+    {
+        static AnswerVariant Make(string detail)
+        {
+            var map = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
+            {
+                ["(O)1"] = new[] { new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, detail) },
+            };
+            return new AnswerVariant(map, map, Array.Empty<string>(), 1,
+                new Dictionary<string, PlaceWeek>(), Array.Empty<string>(), new Dictionary<string, PlaceWeek>());
+        }
+        var rows = new Dictionary<string, ulong> { ["meta|pierre_year2"] = 1 };
+        string[] layers = { "vanilla" };
+        AnswerSet set = AnswerSetMerge.With(null, AnswerSet.BaseVariant, Make("base"), rows, "g", "m", layers);
+        set = AnswerSetMerge.With(set, AnswerSet.PierreVariant, Make("pierre"), rows, "g", "m", layers);
+
+        // The same version keeps the other variant.
+        var warnings = new List<string>();
+        AnswerSet same = AnswerSetMerge.With(set, AnswerSet.BaseVariant, Make("base2"), rows, "g", "m", layers, warnings.Add);
+        Assert.Equal(2, same.Variants.Count);
+        Assert.Empty(warnings);
+
+        // Another version drops it (it is stale by definition), with one WARN naming it.
+        AnswerSet moved = AnswerSetMerge.With(set, AnswerSet.BaseVariant, Make("base2"), rows, game, mod, layers, warnings.Add);
+        Assert.Equal(new[] { AnswerSet.BaseVariant }, moved.Variants.Keys);
+        Assert.Equal("base2", moved.Resolve(AnswerSet.BaseVariant)!.Obtain["(O)1"].Single().Detail);
+        Assert.Equal((game, mod), (moved.GameVersion, moved.ModVersion));
+        Assert.Contains(AnswerSet.PierreVariant, Assert.Single(warnings), StringComparison.Ordinal);
     }
 
     [Fact]

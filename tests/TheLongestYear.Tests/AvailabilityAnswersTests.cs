@@ -9,9 +9,9 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
-/// <summary>The availability model served from stored answers (spec 2026-10-27-path-lexicon,
-/// Task 6b) answers exactly as the one <see cref="ItemAvailabilityBuilder.Build"/> makes, after the
-/// answers have been through the lexicon file format.</summary>
+/// <summary>The availability model served from stored answers answers exactly as the one
+/// <see cref="ItemAvailabilityBuilder.Build"/> makes, after the answers have been through the lexicon
+/// file format.</summary>
 public sealed class AvailabilityAnswersTests
 {
     private const string Fish = "(O)128";
