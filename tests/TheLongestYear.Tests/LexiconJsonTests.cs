@@ -40,13 +40,7 @@ public sealed class LexiconJsonTests
 
     [Theory]
     [InlineData("")]
-    [InlineData("1-50:0")]
-    [InlineData("1-50:0,52-112:0")]
-    [InlineData("1-60:0,50-112:0")]
-    [InlineData("1-112:200")]
-    [InlineData("1-112")]
     [InlineData("a-b:c")]
-    [InlineData("1-113:0")]
     [InlineData("=0x111")]
     [InlineData("=0x113")]
     [InlineData("=113x112")]
@@ -55,6 +49,7 @@ public sealed class LexiconJsonTests
     [InlineData("+1x112")]
     [InlineData("=0x0,=0x112")]
     [InlineData("?3x112")]
+    [InlineData("=0x1,=0x2147483647")]
     public void DayTableRunsRejectsMalformedText(string text)
         => Assert.Throws<FormatException>(() => DayTableRuns.Read(text));
 
@@ -92,6 +87,9 @@ public sealed class LexiconJsonTests
         Assert.Equal(variant.Obtain.Keys.OrderBy(k => k, StringComparer.Ordinal), b.Obtain.Keys.OrderBy(k => k, StringComparer.Ordinal));
         foreach (string id in variant.Obtain.Keys)
             Assert.True(variant.Obtain[id].SequenceEqual(b.Obtain[id]), id);
+        foreach (string id in variant.Obtain.Keys)
+            Assert.True(variant.Obtain[id].Select(s => s.Inputs).SequenceEqual(b.Obtain[id].Select(s => s.Inputs),
+                new InputsComparer()), "Inputs " + id);
         foreach (string id in variant.YearSort.Keys)
             Assert.True(variant.YearSort[id].SequenceEqual(b.YearSort[id]), id);
         Assert.Equal(variant.Passes, b.Passes);
@@ -140,5 +138,41 @@ public sealed class LexiconJsonTests
             if (lines[i].StartsWith("        \"")) ids.Add(lines[i].Trim().Split('"')[1]);
         Assert.True(ids.Count > 100);
         Assert.Equal(ids.OrderBy(x => x, StringComparer.Ordinal), ids);
+    }
+
+    private sealed class InputsComparer : IEqualityComparer<IReadOnlyList<IReadOnlyList<string>>>
+    {
+        public bool Equals(IReadOnlyList<IReadOnlyList<string>>? x, IReadOnlyList<IReadOnlyList<string>>? y)
+            => x!.Count == y!.Count && x.Zip(y).All(p => p.First.SequenceEqual(p.Second));
+
+        public int GetHashCode(IReadOnlyList<IReadOnlyList<string>> obj) => obj.Count;
+    }
+
+    [Fact]
+    public void HostileDetailKeepsOneSourcePerLineAndRoundTrips()
+    {
+        const string detail = "line1\nline2 \"quoted\" back\\slash \u00e9\u4e2d\r\ttab";
+        var source = new ObtainSource(SourceKind.Shop, DayTable.Always, Reliability.Dependable, ObtainConditions.None, detail)
+        {
+            Inputs = new[] { new[] { "(O)1", "(O)2" } },
+            Setup = new[] { new SetupStep("building:Coop", 3) },
+        };
+        var variant = new AnswerVariant(
+            new Dictionary<string, IReadOnlyList<ObtainSource>> { ["(O)1"] = new[] { source, source with { Detail = "second" } } },
+            new Dictionary<string, IReadOnlyList<ObtainSource>>(),
+            Array.Empty<string>(), 1,
+            new Dictionary<string, TheLongestYear.Core.Availability.PlaceWeek>(), Array.Empty<string>(),
+            new Dictionary<string, TheLongestYear.Core.Availability.PlaceWeek>());
+        var set = new AnswerSet("1", "1", new[] { "vanilla" }, new Dictionary<string, ulong>(),
+            new Dictionary<string, AnswerVariant> { ["base"] = variant });
+
+        string json = LexiconJson.Write(set);
+        Assert.Equal(2, json.Split('\n').Count(l => l.TrimStart().StartsWith("{\"Conditions\"")));
+
+        AnswerSet back = LexiconJson.Read(json);
+        IReadOnlyList<ObtainSource> got = back.Variants["base"].Obtain["(O)1"];
+        Assert.Equal(detail, got[0].Detail);
+        Assert.True(got.SequenceEqual(variant.Obtain["(O)1"]));
+        Assert.Equal(new[] { "(O)1", "(O)2" }, got[0].Inputs[0]);
     }
 }

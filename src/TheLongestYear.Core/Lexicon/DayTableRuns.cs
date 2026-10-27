@@ -9,7 +9,7 @@ namespace TheLongestYear.Core.Lexicon;
 /// kinds. A plateau "=&lt;landing&gt;x&lt;count&gt;" (landing 0 = never) is a stretch of equal landings; a
 /// shift "+&lt;k&gt;x&lt;count&gt;" is a stretch where landing minus start is the constant k (k = 0 is
 /// "available every day"). Greedy left to right, the longer candidate wins and a run of one day is a
-/// plateau: "=35x34,+0x78".</summary>
+/// plateau: "=35x35,+0x77".</summary>
 public static class DayTableRuns
 {
     private const char RunSeparator = ',';
@@ -60,7 +60,7 @@ public static class DayTableRuns
             string[] halves = run.Length > 1 ? run.Substring(1).Split(Count) : Array.Empty<string>();
             if (halves.Length != 2 || !TryInt(halves[0], out int value) || !TryInt(halves[1], out int count) || count < 1)
                 throw new FormatException($"Malformed day table run '{run}'.");
-            if (next + count > DayTable.Days)
+            if (count > DayTable.Days - next)
                 throw new FormatException($"Day table run '{run}' runs past day {DayTable.Days}.");
             if (run[0] != PlateauMark && run[0] != ShiftMark)
                 throw new FormatException($"Malformed day table run '{run}'.");
