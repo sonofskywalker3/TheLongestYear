@@ -20,6 +20,8 @@ SpaceCore spawn group), so a layer holds hand-written routes and rulings
 (`<UniqueID>.answers.json`). Two mods together can change each other's answers (one adds a seed
 to the other's shop), so each pair of supported mods installed together needs its own file
 (`<A>+<B>.answers.json`), even if it is empty. All of these live in `assets/lexicon/layers/`.
+A mod with an inputs file but no applied answers file (none written yet, or dropped for a version mismatch)
+is "not mapped yet": nothing is served as shipped, so the answers are computed with its hand-written routes.
 
 ## Where an answer comes from
 
@@ -42,7 +44,7 @@ Read the SMAPI log:
   `— variant 'pierre_year2_seeds' not in the shipped answers` or
   `— shipped answers are for TLY 1.1.0, running 1.1.1` (the file was not regenerated after a version
   bump; see "Every release" below).
-- `Lexicon layers: vanilla, <id>, ...; pairs not mapped yet (A+B), so these answers are computed.`
+- `Lexicon layers: vanilla, <id>, ...; mods not mapped yet (A); pairs not mapped yet (A+B), so these answers are computed.`
   Written at start-up when layers are active.
 - WARN `Lexicon layer <id>: checked against <version>, installed <version>; its generated answers
   are not used, so that mod's content is computed; its hand-written routes and rulings are still in

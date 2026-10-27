@@ -55,7 +55,9 @@ namespace TheLongestYear.Loop
             if (layers.Ids.Count > 0)
                 _monitor.Log(
                     $"Lexicon layers: {string.Join(", ", layers.Layers)}" +
-                    (layers.UnmappedPairs.Count > 0 ? $"; pairs not mapped yet ({string.Join(", ", layers.UnmappedPairs)}), so these answers are computed" : "") + ".",
+                    (layers.UnmappedMods.Count > 0 ? $"; mods not mapped yet ({string.Join(", ", layers.UnmappedMods)})" : "") +
+                    (layers.UnmappedPairs.Count > 0 ? $"; pairs not mapped yet ({string.Join(", ", layers.UnmappedPairs)})" : "") +
+                    (layers.UnmappedMods.Count + layers.UnmappedPairs.Count > 0 ? ", so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
                 live => build(live, layers.ExtraDirectSources));

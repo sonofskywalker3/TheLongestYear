@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.2 - 2026-10-27
+
+### Internal
+
+- A supported mod with hand-written routes but no usable shipped answers (none yet, or dropped for a version mismatch) now has its answers computed, so its routes are no longer lost.
+
 ## 1.1.1 - 2026-10-27
 
 ### Changed

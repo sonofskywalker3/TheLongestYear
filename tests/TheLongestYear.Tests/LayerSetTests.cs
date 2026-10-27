@@ -215,6 +215,57 @@ public sealed class LayerSetTests
         Assert.Empty(set.Composed!.Variants);
     }
 
+    private static LexiconResolver ResolverFor(LayerSet set) => new(set.Composed, _ => null, (_, _) => { },
+        inp =>
+        {
+            ObtainabilityBuild built = ObtainabilityBuilder.Build(inp, extraDirect: set.ExtraDirectSources);
+            return AnswerVariantFactory.From(built, built, inp, null, Array.Empty<string>(), null);
+        });
+
+    [Fact]
+    public void AnInputsOnlyLayerIsUnmappedAndItsRoutesAreComputed()
+    {
+        ObtainabilityInputs live = Inputs.Value;
+        LayerInputs[] inputs = { In(A, "1.0.0", OliveSource()) };
+        LayerSet set = LayerSet.Compose(VanillaSet(RowHashes.Of(live, false)), inputs, Array.Empty<LayerAnswers>(), _ => { });
+
+        Assert.Equal(new[] { A }, set.UnmappedMods);
+        Assert.Empty(set.Composed!.Variants);
+        Resolved r = ResolverFor(set).Resolve(WithOlive(live), false, Game, Mod, set.Composed!.Layers);
+        Assert.Equal(AnswerOrigin.Computed, r.Origin);
+        Assert.Contains(r.Variant.Obtain[Olive], s => s.Detail == "layer: olive grove");
+    }
+
+    [Fact]
+    public void ALayerWhoseAnswersWereDroppedForAVersionMismatchIsUnmapped()
+    {
+        ObtainabilityInputs live = Inputs.Value;
+        LayerInputs[] inputs = { In(A, "1.0.0", OliveSource()) };
+        LayerAnswers[] answers = { Ans("mapped", A) };
+        var (activeInputs, activeAnswers) = LayerSet.Active(inputs, answers, _ => true, _ => "2.0.0", _ => { });
+        Assert.Empty(activeAnswers);
+        LayerSet set = LayerSet.Compose(VanillaSet(RowHashes.Of(live, false)), activeInputs, activeAnswers, _ => { });
+
+        Assert.Equal(new[] { A }, set.UnmappedMods);
+        Assert.Empty(set.Composed!.Variants);
+        Resolved r = ResolverFor(set).Resolve(WithOlive(live), false, Game, Mod, set.Composed!.Layers);
+        Assert.Equal(AnswerOrigin.Computed, r.Origin);
+        Assert.Contains(r.Variant.Obtain[Olive], s => s.Detail == "layer: olive grove");
+    }
+
+    [Fact]
+    public void ALayerWithItsAnswersFileIsStillServedAsShipped()
+    {
+        ObtainabilityInputs live = Inputs.Value;
+        IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, false);
+        LayerSet set = LayerSet.Compose(VanillaSet(rows), new[] { In(A) }, new[] { Ans("mapped", A) }, _ => { });
+
+        Assert.Empty(set.UnmappedMods);
+        Assert.NotEmpty(set.Composed!.Variants);
+        Resolved r = ResolverFor(set).Resolve(live, false, Game, Mod, set.Composed!.Layers);
+        Assert.Equal(AnswerOrigin.Shipped, r.Origin);
+    }
+
     [Fact]
     public void AnswersCheckedVersionsAreReadPerMod()
     {
@@ -300,8 +351,9 @@ public sealed class LayerSetTests
         // Round trip, then the composed set with both is served as shipped data would be.
         LayerAnswers back = LayerFile.ReadAnswers(LayerFile.WriteAnswers(single));
         Assert.Equal("grove", back.Deltas[AnswerSet.BaseVariant].Obtain[Olive].Single().Detail);
-        LayerSet set = LayerSet.Compose(vanilla, new[] { In(A), In(B) }, new[] { back, pair }, _ => { });
+        LayerSet set = LayerSet.Compose(vanilla, new[] { In(A), In(B) }, new[] { back, Ans(new Dictionary<string, AnswerVariant>(), null, B), pair }, _ => { });
         Assert.Empty(set.UnmappedPairs);
+        Assert.Empty(set.UnmappedMods);
         Assert.Equal(liveRows.OrderBy(p => p.Key), set.Composed!.RowHashes.OrderBy(p => p.Key));
         Assert.Equal("grove", DetailOf(set.Composed!, Olive));
     }

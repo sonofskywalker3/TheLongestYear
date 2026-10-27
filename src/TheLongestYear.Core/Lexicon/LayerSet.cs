@@ -30,7 +30,7 @@ public sealed class LayerSet
 
     private LayerSet(
         AnswerSet? composed, AnswerSet? overlay, IReadOnlyList<string> layers, IReadOnlyList<string> keyLayers,
-        IReadOnlyList<string> ids, IReadOnlyList<string> unmappedPairs,
+        IReadOnlyList<string> ids, IReadOnlyList<string> unmappedPairs, IReadOnlyList<string> unmappedMods,
         IReadOnlyDictionary<string, YearRuling> yearRulings, IReadOnlyDictionary<string, int> weekRulings,
         IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> extraDirect)
     {
@@ -40,6 +40,7 @@ public sealed class LayerSet
         KeyLayers = keyLayers;
         Ids = ids;
         UnmappedPairs = unmappedPairs;
+        UnmappedMods = unmappedMods;
         _yearRulings = yearRulings;
         WeekRulings = weekRulings;
         ExtraDirectSources = extraDirect;
@@ -70,6 +71,10 @@ public sealed class LayerSet
 
     /// <summary>Each pair of active layers with no interaction file, as its <see cref="LayerFile.Name"/>.</summary>
     public IReadOnlyList<string> UnmappedPairs { get; }
+
+    /// <summary>Each active layer with no applied single-mod answers file (absent, or dropped by the version
+    /// check). Its hand-written routes are not in the shipped answers, so nothing is served as shipped.</summary>
+    public IReadOnlyList<string> UnmappedMods { get; }
 
     /// <summary>Availability week rulings from every layer, by qualified id (the config's
     /// <c>AvailabilityWeekOverrides</c> win over these per id).</summary>
@@ -182,6 +187,7 @@ public sealed class LayerSet
         var mappedPairs = new HashSet<string>(
             applied.Where(a => a.Mods.Distinct(StringComparer.Ordinal).Count() == 2).Select(a => LayerFile.Name(a.Mods)),
             StringComparer.Ordinal);
+        var unmappedMods = ids.Where(id => !applied.Any(a => a.Mods.Count == 1 && a.Mods[0] == id)).ToList();
         var unmapped = new List<string>();
         for (int i = 0; i < ids.Count; i++)
             for (int j = i + 1; j < ids.Count; j++)
@@ -207,11 +213,11 @@ public sealed class LayerSet
         if (vanilla != null)
         {
             overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers);
-            composed = unmapped.Count == 0
+            composed = unmapped.Count == 0 && unmappedMods.Count == 0
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
-        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, years, weeks, extra);
+        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra);
     }
 
     private static string HashOf(string textHash, Func<string> written)
