@@ -3,7 +3,7 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.1.0)
+## 1.1.0 - 2026-10-27
 
 ### Changed
 
