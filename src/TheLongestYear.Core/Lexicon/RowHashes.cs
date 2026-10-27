@@ -28,7 +28,14 @@ public static class RowHashes
         var rows = new Dictionary<string, ulong>(StringComparer.Ordinal);
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        void Put(string key, object row) => rows[key] = Hash(row);
+        // First occurrence keeps the plain key; a repeat gets |1, |2... in list order, so no row is dropped.
+        var seen = new Dictionary<string, int>(StringComparer.Ordinal);
+        void Put(string key, object row)
+        {
+            seen.TryGetValue(key, out int dupes);
+            seen[key] = dupes + 1;
+            rows[dupes == 0 ? key : key + "|" + dupes] = Hash(row);
+        }
         // Rows that repeat under one key get a list-order suffix.
         void PutN(string key, object row)
         {
@@ -87,7 +94,9 @@ public static class RowHashes
     /// <summary>Best-guess attribution of a row for a report: "vanilla", or the mod prefix of the
     /// first non-vanilla item id in the key (the part before its first "." or "_", or the whole id
     /// when it has neither). A key with no item ids is vanilla when its first segment has no "." or
-    /// "_". A heuristic, not a guarantee: a mod row under a vanilla-looking key reads as vanilla.</summary>
+    /// "_". A mod shop id with a query stock ("shop|Mod_Shop|ALL_ITEMS...") is owned by the shop's
+    /// prefix, since the shop id is the only mod-specific part. A heuristic, not a guarantee: a mod
+    /// row under a vanilla-looking key reads as vanilla.</summary>
     public static string Owner(string rowKey)
     {
         string[] parts = rowKey.Split('|');
