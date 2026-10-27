@@ -923,7 +923,7 @@
     "gmcm.difficulty.starting-gold.name": "Starting gold",
     "gmcm.difficulty.starting-gold.tooltip": "Scales the Starting money value above, rather than replacing it, so a hand-tuned amount is still honoured. Extreme starts you with nothing at all.",
     "gmcm.difficulty.cart-slots.name": "Starting cart slots",
-    "gmcm.difficulty.cart-slots.tooltip": "How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is EMPTY until you buy Cart Stall I. Does nothing if the Traveling Cart limit is turned off.",
+    "gmcm.difficulty.cart-slots.tooltip": "How many items the Traveling Cart offers before you buy any Cart Stall upgrade. On Hard and Extreme the cart is EMPTY until you buy Cart Stall II. Does nothing if the Traveling Cart limit is turned off.",
     "gmcm.difficulty.hold-prices.name": "Hold prices",
     "gmcm.difficulty.darkness.name": "Darkness",
     "gmcm.difficulty.darkness.tooltip": "How hard the darkness hits from Summer on. Sets how many crops or stored items a blight night takes, and whether the darkness checks that you can still get an item back before it undoes a donation or changes what a bundle asks for. Easy and Normal only take what you can replace in time. Hard and Extreme can take anything once a loop, and on Extreme a blight night can also reach tools and machines. The three switches under Features still turn each front off.",

@@ -35,7 +35,7 @@ public class CartSlotStartingSlotsTests
     public void No_Upgrades_Shows_The_Configured_Starting_Slots()
         => Assert.Equal(3, CartSlotRules.VisibleSlots(0, startingSlots: 3));
 
-    /// <summary>Hard and Extreme both floor at zero, so the cart shows nothing until Cart Stall I
+    /// <summary>Hard and Extreme both floor at zero, so the cart shows nothing until Cart Stall II
     /// is bought. The GMCM tooltip has to say so, or it reads as a broken cart.</summary>
     [Fact]
     public void Zero_Starting_Slots_Means_An_Empty_Cart()
@@ -45,7 +45,7 @@ public class CartSlotStartingSlotsTests
     public void An_Owned_Tier_Still_Wins_Over_A_Lower_Starting_Floor()
         => Assert.Equal(5, CartSlotRules.VisibleSlots(5, startingSlots: 0));
 
-    /// <summary>Buying Cart Stall I on an Easy run must never SHRINK the cart.</summary>
+    /// <summary>Buying Cart Stall II on an Easy run must never SHRINK the cart.</summary>
     [Fact]
     public void An_Owned_Tier_Below_The_Starting_Floor_Does_Not_Shrink_The_Cart()
         => Assert.Equal(3, CartSlotRules.VisibleSlots(2, startingSlots: 3));

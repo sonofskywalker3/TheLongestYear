@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.4 - 2026-10-27
+
+### Fixed
+
+- **Settings tooltip:** the Starting cart slots setting's tooltip said the cart stays empty on Hard and Extreme until you buy Cart Stall I. The first stall upgrade is Cart Stall II, and the tooltip now says so.
+
 ## 1.1.3 - 2026-10-27
 
 ### Internal

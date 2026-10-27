@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.1.3
+## What's New in 1.1.4
+
+**Fixed: a settings tooltip named the wrong stall.** The Starting cart slots setting's tooltip said the cart stays empty on Hard and Extreme until you buy Cart Stall I. The first stall upgrade is Cart Stall II, and the tooltip now says so.
+
+## 1.1.3
 
 **Changed: loading a save is faster.** The base game's item routes now ship with the mod instead of being worked out on every load, which took several seconds. Nothing about how a board is built changed. If your mods change the game's data, TLY still works the routes out itself once and remembers them. Supported mods will get their own shipped answers over time.
 

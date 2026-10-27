@@ -13,7 +13,7 @@ public static class CartSlotRules
     public const int MaxSlots = 10;
 
     /// <summary>The lowest a difficulty step may push the starting floor. Zero means the cart
-    /// shows nothing at all until Cart Stall I is bought.</summary>
+    /// shows nothing at all until Cart Stall II is bought.</summary>
     public const int MinStartingSlots = 0;
 
     /// <summary>Total visible cart slots for a player whose highest owned cart_slot tier is
@@ -21,7 +21,7 @@ public static class CartSlotRules
     /// <param name="startingSlots">How many items the cart shows before any Cart Stall upgrade,
     /// from the run's difficulty profile (spec 2026-08-26). Defaults to <see cref="MinSlots"/>,
     /// the shipping value, so existing callers are unaffected. An owned tier always wins over a
-    /// lower floor, and the floor always wins over a lower tier: buying Cart Stall I on an Easy
+    /// lower floor, and the floor always wins over a lower tier: buying Cart Stall II on an Easy
     /// run must never SHRINK the cart.</param>
     public static int VisibleSlots(int highestOwnedTier, int startingSlots = MinSlots)
     {
