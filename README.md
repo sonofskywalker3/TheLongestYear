@@ -23,7 +23,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.0.24
+## What's New in 1.0.27
+
+**New: the Traveling Cart brings Year 2 items.** Every cart visit has a 1 in 10 chance that one of its slots holds something a loop normally can't get before the Community Center is done: Garlic, Red Cabbage and Artichoke Seeds, Ginger Island crops and fish, Mr. Qi's goods, dishes whose recipe only airs in Year 2, and the same kinds of late-game items from your other mods. It is one chance per visit however many cart slots you have bought, and it only offers the kinds of things the cart already sells. Thanks to mysticalfairy25 for the idea.
+
+**Fixed: the cart's special items show up again.** Rare Seed, Coffee Beans, the catalogues and the cart's other fixed items came after its random stock, so with TLY's cart slots they never made it onto the cart. Each one now takes a random slot like any other item. On the day the cart's guaranteed Red Cabbage Seeds visit comes up, the seeds always get a slot.
+
+## 1.0.24
 
 **New: Keep Trash Can.** Four new Loadout upgrades (Copper, Steel, Gold and Iridium, 50 / 100 / 175 / 300 JP) let you start each loop with your trash can at the tier you keep, instead of back at the basic one. Each tier opens once you have upgraded the can that far in the current loop. Thanks to tanky24u, whose trash can report led to this.
 
