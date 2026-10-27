@@ -204,6 +204,7 @@ namespace TheLongestYear
         {
             _obtainabilityReadMs = _obtainabilityBuildMs = _yearSortMs = 0;
             _lastLexiconBuild = null;
+            _lexicon?.Forget();
             try
             {
                 var timer = System.Diagnostics.Stopwatch.StartNew();
@@ -277,7 +278,7 @@ namespace TheLongestYear
             return new TheLongestYear.DebugCommands.LexiconSaveContext(
                 _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId),
                 _enginePools?.LocationWeeks, _enginePools?.ShopWeeks, maps,
-                Game1.version, this.ModManifest.Version.ToString());
+                Game1.version, this.ModManifest.Version.ToString(), AllAvailabilityAnswers);
         }
 
         /// <summary><c>tly_obtain &lt;itemId&gt;</c>: every source the obtainability model has for one item.</summary>

@@ -756,15 +756,69 @@ namespace TheLongestYear
         /// pre-reset model for the rest of the session.</summary>
         private TheLongestYear.Core.ItemAvailabilityModel BuildAvailabilityModelFor(TheLongestYear.Core.DifficultyStep step)
         {
+            // Served from the path lexicon when it holds answers for this step and kitchen state made
+            // from the same inputs (see AvailabilityAnswers.InputsHash); otherwise built and stored.
             TheLongestYear.Core.WeekMode mode = TheLongestYear.Core.WeekModes.For(step);
-            _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.Build(
-                _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData,
-                hasKitchen: _meta.State.HasUpgrade("keep_kitchen"),
-                weekOverrides: _config.AvailabilityWeekOverrides, mode: mode, step: step,
-                hasUpgrade: _meta.State.HasUpgrade);
+            bool kitchen = _meta.State.HasUpgrade("keep_kitchen");
+            string key = TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key(step, kitchen);
+            var timer = System.Diagnostics.Stopwatch.StartNew();
+            string inputs = AvailabilityInputsHash();
+            long hashMs = timer.ElapsedMilliseconds;
+            TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
+            if (stored != null)
+                _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
+                    stored, _itemSeasonPins, _config.AvailabilityWeekOverrides, mode, step);
+            else
+            {
+                var (model, answers) = AvailabilityBuild(step, kitchen);
+                _availability = model;
+                if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });
+            }
+            this.Monitor.Log(
+                $"Availability model {key}: {(stored != null ? "served from the lexicon" : "built")} in {timer.ElapsedMilliseconds} ms (inputs hash {hashMs} ms).",
+                LogLevel.Trace);
             if (_runController != null) _runController.Availability = _availability;
             if (_boardBuilder != null) _boardBuilder.Availability = _availability;
             return _availability;
+        }
+
+        /// <summary>The cold availability build for one step and kitchen state, with its answers.</summary>
+        private (TheLongestYear.Core.ItemAvailabilityModel Model, TheLongestYear.Core.Lexicon.AvailabilityAnswers Answers) AvailabilityBuild(
+            TheLongestYear.Core.DifficultyStep step, bool kitchen)
+            => TheLongestYear.Core.Availability.ItemAvailabilityBuilder.BuildWithAnswers(
+                _enginePools, seasonOverrides: _itemSeasonPins, effortData: _effortData, hasKitchen: kitchen,
+                weekOverrides: _config.AvailabilityWeekOverrides, mode: TheLongestYear.Core.WeekModes.For(step), step: step,
+                hasUpgrade: _meta.State.HasUpgrade);
+
+        /// <summary><see cref="TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash"/> of the live
+        /// availability inputs, or null (nothing is served or stored) when they cannot be serialised.</summary>
+        private string AvailabilityInputsHash()
+        {
+            if (_enginePools == null) return null;
+            try
+            {
+                return TheLongestYear.Core.Lexicon.AvailabilityAnswers.InputsHash(
+                    _enginePools, _effortData, _itemSeasonPins, null, _config.AvailabilityWeekOverrides,
+                    TheLongestYear.Core.YearTwoCrops.IsCapped(_meta.State.HasUpgrade));
+            }
+            catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException or ArgumentException)
+            {
+                this.Monitor.Log($"Availability inputs could not be hashed ({ex.GetType().Name}: {ex.Message}); building without the lexicon.", LogLevel.Trace);
+                return null;
+            }
+        }
+
+        /// <summary>Every step's availability answers under both kitchen states, by
+        /// <see cref="TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key"/>, for <c>tly_lexicon write vanilla</c>.</summary>
+        private IReadOnlyDictionary<string, TheLongestYear.Core.Lexicon.AvailabilityAnswers> AllAvailabilityAnswers()
+        {
+            string inputs = AvailabilityInputsHash();
+            var all = new Dictionary<string, TheLongestYear.Core.Lexicon.AvailabilityAnswers>(StringComparer.Ordinal);
+            if (inputs == null) return all;
+            foreach (TheLongestYear.Core.DifficultyStep step in Enum.GetValues<TheLongestYear.Core.DifficultyStep>())
+                foreach (bool kitchen in new[] { false, true })
+                    all[TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key(step, kitchen)] = AvailabilityBuild(step, kitchen).Answers with { Inputs = inputs };
+            return all;
         }
 
         private static string DisplayName(string itemId)

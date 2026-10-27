@@ -100,12 +100,14 @@ namespace TheLongestYear
             _enginePools = ctx.EnginePools;
             _engineReachability = ctx.EnginePoolReader.LastReachability;
             _itemSeasonPins = ctx.ItemSeasonPins;
+            // The obtainability answers are resolved first: the availability model is served from
+            // the same lexicon variant when it holds answers for these inputs.
+            BuildObtainabilityModel();
             stageTimer.Restart();
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             long availabilityMs = stageTimer.ElapsedMilliseconds;
             _reset.AvailabilityModel = _availability;
             _reset.RebuildAvailabilityModel = BuildAvailabilityModelFor;
-            BuildObtainabilityModel();
             this.Monitor.Log(
                 $"Load timing: pools {poolsMs} ms, effort {effortMs} ms, availability {availabilityMs} ms, "
                 + $"obtainability read {_obtainabilityReadMs} ms build {_obtainabilityBuildMs} ms, year sort {_yearSortMs} ms.",

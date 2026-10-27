@@ -20,6 +20,13 @@ public sealed record AnswerVariant(
     /// builds its own pool); empty on a freshly built variant.</summary>
     public IReadOnlyList<string> Tables { get; init; } = Array.Empty<string>();
 
+    /// <summary>The item availability answers for this data, by <see cref="AvailabilityAnswers.Key"/>
+    /// (<c>"{step}|kitchen"</c> / <c>"{step}|no_kitchen"</c>). Filled as they are first computed (and
+    /// for every key by <c>tly_lexicon write vanilla</c>); empty on a freshly built variant. Stored
+    /// whole in a delta variant, like the other non-route members.</summary>
+    public IReadOnlyDictionary<string, AvailabilityAnswers> Availability { get; init; }
+        = new Dictionary<string, AvailabilityAnswers>(StringComparer.Ordinal);
+
     /// <summary>The obtainability model these answers stand for. Ids with no route (the empty
     /// lists the snapshot keeps for every object) are left out, as the builder leaves them out, so
     /// the model's <see cref="ObtainabilityModel.ItemIds"/> and <see cref="ObtainabilityModel.Count"/>

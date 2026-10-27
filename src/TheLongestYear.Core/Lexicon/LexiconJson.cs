@@ -134,7 +134,11 @@ public static class LexiconJson
         }
     }
 
-    private static void EmitObject(StringBuilder sb, JsonObject obj, int depth, bool compact)
+    /// <summary>Maps whose entries are records (an availability answer's items) rather than further
+    /// maps: one entry per line, each record on that line.</summary>
+    private static readonly string[] RecordMapKeys = { "Derived", "EffortDerived" };
+
+    private static void EmitObject(StringBuilder sb, JsonObject obj, int depth, bool compact, bool compactValues = false)
     {
         var entries = obj.OrderBy(p => p.Key, StringComparer.Ordinal).ToList();
         if (entries.Count == 0) { sb.Append("{}"); return; }
@@ -144,7 +148,10 @@ public static class LexiconJson
             if (i > 0) sb.Append(compact ? ", " : ",");
             if (!compact) sb.Append('\n').Append(Pad(depth + 1));
             sb.Append(JsonSerializer.Serialize(entries[i].Key)).Append(": ");
-            Emit(sb, entries[i].Value, depth + 1, compact);
+            if (!compact && entries[i].Value is JsonObject records && RecordMapKeys.Contains(entries[i].Key))
+                EmitObject(sb, records, depth + 1, compact: false, compactValues: true);
+            else
+                Emit(sb, entries[i].Value, depth + 1, compact || compactValues);
         }
         if (!compact) sb.Append('\n').Append(Pad(depth));
         sb.Append('}');

@@ -14,7 +14,8 @@ namespace TheLongestYear.DebugCommands
     /// <summary>What <c>tly_lexicon write vanilla</c> needs from the loaded save beyond the inputs.</summary>
     internal sealed record LexiconSaveContext(
         bool PierreYear2Owned, LocationWeeks Maps, ShopWeeks Shops, IReadOnlyCollection<string> AllMaps,
-        string GameVersion, string ModVersion);
+        string GameVersion, string ModVersion,
+        Func<IReadOnlyDictionary<string, AvailabilityAnswers>> Availability);
 
     /// <summary><c>tly_lexicon &lt;sub-command&gt;</c>: tooling for the shipped path lexicon.
     /// <c>dumpinputs [fileName]</c> writes the obtainability inputs the last save load read from the
@@ -82,7 +83,8 @@ namespace TheLongestYear.DebugCommands
             var timer = Stopwatch.StartNew();
             ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs);
             ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs));
-            AnswerVariant variant = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops);
+            AnswerVariant variant = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
+                with { Availability = context.Availability() };
             string name = context.PierreYear2Owned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
 
             string path = ShippedLexicon.VanillaPath(modDirectory);
@@ -96,7 +98,7 @@ namespace TheLongestYear.DebugCommands
             monitor.Log(
                 $"tly_lexicon write vanilla: wrote variant '{name}' to {path} ({json.Length:N0} chars; variants [{string.Join(", ", merged.Variants.Keys)}]; " +
                 $"{variant.Obtain.Count} obtain ids, {variant.MapWeeks.Count} maps reached, {variant.UnreachedMaps.Count} unreached, " +
-                $"{variant.ShopWeeks.Count} shops, {model.Passes} pass(es), {model.Unresolved.Count} unresolved; game {context.GameVersion}; {timer.ElapsedMilliseconds} ms).",
+                $"{variant.ShopWeeks.Count} shops, {variant.Availability.Count} availability answer set(s), {model.Passes} pass(es), {model.Unresolved.Count} unresolved; game {context.GameVersion}; {timer.ElapsedMilliseconds} ms).",
                 LogLevel.Info);
         }
     }

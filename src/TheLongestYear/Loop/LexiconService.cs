@@ -25,6 +25,10 @@ namespace TheLongestYear.Loop
         private readonly IMonitor _monitor;
         private readonly string _cacheDirectory;
         private readonly LexiconResolver _resolver;
+        /// <summary>The last resolve, and its variant with the availability answers added since.
+        /// Null before the first resolve and after <see cref="Forget"/>.</summary>
+        private Resolved _current;
+        private AnswerVariant _variant;
 
         /// <param name="build">The answers for live data nothing has (the cold build, for now).</param>
         public LexiconService(IMonitor monitor, string modFolder, Func<ObtainabilityInputs, AnswerSet, AnswerVariant> build)
@@ -41,13 +45,52 @@ namespace TheLongestYear.Loop
         /// <summary>The answers for the live data, logged as one INFO line.</summary>
         public Resolved Resolve(ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion)
         {
+            Forget();
             Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Layers);
+            _current = r;
+            _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.Obtain.Count} items, {r.Ms} ms";
             if (r.Origin == AnswerOrigin.Computed)
                 line += $" — {r.DirtyCount} items recomputed for "
                     + (r.DirtyOwners.Count > 0 ? string.Join(", ", r.DirtyOwners) : "no shipped answers");
             _monitor.Log(line + ".", LogLevel.Info);
             return r;
+        }
+
+        /// <summary>Drops the last resolved answers (a load whose inputs could not be read has none).</summary>
+        public void Forget()
+        {
+            _current = null;
+            _variant = null;
+        }
+
+        /// <summary>The stored availability answers for <paramref name="key"/> when they were computed
+        /// from inputs hashing to <paramref name="inputsHash"/>; else null.</summary>
+        public AvailabilityAnswers AvailabilityFor(string key, string inputsHash)
+            => _variant != null && _variant.Availability.TryGetValue(key, out AvailabilityAnswers answers) && answers.Inputs == inputsHash
+                ? answers
+                : null;
+
+        /// <summary>Adds freshly computed availability answers to the current variant. A cache-backed
+        /// variant is rewritten to its cache entry; the shipped file is read-only, so for shipped
+        /// answers they are kept in memory for this session only.</summary>
+        public void StoreAvailability(string key, AvailabilityAnswers answers)
+        {
+            if (_variant == null) return;
+            _variant = _variant with
+            {
+                Availability = new Dictionary<string, AvailabilityAnswers>(_variant.Availability, StringComparer.Ordinal) { [key] = answers },
+            };
+            if (_current.Origin == AnswerOrigin.Shipped)
+            {
+                _monitor.Log($"Lexicon: availability {key} is not in the shipped answers for these inputs; kept in memory for this session.", LogLevel.Trace);
+                return;
+            }
+            AnswerSet set = _resolver.CurrentSet with
+            {
+                Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [AnswerSet.BaseVariant] = _variant },
+            };
+            WriteCache(_current.Key, set);
         }
 
         /// <summary>Writes <paramref name="set"/> as the cache entry for <paramref name="key"/> and prunes
@@ -60,7 +103,8 @@ namespace TheLongestYear.Loop
                 File.WriteAllText(PathFor(key), LexiconJson.Write(set));
                 Prune();
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            // JSON: a value the format cannot hold (a non-finite number) fails the write, not the load.
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or NotSupportedException or ArgumentException)
             {
                 _monitor.Log($"Lexicon: could not write the cache entry {key[..KeyPrefixLength]} ({e.GetType().Name}: {e.Message}).", LogLevel.Warn);
             }
@@ -70,8 +114,11 @@ namespace TheLongestYear.Loop
         {
             try
             {
+                var timer = System.Diagnostics.Stopwatch.StartNew();
                 AnswerSet shipped = ShippedLexicon.LoadVanilla(modFolder);
-                if (shipped == null)
+                if (shipped != null)
+                    _monitor.Log($"Lexicon: shipped answers read in {timer.ElapsedMilliseconds} ms (game {shipped.GameVersion}, variants {string.Join(", ", shipped.Variants.Keys)}).", LogLevel.Trace);
+                else
                     _monitor.Log($"Lexicon: no shipped answers at {ShippedLexicon.VanillaRelativePath}; every load builds or reads the cache.", LogLevel.Warn);
                 return shipped;
             }
