@@ -45,7 +45,7 @@ Read the SMAPI log:
   `— shipped answers are for TLY 1.1.0, running 1.1.1` (the file was not regenerated after a version
   bump; see "Every release" below).
 - `Lexicon layers: vanilla, <id>, ...; mods not mapped yet (A); pairs not mapped yet (A+B), so these answers are computed.`
-  Written at start-up when layers are active.
+  Logged at the first save load of the session (layers are read once per session), not at start-up, and only when layers are active.
 - WARN `Lexicon layer <id>: checked against <version>, installed <version>; its generated answers
   are not used, so that mod's content is computed; its hand-written routes and rulings are still in
   use. Re-check the layer`. The mod was updated since the layer was mapped. Generated answers are
@@ -84,7 +84,7 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
        "(O)Author.ExampleCrops_Olive": [
          {
            "Kind": "Crop",
-           "Lands": "=29x28,+0x84",
+           "Lands": "=29x29,+0x83",
            "Reliability": "Dependable",
            "Conditions": { "Requires": ["bush:Author.ExampleCrops_OliveBush"] },
            "Detail": "Custom Bush fruit, bush bears from week 5"
@@ -99,33 +99,35 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    - **`ExtraSources`** adds routes the game data does not describe, by qualified item id. Each entry
      is an `ObtainSource`: `Kind` (`Forage`, `Crop`, `FruitTree`, `Shop`, `Machine`, `Fish`, ...; the
      `SourceKind` list), `Lands`, `Reliability` (`Dependable` for a spawn or shop row, `Chance` for
-     luck), `Conditions` (`Requires` is informational; `YearTwo`, `GingerIsland`, `RainOnly`,
+     luck), `Conditions` (write it on every hand-written source; if missing it reads as no conditions. `Requires` is not informational: `mines:floor N` and `location:SkullCave` add digging days (`MineDepth.WithTravel`) to a route that has no `Inputs`. `YearTwo`, `GingerIsland`, `RainOnly`,
      `FewDays`, `Unresolved`, `OwnedOnly`, `Skill`/`SkillLevel` change how the route counts), and a
-     short `Detail` for the debug output. `Setup` (a list of `{ "Name", "Days" }`) is optional.
+     short `Detail` for the debug output. `Kind`, `Lands` and `Detail` are required: a source missing any of them makes the whole file skipped with a WARN. `Setup` (a list of `{ "Name", "Days" }`) and `Inputs` are optional (empty when missing).
    - **`Lands`** is the day table over start days 1 to 112: for each day the player could start the
      route, the day the item lands (0 = never). It is written as comma-separated runs that must cover
      exactly 112 days. `=Lxn` is a plateau: `n` start days that all land on day `L`. `+kxn` is a
      shift: `n` start days that each land `k` days after the start (`+0x112` is "available every day
-     of the year"; `+0x84` is a stretch of 84 such days). So `"=29x28,+0x84"` means: starting on
-     any of the first 28 days, the item lands on day 29; from day 29 on, it is there the same day. The
+     of the year"; `+0x83` is a stretch of 83 such days). So `"=29x29,+0x83"` means: starting on
+     any of the first 29 days, the item lands on day 29; from day 29 on, it is there the same day. The
      example above is a bush that bears from day 29 (week 5); adjust to the mod's real timing.
    - **`YearRulings`** decide the Traveling Cart's year 2 slot: `YearOne`, `YearTwo` or `NeverSell`.
-   - **`WeekRulings`** pin an item's availability week (1 to 16). The config's
+   - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There are no map-week or pond-chance fields in an inputs file: a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.
    - **`CheckedVersion`** is the mod version you mapped against. A different installed version gives
      the layer WARN above. The answers files record their own checked versions
      (`CheckedVersions`, `"A@1.2.0"` or `"A@1.2.0+B@3.0.0"`), written by `tly_lexicon write`; those
      decide whether the answers are used.
-4. **Write the answers.** Load the farm with the inputs file in place (restart the game so it is
+4. **Write the answers.** Layers are read once per session, at the first save load, so a newly written layer file takes effect only after a game restart. Load the farm with the inputs file in place (restart the game so it is
    read), then run `tly_lexicon write <UniqueID>`. This cold-builds with the layer's extra sources
    and writes `<UniqueID>.answers.json`: the part that differs from vanilla, for this save's variant
-   (`base`, or `pierre_year2_seeds` when the save owns that upgrade). Then repeat for the other
-   variant: on a farm that owns Pierre's year 2 line (`tly_buyupgrade pierre_year2_seeds`, then
+   (`base`, or `pierre_year2_seeds` when the save owns that upgrade). It writes into the DEPLOYED
+   `Mods\TheLongestYearssets\lexicon\layers\` folder, not the repo: copy the file back into
+   `src/TheLongestYear/assets/lexicon/layers/` and delete it from the Mods folder afterwards, or it applies to your own games. Then repeat for the other
+   variant: on a farm that owns Pierre's year 2 line (`tly_addjp 10000` first, since the upgrade costs JP, then `tly_buyupgrade pierre_year2_seeds`, then
    `debug sleep` so it saves, then reload), run `tly_lexicon write <UniqueID>` again; the file keeps
    both. A layer that maps only `base` leaves Pierre-owning saves computing live, because a variant
    a layer does not name is dropped from the shipped set.
-5. **Check it.** Reload the farm. `tly_lexicon status` must say `origin: shipped`, and
+5. **Check it.** Restart the game (layers are read once per session), then load the farm. `tly_lexicon status` must say `origin: shipped`, and
    `tly_lexicon diff` must report 0 differences (it cold-builds and compares to what was served; on a
    computed load it is trivially empty, so check on a shipped one).
 6. **Every release.** `vanilla.json` records the TLY version that wrote it and is served only to

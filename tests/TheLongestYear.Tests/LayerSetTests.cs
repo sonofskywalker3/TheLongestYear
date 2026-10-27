@@ -376,6 +376,42 @@ public sealed class LayerSetTests
         Assert.Empty(sparse.WeekRulings);
     }
 
+    private static string BareSource(string members)
+        => "{\"UniqueId\": \"ModC\", \"CheckedVersion\": \"1.0.0\", \"ExtraSources\": {\"(O)x\": [{" + members + "}]}}";
+
+    private const string FullMembers = "\"Kind\": \"Crop\", \"Lands\": \"+0x112\", \"Reliability\": \"Dependable\", \"Detail\": \"d\"";
+
+    [Fact]
+    public void ASourceWithoutConditionsSetupOrInputsReadsWithDefaultsAndBuilds()
+    {
+        LayerInputs read = LayerFile.ReadInputs(BareSource(FullMembers));
+        ObtainSource src = Assert.Single(read.ExtraSources["(O)x"]);
+        Assert.Equal(ObtainConditions.None, src.Conditions);
+        Assert.Empty(src.Setup);
+        Assert.Empty(src.Inputs);
+        ObtainabilityBuilder.Build(Inputs.Value, extraDirect: read.ExtraSources);
+    }
+
+    [Fact]
+    public void ASourceWithoutLandsIsSkippedWithAWarnNamingTheFile()
+    {
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tly-layers-" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(folder);
+        try
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModC.inputs.json"),
+                BareSource("\"Kind\": \"Crop\", \"Reliability\": \"Dependable\", \"Detail\": \"d\""));
+            var warnings = new List<string>();
+            var (inputs, _) = LayerFile.ReadFolder(folder, warnings.Add);
+            Assert.Empty(inputs);
+            Assert.Contains(warnings, w => w.Contains("ModC.inputs.json", StringComparison.Ordinal) && w.Contains("Lands", StringComparison.Ordinal));
+        }
+        finally
+        {
+            System.IO.Directory.Delete(folder, true);
+        }
+    }
+
     [Fact]
     public void RewriteAfterARemovedRowHoldsExactlyTheLiveRows()
     {

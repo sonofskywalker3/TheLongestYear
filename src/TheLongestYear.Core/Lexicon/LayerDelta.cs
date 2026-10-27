@@ -21,7 +21,9 @@ public static class LayerDelta
     /// unreached maps and availability answers that differ, and the live passes. The variant's row hashes
     /// are built fresh (nothing carried over from <paramref name="existing"/>, so a row the mod no longer
     /// has is gone): the live rows missing from or differing from the baseline's, plus (for a single mod)
-    /// every row <see cref="RowHashes.Owner"/> gives that mod. The other variants' rows are kept as they were. An empty delta with no other variant on file
+    /// every row whose <see cref="RowHashes.Owner"/> (the id prefix before the first "." or "_") equals the
+    /// mod's whole UniqueID, which only a UniqueID with no "." can match (a row of "Cornucopia.MoreCrops"
+    /// never does); other rows enter only because they differ from the baseline. The other variants' rows are kept as they were. An empty delta with no other variant on file
     /// writes <c>"Deltas": {}</c>; an existing empty map is not carried over, since it cannot say which
     /// save state it was made in.</para></summary>
     public static LayerAnswers Write(

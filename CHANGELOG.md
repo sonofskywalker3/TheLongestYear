@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.3 - 2026-10-27
+
+### Internal
+
+- A hand-written layer source with no `Conditions`, `Setup` or `Inputs` now reads with defaults instead of breaking the build; one with no `Kind`, `Lands` or `Detail` is skipped with a WARN.
+
 ## 1.1.2 - 2026-10-27
 
 ### Internal

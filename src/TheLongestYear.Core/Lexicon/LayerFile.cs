@@ -77,16 +77,47 @@ public static class LayerFile
             foreach (var (id, sources) in read.ExtraSources)
                 if (sources == null || sources.Any(src => src == null))
                     throw new System.Text.Json.JsonException($"ExtraSources {id} is null or holds a null source.");
+        RequireSourceMembers(json);
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
-            ExtraSources = read.ExtraSources ?? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal),
+            ExtraSources = read.ExtraSources == null
+                ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
+                : read.ExtraSources.ToDictionary(
+                    p => p.Key,
+                    p => (IReadOnlyList<ObtainSource>)p.Value.Select(WithDefaults).ToList(),
+                    StringComparer.Ordinal),
             YearRulings = read.YearRulings ?? new Dictionary<string, YearRuling>(StringComparer.Ordinal),
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
             TextHash = HashText(json),
         };
     }
+
+    private static readonly string[] RequiredSourceMembers = { "Kind", "Lands", "Detail" };
+
+    /// <summary>A source that names no Kind, Lands or Detail cannot be read as intended (a missing Kind
+    /// would silently be the first one), so the file is refused naming the item and member.</summary>
+    private static void RequireSourceMembers(string json)
+    {
+        if (System.Text.Json.Nodes.JsonNode.Parse(json)?["ExtraSources"] is not System.Text.Json.Nodes.JsonObject extra) return;
+        foreach (var (id, list) in extra)
+            if (list is System.Text.Json.Nodes.JsonArray sources)
+                foreach (var source in sources)
+                    if (source is System.Text.Json.Nodes.JsonObject o)
+                        foreach (string member in RequiredSourceMembers)
+                            if (o[member] == null)
+                                throw new System.Text.Json.JsonException($"ExtraSources {id} holds a source with no {member}.");
+    }
+
+    /// <summary>A hand-written source may leave out Conditions, Setup and Inputs; they read as none.</summary>
+    private static ObtainSource WithDefaults(ObtainSource src)
+        => src with
+        {
+            Conditions = src.Conditions ?? ObtainConditions.None,
+            Setup = src.Setup ?? Array.Empty<SetupStep>(),
+            Inputs = src.Inputs ?? Array.Empty<IReadOnlyList<string>>(),
+        };
 
     private const int TextHashChars = 8;
 
