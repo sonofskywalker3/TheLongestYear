@@ -8,8 +8,8 @@ Working these out from the game's data is a cold build, and on 1.0.27 it cost ab
 on every load. From 1.1 the answers for the base game ship with the mod
 (`assets/lexicon/vanilla.json`, one variant for a normal save and one for a save that owns the
 `pierre_year2_seeds` upgrade). On load, TLY hashes the game data that feeds the build and checks
-the hashes against the shipped answers. If they all match, the shipped answers are served and
-nothing is built. If some rows differ (a mod changed them, or a game update), the answers are
+the hashes against the shipped answers. If they all match, and the file was written by the running
+TLY version, the shipped answers are served and nothing is built. If some rows differ (a mod changed them, or a game update), the answers are
 built cold once and written to a small disk cache (`data/lexicon/`, the three most recent
 entries), so the next load of the same data reads the cache instead.
 
@@ -26,7 +26,10 @@ to the other's shop), so each pair of supported mods installed together needs it
 The resolver takes the first of these that applies:
 
 1. **Shipped.** Vanilla's answers with every active layer's delta laid over them, when the live
-   data rows all match the hashes stored with those answers.
+   data rows all match the hashes stored with those answers and the answers are for this version:
+   `vanilla.json`'s `ModVersion` must be the running TLY version (the manifest `Version`), and a
+   layer's answers are laid on only when the installed mod is the version they were checked
+   against (see the layer WARN below).
 2. **Cache.** An entry in `data/lexicon/` made earlier from the same game data and the same layer
    files (the layer file text is part of the cache key, so editing a layer never serves a stale entry).
 3. **Computed.** A cold build, then written to the cache.
@@ -36,12 +39,20 @@ Read the SMAPI log:
 - `Lexicon: Shipped (a1b2c3d4), 5321 items, 42 ms.` The origin, the first 8 characters of the key,
   the routed item count and the time. A `Computed` line ends with the reason, for example
   `— 12 data rows differ from the shipped answers (Custom, FlashShifter)` or
-  `— variant 'pierre_year2_seeds' not in the shipped answers`.
+  `— variant 'pierre_year2_seeds' not in the shipped answers` or
+  `— shipped answers are for TLY 1.1.0, running 1.1.1` (the file was not regenerated after a version
+  bump; see "Every release" below).
 - `Lexicon layers: vanilla, <id>, ...; pairs not mapped yet (A+B), so these answers are computed.`
   Written at start-up when layers are active.
-- WARN `Lexicon layer <id>: checked against <version>, installed <version>; applying its routes,
-  rows that changed are recomputed`. The mod was updated since the layer was mapped. The layer still
-  applies; rows whose hashes changed fall to a computed build.
+- WARN `Lexicon layer <id>: checked against <version>, installed <version>; its generated answers
+  are not used, so that mod's content is computed; its hand-written routes and rulings are still in
+  use. Re-check the layer`. The mod was updated since the layer was mapped. Generated answers are
+  version-locked: `<id>.answers.json` and every `A+B.answers.json` naming that mod are dropped, so
+  the answers are computed (a dropped pair file also leaves the pair unmapped). The hand-written
+  `<id>.inputs.json` (extra routes, year and week rulings) still applies.
+- WARN `Lexicon layer <id>: hand-written inputs checked against <version>, installed <version>; they
+  are still in use. Re-check the layer`. The answers files match the installed mod but the inputs
+  file's `CheckedVersion` does not: the answers still apply; bring the inputs file's version up to date.
 - Trace `Load timing: pools … ms, effort … ms, availability … ms, obtainability read … ms build … ms,
   year sort … ms.` (needs SMAPI's trace level.) The build and year sort figures are near zero when the
   answers were served.
@@ -101,7 +112,9 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.
    - **`CheckedVersion`** is the mod version you mapped against. A different installed version gives
-     the layer WARN above.
+     the layer WARN above. The answers files record their own checked versions
+     (`CheckedVersions`, `"A@1.2.0"` or `"A@1.2.0+B@3.0.0"`), written by `tly_lexicon write`; those
+     decide whether the answers are used.
 4. **Write the answers.** Load the farm with the inputs file in place (restart the game so it is
    read), then run `tly_lexicon write <UniqueID>`. This cold-builds with the layer's extra sources
    and writes `<UniqueID>.answers.json`: the part that differs from vanilla, for this save's variant
@@ -113,7 +126,13 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 5. **Check it.** Reload the farm. `tly_lexicon status` must say `origin: shipped`, and
    `tly_lexicon diff` must report 0 differences (it cold-builds and compares to what was served; on a
    computed load it is trivially empty, so check on a shipped one).
-6. **Keep it current.** After any change to a TLY rule that feeds the build, regenerate `vanilla.json`
+6. **Every release.** `vanilla.json` records the TLY version that wrote it and is served only to
+   that version, so every release regenerates it: bump `Version` in `manifest.json` first, then run
+   `tly_lexicon write vanilla` on a base farm and again on a Pierre-upgrade farm, then build the
+   release. Skip it and the file is ignored in game (every load computes).
+   `ShippedModVersionIsTheManifestVersion` fails until the file's `ModVersion` matches the manifest.
+   A supported mod's layer is regenerated the same way whenever that mod updates.
+7. **Keep it current.** After any change to a TLY rule that feeds the build, regenerate `vanilla.json`
    (the tests in `VanillaLexiconCoverageTests` that rebuild it offline from the inputs fixtures fail
    until you do: the obtainability and year-sort routes of both variants and every availability
    answer) and every layer's `.answers.json`. After a change to what the game reads, dump the
@@ -122,7 +141,7 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    fresh farm, `vanilla_obtainability_inputs_pierre.json` from one that owns Pierre's year 2 line)
    and copy them to `tests/TheLongestYear.Tests/Fixtures/`. After a mod update, review the layer's WARN, re-run `gaps`, adjust the inputs
    file and its `CheckedVersion`, and write the answers again.
-7. **Interactions.** With both mods installed (and only those), run `tly_lexicon write <A>+<B>` (in
+8. **Interactions.** With both mods installed (and only those), run `tly_lexicon write <A>+<B>` (in
    either order; ids are sorted). An empty delta still counts as mapped: write it so the pair is
    known to change nothing. Without the pair's file, the pair is not served as shipped; its answers
    are computed live and the start-up line lists it under "pairs not mapped yet".

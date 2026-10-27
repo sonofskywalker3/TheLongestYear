@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.1 - 2026-10-27
+
+### Changed
+
+- **Shipped item-path answers are now tied to the mod version.** The routes that ship with the mod are only used by the TLY version they were made for. If the file and the mod ever disagree, TLY works the routes out itself once and remembers them, so an out-of-date file can never give a wrong board. A supported mod's shipped answers work the same way: when the installed version of that mod is not the one they were checked against, TLY works out that mod's content itself and says so in the log.
+
 ## 1.1.0 - 2026-10-27
 
 ### Changed

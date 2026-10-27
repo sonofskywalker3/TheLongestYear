@@ -12,7 +12,8 @@ namespace TheLongestYear.Loop
 
     /// <summary>The SMAPI side of the supported-mod layers: reads every file under
     /// <c>assets/lexicon/layers/</c> (<see cref="LayerFile.ReadFolder"/>), keeps the layers whose mods
-    /// are all loaded and version-checks them (<see cref="LayerSet.Active"/>), and composes them over
+    /// are all loaded, drops the generated answers checked against another installed version
+    /// (<see cref="LayerSet.Active"/> decides and WARNs), and composes the rest over
     /// the shipped vanilla answers (<see cref="LayerSet.Compose"/>). Only the mod registry calls live here.</summary>
     internal static class LayerLoader
     {

@@ -29,6 +29,21 @@ public sealed class VanillaLexiconCoverageTests
     private static AnswerVariant Variant(string name)
         => Shipped.Value.Resolve(name) ?? throw new Xunit.Sdk.XunitException($"The shipped lexicon has no '{name}' variant.");
 
+    /// <summary>The shipped answers are served only to the mod version that wrote them, so every
+    /// release must regenerate the file after bumping the manifest (<c>tly_lexicon write vanilla</c>).</summary>
+    [Fact]
+    public void ShippedModVersionIsTheManifestVersion()
+    {
+        string manifestPath = Path.Combine(AppContext.BaseDirectory, "Fixtures", "manifest.json");
+        Assert.True(File.Exists(manifestPath), $"The mod manifest is missing from the test output: {manifestPath}");
+        using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(manifestPath),
+            new System.Text.Json.JsonDocumentOptions { CommentHandling = System.Text.Json.JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        string version = manifest.RootElement.GetProperty("Version").GetString()!;
+        Assert.True(Shipped.Value.ModVersion == version,
+            $"assets/lexicon/vanilla.json was written by TLY {Shipped.Value.ModVersion} but the manifest is {version}: "
+            + "regenerate it (tly_lexicon write vanilla, both variants) after the version bump, or it is ignored in game.");
+    }
+
     [Fact]
     public void EveryVanillaObjectHasAnEntry()
     {

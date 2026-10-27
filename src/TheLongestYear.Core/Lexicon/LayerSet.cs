@@ -6,6 +6,9 @@ using TheLongestYear.Core.Obtainability;
 namespace TheLongestYear.Core.Lexicon;
 
 /// <summary>The shipped vanilla answers with every active supported-mod layer laid over them.
+/// <para><b>Versions.</b> <see cref="Active"/> decides which files reach <see cref="Compose"/>: a
+/// mod's hand-written inputs apply at any installed version, its generated answers only at the version
+/// they were checked against.</para>
 /// <para><b>Compose order.</b> Vanilla, then each single-mod delta in the order given (file order),
 /// then each interaction delta by mod count ascending (file order within a count). A layer's answers
 /// apply only when every mod it names is active (has an inputs entry here). For every variant, a later
@@ -83,26 +86,84 @@ public sealed class LayerSet
 
     /// <summary>The message a layer checked against another mod version gets.</summary>
     public static string VersionMessage(string id, string checkedVersion, string? installed)
-        => $"Lexicon layer {id}: checked against {checkedVersion}, installed {installed ?? "unknown"}; applying its routes, rows that changed are recomputed";
+        => $"Lexicon layer {id}: checked against {checkedVersion}, installed {installed ?? "unknown"}; its generated answers are not used, "
+           + "so that mod's content is computed; its hand-written routes and rulings are still in use. Re-check the layer";
 
-    /// <summary>WARNs when the installed version is not the one the layer was checked against. The layer
-    /// applies either way (true): the row hashes decide which answers still hold.</summary>
-    public static bool VersionCheck(LayerInputs layer, string? installedVersion, Action<string> warn)
+    /// <summary>The message a layer gets when only its hand-written inputs name another version (its
+    /// generated answers match the installed one and still apply).</summary>
+    public static string InputsVersionMessage(string id, string checkedVersion, string? installed)
+        => $"Lexicon layer {id}: hand-written inputs checked against {checkedVersion}, installed {installed ?? "unknown"}; "
+           + "they are still in use. Re-check the layer";
+
+    /// <summary>Whether the installed version is the one the layer's inputs were checked against.</summary>
+    public static bool VersionMatches(LayerInputs layer, string? installedVersion)
+        => installedVersion != null && string.Equals(layer.CheckedVersion, installedVersion, StringComparison.Ordinal);
+
+    /// <summary>The version <paramref name="answers"/> was checked against for <paramref name="mod"/>,
+    /// read from its <see cref="LayerAnswers.CheckedVersions"/> (<c>"A@1.2.0+B@3.0.0"</c>; a version
+    /// may itself hold <c>+</c>, so an entry runs to the next <c>+&lt;other mod&gt;@</c>); null when it
+    /// names no entry for that mod.</summary>
+    public static string? CheckedVersionOf(LayerAnswers answers, string mod)
     {
-        if (!string.Equals(layer.CheckedVersion, installedVersion, StringComparison.Ordinal))
-            warn(VersionMessage(layer.UniqueId, layer.CheckedVersion, installedVersion));
-        return true;
+        string text = answers.CheckedVersions ?? "";
+        string prefix = mod + "@";
+        int start;
+        if (text.StartsWith(prefix, StringComparison.Ordinal)) start = 0;
+        else
+        {
+            int at = text.IndexOf(LayerFile.Joiner + prefix, StringComparison.Ordinal);
+            if (at < 0) return null;
+            start = at + LayerFile.Joiner.Length;
+        }
+        int from = start + prefix.Length;
+        int end = text.Length;
+        foreach (string other in answers.Mods)
+        {
+            if (other == mod) continue;
+            int next = text.IndexOf(LayerFile.Joiner + other + "@", from, StringComparison.Ordinal);
+            if (next >= 0 && next < end) end = next;
+        }
+        return text[from..end];
     }
 
-    /// <summary>The layers for the installed mods: inputs whose mod is loaded (version-checked), and
-    /// answers whose every mod is among them, each in the order given.</summary>
+    /// <summary>The layers for the installed mods. Inputs apply whenever their mod is loaded, whatever
+    /// its version: the hand-written routes and rulings are still the best facts there are. Answers
+    /// apply only when every mod they name is loaded AND its installed version is the one the file
+    /// was checked against (<see cref="CheckedVersionOf"/>): generated answers are version-locked, so on
+    /// a mismatch every answers file naming that mod is dropped and its content is computed. Each such
+    /// mod gets ONE <see cref="VersionMessage"/> WARN (a mod whose answers match but whose inputs name
+    /// another version gets <see cref="InputsVersionMessage"/>). Each list keeps the order given.</summary>
     public static (IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers) Active(
         IReadOnlyList<LayerInputs> inputs, IReadOnlyList<LayerAnswers> answers,
         Func<string, bool> isLoaded, Func<string, string?> installedVersionOf, Action<string> warn)
     {
-        var kept = inputs.Where(i => isLoaded(i.UniqueId) && VersionCheck(i, installedVersionOf(i.UniqueId), warn)).ToList();
-        var ids = new HashSet<string>(kept.Select(i => i.UniqueId), StringComparer.Ordinal);
-        return (kept, answers.Where(a => a.Mods.Count > 0 && a.Mods.All(ids.Contains)).ToList());
+        var kept = inputs.Where(i => isLoaded(i.UniqueId)).ToList();
+        var installed = new Dictionary<string, string?>(StringComparer.Ordinal);
+        foreach (LayerInputs layer in kept) installed[layer.UniqueId] = installedVersionOf(layer.UniqueId);
+
+        // Per mod, the first answers entry checked against a version that is not the installed one.
+        var answersMismatched = new Dictionary<string, string>(StringComparer.Ordinal);
+        var candidates = answers.Where(a => a.Mods.Count > 0 && a.Mods.All(installed.ContainsKey)).ToList();
+        foreach (LayerAnswers file in candidates)
+            foreach (string mod in file.Mods.Distinct(StringComparer.Ordinal))
+            {
+                string? checkedVersion = CheckedVersionOf(file, mod);
+                if (installed[mod] == null || !string.Equals(checkedVersion, installed[mod], StringComparison.Ordinal))
+                    answersMismatched.TryAdd(mod, checkedVersion ?? "unknown");
+            }
+        // A mismatched mod's answers are dropped from every file naming it (an interaction delta is laid
+        // over the single ones, so it cannot stand without them).
+        var applied = candidates.Where(a => !a.Mods.Any(answersMismatched.ContainsKey)).ToList();
+
+        foreach (LayerInputs layer in kept)
+        {
+            string? version = installed[layer.UniqueId];
+            if (answersMismatched.TryGetValue(layer.UniqueId, out string? answersVersion))
+                warn(VersionMessage(layer.UniqueId, VersionMatches(layer, version) ? answersVersion : layer.CheckedVersion, version));
+            else if (!VersionMatches(layer, version))
+                warn(InputsVersionMessage(layer.UniqueId, layer.CheckedVersion, version));
+        }
+        return (kept, applied);
     }
 
     public static LayerSet Compose(

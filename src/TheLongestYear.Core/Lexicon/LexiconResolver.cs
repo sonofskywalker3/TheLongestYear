@@ -20,7 +20,8 @@ public sealed record Resolved(
 
 /// <summary>Finds the answers for the live data, in order:
 /// <list type="number">
-/// <item>the shipped set, when its game version is the live one, it holds the save's variant
+/// <item>the shipped set, when its game version is the live one, its mod version is the running
+/// mod's (the file is regenerated each release; a file left from another version is ignored), it holds the save's variant
 /// (<c>pierre_year2_seeds</c> when owned, else <c>base</c>) and that variant's row hashes equal the
 /// live rows exactly (same keys, same hashes);</item>
 /// <item>the cache entry for <see cref="RowHashes.Key"/> of the live rows, layers, versions and
@@ -41,7 +42,7 @@ public sealed class LexiconResolver
     /// <summary>The Core assembly's module version id: it changes with every change to the code that
     /// computes the answers, so a cache entry written by other code is not reused even when the game
     /// and mod versions are unchanged (a branch that does not bump its version). Only the cache key
-    /// names it; the shipped answers are checked by their rows and game version alone.</summary>
+    /// names it; the shipped answers are checked by their rows, game version and mod version.</summary>
     public static string CodeStamp { get; } = typeof(LexiconResolver).Assembly.ManifestModule.ModuleVersionId.ToString("N");
 
     /// <param name="codeStamp">What the cache key names for the code; null uses <see cref="CodeStamp"/>.</param>
@@ -73,7 +74,8 @@ public sealed class LexiconResolver
         string key = RowHashes.Key(rows, keyLayers ?? layers, gameVersion, modVersion, _codeStamp);
         string variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
 
-        if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.Variants.ContainsKey(variantName)
+        if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.ModVersion == modVersion
+            && _shipped.Variants.ContainsKey(variantName)
             && SameRows(_shipped.RowHashesFor(variantName), rows)
             && _shipped.Resolve(variantName) is AnswerVariant shippedVariant)
         {

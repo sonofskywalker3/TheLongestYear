@@ -78,14 +78,16 @@ namespace TheLongestYear.Loop
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";
             if (r.Origin == AnswerOrigin.Computed)
-                line += ComputedReason(r, Loaded.Set.Composed, pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant, gameVersion);
+                line += ComputedReason(r, Loaded.Set.Composed, pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant, gameVersion, modVersion);
             _monitor.Log(line + ".", LogLevel.Info);
             return r;
         }
 
         /// <summary>Why a computed answer was needed, as the tail of the INFO line.</summary>
-        internal static string ComputedReason(Resolved r, AnswerSet shipped, string variantName, string gameVersion)
+        internal static string ComputedReason(Resolved r, AnswerSet shipped, string variantName, string gameVersion, string modVersion)
         {
+            if (shipped != null && shipped.ModVersion != modVersion)
+                return $" — shipped answers are for TLY {shipped.ModVersion}, running {modVersion}";
             if (r.DirtyOwners.Count > 0)
                 return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})";
             if (shipped == null) return " — no shipped answers";

@@ -123,40 +123,53 @@ public sealed class LayerSetTests
     }
 
     [Fact]
-    public void MismatchedVersionStillApplies()
+    public void MismatchedVersionAppliesInputsButDropsAnswers()
     {
         ObtainabilityInputs vanillaInputs = Inputs.Value;
         ObtainabilityInputs checkedInputs = WithOlive(vanillaInputs, price: 50);   // the data the layer was mapped on
-        ObtainabilityInputs live = WithOlive(vanillaInputs, price: 60);            // the installed version changed a row
         IReadOnlyDictionary<string, ulong> vanillaRows = RowHashes.Of(vanillaInputs, false);
         var layerRows = RowHashes.Of(checkedInputs, false).Where(p => !vanillaRows.ContainsKey(p.Key))
             .ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
 
-        var warnings = new List<string>();
         LayerInputs[] inputs = { In(A, "1.0.0", OliveSource(), new Dictionary<string, YearRuling> { [Olive] = YearRuling.YearTwo }) };
         LayerAnswers[] answers =
         {
             Ans(new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [AnswerSet.BaseVariant] = Variant((Olive, "mapped")) }, layerRows, A),
         };
-        var (activeInputs, activeAnswers) = LayerSet.Active(inputs, answers, _ => true, _ => "1.1.0", warnings.Add);
-        Assert.Equal($"Lexicon layer {A}: checked against 1.0.0, installed 1.1.0; applying its routes, rows that changed are recomputed",
-            Assert.Single(warnings));
-        Assert.Single(activeInputs);
-        Assert.Single(activeAnswers);
-
-        LayerSet set = LayerSet.Compose(VanillaSet(vanillaRows), activeInputs, activeAnswers, warnings.Add);
-        var resolver = new LexiconResolver(set.Composed, _ => null, (_, _) => { },
+        LexiconResolver ResolverFor(LayerSet set) => new(set.Composed, _ => null, (_, _) => { },
             inp =>
             {
                 ObtainabilityBuild built = ObtainabilityBuilder.Build(inp, extraDirect: set.ExtraDirectSources);
                 return AnswerVariantFactory.From(built, built, inp, null, Array.Empty<string>(), null);
             });
 
-        // At the checked data the layer is served as shipped; at the installed data it is recomputed.
-        Assert.Equal(AnswerOrigin.Shipped, resolver.Resolve(checkedInputs, false, Game, Mod, set.Composed!.Layers).Origin);
-        Resolved r = resolver.Resolve(live, false, Game, Mod, set.Composed!.Layers);
+        // At the checked version the answers are composed and served as shipped, silently.
+        var warnings = new List<string>();
+        var (sameInputs, sameAnswers) = LayerSet.Active(inputs, answers, _ => true, _ => "1.0.0", warnings.Add);
+        Assert.Empty(warnings);
+        Assert.Single(sameAnswers);
+        LayerSet same = LayerSet.Compose(VanillaSet(vanillaRows), sameInputs, sameAnswers, warnings.Add);
+        Resolved served = ResolverFor(same).Resolve(checkedInputs, false, Game, Mod, same.Composed!.Layers);
+        Assert.Equal(AnswerOrigin.Shipped, served.Origin);
+        Assert.Equal("mapped", served.Variant.Obtain[Olive].Single().Detail);
+
+        // At another installed version: one WARN, the hand-written inputs still apply, the answers do not.
+        var (activeInputs, activeAnswers) = LayerSet.Active(inputs, answers, _ => true, _ => "1.1.0", warnings.Add);
+        Assert.Equal($"Lexicon layer {A}: checked against 1.0.0, installed 1.1.0; its generated answers are not used, "
+                     + "so that mod's content is computed; its hand-written routes and rulings are still in use. Re-check the layer",
+            Assert.Single(warnings));
+        Assert.Single(activeInputs);
+        Assert.Empty(activeAnswers);
+
+        LayerSet set = LayerSet.Compose(VanillaSet(vanillaRows), activeInputs, activeAnswers, warnings.Add);
+        Assert.Equal(YearRuling.YearTwo, set.YearRuling(Olive));
+        Assert.True(set.ExtraDirectSources.ContainsKey(Olive));
+
+        // Even at the very data the answers were mapped on, the mod's content is computed (with its routes).
+        Resolved r = ResolverFor(set).Resolve(checkedInputs, false, Game, Mod, set.Composed!.Layers);
         Assert.Equal(AnswerOrigin.Computed, r.Origin);
         Assert.Contains(r.Variant.Obtain[Olive], s => s.Detail == "layer: olive grove");
+        Assert.DoesNotContain(r.Variant.Obtain[Olive], s => s.Detail == "mapped");
 
         try
         {
@@ -168,6 +181,55 @@ public sealed class LayerSetTests
             YearTwoCartPool.LayerRuling = null;
         }
         Assert.False(YearTwoCartPool.Offers(new CartCandidate(Olive, "(O)", true, YearTwoReason.YearOne)));
+    }
+
+    [Theory]
+    [InlineData("1.0.0", "1.0.0", true)]
+    [InlineData("1.1.0", "1.0.0", false)]
+    [InlineData("1.0.0", "1.1.0", false)]
+    public void PairAnswersAreDroppedWhenEitherModMismatches(string installedA, string installedB, bool kept)
+    {
+        var warnings = new List<string>();
+        LayerInputs[] inputs = { In(A), In(B) };
+        LayerAnswers[] answers = { Ans("A", A), Ans("B", B), Ans("A+B", A, B) };
+        string Installed(string id) => id == A ? installedA : installedB;
+        var (activeInputs, activeAnswers) = LayerSet.Active(inputs, answers, _ => true, Installed, warnings.Add);
+
+        Assert.Equal(new[] { A, B }, activeInputs.Select(i => i.UniqueId));
+        string[] names = activeAnswers.Select(a => LayerFile.Name(a.Mods)).ToArray();
+        if (kept)
+        {
+            Assert.Equal(new[] { A, B, A + "+" + B }, names);
+            Assert.Empty(warnings);
+            return;
+        }
+        string mismatched = installedA != "1.0.0" ? A : B;
+        string other = mismatched == A ? B : A;
+        Assert.Equal(new[] { other }, names);   // the mismatched mod's own file and the pair file are dropped
+        string warning = Assert.Single(warnings);
+        Assert.StartsWith($"Lexicon layer {mismatched}: checked against 1.0.0, installed 1.1.0;", warning);
+
+        // Without the pair file the pair is unmapped, so nothing is served as shipped.
+        LayerSet set = LayerSet.Compose(VanillaSet(), activeInputs, activeAnswers, warnings.Add);
+        Assert.Equal(new[] { A + "+" + B }, set.UnmappedPairs);
+        Assert.Empty(set.Composed!.Variants);
+    }
+
+    [Fact]
+    public void AnswersCheckedVersionsAreReadPerMod()
+    {
+        var pair = new LayerAnswers(new[] { A, B }, "ModA@1.2.0+build.5+ModB@3.0.0",
+            new Dictionary<string, IReadOnlyDictionary<string, ulong>>(), new Dictionary<string, AnswerVariant>());
+        Assert.Equal("1.2.0+build.5", LayerSet.CheckedVersionOf(pair, A));
+        Assert.Equal("3.0.0", LayerSet.CheckedVersionOf(pair, B));
+        Assert.Null(LayerSet.CheckedVersionOf(pair, "ModC"));
+
+        // Answers that match while the hand-written inputs name another version still apply, with a WARN about the inputs.
+        var warnings = new List<string>();
+        var (_, active) = LayerSet.Active(new[] { In(A, "0.9.0") }, new[] { Ans("A", A) }, _ => true, _ => "1.0.0", warnings.Add);
+        Assert.Single(active);
+        Assert.Equal($"Lexicon layer {A}: hand-written inputs checked against 0.9.0, installed 1.0.0; they are still in use. Re-check the layer",
+            Assert.Single(warnings));
     }
 
     [Fact]

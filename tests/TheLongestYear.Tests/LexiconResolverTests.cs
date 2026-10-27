@@ -87,6 +87,27 @@ public sealed class LexiconResolverTests
     }
 
     [Fact]
+    public void ShippedIsSkippedForAnotherModVersion()
+    {
+        ObtainabilityInputs live = Inputs.Value;
+        AnswerSet shipped = SetOf(RowHashes.Of(live, false), "shipped") with { ModVersion = "1.0.27" };
+
+        var same = new Harness();
+        Assert.Equal(AnswerOrigin.Shipped, same.Resolver(shipped).Resolve(live, false, Game, "1.0.27", Vanilla).Origin);
+        Assert.Equal(0, same.Builds);
+
+        // Same rows, same game version, but written by another mod version: a cold build, cached.
+        var other = new Harness();
+        Resolved r = other.Resolver(shipped).Resolve(live, false, Game, Mod, Vanilla);
+        Assert.Equal(AnswerOrigin.Computed, r.Origin);
+        Assert.True(r.Variant.Obtain.ContainsKey("built"));
+        Assert.Equal(1, other.Builds);
+        Assert.Equal(Mod, Assert.Single(other.Written).Value.ModVersion);
+        Assert.Empty(r.DirtyOwners);
+        Assert.Equal(0, r.DirtyCount);
+    }
+
+    [Fact]
     public void ShippedIsSkippedWhenTheVariantIsMissing()
     {
         ObtainabilityInputs live = Inputs.Value;
@@ -206,7 +227,7 @@ public sealed class LexiconResolverTests
     {
         AnswerSet shipped = LexiconJson.Read(File.ReadAllText(ShippedPath));
         var h = new Harness();
-        Resolved r = h.Resolver(shipped).Resolve(Inputs.Value, false, shipped.GameVersion, Mod, Vanilla);
+        Resolved r = h.Resolver(shipped).Resolve(Inputs.Value, false, shipped.GameVersion, shipped.ModVersion, Vanilla);
         Assert.Equal(AnswerOrigin.Shipped, r.Origin);
         Assert.Equal(0, h.Builds);
     }
