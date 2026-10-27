@@ -8,9 +8,9 @@ namespace TheLongestYear.Core.Obtainability;
 /// seed table, then plant, then land (spec 2026-09-14-obtainability-phase2 section 1).</summary>
 public static class GrowSources
 {
-    internal const string MixedSeedsId = "(O)770";
-    internal const string TeaSaplingId = "(O)251";
-    internal const string TeaLeavesId = "(O)815";
+    private const string MixedSeedsId = "(O)770";
+    private const string TeaSaplingId = "(O)251";
+    private const string TeaLeavesId = "(O)815";
     private const string GreenhouseUnlock = "mail:ccPantry";   // Farm.cs 1132, GreenhouseBuilding.cs 47
     /// <summary>Bush.IsSheltered (Bush.cs 196-205) accepts a greenhouse OR an indoor pot, and a pot
     /// needs no unlock, so the tea bush's sheltered source must not require the pantry bundle.</summary>
@@ -25,7 +25,7 @@ public static class GrowSources
     /// <summary>What Mixed Seeds become, by the season of the planting day (Crop.cs 294-320, 414-433).
     /// 473 resolves to 472. Winter picks a random other season's pool; only the greenhouse grows it,
     /// because the greenhouse waives the season check but still reports the outside season (GameLocation.cs 649-651).</summary>
-    internal static readonly IReadOnlyDictionary<Season, string[]> MixedSeedPools = new Dictionary<Season, string[]>
+    private static readonly IReadOnlyDictionary<Season, string[]> MixedSeedPools = new Dictionary<Season, string[]>
     {
         [Season.Spring] = new[] { "(O)472", "(O)474", "(O)475" },
         [Season.Summer] = new[] { "(O)487", "(O)483", "(O)482", "(O)484" },

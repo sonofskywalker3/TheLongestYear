@@ -12,17 +12,17 @@ public static class MadeSources
 {
     private const int MinutesPerDay = 1440;
     private const string NotTag = "!";
-    internal const string DropIn = "DROP_IN";
+    private const string DropIn = "DROP_IN";
     private const string SkillUnlockPrefix = "s";
     private const string GeodeOpener = "shop:Blacksmith";
-    internal const string MixedSeedsId = "(O)770";
-    internal const string AncientSeedsId = "(O)499";
+    private const string MixedSeedsId = "(O)770";
+    private const string AncientSeedsId = "(O)499";
     private const string MushroomLogTree = "trees:mature trees within 3 tiles";
-    internal static readonly string[] MushroomLogItems = { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" };
+    private static readonly string[] MushroomLogItems = { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" };
     /// <summary>Recipe ingredient code for "any wild seed packet" (CraftingRecipe.cs 16, matched at 209):
     /// Spring, Summer, Fall or Winter Seeds.</summary>
-    internal const string AnyWildSeed = "-777";
-    internal static readonly string[] WildSeedIds = { "(O)495", "(O)496", "(O)497", "(O)498" };
+    private const string AnyWildSeed = "-777";
+    private static readonly string[] WildSeedIds = { "(O)495", "(O)496", "(O)497", "(O)498" };
     private static readonly string[] KnownFromStartWords = { "default", "" };
     private static readonly string[] TaughtElsewhereWords = { "none", "null" };
     /// <summary>A cooking recipe unlocked by farmhouse level ("l 0", "l 100") has no automatic unlock
@@ -33,13 +33,13 @@ public static class MadeSources
     private static readonly string[] Skills = { "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck" };
 
     /// <summary>Code-only default geode contents (Utility.cs getTreasureFromGeode 6397-6647).</summary>
-    internal static readonly IReadOnlyDictionary<string, string[]> DefaultGeodeTable = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    private static readonly IReadOnlyDictionary<string, string[]> DefaultGeodeTable = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
         ["(O)535"] = new[] { "(O)390", "(O)330", "(O)86", "(O)378", "(O)380", "(O)382" },
         ["(O)536"] = new[] { "(O)390", "(O)330", "(O)84", "(O)378", "(O)380", "(O)382", "(O)384" },
         ["(O)749"] = new[] { "(O)390", "(O)330", "(O)82", "(O)84", "(O)86", "(O)378", "(O)380", "(O)382", "(O)384", "(O)386" },
     };
-    internal static readonly string[] OtherGeodeDefault = { "(O)390", "(O)330", "(O)82", "(O)378", "(O)380", "(O)382", "(O)384", "(O)386" };
+    private static readonly string[] OtherGeodeDefault = { "(O)390", "(O)330", "(O)82", "(O)378", "(O)380", "(O)382", "(O)384", "(O)386" };
 
     /// <summary>The three geode types the mines hand out by the handful (Geode, Frozen Geode, Magma
     /// Geode: about 2.2% of stones on their floors, MineShaft.cs 3642-3650). A named mineral from one
@@ -275,7 +275,7 @@ public static class MadeSources
         }
     }
 
-    internal static IEnumerable<string> Inputs(MachineRow rule, IReadOnlyDictionary<string, ObjInfo> objects)
+    private static IEnumerable<string> Inputs(MachineRow rule, IReadOnlyDictionary<string, ObjInfo> objects)
     {
         if (rule.RequiredItemId != null && rule.RequiredTags.Count == 0)
             return new[] { BundleParsing.NormalizeItemId(rule.RequiredItemId) };

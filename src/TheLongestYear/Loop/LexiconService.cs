@@ -30,26 +30,16 @@ namespace TheLongestYear.Loop
         /// <summary>The computed entry the resolver asked to write and that is not on disk yet.</summary>
         private string _pendingKey;
 
-        /// <param name="build">The answers for live data nothing has. Its seed is the shipped variant the
-        /// save needs and that variant's row hashes, for an incremental build over them; null when there
-        /// is no shipped set or it lacks that variant, and the build is then cold.</param>
-        public LexiconService(IMonitor monitor, string modFolder, Func<ObtainabilityInputs, IncrementalSeed, LexiconBuild> build)
+        /// <param name="build">The answers for live data nothing has (the cold build, for now).</param>
+        public LexiconService(IMonitor monitor, string modFolder, Func<ObtainabilityInputs, AnswerSet, AnswerVariant> build)
         {
-            if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             Action<string> warn = m => _monitor.Log(m, LogLevel.Warn);
             Action<string> trace = m => _monitor.Log(m, LogLevel.Trace);
             _cache = new LexiconDiskCache(System.IO.Path.Combine(modFolder, CacheFolder), MaxCacheFiles, warn, trace);
             AnswerSet shipped = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
-            _resolver = new LexiconResolver(shipped, _cache.Read, (key, _) => _pendingKey = key,
-                (live, set, variantName) => build(live, SeedFor(set, variantName)));
+            _resolver = new LexiconResolver(shipped, _cache.Read, (key, _) => _pendingKey = key, build);
         }
-
-        /// <summary>The shipped variant to build over, or null for a cold build.</summary>
-        private static IncrementalSeed SeedFor(AnswerSet shipped, string variantName)
-            => shipped?.Resolve(variantName) is AnswerVariant variant
-                ? new IncrementalSeed(variant, shipped.RowHashesFor(variantName))
-                : null;
 
         /// <summary>The answers for the live data, logged as one INFO line. A computed result is
         /// written by <see cref="StoreAvailability"/> or <see cref="FlushPending"/>.</summary>
@@ -61,8 +51,9 @@ namespace TheLongestYear.Loop
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";
             if (r.Origin == AnswerOrigin.Computed)
-                line += $" — {r.DirtyCount} items recomputed for "
-                    + (r.DirtyOwners.Count > 0 ? string.Join(", ", r.DirtyOwners) : "no shipped answers");
+                line += r.DirtyOwners.Count > 0
+                    ? $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})"
+                    : " — no shipped answers";
             _monitor.Log(line + ".", LogLevel.Info);
             return r;
         }

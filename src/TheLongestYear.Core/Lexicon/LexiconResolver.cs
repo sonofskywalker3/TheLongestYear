@@ -13,14 +13,10 @@ public enum AnswerOrigin { Shipped, Cache, Computed }
 
 /// <summary>A resolved answer: the variant, where it came from, the cache key of the live data, how
 /// long resolving took, and for <see cref="AnswerOrigin.Computed"/> which mods' rows differed from
-/// the shipped answers and how many items were recomputed (the incremental build's dirty set, or every
-/// item for the cold build).</summary>
+/// the shipped answers and how many data rows differ from them (added, removed or changed; 0 with no
+/// shipped set).</summary>
 public sealed record Resolved(
     AnswerVariant Variant, AnswerOrigin Origin, string Key, long Ms, IReadOnlyList<string> DirtyOwners, int DirtyCount);
-
-/// <summary>What a build for live data returns: the variant, and how many items it recomputed (null
-/// for a cold build, which recomputes every item the variant holds).</summary>
-public sealed record LexiconBuild(AnswerVariant Variant, int? DirtyCount = null);
 
 /// <summary>Finds the answers for the live data, in order:
 /// <list type="number">
@@ -29,7 +25,7 @@ public sealed record LexiconBuild(AnswerVariant Variant, int? DirtyCount = null)
 /// live rows exactly (same keys, same hashes);</item>
 /// <item>the cache entry for <see cref="RowHashes.Key"/> of the live rows, layers and versions (an
 /// unreadable entry is a miss);</item>
-/// <item><c>build(live, shipped, variant name)</c>, written to the cache under that key.</item>
+/// <item><c>build(live, shipped)</c>, written to the cache under that key.</item>
 /// </list>
 /// A cache entry is for one exact data set, so it holds one variant, always named
 /// <see cref="AnswerSet.BaseVariant"/> whatever the Pierre state was (that state is a row, so it is
@@ -39,31 +35,16 @@ public sealed class LexiconResolver
     private readonly AnswerSet? _shipped;
     private readonly Func<string, AnswerSet?> _readCache;
     private readonly Action<string, AnswerSet> _writeCache;
-    private readonly Func<ObtainabilityInputs, AnswerSet?, string, LexiconBuild> _build;
+    private readonly Func<ObtainabilityInputs, AnswerSet?, AnswerVariant> _build;
 
     public LexiconResolver(
         AnswerSet? shipped, Func<string, AnswerSet?> readCache, Action<string, AnswerSet> writeCache,
         Func<ObtainabilityInputs, AnswerSet?, AnswerVariant> build)
-        : this(shipped, readCache, writeCache, Cold(build))
-    {
-    }
-
-    /// <param name="build">The answers for live data nothing has, given the shipped set and the name of
-    /// the variant the save needs (so an incremental build can start from that variant).</param>
-    public LexiconResolver(
-        AnswerSet? shipped, Func<string, AnswerSet?> readCache, Action<string, AnswerSet> writeCache,
-        Func<ObtainabilityInputs, AnswerSet?, string, LexiconBuild> build)
     {
         _shipped = shipped;
         _readCache = readCache ?? throw new ArgumentNullException(nameof(readCache));
         _writeCache = writeCache ?? throw new ArgumentNullException(nameof(writeCache));
         _build = build ?? throw new ArgumentNullException(nameof(build));
-    }
-
-    private static Func<ObtainabilityInputs, AnswerSet?, string, LexiconBuild> Cold(Func<ObtainabilityInputs, AnswerSet?, AnswerVariant> build)
-    {
-        if (build == null) throw new ArgumentNullException(nameof(build));
-        return (live, shipped, _) => new LexiconBuild(build(live, shipped));
     }
 
     /// <summary>The set the last <see cref="Resolve"/> answered from: the shipped set, the cache entry
@@ -107,27 +88,27 @@ public sealed class LexiconResolver
             return new Resolved(cachedVariant, AnswerOrigin.Cache, key, timer.ElapsedMilliseconds, Array.Empty<string>(), 0);
         }
 
-        LexiconBuild result = _build(live, _shipped, variantName);
-        AnswerVariant built = result.Variant;
+        AnswerVariant built = _build(live, _shipped);
         var set = new AnswerSet(gameVersion, modVersion, layers.ToList(), rows,
             new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [AnswerSet.BaseVariant] = built });
         _writeCache(key, set);
         CurrentSet = set;
         CurrentVariantName = AnswerSet.BaseVariant;
+        IReadOnlyList<string> differing = DifferingRows(_shipped?.RowHashesFor(variantName), rows);
         return new Resolved(built, AnswerOrigin.Computed, key, timer.ElapsedMilliseconds,
-            DirtyOwnersOf(_shipped?.RowHashesFor(variantName), rows), result.DirtyCount ?? built.Obtain.Count);
+            differing.Select(RowHashes.Owner).Distinct(StringComparer.Ordinal).OrderBy(o => o, StringComparer.Ordinal).ToList(),
+            differing.Count);
     }
 
     private static bool SameRows(IReadOnlyDictionary<string, ulong> a, IReadOnlyDictionary<string, ulong> b)
         => a.Count == b.Count && a.All(p => b.TryGetValue(p.Key, out ulong h) && h == p.Value);
 
-    /// <summary>The owners of every row that differs between the shipped and the live data, sorted;
-    /// empty with no shipped set.</summary>
-    private static IReadOnlyList<string> DirtyOwnersOf(IReadOnlyDictionary<string, ulong>? shippedRows, IReadOnlyDictionary<string, ulong> live)
+    /// <summary>Every row key added, removed or changed between the shipped and the live data; empty
+    /// with no shipped set.</summary>
+    private static IReadOnlyList<string> DifferingRows(IReadOnlyDictionary<string, ulong>? shippedRows, IReadOnlyDictionary<string, ulong> live)
     {
         if (shippedRows == null) return Array.Empty<string>();
         var (added, removed, changed) = RowHashes.Diff(shippedRows, live);
-        return added.Concat(removed).Concat(changed).Select(RowHashes.Owner)
-            .Distinct(StringComparer.Ordinal).OrderBy(o => o, StringComparer.Ordinal).ToList();
+        return added.Concat(removed).Concat(changed).ToList();
     }
 }

@@ -12,7 +12,7 @@ public static class SpawnSources
     private const string RainyWeather = "rainy";
     private const string AllDayTimeSpans = "600 2600";
     private const string FishingSkill = "Fishing";
-    internal const string MagicBaitId = "(O)908";
+    private const string MagicBaitId = "(O)908";
     private const string NoBaitNote = " (Magic Bait has no source in the model; recorded as island gated)";
 
     /// <summary>Maps that only exist during a passive festival (BeachNightMarket.cs, Submarine.cs).</summary>

@@ -157,19 +157,21 @@ public sealed class LexiconResolverTests
         Assert.Equal(1, h.Builds);
     }
 
-    /// <summary>A build that says how many items it recomputed (the incremental one) is reported with
-    /// that count, and is told which variant the save needs.</summary>
+    /// <summary>On a miss the count is the number of data rows that differ from the shipped answers
+    /// (added, removed or changed), not the number of items built; with no shipped set it is 0.</summary>
     [Fact]
-    public void MissReportsTheBuildsDirtyCountAndVariant()
+    public void MissCountsTheDifferingRows()
     {
         ObtainabilityInputs live = WithShopChanged(Inputs.Value);
-        string? asked = null;
-        var resolver = new LexiconResolver(SetOf(RowHashes.Of(Inputs.Value, false), "shipped"), _ => null, (_, _) => { },
-            (_, _, variant) => { asked = variant; return new LexiconBuild(Marker("built"), 7); });
-        Resolved r = resolver.Resolve(live, true, Game, Mod, Vanilla);
+        live = live with { Shops = live.Shops.Skip(1).Append(live.Shops[0]).Concat(new[] { new ShopRow("SeedShop", "(O)Mod.Thing", null, false) }).ToList() };
+        var (added, removed, changed) = RowHashes.Diff(RowHashes.Of(Inputs.Value, false), RowHashes.Of(live, false));
+        int expected = added.Count + removed.Count + changed.Count;
+        Assert.True(expected >= 2);
+        Resolved r = new Harness().Resolver(SetOf(RowHashes.Of(Inputs.Value, false), "shipped")).Resolve(live, false, Game, Mod, Vanilla);
         Assert.Equal(AnswerOrigin.Computed, r.Origin);
-        Assert.Equal(7, r.DirtyCount);
-        Assert.Equal(AnswerSet.PierreVariant, asked);
+        Assert.Equal(expected, r.DirtyCount);
+        Assert.Contains("Mod", r.DirtyOwners);
+        Assert.Equal(0, new Harness().Resolver(null).Resolve(live, false, Game, Mod, Vanilla).DirtyCount);
     }
 
     [Fact]
