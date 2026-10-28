@@ -136,7 +136,11 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    - **`YearTwoMaps`** and **`YearTwoShops`** flag a map or a shop as reachable only in year 2:
      `{ "<map or shop id>": "YearTwo" | "GingerIsland" }`. At build time every data route whose
      `Requires` holds exactly `location:<map>` or `shop:<id>` gets that flag. The id must match the
-     whole name, never a prefix.
+     whole name, never a prefix. A flagged route leaves the year-1 obtain fold entirely, because a
+     shop or data route lands from day 1 whatever the shop's or map's week: a vendor or map the year-1
+     walker had placed as reachable stops counting for the sabotage fairness rule, and the Traveling
+     Cart's year-2 sort reads its items as year 2, which is the intended correction for
+     post-Community-Center, island and Joja content.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.
