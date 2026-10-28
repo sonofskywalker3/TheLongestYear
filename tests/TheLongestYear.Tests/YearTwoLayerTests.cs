@@ -385,6 +385,29 @@ public sealed class YearTwoLayerTests
     }
 
     [Fact]
+    public void Ruled_id_with_an_effort_only_entry_keeps_its_year_one_effort_for_the_board()
+    {
+        const int ruledWeek = 25;
+        var warns = new List<string>();
+        var avail = Avails(effort: new() { [Id] = new ItemEffort(5, "b", EarliestWeek: null) });
+
+        var table = YearTwoAnswers.Build(Rule(ruledWeek, 9), avail, warns.Add);
+        Assert.Single(table);
+        Assert.Empty(warns);
+
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.FromAnswers(
+            avail["Normal|no_kitchen"], null, null, WeekMode.Pacing, DifficultyStep.Normal);
+        ItemAvailability yearOne = model.For(Id);
+        Assert.Equal(5, yearOne.Effort);
+        Assert.NotEqual(EffortSource.Ruling, yearOne.Source);
+
+        AnswerVariant variant = Variant() with { YearTwo = table };
+        ItemAvailability yearTwo = YearTwoAnswers.TableFor(variant, null, AnswerSet.BaseVariant)[Id];
+        Assert.Equal(EffortSource.Ruling, yearTwo.Source);
+        Assert.Equal(ruledWeek, yearTwo.EarliestWeek);
+    }
+
+    [Fact]
     public void Vanilla_json_round_trip_is_byte_identical()
     {
         string? dir = AppContext.BaseDirectory;
