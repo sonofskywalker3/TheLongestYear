@@ -55,23 +55,41 @@ public static class LayerDelta
                 rows[key] = hash;
 
         AnswerVariant delta = Diff(below, live);
+        LayerRemovals removal = Removed(below, live, belowRows, liveRows);
         var deltas = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal);
         var variantRows = new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal);
+        var removals = new Dictionary<string, LayerRemovals>(StringComparer.Ordinal);
         if (existing != null)
             foreach (var (other, d) in existing.Deltas)
                 if (other != variantName)
                 {
                     deltas[other] = d;
                     if (existing.VariantRowHashes.TryGetValue(other, out var otherRows)) variantRows[other] = otherRows;
+                    if (existing.Removals.TryGetValue(other, out var otherRemoval)) removals[other] = otherRemoval;
                 }
-        // A variant that changes rows or answers, or sits beside another mapped variant, is written out;
-        // otherwise the file is the empty map that says "mapped, nothing changes".
-        if (!IsEmpty(delta) || rows.Count > 0 || deltas.Count > 0) deltas[variantName] = delta;
+        // A variant that changes or removes rows or answers, or sits beside another mapped variant, is
+        // written out; otherwise the file is the empty map that says "mapped, nothing changes".
+        if (!IsEmpty(delta) || rows.Count > 0 || !removal.IsEmpty || deltas.Count > 0) deltas[variantName] = delta;
         if (rows.Count > 0) variantRows[variantName] = rows;
+        if (!removal.IsEmpty) removals[variantName] = removal;
 
         return new LayerAnswers(mods, string.Join(LayerFile.Joiner, mods.Select(m => $"{m}@{installedVersionOf(m) ?? "unknown"}")),
-            variantRows, deltas);
+            variantRows, deltas) { Removals = removals };
     }
+
+    /// <summary>What is below the layer but gone from <paramref name="live"/>: the input rows and the
+    /// answer entries a mod deleted (<see cref="LayerRemovals"/>; availability answers excepted).</summary>
+    public static LayerRemovals Removed(
+        AnswerVariant below, AnswerVariant live,
+        IReadOnlyDictionary<string, ulong> belowRows, IReadOnlyDictionary<string, ulong> liveRows)
+        => new(
+            Gone(belowRows.Keys, liveRows.Keys), Gone(below.Obtain.Keys, live.Obtain.Keys),
+            Gone(below.YearSort.Keys, live.YearSort.Keys), Gone(below.Unresolved, live.Unresolved),
+            Gone(below.MapWeeks.Keys, live.MapWeeks.Keys), Gone(below.UnreachedMaps, live.UnreachedMaps),
+            Gone(below.ShopWeeks.Keys, live.ShopWeeks.Keys));
+
+    private static List<string> Gone(IEnumerable<string> below, IEnumerable<string> live)
+        => below.Except(live, StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal).ToList();
 
     /// <summary>What <see cref="LayerSet.LayDelta"/> must lay over <paramref name="below"/> to give
     /// <paramref name="live"/> (as near as its union rules for unresolved sources and unreached maps allow).</summary>

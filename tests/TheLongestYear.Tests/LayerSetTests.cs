@@ -432,6 +432,41 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void AModThatDeletesAVanillaRowIsServedWithTheRowAndItsAnswersGone()
+    {
+        const string trellis = "crop|(O)301";
+        const string grapeVine = "(O)301";
+        var vanillaRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1, [trellis] = 7 };
+        AnswerSet vanilla = new(Game, Mod, new[] { RowHashes.Vanilla }, vanillaRows,
+            new Dictionary<string, AnswerVariant>(StringComparer.Ordinal)
+                { [AnswerSet.BaseVariant] = Variant((Item, "vanilla"), (grapeVine, "trellis")) with { Unresolved = new[] { "gone query" } } });
+        // The mod deletes the trellis crop row; its route and an unresolved line go with it.
+        var liveRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1, ["obj|" + Olive] = 3 };
+        AnswerVariant live = Variant((Item, "vanilla"), (Olive, "grove"));
+
+        LayerAnswers written = LayerDelta.Write(A, vanilla, new[] { In(A) }, Array.Empty<LayerAnswers>(),
+            AnswerSet.BaseVariant, live, liveRows, _ => "1.0.0", null);
+        LayerRemovals removal = written.Removals[AnswerSet.BaseVariant];
+        Assert.Equal(new[] { trellis }, removal.Rows);
+        Assert.Equal(new[] { grapeVine }, removal.Obtain);
+        Assert.Equal(new[] { "gone query" }, removal.Unresolved);
+
+        LayerSet set = LayerSet.Compose(vanilla, new[] { In(A) }, new[] { LayerFile.ReadAnswers(LayerFile.WriteAnswers(written)) }, _ => { });
+        Assert.Equal(liveRows.OrderBy(p => p.Key), set.Composed!.RowHashesFor(AnswerSet.BaseVariant).OrderBy(p => p.Key));
+        AnswerVariant served = set.Composed!.Resolve(AnswerSet.BaseVariant)!;
+        Assert.False(served.Obtain.ContainsKey(grapeVine));
+        Assert.Empty(served.Unresolved);
+        Assert.Equal("grove", served.Obtain[Olive].Single().Detail);
+    }
+
+    [Fact]
+    public void AnAnswersFileWithoutRemovalsReadsAsRemovingNothing()
+    {
+        LayerAnswers read = LayerFile.ReadAnswers("{\"CheckedVersions\": \"A@1.0.0\", \"Deltas\": {}, \"Mods\": [\"A\"], \"VariantRowHashes\": {}}");
+        Assert.Empty(read.Removals);
+    }
+
+    [Fact]
     public void EachVariantMatchesOnlyItsOwnLiveRows()
     {
         const string modRow = "obj|" + Olive;

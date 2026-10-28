@@ -242,6 +242,11 @@ public sealed class LayerSet
                 }
                 if (layer.VariantRowHashes.TryGetValue(name, out var own))
                     foreach (var (key, hash) in own) rows[key] = hash;
+                if (layer.Removals.TryGetValue(name, out LayerRemovals? removal))
+                {
+                    whole = Remove(whole, removal);
+                    foreach (string key in removal.Rows) rows.Remove(key);
+                }
             }
             if (!mapped) continue;
             result = AnswerSetMerge.With(result, name, whole, rows, vanilla.GameVersion, vanilla.ModVersion, layers);
@@ -269,6 +274,25 @@ public sealed class LayerSet
         {
             Availability = Merge(below.Availability, delta.Availability),
         };
+    }
+
+    /// <summary>A variant with a layer's <see cref="LayerRemovals"/> taken out (its availability kept).</summary>
+    public static AnswerVariant Remove(AnswerVariant below, LayerRemovals removal)
+        => new AnswerVariant(
+            Without(below.Obtain, removal.Obtain), Without(below.YearSort, removal.YearSort),
+            below.Unresolved.Except(removal.Unresolved, StringComparer.Ordinal).ToList(),
+            below.Passes,
+            Without(below.MapWeeks, removal.MapWeeks),
+            below.UnreachedMaps.Except(removal.UnreachedMaps, StringComparer.Ordinal).ToList(),
+            Without(below.ShopWeeks, removal.ShopWeeks))
+        {
+            Availability = below.Availability,
+        };
+
+    private static Dictionary<string, T> Without<T>(IReadOnlyDictionary<string, T> below, IReadOnlyList<string> keys)
+    {
+        var gone = new HashSet<string>(keys, StringComparer.Ordinal);
+        return below.Where(p => !gone.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
     }
 
     private static Dictionary<string, T> Merge<T>(IReadOnlyDictionary<string, T> below, IReadOnlyDictionary<string, T> over)

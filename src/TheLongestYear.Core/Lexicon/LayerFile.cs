@@ -40,6 +40,25 @@ public sealed record LayerAnswers(
     /// <summary>See <see cref="LayerInputs.TextHash"/>.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string TextHash { get; init; } = "";
+
+    /// <summary>Per variant name, what the layer takes away from the answers below it (a mod that
+    /// deletes a vanilla row, as Cornucopia deletes the trellis Grape crop): applied after that
+    /// variant's delta. A file with none leaves it out or empty.</summary>
+    public IReadOnlyDictionary<string, LayerRemovals> Removals { get; init; }
+        = new Dictionary<string, LayerRemovals>(StringComparer.Ordinal);
+}
+
+/// <summary>The keys a layer removes from the variant below it: input <see cref="Rows"/> (row hash
+/// keys), and the <see cref="AnswerVariant"/> entries of the same names. Availability answers are not
+/// listed: a variant fills them only as they are computed, so a missing one says nothing.</summary>
+public sealed record LayerRemovals(
+    IReadOnlyList<string> Rows, IReadOnlyList<string> Obtain, IReadOnlyList<string> YearSort,
+    IReadOnlyList<string> Unresolved, IReadOnlyList<string> MapWeeks, IReadOnlyList<string> UnreachedMaps,
+    IReadOnlyList<string> ShopWeeks)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsEmpty => Rows.Count == 0 && Obtain.Count == 0 && YearSort.Count == 0 && Unresolved.Count == 0
+                           && MapWeeks.Count == 0 && UnreachedMaps.Count == 0 && ShopWeeks.Count == 0;
 }
 
 /// <summary>The layer files' names and formats. Both are <see cref="LexiconJson"/> text (sorted keys,
@@ -138,11 +157,17 @@ public static class LayerFile
         if (read.Deltas != null)
             foreach (var (name, delta) in read.Deltas)
                 if (NullMember(delta) is string member) throw new System.Text.Json.JsonException($"Deltas {name}: {member} is null.");
+        if (read.Removals != null)
+            foreach (var (name, removal) in read.Removals)
+                if (removal == null || removal.Rows == null || removal.Obtain == null || removal.YearSort == null
+                    || removal.Unresolved == null || removal.MapWeeks == null || removal.UnreachedMaps == null || removal.ShopWeeks == null)
+                    throw new System.Text.Json.JsonException($"Removals {name} is null or holds a null list.");
         return read with
         {
             CheckedVersions = read.CheckedVersions ?? "",
             VariantRowHashes = read.VariantRowHashes ?? new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal),
             Deltas = read.Deltas ?? new Dictionary<string, AnswerVariant>(StringComparer.Ordinal),
+            Removals = read.Removals ?? new Dictionary<string, LayerRemovals>(StringComparer.Ordinal),
             TextHash = HashText(json),
         };
     }
