@@ -185,8 +185,21 @@ namespace TheLongestYear.Loop
                 foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
                         foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(item?.ItemId, item?.RandomItemId))
-                            shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe, random,
-                                string.IsNullOrWhiteSpace(item.TradeItemId) ? null : item.TradeItemId));
+                        {
+                            string trade = string.IsNullOrWhiteSpace(item.TradeItemId) ? null : item.TradeItemId;
+                            // A line that sells by context tag (Cornucopia's seed lines, the cart's own
+                            // draw) offers only the items passing its PerItemCondition: the game lists
+                            // them, one row each, a random pick staying luck.
+                            if (GameItemQueries.IsFilteredSet(entry, item.PerItemCondition)
+                                && GameItemQueries.Resolve(entry, item.PerItemCondition, _monitor, nameof(GameObtainabilityData)) is List<string> offered)
+                            {
+                                bool pick = random || GameItemQueries.IsRandomPick(entry, item.MaxItems);
+                                foreach (string id in offered)
+                                    shops.Add(new ShopRow(kv.Key, id, item.Condition, item.IsRecipe, pick, trade));
+                                continue;
+                            }
+                            shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe, random, trade));
+                        }
             });
 
             Section("Machines", () =>
