@@ -36,6 +36,11 @@ The resolver takes the first of these that applies:
    files (the layer file text is part of the cache key, so editing a layer never serves a stale entry).
 3. **Computed.** A cold build, then written to the cache.
 
+The `YearTwo` table (see `YearTwoRulings` below) is served beside the year-1 model and never through
+`ItemAvailabilityModel.For()`, so the year-1 board cannot ask for a year-2 item. `tly_itemmodel <id>`
+and `tly_obtain <id>` print a `year 2:` line, and `tly_lexicon status` prints `year-2 entries served: N`.
+The config's `AvailabilityWeekOverrides` (1 to 16) do not touch it.
+
 Read the SMAPI log:
 
 - `Lexicon: Shipped (a1b2c3d4), 5321 items, 42 ms.` The origin, the first 8 characters of the key,
@@ -92,7 +97,12 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
        ]
      },
      "YearRulings": { "(O)Author.ExampleCrops_Pear": "YearTwo" },
-     "WeekRulings": { "(O)Author.ExampleCrops_Nutmeg": 9 }
+     "WeekRulings": { "(O)Author.ExampleCrops_Nutmeg": 9 },
+     "YearTwoMaps": { "Custom_Highlands": "GingerIsland" },
+     "YearTwoShops": { "Author.ExampleCrops_IsaacVendor": "GingerIsland" },
+     "YearTwoRulings": {
+       "(O)Author.ExampleCrops_Void_Soul": { "Week": 21, "Effort": 7, "Basis": "forage, Custom_CrimsonBadlands, Galdora opens about week 21" }
+     }
    }
    ```
 
@@ -123,6 +133,21 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There are no map-week or pond-chance fields in an inputs file: a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.
+   - **`YearTwoMaps`** and **`YearTwoShops`** flag a map or a shop as reachable only in year 2:
+     `{ "<map or shop id>": "YearTwo" | "GingerIsland" }`. At build time every data route whose
+     `Requires` holds exactly `location:<map>` or `shop:<id>` gets that flag. The id must match the
+     whole name, never a prefix.
+   - **`YearTwoRulings`** date an item that only comes in year 2:
+     `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
+     `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.
+     `tly_lexicon write <id>` turns each ruling into one `YearTwo` entry per variant: the week is
+     `EarliestWeek`, the `Basis` is prefixed `year 2 ruling: `, the source is `Ruling`, and the season is
+     the calendar season of that week (17 to 20 Spring of year 2, 21 to 24 Summer, 25 to 28 Fall,
+     29 to 32 Winter). A ruling for an id that already has a placed year-1 week (in any availability
+     key's `Derived` or `EffortDerived`) is refused with the WARN `year 2 ruling for <id> refused: it
+     already has a year-1 week (...)`. An `EffortDerived` entry with no week (a dish whose input comes
+     in year 2) does not block one. Two layers that rule one id: the later wins, with a WARN naming
+     both, like `WeekRulings`. Editing a ruling needs `tly_lexicon write` again.
    - **`CheckedVersion`** is the mod version you mapped against. A different installed version gives
      the layer WARN above. The answers files record their own checked versions
      (`CheckedVersions`, `"A@1.2.0"` or `"A@1.2.0+B@3.0.0"`), written by `tly_lexicon write`; those
