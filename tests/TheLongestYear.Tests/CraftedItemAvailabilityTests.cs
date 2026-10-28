@@ -35,6 +35,43 @@ public class CraftedItemAvailabilityTests
         Assert.Equal($"crafted Seed Cookie: hardest ingredient {MapleSeed} (3) + unlock 's Foraging 3' (1), week 3, effort 4", result.Basis);
     }
 
+    /// <summary>Stardew Valley Expanded writes the Seed Cookie's unlock as "Foraging 3", without the
+    /// "s"; the game's level-up menu matches the skill name and level by Contains, so it teaches the
+    /// recipe all the same, and the rule reads it as "s Foraging 3".</summary>
+    [Fact]
+    public void A_skill_unlock_without_the_s_prefix_reads_as_the_prefixed_one()
+    {
+        ItemEffort? bare = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("Foraging 3")), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.NotNull(bare);
+        Assert.Equal(3, bare!.EarliestWeek);
+        Assert.Equal(3 + 1, bare.Effort);
+        Assert.Equal($"crafted Seed Cookie: hardest ingredient {MapleSeed} (3) + unlock 'Foraging 3' (1), week 3, effort 4", bare.Basis);
+    }
+
+    [Theory]
+    [InlineData("Farming 2")]
+    [InlineData("fishing 6")]
+    [InlineData("FORAGING 3")]
+    [InlineData("Mining 4")]
+    [InlineData("Combat 9")]
+    [InlineData("Luck 1")]
+    public void Every_skill_name_without_the_prefix_matches_its_prefixed_form(string unlock)
+    {
+        var data = new EffortData();
+        Assert.Equal(CookedDishAvailability.UnlockEffort("s " + unlock), CookedDishAvailability.UnlockEffort(unlock));
+        Assert.Equal(CookedDishAvailability.CraftingRecipeWeek("s " + unlock, SeedCookie, data, DifficultyStep.Normal),
+            CookedDishAvailability.CraftingRecipeWeek(unlock, SeedCookie, data, DifficultyStep.Normal));
+        Assert.NotNull(CookedDishAvailability.CraftingRecipeWeek(unlock, SeedCookie, data, DifficultyStep.Normal));
+    }
+
+    [Theory]
+    [InlineData("Cooking 3")]
+    [InlineData("Foraging")]
+    [InlineData("Foraging three")]
+    [InlineData("Foraging 3 extra")]
+    public void Other_bare_words_are_not_read_as_a_skill(string unlock)
+        => Assert.Null(CookedDishAvailability.CraftingRecipeWeek(unlock, SeedCookie, new EffortData(), DifficultyStep.Normal));
+
     [Fact]
     public void An_unplaced_ingredient_leaves_the_crafted_item_unplaced_and_says_which()
     {

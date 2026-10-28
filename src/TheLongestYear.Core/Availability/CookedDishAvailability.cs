@@ -24,9 +24,30 @@ public static class CookedDishAvailability
     private const string FriendshipPrefix = "f";
     private const string TvUnlock = "l";
 
-    public static int UnlockEffort(string? unlock)
+    /// <summary>Skill names a bare "&lt;Skill&gt; &lt;n&gt;" unlock may start with (Farmer.getSkillNameFromIndex).</summary>
+    private static readonly IReadOnlySet<string> SkillNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Farming", "Fishing", "Foraging", "Mining", "Combat", "Luck",
+    };
+
+    private const int BareSkillTokens = 2;
+
+    /// <summary>The unlock as the rules read it: "&lt;Skill&gt; &lt;n&gt;" without the "s" becomes
+    /// "s &lt;Skill&gt; &lt;n&gt;". Stardew Valley Expanded writes its Seed Cookie as "Foraging 3", and
+    /// the game's level-up menu matches a recipe by Contains on the skill name and the level, so it
+    /// teaches that recipe exactly as it would the prefixed form. Anything else is left as written.</summary>
+    private static string ReadUnlock(string? unlock)
     {
         string text = (unlock ?? "").Trim();
+        string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length == BareSkillTokens && SkillNames.Contains(tokens[0]) && int.TryParse(tokens[1], out _)
+            ? $"{SkillPrefix} {tokens[0]} {tokens[1]}"
+            : text;
+    }
+
+    public static int UnlockEffort(string? unlock)
+    {
+        string text = ReadUnlock(unlock);
         if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return 0;
         if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase)) return TvUnlockEffort;
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -126,7 +147,7 @@ public static class CookedDishAvailability
     /// EARLIER of its year-1 episode week (episodes 1 to 16; a later episode contributes nothing)
     /// and the week the player can afford it in a shop, if any shop sells it. The number is not
     /// branched on. "l 100" simply has no shop row, so the episode week is all that is left. "f
-    /// NPC N" takes the hearts table, again against the price week. "s Skill N" the level week.
+    /// NPC N" takes the hearts table, again against the price week. "s Skill N" (or a bare "Skill N") the level week.
     /// "default" is week 1. "null" is Cookies (event 19).
     ///
     /// A year-2 episode has no year-1 shelf date of its own, but the Sneak Peek Boost (spec
@@ -178,7 +199,7 @@ public static class CookedDishAvailability
     private static RecipeWeekResult ComputeRecipeWeek(string? unlock, string outputId, string? channelName, int? nullUnlockWeek,
         EffortData data, DifficultyStep step)
     {
-        string text = (unlock ?? "").Trim();
+        string text = ReadUnlock(unlock);
         if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return new RecipeWeekResult(1, null);
         int? priceWeek = data.RecipePrices.TryGetValue(outputId, out int price) ? UnlockWeeks.ForCost(price) : null;
         if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase))
