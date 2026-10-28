@@ -156,14 +156,20 @@ public static class CookedDishAvailability
         => ComputeRecipeWeek(recipe.UnlockCondition, recipe.OutputItemId, recipe.Name, AvailabilityWeeks.CookiesWeek, data, step);
 
     /// <summary>Week a crafting recipe (Data/CraftingRecipes) is learned, or null when it is not in
-    /// year 1. Same reading as a dish's, with two differences: "null" (or empty) is a recipe known
-    /// from day 1, week 1, not the Cookies event; and no Queen of Sauce episode teaches an "l N"
-    /// crafting recipe (the game grants crafting recipes only by "default", a skill level-up and
-    /// friendship mail), so that one leans on the shop price alone.</summary>
+    /// year 1. Same reading as a dish's, with three differences: an empty unlock is "default" (known
+    /// from the start, as Obtainability's MadeSources reads it); "null" is not the Cookies event but a
+    /// recipe a shop, letter or event teaches, so only a shop price places it here (the caller
+    /// substitutes an event-taught recipe's friendship condition first); and no Queen of Sauce
+    /// episode teaches an "l N" crafting recipe (the game grants crafting recipes only by "default",
+    /// a skill level-up and friendship mail), so that one leans on the shop price alone.</summary>
     internal static int? CraftingRecipeWeek(string unlock, string outputId, EffortData data, DifficultyStep step)
-        => ComputeRecipeWeek(unlock, outputId, channelName: null, nullUnlockWeek: KnownFromDayOneWeek, data, step).Week;
+    {
+        string text = (unlock ?? "").Trim();
+        if (text.Length == 0) text = DefaultUnlock;
+        return ComputeRecipeWeek(text, outputId, channelName: null, nullUnlockWeek: null, data, step).Week;
+    }
 
-    private const int KnownFromDayOneWeek = 1;
+    private const string DefaultUnlock = "default";
 
     /// <param name="channelName">The name the Queen of Sauce lists the recipe under, or null when
     /// no episode can teach it.</param>

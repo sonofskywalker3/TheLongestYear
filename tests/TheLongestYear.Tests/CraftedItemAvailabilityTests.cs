@@ -56,12 +56,34 @@ public class CraftedItemAvailabilityTests
     }
 
     [Fact]
-    public void A_null_unlock_is_known_from_day_1_without_a_shop_price()
+    public void A_default_unlock_is_known_from_week_1()
+    {
+        ItemEffort? result = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("default")), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(1, result!.EarliestWeek);
+        Assert.Equal(3, result.Effort);
+        Assert.DoesNotContain("not in year 1", result.Basis);
+    }
+
+    [Fact]
+    public void A_null_unlock_outside_the_event_table_with_no_price_is_unplaced()
     {
         ItemEffort? result = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("null")), EffortOf, WeekOf, DifficultyStep.Normal);
-        Assert.Equal(1, result!.EarliestWeek);
-        Assert.Equal(3 + CookedDishAvailability.UnlockEffort("null"), result.Effort);
-        Assert.DoesNotContain("not in year 1", result.Basis);
+        Assert.Null(result!.EarliestWeek);
+        Assert.Contains("unlock 'null'", result.Basis);
+        Assert.Contains("recipe not in year 1", result.Basis);
+    }
+
+    [Fact]
+    public void An_event_taught_null_recipe_is_dated_from_the_event_friendship()
+    {
+        const string WildBait = "(O)774";
+        var recipe = new CraftingRecipe("Wild Bait", WildBait,
+            new[] { new RecipeIngredient(Acorn, 1), new RecipeIngredient(MapleSeed, 1) }, "null");
+        ItemEffort? result = CraftedItemAvailability.Derive(WildBait, Data(recipe), EffortOf, WeekOf, DifficultyStep.Normal);
+        int friendshipWeek = UnlockWeeks.ForFriendship("Linus", 4)!.Value;
+        Assert.Equal(System.Math.Max(1, friendshipWeek), result!.EarliestWeek);
+        Assert.Equal(3 + CookedDishAvailability.UnlockEffort("f Linus 4"), result.Effort);
+        Assert.Contains("unlock 'null → f Linus 4'", result.Basis);
     }
 
     [Fact]

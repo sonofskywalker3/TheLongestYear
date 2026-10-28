@@ -223,7 +223,7 @@ public static class MadeSources
     /// teaches on a friendship level (Jeff's ruling 2026-09-16). Tea Sapling: the Sunroom opens at
     /// Caroline 2 hearts (GameLocation.cs 8863-8871) and its event mails CarolineTea. Wild Bait: Linus's
     /// event 26 needs 4 hearts and adds the recipe (Event.cs 10463-10465).</summary>
-    private static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
+    public static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Tea Sapling"] = "f Caroline 2",
         ["Wild Bait"] = "f Linus 4",
