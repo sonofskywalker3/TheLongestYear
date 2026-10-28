@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.5 - 2026-10-28
+
+### Fixed
+
+- **Day 2 would not save after a rewind with Farm Type Manager packs.** The save right after the rewind made the game announce a second morning, so Farm Type Manager spawned its monsters twice and lost track of some. One it forgot (a ghost) stayed in the world and broke the next night's save. The rewind's save no longer counts as a new morning. Reported by SylviaStormsinger.
+
+### Internal
+
+- `tly_focus card <n>` picks a card on the open focus pick, as a click would.
+
 ## 1.1.4 - 2026-10-27
 
 ### Fixed

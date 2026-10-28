@@ -267,6 +267,15 @@ namespace TheLongestYear.UI
             if (card != null) Pick(card);
         }
 
+        /// <summary>Debug bridge: pick the card at this position (0 = left) as a click would.
+        /// False if there is no such card.</summary>
+        internal bool PickAt(int index)
+        {
+            if (index < 0 || index >= _cards.Count) return false;
+            Pick(_cards[index]);
+            return true;
+        }
+
         private void Pick(Card card)
         {
             if (_picked || !_armed) return;

@@ -25,6 +25,21 @@ public class SaveSafetyTests
         Assert.False(ResetSaveGate.CanOpen(menuOpen, eventUp, minigameUp, worldReloadFinished: true));
     }
 
+    [Fact]
+    public void Post_save_day_start_is_dropped_once_per_reset_save()
+    {
+        var latch = new PostSaveDayStartLatch();
+        Assert.False(latch.TryConsume());   // an ordinary night save keeps its DayStarted
+
+        latch.Arm();
+        Assert.True(latch.TryConsume());    // the reset save's DayStarted is dropped
+        Assert.False(latch.TryConsume());   // the next real morning is not
+
+        latch.Arm();
+        latch.Disarm();                     // left the save before SMAPI raised it
+        Assert.False(latch.TryConsume());
+    }
+
     private class GameThing { }
     private sealed class ModThing : GameThing { }
     private sealed class OtherModThing : GameThing { }

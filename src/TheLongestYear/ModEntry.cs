@@ -361,6 +361,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
             helper.Events.GameLoop.Saving += this.OnSaving;
             // Settles the post-reset save (ResetSave) before the DayStarted SMAPI raises with Saved.
+            helper.Events.GameLoop.Saving += (_, _) => TheLongestYear.Loop.ResetSave.OnSaving();
             helper.Events.GameLoop.Saved += (_, _) => TheLongestYear.Loop.ResetSave.OnSaved();
             helper.Events.Specialized.LoadStageChanged += TheLongestYear.Loop.ResetSave.OnLoadStageChanged;
             // A foreign object the save cannot write is set aside for the write instead of failing it.
@@ -439,6 +440,8 @@ namespace TheLongestYear
                 return taintedItems;
             };
             TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
+            // The post-reset save's extra DayStarted (Farm Type Manager double spawns): manual, SMAPI-internal target.
+            TheLongestYear.Loop.ResetSaveDayStartPatch.Apply(harmony, this.Monitor);
             // The same glow marks a bundle slot the darkness emptied, until it is filled again.
             TheLongestYear.Loop.DarkenedSlotMarkPatch.Marks = () => _meta?.Run?.DarkenedSlots;
             this.Monitor.Log(

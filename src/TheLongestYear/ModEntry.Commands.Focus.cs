@@ -11,7 +11,7 @@ namespace TheLongestYear
         private FocusService _focus;
 
         private const string FocusUsage =
-            "Usage: tly_focus show | deal | pick <tools|buildings|knacks> <chainId> | buy <tools|buildings|knacks> [keeponly] | reset";
+            "Usage: tly_focus show | deal | pick <tools|buildings|knacks> <chainId> | card <n> | buy <tools|buildings|knacks> [keeponly] | reset";
 
         /// <summary>tly_focus: inspect and drive the focus cards headlessly (debug only).</summary>
         private void CmdFocus(string command, string[] args)
@@ -42,6 +42,17 @@ namespace TheLongestYear
                         ? $"tly_focus: picked '{args[2]}' for {theme}."
                         : $"tly_focus: cannot pick '{args[2]}' for {theme} (not dealt, or {theme} already picked).",
                         picked ? LogLevel.Info : LogLevel.Warn);
+                    break;
+                }
+                case "card":
+                {
+                    // The open pick menu's own click path, so the menu advances and closes as in play.
+                    if (args.Length < 2 || !int.TryParse(args[1], out int index))
+                    { this.Monitor.Log(FocusUsage, LogLevel.Warn); return; }
+                    if (StardewValley.Game1.activeClickableMenu is not TheLongestYear.UI.FocusPickMenu menu)
+                    { this.Monitor.Log("tly_focus card: no focus card pick is open.", LogLevel.Warn); return; }
+                    if (!menu.PickAt(index))
+                        this.Monitor.Log($"tly_focus card: there is no card {index} on the open pick.", LogLevel.Warn);
                     break;
                 }
                 case "buy":

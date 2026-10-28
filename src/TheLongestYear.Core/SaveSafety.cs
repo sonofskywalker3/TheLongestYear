@@ -17,6 +17,30 @@ public static class ResetSaveGate
         => worldReloadFinished && !menuOpen && !eventUp && !minigameUp;
 }
 
+/// <summary>Waiting for the reload was not enough on its own: SMAPI raises DayStarted right after
+/// every Saved, so the post-reset save still gave mods a second day start on Spring 1. Farm Type
+/// Manager reloads its records on DayStarted and respawns everything again, losing track of what it
+/// had already placed; a ghost it no longer knew about stayed in the world and broke the next
+/// night's save (SylviaStormsinger, TLY 1.0.27, Seven Deadly Sins pack). The post-reset save is not
+/// a new day, so that one DayStarted is dropped: armed when the save's Saving runs, spent by the
+/// DayStarted SMAPI raises with its Saved.</summary>
+public sealed class PostSaveDayStartLatch
+{
+    public bool Armed { get; private set; }
+
+    public void Arm() => Armed = true;
+
+    public void Disarm() => Armed = false;
+
+    /// <summary>True once per <see cref="Arm"/>: the caller drops that DayStarted.</summary>
+    public bool TryConsume()
+    {
+        if (!Armed) return false;
+        Armed = false;
+        return true;
+    }
+}
+
 /// <summary>Which placed objects the save cannot write.</summary>
 public static class UnsaveableObjects
 {
