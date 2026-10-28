@@ -460,6 +460,29 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void ALayersFishSpawnRowGivesARouteAndAStoredCatchRate()
+    {
+        const string eel = "(O)ModA.CodeEel";
+        LayerInputs read = LayerFile.ReadInputs(
+            "{\"UniqueId\": \"" + A + "\", \"CheckedVersion\": \"1.0.0\", \"FishSpawns\": [" +
+            "{\"Location\": \"ModA_Lagoon\", \"ItemId\": \"" + eel + "\", \"Season\": \"Summer\", \"Condition\": null, \"Chance\": 0.5," +
+            " \"Precedence\": 0, \"CatchLimit\": 0, \"RequireMagicBait\": false, \"MinFishingLevel\": 0, \"MaxDistanceFromShore\": -1}]}");
+        LayerSet set = LayerSet.Compose(VanillaSet(), new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        ObtainabilityInputs live = Inputs.Value;
+        var objects = new Dictionary<string, ObjInfo>(live.Objects, StringComparer.Ordinal)
+            { [eel] = new ObjInfo(eel, "Code Eel", -4, 80, new[] { "category_fish" }, false) };
+
+        ObtainabilityBuild built = ObtainabilityBuilder.Build(set.WithFishSpawns(live with { Objects = objects }));
+
+        Assert.Contains(built.Model.Sources(eel), s => s.Kind == SourceKind.Fish && s.Detail.Contains("ModA_Lagoon"));
+        CatchRate rate = built.CatchRates[eel];
+        Assert.True(rate.Weekly[(int)Season.Summer] > 0);
+        Assert.Equal(0, rate.Weekly[(int)Season.Winter]);
+        // The game's own inputs (what the row hashes read) never gain the layer's row.
+        Assert.DoesNotContain(live.LocationFish, r => r.ItemId == eel);
+    }
+
+    [Fact]
     public void AnAnswersFileWithoutRemovalsReadsAsRemovingNothing()
     {
         LayerAnswers read = LayerFile.ReadAnswers("{\"CheckedVersions\": \"A@1.0.0\", \"Deltas\": {}, \"Mods\": [\"A\"], \"VariantRowHashes\": {}}");

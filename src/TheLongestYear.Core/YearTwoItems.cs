@@ -39,14 +39,15 @@ public static class YearTwoItems
     private const int FirstDay = 1;
     private const string CartShopId = "Traveler";
 
-    /// <summary>The inputs without the cart's item-query lines (its random objects and furniture).
+    /// <summary>The inputs without the cart's item-query lines (its random objects and furniture),
+    /// whether read as the query or listed by the game from it (<see cref="ShopRow.Query"/>).
     /// The cart's fixed lines (Rare Seed, Coffee Bean...) stay: they are real year-1 routes.</summary>
     public static ObtainabilityInputs WithoutCartRandomStock(ObtainabilityInputs inputs)
     {
         if (inputs == null) throw new ArgumentNullException(nameof(inputs));
         return inputs with
         {
-            Shops = inputs.Shops.Where(r => !(r.ShopId == CartShopId && ItemQueries.IsQuery(r.ItemId))).ToList(),
+            Shops = inputs.Shops.Where(r => !(r.ShopId == CartShopId && (r.Query != null || ItemQueries.IsQuery(r.ItemId)))).ToList(),
         };
     }
 

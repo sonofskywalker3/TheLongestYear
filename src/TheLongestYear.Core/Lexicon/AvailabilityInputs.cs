@@ -25,7 +25,8 @@ public sealed record AvailabilityInputs(
     EffortData? EffortData,
     IReadOnlyDictionary<string, Season>? SeasonOverrides, IReadOnlyDictionary<string, int>? EffortOverrides,
     IReadOnlyDictionary<string, int>? WeekOverrides,
-    bool YearTwoCapped)
+    bool YearTwoCapped,
+    IReadOnlyDictionary<string, CatchRate>? CatchRates = null)
 {
     private const int HashChars = 16;
 
@@ -42,7 +43,8 @@ public sealed record AvailabilityInputs(
             pools.FishRows,
             pools.LocationWeeks?.Reached, pools.ShopWeeks?.Weeks,
             pools.Saplings, pools.Artifacts, pools.Books,
-            effortData, seasonOverrides, effortOverrides, weekOverrides, yearTwoCapped);
+            effortData, seasonOverrides, effortOverrides, weekOverrides, yearTwoCapped,
+            pools.CatchRates);
     }
 
     /// <summary>The first <see cref="HashChars"/> lower-case hex digits of the SHA-256 of this record's
@@ -67,6 +69,7 @@ public sealed record AvailabilityInputs(
         Saplings = Saplings ?? new List<PoolItem>(),
         Artifacts = Artifacts ?? new List<PoolItem>(),
         Books = Books ?? new List<PoolItem>(),
+        CatchRates = CatchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
     };
 
     /// <summary>The upgrade test the game hands the builder, as far as it reads it: only

@@ -73,7 +73,7 @@ public static class QuantityAskPass
     {
         if (itemId == null) return false;
         string id = BundleParsing.NormalizeItemId(itemId);
-        return FishAskBasis.Covers(id) || ForageAskBasis.Covers(id)
+        return FishAskBasis.Covers(model?.CatchRates, id) || ForageAskBasis.Covers(id)
                || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)
                || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id)
@@ -91,10 +91,13 @@ public static class QuantityAskPass
     /// A <see cref="SeasonalAskBasis"/> hand row is the per-season candidate when the id has one, even
     /// in a season where it reads 0; only an id without a hand row falls back to the model's
     /// generated dish table.</summary>
-    public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null)
+    /// <param name="catchRates">The stored catch model to read when there is no <paramref name="model"/>
+    /// (the dish table's ingredient lookup, built before the model it goes on).</param>
+    public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null,
+        IReadOnlyDictionary<string, CatchRate>? catchRates = null)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
-        double? best = FishAskBasis.BasisByDeadline(id, deadline);
+        double? best = FishAskBasis.BasisByDeadline(model?.CatchRates ?? catchRates, id, deadline);
         double? forage = ForageAskBasis.BasisByDeadline(id, deadline);
         double? pot = QuantityBasisTables.CrabPot.TryGetValue(id, out double p) ? p : null;
         if (forage != null || pot != null)

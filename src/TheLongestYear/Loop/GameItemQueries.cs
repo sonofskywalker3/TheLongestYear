@@ -12,14 +12,16 @@ namespace TheLongestYear.Loop
     {
         private const string RandomItemsQuery = "RANDOM_ITEMS";
         private const string AllItemsQuery = "ALL_ITEMS";
+        private const string ObjectQualifier = "(O)";
 
-        /// <summary>True when a data line's query names a set the game can list in full once its
-        /// PerItemCondition is applied: <c>ALL_ITEMS</c> or <c>RANDOM_ITEMS</c> with a condition.</summary>
+        /// <summary>True when a data line's query names a set of objects the game can list in full once
+        /// its PerItemCondition is applied: <c>ALL_ITEMS (O)</c> or <c>RANDOM_ITEMS (O)</c> with a
+        /// condition. Catalogue lines of other item types (furniture, wallpaper) are left as they were.</summary>
         public static bool IsFilteredSet(string query, string perItemCondition)
         {
             if (string.IsNullOrWhiteSpace(perItemCondition) || string.IsNullOrWhiteSpace(query)) return false;
-            string key = query.Trim().Split(' ', 2)[0];
-            return key == RandomItemsQuery || key == AllItemsQuery;
+            string[] tokens = query.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return tokens.Length >= 2 && (tokens[0] == RandomItemsQuery || tokens[0] == AllItemsQuery) && tokens[1] == ObjectQualifier;
         }
 
         /// <summary>True when the line hands out only some of its set (a random pick), so a route from

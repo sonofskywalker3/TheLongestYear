@@ -60,7 +60,7 @@ namespace TheLongestYear.Loop
                     (layers.UnmappedMods.Count + layers.UnmappedPairs.Count > 0 ? ", so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
-                live => build(live, layers.ExtraDirectSources));
+                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources));
         }
 
         /// <summary>The shipped vanilla answers, or null when the file is absent or unreadable.</summary>

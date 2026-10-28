@@ -25,14 +25,22 @@ public sealed record ObjInfo(
 /// <summary>One Data/Locations Forage or Fish row. <see cref="ItemId"/> may be an item query.
 /// <see cref="Season"/> null means any season unless <see cref="Condition"/> names one.
 /// <see cref="MinFishingLevel"/> is SpawnFishData.MinFishingLevel (0 for forage). <see cref="IsRandom"/>
-/// marks one entry of a RandomItemId list: the game picks one of them (ItemQueryResolver.cs 804-817).</summary>
+/// marks one entry of a RandomItemId list: the game picks one of them (ItemQueryResolver.cs 804-817).
+/// The fish-only members feed <see cref="FishCatchRates"/>: <see cref="Precedence"/> (lower is tried
+/// first, ties shuffled), <see cref="FishAreaId"/> (null = any area), the cast distance range
+/// (<see cref="MaxDistanceFromShore"/> -1 = none) and <see cref="NeedsPosition"/> (a bobber or player
+/// tile rectangle: only one spot of the map, which the catch model leaves out as sim.py did).</summary>
 public sealed record LocationSpawn(
     string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit,
-    bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false, bool CanBeInherited = true);
+    bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false, bool CanBeInherited = true,
+    int Precedence = 0, string? FishAreaId = null, int MinDistanceFromShore = 0, int MaxDistanceFromShore = -1,
+    bool NeedsPosition = false);
 
 /// <summary>One Data/Fish row, reduced: field 1 difficulty or "trap", field 5 time spans
-/// ("600 1200 1800 2000"), field 7 weather ("sunny", "rainy", "both"), field 12 minimum level.</summary>
-public sealed record FishRow(string ItemId, bool IsTrap, string Weather, int MinFishingLevel, string TimeSpans);
+/// ("600 1200 1800 2000"), field 7 weather ("sunny", "rainy", "both"), field 12 minimum level, and for
+/// <see cref="FishCatchRates"/> field 9 max depth, field 10 base bite chance, field 11 depth multiplier.</summary>
+public sealed record FishRow(string ItemId, bool IsTrap, string Weather, int MinFishingLevel, string TimeSpans,
+    int MaxDepth = 0, double BaseChance = 0, double DepthMultiplier = 0);
 
 public sealed record ArtifactSpotRow(string Location, string ItemId, string? Condition, double Chance);
 
@@ -41,8 +49,10 @@ public sealed record GarbageRow(string CanId, string ItemId, string? Condition);
 
 /// <summary>One Data/Shops stock row, or one of its RandomItemId entries (<see cref="IsRandom"/>). <see cref="ItemId"/>
 /// is an id or an item query. A recipe row teaches the recipe for that item. <see cref="TradeItemId"/> is
-/// ShopItemData.TradeItemId: the item is paid for with another item.</summary>
-public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null);
+/// ShopItemData.TradeItemId: the item is paid for with another item. <see cref="Query"/> is set on a row the
+/// game listed from a tag-filtered item query (the line's ItemId text): the item is one the query offers.</summary>
+public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null,
+    string? Query = null);
 
 /// <summary>One Data/Monsters drop (field 6 is "id chance id chance ..."). <see cref="ItemId"/> may be a query.</summary>
 public sealed record MonsterDropRow(string Monster, string ItemId, double Chance);

@@ -51,6 +51,9 @@ public static class ShopSources
         ("TroutDerby", "(O)749", Reliability.Chance),
     };
 
+    private static string QueryNote(string query)
+        => query.TrimStart().StartsWith("RANDOM_ITEMS", StringComparison.Ordinal) ? "random items" : "all items with its tags";
+
     public static bool IsIslandShop(string shopId)
         => IslandShopMarkers.Any(m => shopId.Contains(m, StringComparison.Ordinal));
 
@@ -62,6 +65,8 @@ public static class ShopSources
         {
             if (row.IsRecipe || row.TradeItemId != null) continue;
             if (Template(row, festivals) is not ObtainSource template) continue;
+            // A row the game listed from a query reads as the query's own rows do.
+            if (row.Query != null) template = template with { Detail = $"{template.Detail} ({QueryNote(row.Query)})" };
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
         }

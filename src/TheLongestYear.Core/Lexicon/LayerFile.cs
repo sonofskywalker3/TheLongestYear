@@ -21,6 +21,11 @@ public sealed record LayerInputs(
     /// made in code); part of the cache key, so editing a layer file does not reuse a stale entry.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string TextHash { get; init; } = "";
+
+    /// <summary>Fishing rows the game data does not hold (a fish a mod hands out in code), written as
+    /// Data/Locations fish rows are read (<see cref="LocationSpawn"/>). They join the build's fish rows,
+    /// so they give routes and catch rates (<see cref="FishCatchRates"/>) as a data row would.</summary>
+    public IReadOnlyList<LocationSpawn> FishSpawns { get; init; } = Array.Empty<LocationSpawn>();
 }
 
 /// <summary>A layer's answers: what changes over the answers composed without it. <see cref="Mods"/>
@@ -54,11 +59,11 @@ public sealed record LayerAnswers(
 public sealed record LayerRemovals(
     IReadOnlyList<string> Rows, IReadOnlyList<string> Obtain, IReadOnlyList<string> YearSort,
     IReadOnlyList<string> Unresolved, IReadOnlyList<string> MapWeeks, IReadOnlyList<string> UnreachedMaps,
-    IReadOnlyList<string> ShopWeeks)
+    IReadOnlyList<string> ShopWeeks, IReadOnlyList<string> CatchRates)
 {
     [System.Text.Json.Serialization.JsonIgnore]
     public bool IsEmpty => Rows.Count == 0 && Obtain.Count == 0 && YearSort.Count == 0 && Unresolved.Count == 0
-                           && MapWeeks.Count == 0 && UnreachedMaps.Count == 0 && ShopWeeks.Count == 0;
+                           && MapWeeks.Count == 0 && UnreachedMaps.Count == 0 && ShopWeeks.Count == 0 && CatchRates.Count == 0;
 }
 
 /// <summary>The layer files' names and formats. Both are <see cref="LexiconJson"/> text (sorted keys,
@@ -97,6 +102,8 @@ public static class LayerFile
                 if (sources == null || sources.Any(src => src == null))
                     throw new System.Text.Json.JsonException($"ExtraSources {id} is null or holds a null source.");
         RequireSourceMembers(json);
+        if (read.FishSpawns != null && read.FishSpawns.Any(row => row == null || string.IsNullOrWhiteSpace(row.Location) || string.IsNullOrWhiteSpace(row.ItemId)))
+            throw new System.Text.Json.JsonException("FishSpawns holds a null row or a row with no Location or ItemId.");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
@@ -109,6 +116,7 @@ public static class LayerFile
             YearRulings = read.YearRulings ?? new Dictionary<string, YearRuling>(StringComparer.Ordinal),
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
+            FishSpawns = read.FishSpawns ?? Array.Empty<LocationSpawn>(),
             TextHash = HashText(json),
         };
     }
@@ -160,7 +168,7 @@ public static class LayerFile
         if (read.Removals != null)
             foreach (var (name, removal) in read.Removals)
                 if (removal == null || removal.Rows == null || removal.Obtain == null || removal.YearSort == null
-                    || removal.Unresolved == null || removal.MapWeeks == null || removal.UnreachedMaps == null || removal.ShopWeeks == null)
+                    || removal.Unresolved == null || removal.MapWeeks == null || removal.UnreachedMaps == null || removal.ShopWeeks == null || removal.CatchRates == null)
                     throw new System.Text.Json.JsonException($"Removals {name} is null or holds a null list.");
         return read with
         {
@@ -183,6 +191,7 @@ public static class LayerFile
         if (delta.UnreachedMaps == null) return "UnreachedMaps";
         if (delta.ShopWeeks == null || delta.ShopWeeks.Values.Any(v => v == null)) return "ShopWeeks";
         if (delta.Availability == null || delta.Availability.Values.Any(v => v == null)) return "Availability";
+        if (delta.CatchRates == null || delta.CatchRates.Values.Any(v => v?.Weekly == null)) return "CatchRates";
         return null;
     }
 

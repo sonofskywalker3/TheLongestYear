@@ -86,7 +86,7 @@ public static class LayerDelta
             Gone(belowRows.Keys, liveRows.Keys), Gone(below.Obtain.Keys, live.Obtain.Keys),
             Gone(below.YearSort.Keys, live.YearSort.Keys), Gone(below.Unresolved, live.Unresolved),
             Gone(below.MapWeeks.Keys, live.MapWeeks.Keys), Gone(below.UnreachedMaps, live.UnreachedMaps),
-            Gone(below.ShopWeeks.Keys, live.ShopWeeks.Keys));
+            Gone(below.ShopWeeks.Keys, live.ShopWeeks.Keys), Gone(below.CatchRates.Keys, live.CatchRates.Keys));
 
     private static List<string> Gone(IEnumerable<string> below, IEnumerable<string> live)
         => below.Except(live, StringComparer.Ordinal).OrderBy(k => k, StringComparer.Ordinal).ToList();
@@ -105,6 +105,7 @@ public static class LayerDelta
             Changed(below.ShopWeeks, live.ShopWeeks, (a, b) => a == b))
         {
             Availability = Changed(below.Availability, live.Availability, (a, b) => Text(a) == Text(b)),
+            CatchRates = Changed(below.CatchRates, live.CatchRates, (a, b) => Json(a) == Json(b)),
         };
     }
 
@@ -112,7 +113,7 @@ public static class LayerDelta
     public static bool IsEmpty(AnswerVariant delta)
         => delta.Obtain.Count == 0 && delta.YearSort.Count == 0 && delta.Unresolved.Count == 0
            && delta.MapWeeks.Count == 0 && delta.UnreachedMaps.Count == 0 && delta.ShopWeeks.Count == 0
-           && delta.Availability.Count == 0;
+           && delta.Availability.Count == 0 && delta.CatchRates.Count == 0;
 
     private static Dictionary<string, T> Changed<T>(
         IReadOnlyDictionary<string, T> below, IReadOnlyDictionary<string, T> live, Func<T, T, bool> same)
@@ -120,4 +121,6 @@ public static class LayerDelta
             .ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
 
     private static string Text(AvailabilityAnswers answers) => JsonSerializer.Serialize(answers, LexiconJson.Options);
+
+    private static string Json(CatchRate rate) => JsonSerializer.Serialize(rate, LexiconJson.Options);
 }

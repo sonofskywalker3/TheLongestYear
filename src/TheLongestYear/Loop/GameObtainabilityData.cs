@@ -33,6 +33,9 @@ namespace TheLongestYear.Loop
         private const int FishTimeField = 5;
         private const int FishWeatherField = 7;
         private const int FishMinLevelField = 12;
+        private const int FishMaxDepthField = 9;
+        private const int FishBaseChanceField = 10;
+        private const int FishDepthMultiplierField = 11;
         private const string TrapMarker = "trap";
         private const int MonsterDropField = 6;
         private const string PreviousOutputTapId = "PREVIOUS_OUTPUT_ID";
@@ -50,6 +53,12 @@ namespace TheLongestYear.Loop
         private readonly List<string> _failed = new();
 
         public GameObtainabilityData(IMonitor monitor) => _monitor = monitor;
+
+        private static int IntField(string[] fields, int index)
+            => int.TryParse(GameObtainabilityParsing.Field(fields, index), NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : 0;
+
+        private static double DoubleField(string[] fields, int index)
+            => double.TryParse(GameObtainabilityParsing.Field(fields, index), NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : 0;
 
         public ObtainabilityInputs Build()
         {
@@ -125,7 +134,9 @@ namespace TheLongestYear.Loop
                         foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
                             fish.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance,
                                 Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random,
-                                f.CanBeInherited));   // CatchLimit defaults to -1
+                                f.CanBeInherited,   // CatchLimit defaults to -1
+                                f.Precedence, string.IsNullOrWhiteSpace(f.FishAreaId) ? null : f.FishAreaId,
+                                f.MinDistanceFromShore, f.MaxDistanceFromShore, f.BobberPosition != null || f.PlayerPosition != null));
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                         foreach ((string item, _) in GameObtainabilityParsing.Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
@@ -141,7 +152,9 @@ namespace TheLongestYear.Loop
                     bool trap = GameObtainabilityParsing.Field(fields, FishDifficultyField) == TrapMarker;
                     int level = trap ? 0 : (int.TryParse(GameObtainabilityParsing.Field(fields, FishMinLevelField), out int l) ? l : 0);
                     fishRows[id] = new FishRow(id, trap, trap ? "" : GameObtainabilityParsing.Field(fields, FishWeatherField), level,
-                        trap ? "" : GameObtainabilityParsing.Field(fields, FishTimeField));
+                        trap ? "" : GameObtainabilityParsing.Field(fields, FishTimeField),
+                        trap ? 0 : IntField(fields, FishMaxDepthField), trap ? 0 : DoubleField(fields, FishBaseChanceField),
+                        trap ? 0 : DoubleField(fields, FishDepthMultiplierField));
                 }
             });
 
@@ -195,7 +208,7 @@ namespace TheLongestYear.Loop
                             {
                                 bool pick = random || GameItemQueries.IsRandomPick(entry, item.MaxItems);
                                 foreach (string id in offered)
-                                    shops.Add(new ShopRow(kv.Key, id, item.Condition, item.IsRecipe, pick, trade));
+                                    shops.Add(new ShopRow(kv.Key, id, item.Condition, item.IsRecipe, pick, trade, entry));
                                 continue;
                             }
                             shops.Add(new ShopRow(kv.Key, entry, item.Condition, item.IsRecipe, random, trade));

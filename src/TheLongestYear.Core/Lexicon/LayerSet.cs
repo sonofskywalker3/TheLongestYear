@@ -86,6 +86,14 @@ public sealed class LayerSet
     /// (and their row hashes) stay the game's.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> ExtraDirectSources { get; }
 
+    /// <summary>Every layer's <see cref="LayerInputs.FishSpawns"/>, in inputs order.</summary>
+    public IReadOnlyList<LocationSpawn> ExtraFishSpawns { get; private init; } = Array.Empty<LocationSpawn>();
+
+    /// <summary>The inputs a build reads: the game's, with the layers' fishing rows added. Only builds
+    /// read this; the row hashes stay the game's own (a layer edit changes the cache key instead).</summary>
+    public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
+        => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
+
     /// <summary>The layers' year ruling for a qualified id, or null when no layer rules it.</summary>
     public YearRuling? YearRuling(string id) => _yearRulings.TryGetValue(id, out YearRuling r) ? r : null;
 
@@ -217,7 +225,10 @@ public sealed class LayerSet
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
-        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra);
+        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra)
+        {
+            ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
+        };
     }
 
     private static string HashOf(string textHash, Func<string> written)
@@ -273,6 +284,7 @@ public sealed class LayerSet
             Merge(below.ShopWeeks, delta.ShopWeeks))
         {
             Availability = Merge(below.Availability, delta.Availability),
+            CatchRates = Merge(below.CatchRates, delta.CatchRates),
         };
     }
 
@@ -287,6 +299,7 @@ public sealed class LayerSet
             Without(below.ShopWeeks, removal.ShopWeeks))
         {
             Availability = below.Availability,
+            CatchRates = Without(below.CatchRates, removal.CatchRates),
         };
 
     private static Dictionary<string, T> Without<T>(IReadOnlyDictionary<string, T> below, IReadOnlyList<string> keys)
