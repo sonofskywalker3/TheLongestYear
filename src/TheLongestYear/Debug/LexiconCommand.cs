@@ -185,6 +185,8 @@ namespace TheLongestYear.DebugCommands
                 ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
                 cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                     with { Availability = context.Availability() };
+                if (context.Layers != null)
+                    cold = cold with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, cold.Availability, m => monitor.Log($"tly_lexicon diff: {m}", LogLevel.Warn)) };
                 lines = LexiconDiff.Compare(service.Variant, cold);
             }
             catch (Exception e)
@@ -299,6 +301,7 @@ namespace TheLongestYear.DebugCommands
             ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                 with { Availability = context.Availability() };
+            live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn)) };
             string name = context.PierreYear2Owned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
 
             string path = Path.Combine(LayerFile.Folder(modDirectory), LayerFile.AnswersFileName(mods));
@@ -330,7 +333,7 @@ namespace TheLongestYear.DebugCommands
             answers.Deltas.TryGetValue(name, out AnswerVariant delta);
             monitor.Log(
                 $"{verb}: wrote variant '{name}' to {path} ({json.Length:N0} chars; variants [{string.Join(", ", answers.Deltas.Keys)}]; " +
-                $"{delta?.Obtain.Count ?? 0} obtain ids differ, {(answers.VariantRowHashes.TryGetValue(name, out var rows) ? rows.Count : 0)} rows; {answers.CheckedVersions}; {timer.ElapsedMilliseconds} ms).",
+                $"{delta?.Obtain.Count ?? 0} obtain ids differ, {delta?.YearTwo.Count ?? 0} year-2 entries, {(answers.VariantRowHashes.TryGetValue(name, out var rows) ? rows.Count : 0)} rows; {answers.CheckedVersions}; {timer.ElapsedMilliseconds} ms).",
                 LogLevel.Info);
         }
     }

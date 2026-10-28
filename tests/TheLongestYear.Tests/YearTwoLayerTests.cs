@@ -244,6 +244,96 @@ public sealed class YearTwoLayerTests
         Assert.StartsWith("year 2 ", line);
     }
 
+    private static IReadOnlyDictionary<string, YearTwoRuling> Rule(int week, int effort = 5)
+        => new Dictionary<string, YearTwoRuling> { [Id] = new(week, effort, "why") };
+
+    private static IReadOnlyDictionary<string, AvailabilityAnswers> Avails(
+        Dictionary<string, ItemAvailability>? derived = null, Dictionary<string, ItemEffort>? effort = null)
+        => new Dictionary<string, AvailabilityAnswers>
+        {
+            ["Normal|no_kitchen"] = new(
+                derived ?? new Dictionary<string, ItemAvailability>(), effort ?? new Dictionary<string, ItemEffort>(),
+                new Dictionary<string, double[]>(), new Dictionary<string, int>()),
+        };
+
+    [Theory]
+    [InlineData(17, Season.Spring)]
+    [InlineData(21, Season.Summer)]
+    [InlineData(32, Season.Winter)]
+    public void Build_stores_week_effort_season_and_prefixed_basis(int week, Season season)
+    {
+        var warns = new List<string>();
+        var table = YearTwoAnswers.Build(Rule(week, 7), Avails(), warns.Add);
+        ItemAvailability a = Assert.Single(table).Value;
+        Assert.Equal(week, a.EarliestWeek);
+        Assert.Equal(7, a.Effort);
+        Assert.Equal("year 2 ruling: why", a.Basis);
+        Assert.Equal(EffortSource.Ruling, a.Source);
+        Assert.Equal(season, a.EarliestSeason);
+        Assert.Equal(season, a.GateSeason);
+        Assert.Empty(warns);
+    }
+
+    [Fact]
+    public void Build_refuses_id_with_placed_year_one_week_in_Derived()
+    {
+        var warns = new List<string>();
+        var avail = Avails(derived: new() { [Id] = new ItemAvailability(Season.Spring, 3, "b", EffortSource.Derived, 6) });
+        Assert.Empty(YearTwoAnswers.Build(Rule(20), avail, warns.Add));
+        string warn = Assert.Single(warns);
+        Assert.Contains(Id, warn);
+        Assert.Contains("6", warn);
+    }
+
+    [Fact]
+    public void Build_refuses_id_with_placed_week_in_EffortDerived()
+    {
+        var warns = new List<string>();
+        var avail = Avails(effort: new() { [Id] = new ItemEffort(5, "b", 9) });
+        Assert.Empty(YearTwoAnswers.Build(Rule(20), avail, warns.Add));
+        Assert.Contains("9", Assert.Single(warns));
+    }
+
+    [Fact]
+    public void Build_accepts_id_in_EffortDerived_without_a_week()
+    {
+        var warns = new List<string>();
+        var avail = Avails(effort: new() { [Id] = new ItemEffort(5, "b", EarliestWeek: null) });
+        Assert.Single(YearTwoAnswers.Build(Rule(20), avail, warns.Add));
+        Assert.Empty(warns);
+    }
+
+    [Fact]
+    public void Compose_year_two_rulings_later_wins_with_warn()
+    {
+        LayerInputs a = LayerFile.ReadInputs("{\"UniqueId\": \"ModA\", " + Ruling(20, 3, "a") + "}");
+        LayerInputs b = LayerFile.ReadInputs("{\"UniqueId\": \"ModB\", " + Ruling(25, 4, "b") + "}");
+        var warns = new List<string>();
+        LayerSet set = LayerSet.Compose(null, new[] { a, b }, Array.Empty<LayerAnswers>(), warns.Add);
+        Assert.Equal(25, set.YearTwoRulings[Id].Week);
+        string warn = Assert.Single(warns);
+        Assert.Contains("ModA", warn);
+        Assert.Contains("ModB", warn);
+    }
+
+    [Fact]
+    public void Build_does_not_touch_year_one_availability()
+    {
+        var avail = Avails();
+        YearTwoAnswers.Build(Rule(20), avail, _ => { });
+        Assert.Empty(avail["Normal|no_kitchen"].Derived);
+        Assert.Empty(avail["Normal|no_kitchen"].EffortDerived);
+    }
+
+    [Fact]
+    public void Factory_leaves_year_two_table_empty_so_write_vanilla_stays_empty()
+    {
+        ObtainabilityInputs inputs = VanillaInputsFixture.Load();
+        ObtainabilityBuild build = ObtainabilityBuilder.Build(inputs);
+        AnswerVariant variant = AnswerVariantFactory.From(build, build, inputs, null, Array.Empty<string>(), null);
+        Assert.Empty(variant.YearTwo);
+    }
+
     [Fact]
     public void Vanilla_json_round_trip_is_byte_identical()
     {

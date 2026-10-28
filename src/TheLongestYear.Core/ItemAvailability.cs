@@ -36,7 +36,7 @@ public sealed record ItemAvailability(
 
 /// <summary>Where an item's effort number came from: a derivation rule, the price bucket
 /// fallback (no rule claimed the id), or the curated effort override table.</summary>
-public enum EffortSource { Derived, Price, Override }
+public enum EffortSource { Derived, Price, Override, Ruling }
 
 /// <summary>Effort without a season floor. Phase 2 rules (gems, geodes, monster drops,
 /// artifacts, artisan goods, animal products, dishes, crops, forage) produce these: they say how

@@ -90,6 +90,9 @@ public sealed class LayerSet
     /// <summary>Every layer's year-2 maps and shops, later layer winning: the builder's <c>marks</c>.</summary>
     public YearTwoMarks Marks { get; }
 
+    /// <summary>Every layer's year-2 week and effort rulings by qualified id, later layer winning.</summary>
+    public IReadOnlyDictionary<string, YearTwoRuling> YearTwoRulings { get; private init; } = new Dictionary<string, YearTwoRuling>(StringComparer.Ordinal);
+
     /// <summary>Every layer's <see cref="LayerInputs.FishSpawns"/>, in inputs order.</summary>
     public IReadOnlyList<LocationSpawn> ExtraFishSpawns { get; private init; } = Array.Empty<LocationSpawn>();
 
@@ -258,6 +261,7 @@ public sealed class LayerSet
         }
         return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra, marks)
         {
+            YearTwoRulings = Rulings(inputs, i => i.YearTwoRulings, warn, "year-2"),
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
         };
