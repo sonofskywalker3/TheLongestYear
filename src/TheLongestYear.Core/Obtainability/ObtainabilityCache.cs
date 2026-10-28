@@ -17,19 +17,22 @@ public sealed class ObtainabilityCache
     private ObtainabilityBuild? _build;
 
     /// <param name="extraDirect">Passed to <see cref="ObtainabilityBuilder.Build"/>; part of the key.</param>
+    /// <param name="marks">Passed to <see cref="ObtainabilityBuilder.Build"/>; part of the key.</param>
     public ObtainabilityBuild Get(
         ObtainabilityInputs inputs, out bool reused,
-        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null)
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null,
+        YearTwoMarks? marks = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
-        string key = Fingerprint(inputs) + (extraDirect is { Count: > 0 } ? ExtraFingerprint(extraDirect) : "");
+        string key = Fingerprint(inputs) + (extraDirect is { Count: > 0 } ? ExtraFingerprint(extraDirect) : "")
+            + (marks is { IsEmpty: false } ? MarksFingerprint(marks) : "");
         if (_build != null && key == _key)
         {
             reused = true;
             return _build;
         }
 
-        _build = ObtainabilityBuilder.Build(inputs, extraDirect: extraDirect);
+        _build = ObtainabilityBuilder.Build(inputs, extraDirect: extraDirect, marks: marks);
         _key = key;
         reused = false;
         return _build;
@@ -42,6 +45,14 @@ public sealed class ObtainabilityCache
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(sorted, Lexicon.LexiconJson.Options);
         using var sha = SHA256.Create();
         return "+" + Convert.ToHexString(sha.ComputeHash(json));
+    }
+
+    /// <summary>The maps and shops as sorted <c>name=flag</c> pairs, like <see cref="ExtraFingerprint"/>.</summary>
+    private static string MarksFingerprint(YearTwoMarks marks)
+    {
+        static string Pairs(IReadOnlyDictionary<string, Lexicon.YearTwoFlag> flags)
+            => string.Join(";", flags.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
+        return "|maps:" + Pairs(marks.Maps) + "|shops:" + Pairs(marks.Shops);
     }
 
     private static string Fingerprint(ObtainabilityInputs inputs)

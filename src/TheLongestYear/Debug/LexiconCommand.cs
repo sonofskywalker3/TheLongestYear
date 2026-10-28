@@ -155,6 +155,7 @@ namespace TheLongestYear.DebugCommands
                 monitor.Log($"tly_lexicon status: layer pairs not mapped: {string.Join(", ", service.Loaded.Set.UnmappedPairs)}.", LogLevel.Info);
             var present = service.Variant?.Availability.Keys ?? (IEnumerable<string>)Array.Empty<string>();
             monitor.Log($"tly_lexicon status: availability keys present: {JoinOrNone(present)}; computed this session: {JoinOrNone(service.ComputedAvailabilityKeys)}.", LogLevel.Info);
+            monitor.Log($"tly_lexicon status: year-2 entries served: {service.YearTwoCount}.", LogLevel.Info);
             var files = service.CacheFiles();
             monitor.Log($"tly_lexicon status: cache {TheLongestYear.Loop.LexiconService.CacheFolder}: {files.Count} file(s).", LogLevel.Info);
             foreach (CacheFileInfo f in files)
@@ -174,15 +175,16 @@ namespace TheLongestYear.DebugCommands
             }
             var timer = Stopwatch.StartNew();
             Resolved current = service.Current;
-            // Exactly what a cache miss builds: the composed layers' extra sources, this save's weeks and shops.
+            // Exactly what a cache miss builds: the composed layers' extra sources and year-2 flags, this save's weeks and shops.
             var extra = context.Layers?.Set.ExtraDirectSources;
+            var marks = context.Layers?.Set.Marks;
             AnswerVariant cold;
             IReadOnlyList<string> lines;
             try
             {
                 ObtainabilityInputs built = context.Layers?.Set.WithFishSpawns(inputs) ?? inputs;
-                ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra);
-                ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
+                ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: marks);
+                ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: marks);
                 cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                     with { Availability = context.Availability() };
                 if (context.Layers != null)
@@ -297,8 +299,8 @@ namespace TheLongestYear.DebugCommands
             var timer = Stopwatch.StartNew();
             var extra = context.Layers.Set.ExtraDirectSources;
             ObtainabilityInputs built = context.Layers.Set.WithFishSpawns(inputs);
-            ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra);
-            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
+            ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: context.Layers.Set.Marks);
+            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: context.Layers.Set.Marks);
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                 with { Availability = context.Availability() };
             live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn)) };

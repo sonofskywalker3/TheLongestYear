@@ -36,12 +36,14 @@ namespace TheLongestYear.Loop
         private string _pendingKey;
         /// <summary>The availability keys computed (not served) since the last resolve.</summary>
         private readonly HashSet<string> _computedKeys = new(StringComparer.Ordinal);
+        /// <summary>The shipped variant name the last resolve was for (base or Pierre's year-2 line).</summary>
+        private string _variantName = AnswerSet.BaseVariant;
 
         /// <param name="build">The answers for live data nothing has (the cold build, for now), given the
-        /// layers' extra direct sources to add.</param>
+        /// layers' extra direct sources to add and their year-2 maps and shops to flag.</param>
         public LexiconService(
             IMonitor monitor, string modFolder, IModRegistry registry,
-            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, AnswerVariant> build)
+            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, YearTwoMarks, AnswerVariant> build)
         {
             if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
@@ -60,7 +62,7 @@ namespace TheLongestYear.Loop
                     (layers.UnmappedMods.Count + layers.UnmappedPairs.Count > 0 ? ", so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
-                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources));
+                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, layers.Marks));
         }
 
         /// <summary>The shipped vanilla answers, or null when the file is absent or unreadable.</summary>
@@ -75,12 +77,13 @@ namespace TheLongestYear.Loop
         {
             Forget();
             _computedKeys.Clear();
+            _variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
             Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers);
             _current = r;
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";
             if (r.Origin == AnswerOrigin.Computed)
-                line += ComputedReason(r, Loaded.Set.Composed, pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant, gameVersion, modVersion);
+                line += ComputedReason(r, Loaded.Set.Composed, _variantName, gameVersion, modVersion);
             _monitor.Log(line + ".", LogLevel.Info);
             return r;
         }
@@ -105,6 +108,19 @@ namespace TheLongestYear.Loop
 
         /// <summary>The current answers with the availability answers added since the resolve; null with none.</summary>
         public AnswerVariant Variant => _variant;
+
+        /// <summary>The year-2 answer for one item, or null when there is none. Served only here, never
+        /// through the year-1 availability model; a computed load falls back to the shipped rulings
+        /// (<see cref="YearTwoAnswers.TableFor"/>).</summary>
+        public ItemAvailability YearTwoFor(string qualifiedId)
+            => YearTwoTable.TryGetValue(qualifiedId, out ItemAvailability a) ? a : null;
+
+        /// <summary>How many year-2 answers <see cref="YearTwoFor"/> serves.</summary>
+        public int YearTwoCount => YearTwoTable.Count;
+
+        /// <summary>Empty with no resolved answers (before a resolve, after <see cref="Forget"/>).</summary>
+        private IReadOnlyDictionary<string, ItemAvailability> YearTwoTable
+            => YearTwoAnswers.TableFor(_variant, _variant == null ? null : Loaded.Set.Composed, _variantName);
 
         /// <summary>The availability keys computed (not served from the answers) since the last resolve.</summary>
         public IReadOnlyCollection<string> ComputedAvailabilityKeys => _computedKeys;

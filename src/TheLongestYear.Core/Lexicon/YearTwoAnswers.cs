@@ -32,6 +32,17 @@ public static class YearTwoAnswers
         return table;
     }
 
+    private static readonly IReadOnlyDictionary<string, ItemAvailability> NoTable = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
+
+    /// <summary>The year-2 table to serve: <paramref name="current"/>'s when it holds one, else the
+    /// composed shipped set's <paramref name="variantName"/> variant's (a computed load builds a variant
+    /// with an empty table, and the stored rulings still apply), else empty.</summary>
+    public static IReadOnlyDictionary<string, ItemAvailability> TableFor(AnswerVariant? current, AnswerSet? composed, string variantName)
+    {
+        if (current is { YearTwo.Count: > 0 }) return current.YearTwo;
+        return composed?.Resolve(variantName)?.YearTwo ?? NoTable;
+    }
+
     private static (int Week, string Key)? YearOneWeek(string id, IReadOnlyDictionary<string, AvailabilityAnswers> availability)
     {
         foreach (var (key, answers) in availability)

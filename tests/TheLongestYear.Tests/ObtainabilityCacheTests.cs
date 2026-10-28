@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TheLongestYear.Core.Lexicon;
 using TheLongestYear.Core.Obtainability;
 using Xunit;
 
@@ -50,5 +51,44 @@ public class ObtainabilityCacheTests
         cache.Get(WithCrop(5), out bool reused);
 
         Assert.False(reused);
+    }
+    private static YearTwoMarks Marks(string map, YearTwoFlag flag) => new(
+        new Dictionary<string, YearTwoFlag>(System.StringComparer.Ordinal) { [map] = flag },
+        new Dictionary<string, YearTwoFlag>(System.StringComparer.Ordinal));
+
+    [Fact]
+    public void Different_marks_rebuild()
+    {
+        var cache = new ObtainabilityCache();
+
+        cache.Get(Inputs("(O)472"), out _, marks: Marks("Custom_Highlands", YearTwoFlag.YearTwo));
+        cache.Get(Inputs("(O)472"), out bool flagChanged, marks: Marks("Custom_Highlands", YearTwoFlag.GingerIsland));
+        cache.Get(Inputs("(O)472"), out bool marksDropped);
+
+        Assert.False(flagChanged);
+        Assert.False(marksDropped);
+    }
+
+    [Fact]
+    public void Equal_marks_reuse_the_previous_build()
+    {
+        var cache = new ObtainabilityCache();
+
+        ObtainabilityBuild first = cache.Get(Inputs("(O)472"), out _, marks: Marks("Custom_Highlands", YearTwoFlag.YearTwo));
+        ObtainabilityBuild second = cache.Get(Inputs("(O)472"), out bool reused, marks: Marks("Custom_Highlands", YearTwoFlag.YearTwo));
+
+        Assert.True(reused);
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void Empty_marks_key_like_no_marks()
+    {
+        var cache = new ObtainabilityCache();
+
+        cache.Get(Inputs("(O)472"), out _);
+        cache.Get(Inputs("(O)472"), out bool reused, marks: YearTwoMarks.None);
+
+        Assert.True(reused);
     }
 }

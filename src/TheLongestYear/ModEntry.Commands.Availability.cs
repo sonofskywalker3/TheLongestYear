@@ -95,6 +95,17 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} ({single.Source}), tier {TierLabel(itemId, single)} [{single.Basis}]",
                 LogLevel.Info);
+            LogYearTwoLine(itemId);
+        }
+
+        /// <summary>The <c>{id}: year 2: ...</c> line, when the lexicon serves a year-2 answer for the item.</summary>
+        private void LogYearTwoLine(string itemId)
+        {
+            TheLongestYear.Core.ItemAvailability y2 = _lexicon?.YearTwoFor(itemId);
+            if (y2 == null) return;
+            this.Monitor.Log(
+                $"{itemId}: year 2: earliest {y2.EarliestSeason} (week {y2.EarliestWeek}), effort {y2.Effort} ({y2.Source}), tier {TierLabel(itemId, y2)} [{y2.Basis}]",
+                LogLevel.Info);
         }
 
         /// <summary>The item's effort tier within the first theme pool that contains it, or
@@ -253,15 +264,16 @@ namespace TheLongestYear
 
         /// <summary>The lexicon's build for live data it has no answers for: the cold obtainability and
         /// year-sort builds (each memoised for the session by input hash, so a reload of unchanged data
-        /// reuses them) with the supported-mod layers' extra direct sources, snapshotted with this save's
-        /// map and shop weeks.</summary>
+        /// reuses them) with the supported-mod layers' extra direct sources and year-2 map and shop flags,
+        /// snapshotted with this save's map and shop weeks.</summary>
         private TheLongestYear.Core.Lexicon.AnswerVariant BuildLexiconVariant(
             TheLongestYear.Core.Obtainability.ObtainabilityInputs inputs,
-            IReadOnlyDictionary<string, IReadOnlyList<TheLongestYear.Core.Obtainability.ObtainSource>> extraDirect)
+            IReadOnlyDictionary<string, IReadOnlyList<TheLongestYear.Core.Obtainability.ObtainSource>> extraDirect,
+            TheLongestYear.Core.Obtainability.YearTwoMarks marks)
         {
-            var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect);
+            var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect, marks);
             var sortTimer = System.Diagnostics.Stopwatch.StartNew();
-            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _, extraDirect);
+            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _, extraDirect, marks);
             _yearSortMs = sortTimer.ElapsedMilliseconds;
             _lastLexiconBuild = build;
             _lastLexiconBuildReused = reused;
@@ -342,6 +354,7 @@ namespace TheLongestYear
                     return;
                 }
             }
+            LogYearTwoLine(TheLongestYear.Core.BundleParsing.NormalizeItemId(args[0]));   // the year-2 answer reads first
             this.Monitor.Log(
                 OriginLine() + System.Environment.NewLine
                 + TheLongestYear.Core.Obtainability.ObtainabilityText.Describe(args[0], _obtainability, id => ItemRegistry.GetData(id)?.DisplayName, startDay),

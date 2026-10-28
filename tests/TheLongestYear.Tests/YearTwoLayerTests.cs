@@ -334,6 +334,56 @@ public sealed class YearTwoLayerTests
         Assert.Empty(variant.YearTwo);
     }
 
+    private static AnswerSet Composed(string name, AnswerVariant variant)
+        => new("1.6", "1.0.0", Array.Empty<string>(), new Dictionary<string, ulong>(),
+               new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { [name] = variant });
+
+    [Fact]
+    public void TableFor_serves_the_current_variant_table_when_it_has_one()
+    {
+        AnswerVariant current = Variant((Id, Avail(25, 9)));
+        AnswerSet composed = Composed(AnswerSet.BaseVariant, Variant((Id, Avail(18, 4))));
+        Assert.Equal(Avail(25, 9), YearTwoAnswers.TableFor(current, composed, AnswerSet.BaseVariant)[Id]);
+    }
+
+    [Fact]
+    public void TableFor_falls_back_to_the_composed_variant_on_a_computed_load()
+    {
+        AnswerVariant computed = Variant();
+        AnswerSet composed = Composed(AnswerSet.PierreVariant, Variant((Id, Avail(18, 4))));
+        Assert.Equal(Avail(18, 4), YearTwoAnswers.TableFor(computed, composed, AnswerSet.PierreVariant)[Id]);
+        Assert.Empty(YearTwoAnswers.TableFor(computed, composed, AnswerSet.BaseVariant));
+    }
+
+    [Fact]
+    public void TableFor_is_empty_with_nothing_to_serve()
+    {
+        Assert.Empty(YearTwoAnswers.TableFor(null, null, AnswerSet.BaseVariant));
+        Assert.Empty(YearTwoAnswers.TableFor(Variant(), null, AnswerSet.BaseVariant));
+    }
+
+    [Fact]
+    public void Year_one_model_never_serves_a_ruled_year_two_entry()
+    {
+        const int ruledWeek = 25;
+        var answers = Avails()["Normal|no_kitchen"];
+        AnswerVariant variant = Variant((Id, new ItemAvailability(Season.Summer, 9, YearTwoAnswers.BasisPrefix + "why",
+            EffortSource.Ruling, ruledWeek, Season.Summer))) with
+        {
+            Availability = new Dictionary<string, AvailabilityAnswers>(StringComparer.Ordinal) { ["Normal|no_kitchen"] = answers },
+        };
+        ItemAvailabilityModel model = ItemAvailabilityBuilder.FromAnswers(
+            variant.Availability["Normal|no_kitchen"], null, null, WeekMode.Pacing, DifficultyStep.Normal);
+
+        ItemAvailability yearOne = model.For(Id);
+        Assert.NotEqual(EffortSource.Ruling, yearOne.Source);
+        Assert.NotEqual(ruledWeek, yearOne.EarliestWeek);
+
+        ItemAvailability yearTwo = YearTwoAnswers.TableFor(variant, null, AnswerSet.BaseVariant)[Id];
+        Assert.Equal(EffortSource.Ruling, yearTwo.Source);
+        Assert.Equal(ruledWeek, yearTwo.EarliestWeek);
+    }
+
     [Fact]
     public void Vanilla_json_round_trip_is_byte_identical()
     {
