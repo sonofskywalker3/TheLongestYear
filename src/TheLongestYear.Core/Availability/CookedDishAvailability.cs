@@ -153,20 +153,35 @@ public static class CookedDishAvailability
     public const string SneakPeekBasisMarker = "year-2 episode, Sneak Peek Boost";
 
     private static RecipeWeekResult ComputeRecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
+        => ComputeRecipeWeek(recipe.UnlockCondition, recipe.OutputItemId, recipe.Name, AvailabilityWeeks.CookiesWeek, data, step);
+
+    /// <summary>Week a crafting recipe (Data/CraftingRecipes) is learned, or null when it is not in
+    /// year 1. Same reading as a dish's, with two differences: no Queen of Sauce episode exists for
+    /// it, and "null" is not the Cookies event (a crafting recipe with that unlock is handed out by
+    /// mail or a quest), so both fall back to the shop price week alone.</summary>
+    internal static int? CraftingRecipeWeek(string unlock, string outputId, EffortData data, DifficultyStep step)
+        => ComputeRecipeWeek(unlock, outputId, channelName: null, nullUnlockWeek: null, data, step).Week;
+
+    /// <param name="channelName">The name the Queen of Sauce lists the recipe under, or null when
+    /// no episode can teach it.</param>
+    /// <param name="nullUnlockWeek">The week a "null" (or empty) unlock is learned, or null to
+    /// fall back to the price week.</param>
+    private static RecipeWeekResult ComputeRecipeWeek(string? unlock, string outputId, string? channelName, int? nullUnlockWeek,
+        EffortData data, DifficultyStep step)
     {
-        string text = (recipe.UnlockCondition ?? "").Trim();
+        string text = (unlock ?? "").Trim();
         if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return new RecipeWeekResult(1, null);
+        int? priceWeek = data.RecipePrices.TryGetValue(outputId, out int price) ? UnlockWeeks.ForCost(price) : null;
         if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase))
-            return new RecipeWeekResult(AvailabilityWeeks.CookiesWeek, null);
+            return new RecipeWeekResult(nullUnlockWeek ?? priceWeek, null);
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        int? priceWeek = data.RecipePrices.TryGetValue(recipe.OutputItemId, out int price) ? UnlockWeeks.ForCost(price) : null;
         if (tokens[0].Equals(FriendshipPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int hearts))
             return new RecipeWeekResult(Min(UnlockWeeks.ForFriendship(tokens[1], hearts), priceWeek), null);
         if (tokens[0].Equals(SkillPrefix, StringComparison.OrdinalIgnoreCase) && tokens.Length >= 3 && int.TryParse(tokens[^1], out int level))
             return new RecipeWeekResult(Min(AvailabilityWeeks.MachineLevelWeek(level), priceWeek), null);
         if (tokens[0].Equals(TvUnlock, StringComparison.OrdinalIgnoreCase))
         {
-            int? episode = data.CookingChannel.TryGetValue(recipe.Name, out int e) ? e : null;
+            int? episode = channelName != null && data.CookingChannel.TryGetValue(channelName, out int e) ? e : null;
             int? tvWeek = episode != null && episode.Value <= AvailabilityWeeks.YearOneEpisodes ? episode : null;
             bool yearTwoRoute = false;
             if (tvWeek == null && step != DifficultyStep.Easy && episode != null
@@ -187,7 +202,7 @@ public static class CookedDishAvailability
 
     private static int? Min(int? a, int? b) => a == null ? b : b == null ? a : Math.Min(a.Value, b.Value);
 
-    private static int? IngredientEffort(string ingredient, EffortData data, Func<string, int?> effortOf)
+    internal static int? IngredientEffort(string ingredient, EffortData data, Func<string, int?> effortOf)
     {
         if (int.TryParse(ingredient, out int category) && category < 0)
         {
@@ -205,7 +220,7 @@ public static class CookedDishAvailability
 
     /// <summary>A category ref takes the earliest member with a week; a member without one is
     /// skipped, so "any fish" is as early as the earliest placed fish.</summary>
-    private static int? IngredientWeek(string ingredient, EffortData data, Func<string, int?> weekOf)
+    internal static int? IngredientWeek(string ingredient, EffortData data, Func<string, int?> weekOf)
     {
         if (int.TryParse(ingredient, out int category) && category < 0)
         {

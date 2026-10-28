@@ -109,6 +109,7 @@ public sealed class EffortComposer
             ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
             FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _step),
             CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf, _step),
+            CraftedItemAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _step),
         })
         {
             ItemEffort? candidate = raw;

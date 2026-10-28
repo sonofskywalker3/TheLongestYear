@@ -38,6 +38,14 @@ public sealed record RawCookingRecipe(
     public int CountOf(int i) => IngredientCounts != null && i < IngredientCounts.Count ? Math.Max(1, IngredientCounts[i]) : 1;
 }
 
+/// <summary>One (id, count) ingredient of a crafting recipe. A negative id is a category ref.</summary>
+public sealed record RecipeIngredient(string Id, int Count);
+
+/// <summary>One Data/CraftingRecipes entry whose output is an object (big-craftable recipes go to
+/// <see cref="EffortData.MachineUnlocks"/> instead): the qualified output id, the ingredients and
+/// the unlock condition field.</summary>
+public sealed record CraftingRecipe(string Name, string OutputId, IReadOnlyList<RecipeIngredient> Ingredients, string Unlock);
+
 /// <summary>One product a fish pond can yield, the population it needs and its row's daily
 /// <c>Chance</c> (FishPondReward.Chance; 1 when the data gave none).</summary>
 public sealed record RawFishPondProduct(string ItemId, int RequiredPopulation, double Chance = 1.0);
@@ -91,6 +99,8 @@ public sealed class EffortData
     public IReadOnlyList<RawFarmAnimal> Animals { get; init; } = new List<RawFarmAnimal>();
     public IReadOnlyList<RawBuilding> Buildings { get; init; } = new List<RawBuilding>();
     public IReadOnlyList<RawCookingRecipe> CookingRecipes { get; init; } = new List<RawCookingRecipe>();
+    /// <summary>Data/CraftingRecipes entries that make objects (not big craftables).</summary>
+    public IReadOnlyList<CraftingRecipe> CraftingRecipes { get; init; } = new List<CraftingRecipe>();
     public IReadOnlyList<RawFishPondRule> FishPonds { get; init; } = new List<RawFishPondRule>();
     public IReadOnlyList<RawCropGrowth> Crops { get; init; } = new List<RawCropGrowth>();
     public IReadOnlyList<RawSpawnEntry> ForageSpawns { get; init; } = new List<RawSpawnEntry>();

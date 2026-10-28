@@ -54,6 +54,7 @@ namespace TheLongestYear.Loop
             var animals = new List<RawFarmAnimal>();
             var buildings = new List<RawBuilding>();
             var cooking = new List<RawCookingRecipe>();
+            var crafting = new List<TheLongestYear.Core.Availability.CraftingRecipe>();
             var ponds = new List<RawFishPondRule>();
             var crops = new List<RawCropGrowth>();
             var tapItems = new List<RawTapItem>();
@@ -145,10 +146,15 @@ namespace TheLongestYear.Loop
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= CraftingUnlockField) continue;
-                    if (!string.Equals(fields[CraftingBigCraftableField].Trim(), "true", StringComparison.OrdinalIgnoreCase))
-                        continue;
                     string outputId = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                     if (string.IsNullOrEmpty(outputId)) continue;
+                    if (!string.Equals(fields[CraftingBigCraftableField].Trim(), "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // An object recipe: qualified the way the cooking loader qualifies its output.
+                        crafting.Add(new TheLongestYear.Core.Availability.CraftingRecipe(kv.Key, BundleParsing.NormalizeItemId(outputId),
+                            RecipeIngredients(fields[RecipeIngredientsField]), fields[CraftingUnlockField].Trim()));
+                        continue;
+                    }
                     string machineId = outputId.StartsWith("(", StringComparison.Ordinal) ? outputId : BigCraftableQualifier + outputId;
                     machineUnlocks[machineId] = fields[CraftingUnlockField].Trim();
                 }
@@ -181,16 +187,9 @@ namespace TheLongestYear.Loop
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= CookingUnlockField) continue;
-                    string[] ingredientPairs = fields[RecipeIngredientsField].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    var ingredients = new List<string>();
-                    var counts = new List<int>();
-                    for (int i = 0; i + 1 < ingredientPairs.Length; i += 2)
-                    {
-                        ingredients.Add(int.TryParse(ingredientPairs[i], out int n) && n < 0
-                            ? ingredientPairs[i]
-                            : BundleParsing.NormalizeItemId(ingredientPairs[i]));
-                        counts.Add(int.TryParse(ingredientPairs[i + 1], out int c) ? c : 1);
-                    }
+                    List<RecipeIngredient> pairs = RecipeIngredients(fields[RecipeIngredientsField]);
+                    List<string> ingredients = pairs.Select(p => p.Id).ToList();
+                    List<int> counts = pairs.Select(p => p.Count).ToList();
                     string output = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                     if (string.IsNullOrEmpty(output)) continue;
                     cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim(), counts));
@@ -284,10 +283,24 @@ namespace TheLongestYear.Loop
                 ArtifactSpots = artifactSpots, ForageSpawns = forage, ForageRates = forageRates,
                 MachineRules = machineRules,
                 MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
-                CookingRecipes = cooking, FishPonds = ponds, Crops = crops, TapItems = tapItems,
+                CookingRecipes = cooking, CraftingRecipes = crafting, FishPonds = ponds, Crops = crops, TapItems = tapItems,
                 CookingChannel = cookingChannel, FruitTrees = fruitTrees, ObjectArtifactSpots = objectArtifactSpots,
                 WildTrees = wildTrees, WildTreeSpots = wildTreeSpots,
             };
+        }
+
+        /// <summary>A recipe's "id count id count" ingredient field, read as the cooking loader reads
+        /// it: a negative id (a category ref) stays bare, any other id is qualified; a missing or
+        /// unreadable count is 1.</summary>
+        private static List<RecipeIngredient> RecipeIngredients(string field)
+        {
+            string[] pairs = (field ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var ingredients = new List<RecipeIngredient>();
+            for (int i = 0; i + 1 < pairs.Length; i += 2)
+                ingredients.Add(new RecipeIngredient(
+                    int.TryParse(pairs[i], out int n) && n < 0 ? pairs[i] : BundleParsing.NormalizeItemId(pairs[i]),
+                    int.TryParse(pairs[i + 1], out int c) ? c : 1));
+            return ingredients;
         }
 
         /// <summary>A Data/WildTrees entry as WildTreeAvailability reads it. ChopItems rows with a
