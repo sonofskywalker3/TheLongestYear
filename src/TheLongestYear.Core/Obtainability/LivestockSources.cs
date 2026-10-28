@@ -11,6 +11,9 @@ public static class LivestockSources
 {
     private const int FriendshipPerPetting = 15;   // FarmAnimal.cs 733
     private const string FishPondBuilding = "Fish Pond";
+    private const string ForagingSkill = "Foraging";
+    /// <summary>A tree drops its seed (or its SeedDropItems) only for Foraging 1 or more (Tree.cs 665).</summary>
+    private const int SeedDropForagingLevel = 1;
 
     /// <summary>Setup steps for one animal produce: the building (its BuildDays, or 0 when unknown),
     /// the animal itself (bought or hatched today, growing up and, for a hatched one, incubating
@@ -108,6 +111,36 @@ public static class LivestockSources
                 ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "crafting:Tapper", "tree:" + tap.TreeId } }, reading),
                 $"tapper on tree {tap.TreeId}, {tap.DaysUntilReady} days");
             foreach (var emitted in ItemQueries.Emit(tap.ItemId, objects, template))
+                yield return emitted;
+        }
+    }
+
+    /// <summary>Wild tree drops (Data/WildTrees ShakeItems, SeedDropItems, ChopItems; Tree.cs shake and
+    /// chop), read like the tappers: the tree stands where the game puts it, its own season and
+    /// condition decide the days. A seed drop comes only on days the tree rolls a seed and only from
+    /// Foraging 1 (Tree.cs 665), so it is luck.</summary>
+    public static IEnumerable<(string ItemId, ObtainSource Source)> TreeDrops(
+        IEnumerable<TreeDropRow> rows, IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)
+    {
+        foreach (TreeDropRow drop in rows)
+        {
+            ConditionReading reading = ConditionSeasons.Read(drop.Condition, festivals);
+            WeekMask seasonMask = drop.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
+            DayTable table = ConditionSeasons.Availability(reading, seasonMask);
+            if (table.IsEmpty) continue;
+            bool seed = drop.Kind == TreeDropKind.Seed;
+            ObtainConditions conditions = ObtainConditions.None with { Requires = new[] { "tree:" + drop.TreeId } };
+            if (seed) conditions = conditions with { Skill = ForagingSkill, SkillLevel = SeedDropForagingLevel };
+            string how = drop.Kind switch
+            {
+                TreeDropKind.Shake => "shaken from",
+                TreeDropKind.Seed => "seed drop from",
+                _ => "chopped from",
+            };
+            var template = new ObtainSource(SourceKind.Forage, table,
+                seed || drop.Chance < 1.0 || reading.Chance || drop.IsRandom ? Reliability.Chance : Reliability.Dependable,
+                ConditionSeasons.Apply(conditions, reading), $"{how} tree {drop.TreeId}");
+            foreach (var emitted in ItemQueries.Emit(drop.ItemId, objects, template))
                 yield return emitted;
         }
     }

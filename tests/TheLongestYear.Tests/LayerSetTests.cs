@@ -483,6 +483,28 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void ADailyPickedShopLineReadsTheSameWhicheverItemTheModChoseToday()
+    {
+        LayerInputs read = LayerFile.ReadInputs(
+            "{\"UniqueId\": \"" + A + "\", \"CheckedVersion\": \"1.0.0\", \"RandomShopItems\": [" +
+            "{\"ShopId\": \"Traveler\", \"Condition\": \"SYNCED_RANDOM day pick 0.8\", \"ItemIds\": [\"(O)ModA.A\", \"(O)ModA.B\"]}]}");
+        LayerSet set = LayerSet.Compose(VanillaSet(), new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        ObtainabilityInputs Day(string picked) => Inputs.Value with
+        {
+            Shops = Inputs.Value.Shops.Append(new ShopRow("Traveler", picked, "SYNCED_RANDOM day pick 0.8", false)).ToList(),
+        };
+
+        ObtainabilityInputs monday = set.Normalize(Day("ModA.A")), tuesday = set.Normalize(Day("ModA.B"));
+
+        Assert.Equal(RowHashes.Of(monday, false), RowHashes.Of(tuesday, false));
+        var picked = monday.Shops.Where(r => r.ItemId.StartsWith("(O)ModA.", StringComparison.Ordinal)).ToList();
+        Assert.Equal(new[] { "(O)ModA.A", "(O)ModA.B" }, picked.Select(r => r.ItemId));
+        Assert.All(picked, r => Assert.True(r.IsRandom));
+        // Data with no such line is read unchanged.
+        Assert.Equal(Inputs.Value.Shops, set.Normalize(Inputs.Value).Shops);
+    }
+
+    [Fact]
     public void AnAnswersFileWithoutRemovalsReadsAsRemovingNothing()
     {
         LayerAnswers read = LayerFile.ReadAnswers("{\"CheckedVersions\": \"A@1.0.0\", \"Deltas\": {}, \"Mods\": [\"A\"], \"VariantRowHashes\": {}}");

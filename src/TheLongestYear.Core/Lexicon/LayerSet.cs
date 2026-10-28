@@ -94,6 +94,31 @@ public sealed class LayerSet
     public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
         => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
 
+    /// <summary>Every layer's <see cref="LayerInputs.RandomShopItems"/>, in inputs order.</summary>
+    public IReadOnlyList<RandomShopItem> RandomShopItems { get; private init; } = Array.Empty<RandomShopItem>();
+
+    /// <summary>The live inputs as the answers are kept for them: each shop line a layer names as a
+    /// daily pick (<see cref="RandomShopItems"/>) replaced by one random row per item it can pick, so the
+    /// data reads the same whichever item the mod chose today. Both the row hashes and the builds read
+    /// this; the inputs are unchanged when no line matches.</summary>
+    public ObtainabilityInputs Normalize(ObtainabilityInputs inputs)
+    {
+        if (RandomShopItems.Count == 0) return inputs;
+        var rows = new List<ShopRow>(inputs.Shops.Count);
+        var done = new HashSet<RandomShopItem>();
+        foreach (ShopRow row in inputs.Shops)
+        {
+            RandomShopItem? pick = RandomShopItems.FirstOrDefault(r => r.ShopId == row.ShopId
+                && (r.Condition == null || r.Condition == row.Condition)
+                && r.ItemIds.Any(id => BundleParsing.NormalizeItemId(id) == BundleParsing.NormalizeItemId(row.ItemId)));
+            if (pick == null) { rows.Add(row); continue; }
+            if (!done.Add(pick)) continue;   // the day's other match, already read as the whole pick
+            foreach (string id in pick.ItemIds)
+                rows.Add(row with { ItemId = BundleParsing.NormalizeItemId(id), IsRandom = true });
+        }
+        return inputs with { Shops = rows };
+    }
+
     /// <summary>The layers' year ruling for a qualified id, or null when no layer rules it.</summary>
     public YearRuling? YearRuling(string id) => _yearRulings.TryGetValue(id, out YearRuling r) ? r : null;
 
@@ -228,6 +253,7 @@ public sealed class LayerSet
         return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra)
         {
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
+            RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
         };
     }
 

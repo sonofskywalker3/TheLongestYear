@@ -61,6 +61,7 @@ public static class RowHashes
         foreach (var r in inputs.Animals) Put("animal|" + r.AnimalId, r);
         foreach (var r in inputs.Ponds) Put("pond|" + r.Id, r);
         foreach (var r in inputs.TapItems) PutN($"tap|{r.TreeId}|{r.ItemId}", r);
+        foreach (var r in inputs.TreeDrops) PutN($"treedrop|{r.TreeId}|{r.ItemId}|{r.Kind}", r);
         foreach (var r in inputs.GeodeDrops) PutN($"geode|{r.GeodeId}|{r.ItemId}", r);
         foreach (string id in inputs.GeodesUsingDefaultTable) Put("geodedefault|" + id, id);
         foreach (var r in inputs.SlayerQuests) Put("slayer|" + r.Id, r);

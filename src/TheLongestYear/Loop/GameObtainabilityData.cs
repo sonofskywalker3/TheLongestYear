@@ -54,6 +54,13 @@ namespace TheLongestYear.Loop
 
         public GameObtainabilityData(IMonitor monitor) => _monitor = monitor;
 
+        private static void AddTreeDrops<T>(List<TreeDropRow> rows, string treeId, List<T> drops, TreeDropKind kind) where T : WildTreeItemData
+        {
+            foreach (T drop in drops ?? new List<T>())
+                foreach ((string item, bool random) in GameObtainabilityParsing.Entries(drop?.ItemId, drop?.RandomItemId))
+                    rows.Add(new TreeDropRow(treeId, item, kind, GameObtainabilityParsing.MapSeason(drop.Season), drop.Chance, drop.Condition, random));
+        }
+
         private static int IntField(string[] fields, int index)
             => int.TryParse(GameObtainabilityParsing.Field(fields, index), NumberStyles.Integer, CultureInfo.InvariantCulture, out int n) ? n : 0;
 
@@ -81,6 +88,7 @@ namespace TheLongestYear.Loop
             var animals = new List<AnimalRow>();
             var ponds = new List<PondRow>();
             var taps = new List<TapRow>();
+            var treeDrops = new List<TreeDropRow>();
             var garbage = new List<GarbageRow>();
             var buildings = new Dictionary<string, int>(StringComparer.Ordinal);
             var slayerQuests = new List<SlayerQuestRow>();
@@ -321,10 +329,15 @@ namespace TheLongestYear.Loop
             Section("WildTrees", () =>
             {
                 foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
+                {
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
                         foreach ((string item, bool random) in GameObtainabilityParsing.Entries(tap?.ItemId, tap?.RandomItemId))
                             if (item != PreviousOutputTapId)
                                 taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, GameObtainabilityParsing.MapSeason(tap.Season), tap.Chance, tap.Condition, random));
+                    AddTreeDrops(treeDrops, kv.Key, kv.Value?.ShakeItems, TreeDropKind.Shake);
+                    AddTreeDrops(treeDrops, kv.Key, kv.Value?.SeedDropItems, TreeDropKind.Seed);
+                    AddTreeDrops(treeDrops, kv.Key, kv.Value?.ChopItems, TreeDropKind.Chop);
+                }
             });
 
             Section("GarbageCans", () =>
@@ -373,7 +386,7 @@ namespace TheLongestYear.Loop
                 Objects = objects, Festivals = festivals, Forage = forage, LocationFish = expandedFish, FishRows = fishRows,
                 ArtifactSpots = artifactSpots, Garbage = garbage, Shops = shops, MonsterDrops = monsterDrops,
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
-                Ponds = ponds, TapItems = taps, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
+                Ponds = ponds, TapItems = taps, TreeDrops = treeDrops, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
                 Buildings = buildings, SlayerQuests = slayerQuests, CookingChannel = cookingChannel,
             };
         }

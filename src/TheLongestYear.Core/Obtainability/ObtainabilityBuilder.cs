@@ -55,6 +55,7 @@ public static class ObtainabilityBuilder
         direct.AddRange(MineSources.FishingTreasure());
         direct.AddRange(LivestockSources.Animals(inputs.Animals, f, inputs.Buildings));
         direct.AddRange(LivestockSources.Tappers(inputs.TapItems, o, f));
+        direct.AddRange(LivestockSources.TreeDrops(inputs.TreeDrops, o, f));
         direct.AddRange(CodeSources.MineFish());
         direct.AddRange(CodeSources.Moss());
         direct.AddRange(CodeSources.SeasonSeeds());

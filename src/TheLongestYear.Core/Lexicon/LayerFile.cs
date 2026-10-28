@@ -26,7 +26,17 @@ public sealed record LayerInputs(
     /// Data/Locations fish rows are read (<see cref="LocationSpawn"/>). They join the build's fish rows,
     /// so they give routes and catch rates (<see cref="FishCatchRates"/>) as a data row would.</summary>
     public IReadOnlyList<LocationSpawn> FishSpawns { get; init; } = Array.Empty<LocationSpawn>();
+
+    /// <summary>Shop lines whose item the mod re-picks every day (a Content Patcher <c>{{Random: a, b, c}}</c>
+    /// in the line's ItemId), so the data holds a different one of them each day. The live line is read as
+    /// all of them, a random pick, before the data is hashed or built: the answers match on any day.</summary>
+    public IReadOnlyList<RandomShopItem> RandomShopItems { get; init; } = Array.Empty<RandomShopItem>();
 }
+
+/// <summary>A shop line that offers one of <see cref="ItemIds"/>, picked by the mod each day: the
+/// Data/Shops line of <see cref="ShopId"/> whose item is one of them and, when given, whose Condition
+/// reads <see cref="Condition"/> exactly as the game holds it.</summary>
+public sealed record RandomShopItem(string ShopId, string? Condition, IReadOnlyList<string> ItemIds);
 
 /// <summary>A layer's answers: what changes over the answers composed without it. <see cref="Mods"/>
 /// is one id for a single mod's layer (<c>&lt;A&gt;.answers.json</c>) or several for the interaction
@@ -104,6 +114,8 @@ public static class LayerFile
         RequireSourceMembers(json);
         if (read.FishSpawns != null && read.FishSpawns.Any(row => row == null || string.IsNullOrWhiteSpace(row.Location) || string.IsNullOrWhiteSpace(row.ItemId)))
             throw new System.Text.Json.JsonException("FishSpawns holds a null row or a row with no Location or ItemId.");
+        if (read.RandomShopItems != null && read.RandomShopItems.Any(r => r == null || string.IsNullOrWhiteSpace(r.ShopId) || r.ItemIds == null || r.ItemIds.Count == 0))
+            throw new System.Text.Json.JsonException("RandomShopItems holds a null entry or one with no ShopId or ItemIds.");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
@@ -117,6 +129,7 @@ public static class LayerFile
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
             FishSpawns = read.FishSpawns ?? Array.Empty<LocationSpawn>(),
+            RandomShopItems = read.RandomShopItems ?? Array.Empty<RandomShopItem>(),
             TextHash = HashText(json),
         };
     }

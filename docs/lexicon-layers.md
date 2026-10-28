@@ -115,6 +115,11 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      leave it out for any), `Condition`, `Chance`, `Precedence`, `FishAreaId`, `MinFishingLevel`,
      `MinDistanceFromShore`, `MaxDistanceFromShore` (-1 for none), `CatchLimit`, `RequireMagicBait`.
      They join the build's fish rows, so they give routes and catch rates exactly as a data row would.
+   - **`RandomShopItems`** name shop lines whose item the mod re-picks every day (a Content Patcher
+     `{{Random: a, b, c}}` in a Data/Shops ItemId): `[{ "ShopId": "Traveler", "Condition": "<the line's
+     Condition as the game holds it, or leave it out>", "ItemIds": ["(O)a", "(O)b", "(O)c"] }]`. The
+     live line is read as all of them, a random pick, before the data is hashed or built, so the
+     answers match whichever item the mod chose today.
    - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There are no map-week or pond-chance fields in an inputs file: a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.

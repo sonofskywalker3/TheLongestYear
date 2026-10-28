@@ -117,6 +117,16 @@ public sealed record PondRow(string Id, IReadOnlyList<string> RequiredTags, int 
 
 public sealed record TapRow(string TreeId, string ItemId, int DaysUntilReady, Season? Season, double Chance, string? Condition, bool IsRandom = false);
 
+/// <summary>How a wild tree hands an item over (Tree.cs): shaken from a grown tree once a day
+/// (<see cref="Shake"/>, WildTreeData.ShakeItems), in place of its seed when it carries one
+/// (<see cref="Seed"/>, SeedDropItems: only on the days it rolls a seed, and from Foraging 1), or
+/// when it is chopped (<see cref="Chop"/>, ChopItems).</summary>
+public enum TreeDropKind { Shake, Seed, Chop }
+
+/// <summary>One Data/WildTrees ShakeItems, SeedDropItems or ChopItems entry. <see cref="ItemId"/> may be a
+/// query; <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
+public sealed record TreeDropRow(string TreeId, string ItemId, TreeDropKind Kind, Season? Season, double Chance, string? Condition, bool IsRandom = false);
+
 /// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
 public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
 
@@ -143,6 +153,7 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<AnimalRow> Animals { get; init; } = Array.Empty<AnimalRow>();
     public IReadOnlyList<PondRow> Ponds { get; init; } = Array.Empty<PondRow>();
     public IReadOnlyList<TapRow> TapItems { get; init; } = Array.Empty<TapRow>();
+    public IReadOnlyList<TreeDropRow> TreeDrops { get; init; } = Array.Empty<TreeDropRow>();
     public IReadOnlyList<GeodeDropRow> GeodeDrops { get; init; } = Array.Empty<GeodeDropRow>();
     public IReadOnlyCollection<string> GeodesUsingDefaultTable { get; init; } = Array.Empty<string>();
     public IReadOnlyList<SlayerQuestRow> SlayerQuests { get; init; } = Array.Empty<SlayerQuestRow>();
