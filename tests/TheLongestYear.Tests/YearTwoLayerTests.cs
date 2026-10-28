@@ -399,4 +399,30 @@ public sealed class YearTwoLayerTests
         string text = System.IO.File.ReadAllText(path).Replace("\r\n", "\n");   // a Windows checkout may convert endings
         Assert.Equal(text, LexiconJson.Write(LexiconJson.Read(text)));
     }
+
+    /// <summary>The shipped Stardew Valley Expanded inputs file loads, and its year-2 rulings stay inside
+    /// the year-2 calendar (a bad ruling would make the whole layer fail to load in game).</summary>
+    [Fact]
+    public void Shipped_sve_inputs_file_reads_with_its_year_two_sections()
+    {
+        string? path = RepoFile("src", "TheLongestYear", "assets", "lexicon", "layers", "FlashShifter.StardewValleyExpandedCP.inputs.json");
+        if (path == null) return;   // not a source checkout
+        LayerInputs read = LayerFile.ReadInputs(System.IO.File.ReadAllText(path));
+        Assert.Equal("FlashShifter.StardewValleyExpandedCP", read.UniqueId);
+        Assert.NotEmpty(read.YearTwoMaps);
+        Assert.NotEmpty(read.YearTwoShops);
+        Assert.NotEmpty(read.YearTwoRulings);
+        Assert.All(read.YearTwoRulings.Values, r => Assert.InRange(r.Week, YearTwoWeeks.First, YearTwoWeeks.Last));
+        Assert.All(read.ExtraSources.Values.SelectMany(s => s), s => Assert.False(string.IsNullOrWhiteSpace(s.Detail)));
+    }
+
+    private static string? RepoFile(params string[] parts)
+    {
+        for (string? dir = AppContext.BaseDirectory; dir != null; dir = System.IO.Path.GetDirectoryName(dir))
+        {
+            string candidate = System.IO.Path.Combine(new[] { dir }.Concat(parts).ToArray());
+            if (System.IO.File.Exists(candidate)) return candidate;
+        }
+        return null;
+    }
 }

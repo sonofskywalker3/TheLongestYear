@@ -1,7 +1,7 @@
 {
   "UniqueId": "FlashShifter.StardewValleyExpandedCP",
   "CheckedVersion": "1.15.11",
-  "Notes": "Farm Type Manager forage: an area with MinimumSpawnsPerDay 0 or a GameStateQueries RANDOM roll is Chance, any other area is Dependable (FTM content.json, [FTM] Stardew Valley Expanded). | Summit flowers (Thistle, Goldenrod, Winter Star Rose): routed at Custom_SVESummit only; the vanilla Summit copy of each area is left out because that map opens at perfection. Custom_SVESummit is walked as week 1 (Railroad warp 48 0) but the Railroad boulder at (43-46, 23-25) blocks the path until event 8050109, the end of Clint's second special order (20 iridium ore and 20 coal, offered after event 8050108), and TLY dates iridium ore week 9 (Skull Cavern), so each flower is ruled week 10 or its first season after. | (O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose: left unknown; it grows on the SVE Summit in Spring only, and the Summit opens about week 10. | (O)FlashShifter.StardewValleyExpandedCP_Flower_Cookie: left unknown, it needs Ferngill Primrose. | Pear, Nectarine, Persimmon: the fruit-bat cave area (FarmCave, RANDOM 0.1 a day, one of the three) is written as a Chance forage route with cave:fruit bats in Requires, since vanilla's own cave fruit has no route either. | Bearberrys: one Forage route for the three Winter areas on Woods (one surface, two buried). | Ancient Ferns Seed and Shrub Seed: FTM Buried spawns on Woods, dug up with a hoe, written as ArtifactSpot. | Mushroom Colony and Lucky Four Leaf Clover: one route per map (Woods and Custom_ForestWest). | Jack-O-Lanterns (O)746: SVE places four on Fall 17 (ModEntry.cs 47, 89-90, 102) and a heavy tool picks them up (Object.cs 1292, 2859), but four one-off pickups a loop are not a supply and vanilla's own Spirit's Eve route already places the item, so no route is written. | One-time FTM spawns (Forest Sword, Rapier, Ancient Sword, Maple Syrup, Trash, Joja Cola on Custom_ForestWest; Ancient Doll and Old Newspaper on Custom_AuroraVineyard; the Rare Seed on Woods until event 7134028): LimitedNumberOfSpawns counters live in FTM's per-save file and the items are vanilla's with vanilla routes, so nothing is written. | Golden Pumpkin (O)373: SVE's Spirit's Eve chest gives one in year 1 (SpiritsEveChestEditor.cs 25-27), the same as vanilla's own table route, so nothing is written. | Razor Trout and Kittyfish: their Data/Locations rows need events 1056732 and 69069247, which no file of SVE 1.15.11 defines, and Razor Trout's Data/Fish entry needs the Joja event 5553210; TLY passes a condition it cannot read, so both keep their data weeks (reported). | YearRulings NeverSell: the deeds, the two schedules, the Golden Key, the Magic Lamp, the Money Bag and the Mermaid's Bracelet are quest and event items. | WeekRulings: TLY's own forage rule reads Data/Locations rows, not layer routes, so every Dependable forage route here is unplaced without a ruling; each is ruled at its first dependable landing from day 1 or its map's walked week when that is later (Woods is week 4). The Chance routes (Big Conch, Dried Sand Dollar, Four Leaf Clover, Poison Mushroom, the cave fruit) get no ruling, as luck is not a supply the board may ask for. | Monster Fruit, Monster Mushroom, Slime Berry and Void Root: their seeds drop only in the Highlands (Ginger Island chain), so they are left unknown; TLY's crop rule still dates them from their seasons, as it dates vanilla's Qi Fruit (reported).",
+  "Notes": "Farm Type Manager forage: an area with MinimumSpawnsPerDay 0 or a GameStateQueries RANDOM roll is Chance, any other area is Dependable (FTM content.json, [FTM] Stardew Valley Expanded). | Summit flowers (Thistle, Goldenrod, Winter Star Rose): routed at Custom_SVESummit only; the vanilla Summit copy of each area is left out because that map opens at perfection. Custom_SVESummit is walked as week 1 (Railroad warp 48 0) but the Railroad boulder at (43-46, 23-25) blocks the path until event 8050109, the end of Clint's second special order (20 iridium ore and 20 coal, offered after event 8050108), and TLY dates iridium ore week 9 (Skull Cavern), so each flower is ruled week 10 or its first season after. | (O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose: left unknown; it grows on the SVE Summit in Spring only, and the Summit opens about week 10. | (O)FlashShifter.StardewValleyExpandedCP_Flower_Cookie: left unknown, it needs Ferngill Primrose. | Pear, Nectarine, Persimmon: the fruit-bat cave area (FarmCave, RANDOM 0.1 a day, one of the three) is written as a Chance forage route with cave:fruit bats in Requires, since vanilla's own cave fruit has no route either. | Bearberrys: one Forage route for the three Winter areas on Woods (one surface, two buried). | Ancient Ferns Seed and Shrub Seed: FTM Buried spawns on Woods, dug up with a hoe, written as ArtifactSpot. | Mushroom Colony and Lucky Four Leaf Clover: one route per map (Woods and Custom_ForestWest). | Jack-O-Lanterns (O)746: SVE places four on Fall 17 (ModEntry.cs 47, 89-90, 102) and a heavy tool picks them up (Object.cs 1292, 2859), but four one-off pickups a loop are not a supply and vanilla's own Spirit's Eve route already places the item, so no route is written. | One-time FTM spawns (Forest Sword, Rapier, Ancient Sword, Maple Syrup, Trash, Joja Cola on Custom_ForestWest; Ancient Doll and Old Newspaper on Custom_AuroraVineyard; the Rare Seed on Woods until event 7134028): LimitedNumberOfSpawns counters live in FTM's per-save file and the items are vanilla's with vanilla routes, so nothing is written. | Golden Pumpkin (O)373: SVE's Spirit's Eve chest gives one in year 1 (SpiritsEveChestEditor.cs 25-27), the same as vanilla's own table route, so nothing is written. | Razor Trout and Kittyfish: their Data/Locations rows need events 1056732 and 69069247, which no file of SVE 1.15.11 defines, and Razor Trout's Data/Fish entry needs the Joja event 5553210; TLY passes a condition it cannot read, so both keep their data weeks (reported). | YearRulings NeverSell: the deeds, the two schedules, the Golden Key, the Magic Lamp, the Money Bag and the Mermaid's Bracelet are quest and event items. | WeekRulings: TLY's own forage rule reads Data/Locations rows, not layer routes, so every Dependable forage route here is unplaced without a ruling; each is ruled at its first dependable landing from day 1 or its map's walked week when that is later (Woods is week 4). The Chance routes (Big Conch, Dried Sand Dollar, Four Leaf Clover, Poison Mushroom, the cave fruit) get no ruling, as luck is not a supply the board may ask for. | Monster Fruit, Monster Mushroom, Slime Berry and Void Root: their seeds drop only in the Highlands (Ginger Island chain), so they are left unknown; TLY's crop rule still dates them from their seasons, as it dates vanilla's Qi Fruit (reported). | Year 2: weeks 17 to 32 continue the calendar (Spring of year 2 = 17 to 20); each map's gate week is a judgement from SVE's quest chains, one sentence each below. | Post-Community-Center content (Junimo Woods, Forbidden Maze and the Henchman, Grampleton Suburbs, Andy's cellar, the Sprite Spring cave, the Garden) is week 17: the Community Center is restored at the year-1 win and the Dark Talisman and Sophia's 8 hearts follow. | Ginger Island arrivals (Fable Reef, the island fish rows, Lance's first rewards) are week 17: the boat is repaired in the Winter of a won year. | The Highlands, their caverns and the dwarf shop are week 19: the Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184. | The Enchanted Grove is week 20: the Galaxy Sword, the Caldera, the Railroad boulder (event 8050109) and event 7502582, then event 908071. | Galdora (Castle Village Outpost, Desert Railway, Crimson Badlands, Iridium Quarry, Treasure Cave) is week 21: the Grove, then event 908078. | The Legendary Trio monsters (purple mushroom crab, gold slime, diamond sand scorpion) are week 22: event 1337930 needs the Treasure Cave event 1925178, the Highlands dwarf (55134263), the Henchman and Marlon's 4 hearts; so Mega Purple Mushroom, Gold Slime Egg, Magic Lamp and Galdoran Gem are ruled 22, the gem earlier than Gunther's year-2 museum mail. | Custom_SpriteSpring2 is walked in year 1, so only Custom_SpriteSpringCave is flagged; Custom_GrandpasShed and its greenhouse can open in year 1 (Robin's order) and are not flagged. | Joja-route content (Morris's property and house, the Joja Emporium vendors Brooklyn, Jace, Zoey and Chloe 1 to 4, Axel 1 and 2, the refurbished Aurora Vineyard and AuroraLedger, Super Joja Cola) is mapped and flagged YearTwo, its routes carry route:Joja (no path on a restored save), and it gets no YearTwoRulings: there is no honest week for it. | BearVendor (Custom_ForestWest after event 2120303) and AdventurerLedger (the Adventurer's Guild after event 5407921) are year-1-reachable shops behind events, so they are not in YearTwoShops; LewisLedger and MorrisLedger have no opener in SVE 1.15.11, so they are left out and the Property Deed stays unknown. | Challenging-config and Low Memory config areas (SVE_Challenging*, SVE_LowMemory* flags, off by default) are left out. | One-time FTM spawns on year-2 maps (LimitedNumberOfSpawns: the Galdoran vendor schedule, Monster Splitter and Heavy Shield chests, the Grampleton Suburbs and Treasure Cave treasure chests, Junimo Woods forage areas 1 to 5) get no route; the vendor schedule is ruled 21 as a reward. | The Treasure Cave chest is an SVE_Lock that takes a Prismatic Shard for the Galaxy Slingshot, not the Magic Lamp; the lamp drops only from the Legendary Diamond Sand Scorpion. | Monster drops: one MonsterDrop route per item per map pooling its default-config areas, always Chance; FTM drops every item in a monster's loot list, so the ruling reads chance 1 (+0) on the monster's mine tier, a monster TLY's mine table lacks reading at the Skull Cavern tier (7) except the Wilderness Golem at floors 1 to 39 (1), a Wilderness farm monster from day 1. | Highlands Sapling Spawns buries 1 to 3 a day picked from 12 items, so each sapling and the Tree Coin is a Chance ArtifactSpot route despite the area's minimum of 1. | Vanilla items in these FTM areas keep their vanilla routes and are not written, except the year-2 Beach forage area 2 (clam, cockle, oyster, Years 2+) and the Dark Shrine of Life's Life Elixir (O)773, which are SVE's own year-2 routes. | Shop rulings read shop 1 + a price step (under 1000g +0, under 4000g +1, otherwise +2, as for an animal's price) + 1 for a vendor open only some days; a craft reads hardest ingredient + unlock (the dish rule without the kitchen); a dish reads kitchen 1; a one-time gift reads reward, effort 3; the shrine Tree Coin reads input + shrine 1 + time 0, as an artisan good. | Big Conch, Dried Sand Dollar, Lucky Four Leaf Clover and Poison Mushroom have only luck routes in year 1, so each is ruled at its first dependable year-2 supply (Fable Reef, the Highlands, the Forbidden Maze). | Already dated by a year-1 rule, no year-2 ruling: Monster Fruit, Monster Mushroom, Slime Berry, Void Root, Kittyfish, Razor Trout, Wolf Snapper, Prismatic Pop, Amber, Boomerang and the other placed ids; Mushroom Colony and Smelly Rafflesia (week rulings), the three saplings and Void Root get year-2 routes only. | Gold Carrot Seed gets year-2 routes but no ruling: its year-1 Desert Trader barter lands. | Clownfish is Summer only, so it is ruled 21, the first Summer week of year 2; Super Starfruit needs Apples' 10-heart chain (event 7776009) and is ruled 17 with the Junimo Woods, to move once played. | Void Eel (WitchSwamp), Snatcher Worm and Water Grub (BugLand) are ruled 17 with the Dark Talisman; those vanilla maps are not flagged, as vanilla's own year-2 content is a later pass. | SVE stock that is not in Data/Objects (the dwarf shop's nodes and decor, Brooklyn's and the Orange Junimo's decor, Alesia's and Isaac's boots and Galaxy weapons, Lance's Diamond Wand) is read with an (O) prefix from unqualified shop lines and is not ruled; the shop flags still mark its routes. | Ferngill Primrose now has a year-2 Spring route at Custom_SVESummit, and it and Flower Cookie are ruled 17.",
   "ExtraSources": {
     "(O)FlashShifter.StardewValleyExpandedCP_Ancient_Ferns_Seed": [
       {
@@ -28,6 +28,13 @@
         "Reliability": "Chance",
         "Conditions": { "Requires": ["location:Beach"] },
         "Detail": "big conch forage at Beach, all year on days 1, 2, 7, 11, 16, 19, 22, 26, 0 to 1 a day (FTM content.json, Big Conch spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_FableReef", "gate:Ginger Island, Lance's events 65360192 and 65360194, week 17"] },
+        "Detail": "big conch forage at Custom_FableReef, all year, 6 to 15 a day shared with 6 other items (FTM content.json, Beach Spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Dried_Sand_Dollar": [
@@ -37,6 +44,13 @@
         "Reliability": "Chance",
         "Conditions": { "Requires": ["location:Beach"] },
         "Detail": "dried sand dollar forage at Beach, Summer and Fall on days 1, 4, 7 to 9, 13 to 15, 17, 20, 23, 25, 26, 28, 0 to 2 a day (FTM content.json, Dried Sand Dollar spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_FableReef", "gate:Ginger Island, Lance's events 65360192 and 65360194, week 17"] },
+        "Detail": "dried sand dollar forage at Custom_FableReef, all year, 6 to 15 a day shared with 6 other items (FTM content.json, Beach Spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Goldenrod": [
@@ -62,6 +76,13 @@
         "Reliability": "Chance",
         "Conditions": { "Requires": ["location:Custom_ForestWest"] },
         "Detail": "four leaf clover forage at Custom_ForestWest, Spring and Summer, 0 to 1 a day (FTM content.json, Lucky Four Leaf Clover Forest West spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "four leaf clover forage at Custom_Highlands, Spring and Summer, 36 to 46 a day shared with 6 other items (FTM content.json, Highlands Mountain Forage Spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Mushroom_Colony": [
@@ -78,6 +99,27 @@
         "Reliability": "Dependable",
         "Conditions": { "Requires": ["location:Custom_ForestWest"] },
         "Detail": "mushroom colony forage at Custom_ForestWest, Fall (FTM content.json, Mushroom Colony Forest West spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x84,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_JunimoWoods", "gate:Community Center restored (event 191393), week 17"] },
+        "Detail": "mushroom colony forage at Custom_JunimoWoods, Spring to Fall, 12 to 24 a day shared with 3 other items (FTM content.json, JunimoWoods forage area 6)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x84,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "mushroom colony forage at Custom_Highlands, Spring to Fall, 7 to 12 a day shared with the season's other items (FTM content.json, Fern and mushroom spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "mushroom colony forage at Custom_Highlands, Fall, 36 to 46 a day shared with 8 other items (FTM content.json, Highlands Mountain Forage Spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Nectarine": [
@@ -114,6 +156,20 @@
         "Reliability": "Chance",
         "Conditions": { "Requires": ["location:Woods"] },
         "Detail": "poison mushroom forage at Woods, Summer and Fall, 0 to 2 a day (FTM content.json, poison mushroom spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "poison mushroom forage at Custom_ForbiddenMaze, all year, 70 to 100 a day shared with 6 other items (FTM content.json, Forbidden Maze swamp forage Spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "poison mushroom forage at Custom_Highlands, Fall, 7 to 12 a day shared with Mushroom Colony (FTM content.json, Fern and mushroom spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Red_Baneberry": [
@@ -141,6 +197,13 @@
         "Reliability": "Dependable",
         "Conditions": { "Requires": ["location:Woods"] },
         "Detail": "rafflesia forage at Woods, Spring to Fall on days 4, 8, 11, 14, 17, 21, 25 (FTM content.json, Smelly Rafflesia spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "rafflesia forage at Custom_Highlands, Fall, 36 to 46 a day shared with 8 other items (FTM content.json, Highlands Mountain Forage Spawns)"
       }
     ],
     "(O)FlashShifter.StardewValleyExpandedCP_Thistle": [
@@ -159,6 +222,418 @@
         "Reliability": "Dependable",
         "Conditions": { "Requires": ["location:Custom_SVESummit"] },
         "Detail": "winter star rose forage at Custom_SVESummit, Winter (FTM content.json, Winter Star Rose SVEsummit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Shark_Tooth": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_FableReef", "gate:Ginger Island, Lance's events 65360192 and 65360194, week 17"] },
+        "Detail": "shark tooth forage at Custom_FableReef, all year, 6 to 15 a day shared with 6 other items (FTM content.json, Beach Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Golden_Ocean_Flower": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_FableReef", "gate:Ginger Island, Lance's events 65360192 and 65360194, week 17"] },
+        "Detail": "golden ocean flower forage at Custom_FableReef, all year, 1 a day (FTM content.json, Gold Ocean Flower Spawn)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Swamp_Flower": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "swamp flower forage at Custom_ForbiddenMaze, all year, 70 to 100 a day shared with 6 other items (FTM content.json, Forbidden Maze swamp forage Spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "swamp flower forage at Custom_ForbiddenMaze, all year, 32 to 56 a day (FTM content.json, Forbidden Maze Swamp Flower Spawns)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "swamp flower monster drop at Custom_ForbiddenMaze, all year: Truffle Crab loot [Swamp Flower] (FTM content.json, Swamp Flower Crab Spawns - Entire Map, Swamp Flower Crab Spawns (swamp flower map areas))"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Sludge": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "sludge monster drop at Custom_ForbiddenMaze, all year: Wilderness Golem loot [Sludge/771], iridium golem loot [Sludge/Sludge/771], Lava Lurk loot [Sludge] (FTM content.json, Swamp Golem Spawns, Swamp Golem Spawns - iridium golem behavior, Forbidden Maze Swamp Lurker Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Swamp_Essence": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "swamp essence monster drop at Custom_ForbiddenMaze, all year: Ghost loot [Swamp Essence], Haunted Skull loot [Swamp Essence], putrid ghost loot [Swamp Essence x3] after event 1925178 (FTM content.json, Toxic Bubble timed Spawns, Toxic Bubble Haunted Skull Timed Spawns, Putrid Swamp Ghost Spawns - after crimson badlands treasure cave event)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Supernatural_Goo": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "supernatural goo monster drop at Custom_ForbiddenMaze, all year: Pepper Rex loot [Supernatural Goo/768 x5/561], [Supernatural Goo/768 x5/308], [Supernatural Goo/768 x4/909] (FTM content.json, Poltergeist Spawns, Poltergeist Void Mayo Spawn, Poltergeist radioactive ore Spawn)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Mega_Purple_Mushroom": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "mega purple mushroom monster drop at Custom_ForbiddenMaze, all year, one crab a day after event 1337930: iridium crab loot [Mega Purple Mushroom/422 x8/891/773 x3/Gold Carrot Seed/Crab] (FTM content.json, The Legendary Purple Mushroom Crab)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Gold_Carrot_Seed": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_ForbiddenMaze", "gate:Dark Talisman, after the Community Center, week 17", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "gold carrot seed monster drop at Custom_ForbiddenMaze, all year, one crab a day after event 1337930: iridium crab loot [Mega Purple Mushroom/422 x8/891/773 x3/Gold Carrot Seed/Crab] (FTM content.json, The Legendary Purple Mushroom Crab)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "gold carrot seed monster drop at Custom_Highlands, all year, one slime a day after event 1337930: iridium golem loot [Gold Slime Egg/413/437/439/680/857/Gold Carrot Seed] (FTM content.json, Highlands Legendary Slime Spawn)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "gold carrot seed monster drop at Custom_CrimsonBadlands, all year, one scorpion a day after event 1337930: iridium golem loot [Galdoran Gem/Magic Lamp/Ornate Treasure Chest/Gold Carrot Seed/166] (FTM content.json, Legendary Diamond Sand Scorpion)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Tree_Coin": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_HenchmanBackyard", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "tree coin from the Dark Shrine of Money at Custom_HenchmanBackyard (48, 29) for 20 Supernatural Goo, any day (SVE_Lock, NPCs/Henchman.json)"
+      },
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "tree coin buried at Custom_Highlands, all year, 1 to 3 a day picked from 11 saplings and the tree coin (FTM content.json, Highlands Sapling Spawns)"
+      }
+    ],
+    "(O)773": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_HenchmanBackyard", "gate:Dark Talisman, after the Community Center, week 17"] },
+        "Detail": "life elixir from the Dark Shrine of Life at Custom_HenchmanBackyard (16, 13) for 15 Sludge, any day (SVE_Lock, NPCs/Henchman.json)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Pear_Sapling": [
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "pear sapling buried at Custom_Highlands, all year, 1 to 3 a day picked from 11 saplings and the tree coin (FTM content.json, Highlands Sapling Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Nectarine_Sapling": [
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "nectarine sapling buried at Custom_Highlands, all year, 1 to 3 a day picked from 11 saplings and the tree coin (FTM content.json, Highlands Sapling Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Persimmon_Sapling": [
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "persimmon sapling buried at Custom_Highlands, all year, 1 to 3 a day picked from 11 saplings and the tree coin (FTM content.json, Highlands Sapling Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Ornate_Treasure_Chest": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19", "gate:until Lance's event 65360186"] },
+        "Detail": "ornate treasure chest forage at Custom_Highlands, all year, 1 a day until event 65360186 (FTM content.json, Highlands Ornate Treasure Chest Spawn)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "ornate treasure chest monster drop at Custom_Highlands, all year, one boss a day: Pepper Rex loot [Golden Key/Ornate Treasure Chest/166/334 x4/335 x2/107] before event 55134259, [Ornate Treasure Chest/166/334 x4/335 x2/107] after it (FTM content.json, Highlands Boss, Custom_Highlands monster area 1)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "ornate treasure chest monster drop at Custom_CrimsonBadlands, all year, one scorpion a day after event 1337930: iridium golem loot [Galdoran Gem/Magic Lamp/Ornate Treasure Chest/Gold Carrot Seed/166] (FTM content.json, Legendary Diamond Sand Scorpion)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Golden_Key": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19", "gate:until event 55134259"] },
+        "Detail": "golden key monster drop at Custom_Highlands, all year, one boss a day until event 55134259: Pepper Rex loot [Golden Key/Ornate Treasure Chest/166/334 x4/335 x2/107] (FTM content.json, Highlands Boss)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Gold_Slime_Egg": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "gold slime egg monster drop at Custom_Highlands, all year, one slime a day after event 1337930: iridium golem loot [Gold Slime Egg/413/437/439/680/857/Gold Carrot Seed] (FTM content.json, Highlands Legendary Slime Spawn)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Slime_Seed": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "slime seed monster drop at Custom_Highlands, all year: green slime loot [Slime Seed]; slimes [766/Slime Seed] on a 15% day after event 55134263 (FTM content.json, Highlands Slime Berry and Monster Fruit seeds [Spring], [Summer], [Fall], [Winter], Highlands Rare Event Spawn)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Stalk_Seed": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "stalk seed monster drop at Custom_Highlands, all year: Wilderness Golem loot [Stalk Seed] (FTM content.json, Highlands Slime Berry and Monster Fruit seeds [Spring], [Summer], [Fall], [Winter])"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Fungus_Seed": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "fungus seed monster drop at Custom_Highlands, all year: Dust Spirit loot [Fungus Seed] (FTM content.json, Highlands Ruins Seed Spawns, Fungus Seed - winter)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Green_Mushroom": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x84,=0x28",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "RainOnly": true, "Requires": ["location:Custom_Highlands", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "green mushroom monster drop at Custom_Highlands, Spring to Fall on rain, storm or green rain days: Dust Spirit loot [Green Mushroom] (FTM content.json, Highlands Mushroom green mushrooms - rain drop)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Root": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_HighlandsCavern", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19", "gate:event 1090508 (peace with the shadow people)"] },
+        "Detail": "void root forage at Custom_HighlandsCavern, all year, 5 to 11 a day after event 1090508 (FTM content.json, Highland Caverns Void Root spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Seed": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_HighlandsCavern", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "void seed monster drop at Custom_HighlandsCavern, all year: Shadow Brute, Shadow Shaman and Shadow Sniper loot [Void Seed] (FTM content.json, Highlands Cavern Monster Seeds before event 1090508, Highlands Cavern Monster Seeds - betrayed after it)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Diamond_Flower": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_DiamondCavern", "gate:Caldera (event 6951319), then Marlon's MarlonFay2 order and event 65360184, week 19"] },
+        "Detail": "diamond flower forage at Custom_DiamondCavern, all year, 3 to 6 a day (FTM content.json, Diamond Cavern flower spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Dewdrop_Berry": [
+      {
+        "Kind": "Forage",
+        "Lands": "=1x1,=14x13,=29x15,=42x13,=57x15,=70x13,=85x15,=98x13,=0x14",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_EnchantedGrove", "gate:Galaxy Sword, Caldera, the Railroad boulder (event 8050109) and event 7502582, then event 908071, week 20"] },
+        "Detail": "dewdrop berry forage at Custom_EnchantedGrove, every season on days 1 and 14, 1 a day (FTM content.json, Enchanted Grove Dewdrop Berry spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Pebble": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CastleVillageOutpost", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void pebble monster drop at Custom_CastleVillageOutpost, all year: Skeleton Mage loot [Void Pebble] (FTM content.json, Castle Village Outpost Spawns)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void pebble monster drop at Custom_CrimsonBadlands, all year: Mummy loot [Void Pebble/769/769/768], Skeleton Mage loot [Void Pebble/881], Serpent loot [Void Pebble/769 x3/226], Wilderness Golem and iridium golem loot [684/Void Pebble] (FTM content.json, Crimson Badlands Mummy Cave Guards, Crimson Badlands Corrupt Mummy Guard, Crimson Badlands Primary Spawns, Corrupt Serpent Timed Spawns, Sand Scorpion Dens 3 and 6, Sand Scorpion Dens - iridium golem behavior)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_IridiumQuarry", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void pebble monster drop at Custom_IridiumQuarry, all year: Carbon Ghost loot [Void Pebble/768 x4], Mummy loot [Void Pebble/769/769/768] (FTM content.json, Corrupt Ghosts at iridium quarry, Corrupt Ghost Wave Spawns, Corrupt Mummy's at iridium quarry)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Soul": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void soul forage at Custom_CrimsonBadlands, all year, 7 to 14 a day (FTM content.json, Void Soul spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Swirl_Stone": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "swirl stone forage at Custom_CrimsonBadlands, all year, 1 a day and a second on a 33% day (FTM content.json, Crimson Badlands Swirl Stone, Crimson Badlands Swirl Stone - 33% chance of an extra spawn)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Rusty_Blade": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "rusty blade monster drop at Custom_CrimsonBadlands, all year: Mummy loot [Rusty Blade/769 x6] (FTM content.json, Male Zombie Adventurers, Female Zombie Adventurers, Female Zombie Adventurer spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Delight": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void delight monster drop at Custom_CrimsonBadlands, all year on a 50% or 40% day: Mummy loot [Void Pebble/Void Delight/769/769/768] (FTM content.json, Crimson Badlands Mummy Cave Guards - Void Delight, Crimson Badlands Corrupt Mummy Guard - Void Delight)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_IridiumQuarry", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void delight monster drop at Custom_IridiumQuarry, all year on a 70% day: Mummy loot [Void Pebble/Void Delight/769/769/768] (FTM content.json, Corrupt Mummy's at iridium quarry - Void Delight)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Salmon_Sushi": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void salmon sushi monster drop at Custom_CrimsonBadlands, all year on a 40% day: Serpent loot [Void Pebble/Void Salmon Sushi/769 x3/226] (FTM content.json, Corrupt Serpent Timed Spawns - Void Salmon Sushi)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Shard": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21"] },
+        "Detail": "void shard monster drop at Custom_CrimsonBadlands, all year, one boss a day: Royal Serpent loot [Void Shard/769 x24/226] (FTM content.json, Apophis Boss Monster)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Galdoran_Gem": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "galdoran gem monster drop at Custom_CrimsonBadlands, all year, one scorpion a day after event 1337930: iridium golem loot [Galdoran Gem/Magic Lamp/Ornate Treasure Chest/Gold Carrot Seed/166] (FTM content.json, Legendary Diamond Sand Scorpion)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Magic_Lamp": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "GingerIsland": true, "Requires": ["location:Custom_CrimsonBadlands", "gate:Enchanted Grove, then event 908078, week 21", "gate:Legendary Trio order (event 1337930, after the Treasure Cave event 1925178), week 22"] },
+        "Detail": "magic lamp monster drop at Custom_CrimsonBadlands, all year, one scorpion a day after event 1337930: iridium golem loot [Galdoran Gem/Magic Lamp/Ornate Treasure Chest/Gold Carrot Seed/166] (FTM content.json, Legendary Diamond Sand Scorpion)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Super_Joja_Cola": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_MorrisHouse", "route:Joja (no path on a restored save)", "gate:Joja events 6663408 and 6663409"] },
+        "Detail": "super joja cola from the locked fridge at Custom_MorrisHouse (13, 24) for 1 Broken CD (O)171, any day (SVE_Lock, NPCs/Morris.json)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Custom_SVESummit", "gate:Railroad boulder (event 8050109), Spring of year 2, week 17"] },
+        "Detail": "ferngill primrose forage at Custom_SVESummit, Spring, 2 to 5 a day (FTM content.json, Ferngill Primrose SVEsummit spawns)"
+      }
+    ],
+    "(O)372": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Beach", "gate:FTM Years 2+"] },
+        "Detail": "clam forage at Beach in year 2 and later, all year, 0 to 2 a day shared with cockle and oyster (FTM content.json, Beach forage area 2)"
+      }
+    ],
+    "(O)718": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Beach", "gate:FTM Years 2+"] },
+        "Detail": "cockle forage at Beach in year 2 and later, all year, 0 to 2 a day shared with clam and oyster (FTM content.json, Beach forage area 2)"
+      }
+    ],
+    "(O)723": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "YearTwo": true, "Requires": ["location:Beach", "gate:FTM Years 2+"] },
+        "Detail": "oyster forage at Beach in year 2 and later, all year, 0 to 2 a day shared with clam and cockle (FTM content.json, Beach forage area 2)"
       }
     ]
   },
@@ -182,5 +657,139 @@
     "(O)FlashShifter.StardewValleyExpandedCP_Smelly_Rafflesia": 4,
     "(O)FlashShifter.StardewValleyExpandedCP_Thistle": 10,
     "(O)FlashShifter.StardewValleyExpandedCP_Winter_Star_Rose": 13
+  },
+  "YearTwoMaps": {
+    "Custom_JunimoWoods": "YearTwo",
+    "Custom_ForbiddenMaze": "YearTwo",
+    "Custom_HenchmanBackyard": "YearTwo",
+    "Custom_HenchmanHouse": "YearTwo",
+    "Custom_GrampletonSuburbs": "YearTwo",
+    "Custom_GrampletonSuburbsTrainStation": "YearTwo",
+    "Custom_ScarlettHouse": "YearTwo",
+    "Custom_HanksGarage": "YearTwo",
+    "Custom_AndyCellar": "YearTwo",
+    "Custom_SpriteSpringCave": "YearTwo",
+    "Custom_Garden": "YearTwo",
+    "Custom_FableReef": "GingerIsland",
+    "Custom_FirstSlashGuild": "GingerIsland",
+    "Custom_FirstSlashHallway": "GingerIsland",
+    "Custom_FirstSlashGuestRoom": "GingerIsland",
+    "Custom_LanceSecretWarp": "GingerIsland",
+    "Custom_Highlands": "GingerIsland",
+    "Custom_HighlandsCavern": "GingerIsland",
+    "Custom_DiamondCavern": "GingerIsland",
+    "Custom_HighlandsOutpost": "GingerIsland",
+    "Custom_HighlandsCavernPrison": "GingerIsland",
+    "Custom_EnchantedGrove": "GingerIsland",
+    "Custom_CastleVillageOutpost": "GingerIsland",
+    "Custom_DesertRailway": "GingerIsland",
+    "Custom_CrimsonBadlands": "GingerIsland",
+    "Custom_IridiumQuarry": "GingerIsland",
+    "Custom_TreasureCave": "GingerIsland",
+    "Custom_MorrisProperty": "YearTwo",
+    "Custom_MorrisHouse": "YearTwo",
+    "Custom_JojaEmporium": "YearTwo",
+    "Custom_AuroraVineyardRefurbished": "YearTwo",
+    "Custom_AuroraVineyardCellarRefurbished": "YearTwo"
+  },
+  "YearTwoShops": {
+    "FlashShifter.StardewValleyExpandedCP_BlueJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_GreyJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_OrangeJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_PurpleJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_RedJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_YellowJunimoVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_AlesiaVendor": "GingerIsland",
+    "FlashShifter.StardewValleyExpandedCP_IsaacVendor": "GingerIsland",
+    "FlashShifter.StardewValleyExpandedCP_CamillaVendor": "GingerIsland",
+    "FlashShifter.StardewValleyExpandedCP_HighlandsDwarfShop": "GingerIsland",
+    "FlashShifter.StardewValleyExpandedCP_BrooklynVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_JaceVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_ZoeyVendor": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_ChloeVendor1": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_ChloeVendor2": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_ChloeVendor3": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_ChloeVendor4": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_AxelVendor1": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_AxelVendor2": "YearTwo",
+    "FlashShifter.StardewValleyExpandedCP_AuroraLedger": "YearTwo"
+  },
+  "YearTwoRulings": {
+    "(O)FlashShifter.StardewValleyExpandedCP_Arrowhead_Shark": { "Week": 17, "Effort": 5, "Basis": "fish, spawns any season, difficulty 95, level 0, weather both, window 20h, deep cast (+1), effort 5; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Baby_Lunaloo": { "Week": 17, "Effort": 2, "Basis": "fish, spawns any season, difficulty 15, level 0, weather both, window 9h, deep cast (+1), effort 2; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Barred_Knifejaw": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 65, level 0, weather both, window 14h, effort 3; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Blue_Tang": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 30, level 0, weather sunny, window 14h, effort 3; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Daggerfish": { "Week": 17, "Effort": 2, "Basis": "fish, spawns any season, difficulty 50, level 0, weather both, window 20h, effort 2; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Lunaloo": { "Week": 17, "Effort": 6, "Basis": "fish, spawns any season, difficulty 70, level 5, weather both, window 9h, deep cast (+1), effort 6; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Ocean_Sunfish": { "Week": 17, "Effort": 7, "Basis": "fish, spawns any season, difficulty 90, level 0, weather sunny, window 20h, deep cast (+1), effort 7; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Sea_Sponge": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 40, level 0, weather both, window 20h, deep cast (+1), effort 3; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Seahorse": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 25, level 0, weather both, window 9h, deep cast (+1), effort 3; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Shark": { "Week": 17, "Effort": 6, "Basis": "fish, spawns any season, difficulty 110, level 0, weather both, window 20h, deep cast (+1), effort 6; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Shiny_Lunaloo": { "Week": 17, "Effort": 9, "Basis": "fish, spawns any season, difficulty 110, level 8, weather both, window 9h, deep cast (+1), effort 9; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Torpedo_Trout": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 70, level 0, weather both, window 20h, effort 3; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Viper_Eel": { "Week": 17, "Effort": 5, "Basis": "fish, spawns any season, difficulty 80, level 0, weather both, window 20h, deep cast (+1), effort 5; Fable Reef opens with Ginger Island, week 17 [Data/Fish, Data/Locations Custom_FableReef]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Clownfish": { "Week": 21, "Effort": 6, "Basis": "fish, spawns Summer, difficulty 45, level 3, weather both, window 7h, one season (+1), effort 6; Ginger Island fish, Summer only, first Summer week of year 2 is week 21 [Data/Fish, Data/Locations IslandSouth, IslandSouthEast, IslandWest]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Turretfish": { "Week": 17, "Effort": 3, "Basis": "shop, BlueJunimoVendor, price 60000g (+2), effort 3; the Junimo Woods open after the Community Center, week 17 [Data/Shops BlueJunimoVendor]; the Custom_FableReef fish row is a rare bite (fish, difficulty 150, level 10, weather both, window 20h, effort 10)" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Highlands_Bass": { "Week": 19, "Effort": 2, "Basis": "fish, spawns any season, difficulty 45, level 0, weather both, window 20h, effort 2; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [Data/Fish, Data/Locations Custom_Highlands]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Fiber_Goby": { "Week": 19, "Effort": 4, "Basis": "fish, spawns any season, difficulty 60, level 0, weather both, window 20h, deep cast (+1), effort 4; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [Data/Fish, Data/Locations Custom_Highlands]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Gemfish": { "Week": 19, "Effort": 5, "Basis": "fish, spawns any season, difficulty 100, level 0, weather both, window 20h, effort 5; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [Data/Fish, Data/Locations Custom_HighlandsCavern]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Diamond_Carp": { "Week": 19, "Effort": 3, "Basis": "fish, spawns any season, difficulty 70, level 0, weather both, window 20h, effort 3; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [Data/Fish, Data/Locations Custom_DiamondCavern]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Alligator": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 75, level 0, weather both, window 20h, effort 3; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [Data/Fish, Data/Locations Custom_ForbiddenMaze, Custom_HenchmanBackyard]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Swamp_Crab": { "Week": 17, "Effort": 1, "Basis": "fish, spawns any season, difficulty 35, level 0, weather both, window 20h, effort 1; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [Data/Fish, Data/Locations Custom_ForbiddenMaze, Custom_HenchmanBackyard]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Eel": { "Week": 17, "Effort": 7, "Basis": "fish, spawns any season, difficulty 100, level 8, weather both, window 20h, effort 7; the Witch's Swamp follows the Dark Talisman after the Community Center, week 17 [Data/Fish, Data/Locations WitchSwamp]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Snatcher_Worm": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 75, level 0, weather both, window 20h, effort 3; the Mutant Bug Lair opens with the Dark Talisman quest after the Community Center, week 17 [Data/Fish, Data/Locations BugLand]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Water_Grub": { "Week": 17, "Effort": 3, "Basis": "fish, spawns any season, difficulty 60, level 0, weather both, window 20h, effort 3; the Mutant Bug Lair opens with the Dark Talisman quest after the Community Center, week 17 [Data/Fish, Data/Locations BugLand]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Bonefish": { "Week": 21, "Effort": 4, "Basis": "fish, spawns any season, difficulty 70, level 5, weather both, window 20h, effort 4; Galdora opens about week 21; also IsaacVendor at 6000g [Data/Fish, Data/Locations Custom_CrimsonBadlands]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Undeadfish": { "Week": 21, "Effort": 4, "Basis": "shop, AlesiaVendor, open days 3, 4, 13, 21, 23, 25 (+1), price 4000g (+2), effort 4; Galdora opens about week 21 [Data/Shops AlesiaVendor]; the Custom_CrimsonBadlands fish row is fish, difficulty 80, level 5, weather both, window 20h, effort 5" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Gravity_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, CamillaVendor, open days 7, 22, 28 (+1), price 4000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops CamillaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Lightning_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, CamillaVendor, open days 7, 22, 28 (+1), price 8000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops CamillaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Barbarian_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, CamillaVendor, open days 7, 22, 28 (+1), price 20000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops CamillaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Aegis_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, CamillaVendor, open days 7, 22, 28 (+1), price 28000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops CamillaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, AlesiaVendor, open days 3, 4, 13, 21, 23, 25 (+1), price 8000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops AlesiaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Armor_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, AlesiaVendor, open days 3, 4, 13, 21, 23, 25 (+1), price 5000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops AlesiaVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": { "Week": 21, "Effort": 4, "Basis": "shop, IsaacVendor, open days 1, 8, 12, 19, 24 (+1), price 12000g (+2), effort 4; Galdora opens about week 21 (Castle Village Outpost) [Data/Shops IsaacVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Bombardier_Elixir": { "Week": 21, "Effort": 9, "Basis": "craft Bombardier Elixir: hardest ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Pebble (7) + unlock 'Combat 9' (2), effort 9; Void Soul and Void Pebble come from Custom_CrimsonBadlands, Galdora opens about week 21 [Data/CraftingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Super_Starfruit": { "Week": 17, "Effort": 3, "Basis": "shop, PurpleJunimoVendor, price 80000g (+2), effort 3; after event 7776009 (Apples' 10-heart chain); the Junimo Woods open after the Community Center, week 17 [Data/Shops PurpleJunimoVendor]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Soul": { "Week": 21, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Galdora opens about week 21 [FTM content.json, Void Soul spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Swirl_Stone": { "Week": 21, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Galdora opens about week 21 [FTM content.json, Crimson Badlands Swirl Stone]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Diamond_Flower": { "Week": 19, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [FTM content.json, Diamond Cavern flower spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Dewdrop_Berry": { "Week": 20, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; the Enchanted Grove opens about week 20, days 1 and 14 of each season [FTM content.json, Enchanted Grove Dewdrop Berry spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Golden_Ocean_Flower": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Fable Reef opens with Ginger Island, week 17 [FTM content.json, Gold Ocean Flower Spawn]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Shark_Tooth": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Fable Reef opens with Ginger Island, week 17 [FTM content.json, Beach Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Big_Conch": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Fable Reef opens with Ginger Island, week 17; the year-1 Beach route is luck [FTM content.json, Beach Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Dried_Sand_Dollar": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Fable Reef opens with Ginger Island, week 17; the year-1 Beach route is luck [FTM content.json, Beach Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Swamp_Flower": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [FTM content.json, Forbidden Maze swamp forage Spawns, Forbidden Maze Swamp Flower Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Poison_Mushroom": { "Week": 17, "Effort": 1, "Basis": "forage, 2 location(s) (+0), effort 1; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17; the year-1 Woods route is luck [FTM content.json, Forbidden Maze swamp forage Spawns, Fern and mushroom spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Lucky_Four_Leaf_Clover": { "Week": 19, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19, Spring and Summer; the year-1 Woods and Forest West routes are luck [FTM content.json, Highlands Mountain Forage Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose": { "Week": 17, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; Spring only, and the Summit opens about week 10, so Spring of year 2, week 17 [FTM content.json, Ferngill Primrose SVEsummit spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Ornate_Treasure_Chest": { "Week": 19, "Effort": 2, "Basis": "forage, 1 location(s) (+1), effort 2; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19, daily until event 65360186; later from the Highlands boss and the Legendary Diamond Sand Scorpion [FTM content.json, Highlands Ornate Treasure Chest Spawn]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Pebble": { "Week": 21, "Effort": 7, "Basis": "monster drop, Mummy (Skull Cavern) at 1 (+0), effort 7; Galdora opens about week 21 [FTM content.json, Custom_CrimsonBadlands, Crimson Badlands Mummy Cave Guards]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Rusty_Blade": { "Week": 21, "Effort": 7, "Basis": "monster drop, Mummy (Skull Cavern) at 1 (+0), effort 7; Galdora opens about week 21 [FTM content.json, Custom_CrimsonBadlands, Male Zombie Adventurers]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Shard": { "Week": 21, "Effort": 7, "Basis": "monster drop, Royal Serpent (Skull Cavern) at 1 (+0), one boss a day, effort 7; Galdora opens about week 21 [FTM content.json, Custom_CrimsonBadlands, Apophis Boss Monster]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Sludge": { "Week": 17, "Effort": 1, "Basis": "monster drop, Wilderness Golem (not in TLY's mine table, read at mine floors 1 to 39: a Wilderness farm monster) at 1 (+0), effort 1; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [FTM content.json, Custom_ForbiddenMaze, Swamp Golem Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Supernatural_Goo": { "Week": 17, "Effort": 7, "Basis": "monster drop, Pepper Rex (Skull Cavern) at 1 (+0), effort 7; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [FTM content.json, Custom_ForbiddenMaze, Poltergeist Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Swamp_Essence": { "Week": 17, "Effort": 3, "Basis": "monster drop, Ghost (mine floors 41 to 79) at 1 (+0), effort 3; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [FTM content.json, Custom_ForbiddenMaze, Toxic Bubble timed Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Mega_Purple_Mushroom": { "Week": 22, "Effort": 7, "Basis": "monster drop, Iridium Crab (Skull Cavern) at 1 (+0), one crab a day, effort 7; the Legendary Trio order (event 1337930) follows the Treasure Cave, about week 22 [FTM content.json, Custom_ForbiddenMaze, The Legendary Purple Mushroom Crab]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Gold_Slime_Egg": { "Week": 22, "Effort": 7, "Basis": "monster drop, iridium golem (not in TLY's mine table, read at the Skull Cavern tier) at 1 (+0), one slime a day, effort 7; the Legendary Trio order (event 1337930) follows the Treasure Cave, about week 22 [FTM content.json, Custom_Highlands, Highlands Legendary Slime Spawn]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Magic_Lamp": { "Week": 22, "Effort": 7, "Basis": "monster drop, iridium golem (not in TLY's mine table, read at the Skull Cavern tier) at 1 (+0), one scorpion a day, effort 7; the Legendary Trio order (event 1337930) follows the Treasure Cave, about week 22 [FTM content.json, Custom_CrimsonBadlands, Legendary Diamond Sand Scorpion]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Galdoran_Gem": { "Week": 22, "Effort": 7, "Basis": "monster drop, iridium golem (not in TLY's mine table, read at the Skull Cavern tier) at 1 (+0), one scorpion a day, effort 7; the Legendary Trio order (event 1337930) follows the Treasure Cave, about week 22; earlier than Gunther's museum mail (GuntherGaldoranGemReward, year 2) [FTM content.json, Custom_CrimsonBadlands, Legendary Diamond Sand Scorpion]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Slime_Seed": { "Week": 19, "Effort": 1, "Basis": "monster drop, Green Slime (mine floors 1 to 39) at 1 (+0), effort 1; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [FTM content.json, Custom_Highlands, Highlands Slime Berry and Monster Fruit seeds]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Stalk_Seed": { "Week": 19, "Effort": 1, "Basis": "monster drop, Wilderness Golem (not in TLY's mine table, read at mine floors 1 to 39: a Wilderness farm monster) at 1 (+0), effort 1; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [FTM content.json, Custom_Highlands, Highlands Slime Berry and Monster Fruit seeds]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Fungus_Seed": { "Week": 19, "Effort": 3, "Basis": "monster drop, Dust Spirit (mine floors 41 to 79) at 1 (+0), effort 3; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [FTM content.json, Custom_Highlands, Highlands Ruins Seed Spawns]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Green_Mushroom": { "Week": 19, "Effort": 3, "Basis": "monster drop, Dust Spirit (mine floors 41 to 79) at 1 (+0), effort 3; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19, rain days Spring to Fall [FTM content.json, Custom_Highlands, Highlands Mushroom green mushrooms - rain drop]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Seed": { "Week": 19, "Effort": 5, "Basis": "monster drop, Shadow Brute (mine floors 81 to 119) at 1 (+0), effort 5; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19 [FTM content.json, Custom_HighlandsCavern, Highlands Cavern Monster Seeds]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Golden_Key": { "Week": 19, "Effort": 7, "Basis": "monster drop, Pepper Rex (Skull Cavern) at 1 (+0), one boss a day, effort 7; the Highlands open after the Caldera and Marlon's MarlonFay2 order, week 19, until event 55134259 [FTM content.json, Custom_Highlands, Highlands Boss]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Tree_Coin": { "Week": 17, "Effort": 8, "Basis": "shrine trade, Dark Shrine of Money: input (O)FlashShifter.StardewValleyExpandedCP_Supernatural_Goo x20 (7) + shrine 1 + time 0, effort 8; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [SVE_Lock, NPCs/Henchman.json, Custom_HenchmanBackyard]; also buried in the Highlands (week 19, luck)" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Money_Bag": { "Week": 21, "Effort": 5, "Basis": "fruit tree, Tree Coin (week 17) planted, 28 days to bear, every season, effort 5; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [Data/FruitTrees]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Delight": { "Week": 17, "Effort": 9, "Basis": "dish Void Delight: hardest ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Eel (7) + unlock 'null' (1) + kitchen 1, effort 9; Void Eel from WitchSwamp, week 17; also a Galdora monster drop (week 21) [Data/CookingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Salmon_Sushi": { "Week": 17, "Effort": 7, "Basis": "dish Void Salmon Sushi: hardest ingredient (O)308 (5) + unlock 'null' (1) + kitchen 1, effort 7; Void Salmon (O)795 (4) from the Witch's Swamp and the Forbidden Maze, week 17; also a Galdora monster drop (week 21) [Data/CookingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Gingerbread_Man": { "Week": 17, "Effort": 4, "Basis": "dish Gingerbread Man: hardest ingredient (O)829 (2, Ginger Island forage, remote only) + unlock 'null' (1) + kitchen 1, effort 4; Ginger comes with Ginger Island, week 17 [Data/CookingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Flower_Cookie": { "Week": 17, "Effort": 4, "Basis": "dish Flower Cookie: hardest ingredient (O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose (2) + unlock 'null' (1) + kitchen 1, effort 4; Ferngill Primrose is Spring of year 2, week 17 (Goldenrod week 10 and Winter Star Rose week 13 kept from year 1) [Data/CookingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Mushroom_Berry_Rice": { "Week": 17, "Effort": 5, "Basis": "dish Mushroom Berry Rice: hardest ingredient (O)FlashShifter.StardewValleyExpandedCP_Red_Baneberry (3) + unlock 'null' (1) + kitchen 1, effort 5; Poison Mushroom is dependable only from the Forbidden Maze, week 17 (Red Baneberry week 5) [Data/CookingRecipes]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Marsh_Tonic": { "Week": 17, "Effort": 5, "Basis": "craft Marsh Tonic: hardest ingredient (O)FlashShifter.StardewValleyExpandedCP_Swamp_Essence (3) + unlock 'f SVE_Henchman 4' (2), effort 5; recipe from the Henchman 4-heart event, the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [Data/CraftingRecipes, NPCs/Henchman.json]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Void_Mayo_Sandwich": { "Week": 17, "Effort": 3, "Basis": "reward, Henchman 2-heart event at Custom_HenchmanHouse, effort 3; the Forbidden Maze opens with the Dark Talisman after the Community Center, week 17 [NPCs/Henchman.json]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Lance's_Schedule": { "Week": 17, "Effort": 3, "Basis": "reward, Lance's first event after Ginger Island, effort 3; Ginger Island, week 17 [NPCs/Lance.json]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Mermaid's_Bracelet": { "Week": 17, "Effort": 3, "Basis": "reward, Wizard marriage event 1724100, effort 3; marriage is not plannable inside a 16-week loop, so Spring of year 2, week 17 [NPCs/Magnus.json]" },
+    "(O)FlashShifter.StardewValleyExpandedCP_Castle_Village_Outpost_Vendor_Schedule": { "Week": 21, "Effort": 3, "Basis": "reward, one-time chest at Custom_CastleVillageOutpost until event 9514263, effort 3; Galdora opens about week 21 [FTM content.json, Galdoran Vendor Schedule Chest Spawn]" }
   }
 }
