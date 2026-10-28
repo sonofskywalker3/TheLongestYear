@@ -23,8 +23,8 @@ public static class MadeSources
     /// Spring, Summer, Fall or Winter Seeds.</summary>
     private const string AnyWildSeed = "-777";
     private static readonly string[] WildSeedIds = { "(O)495", "(O)496", "(O)497", "(O)498" };
-    private static readonly string[] KnownFromStartWords = { "default", "" };
-    private static readonly string[] TaughtElsewhereWords = { "none", "null" };
+    internal static readonly string[] KnownFromStartWords = { "default", "" };
+    internal static readonly string[] TaughtElsewhereWords = { "none", "null" };
     /// <summary>A cooking recipe unlocked by farmhouse level ("l 0", "l 100") has no automatic unlock
     /// either: the Queen of Sauce or an event teaches it.</summary>
     private const string FarmhouseUnlockPrefix = "l";
@@ -223,7 +223,7 @@ public static class MadeSources
     /// teaches on a friendship level (Jeff's ruling 2026-09-16). Tea Sapling: the Sunroom opens at
     /// Caroline 2 hearts (GameLocation.cs 8863-8871) and its event mails CarolineTea. Wild Bait: Linus's
     /// event 26 needs 4 hearts and adds the recipe (Event.cs 10463-10465).</summary>
-    public static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
+    internal static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Tea Sapling"] = "f Caroline 2",
         ["Wild Bait"] = "f Linus 4",

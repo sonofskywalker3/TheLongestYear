@@ -19,17 +19,20 @@ public static class CraftedItemAvailability
 {
     private const string AnyWildSeed = "-777";
     private const string DefaultUnlock = "default";
-    private static readonly string[] TaughtElsewhereWords = { "null", "none" };
+    private const string TaughtElsewhereUnlock = "null";
 
-    /// <summary>The unlock the rule dates the recipe from, and the text the basis shows for it.</summary>
+    /// <summary>The unlock the rule dates the recipe from, and the text the basis shows for it. The
+    /// words are MadeSources' own: a known-from-start word reads as "default", and every
+    /// taught-elsewhere word ("none" too) reads as "null", so they cost the same.</summary>
     private static (string Unlock, string Label) EffectiveUnlock(CraftingRecipe recipe)
     {
         string text = (recipe.Unlock ?? "").Trim();
-        if (text.Length == 0) return (DefaultUnlock, text);
-        if (TaughtElsewhereWords.Contains(text, StringComparer.OrdinalIgnoreCase)
-            && MadeSources.EventTaughtUnlocks.TryGetValue(recipe.Name, out string? taughtBy))
-            return (taughtBy, $"{text} → {taughtBy}");
-        return (text, text);
+        string word = text.ToLowerInvariant();
+        if (MadeSources.KnownFromStartWords.Contains(word)) return (DefaultUnlock, text);
+        if (!MadeSources.TaughtElsewhereWords.Contains(word)) return (text, text);
+        return MadeSources.EventTaughtUnlocks.TryGetValue(recipe.Name, out string? taughtBy)
+            ? (taughtBy, $"{text} → {taughtBy}")
+            : (TaughtElsewhereUnlock, text);
     }
 
     /// <param name="step">Required for the same reason as the dish rule's: the recipe-week reading

@@ -142,8 +142,24 @@ public class CraftedItemAvailabilityTests
         };
         var recipe = new CraftingRecipe("Trash Maker", Trash,
             new[] { new RecipeIngredient(Acorn, 1), new RecipeIngredient(MapleSeed, 1) }, "default");
+        ItemEffort? crafted = CraftedItemAvailability.Derive(Trash, Data(recipe), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(1, crafted!.EarliestWeek);
+        Assert.Equal(3, crafted.Effort);
         var composer = new EffortComposer(Data(recipe), seasonDerived, hasKitchen: false);
         ItemEffort? result = composer.Derive(Trash);
         Assert.StartsWith("fishing trash", result!.Basis);
+        Assert.Equal(1, result.EarliestWeek);
+        Assert.Equal(2, result.Effort);
+    }
+
+    [Fact]
+    public void A_none_unlock_costs_and_dates_the_same_as_null()
+    {
+        ItemEffort? none = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("none")), EffortOf, WeekOf, DifficultyStep.Normal);
+        ItemEffort? @null = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("null")), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(3 + CookedDishAvailability.UnlockEffort("null"), none!.Effort);
+        Assert.Equal(@null!.Effort, none.Effort);
+        Assert.Equal(@null.EarliestWeek, none.EarliestWeek);
+        Assert.Contains("unlock 'none'", none.Basis);
     }
 }
