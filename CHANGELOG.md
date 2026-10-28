@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.8 - 2026-10-28
+
+### Fixed
+
+- **Qi gems and Casino coins now rewind with your gold.** Both stayed in your wallet through the rewind. Reported by sarahwinchester97.
+
 ## 1.1.7 - 2026-10-28
 
 ### Fixed

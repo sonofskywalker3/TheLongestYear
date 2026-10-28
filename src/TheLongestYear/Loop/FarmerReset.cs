@@ -42,6 +42,11 @@ namespace TheLongestYear.Loop
             IReadOnlyList<string> seenEventsEver)
         {
             p.Money = baseline.StartingGold;
+            // The other wallets rewind with the gold. The Farmer object survives the rewind, so
+            // anything not cleared here carries over: Qi gems bought last loop were still there
+            // (sarahwinchester97, 1.1.x), and so were Casino coins.
+            p.QiGems = 0;
+            p.clubCoins = 0;
 
             // Inventory — wipe CONTENTS but set the slot count from the baseline (kept items
             // ride in the Junimo Stash chest). p.Items.Clear() removes the slot list itself, which
@@ -369,7 +374,7 @@ namespace TheLongestYear.Loop
             _monitor.Log($"Reset: cleared the fish collection ({fishToClear.Count}) and the cooked dishes ({cookedToClear.Count}).", LogLevel.Info);
 
             _monitor.Log(
-                $"FarmerReset: gold={baseline.StartingGold}, slots={baseline.MaxItems}, " +
+                $"FarmerReset: gold={baseline.StartingGold}, qiGems={p.QiGems}, clubCoins={p.clubCoins}, slots={baseline.MaxItems}, " +
                 $"tools=[{string.Join(",", baseline.ToolTiers)}], trashCan={p.trashCanLevel}, " +
                 $"skills=[{string.Join(",", baseline.SkillLevels)}], " +
                 $"kitchen={baseline.KitchenOnDay1}, basement={baseline.BasementOnDay1}, " +
