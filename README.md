@@ -23,7 +23,17 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.1.4
+## What's New in 1.1.8
+
+**Fixed: day 2 would not save after a rewind with Farm Type Manager packs.** The save right after the rewind made the game announce a second morning, so Farm Type Manager spawned its monsters twice and lost track of some. A ghost it forgot stayed in the world and stopped the next night's save. The rewind's save no longer counts as a new morning. Thanks to SylviaStormsinger for the report and the log.
+
+**Fixed: bundles no longer count on a Desert Festival stall that may never open.** Each festival day picks two villagers at random to run a stall, so an item only one villager's stall sells or trades (Pierre's Squid, Leah's Hardwood) is luck, not something the board can expect you to get. The Egg Shop still counts, since it opens every day. Thanks to SylviaStormsinger.
+
+**Fixed: "To The Beach" no longer stays in your quest log when you already have a rod.** Keeping your fishing rod through the rewind, or buying it as a focus card, skips Willy's beach scene so he doesn't hand you a second pole. That scene was also what closed his quest. Walking onto the beach now closes it. Thanks to tanky24u.
+
+**Fixed: Qi gems and Casino coins now rewind with your gold.** Both stayed in your wallet through the rewind. Thanks to sarahwinchester97.
+
+## 1.1.4
 
 **Fixed: a settings tooltip named the wrong stall.** The Starting cart slots setting's tooltip said the cart stays empty on Hard and Extreme until you buy Cart Stall I. The first stall upgrade is Cart Stall II, and the tooltip now says so.
 
