@@ -48,6 +48,35 @@ public class YearOneSourceTests
     public void Item_query_kinds(string itemId, ShopItemQueryKind kind)
         => Assert.Equal(kind, ItemQueryRules.Classify(itemId));
 
+    private const string CornucopiaRareSeeds =
+        "ITEM_CONTEXT_TAG Target cornucopia_crop_seed, ITEM_CONTEXT_TAG Target cornucopia_rarity_rare, !ITEM_CONTEXT_TAG Target traveling_cart_banned";
+
+    /// <summary>Cornucopia's cart seed lines draw from a tag-filtered set; they are listed as random
+    /// picks. Vanilla's own cart draw (@isRandomSale) and an unfiltered draw are not.</summary>
+    [Theory]
+    [InlineData("RANDOM_ITEMS (O)", CornucopiaRareSeeds, true)]
+    [InlineData("RANDOM_ITEMS (O)", null, false)]
+    [InlineData("RANDOM_ITEMS (O) 2 789 @requirePrice @isRandomSale", "ITEM_CATEGORY Target -74", false)]
+    [InlineData("RANDOM_ITEMS (F)", CornucopiaRareSeeds, false)]
+    [InlineData("ALL_ITEMS (O)", CornucopiaRareSeeds, false)]
+    [InlineData("Cornucopia_KiwiSeeds", null, false)]
+    public void Filtered_random_picks(string itemId, string? perItemCondition, bool pick)
+        => Assert.Equal(pick, ItemQueryRules.IsFilteredRandomPick(itemId, perItemCondition));
+
+    /// <summary>A random pick is no route: it neither condemns nor clears an item.</summary>
+    [Fact]
+    public void A_random_pick_listing_is_not_a_reachability_route()
+    {
+        static bool Unreachable(bool randomPick) => new SourceReachability(
+            new HashSet<string>(StringComparer.Ordinal) { "IslandSouth" },
+            new[] { new RawShopListing("(O)Mod_Seed", "Custom_IslandShop", RandomPick: randomPick) },
+            new[] { new RawShopPlacement("Custom_IslandShop", "IslandSouth") },
+            Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(),
+            new HashSet<string>(StringComparer.Ordinal)).IsUnreachable("(O)Mod_Seed");
+        Assert.True(Unreachable(randomPick: false));
+        Assert.False(Unreachable(randomPick: true));
+    }
+
     private const string Town = "SeedShop";
     private static readonly RawShopPlacement[] Placements = { new("Pierre", Town) };
 

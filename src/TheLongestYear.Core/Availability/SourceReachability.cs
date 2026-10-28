@@ -81,7 +81,8 @@ public sealed class SourceReachability
         _listingsByItem = new Dictionary<string, List<RawShopListing>>(StringComparer.Ordinal);
         foreach (RawShopListing listing in shopListings ?? Array.Empty<RawShopListing>())
         {
-            if (listing == null || string.IsNullOrEmpty(listing.ItemId)) continue;
+            // A random pick is a lottery, not a route (ItemQueryRules): it neither condemns nor clears.
+            if (listing == null || string.IsNullOrEmpty(listing.ItemId) || listing.RandomPick) continue;
             string id = Qualify(listing.ItemId);
             if (!_listingsByItem.TryGetValue(id, out List<RawShopListing>? list))
                 _listingsByItem[id] = list = new List<RawShopListing>();

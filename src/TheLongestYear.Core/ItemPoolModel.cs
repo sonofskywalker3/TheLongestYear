@@ -207,8 +207,12 @@ public sealed record RawLocationLink(string From, string To);
 /// IsRecipe flag: such a line teaches a recipe rather than selling the item, so it is a source of
 /// the KNOWLEDGE, never of the item itself. <paramref name="LockedAfterYearOne"/> marks a line whose
 /// Condition needs year 2 or later (<see cref="Availability.YearOneCondition"/>): a known route, but
-/// a closed one in a loop that never leaves year 1.</summary>
-public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false, bool LockedAfterYearOne = false);
+/// a closed one in a loop that never leaves year 1. <paramref name="RandomPick"/> marks one item a
+/// filtered <c>RANDOM_ITEMS (O)</c> line can draw (Cornucopia's cart seed lines): the shop may offer
+/// it, so it is a year-1 source for <see cref="Availability.ShopWeeks.UnplacedItems"/>, but a lottery
+/// proves no week and no reachability (<see cref="Availability.ItemQueryRules"/>).</summary>
+public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false, bool LockedAfterYearOne = false,
+    bool RandomPick = false);
 
 /// <summary>Where a shop can actually be opened. A shop with no known placement leaves everything
 /// it sells allowed, per the conservative rule.</summary>

@@ -74,4 +74,22 @@ public static class ItemQueryRules
         }
         return ShopItemQueryKind.Resolve;
     }
+
+    private const string RandomItemsKey = "RANDOM_ITEMS";
+
+    /// <summary>True for a <c>RANDOM_ITEMS (O)</c> line narrowed by a PerItemCondition and not
+    /// flagged <c>@isRandomSale</c>: Cornucopia's cart seed lines ("RANDOM_ITEMS (O)" with
+    /// "ITEM_CONTEXT_TAG Target cornucopia_crop_seed, ..."). The line draws one of a known set, so the
+    /// game layer lists the set with <see cref="RawShopListing.RandomPick"/>: each item may be on
+    /// offer, which is a year-1 source, though no route (<see cref="Classify"/> still skips it).
+    /// Vanilla's own cart draw is <c>@isRandomSale</c> over hundreds of objects and stays unread.</summary>
+    public static bool IsFilteredRandomPick(string? itemId, string? perItemCondition)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || string.IsNullOrWhiteSpace(perItemCondition)) return false;
+        string[] tokens = itemId.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length >= 2
+               && tokens[0].Equals(RandomItemsKey, StringComparison.OrdinalIgnoreCase)
+               && tokens[1].Equals(ObjectPrefix, StringComparison.Ordinal)
+               && itemId.IndexOf(RandomSaleFlag, StringComparison.OrdinalIgnoreCase) < 0;
+    }
 }

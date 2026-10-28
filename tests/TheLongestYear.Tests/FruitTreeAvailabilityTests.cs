@@ -298,3 +298,108 @@ public class CropSeedShopWeekTests
         Assert.DoesNotContain("seed sold", effort.Basis);
     }
 }
+
+/// <summary>The first regeneration after the "seed sold only outside year 1" rule unplaced crops a
+/// player can grow in year 1: Cornucopia seeds whose other listings are a festival stall, the
+/// Traveling Cart or a cart tag row, and vanilla seeds the Raccoon sells that also come out of
+/// seed spots. Only a seed with no year-1 source at all (vanilla Pineapple, Taro) is unplaced.</summary>
+public class SeedSoldOnlyOutsideYearOneTests
+{
+    private const string Kiwi = "(O)Cornucopia_Kiwi";
+    private const string KiwiSeeds = "(O)Cornucopia_KiwiSeeds";
+
+    private static ShopWeeks Shops(params RawShopListing[] listings)
+        => ShopWeeks.Build(listings, new[] { new RawShopPlacement("SeedShop", "SeedShop") },
+            LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town"), new RawLocationLink("Town", "SeedShop") }, _ => false));
+
+    private static readonly RawCropGrowth[] KiwiCrop =
+        { new(Kiwi, 21, true, false, new[] { Season.Summer }, KiwiSeeds) };
+
+    [Fact]
+    public void A_Pineapple_Shaped_Seed_Sold_Only_By_The_Island_Trader_Is_Still_Unplaced()
+    {
+        var pineapple = new[] { new RawCropGrowth("(O)832", 14, true, false, new[] { Season.Summer }, "(O)833") };
+        ShopWeeks shops = Shops(new RawShopListing("(O)833", "IslandTrade"));
+        Assert.Contains("(O)833", shops.UnplacedItems);
+        Assert.Null(CropForageAvailability.DeriveCrop("(O)832", pineapple, WeekMode.Pacing, shops)!.EarliestWeek);
+    }
+
+    /// <summary>Cornucopia's Kiwi Seeds: the Island Trader, the Luau stall and the cart all list them.</summary>
+    [Theory]
+    [InlineData("Festival_Luau_Pierre", false)]
+    [InlineData("Traveler", false)]
+    [InlineData("Traveler", true)]
+    [InlineData("SeedShop", true)]
+    [InlineData("SeedShop", false)]
+    public void A_Kiwi_Shaped_Seed_With_Any_Year_One_Listing_Keeps_Its_Week(string shop, bool randomPick)
+    {
+        ShopWeeks shops = Shops(new RawShopListing(KiwiSeeds, "IslandTrade"), new RawShopListing(KiwiSeeds, shop, RandomPick: randomPick));
+        Assert.DoesNotContain(KiwiSeeds, shops.UnplacedItems);
+        ItemEffort effort = CropForageAvailability.DeriveCrop(Kiwi, KiwiCrop, WeekMode.Pacing, shops)!;
+        Assert.Equal(8, effort.EarliestWeek);
+        Assert.Equal("crop, 21 days (+2), regrows or trellis (+1), week 8, effort 4", effort.Basis);
+    }
+
+    /// <summary>A festival stall and the cart open in year 1 but at no map the walk dates, and a random
+    /// pick is luck: they keep an item out of the unplaced set without giving it a shop week.</summary>
+    [Fact]
+    public void A_Festival_Cart_Or_Random_Listing_Gives_No_Shop_Week()
+    {
+        ShopWeeks shops = Shops(
+            new RawShopListing("(O)A", "Festival_EggFestival_Pierre"),
+            new RawShopListing("(O)B", "Traveler"),
+            new RawShopListing("(O)C", "SeedShop", RandomPick: true));
+        Assert.Empty(shops.UnplacedItems);
+        Assert.Empty(shops.Weeks);
+    }
+
+    /// <summary>A layer's flag still wins: a flagged festival stall or cart sells nothing in year 1.</summary>
+    [Fact]
+    public void A_Flagged_Festival_Or_Cart_Listing_Is_Outside_Year_One()
+    {
+        ShopWeeks shops = ShopWeeks.Build(
+            new[] { new RawShopListing("(O)A", "Festival_Luau_Pierre"), new RawShopListing("(O)B", "Traveler", RandomPick: true) },
+            Array.Empty<RawShopPlacement>(),
+            LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town") }, _ => false),
+            new HashSet<string>(StringComparer.Ordinal) { "Festival_Luau_Pierre", "Traveler" });
+        Assert.Equal(new[] { "(O)A", "(O)B" }, shops.UnplacedItems.OrderBy(id => id, StringComparer.Ordinal));
+    }
+
+    /// <summary>A random pick at a shop outside year 1 is no year-1 source either.</summary>
+    [Fact]
+    public void A_Random_Pick_At_An_Unplaced_Shop_Is_Outside_Year_One()
+        => Assert.Contains("(O)A", Shops(new RawShopListing("(O)A", "IslandTrade", RandomPick: true)).UnplacedItems);
+
+    /// <summary>Vanilla Carrot Seeds are sold only by the Raccoon, which no walk places, but Spring seed
+    /// spots give them from day 1: the seed-source row keeps the crop at its season week.</summary>
+    [Fact]
+    public void A_Carrot_Shaped_Seed_Placed_By_Its_Seed_Source_Row()
+    {
+        var carrot = new[] { new RawCropGrowth("(O)Carrot", 3, false, false, new[] { Season.Spring }, "(O)CarrotSeeds") };
+        ShopWeeks shops = Shops(new RawShopListing("(O)CarrotSeeds", "Raccoon"));
+        Assert.Contains("(O)CarrotSeeds", shops.UnplacedItems);
+        ItemEffort effort = CropForageAvailability.DeriveCrop("(O)Carrot", carrot, WeekMode.Pacing, shops)!;
+        Assert.Equal(1, effort.EarliestWeek);
+        Assert.Equal(1, effort.HardWeek);
+        Assert.Equal("crop, 3 days (+0), week 1, effort 1", effort.Basis);
+    }
+
+    /// <summary>The seed-source rows for crops whose seed comes from a seed spot or an artifact spot give
+    /// the weeks these crops had before the rule (vanilla.json and the Stardew Valley Expanded layer as
+    /// written before it), with Hard equal to Week.</summary>
+    [Theory]
+    [InlineData("(O)Carrot", 3, false, Season.Spring, "(O)CarrotSeeds", 1)]
+    [InlineData("(O)SummerSquash", 6, true, Season.Summer, "(O)SummerSquashSeeds", 5)]
+    [InlineData("(O)Broccoli", 8, true, Season.Fall, "(O)BroccoliSeeds", 10)]
+    [InlineData("(O)Powdermelon", 7, false, Season.Winter, "(O)PowdermelonSeeds", 14)]
+    [InlineData("(O)454", 28, true, Season.Spring, "(O)499", 4)]
+    public void Seed_Spot_And_Artifact_Spot_Crops_Keep_Their_Weeks(string crop, int days, bool regrows, Season season, string seed, int week)
+    {
+        Assert.Equal((week, week), AvailabilityWeeks.SeedSourceWeeks[crop]);
+        var growth = new[] { new RawCropGrowth(crop, days, regrows, false, new[] { season }, seed) };
+        ItemEffort effort = CropForageAvailability.DeriveCrop(crop, growth, WeekMode.Pacing,
+            Shops(new RawShopListing(seed, "Raccoon")))!;
+        Assert.Equal(week, effort.EarliestWeek);
+        Assert.Equal(week, effort.HardWeek);
+    }
+}

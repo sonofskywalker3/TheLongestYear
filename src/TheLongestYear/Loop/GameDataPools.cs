@@ -193,11 +193,11 @@ namespace TheLongestYear.Loop
                         // Read the line the way the game does (item queries, RandomItemId,
                         // PerItemCondition), and keep a year-2 line as a known but closed route.
                         bool locked = !YearOneCondition.Allows(entry.Condition, closedRules);
-                        foreach (string id in OfferedObjectIds(entry.ItemId, entry.RandomItemId, entry.PerItemCondition))
+                        foreach ((string id, bool randomPick) in OfferedShopIds(entry.ItemId, entry.RandomItemId, entry.PerItemCondition))
                         {
                             bool lockedHere = locked
                                 && !YearTwoCrops.TlyUnlockedSeedIds.Contains(BundleParsing.NormalizeItemId(id));
-                            shopListings.Add(new RawShopListing(id, kv.Key, entry.IsRecipe, lockedHere));
+                            shopListings.Add(new RawShopListing(id, kv.Key, entry.IsRecipe, lockedHere, randomPick));
                         }
                     }
                     foreach (var owner in kv.Value.Owners ?? new List<ShopOwnerData>())
@@ -526,9 +526,20 @@ namespace TheLongestYear.Loop
         /// reads it: a plain id as-is, and a fixed-set item query (ALL_ITEMS, FLAVORED_ITEM)
         /// resolved through the game's own ItemQueryResolver with the line's PerItemCondition, so a
         /// mod that sells by context tag is read exactly as it wrote it (Cornucopia, Nexus post
-        /// Thrippa 2026-09-25). Random picks and non-object queries offer nothing here; see
-        /// <see cref="ItemQueryRules"/>. Each RandomItemId option is one possible line.</summary>
+        /// Thrippa 2026-09-25). A tag-filtered RANDOM_ITEMS (O) line (Cornucopia's cart seed lines,
+        /// <see cref="ItemQueryRules.IsFilteredRandomPick"/>) is resolved the same way, as
+        /// GameObtainabilityData reads it, and each result is marked a random pick: a year-1 source for
+        /// the shop weeks' unplaced set, never a week or a reachability route. Other random picks and
+        /// non-object queries offer nothing here. Each RandomItemId option is one possible line.</summary>
         private IEnumerable<string> OfferedObjectIds(string itemId, List<string> randomItemId, string perItemCondition)
+            => Offered(itemId, randomItemId, perItemCondition, randomPicks: false).Select(o => o.Id);
+
+        /// <summary><see cref="OfferedObjectIds"/> plus, for a shop line only, the random picks of a
+        /// tag-filtered RANDOM_ITEMS (O) line, marked as such. Forage never reads them.</summary>
+        private IEnumerable<(string Id, bool RandomPick)> OfferedShopIds(string itemId, List<string> randomItemId, string perItemCondition)
+            => Offered(itemId, randomItemId, perItemCondition, randomPicks: true);
+
+        private IEnumerable<(string Id, bool RandomPick)> Offered(string itemId, List<string> randomItemId, string perItemCondition, bool randomPicks)
         {
             var raws = new List<string>();
             if (!string.IsNullOrEmpty(itemId)) raws.Add(itemId);
@@ -539,11 +550,15 @@ namespace TheLongestYear.Loop
                 switch (ItemQueryRules.Classify(raw, IsRegisteredQueryKey))
                 {
                     case ShopItemQueryKind.PlainId:
-                        yield return raw;
+                        yield return (raw, false);
                         break;
                     case ShopItemQueryKind.Resolve:
                         foreach (string id in ResolveQuery(raw, perItemCondition))
-                            yield return id;
+                            yield return (id, false);
+                        break;
+                    case ShopItemQueryKind.Skip when randomPicks && ItemQueryRules.IsFilteredRandomPick(raw, perItemCondition):
+                        foreach (string id in ResolveQuery(raw, perItemCondition))
+                            yield return (id, true);
                         break;
                 }
             }

@@ -106,6 +106,14 @@ public static class AvailabilityWeeks
             [YearTwoCrops.Garlic] = (4, 2),        // year-two crop: permanent buy, or the Boost from Spring week 2
             [YearTwoCrops.RedCabbage] = (7, 6),    // year-two crop: permanent buy, or the Boost from Summer week 6
             [YearTwoCrops.Artichoke] = (10, 10),   // vanilla Fall Mixed Seeds yields Artichoke Seeds at 25%, so a Fall 1 planting harvests in week 10 with nothing bought
+            // Seeds the only shop that sells (the Raccoon) cannot date, but that come out of the season's
+            // seed spots from its first day: without these rows the seed rule read them as sold only
+            // outside year 1.
+            ["(O)Carrot"] = (1, 1),         // Carrot, Spring seed spots
+            ["(O)SummerSquash"] = (5, 5),   // Summer Squash, Summer seed spots
+            ["(O)Broccoli"] = (10, 10),     // Broccoli, Fall seed spots plus 8 days
+            ["(O)Powdermelon"] = (14, 14),  // Powdermelon, Winter seed spots plus 7 days
+            ["(O)454"] = (4, 4),            // Ancient Fruit, Ancient Seeds from artifact spots (Stardew Valley Expanded also lists them at a flagged shop)
         };
 
     /// <summary>Items whose own rule answers too early, pinned by hand. Later floors that beat

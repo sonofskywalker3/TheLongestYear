@@ -48,11 +48,13 @@ public sealed class ShopWeeks
     /// <summary>Every item some walkable shop sells, with its earliest weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Weeks => _weeks;
 
-    /// <summary>Items (normalized ids) a non-recipe, year-1 listing sells only at shops that are
+    /// <summary>Items (normalized ids) whose every non-recipe, year-1 listing is at a shop that is
     /// unplaced or flagged, so they have no <see cref="Weeks"/> entry: vanilla's Pineapple Seeds
-    /// (Island Trader), SVE's Joja Berry and Joja Veggie seeds (Joja-route vendors). An item no shop
-    /// lists at all is not here: nothing says where it comes from, so the rules keep their own
-    /// arithmetic for it.</summary>
+    /// (Island Trader), SVE's Joja Berry and Joja Veggie seeds (Joja-route vendors). A listing at a
+    /// festival stall or the cart (<see cref="OpensInYearOneUndated"/>), or a random pick at a shop
+    /// that is either, keeps an item out: Cornucopia's Kiwi Seeds are at the Island Trader but also at
+    /// the Luau and the cart. An item no shop lists at all is not here: nothing says where it comes
+    /// from, so the rules keep their own arithmetic for it.</summary>
     public IReadOnlySet<string> UnplacedItems => _unplaced;
 
     /// <param name="flaggedShops">Shop ids a supported mod's layer marks as year-2 or Ginger Island
@@ -81,21 +83,50 @@ public sealed class ShopWeeks
 
         var weeks = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);
         var unplaced = new HashSet<string>(StringComparer.Ordinal);
+        var soldUndated = new HashSet<string>(StringComparer.Ordinal);
         foreach (RawShopListing listing in listings)
         {
             if (listing == null || listing.IsRecipe || listing.LockedAfterYearOne || string.IsNullOrEmpty(listing.ItemId)) continue;
             string id = BundleParsing.NormalizeItemId(listing.ItemId);
-            if ((flaggedShops != null && flaggedShops.Contains(listing.ShopId ?? ""))
-                || !shopWeek.TryGetValue(listing.ShopId ?? "", out PlaceWeek? week))
+            string shopId = listing.ShopId ?? "";
+            if (flaggedShops != null && flaggedShops.Contains(shopId))
             {
                 unplaced.Add(id);
                 continue;
             }
-            weeks[id] = weeks.TryGetValue(id, out PlaceWeek? known) ? known.EarlierOf(week) : week;
+            bool placed = shopWeek.TryGetValue(shopId, out PlaceWeek? week);
+            if (!placed && !OpensInYearOneUndated(shopId))
+            {
+                unplaced.Add(id);
+                continue;
+            }
+            // A year-1 source with no week of its own: a festival stall, the cart, or a random pick
+            // (luck, even at a dated shop). It proves the item is not sold only outside year 1.
+            if (!placed || listing.RandomPick)
+            {
+                soldUndated.Add(id);
+                continue;
+            }
+            weeks[id] = weeks.TryGetValue(id, out PlaceWeek? known) ? known.EarlierOf(week!) : week!;
         }
         unplaced.ExceptWith(weeks.Keys);
+        unplaced.ExceptWith(soldUndated);
         return new ShopWeeks(weeks, unplaced);
     }
+
+    /// <summary>The Traveling Cart's shop id. The cart stands in the Forest from year 1, but on two
+    /// days a week the walk cannot date.</summary>
+    public const string CartShopId = "Traveler";
+
+    /// <summary>Prefix of every vanilla festival stall (Event.cs: "Festival_&lt;festival&gt;_&lt;owner&gt;",
+    /// the Night Market boats too). Every one opens on a year-1 festival day.</summary>
+    public const string FestivalShopPrefix = "Festival_";
+
+    /// <summary>True for a shop that opens in year 1 at no map the walk places: the cart and the
+    /// festival stalls. Its listings keep an item out of <see cref="UnplacedItems"/> but give no week.
+    /// The Desert Festival's stalls ("DesertFestival_…") are not here: they need the bus.</summary>
+    public static bool OpensInYearOneUndated(string shopId)
+        => shopId == CartShopId || shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal);
 
     public bool TryGet(string qualifiedItemId, out PlaceWeek week)
     {
