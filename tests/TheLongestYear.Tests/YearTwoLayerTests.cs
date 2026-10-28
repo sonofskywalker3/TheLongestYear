@@ -433,6 +433,10 @@ public sealed class YearTwoLayerTests
         LayerInputs read = LayerFile.ReadInputs(System.IO.File.ReadAllText(path));
         Assert.Equal("FlashShifter.StardewValleyExpandedCP", read.UniqueId);
         Assert.NotEmpty(read.YearTwoMaps);
+        // The Sprite Spring is locked behind the post-Community-Center Magic Ink event, so it and
+        // its cave leave the year-1 walk (Goldenfish and Meteor Carp were week 1 from its rows).
+        Assert.Equal(YearTwoFlag.YearTwo, read.YearTwoMaps["Custom_SpriteSpring2"]);
+        Assert.Equal(YearTwoFlag.YearTwo, read.YearTwoMaps["Custom_SpriteSpringCave"]);
         Assert.NotEmpty(read.YearTwoShops);
         Assert.NotEmpty(read.YearTwoRulings);
         Assert.All(read.YearTwoRulings.Values, r => Assert.InRange(r.Week, YearTwoWeeks.First, YearTwoWeeks.Last));

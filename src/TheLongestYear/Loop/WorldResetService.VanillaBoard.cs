@@ -58,7 +58,8 @@ namespace TheLongestYear.Loop
                 try
                 {
                     qualityEligibleIds = new GameDataPools(_monitor)
-                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, difficulty.Steps.ItemRarity))
+                        .Build(_config.PoolTuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, difficulty.Steps.ItemRarity),
+                            marks: LayerMarks?.Invoke())
                         .QualityEligibleIds;
                 }
                 catch (Exception ex)

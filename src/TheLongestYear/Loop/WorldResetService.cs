@@ -84,6 +84,11 @@ namespace TheLongestYear.Loop
         /// which keeps <see cref="AvailabilityModel"/> at whatever SaveLoaded built.</summary>
         public Func<TheLongestYear.Core.DifficultyStep, TheLongestYear.Core.ItemAvailabilityModel> RebuildAvailabilityModel { get; set; }
 
+        /// <summary>The supported-mod layers' year-2 maps and shops (the lexicon's
+        /// <c>LayerSet.Marks</c>), read by every pool build here so it sees the same year-1 walk as
+        /// the SaveLoaded pools. Set by ModEntry; null, or returning null, = none.</summary>
+        public Func<TheLongestYear.Core.Obtainability.YearTwoMarks> LayerMarks { get; set; }
+
         /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
         /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
         /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset

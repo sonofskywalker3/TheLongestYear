@@ -10,6 +10,7 @@ using StardewValley.GameData.Objects;
 using StardewValley.GameData.Shops;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
+using TheLongestYear.Core.Obtainability;
 
 namespace TheLongestYear.Loop
 {
@@ -41,8 +42,14 @@ namespace TheLongestYear.Loop
         /// <param name="vanillaOnlyIds">TLY Custom boards pass <see cref="VanillaItemIds.All"/>: every
         /// other item is left out of every pool (spec 2026-10-08-custom-board-vanilla-only). Null
         /// keeps modded items, as the shared load-time pools and the Normal/Remixed paths need.</param>
-        public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null, IReadOnlySet<string> vanillaOnlyIds = null)
+        /// <param name="marks">The supported-mod layers' year-2 maps and shops
+        /// (<see cref="TheLongestYear.Core.Lexicon.LayerSet.Marks"/>): a flagged map is left out of the
+        /// year-1 location walk (and so is every map reached only through it), and a flagged shop sells
+        /// nothing in year 1. Null = <see cref="YearTwoMarks.None"/>.</param>
+        public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null, IReadOnlySet<string> vanillaOnlyIds = null,
+            YearTwoMarks marks = null)
         {
+            marks ??= YearTwoMarks.None;
             IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
             var crops = new List<RawCropEntry>();
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
@@ -165,7 +172,7 @@ namespace TheLongestYear.Loop
             // because a partial source graph is worse than none (it looks authoritative while
             // missing exactly the alternative route that would have kept an item allowed).
             // Read first: the spawn-row rule below needs the one-way door walk as well as the warp graph.
-            LocationWeeks locationWeeks = ReadLocationWeeks(tuning);
+            LocationWeeks locationWeeks = ReadLocationWeeks(tuning, marks);
             SourceReachability reachability = null;
             List<RawShopListing> listingsForWeeks = null;
             List<RawShopPlacement> placementsForWeeks = null;
@@ -421,7 +428,7 @@ namespace TheLongestYear.Loop
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
                 festivalSeasons, reachability, vanillaOnlyIds, locationWeeks)
-                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks) };
+                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks) };
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
@@ -443,8 +450,9 @@ namespace TheLongestYear.Loop
         /// <summary>When each loaded map can first be reached: the maps' own warps and door warps
         /// (GameLocation.doors, the "Warp"/"LockedDoorWarp" tile actions), walked one way from the
         /// farm (<see cref="LocationWeeks"/>). Its own try/catch, failing to null: with no weeks the
-        /// availability rules that need them place nothing from a modded map, as before.</summary>
-        private LocationWeeks ReadLocationWeeks(BundleGenerationTuning tuning)
+        /// availability rules that need them place nothing from a modded map, as before. A map a
+        /// layer flags as year-2 content is forbidden like an excluded one.</summary>
+        private LocationWeeks ReadLocationWeeks(BundleGenerationTuning tuning, YearTwoMarks marks)
         {
             try
             {
@@ -460,8 +468,8 @@ namespace TheLongestYear.Loop
                             links.Add(new RawLocationLink(location.Name, door.Value));
                 }
                 LocationWeeks weeks = LocationWeeks.Build(
-                    links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
-                _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors).", LogLevel.Trace);
+                    links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers) || marks.Maps.ContainsKey(name));
+                _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors; {marks.Maps.Count} year-2 map(s) flagged by layers left out).", LogLevel.Trace);
                 return weeks;
             }
             catch (Exception ex)
@@ -472,13 +480,15 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>The earliest week a walkable shop sells each item, from the listings and
-        /// placements the reachability read already gathered. Null when either read failed.</summary>
-        private ShopWeeks ReadShopWeeks(List<RawShopListing> listings, List<RawShopPlacement> placements, LocationWeeks locationWeeks)
+        /// placements the reachability read already gathered. Null when either read failed. A shop a
+        /// layer flags as year-2 content sells nothing.</summary>
+        private ShopWeeks ReadShopWeeks(List<RawShopListing> listings, List<RawShopPlacement> placements, LocationWeeks locationWeeks, YearTwoMarks marks)
         {
             if (listings == null || placements == null || locationWeeks == null) return null;
             try
             {
-                ShopWeeks weeks = ShopWeeks.Build(listings, placements, locationWeeks);
+                ShopWeeks weeks = ShopWeeks.Build(listings, placements, locationWeeks,
+                    new HashSet<string>(marks.Shops.Keys, StringComparer.Ordinal));
                 _monitor?.Log($"Shop weeks: {weeks.Weeks.Count} items sold by a walkable shop.", LogLevel.Trace);
                 return weeks;
             }

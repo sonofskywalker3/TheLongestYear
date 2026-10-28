@@ -121,6 +121,7 @@ namespace TheLongestYear.Loop
                 var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty, _meta.HasUpgrade);
                 engine.Availability = AvailabilityModel;
+                engine.LayerMarks = LayerMarks?.Invoke();
                 // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1): a new board takes
                 // the save's choice, a held board keeps the value it was built under. Stamped with the
                 // board so the load-time check re-derives it the same way after a mid-loop toggle.

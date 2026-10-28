@@ -23,7 +23,7 @@ namespace TheLongestYear.Loop
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
             var timing = _monitor != null ? new ResetTiming(_monitor, "BundleEngine.Generate") : null;
-            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter);
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter, LayerMarks);
             timing?.Mark("GameDataPools.Build");
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the

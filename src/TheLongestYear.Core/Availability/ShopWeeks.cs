@@ -41,10 +41,14 @@ public sealed class ShopWeeks
     /// <summary>Every item some walkable shop sells, with its earliest weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Weeks => _weeks;
 
+    /// <param name="flaggedShops">Shop ids a supported mod's layer marks as year-2 or Ginger Island
+    /// content (<see cref="Obtainability.YearTwoMarks.Shops"/>): their listings are skipped, so a
+    /// shop standing on a reached map still sells nothing in year 1. Null = none.</param>
     public static ShopWeeks Build(
         IReadOnlyList<RawShopListing> listings,
         IReadOnlyList<RawShopPlacement> placements,
-        LocationWeeks locationWeeks)
+        LocationWeeks locationWeeks,
+        IReadOnlySet<string>? flaggedShops = null)
     {
         if (listings == null) throw new ArgumentNullException(nameof(listings));
         if (placements == null) throw new ArgumentNullException(nameof(placements));
@@ -65,6 +69,7 @@ public sealed class ShopWeeks
         foreach (RawShopListing listing in listings)
         {
             if (listing == null || listing.IsRecipe || listing.LockedAfterYearOne || string.IsNullOrEmpty(listing.ItemId)) continue;
+            if (flaggedShops != null && flaggedShops.Contains(listing.ShopId ?? "")) continue;
             if (!shopWeek.TryGetValue(listing.ShopId ?? "", out PlaceWeek? week)) continue;
             string id = BundleParsing.NormalizeItemId(listing.ItemId);
             weeks[id] = weeks.TryGetValue(id, out PlaceWeek? known) ? known.EarlierOf(week) : week;

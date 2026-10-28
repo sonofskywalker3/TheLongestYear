@@ -208,6 +208,26 @@ namespace TheLongestYear
             this.Monitor.Log($"tly_dumpavailability: wrote {path} ({sb.Length:N0} chars, {requirements.Count} bundles, {judgement.Count} judgement row(s), {unknown.Count} unknown item(s)).", LogLevel.Info);
         }
 
+        /// <summary>Constructs the path lexicon (which loads the supported-mod layers) once per session.
+        /// Called before the load-time pools are built, so the layers' year-2 maps and shops are known
+        /// to the location walk. A failure is logged and leaves it null; <see cref="BuildObtainabilityModel"/>
+        /// tries again and reports its own failure.</summary>
+        private void EnsureLexicon()
+        {
+            try
+            {
+                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"Lexicon: could not load the layers before the pools ({ex.GetType().Name}: {ex.Message}); no layer map or shop leaves the year-1 walk this load.", LogLevel.Warn);
+            }
+        }
+
+        /// <summary>The supported-mod layers' year-2 maps and shops for every pool build, or null
+        /// (none) before the lexicon exists.</summary>
+        private TheLongestYear.Core.Obtainability.YearTwoMarks LayerMarks() => _lexicon?.Loaded.Set.Marks;
+
         /// <summary>Reads the obtainability inputs from the live game data and publishes the models
         /// the path lexicon resolves them to: the shipped answers when the data is the unmodded game's,
         /// else the disk cache entry for this exact data, else a build (<see cref="BuildLexiconVariant"/>).</summary>

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
@@ -160,6 +161,41 @@ public class ShopWeeksTests
 
         Assert.True(shops.TryGet("(O)E", out PlaceWeek week));
         Assert.Equal(1, week.Week);
+    }
+
+    /// <summary>A shop a layer flags as year-2 content (SVE's Joja Emporium vendors) sells nothing
+    /// in year 1, even when the walk reaches the map it stands on.</summary>
+    [Fact]
+    public void A_Flagged_Shop_On_A_Reached_Map_Places_Nothing()
+    {
+        LocationWeeks walk = LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town") }, _ => false);
+        ShopWeeks shops = ShopWeeks.Build(
+            new[] { new RawShopListing("(O)F", "JojaVendor"), new RawShopListing("(O)G", "TownShop") },
+            new[] { new RawShopPlacement("JojaVendor", "Town"), new RawShopPlacement("TownShop", "Town") },
+            walk,
+            new HashSet<string>(StringComparer.Ordinal) { "JojaVendor" });
+
+        Assert.False(shops.TryGet("(O)F", out _));
+        Assert.True(shops.TryGet("(O)G", out _));
+    }
+
+    /// <summary>A map the forbidden predicate rejects (a layer's year-2 map) is not reached, and
+    /// neither is any map reached only through it.</summary>
+    [Fact]
+    public void A_Forbidden_Map_And_The_Maps_Only_Behind_It_Are_Not_Reached()
+    {
+        LocationWeeks walk = LocationWeeks.Build(
+            new[]
+            {
+                new RawLocationLink("Farm", "Forest"), new RawLocationLink("Forest", "Custom_Spring"),
+                new RawLocationLink("Custom_Spring", "Custom_Cave"), new RawLocationLink("Farm", "Town"),
+            },
+            name => name == "Custom_Spring");
+
+        Assert.Contains("Forest", walk.Reached.Keys);
+        Assert.Contains("Town", walk.Reached.Keys);
+        Assert.DoesNotContain("Custom_Spring", walk.Reached.Keys);
+        Assert.DoesNotContain("Custom_Cave", walk.Reached.Keys);
     }
 }
 

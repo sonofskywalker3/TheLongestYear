@@ -225,6 +225,12 @@ namespace TheLongestYear.Loop
         /// stretch and hard-item swaps (spec 2026-08-28-obtainable-board-2-stretch). Must be set the
         /// same way at every construction site: the board is re-generated and compared at save load.</summary>
         public Core.ItemAvailabilityModel Availability { get; set; }
+
+        /// <summary>The supported-mod layers' year-2 maps and shops, forwarded to
+        /// <see cref="GameDataPools.Build"/> so the pools read the same year-1 walk as the load-time
+        /// pools. Set the same way at every construction site, like <see cref="Availability"/>.
+        /// Null = none.</summary>
+        public Core.Obtainability.YearTwoMarks LayerMarks { get; set; }
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
