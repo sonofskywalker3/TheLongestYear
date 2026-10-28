@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.6 - 2026-10-28
+
+### Fixed
+
+- **Bundles no longer count on a Desert Festival stall that may never open.** Each festival day, two villagers are picked at random to run a stall, so an item only sold or bartered at one villager's stall (Pierre's Squid barter, Leah's Hardwood) is luck, not something the board can expect you to get. The Egg Shop still counts, since it opens every day. Reported by SylviaStormsinger.
+- The shipped item answers were rebuilt for this version (1.1.5 shipped with answers stamped for 1.1.4, so every load computed them itself).
+
 ## 1.1.5 - 2026-10-28
 
 ### Fixed

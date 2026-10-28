@@ -79,6 +79,18 @@ public class ObtainabilityShopTests
     }
 
     [Fact]
+    public void A_villager_stall_at_the_Desert_Festival_is_luck_but_the_egg_shop_is_not()
+    {
+        // Each festival day picks two villagers at random to run a stall (DesertFestival.SetupFestivalDay),
+        // so Pierre's barter for Squid may never open in a given year (SylviaStormsinger, 1.0.27).
+        var pierre = Stock(new ShopRow("DesertFestival_Pierre", "(O)Moss", null, false)).Single().Source;
+        Assert.Equal(Reliability.Chance, pierre.Reliability);
+
+        var eggShop = Stock(new ShopRow("DesertFestival_EggShop", "(O)Moss", null, false)).Single().Source;
+        Assert.Equal(Reliability.Dependable, eggShop.Reliability);
+    }
+
+    [Fact]
     public void A_sparse_shop_condition_inside_a_festival_window_is_a_true_intersection()
     {
         var s = Stock(new ShopRow("DesertFestival_EggShop", "(O)Moss", "DAY_OF_MONTH 16", false)).Single().Source;

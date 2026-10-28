@@ -12,6 +12,11 @@ public static class ShopSources
     private const string FestivalShopPrefix = "Festival_";
     private const string NightMarketId = "NightMarket";
     private const string TravelingMerchantSuffix = "_TravelingMerchant";
+    /// <summary>Each Desert Festival day picks two villagers at random to run a
+    /// "DesertFestival_&lt;villager&gt;" stall (DesertFestival.SetupFestivalDay), so any one of them
+    /// may never open in a year. Only the egg shop opens every day.</summary>
+    private const string DesertFestivalStallPrefix = "DesertFestival_";
+    private const string DesertFestivalEggShop = "DesertFestival_EggShop";
     private static readonly string[] IslandShopMarkers = { "Island", "Volcano", "Resort", "QiGem" };
 
     /// <summary>Festival key to the shop it opens (Event.cs 11818-11838). Keys are Data/Festivals/FestivalDates keys.</summary>
@@ -149,7 +154,8 @@ public static class ShopSources
             : ConditionSeasons.Availability(reading, placeWeeks);
         if (table.IsEmpty) return null;
         bool chance = reading.Chance || row.IsRandom || kind == SourceKind.Cart
-                      || row.ShopId.EndsWith(TravelingMerchantSuffix, StringComparison.Ordinal);
+                      || row.ShopId.EndsWith(TravelingMerchantSuffix, StringComparison.Ordinal)
+                      || IsRandomFestivalStall(row.ShopId);
         ObtainConditions conditions = ConditionSeasons.Apply(
             ObtainConditions.None with
             {
@@ -187,6 +193,10 @@ public static class ShopSources
             return (KindOf(head), own.Weeks, true, false, own);
         return (SourceKind.Shop, WeekMask.All, false, false, null);
     }
+
+    private static bool IsRandomFestivalStall(string shopId)
+        => shopId.StartsWith(DesertFestivalStallPrefix, StringComparison.Ordinal)
+           && !string.Equals(shopId, DesertFestivalEggShop, StringComparison.Ordinal);
 
     private static SourceKind KindOf(string festivalName)
         => festivalName == NightMarketId ? SourceKind.NightMarket : SourceKind.Festival;
