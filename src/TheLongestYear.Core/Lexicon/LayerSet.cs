@@ -32,7 +32,7 @@ public sealed class LayerSet
         AnswerSet? composed, AnswerSet? overlay, IReadOnlyList<string> layers, IReadOnlyList<string> keyLayers,
         IReadOnlyList<string> ids, IReadOnlyList<string> unmappedPairs, IReadOnlyList<string> unmappedMods,
         IReadOnlyDictionary<string, YearRuling> yearRulings, IReadOnlyDictionary<string, int> weekRulings,
-        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> extraDirect)
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> extraDirect, YearTwoMarks marks)
     {
         Composed = composed;
         Overlay = overlay;
@@ -44,6 +44,7 @@ public sealed class LayerSet
         _yearRulings = yearRulings;
         WeekRulings = weekRulings;
         ExtraDirectSources = extraDirect;
+        Marks = marks;
     }
 
     /// <summary>The set the resolver is given as its shipped answers: <see cref="Overlay"/>, with no
@@ -85,6 +86,9 @@ public sealed class LayerSet
     /// <c>extraDirect</c>). They are passed beside the inputs, never written into them, so the inputs
     /// (and their row hashes) stay the game's.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> ExtraDirectSources { get; }
+
+    /// <summary>Every layer's year-2 maps and shops, later layer winning: the builder's <c>marks</c>.</summary>
+    public YearTwoMarks Marks { get; }
 
     /// <summary>Every layer's <see cref="LayerInputs.FishSpawns"/>, in inputs order.</summary>
     public IReadOnlyList<LocationSpawn> ExtraFishSpawns { get; private init; } = Array.Empty<LocationSpawn>();
@@ -231,6 +235,8 @@ public sealed class LayerSet
 
         var years = Rulings(inputs, i => i.YearRulings, warn, "year");
         var weeks = Rulings(inputs, i => i.WeekRulings, warn, "week");
+        var marks = new YearTwoMarks(
+            Rulings(inputs, i => i.YearTwoMaps, warn, "year-2 map"), Rulings(inputs, i => i.YearTwoShops, warn, "year-2 shop"));
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)
             foreach (var (id, sources) in layer.ExtraSources)
@@ -250,7 +256,7 @@ public sealed class LayerSet
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
-        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra)
+        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra, marks)
         {
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),

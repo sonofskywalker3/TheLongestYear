@@ -49,6 +49,7 @@ public class ObtainabilityBlindGuardTests
         "TheLongestYear.Core/Obtainability/ObtainabilityCache.cs",
         "TheLongestYear.Core/Obtainability/MineDepth.cs",
         "TheLongestYear.Core/Obtainability/FishCatchRates.cs",
+        "TheLongestYear.Core/Obtainability/YearTwoMarks.cs",
         "TheLongestYear/Loop/GameObtainabilityData.cs",
         "TheLongestYear/Loop/GameObtainabilityParsing.cs",
     };

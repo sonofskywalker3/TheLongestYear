@@ -35,9 +35,12 @@ public static class ObtainabilityBuilder
     /// mod's layer (<see cref="Lexicon.LayerSet.ExtraDirectSources"/>). They join the direct sources
     /// before the mine travel and the passes, so everything made from them is derived as from any
     /// other direct route. Null or empty changes nothing.</param>
+    /// <param name="marks">The maps and shops a layer calls year 2 or Ginger Island: every source
+    /// requiring one is flagged as the model is assembled. Null changes nothing.</param>
     public static ObtainabilityBuild Build(
         ObtainabilityInputs inputs, bool mineTravel = true,
-        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null)
+        IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null,
+        YearTwoMarks? marks = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         var f = inputs.Festivals;
@@ -75,7 +78,7 @@ public static class ObtainabilityBuilder
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
         IReadOnlyDictionary<string, CatchRate> catchRates = FishCatchRates.Build(inputs);
 
-        ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
+        ObtainabilityModel current = Assemble(direct, marks, out List<string> lastUnresolved);
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
@@ -88,7 +91,7 @@ public static class ObtainabilityBuilder
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
             all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
             all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
-            ObtainabilityModel next = Assemble(all, out List<string> unresolved);
+            ObtainabilityModel next = Assemble(all, marks, out List<string> unresolved);
             if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved) { CatchRates = catchRates };
             current = next;
             lastUnresolved = unresolved;   // from the last full pass, derived sources included
@@ -97,7 +100,7 @@ public static class ObtainabilityBuilder
     }
 
     private static ObtainabilityModel Assemble(
-        IEnumerable<(string ItemId, ObtainSource Source)> sources, out List<string> unresolved)
+        IEnumerable<(string ItemId, ObtainSource Source)> sources, YearTwoMarks? marks, out List<string> unresolved)
     {
         var real = new List<(string ItemId, ObtainSource Source)>();
         unresolved = new List<string>();
@@ -106,7 +109,7 @@ public static class ObtainabilityBuilder
             if (s.ItemId.StartsWith(ItemQueries.UnresolvedPrefix, StringComparison.Ordinal))
                 unresolved.Add($"{s.ItemId.Substring(ItemQueries.UnresolvedPrefix.Length)} | {s.Source.Detail}");
             else
-                real.Add(s);
+                real.Add(marks == null ? s : (s.ItemId, marks.Mark(s.Source)));
         }
         unresolved = unresolved.Distinct().OrderBy(u => u, StringComparer.Ordinal).ToList();
         return new ObtainabilityModel(real
