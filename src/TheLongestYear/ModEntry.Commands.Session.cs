@@ -186,6 +186,24 @@ namespace TheLongestYear
         /// <summary>Debug: jump to a given day of the current season (console alias for the file-bridge
         /// <c>tly_setday</c>). Sleep afterward to trigger that day's gate. Usage: tly_setday &lt;day&gt;
         /// (defaults to 28).</summary>
+        /// <summary>Debug: end the day now, the way <c>RunController.EndDayNow</c> does for the
+        /// shrine's restart (vanilla's DebugCommands.Sleep recipe), so a background test can cross
+        /// nights without the bed.</summary>
+        private void CmdSleep(string command, string[] args)
+        {
+            if (!Context.IsWorldReady)
+            {
+                this.Monitor.Log("Load a save first.", LogLevel.Warn);
+                return;
+            }
+            Farmer player = Game1.player;
+            player.isInBed.Value = true;
+            player.sleptInTemporaryBed.Value = true;
+            (Game1.currentLocation ?? player.currentLocation).answerDialogueAction("Sleep_Yes", null);
+            this.Monitor.Log(Game1.newDay ? "tly_sleep: the day is ending." : "tly_sleep: the game did not start a new day.",
+                Game1.newDay ? LogLevel.Info : LogLevel.Warn);
+        }
+
         private void CmdSetDay(string command, string[] args)
         {
             if (!Context.IsWorldReady)

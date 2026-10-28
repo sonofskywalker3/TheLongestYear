@@ -355,6 +355,8 @@ namespace TheLongestYear
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedNormal;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoadedLate;
             helper.Events.Player.Warped += this.OnWarpedForFarmArrivalScene;
+            TheLongestYear.Loop.WillyRodQuest.Init(this.Monitor);
+            helper.Events.Player.Warped += TheLongestYear.Loop.WillyRodQuest.OnWarped;
             // Festival memories: the golden pumpkin is seen as it lands in the inventory (no chest patch).
             helper.Events.Player.InventoryChanged += TheLongestYear.Loop.FestivalMemoryRecorder.OnInventoryChanged;
             helper.Events.GameLoop.SaveCreating += this.OnSaveCreating;

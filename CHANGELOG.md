@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.7 - 2026-10-28
+
+### Fixed
+
+- **"To The Beach" no longer stays in the quest log when you already have a rod.** Keeping your fishing rod through the rewind (or buying it as a focus card) skips Willy's beach scene so he doesn't hand you a second pole, but that scene is also what closes his quest. Walking onto the beach now closes it the same way. Reported by tanky24u.
+
+### Internal
+
+- `tly_sleep` ends the day where the farmer stands (debug/automation).
+
 ## 1.1.6 - 2026-10-28
 
 ### Fixed
