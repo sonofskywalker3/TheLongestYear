@@ -1,0 +1,186 @@
+{
+  "UniqueId": "FlashShifter.StardewValleyExpandedCP",
+  "CheckedVersion": "1.15.11",
+  "Notes": "Farm Type Manager forage: an area with MinimumSpawnsPerDay 0 or a GameStateQueries RANDOM roll is Chance, any other area is Dependable (FTM content.json, [FTM] Stardew Valley Expanded). | Summit flowers (Thistle, Goldenrod, Winter Star Rose): routed at Custom_SVESummit only; the vanilla Summit copy of each area is left out because that map opens at perfection. Custom_SVESummit is walked as week 1 (Railroad warp 48 0) but the Railroad boulder at (43-46, 23-25) blocks the path until event 8050109, the end of Clint's second special order (20 iridium ore and 20 coal, offered after event 8050108), and TLY dates iridium ore week 9 (Skull Cavern), so each flower is ruled week 10 or its first season after. | (O)FlashShifter.StardewValleyExpandedCP_Ferngill_Primrose: left unknown; it grows on the SVE Summit in Spring only, and the Summit opens about week 10. | (O)FlashShifter.StardewValleyExpandedCP_Flower_Cookie: left unknown, it needs Ferngill Primrose. | Pear, Nectarine, Persimmon: the fruit-bat cave area (FarmCave, RANDOM 0.1 a day, one of the three) is written as a Chance forage route with cave:fruit bats in Requires, since vanilla's own cave fruit has no route either. | Bearberrys: one Forage route for the three Winter areas on Woods (one surface, two buried). | Ancient Ferns Seed and Shrub Seed: FTM Buried spawns on Woods, dug up with a hoe, written as ArtifactSpot. | Mushroom Colony and Lucky Four Leaf Clover: one route per map (Woods and Custom_ForestWest). | Jack-O-Lanterns (O)746: SVE places four on Fall 17 (ModEntry.cs 47, 89-90, 102) and a heavy tool picks them up (Object.cs 1292, 2859), but four one-off pickups a loop are not a supply and vanilla's own Spirit's Eve route already places the item, so no route is written. | One-time FTM spawns (Forest Sword, Rapier, Ancient Sword, Maple Syrup, Trash, Joja Cola on Custom_ForestWest; Ancient Doll and Old Newspaper on Custom_AuroraVineyard; the Rare Seed on Woods until event 7134028): LimitedNumberOfSpawns counters live in FTM's per-save file and the items are vanilla's with vanilla routes, so nothing is written. | Golden Pumpkin (O)373: SVE's Spirit's Eve chest gives one in year 1 (SpiritsEveChestEditor.cs 25-27), the same as vanilla's own table route, so nothing is written. | Razor Trout and Kittyfish: their Data/Locations rows need events 1056732 and 69069247, which no file of SVE 1.15.11 defines, and Razor Trout's Data/Fish entry needs the Joja event 5553210; TLY passes a condition it cannot read, so both keep their data weeks (reported). | YearRulings NeverSell: the deeds, the two schedules, the Golden Key, the Magic Lamp, the Money Bag and the Mermaid's Bracelet are quest and event items. | WeekRulings: TLY's own forage rule reads Data/Locations rows, not layer routes, so every Dependable forage route here is unplaced without a ruling; each is ruled at its first dependable landing from day 1 or its map's walked week when that is later (Woods is week 4). The Chance routes (Big Conch, Dried Sand Dollar, Four Leaf Clover, Poison Mushroom, the cave fruit) get no ruling, as luck is not a supply the board may ask for. | Monster Fruit, Monster Mushroom, Slime Berry and Void Root: their seeds drop only in the Highlands (Ginger Island chain), so they are left unknown; TLY's crop rule still dates them from their seasons, as it dates vanilla's Qi Fruit (reported).",
+  "ExtraSources": {
+    "(O)FlashShifter.StardewValleyExpandedCP_Ancient_Ferns_Seed": [
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "=1x1,=3x2,=6x3,=10x4,=15x5,=24x9,=28x4,=29x1,=31x2,=34x3,=38x4,=43x5,=52x9,=56x4,=57x1,=59x2,=62x3,=66x4,=71x5,=80x9,=84x4,=85x1,=87x2,=90x3,=94x4,=99x5,=108x9,=112x4",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "ancient fern seed buried at Woods, all year on days 1, 3, 6, 10, 15, 24, 28 (FTM content.json, Ancient Ferns Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Bearberrys": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "bearberry forage at Woods, Winter (FTM content.json, Woods forage area 1, Bearberrys Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Big_Conch": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x2,=7x5,=11x4,=16x5,=19x3,=22x3,=26x4,=29x3,=30x1,=35x5,=39x4,=44x5,=47x3,=50x3,=54x4,=57x3,=58x1,=63x5,=67x4,=72x5,=75x3,=78x3,=82x4,=85x3,=86x1,=91x5,=95x4,=100x5,=103x3,=106x3,=110x4,=0x2",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:Beach"] },
+        "Detail": "big conch forage at Beach, all year on days 1, 2, 7, 11, 16, 19, 22, 26, 0 to 1 a day (FTM content.json, Big Conch spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Dried_Sand_Dollar": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,=32x3,=35x3,+0x2,=41x4,+0x2,=45x2,=48x3,=51x3,=53x2,=54x1,=56x2,=57x1,=60x3,=63x3,+0x2,=69x4,+0x2,=73x2,=76x3,=79x3,=81x2,=82x1,=84x2,=0x28",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:Beach"] },
+        "Detail": "dried sand dollar forage at Beach, Summer and Fall on days 1, 4, 7 to 9, 13 to 15, 17, 20, 23, 25, 26, 28, 0 to 2 a day (FTM content.json, Dried Sand Dollar spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Goldenrod": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x55,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Custom_SVESummit"] },
+        "Detail": "goldenrod forage at Custom_SVESummit, Summer and Fall (FTM content.json, Goldenrod SVEsummit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Lucky_Four_Leaf_Clover": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "four leaf clover forage at Woods, Spring and Summer, 0 to 1 a day (FTM content.json, Lucky Four Leaf Clover spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:Custom_ForestWest"] },
+        "Detail": "four leaf clover forage at Custom_ForestWest, Spring and Summer, 0 to 1 a day (FTM content.json, Lucky Four Leaf Clover Forest West spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Mushroom_Colony": [
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "mushroom colony forage at Woods, Fall (FTM content.json, mushroom colony spawns)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Custom_ForestWest"] },
+        "Detail": "mushroom colony forage at Custom_ForestWest, Fall (FTM content.json, Mushroom Colony Forest West spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Nectarine": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:FarmCave", "cave:fruit bats"] },
+        "Detail": "nectarine in the fruit-bat cave, any season, one of three fruits at 10% a day (FTM content.json, Farm Cave SVE fruit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Pear": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:FarmCave", "cave:fruit bats"] },
+        "Detail": "pear in the fruit-bat cave, any season, one of three fruits at 10% a day (FTM content.json, Farm Cave SVE fruit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Persimmon": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:FarmCave", "cave:fruit bats"] },
+        "Detail": "persimmon in the fruit-bat cave, any season, one of three fruits at 10% a day (FTM content.json, Farm Cave SVE fruit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Poison_Mushroom": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x55,=0x28",
+        "Reliability": "Chance",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "poison mushroom forage at Woods, Summer and Fall, 0 to 2 a day (FTM content.json, poison mushroom spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Red_Baneberry": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "red baneberry forage at Woods, Summer (FTM content.json, Poison berry spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Shrub_Seed": [
+      {
+        "Kind": "ArtifactSpot",
+        "Lands": "=2x2,=4x2,=8x4,=12x4,=14x2,=17x3,=21x4,=26x5,=30x4,=32x2,=36x4,=40x4,=42x2,=45x3,=49x4,=54x5,=58x4,=60x2,=64x4,=68x4,=70x2,=73x3,=77x4,=82x5,=86x4,=88x2,=92x4,=96x4,=98x2,=101x3,=105x4,=110x5,=0x2",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "salal berry seed buried at Woods, all year on days 2, 4, 8, 12, 14, 17, 21, 26 (FTM content.json, Salal Berry Spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Smelly_Rafflesia": [
+      {
+        "Kind": "Forage",
+        "Lands": "=4x4,=8x4,=11x3,=14x3,=17x3,=21x4,=25x4,=32x7,=36x4,=39x3,=42x3,=45x3,=49x4,=53x4,=60x7,=64x4,=67x3,=70x3,=73x3,=77x4,=81x4,=0x31",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Woods"] },
+        "Detail": "rafflesia forage at Woods, Spring to Fall on days 4, 8, 11, 14, 17, 21, 25 (FTM content.json, Smelly Rafflesia spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Thistle": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Custom_SVESummit"] },
+        "Detail": "thistle forage at Custom_SVESummit, all year (FTM content.json, Thistle flower SVEsummit spawns)"
+      }
+    ],
+    "(O)FlashShifter.StardewValleyExpandedCP_Winter_Star_Rose": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": { "Requires": ["location:Custom_SVESummit"] },
+        "Detail": "winter star rose forage at Custom_SVESummit, Winter (FTM content.json, Winter Star Rose SVEsummit spawns)"
+      }
+    ]
+  },
+  "YearRulings": {
+    "(O)FlashShifter.StardewValleyExpandedCP_Aurora_Vineyard_Property_Deed": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Castle_Village_Outpost_Vendor_Schedule": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Golden_Key": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Lance's_Schedule": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Magic_Lamp": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Mermaid's_Bracelet": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Money_Bag": "NeverSell",
+    "(O)FlashShifter.StardewValleyExpandedCP_Property_Deed": "NeverSell"
+  },
+  "WeekRulings": {
+    "(O)FlashShifter.StardewValleyExpandedCP_Ancient_Ferns_Seed": 4,
+    "(O)FlashShifter.StardewValleyExpandedCP_Bearberrys": 13,
+    "(O)FlashShifter.StardewValleyExpandedCP_Goldenrod": 10,
+    "(O)FlashShifter.StardewValleyExpandedCP_Mushroom_Colony": 9,
+    "(O)FlashShifter.StardewValleyExpandedCP_Red_Baneberry": 5,
+    "(O)FlashShifter.StardewValleyExpandedCP_Shrub_Seed": 4,
+    "(O)FlashShifter.StardewValleyExpandedCP_Smelly_Rafflesia": 4,
+    "(O)FlashShifter.StardewValleyExpandedCP_Thistle": 10,
+    "(O)FlashShifter.StardewValleyExpandedCP_Winter_Star_Rose": 13
+  }
+}
