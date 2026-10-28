@@ -106,6 +106,7 @@ public static class LayerDelta
         {
             Availability = Changed(below.Availability, live.Availability, (a, b) => Text(a) == Text(b)),
             CatchRates = Changed(below.CatchRates, live.CatchRates, (a, b) => Json(a) == Json(b)),
+            YearTwo = Changed(below.YearTwo, live.YearTwo, (a, b) => a == b),
         };
     }
 
@@ -113,7 +114,7 @@ public static class LayerDelta
     public static bool IsEmpty(AnswerVariant delta)
         => delta.Obtain.Count == 0 && delta.YearSort.Count == 0 && delta.Unresolved.Count == 0
            && delta.MapWeeks.Count == 0 && delta.UnreachedMaps.Count == 0 && delta.ShopWeeks.Count == 0
-           && delta.Availability.Count == 0 && delta.CatchRates.Count == 0;
+           && delta.Availability.Count == 0 && delta.CatchRates.Count == 0 && delta.YearTwo.Count == 0;
 
     private static Dictionary<string, T> Changed<T>(
         IReadOnlyDictionary<string, T> below, IReadOnlyDictionary<string, T> live, Func<T, T, bool> same)

@@ -30,7 +30,11 @@ public static class LexiconJson
     internal static string WriteDocument<T>(T value, string? variantsKey)
     {
         JsonNode? node = JsonSerializer.SerializeToNode(value, Options);
-        if (variantsKey != null) PoolTables(node, variantsKey);
+        if (variantsKey != null)
+        {
+            PoolTables(node, variantsKey);
+            DropEmptyYearTwo(node, variantsKey);
+        }
         var sb = new StringBuilder();
         Emit(sb, node, 0, compact: false);
         sb.Append('\n');
@@ -47,6 +51,7 @@ public static class LexiconJson
     }
 
     private const string TablesKey = "Tables";
+    private const string YearTwoKey = "YearTwo";
     private static readonly string[] SourceTableKeys = { "Lands", "UndelayedLands" };
     private static readonly string[] SourceMapKeys = { "Obtain", "YearSort" };
 
@@ -80,6 +85,14 @@ public static class LexiconJson
                     if (source[key]?.GetValue<string>() is string runs) source[key] = index[runs];
             variant[TablesKey] = new JsonArray(pool.Select(t => (JsonNode?)JsonValue.Create(t)).ToArray());
         }
+    }
+
+    /// <summary>An empty <c>YearTwo</c> table is left out, so a file made before it existed round-trips
+    /// byte for byte; the reader defaults a missing one to empty.</summary>
+    private static void DropEmptyYearTwo(JsonNode? root, string variantsKey)
+    {
+        foreach (JsonObject variant in Variants(root, variantsKey))
+            if (variant[YearTwoKey] is JsonObject { Count: 0 }) variant.Remove(YearTwoKey);
     }
 
     private static void ResolveTables(JsonNode? root, string variantsKey)

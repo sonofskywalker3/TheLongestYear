@@ -33,6 +33,12 @@ public sealed record AnswerVariant(
     public IReadOnlyDictionary<string, CatchRate> CatchRates { get; init; }
         = new Dictionary<string, CatchRate>(StringComparer.Ordinal);
 
+    /// <summary>Year-2 availability by qualified id: the week and effort a year-2 player reaches an
+    /// item at. Stored whole in a delta variant, like Availability; a later layer's entry replaces the
+    /// one below per id, and a removal never touches it. An empty table is not written to the file.</summary>
+    public IReadOnlyDictionary<string, ItemAvailability> YearTwo { get; init; }
+        = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
+
     /// <summary>The obtainability model these answers stand for. Ids with no route (the empty
     /// lists the snapshot keeps for every object) are left out, as the builder leaves them out, so
     /// the model's <see cref="ObtainabilityModel.ItemIds"/> and <see cref="ObtainabilityModel.Count"/>

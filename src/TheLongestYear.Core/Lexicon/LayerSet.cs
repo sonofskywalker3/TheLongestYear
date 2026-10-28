@@ -317,6 +317,7 @@ public sealed class LayerSet
         {
             Availability = Merge(below.Availability, delta.Availability),
             CatchRates = Merge(below.CatchRates, delta.CatchRates),
+            YearTwo = Merge(below.YearTwo, delta.YearTwo),
         };
     }
 
@@ -332,6 +333,7 @@ public sealed class LayerSet
         {
             Availability = below.Availability,
             CatchRates = Without(below.CatchRates, removal.CatchRates),
+            YearTwo = below.YearTwo,
         };
 
     private static Dictionary<string, T> Without<T>(IReadOnlyDictionary<string, T> below, IReadOnlyList<string> keys)

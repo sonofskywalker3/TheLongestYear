@@ -262,6 +262,7 @@ public static class LayerFile
         if (delta.ShopWeeks == null || delta.ShopWeeks.Values.Any(v => v == null)) return "ShopWeeks";
         if (delta.Availability == null || delta.Availability.Values.Any(v => v == null)) return "Availability";
         if (delta.CatchRates == null || delta.CatchRates.Values.Any(v => v?.Weekly == null)) return "CatchRates";
+        if (delta.YearTwo == null || delta.YearTwo.Values.Any(v => v == null)) return "YearTwo";
         return null;
     }
 

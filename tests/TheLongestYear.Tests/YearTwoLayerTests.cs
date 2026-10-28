@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using TheLongestYear.Core;
+using TheLongestYear.Core.Availability;
 using TheLongestYear.Core.Lexicon;
 using TheLongestYear.Core.Obtainability;
 using Xunit;
@@ -178,5 +180,83 @@ public sealed class YearTwoLayerTests
         string warn = Assert.Single(warns);
         Assert.Contains("ModA", warn);
         Assert.Contains("ModB", warn);
+    }
+
+    private static ItemAvailability Avail(int week, int effort)
+        => new(Season.Spring, effort, "b", EffortSource.Derived, week);
+
+    private static AnswerVariant Variant(params (string Id, ItemAvailability A)[] yearTwo)
+        => new(new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal),
+               new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal),
+               Array.Empty<string>(), 1, new Dictionary<string, PlaceWeek>(StringComparer.Ordinal),
+               Array.Empty<string>(), new Dictionary<string, PlaceWeek>(StringComparer.Ordinal))
+        {
+            YearTwo = yearTwo.ToDictionary(p => p.Id, p => p.A, StringComparer.Ordinal),
+        };
+
+    [Fact]
+    public void LayDelta_merges_year_two_per_id_later_wins()
+    {
+        AnswerVariant below = Variant(("(O)A", Avail(17, 3)), (Id, Avail(18, 4)));
+        AnswerVariant delta = Variant((Id, Avail(25, 9)), ("(O)B", Avail(20, 5)));
+        AnswerVariant laid = LayerSet.LayDelta(below, delta);
+        Assert.Equal(3, laid.YearTwo.Count);
+        Assert.Equal(Avail(17, 3), laid.YearTwo["(O)A"]);
+        Assert.Equal(Avail(25, 9), laid.YearTwo[Id]);
+        Assert.Equal(Avail(20, 5), laid.YearTwo["(O)B"]);
+    }
+
+    [Fact]
+    public void Remove_keeps_year_two()
+    {
+        AnswerVariant below = Variant((Id, Avail(18, 4)));
+        var removal = new LayerRemovals(
+            Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
+            Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>());
+        Assert.Equal(Avail(18, 4), LayerSet.Remove(below, removal).YearTwo[Id]);
+    }
+
+    [Fact]
+    public void Diff_holds_only_changed_year_two_entries_and_IsEmpty_sees_them()
+    {
+        AnswerVariant below = Variant(("(O)A", Avail(17, 3)), (Id, Avail(18, 4)));
+        Assert.True(LayerDelta.IsEmpty(LayerDelta.Diff(below, Variant(("(O)A", Avail(17, 3)), (Id, Avail(18, 4))))));
+        AnswerVariant live = Variant(("(O)A", Avail(17, 3)), (Id, Avail(25, 9)), ("(O)B", Avail(20, 5)));
+        AnswerVariant diff = LayerDelta.Diff(below, live);
+        Assert.Equal(new[] { "(O)B", Id }, diff.YearTwo.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.False(LayerDelta.IsEmpty(diff));
+    }
+
+    [Fact]
+    public void ReadAnswers_refuses_null_year_two_entry()
+    {
+        string json = "{\"Mods\": [\"ModC\"], \"CheckedVersions\": \"1.0.0\", \"Deltas\": {\"base\": {\"Tables\": [], \"Obtain\": {}, \"YearSort\": {}, \"Unresolved\": [], \"Passes\": 1, \"MapWeeks\": {}, \"UnreachedMaps\": [], \"ShopWeeks\": {}, \"Availability\": {}, \"CatchRates\": {}, \"YearTwo\": {\"" + Id + "\": null}}}}";
+        var e = Assert.Throws<JsonException>(() => LayerFile.ReadAnswers(json));
+        Assert.Contains("YearTwo", e.Message);
+    }
+
+    [Fact]
+    public void LexiconDiff_reports_year_two_difference()
+    {
+        var lines = LexiconDiff.Compare(Variant((Id, Avail(18, 4))), Variant((Id, Avail(25, 9))));
+        string line = Assert.Single(lines);
+        Assert.Contains(Id, line);
+        Assert.StartsWith("year 2 ", line);
+    }
+
+    [Fact]
+    public void Vanilla_json_round_trip_is_byte_identical()
+    {
+        string? dir = AppContext.BaseDirectory;
+        string? path = null;
+        while (dir != null && path == null)
+        {
+            string candidate = System.IO.Path.Combine(dir, "src", "TheLongestYear", "assets", "lexicon", "vanilla.json");
+            if (System.IO.File.Exists(candidate)) path = candidate;
+            dir = System.IO.Path.GetDirectoryName(dir);
+        }
+        if (path == null) return;   // not a source checkout
+        string text = System.IO.File.ReadAllText(path).Replace("\r\n", "\n");   // a Windows checkout may convert endings
+        Assert.Equal(text, LexiconJson.Write(LexiconJson.Read(text)));
     }
 }
