@@ -115,8 +115,14 @@ public class AvailabilityInputsOrderTests
         Sorted(inputs.EffortData.CookingChannel);
     }
 
+    /// <summary>The members <see cref="EffortData.Ordered"/> re-sorts: every dictionary, and the one list
+    /// built by walking the live maps.</summary>
+    private static readonly string[] SortedMembers =
+        { "Objects", "MachineUnlocks", "RecipePrices", "CookingChannel", "WildTreeSpots" };
+
     /// <summary>The ordered copy of the effort data carries every member: a member added to
-    /// <see cref="EffortData"/> and left out of the copy would silently drop out of the stamp.</summary>
+    /// <see cref="EffortData"/> and left out of the copy would silently drop out of the stamp, and a
+    /// dictionary member of any type must be one the copy sorts.</summary>
     [Fact]
     public void The_Ordered_Effort_Data_Carries_Every_Member()
     {
@@ -126,23 +132,48 @@ public class AvailabilityInputsOrderTests
             MachineUnlocks = new Dictionary<string, string> { ["(BC)12"] = "default" },
             RecipePrices = new Dictionary<string, int> { ["(O)194"] = 100 },
             CookingChannel = new Dictionary<string, int> { ["Fried Egg"] = 1 },
+            WildTreeSpots = new[] { new RawWildTreeSpot("1", "Forest") },
         };
         EffortData ordered = source.Ordered();
         foreach (System.Reflection.PropertyInfo property in typeof(EffortData).GetProperties())
         {
             object? before = property.GetValue(source);
             object? after = property.GetValue(ordered);
-            bool dictionary = property.PropertyType.IsGenericType
-                && property.PropertyType.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>);
-            if (!dictionary)
+            bool keyed = property.PropertyType.GetInterfaces().Append(property.PropertyType)
+                .Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+                          && t.GetGenericArguments()[0].IsGenericType
+                          && t.GetGenericArguments()[0].GetGenericTypeDefinition() == typeof(KeyValuePair<,>));
+            if (!SortedMembers.Contains(property.Name))
             {
+                Assert.False(keyed, $"{property.Name}: a dictionary member must be sorted by Ordered()");
                 Assert.Same(before, after);
                 continue;
             }
-            // Every dictionary member is filled above, so one the copy forgot reads as empty here.
+            // Every sorted member is filled above, so one the copy forgot reads as empty here.
             int count = ((System.Collections.IEnumerable)before!).Cast<object>().Count();
             Assert.True(count > 0, $"{property.Name}: fill it in this test");
             Assert.Equal(count, ((System.Collections.IEnumerable)after!).Cast<object>().Count());
         }
+    }
+
+    /// <summary>The wild tree spots are read map by map in Game1.locations order, which is not the same
+    /// on a loaded save as on a fresh farm: the stamp reads them by map, then tree type.</summary>
+    [Fact]
+    public void Wild_Tree_Spots_In_Different_Orders_Hash_Equal_And_Come_Out_Sorted()
+    {
+        RawWildTreeSpot[] spots =
+        {
+            new("2", "Town"), new("1", "Forest"), new("1", "Custom_AndyHouse"), new("3", "Forest"), new("1", "Town"),
+        };
+        AvailabilityInputs Inputs(IEnumerable<RawWildTreeSpot> order)
+            => AvailabilityInputs.From(new ItemPools(), new EffortData { WildTreeSpots = order.ToList() }, null, null, null, false);
+
+        AvailabilityInputs forward = Inputs(spots);
+        Assert.Equal(forward.Hash(), Inputs(spots.Reverse()).Hash());
+        Assert.Equal(
+            new[] { ("Custom_AndyHouse", "1"), ("Forest", "1"), ("Forest", "3"), ("Town", "1"), ("Town", "2") },
+            forward.EffortData!.WildTreeSpots.Select(s => (s.Location, s.TreeId)));
+        Assert.Equal(spots.OrderBy(s => s.Location, StringComparer.Ordinal).ThenBy(s => s.TreeId, StringComparer.Ordinal),
+            EffortData.SortedSpots(spots.Reverse()));
     }
 }

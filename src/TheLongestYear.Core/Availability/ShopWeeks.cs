@@ -51,9 +51,10 @@ public sealed class ShopWeeks
     /// <summary>Items (normalized ids) whose every non-recipe, year-1 listing is at a shop that is
     /// unplaced or flagged, so they have no <see cref="Weeks"/> entry: vanilla's Pineapple Seeds
     /// (Island Trader), SVE's Joja Berry and Joja Veggie seeds (Joja-route vendors). A listing at a
-    /// festival stall or the cart (<see cref="OpensInYearOneUndated"/>), or a random pick at a shop
-    /// that is either, keeps an item out: Cornucopia's Kiwi Seeds are at the Island Trader but also at
-    /// the Luau and the cart. An item no shop lists at all is not here: nothing says where it comes
+    /// festival stall or the cart (<see cref="OpensInYearOneUndated"/>) keeps an item out, and so does
+    /// a random pick (<see cref="RawShopListing.RandomPick"/>) at such a shop or at a placed one; a
+    /// random pick at an unplaced or flagged shop does not. Cornucopia's Kiwi Seeds are at the Island
+    /// Trader but also at the Luau and the cart. An item no shop lists at all is not here: nothing says where it comes
     /// from, so the rules keep their own arithmetic for it.</summary>
     public IReadOnlySet<string> UnplacedItems => _unplaced;
 

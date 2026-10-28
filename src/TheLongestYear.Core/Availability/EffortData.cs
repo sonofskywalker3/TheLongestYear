@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -118,10 +119,21 @@ public sealed class EffortData
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
     public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
 
-    /// <summary>This data with every dictionary member in ordinal key order and every other member
-    /// shared, for <see cref="Lexicon.AvailabilityInputs"/>: the game fills the dictionaries in the
-    /// order it reads its assets, and the availability stamp must not depend on that order. A member
-    /// added here must be added to this copy too (a test checks every one).</summary>
+    /// <summary>The wild tree spots in ordinal order of map, then tree type. The game reads them map
+    /// by map in Game1.locations order, which differs between a fresh farm and a loaded save, and the
+    /// first spot of the earliest week names the map a tree's basis shows.</summary>
+    public static IReadOnlyList<RawWildTreeSpot> SortedSpots(IEnumerable<RawWildTreeSpot> spots)
+        => (spots ?? Array.Empty<RawWildTreeSpot>())
+            .OrderBy(s => s?.Location ?? "", StringComparer.Ordinal)
+            .ThenBy(s => s?.TreeId ?? "", StringComparer.Ordinal)
+            .ToList();
+
+    /// <summary>This data with every dictionary member in ordinal key order, the wild tree spots (the
+    /// one list read by walking the live maps) by <see cref="SortedSpots"/>, and every other member
+    /// shared, for <see cref="Lexicon.AvailabilityInputs"/>: the availability stamp must not depend on
+    /// the order the game fills them in. The shared lists come from Data assets, read in the same
+    /// order on every load. A member added here must be added to this copy too (a test checks every
+    /// one).</summary>
     internal EffortData Ordered() => new()
     {
         Objects = OrdinalOrder.Of(Objects)!,
@@ -142,7 +154,7 @@ public sealed class EffortData
         ForageRates = ForageRates,
         TapItems = TapItems,
         WildTrees = WildTrees,
-        WildTreeSpots = WildTreeSpots,
+        WildTreeSpots = SortedSpots(WildTreeSpots),
         FruitTrees = FruitTrees,
         CookingChannel = OrdinalOrder.Of(CookingChannel)!,
     };

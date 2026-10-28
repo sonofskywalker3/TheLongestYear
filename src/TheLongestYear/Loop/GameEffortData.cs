@@ -241,7 +241,7 @@ namespace TheLongestYear.Loop
                     }
                     if (kv.Value != null) wildTrees.Add(ReadWildTree(kv.Key, kv.Value));
                 }
-                wildTreeSpots.AddRange(ReadWildTreeSpots());
+                wildTreeSpots.AddRange(EffortData.SortedSpots(ReadWildTreeSpots()));
 
                 foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
                 {
@@ -321,10 +321,10 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>Every full-grown wild tree standing in the live world (Tree.treeStage or more),
-        /// by type and map: the places WildTreeAvailability dates seeds, wood and chop drops by. Maps
-        /// in Game1.locations order, and within a map the tree types in ordinal order: the terrain
-        /// feature dictionary enumerates in a different order from one load of a save to the next,
-        /// and the list is part of the path lexicon's availability inputs hash.</summary>
+        /// by type and map: the places WildTreeAvailability dates seeds, wood and chop drops by. The
+        /// caller sorts them by map, then type (<see cref="EffortData.SortedSpots"/>): Game1.locations
+        /// and the terrain feature dictionary both enumerate in a different order from one load of a
+        /// save to the next, and the list is part of the path lexicon's availability inputs hash.</summary>
         private static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
         {
             foreach (GameLocation location in Game1.locations)
