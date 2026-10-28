@@ -117,4 +117,48 @@ public sealed class EffortData
     public IReadOnlyList<RawFruitTree> FruitTrees { get; init; } = new List<RawFruitTree>();
     /// <summary>Data/TV/CookingChannel: recipe name to episode index (1 to 32).</summary>
     public IReadOnlyDictionary<string, int> CookingChannel { get; init; } = new Dictionary<string, int>();
+
+    /// <summary>This data with every dictionary member in ordinal key order and every other member
+    /// shared, for <see cref="Lexicon.AvailabilityInputs"/>: the game fills the dictionaries in the
+    /// order it reads its assets, and the availability stamp must not depend on that order. A member
+    /// added here must be added to this copy too (a test checks every one).</summary>
+    internal EffortData Ordered() => new()
+    {
+        Objects = OrdinalOrder.Of(Objects)!,
+        GeodeDrops = GeodeDrops,
+        MonsterDrops = MonsterDrops,
+        ArtifactSpots = ArtifactSpots,
+        ObjectArtifactSpots = ObjectArtifactSpots,
+        MachineRules = MachineRules,
+        MachineUnlocks = OrdinalOrder.Of(MachineUnlocks)!,
+        RecipePrices = OrdinalOrder.Of(RecipePrices)!,
+        Animals = Animals,
+        Buildings = Buildings,
+        CookingRecipes = CookingRecipes,
+        CraftingRecipes = CraftingRecipes,
+        FishPonds = FishPonds,
+        Crops = Crops,
+        ForageSpawns = ForageSpawns,
+        ForageRates = ForageRates,
+        TapItems = TapItems,
+        WildTrees = WildTrees,
+        WildTreeSpots = WildTreeSpots,
+        FruitTrees = FruitTrees,
+        CookingChannel = OrdinalOrder.Of(CookingChannel)!,
+    };
+}
+
+/// <summary>Copies of string-keyed dictionaries that enumerate (and so serialise) in ordinal key
+/// order whatever order they were filled in.</summary>
+internal static class OrdinalOrder
+{
+    /// <summary>A sorted copy of <paramref name="source"/>, or null for null. Keys are compared
+    /// ordinally, as every id table in the availability inputs is.</summary>
+    public static IReadOnlyDictionary<string, T>? Of<T>(IReadOnlyDictionary<string, T>? source)
+    {
+        if (source == null) return null;
+        var sorted = new SortedDictionary<string, T>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, T> pair in source) sorted.Add(pair.Key, pair.Value);
+        return sorted;
+    }
 }

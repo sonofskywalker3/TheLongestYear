@@ -33,7 +33,9 @@ public sealed record AvailabilityInputs(
 
     /// <summary>The projection of the live inputs; the trap fish set and the items sold only
     /// outside year 1 (<see cref="ShopWeeks.UnplacedItems"/>, null when there are none) are sorted
-    /// ordinally.</summary>
+    /// ordinally, and so is every dictionary, the effort data's included, so the stamp is a function
+    /// of the content alone: Stardew Valley Expanded's location walk visits its maps in a different
+    /// order on a loaded save than on a fresh farm, and the same inputs hashed two ways.</summary>
     public static AvailabilityInputs From(
         ItemPools pools, EffortData? effortData,
         IReadOnlyDictionary<string, Season>? seasonOverrides, IReadOnlyDictionary<string, int>? effortOverrides,
@@ -43,14 +45,15 @@ public sealed record AvailabilityInputs(
         return new AvailabilityInputs(
             pools.Fish, pools.CrabPot, pools.UnpooledFish, pools.Metals,
             pools.TrapFishIds?.OrderBy(id => id, StringComparer.Ordinal).ToList(),
-            pools.FishRows,
-            pools.LocationWeeks?.Reached, pools.ShopWeeks?.Weeks,
+            OrdinalOrder.Of(pools.FishRows),
+            OrdinalOrder.Of(pools.LocationWeeks?.Reached), OrdinalOrder.Of(pools.ShopWeeks?.Weeks),
             pools.ShopWeeks?.UnplacedItems is { Count: > 0 } unplaced
                 ? unplaced.OrderBy(id => id, StringComparer.Ordinal).ToList()
                 : null,
             pools.Saplings, pools.Artifacts, pools.Books,
-            effortData, seasonOverrides, effortOverrides, weekOverrides, yearTwoCapped,
-            pools.CatchRates);
+            effortData?.Ordered(), OrdinalOrder.Of(seasonOverrides), OrdinalOrder.Of(effortOverrides),
+            OrdinalOrder.Of(weekOverrides), yearTwoCapped,
+            OrdinalOrder.Of(pools.CatchRates));
     }
 
     /// <summary>The first <see cref="HashChars"/> lower-case hex digits of the SHA-256 of this record's
