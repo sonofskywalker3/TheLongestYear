@@ -5,7 +5,11 @@ using System.Linq;
 namespace TheLongestYear.Core.Obtainability;
 
 /// <summary>The built model, how many passes it took, and every source the model could not read.</summary>
-public sealed record ObtainabilityBuild(ObtainabilityModel Model, int Passes, bool HitPassCap, IReadOnlyList<string> Unresolved);
+public sealed record ObtainabilityBuild(ObtainabilityModel Model, int Passes, bool HitPassCap, IReadOnlyList<string> Unresolved)
+{
+    /// <summary>The catch model of the build's fish rows (<see cref="FishCatchRates"/>), stored with the answers.</summary>
+    public IReadOnlyDictionary<string, CatchRate> CatchRates { get; init; } = new Dictionary<string, CatchRate>(StringComparer.Ordinal);
+}
 
 /// <summary>Builds the model: direct sources once, then grown and made sources over the previous pass's
 /// model, repeating until <see cref="SameTables"/> finds nothing changed (spec
@@ -51,6 +55,7 @@ public static class ObtainabilityBuilder
         direct.AddRange(MineSources.FishingTreasure());
         direct.AddRange(LivestockSources.Animals(inputs.Animals, f, inputs.Buildings));
         direct.AddRange(LivestockSources.Tappers(inputs.TapItems, o, f));
+        direct.AddRange(LivestockSources.TreeDrops(inputs.TreeDrops, o, f));
         direct.AddRange(CodeSources.MineFish());
         direct.AddRange(CodeSources.Moss());
         direct.AddRange(CodeSources.SeasonSeeds());
@@ -68,12 +73,13 @@ public static class ObtainabilityBuilder
             for (int i = 0; i < direct.Count; i++)
                 direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
         IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
+        IReadOnlyDictionary<string, CatchRate> catchRates = FishCatchRates.Build(inputs);
 
         ObtainabilityModel current = Assemble(direct, out List<string> lastUnresolved);
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
-            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current));
+            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates));
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
@@ -83,11 +89,11 @@ public static class ObtainabilityBuilder
             all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
             all.AddRange(MadeSources.Geodes(inputs.GeodeDrops, inputs.GeodesUsingDefaultTable, o, current, f));
             ObtainabilityModel next = Assemble(all, out List<string> unresolved);
-            if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved);
+            if (SameTables(current, next)) return new ObtainabilityBuild(next, pass, false, unresolved) { CatchRates = catchRates };
             current = next;
             lastUnresolved = unresolved;   // from the last full pass, derived sources included
         }
-        return new ObtainabilityBuild(current, MaxPasses, true, lastUnresolved);
+        return new ObtainabilityBuild(current, MaxPasses, true, lastUnresolved) { CatchRates = catchRates };
     }
 
     private static ObtainabilityModel Assemble(

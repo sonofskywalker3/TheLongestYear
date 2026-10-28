@@ -34,14 +34,6 @@ public static class SpawnSources
     private static readonly HashSet<string> LegendaryIds = new(StringComparer.Ordinal)
         { "(O)163", "(O)159", "(O)160", "(O)775", "(O)682" };
 
-    /// <summary>Species a full day at their best spot lands under 2 expected catches (about an 86%
-    /// chance of at least one), so a catch is a lottery ticket rather than a dependable route: Octopus
-    /// 1.2, Pufferfish 1.5, Sea Jelly 1.1 to 1.4, Cave Jelly 1.9 a day for a level 10 angler with bait
-    /// (docs/design/fish-catch-rates-2026-09-04.md; ruling 2026-09-16). Every other species
-    /// clears 2.0 on its best day and stays dependable.</summary>
-    private static readonly HashSet<string> RareCatchIds = new(StringComparer.Ordinal)
-        { "(O)149", "(O)128", "(O)SeaJelly", "(O)CaveJelly" };
-
     /// <summary>Fishing trash (FishingRod.cs 495; MineShaft.cs 1193-1197): caught when nothing bites.</summary>
     private static readonly string[] TrashIds = { "(O)167", "(O)168", "(O)169", "(O)170", "(O)171", "(O)172" };
 
@@ -115,9 +107,13 @@ public static class SpawnSources
     public static IEnumerable<(string ItemId, ObtainSource Source)> LocationFish(
         IEnumerable<LocationSpawn> rows, IReadOnlyDictionary<string, FishRow> fishRows,
         IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals,
-        ObtainabilityModel snapshot)
+        ObtainabilityModel snapshot, IReadOnlyDictionary<string, CatchRate>? catchRates = null)
     {
         Derived.Input bait = Derived.Of(snapshot, MagicBaitId);
+        // A catch a full day at its best spot lands under twice is a lottery ticket, not a dependable
+        // route (ruling 2026-09-16), read from the build's own catch model (FishCatchRates), so a mod's
+        // rare fish or a seed that only sometimes bites (Cornucopia's Mung Beans) is luck too.
+        IReadOnlyDictionary<string, CatchRate> rates = catchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal);
 
         // A row needing bait can only be fished where the bait itself can be had; route the fish's
         // table through the bait's, and pick up the bait's island and year 2 flags when every bait
@@ -166,7 +162,7 @@ public static class SpawnSources
                 ObtainConditions c = baseTemplate.Conditions;
                 ObtainSource finalSource = baseTemplate with
                 {
-                    Reliability = resolved.Chance || row.CatchLimit == OnceAYearCatchLimit || LegendaryIds.Contains(id) || RareCatchIds.Contains(id)
+                    Reliability = resolved.Chance || row.CatchLimit == OnceAYearCatchLimit || LegendaryIds.Contains(id) || FishCatchRates.IsRare(rates, id)
                         ? Reliability.Chance : baseTemplate.Reliability,
                     Detail = baseTemplate.Detail + time + (resolved.Note.Length == 0 ? "" : $" ({resolved.Note})"),
                     Conditions = c with

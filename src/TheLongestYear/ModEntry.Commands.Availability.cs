@@ -207,12 +207,14 @@ namespace TheLongestYear
             _lexicon?.Forget();
             try
             {
+                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
                 var timer = System.Diagnostics.Stopwatch.StartNew();
-                var inputs = new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build();
+                // A shop line a layer names as a daily pick reads as every item it can pick, so the
+                // data, its row hashes and everything built from it are the same on any day.
+                var inputs = _lexicon.Loaded.Set.Normalize(new TheLongestYear.Loop.GameObtainabilityData(this.Monitor).Build());
                 _lastObtainabilityInputs = inputs;
                 long readMs = timer.ElapsedMilliseconds;
                 _obtainabilityReadMs = readMs;
-                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
                 TheLongestYear.Core.Lexicon.Resolved resolved = _lexicon.Resolve(
                     inputs, _meta.State.HasUpgrade(PierreYear2SeedsService.UpgradeId), Game1.version, this.ModManifest.Version.ToString());
                 _obtainability = resolved.Variant.ObtainModel();

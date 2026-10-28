@@ -27,6 +27,12 @@ public sealed record AnswerVariant(
     public IReadOnlyDictionary<string, AvailabilityAnswers> Availability { get; init; }
         = new Dictionary<string, AvailabilityAnswers>(StringComparer.Ordinal);
 
+    /// <summary>How well each item bites (<see cref="FishCatchRates"/>), by qualified id: worked out in
+    /// the cold build and served from here, so the fish ask sizes and the rare-catch rule are never
+    /// computed on a load that is served. Stored whole in a delta variant, like Availability.</summary>
+    public IReadOnlyDictionary<string, CatchRate> CatchRates { get; init; }
+        = new Dictionary<string, CatchRate>(StringComparer.Ordinal);
+
     /// <summary>The obtainability model these answers stand for. Ids with no route (the empty
     /// lists the snapshot keeps for every object) are left out, as the builder leaves them out, so
     /// the model's <see cref="ObtainabilityModel.ItemIds"/> and <see cref="ObtainabilityModel.Count"/>
@@ -189,7 +195,10 @@ public static class AnswerVariantFactory
             model.Unresolved.ToList(), model.Passes,
             new Dictionary<string, PlaceWeek>(reached),
             allMaps.Where(m => !reached.ContainsKey(m)).OrderBy(m => m, StringComparer.Ordinal).ToList(),
-            new Dictionary<string, PlaceWeek>(shops?.Weeks ?? new Dictionary<string, PlaceWeek>()));
+            new Dictionary<string, PlaceWeek>(shops?.Weeks ?? new Dictionary<string, PlaceWeek>()))
+        {
+            CatchRates = model.CatchRates,
+        };
     }
 
     private static Dictionary<string, IReadOnlyList<ObtainSource>> Snapshot(ObtainabilityModel model, ObtainabilityInputs inputs)

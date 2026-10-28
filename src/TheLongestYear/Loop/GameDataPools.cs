@@ -551,28 +551,8 @@ namespace TheLongestYear.Loop
             => StardewValley.Internal.ItemQueryResolver.ItemResolvers.ContainsKey(key);
 
         private List<string> ResolveQuery(string query, string perItemCondition)
-        {
-            var ids = new List<string>();
-            try
-            {
-                var results = StardewValley.Internal.ItemQueryResolver.TryResolve(
-                    query, new StardewValley.Internal.ItemQueryContext(),
-                    StardewValley.Internal.ItemQuerySearchMode.All, perItemCondition,
-                    logError: (q, error) => _monitor?.Log($"GameDataPools: item query '{q}' failed: {error}", LogLevel.Trace));
-                foreach (var result in results)
-                {
-                    string qualified = (result?.Item as Item)?.QualifiedItemId;
-                    if (qualified != null && qualified.StartsWith("(O)", StringComparison.Ordinal))
-                        ids.Add(qualified);
-                }
-            }
-            catch (Exception ex)
-            {
-                // One bad line from one mod must not cost the whole read: skip it, as before.
-                _monitor?.Log($"GameDataPools: could not resolve item query '{query}' ({ex.GetType().Name}: {ex.Message}); skipped.", LogLevel.Trace);
-            }
-            return ids;
-        }
+            => (GameItemQueries.Resolve(query, perItemCondition, _monitor, nameof(GameDataPools)) ?? new List<string>())
+                .Where(id => id.StartsWith("(O)", StringComparison.Ordinal)).ToList();
 
         private static Core.Season? MapSeason(StardewValley.Season? season)
             => season == null ? null : MapSeasonValue(season.Value);

@@ -126,8 +126,10 @@ public class QuantityBasisTablesTests
         // Oasis sells the seed.
         Assert.Equal(QuantityBasisTables.MonsterDropsMeasured["(O)717"], QuantityAskPass.BasisByDeadline("(O)717", null));   // Crab, measured cap 15
         Assert.Equal(99, QuantityAskPass.BasisByDeadline("(O)90", null));                                            // Cactus Fruit: crop 99 beats forage
-        // Green Algae: caught (fish table) and dropped by Slimes; the bigger of the two.
-        Assert.Equal(Math.Max(FishAskBasis.BasisByDeadline("(O)153", null)!.Value, QuantityBasisTables.MonsterDropsMeasured["(O)153"]), QuantityAskPass.BasisByDeadline("(O)153", null));
+        // Green Algae: caught (the stored catch model) and dropped by Slimes; the bigger of the two.
+        var rates = TheLongestYear.Core.Obtainability.FishCatchRates.Build(VanillaInputsFixture.Load());
+        Assert.Equal(Math.Max(FishAskBasis.BasisByDeadline(rates, "(O)153", null) ?? 0, QuantityBasisTables.MonsterDropsMeasured["(O)153"]),
+            QuantityAskPass.BasisByDeadline("(O)153", null, catchRates: rates));
     }
 
     [Fact]
@@ -143,7 +145,9 @@ public class QuantityBasisTablesTests
     [Fact]
     public void Crops_keep_half_on_gold_fish_three_quarters_and_resources_are_banded()
     {
-        var gold = QuantityAskPass.Apply(Spec((Parsnip, 1, 2), (SmallmouthBassId, 1, 2), ("(O)771", 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Spring, new Random(5));
+        var gold = QuantityAskPass.Apply(Spec((Parsnip, 1, 2), (SmallmouthBassId, 1, 2), ("(O)771", 1, 0)), Profile(DifficultyStep.Extreme), _ => Season.Spring, new Random(5),
+            new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>())
+                { CatchRates = TheLongestYear.Core.Obtainability.FishCatchRates.Build(VanillaInputsFixture.Load()) });
         Assert.InRange(gold.Slots[0].Stack, 33, 40);   // 65..80 of 99, then half
         Assert.InRange(gold.Slots[1].Stack, 32, 40);   // 43..53, then three quarters
         Assert.InRange(gold.Slots[2].Stack, 65, 80);   // Fiber, Resources 99

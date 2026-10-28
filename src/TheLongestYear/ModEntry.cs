@@ -773,7 +773,7 @@ namespace TheLongestYear
             TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
             if (stored != null)
                 _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
-                    stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step);
+                    stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
             else
             {
                 var (model, answers) = AvailabilityBuild(step, kitchen);

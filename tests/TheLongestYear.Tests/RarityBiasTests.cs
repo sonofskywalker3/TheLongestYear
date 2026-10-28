@@ -147,6 +147,7 @@ public class RarityBiasTests
             ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>> { [ItemKind.Gem] = one },
             ColourTags = new Dictionary<string, IReadOnlyList<PoolItem>> { ["color_red"] = one },
             UnpooledFish = one,
+            CatchRates = new Dictionary<string, CatchRate> { ["(O)128"] = new(new double[] { 0, 10, 0, 0 }, 1.4) },
             LocationWeeks = TheLongestYear.Core.Availability.LocationWeeks.Build(
                 new[] { new RawLocationLink("Farm", "Forest") }, _ => false),
             ShopWeeks = TheLongestYear.Core.Availability.ShopWeeks.Build(

@@ -110,6 +110,16 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      any of the first 29 days, the item lands on day 29; from day 29 on, it is there the same day. The
      example above is a bush that bears from day 29 (week 5); adjust to the mod's real timing.
    - **`YearRulings`** decide the Traveling Cart's year 2 slot: `YearOne`, `YearTwo` or `NeverSell`.
+   - **`FishSpawns`** add fishing rows the game data does not hold (a fish a mod hands out in code),
+     written as a Data/Locations fish row is read: `Location`, `ItemId`, `Season` (`"Spring"`, or
+     leave it out for any), `Condition`, `Chance`, `Precedence`, `FishAreaId`, `MinFishingLevel`,
+     `MinDistanceFromShore`, `MaxDistanceFromShore` (-1 for none), `CatchLimit`, `RequireMagicBait`.
+     They join the build's fish rows, so they give routes and catch rates exactly as a data row would.
+   - **`RandomShopItems`** name shop lines whose item the mod re-picks every day (a Content Patcher
+     `{{Random: a, b, c}}` in a Data/Shops ItemId): `[{ "ShopId": "Traveler", "Condition": "<the line's
+     Condition as the game holds it, or leave it out>", "ItemIds": ["(O)a", "(O)b", "(O)c"] }]`. The
+     live line is read as all of them, a random pick, before the data is hashed or built, so the
+     answers match whichever item the mod chose today.
    - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There are no map-week or pond-chance fields in an inputs file: a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.
@@ -150,11 +160,24 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    known to change nothing. Without the pair's file, the pair is not served as shipped; its answers
    are computed live and the start-up line lists it under "pairs not mapped yet".
 
+## Fish catch rates
+
+The cold build also works out how well every item bites (`FishCatchRates`: the game's own fish pick
+for a level-10 angler at cast depth 5, two catches a game hour, over every fishing spot a loop
+reaches), and stores it with the answers (`CatchRates` in each variant). Two rules read it, so
+nothing about fishing is computed on a served load: the board sizes a fish ask from its stored weekly
+catch (Jeff's ruling 2026-09-04: best ten-hour day times seven), and a catch a full best day lands
+under twice is luck, not a dependable route (ruling 2026-09-16). It covers anything that bites, a
+mod's fish or a seed in a fish row alike. The numbers come out within 10% of the sampled table
+(`tools/fish-sim`) they replaced, and pick the same rare catches.
+
 ## Known limits
 
-- A layer cannot express a mod REMOVING a vanilla row. A mod set that does so computes live: correct,
-  just not shipped.
-- A delta cannot remove an `Unresolved`, map, shop or availability entry; a later delta can only add one or overwrite an existing key.
+- A mod that REMOVES a vanilla row (Cornucopia deletes the trellis Grape crop) is recorded by
+  `tly_lexicon write`: the answers file's `Removals` lists, per variant, the input rows and the
+  answer entries (routes, year sort, unresolved sources, map and shop weeks, catch rates) that are
+  gone, and composing the layers takes them out. Availability answers are never removed: a variant
+  fills them only as they are computed.
 - Owner names in `gaps` and in the INFO line are a prefix heuristic, not a record of which mod
   changed a row.
 - `vanilla.json` costs about 250 ms to read on a session's first load.

@@ -180,8 +180,9 @@ namespace TheLongestYear.DebugCommands
             IReadOnlyList<string> lines;
             try
             {
-                ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs, extraDirect: extra);
-                ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs), extraDirect: extra);
+                ObtainabilityInputs built = context.Layers?.Set.WithFishSpawns(inputs) ?? inputs;
+                ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra);
+                ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
                 cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                     with { Availability = context.Availability() };
                 lines = LexiconDiff.Compare(service.Variant, cold);
@@ -293,8 +294,9 @@ namespace TheLongestYear.DebugCommands
 
             var timer = Stopwatch.StartNew();
             var extra = context.Layers.Set.ExtraDirectSources;
-            ObtainabilityBuild model = ObtainabilityBuilder.Build(inputs, extraDirect: extra);
-            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(inputs), extraDirect: extra);
+            ObtainabilityInputs built = context.Layers.Set.WithFishSpawns(inputs);
+            ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra);
+            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra);
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                 with { Availability = context.Availability() };
             string name = context.PierreYear2Owned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;

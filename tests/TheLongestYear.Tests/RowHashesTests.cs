@@ -121,7 +121,7 @@ public class RowHashesTests
         ["Objects"] = "obj|", ["Festivals"] = "fest|", ["Forage"] = "forage|", ["LocationFish"] = "fish|",
         ["FishRows"] = "fishrow|", ["ArtifactSpots"] = "spot|", ["Garbage"] = "garbage|", ["Shops"] = "shop|",
         ["MonsterDrops"] = "drop|", ["Crops"] = "crop|", ["FruitTrees"] = "tree|", ["Machines"] = "machine|",
-        ["Recipes"] = "recipe|", ["Animals"] = "animal|", ["Ponds"] = "pond|", ["TapItems"] = "tap|",
+        ["Recipes"] = "recipe|", ["Animals"] = "animal|", ["Ponds"] = "pond|", ["TapItems"] = "tap|", ["TreeDrops"] = "treedrop|",
         ["GeodeDrops"] = "geode|", ["GeodesUsingDefaultTable"] = "geodedefault|", ["SlayerQuests"] = "slayer|",
         ["Buildings"] = "building|", ["CookingChannel"] = "tv|",
     };

@@ -92,7 +92,13 @@ public class ObtainabilitySpawnTests
             new LocationSpawn("Beach", "(O)129", Season.Spring, null, 1.0, 0, false, 0),         // Anchovy
         };
         var fishRows = new Dictionary<string, FishRow>();
-        var all = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources).ToList();
+        // The stored catch model: Octopus lands 1.2 on its best day, Anchovy well over two.
+        var rates = new Dictionary<string, CatchRate>
+        {
+            ["(O)149"] = new(new double[] { 0, 8.2, 0, 0 }, 1.19),
+            ["(O)129"] = new(new double[] { 40, 0, 40, 0 }, 9.5),
+        };
+        var all = SpawnSources.LocationFish(rows, fishRows, Objects, Festivals, NoSources, rates).ToList();
         Assert.All(all.Where(s => s.ItemId == "(O)163"), s => Assert.Equal(Reliability.Chance, s.Source.Reliability));
         var byId = all.Where(s => s.ItemId != "(O)163").ToDictionary(s => s.ItemId, s => s.Source);
         Assert.Equal(Reliability.Chance, byId["(O)149"].Reliability);

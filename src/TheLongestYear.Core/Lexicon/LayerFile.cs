@@ -21,7 +21,22 @@ public sealed record LayerInputs(
     /// made in code); part of the cache key, so editing a layer file does not reuse a stale entry.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string TextHash { get; init; } = "";
+
+    /// <summary>Fishing rows the game data does not hold (a fish a mod hands out in code), written as
+    /// Data/Locations fish rows are read (<see cref="LocationSpawn"/>). They join the build's fish rows,
+    /// so they give routes and catch rates (<see cref="FishCatchRates"/>) as a data row would.</summary>
+    public IReadOnlyList<LocationSpawn> FishSpawns { get; init; } = Array.Empty<LocationSpawn>();
+
+    /// <summary>Shop lines whose item the mod re-picks every day (a Content Patcher <c>{{Random: a, b, c}}</c>
+    /// in the line's ItemId), so the data holds a different one of them each day. The live line is read as
+    /// all of them, a random pick, before the data is hashed or built: the answers match on any day.</summary>
+    public IReadOnlyList<RandomShopItem> RandomShopItems { get; init; } = Array.Empty<RandomShopItem>();
 }
+
+/// <summary>A shop line that offers one of <see cref="ItemIds"/>, picked by the mod each day: the
+/// Data/Shops line of <see cref="ShopId"/> whose item is one of them and, when given, whose Condition
+/// reads <see cref="Condition"/> exactly as the game holds it.</summary>
+public sealed record RandomShopItem(string ShopId, string? Condition, IReadOnlyList<string> ItemIds);
 
 /// <summary>A layer's answers: what changes over the answers composed without it. <see cref="Mods"/>
 /// is one id for a single mod's layer (<c>&lt;A&gt;.answers.json</c>) or several for the interaction
@@ -40,6 +55,25 @@ public sealed record LayerAnswers(
     /// <summary>See <see cref="LayerInputs.TextHash"/>.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public string TextHash { get; init; } = "";
+
+    /// <summary>Per variant name, what the layer takes away from the answers below it (a mod that
+    /// deletes a vanilla row, as Cornucopia deletes the trellis Grape crop): applied after that
+    /// variant's delta. A file with none leaves it out or empty.</summary>
+    public IReadOnlyDictionary<string, LayerRemovals> Removals { get; init; }
+        = new Dictionary<string, LayerRemovals>(StringComparer.Ordinal);
+}
+
+/// <summary>The keys a layer removes from the variant below it: input <see cref="Rows"/> (row hash
+/// keys), and the <see cref="AnswerVariant"/> entries of the same names. Availability answers are not
+/// listed: a variant fills them only as they are computed, so a missing one says nothing.</summary>
+public sealed record LayerRemovals(
+    IReadOnlyList<string> Rows, IReadOnlyList<string> Obtain, IReadOnlyList<string> YearSort,
+    IReadOnlyList<string> Unresolved, IReadOnlyList<string> MapWeeks, IReadOnlyList<string> UnreachedMaps,
+    IReadOnlyList<string> ShopWeeks, IReadOnlyList<string> CatchRates)
+{
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsEmpty => Rows.Count == 0 && Obtain.Count == 0 && YearSort.Count == 0 && Unresolved.Count == 0
+                           && MapWeeks.Count == 0 && UnreachedMaps.Count == 0 && ShopWeeks.Count == 0 && CatchRates.Count == 0;
 }
 
 /// <summary>The layer files' names and formats. Both are <see cref="LexiconJson"/> text (sorted keys,
@@ -78,6 +112,10 @@ public static class LayerFile
                 if (sources == null || sources.Any(src => src == null))
                     throw new System.Text.Json.JsonException($"ExtraSources {id} is null or holds a null source.");
         RequireSourceMembers(json);
+        if (read.FishSpawns != null && read.FishSpawns.Any(row => row == null || string.IsNullOrWhiteSpace(row.Location) || string.IsNullOrWhiteSpace(row.ItemId)))
+            throw new System.Text.Json.JsonException("FishSpawns holds a null row or a row with no Location or ItemId.");
+        if (read.RandomShopItems != null && read.RandomShopItems.Any(r => r == null || string.IsNullOrWhiteSpace(r.ShopId) || r.ItemIds == null || r.ItemIds.Count == 0))
+            throw new System.Text.Json.JsonException("RandomShopItems holds a null entry or one with no ShopId or ItemIds.");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
@@ -90,6 +128,8 @@ public static class LayerFile
             YearRulings = read.YearRulings ?? new Dictionary<string, YearRuling>(StringComparer.Ordinal),
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
+            FishSpawns = read.FishSpawns ?? Array.Empty<LocationSpawn>(),
+            RandomShopItems = read.RandomShopItems ?? Array.Empty<RandomShopItem>(),
             TextHash = HashText(json),
         };
     }
@@ -138,11 +178,17 @@ public static class LayerFile
         if (read.Deltas != null)
             foreach (var (name, delta) in read.Deltas)
                 if (NullMember(delta) is string member) throw new System.Text.Json.JsonException($"Deltas {name}: {member} is null.");
+        if (read.Removals != null)
+            foreach (var (name, removal) in read.Removals)
+                if (removal == null || removal.Rows == null || removal.Obtain == null || removal.YearSort == null
+                    || removal.Unresolved == null || removal.MapWeeks == null || removal.UnreachedMaps == null || removal.ShopWeeks == null || removal.CatchRates == null)
+                    throw new System.Text.Json.JsonException($"Removals {name} is null or holds a null list.");
         return read with
         {
             CheckedVersions = read.CheckedVersions ?? "",
             VariantRowHashes = read.VariantRowHashes ?? new Dictionary<string, IReadOnlyDictionary<string, ulong>>(StringComparer.Ordinal),
             Deltas = read.Deltas ?? new Dictionary<string, AnswerVariant>(StringComparer.Ordinal),
+            Removals = read.Removals ?? new Dictionary<string, LayerRemovals>(StringComparer.Ordinal),
             TextHash = HashText(json),
         };
     }
@@ -158,6 +204,7 @@ public static class LayerFile
         if (delta.UnreachedMaps == null) return "UnreachedMaps";
         if (delta.ShopWeeks == null || delta.ShopWeeks.Values.Any(v => v == null)) return "ShopWeeks";
         if (delta.Availability == null || delta.Availability.Values.Any(v => v == null)) return "Availability";
+        if (delta.CatchRates == null || delta.CatchRates.Values.Any(v => v?.Weekly == null)) return "CatchRates";
         return null;
     }
 

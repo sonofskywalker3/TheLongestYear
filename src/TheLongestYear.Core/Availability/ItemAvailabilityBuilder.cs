@@ -37,11 +37,15 @@ public static class ItemAvailabilityBuilder
         IReadOnlyDictionary<string, int>? weekOverrides,
         WeekMode mode,
         DifficultyStep step,
-        IReadOnlyDictionary<string, int>? effortOverrides = null)
+        IReadOnlyDictionary<string, int>? effortOverrides = null,
+        IReadOnlyDictionary<string, CatchRate>? catchRates = null)
     {
         if (answers == null) throw new ArgumentNullException(nameof(answers));
         return new ItemAvailabilityModel(answers.Derived, seasonOverrides, effortOverrides, answers.EffortDerived, weekOverrides, mode, step)
-            { DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits };
+        {
+            DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits,
+            CatchRates = catchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
+        };
     }
 
     /// <summary><see cref="Build"/>, also returning the computed answers the model was made from, for
@@ -119,7 +123,8 @@ public static class ItemAvailabilityBuilder
             }
         }
 
-        var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step);
+        var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
+            { CatchRates = pools.CatchRates };
         var noEffort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         if (effortData == null)
             return (model, new AvailabilityAnswers(derived, effortDerived ?? noEffort,
@@ -137,14 +142,14 @@ public static class ItemAvailabilityBuilder
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,
-            (id, s) => QuantityAskPass.BasisByDeadline(id, s),
+            (id, s) => QuantityAskPass.BasisByDeadline(id, s, catchRates: pools.CatchRates),
             kitchenFree.EffortOf);
         // hasUpgrade is read like hasKitchen: once, here. Upgrades are only bought before a reset,
         // and every reset rebuilds the model, so the set is the one the board is generated under.
         // Built here, not through FromAnswers, so the tests comparing the two compare two constructions.
         IReadOnlyDictionary<string, int> dishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade);
         var built = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits };
+            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates };
         return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits));
     }
 

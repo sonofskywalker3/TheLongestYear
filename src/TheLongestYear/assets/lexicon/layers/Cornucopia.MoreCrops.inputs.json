@@ -1,0 +1,1063 @@
+{
+  "UniqueId": "Cornucopia.MoreCrops",
+  "CheckedVersion": "1.6.3",
+  "Notes": "Custom Bush fruit: a bush bears from AgeToProduce days after planting, in its Seasons and on the days its item Condition names (Custom Bush README); its age is taken to count every day, as a tea bush's does, since the README does not say. | Custom Bush fruit indoors: the README says seasons are ignored in non-seasonal locations, so each bush also gets a GreenhouseCrop route, as reliable as its sapling, the way the data's own greenhouse crop routes are. | Custom Bush fruit week rulings: the week of the outdoor bush route's first dependable landing from day 1, not the greenhouse route's, since the greenhouse waits for the Pantry. | (O)Cornucopia_Peppercorn and (O)Cornucopia_Vanilla: their saplings are dependable only from the Island Trader, so that bush route is GingerIsland and the one from a Traveling Cart sapling is Chance. | SpaceCore spawn groups: every vanilla-map row is gated by If RANDOM p per map per day, so each route is Chance (decision table row 1); the SVE, East Scarp and Sunberry Village rows need those mods and the island rows are not year 1, so they are left out. | Bell pepper colours: SpaceCore's YieldOverrides add each colour with PerItemCondition RANDOM 0.1 to every harvest of the Summer Bell Pepper crop (10 days to the first), so each route is Chance. | RandomShopItems: the Traveler lines Cornucopia.MoreCrops_ExclusiveExtended and _ExclusiveEssential name their item with a {{Random: ...}} token (data/shop_travelingcart.json), so each is listed with every item it can hold. | (O)Cornucopia_Sapodilla: week 5, the first Summer, because its shake condition is an ANY that TLY reads as all year and an outdoor tree only fruits in Summer (data/wildtrees.json). | (O)Cornucopia_Sugarcane: week 9, when the Desert opens, because its seeds (Sandy) and its spawn group are both in the Desert. | Summit spawn rows are kept with location:Summit, as TLY walks the Summit as reachable from week 1.",
+  "ExtraSources": {
+    "(O)398": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)301"
+          ]
+        ],
+        "Lands": "=58x42,=60x2,=62x2,=64x2,=66x2,=68x2,=70x2,=72x2,=74x2,=76x2,=78x2,=80x2,=82x2,=84x2,=0x44",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)301"
+          ]
+        },
+        "Detail": "grape bush, Fall even days (data/teabushes.json, (O)301)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)301"
+          ]
+        ],
+        "Lands": "=18x2,=20x2,=22x2,=24x2,=26x2,=28x2,=30x2,=32x2,=34x2,=36x2,=38x2,=40x2,=42x2,=44x2,=46x2,=48x2,=50x2,=52x2,=54x2,=56x2,=58x2,=60x2,=62x2,=64x2,=66x2,=68x2,=70x2,=72x2,=74x2,=76x2,=78x2,=80x2,=82x2,=84x2,=86x2,=88x2,=90x2,=92x2,=94x2,=96x2,=98x2,=100x2,=102x2,=104x2,=106x2,=108x2,=110x2,=112x2,=0x16",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)301",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "grape bush indoors, any season, even days (data/teabushes.json, (O)301)"
+      }
+    ],
+    "(O)Cornucopia_BayLeaves": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 12
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BayLeavesSeeds"
+          ]
+        ],
+        "Lands": "=85x73,+12x27,=0x12",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BayLeavesSeeds"
+          ]
+        },
+        "Detail": "bay bush, Winter every day (data/teabushes.json, (O)Cornucopia_BayLeavesSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 12
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BayLeavesSeeds"
+          ]
+        ],
+        "Lands": "+12x100,=0x12",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BayLeavesSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "bay bush indoors, any season, every day (data/teabushes.json, (O)Cornucopia_BayLeavesSeeds)"
+      }
+    ],
+    "(O)Cornucopia_BellPepperGreen": [
+      {
+        "Kind": "Crop",
+        "Lands": "=39x29,+10x17,=0x66",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BellPepperSeeds"
+          ]
+        },
+        "Setup": [
+          {
+            "Name": "growth",
+            "Days": 10
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BellPepperSeeds"
+          ]
+        ],
+        "Detail": "bell pepper harvest, green at 10% a harvest, Summer (data/multiyieldcrops.json, Cornucopia_BellPepperSeeds)"
+      }
+    ],
+    "(O)Cornucopia_BellPepperOrange": [
+      {
+        "Kind": "Crop",
+        "Lands": "=39x29,+10x17,=0x66",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BellPepperSeeds"
+          ]
+        },
+        "Setup": [
+          {
+            "Name": "growth",
+            "Days": 10
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BellPepperSeeds"
+          ]
+        ],
+        "Detail": "bell pepper harvest, orange at 10% a harvest, Summer (data/multiyieldcrops.json, Cornucopia_BellPepperSeeds)"
+      }
+    ],
+    "(O)Cornucopia_BellPepperYellow": [
+      {
+        "Kind": "Crop",
+        "Lands": "=39x29,+10x17,=0x66",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BellPepperSeeds"
+          ]
+        },
+        "Setup": [
+          {
+            "Name": "growth",
+            "Days": 10
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BellPepperSeeds"
+          ]
+        ],
+        "Detail": "bell pepper harvest, yellow at 10% a harvest, Summer (data/multiyieldcrops.json, Cornucopia_BellPepperSeeds)"
+      }
+    ],
+    "(O)Cornucopia_BlackCurrants": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BlackCurrantsSeeds"
+          ]
+        ],
+        "Lands": "=29x13,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=0x72",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BlackCurrantsSeeds"
+          ]
+        },
+        "Detail": "black currant bush, Summer days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_BlackCurrantsSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_BlackCurrantsSeeds"
+          ]
+        ],
+        "Lands": "=19x3,=22x3,=25x3,=28x3,=29x1,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=57x1,=60x3,=63x3,=66x3,=69x3,=72x3,=75x3,=78x3,=81x3,=84x3,=85x1,=88x3,=91x3,=94x3,=97x3,=100x3,=103x3,=106x3,=109x3,=112x3,=0x16",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_BlackCurrantsSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "black currant bush indoors, any season, days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_BlackCurrantsSeeds)"
+      }
+    ],
+    "(O)Cornucopia_ChickenoftheWoods": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 22
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ChickenoftheWoodsSeeds"
+          ]
+        ],
+        "Lands": "=50x28,+22x6,=78x22,+22x6,=0x50",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ChickenoftheWoodsSeeds"
+          ]
+        },
+        "Detail": "chicken of the woods bush, Summer/Fall days 22 to 28 (data/teabushes.json, (O)Cornucopia_ChickenoftheWoodsSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 22
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ChickenoftheWoodsSeeds"
+          ]
+        ],
+        "Lands": "+22x6,=50x22,+22x6,=78x22,+22x6,=106x22,+22x6,=0x22",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ChickenoftheWoodsSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "chicken of the woods bush indoors, any season, days 22 to 28 (data/teabushes.json, (O)Cornucopia_ChickenoftheWoodsSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Woods"
+          ]
+        },
+        "Detail": "chicken of the woods forage at Woods, Fall (data/forage.json, Cornucopia.MoreCrops_ChickenoftheWoods)"
+      }
+    ],
+    "(O)Cornucopia_Elderberries": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ElderberriesSeeds"
+          ]
+        ],
+        "Lands": "=85x71,=89x4,=93x4,=97x4,=101x4,=105x4,=109x4,=0x17",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ElderberriesSeeds"
+          ]
+        },
+        "Detail": "elderberry bush, Winter days 1, 5, 9, 13, 17, 21, 25 (data/teabushes.json, (O)Cornucopia_ElderberriesSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ElderberriesSeeds"
+          ]
+        ],
+        "Lands": "=17x3,=21x4,=25x4,=29x4,=33x4,=37x4,=41x4,=45x4,=49x4,=53x4,=57x4,=61x4,=65x4,=69x4,=73x4,=77x4,=81x4,=85x4,=89x4,=93x4,=97x4,=101x4,=105x4,=109x4,=0x17",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ElderberriesSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "elderberry bush indoors, any season, days 1, 5, 9, 13, 17, 21, 25 (data/teabushes.json, (O)Cornucopia_ElderberriesSeeds)"
+      }
+    ],
+    "(O)Cornucopia_Gooseberry": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_GooseberrySeeds"
+          ]
+        ],
+        "Lands": "=29x13,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=0x72",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_GooseberrySeeds"
+          ]
+        },
+        "Detail": "gooseberry bush, Summer days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_GooseberrySeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_GooseberrySeeds"
+          ]
+        ],
+        "Lands": "=19x3,=22x3,=25x3,=28x3,=29x1,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=57x1,=60x3,=63x3,=66x3,=69x3,=72x3,=75x3,=78x3,=81x3,=84x3,=85x1,=88x3,=91x3,=94x3,=97x3,=100x3,=103x3,=106x3,=109x3,=112x3,=0x16",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_GooseberrySeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "gooseberry bush indoors, any season, days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_GooseberrySeeds)"
+      }
+    ],
+    "(O)Cornucopia_JuniperBerries": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_JuniperBerriesSeeds"
+          ]
+        ],
+        "Lands": "=85x71,=88x3,=91x3,=94x3,=97x3,=100x3,=103x3,=106x3,=109x3,=112x3,=0x14",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_JuniperBerriesSeeds"
+          ]
+        },
+        "Detail": "juniper bush, Winter days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_JuniperBerriesSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_JuniperBerriesSeeds"
+          ]
+        ],
+        "Lands": "=16x2,=19x3,=22x3,=25x3,=28x3,=29x1,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=57x1,=60x3,=63x3,=66x3,=69x3,=72x3,=75x3,=78x3,=81x3,=84x3,=85x1,=88x3,=91x3,=94x3,=97x3,=100x3,=103x3,=106x3,=109x3,=112x3,=0x14",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_JuniperBerriesSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "juniper bush indoors, any season, days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_JuniperBerriesSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "juniper berry forage at Forest, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:BusStop"
+          ]
+        },
+        "Detail": "juniper berry forage at BusStop, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Mountain"
+          ]
+        },
+        "Detail": "juniper berry forage at Mountain, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Summit"
+          ]
+        },
+        "Detail": "juniper berry forage at Summit, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Backwoods"
+          ]
+        },
+        "Detail": "juniper berry forage at Backwoods, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Railroad"
+          ]
+        },
+        "Detail": "juniper berry forage at Railroad, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Woods"
+          ]
+        },
+        "Detail": "juniper berry forage at Woods, Winter (data/forage.json, Cornucopia.MoreCrops_JuniperBerries)"
+      }
+    ],
+    "(O)Cornucopia_LentilsSeeds": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Desert"
+          ]
+        },
+        "Detail": "lentil seed forage at Desert, Spring/Summer/Fall/Winter (data/forage.json, Cornucopia.MoreCrops_LentilsSeeds)"
+      }
+    ],
+    "(O)Cornucopia_Peppercorn": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_PeppercornSeeds"
+          ]
+        ],
+        "Lands": "+22x62,=0x50",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_PeppercornSeeds"
+          ],
+          "GingerIsland": true
+        },
+        "Detail": "peppercorn bush, Spring/Summer/Fall every day (data/teabushes.json, (O)Cornucopia_PeppercornSeeds)"
+      },
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_PeppercornSeeds"
+          ]
+        ],
+        "Lands": "+16x68,=0x44",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_PeppercornSeeds"
+          ]
+        },
+        "Detail": "peppercorn bush from a cart sapling, Spring/Summer/Fall every day (data/teabushes.json, (O)Cornucopia_PeppercornSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_PeppercornSeeds"
+          ]
+        ],
+        "Lands": "+16x96,=0x16",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_PeppercornSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "peppercorn bush indoors, any season, every day (data/teabushes.json, (O)Cornucopia_PeppercornSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "peppercorn forage at Forest, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:BusStop"
+          ]
+        },
+        "Detail": "peppercorn forage at BusStop, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Mountain"
+          ]
+        },
+        "Detail": "peppercorn forage at Mountain, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Summit"
+          ]
+        },
+        "Detail": "peppercorn forage at Summit, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Backwoods"
+          ]
+        },
+        "Detail": "peppercorn forage at Backwoods, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Railroad"
+          ]
+        },
+        "Detail": "peppercorn forage at Railroad, Spring/Summer (data/forage.json, Cornucopia.MoreCrops_Peppercorn)"
+      }
+    ],
+    "(O)Cornucopia_Raspberry": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_RaspberrySeeds"
+          ]
+        ],
+        "Lands": "=50x36,+14x6,=0x70",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_RaspberrySeeds"
+          ]
+        },
+        "Detail": "raspberry bush, Summer days 22 to 28 (data/teabushes.json, (O)Cornucopia_RaspberrySeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 14
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_RaspberrySeeds"
+          ]
+        ],
+        "Lands": "=22x8,+14x6,=50x22,+14x6,=78x22,+14x6,=106x22,+14x6,=0x14",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_RaspberrySeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "raspberry bush indoors, any season, days 22 to 28 (data/teabushes.json, (O)Cornucopia_RaspberrySeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "raspberry forage at Forest, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:BusStop"
+          ]
+        },
+        "Detail": "raspberry forage at BusStop, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Town"
+          ]
+        },
+        "Detail": "raspberry forage at Town, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Mountain"
+          ]
+        },
+        "Detail": "raspberry forage at Mountain, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Summit"
+          ]
+        },
+        "Detail": "raspberry forage at Summit, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Backwoods"
+          ]
+        },
+        "Detail": "raspberry forage at Backwoods, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Railroad"
+          ]
+        },
+        "Detail": "raspberry forage at Railroad, Summer (data/forage.json, Cornucopia.MoreCrops_Raspberry)"
+      }
+    ],
+    "(O)Cornucopia_SesameSeeds": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Desert"
+          ]
+        },
+        "Detail": "sesame seed forage at Desert, Spring/Summer/Fall/Winter (data/forage.json, Cornucopia.MoreCrops_SesameSeeds)"
+      }
+    ],
+    "(O)Cornucopia_Shiitake": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 22
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ShiitakeSeeds"
+          ]
+        ],
+        "Lands": "=26x4,=57x31,=62x5,=67x5,=72x5,=77x5,=82x5,=0x52",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ShiitakeSeeds"
+          ]
+        },
+        "Detail": "shiitake bush, Spring/Fall days 1, 6, 11, 16, 21, 26 (data/teabushes.json, (O)Cornucopia_ShiitakeSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 22
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_ShiitakeSeeds"
+          ]
+        ],
+        "Lands": "=26x4,=29x3,=34x5,=39x5,=44x5,=49x5,=54x5,=57x3,=62x5,=67x5,=72x5,=77x5,=82x5,=85x3,=90x5,=95x5,=100x5,=105x5,=110x5,=0x24",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_ShiitakeSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "shiitake bush indoors, any season, days 1, 6, 11, 16, 21, 26 (data/teabushes.json, (O)Cornucopia_ShiitakeSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=57x29,+0x27,=0x28",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Woods"
+          ]
+        },
+        "Detail": "shiitake forage at Woods, Spring/Fall (data/forage.json, Cornucopia.MoreCrops_Shiitake)"
+      }
+    ],
+    "(O)Cornucopia_Sugarcane": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Desert"
+          ]
+        },
+        "Detail": "sugarcane forage at Desert, Spring/Summer/Fall/Winter (data/forage.json, Cornucopia.MoreCrops_Sugarcane)"
+      }
+    ],
+    "(O)Cornucopia_UbeSeeds": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Beach"
+          ]
+        },
+        "Detail": "ube seed forage at Beach, Winter (data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Town"
+          ]
+        },
+        "Detail": "ube seed forage at Town, Winter (data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "ube seed forage at Forest, Winter (data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Farm"
+          ]
+        },
+        "Detail": "ube seed forage at Farm, Winter (data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      }
+    ],
+    "(O)Cornucopia_Vanilla": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_VanillaSeeds"
+          ]
+        ],
+        "Lands": "=0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_VanillaSeeds"
+          ],
+          "GingerIsland": true
+        },
+        "Detail": "vanilla bush, Spring days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_VanillaSeeds)"
+      },
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_VanillaSeeds"
+          ]
+        ],
+        "Lands": "=19x3,=22x3,=25x3,=28x3,=0x100",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_VanillaSeeds"
+          ]
+        },
+        "Detail": "vanilla bush from a cart sapling, Spring days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_VanillaSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_VanillaSeeds"
+          ]
+        ],
+        "Lands": "=19x3,=22x3,=25x3,=28x3,=29x1,=32x3,=35x3,=38x3,=41x3,=44x3,=47x3,=50x3,=53x3,=56x3,=57x1,=60x3,=63x3,=66x3,=69x3,=72x3,=75x3,=78x3,=81x3,=84x3,=85x1,=88x3,=91x3,=94x3,=97x3,=100x3,=103x3,=106x3,=109x3,=112x3,=0x16",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_VanillaSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "vanilla bush indoors, any season, days 1, 4, 7, 10, 13, 16, 19, 22, 25, 28 (data/teabushes.json, (O)Cornucopia_VanillaSeeds)"
+      }
+    ],
+    "(O)Cornucopia_WhiteGrape": [
+      {
+        "Kind": "Crop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_WhiteGrapeSeeds"
+          ]
+        ],
+        "Lands": "=58x42,=60x2,=62x2,=64x2,=66x2,=68x2,=70x2,=72x2,=74x2,=76x2,=78x2,=80x2,=82x2,=84x2,=0x44",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_WhiteGrapeSeeds"
+          ]
+        },
+        "Detail": "white grape bush, Fall even days (data/teabushes.json, (O)Cornucopia_WhiteGrapeSeeds)"
+      },
+      {
+        "Kind": "GreenhouseCrop",
+        "Setup": [
+          {
+            "Name": "bush",
+            "Days": 16
+          }
+        ],
+        "Inputs": [
+          [
+            "(O)Cornucopia_WhiteGrapeSeeds"
+          ]
+        ],
+        "Lands": "=18x2,=20x2,=22x2,=24x2,=26x2,=28x2,=30x2,=32x2,=34x2,=36x2,=38x2,=40x2,=42x2,=44x2,=46x2,=48x2,=50x2,=52x2,=54x2,=56x2,=58x2,=60x2,=62x2,=64x2,=66x2,=68x2,=70x2,=72x2,=74x2,=76x2,=78x2,=80x2,=82x2,=84x2,=86x2,=88x2,=90x2,=92x2,=94x2,=96x2,=98x2,=100x2,=102x2,=104x2,=106x2,=108x2,=110x2,=112x2,=0x16",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "item:(O)Cornucopia_WhiteGrapeSeeds",
+            "mail:ccPantry",
+            "sheltered (greenhouse or indoor pot)"
+          ]
+        },
+        "Detail": "white grape bush indoors, any season, even days (data/teabushes.json, (O)Cornucopia_WhiteGrapeSeeds)"
+      }
+    ]
+  },
+  "RandomShopItems": [
+    {
+      "ShopId": "Traveler",
+      "Condition": "true, SYNCED_RANDOM day cornucopia_exclusive_seeds 0.8",
+      "ItemIds": [
+        "(O)Cornucopia_Soybeans",
+        "(O)Cornucopia_PeppercornSeeds",
+        "(O)Cornucopia_VanillaSeeds",
+        "(O)Cornucopia_GinsengSeeds"
+      ]
+    },
+    {
+      "ShopId": "Traveler",
+      "Condition": "!true, SYNCED_RANDOM day cornucopia_exclusive_seeds 0.6",
+      "ItemIds": [
+        "(O)Cornucopia_Soybeans",
+        "(O)Cornucopia_PeppercornSeeds",
+        "(O)Cornucopia_VanillaSeeds"
+      ]
+    }
+  ],
+  "YearRulings": {},
+  "WeekRulings": {
+    "(O)Cornucopia_BayLeaves": 13,
+    "(O)Cornucopia_BlackCurrants": 5,
+    "(O)Cornucopia_ChickenoftheWoods": 8,
+    "(O)Cornucopia_Elderberries": 13,
+    "(O)Cornucopia_Gooseberry": 5,
+    "(O)Cornucopia_JuniperBerries": 13,
+    "(O)Cornucopia_Raspberry": 8,
+    "(O)Cornucopia_Sapodilla": 5,
+    "(O)Cornucopia_Shiitake": 4,
+    "(O)Cornucopia_Sugarcane": 9,
+    "(O)Cornucopia_WhiteGrape": 9
+  }
+}

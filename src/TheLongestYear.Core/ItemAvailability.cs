@@ -95,6 +95,11 @@ public sealed class ItemAvailabilityModel
     /// only for ids with no <see cref="SeasonalAskBasis"/> hand row.</summary>
     public IReadOnlyDictionary<string, double[]> DishBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
 
+    /// <summary>The stored catch model the fish ask sizes read (<see cref="FishAskBasis"/>), carried
+    /// from the pools the model was built from.</summary>
+    public IReadOnlyDictionary<string, CatchRate> CatchRates { get; init; }
+        = new Dictionary<string, CatchRate>(StringComparer.Ordinal);
+
     /// <summary>Dishes that cannot be cooked without Garlic, Red Cabbage or Artichoke, to the
     /// fewest of them one dish takes (<see cref="YearTwoCrops.DishUnits"/>). Built only while the
     /// save does not own Pierre's year-2 seeds; the quantity pass caps these asks with the crops.</summary>

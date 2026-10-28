@@ -103,6 +103,9 @@ namespace TheLongestYear
             // The obtainability answers are resolved first: the availability model is served from
             // the same lexicon variant when it holds answers for these inputs.
             BuildObtainabilityModel();
+            // The fish ask sizes read the catch model stored with those answers (FishCatchRates).
+            if (_lexicon?.Variant?.CatchRates is { } catchRates)
+                ctx.EnginePools = _enginePools = _enginePools with { CatchRates = catchRates };
             stageTimer.Restart();
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             long availabilityMs = stageTimer.ElapsedMilliseconds;

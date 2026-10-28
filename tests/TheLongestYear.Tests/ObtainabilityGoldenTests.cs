@@ -7,7 +7,7 @@ namespace TheLongestYear.Tests;
 /// landing day, tag, setup step, input group or source shows up here.</summary>
 public class ObtainabilityGoldenTests
 {
-    internal const string VanillaHash = "0A61D39CEB66A2D54E5130AC0411434CF453A330F3F2022DFF1ACB5FD6CC9FB6";
+    internal const string VanillaHash = "F64E946410492FF56664BFE316BDEBAF6C6EFB80BAF1145A4FE4ED88F173FD5A";
     private const int VanillaPasses = 7;
     private const int VanillaUnresolved = 45;
 

@@ -86,6 +86,39 @@ public sealed class LayerSet
     /// (and their row hashes) stay the game's.</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>> ExtraDirectSources { get; }
 
+    /// <summary>Every layer's <see cref="LayerInputs.FishSpawns"/>, in inputs order.</summary>
+    public IReadOnlyList<LocationSpawn> ExtraFishSpawns { get; private init; } = Array.Empty<LocationSpawn>();
+
+    /// <summary>The inputs a build reads: the game's, with the layers' fishing rows added. Only builds
+    /// read this; the row hashes stay the game's own (a layer edit changes the cache key instead).</summary>
+    public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
+        => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
+
+    /// <summary>Every layer's <see cref="LayerInputs.RandomShopItems"/>, in inputs order.</summary>
+    public IReadOnlyList<RandomShopItem> RandomShopItems { get; private init; } = Array.Empty<RandomShopItem>();
+
+    /// <summary>The live inputs as the answers are kept for them: each shop line a layer names as a
+    /// daily pick (<see cref="RandomShopItems"/>) replaced by one random row per item it can pick, so the
+    /// data reads the same whichever item the mod chose today. Both the row hashes and the builds read
+    /// this; the inputs are unchanged when no line matches.</summary>
+    public ObtainabilityInputs Normalize(ObtainabilityInputs inputs)
+    {
+        if (RandomShopItems.Count == 0) return inputs;
+        var rows = new List<ShopRow>(inputs.Shops.Count);
+        var done = new HashSet<RandomShopItem>();
+        foreach (ShopRow row in inputs.Shops)
+        {
+            RandomShopItem? pick = RandomShopItems.FirstOrDefault(r => r.ShopId == row.ShopId
+                && (r.Condition == null || r.Condition == row.Condition)
+                && r.ItemIds.Any(id => BundleParsing.NormalizeItemId(id) == BundleParsing.NormalizeItemId(row.ItemId)));
+            if (pick == null) { rows.Add(row); continue; }
+            if (!done.Add(pick)) continue;   // the day's other match, already read as the whole pick
+            foreach (string id in pick.ItemIds)
+                rows.Add(row with { ItemId = BundleParsing.NormalizeItemId(id), IsRandom = true });
+        }
+        return inputs with { Shops = rows };
+    }
+
     /// <summary>The layers' year ruling for a qualified id, or null when no layer rules it.</summary>
     public YearRuling? YearRuling(string id) => _yearRulings.TryGetValue(id, out YearRuling r) ? r : null;
 
@@ -217,7 +250,11 @@ public sealed class LayerSet
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
-        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra);
+        return new LayerSet(composed, overlay, layers, keyLayers, ids, unmapped, unmappedMods, years, weeks, extra)
+        {
+            ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
+            RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
+        };
     }
 
     private static string HashOf(string textHash, Func<string> written)
@@ -242,6 +279,11 @@ public sealed class LayerSet
                 }
                 if (layer.VariantRowHashes.TryGetValue(name, out var own))
                     foreach (var (key, hash) in own) rows[key] = hash;
+                if (layer.Removals.TryGetValue(name, out LayerRemovals? removal))
+                {
+                    whole = Remove(whole, removal);
+                    foreach (string key in removal.Rows) rows.Remove(key);
+                }
             }
             if (!mapped) continue;
             result = AnswerSetMerge.With(result, name, whole, rows, vanilla.GameVersion, vanilla.ModVersion, layers);
@@ -268,7 +310,28 @@ public sealed class LayerSet
             Merge(below.ShopWeeks, delta.ShopWeeks))
         {
             Availability = Merge(below.Availability, delta.Availability),
+            CatchRates = Merge(below.CatchRates, delta.CatchRates),
         };
+    }
+
+    /// <summary>A variant with a layer's <see cref="LayerRemovals"/> taken out (its availability kept).</summary>
+    public static AnswerVariant Remove(AnswerVariant below, LayerRemovals removal)
+        => new AnswerVariant(
+            Without(below.Obtain, removal.Obtain), Without(below.YearSort, removal.YearSort),
+            below.Unresolved.Except(removal.Unresolved, StringComparer.Ordinal).ToList(),
+            below.Passes,
+            Without(below.MapWeeks, removal.MapWeeks),
+            below.UnreachedMaps.Except(removal.UnreachedMaps, StringComparer.Ordinal).ToList(),
+            Without(below.ShopWeeks, removal.ShopWeeks))
+        {
+            Availability = below.Availability,
+            CatchRates = Without(below.CatchRates, removal.CatchRates),
+        };
+
+    private static Dictionary<string, T> Without<T>(IReadOnlyDictionary<string, T> below, IReadOnlyList<string> keys)
+    {
+        var gone = new HashSet<string>(keys, StringComparer.Ordinal);
+        return below.Where(p => !gone.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
     }
 
     private static Dictionary<string, T> Merge<T>(IReadOnlyDictionary<string, T> below, IReadOnlyDictionary<string, T> over)

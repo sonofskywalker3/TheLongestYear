@@ -25,6 +25,11 @@ public sealed record PoolItem(
 /// silently drop whatever was added later (final review, 2026-08-29).</summary>
 public sealed record ItemPools
 {
+    /// <summary>The stored catch model (<see cref="CatchRate"/>) from the lexicon
+    /// variant this load was served or built: what the fish ask sizes read. Empty until it is set.</summary>
+    public IReadOnlyDictionary<string, CatchRate> CatchRates { get; init; }
+        = new Dictionary<string, CatchRate>(StringComparer.Ordinal);
+
     public IReadOnlyList<PoolItem> Crops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Fish { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> CrabPot { get; init; } = new List<PoolItem>();
