@@ -56,9 +56,18 @@ public class CraftedItemAvailabilityTests
     }
 
     [Fact]
-    public void An_unlock_outside_year_1_leaves_it_unplaced()
+    public void A_null_unlock_is_known_from_day_1_without_a_shop_price()
     {
         ItemEffort? result = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("null")), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(1, result!.EarliestWeek);
+        Assert.Equal(3 + CookedDishAvailability.UnlockEffort("null"), result.Effort);
+        Assert.DoesNotContain("not in year 1", result.Basis);
+    }
+
+    [Fact]
+    public void An_unlock_outside_year_1_leaves_it_unplaced()
+    {
+        ItemEffort? result = CraftedItemAvailability.Derive(SeedCookie, Data(Cookie("l 2")), EffortOf, WeekOf, DifficultyStep.Normal);
         Assert.Null(result!.EarliestWeek);
         Assert.Contains("recipe not in year 1", result.Basis);
     }

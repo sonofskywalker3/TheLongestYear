@@ -8,7 +8,8 @@ namespace TheLongestYear.Core.Availability;
 /// ingredient plus the recipe unlock, and the week is the later of the recipe's week and the
 /// latest ingredient's week. The unlock and the ingredients are read exactly as a dish's are
 /// (<see cref="CookedDishAvailability"/>), except that no Queen of Sauce episode teaches a crafting
-/// recipe and a "null" unlock is not the Cookies event, so both lean on the shop price alone.
+/// recipe ("l N" leans on the shop price alone) and a "null" unlock is known from day 1, not the
+/// Cookies event.
 /// A recipe that asks for "any wild seed" (-777, a code-only group the dish rule never meets) is
 /// skipped rather than guessed at.</summary>
 public static class CraftedItemAvailability

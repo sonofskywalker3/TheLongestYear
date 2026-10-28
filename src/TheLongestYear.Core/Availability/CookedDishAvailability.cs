@@ -156,11 +156,14 @@ public static class CookedDishAvailability
         => ComputeRecipeWeek(recipe.UnlockCondition, recipe.OutputItemId, recipe.Name, AvailabilityWeeks.CookiesWeek, data, step);
 
     /// <summary>Week a crafting recipe (Data/CraftingRecipes) is learned, or null when it is not in
-    /// year 1. Same reading as a dish's, with two differences: no Queen of Sauce episode exists for
-    /// it, and "null" is not the Cookies event (a crafting recipe with that unlock is handed out by
-    /// mail or a quest), so both fall back to the shop price week alone.</summary>
+    /// year 1. Same reading as a dish's, with two differences: "null" (or empty) is a recipe known
+    /// from day 1, week 1, not the Cookies event; and no Queen of Sauce episode teaches an "l N"
+    /// crafting recipe (the game grants crafting recipes only by "default", a skill level-up and
+    /// friendship mail), so that one leans on the shop price alone.</summary>
     internal static int? CraftingRecipeWeek(string unlock, string outputId, EffortData data, DifficultyStep step)
-        => ComputeRecipeWeek(unlock, outputId, channelName: null, nullUnlockWeek: null, data, step).Week;
+        => ComputeRecipeWeek(unlock, outputId, channelName: null, nullUnlockWeek: KnownFromDayOneWeek, data, step).Week;
+
+    private const int KnownFromDayOneWeek = 1;
 
     /// <param name="channelName">The name the Queen of Sauce lists the recipe under, or null when
     /// no episode can teach it.</param>
