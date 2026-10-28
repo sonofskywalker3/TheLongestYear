@@ -31,6 +31,33 @@ public sealed record LayerInputs(
     /// in the line's ItemId), so the data holds a different one of them each day. The live line is read as
     /// all of them, a random pick, before the data is hashed or built: the answers match on any day.</summary>
     public IReadOnlyList<RandomShopItem> RandomShopItems { get; init; } = Array.Empty<RandomShopItem>();
+
+    /// <summary>Per qualified item id, the week (<see cref="YearTwoWeeks.First"/> to <see cref="YearTwoWeeks.Last"/>)
+    /// and effort (0 to <see cref="YearTwoWeeks.MaxEffort"/>) a year-2 route gives it, with the reason.</summary>
+    public IReadOnlyDictionary<string, YearTwoRuling> YearTwoRulings { get; init; }
+        = new Dictionary<string, YearTwoRuling>(StringComparer.Ordinal);
+
+    /// <summary>Maps (by location name) whose data routes are flagged as year 2 or Ginger Island.</summary>
+    public IReadOnlyDictionary<string, YearTwoFlag> YearTwoMaps { get; init; }
+        = new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal);
+
+    /// <summary>Shops (by shop id) whose data routes are flagged as year 2 or Ginger Island.</summary>
+    public IReadOnlyDictionary<string, YearTwoFlag> YearTwoShops { get; init; }
+        = new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal);
+}
+
+/// <summary>What a year-2 map or shop route is flagged as.</summary>
+public enum YearTwoFlag { YearTwo, GingerIsland }
+
+/// <summary>A hand-ruled year-2 availability: <see cref="Week"/>, <see cref="Effort"/> and why (<see cref="Basis"/>).</summary>
+public sealed record YearTwoRuling(int Week, int Effort, string Basis);
+
+/// <summary>The bounds of a <see cref="YearTwoRuling"/>.</summary>
+public static class YearTwoWeeks
+{
+    public const int First = 17;
+    public const int Last = 32;
+    public const int MaxEffort = 12;
 }
 
 /// <summary>A shop line that offers one of <see cref="ItemIds"/>, picked by the mod each day: the
@@ -116,9 +143,25 @@ public static class LayerFile
             throw new System.Text.Json.JsonException("FishSpawns holds a null row or a row with no Location or ItemId.");
         if (read.RandomShopItems != null && read.RandomShopItems.Any(r => r == null || string.IsNullOrWhiteSpace(r.ShopId) || r.ItemIds == null || r.ItemIds.Count == 0))
             throw new System.Text.Json.JsonException("RandomShopItems holds a null entry or one with no ShopId or ItemIds.");
+        if (read.YearTwoRulings != null)
+            foreach (var (id, ruling) in read.YearTwoRulings)
+            {
+                if (ruling == null) throw new System.Text.Json.JsonException($"YearTwoRulings {id} is null.");
+                if (ruling.Week < YearTwoWeeks.First || ruling.Week > YearTwoWeeks.Last)
+                    throw new System.Text.Json.JsonException($"YearTwoRulings {id}: Week {ruling.Week} is outside {YearTwoWeeks.First} to {YearTwoWeeks.Last}.");
+                if (ruling.Effort < 0 || ruling.Effort > YearTwoWeeks.MaxEffort)
+                    throw new System.Text.Json.JsonException($"YearTwoRulings {id}: Effort {ruling.Effort} is outside 0 to {YearTwoWeeks.MaxEffort}.");
+                if (string.IsNullOrWhiteSpace(ruling.Basis))
+                    throw new System.Text.Json.JsonException($"YearTwoRulings {id}: Basis is null or blank.");
+            }
+        RequireFlags(json, "YearTwoMaps");
+        RequireFlags(json, "YearTwoShops");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
+            YearTwoRulings = ToOrdinal(read.YearTwoRulings),
+            YearTwoMaps = ToOrdinal(read.YearTwoMaps),
+            YearTwoShops = ToOrdinal(read.YearTwoShops),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
                 : read.ExtraSources.ToDictionary(
@@ -132,6 +175,20 @@ public static class LayerFile
             RandomShopItems = read.RandomShopItems ?? Array.Empty<RandomShopItem>(),
             TextHash = HashText(json),
         };
+    }
+
+    private static IReadOnlyDictionary<string, T> ToOrdinal<T>(IReadOnlyDictionary<string, T>? map)
+        => map == null
+            ? new Dictionary<string, T>(StringComparer.Ordinal)
+            : map.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
+
+    /// <summary>A null flag would read as the first enum value, so it is refused naming the entry.</summary>
+    private static void RequireFlags(string json, string section)
+    {
+        if (System.Text.Json.Nodes.JsonNode.Parse(json)?[section] is not System.Text.Json.Nodes.JsonObject flags) return;
+        foreach (var (id, flag) in flags)
+            if (flag == null)
+                throw new System.Text.Json.JsonException($"{section} {id} is null.");
     }
 
     private static readonly string[] RequiredSourceMembers = { "Kind", "Lands", "Detail" };
