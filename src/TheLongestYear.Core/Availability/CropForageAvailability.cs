@@ -19,6 +19,7 @@ public static class CropForageAvailability
     private const int SingleLocationStep = 1;
     private const int RemoteLocationStep = 1;
     private const int SaplingEffort = 2;
+    private const string UnplacedSeedBasis = "crop, seed sold only outside year 1";
     private static readonly string[] RemoteMarkers = { "Woods", "Desert", "Island" };
 
     /// <param name="shopWeeks">When set, a crop whose seed has no <see cref="AvailabilityWeeks.SeedSourceWeeks"/>
@@ -26,7 +27,10 @@ public static class CropForageAvailability
     /// week, in a season it can still finish in: Stardew Valley Expanded's Gold Carrot seed is sold
     /// only by the Desert Trader, and read from its seasons alone the crop was a week-1 Spring
     /// harvest (mod-support work, 2026-10-08). A seed sold from week 1, or by no walkable shop at
-    /// all (Mixed Seeds, a mod's own framework), keeps the season arithmetic.</param>
+    /// all (Mixed Seeds, a mod's own framework), keeps the season arithmetic. A seed listed only at
+    /// shops outside year 1 (<see cref="ShopWeeks.UnplacedItems"/>: vanilla Pineapple from the
+    /// Island Trader, SVE's Joja Berry and Joja Veggie from Joja-route vendors) leaves the crop
+    /// unplaced, with no week.</param>
     public static ItemEffort? DeriveCrop(string qualifiedId, IReadOnlyList<RawCropGrowth> crops, WeekMode mode = WeekMode.Pacing,
         ShopWeeks? shopWeeks = null)
     {
@@ -38,6 +42,14 @@ public static class CropForageAvailability
             int growth = crop.GrowthDays <= QuickGrowthDays ? 0 : crop.GrowthDays <= MediumGrowthDays ? 1 : 2;
             int regrow = crop.Regrows || crop.Trellis ? RegrowStep : 0;
             int effort = BaseEffort + growth + regrow;
+            if (!AvailabilityWeeks.SeedSourceWeeks.ContainsKey(qualifiedId) && shopWeeks != null
+                && !string.IsNullOrEmpty(crop.SeedItemId)
+                && shopWeeks.UnplacedItems.Contains(BundleParsing.NormalizeItemId(crop.SeedItemId)))
+            {
+                if (best == null || (best.EarliestWeek == null && effort < best.Effort))
+                    best = new ItemEffort(effort, UnplacedSeedBasis);
+                continue;
+            }
             int? week = null;
             int hardWeek = 0;
             string? sold = null;

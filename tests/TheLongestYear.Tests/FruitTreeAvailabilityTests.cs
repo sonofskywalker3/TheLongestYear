@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Availability;
 using Xunit;
@@ -179,6 +180,32 @@ public class ShopWeeksTests
         Assert.True(shops.TryGet("(O)G", out _));
     }
 
+    /// <summary>A seed listed only at a shop no walk places, or only at a flagged one, is recorded
+    /// as sold outside year 1; one also sold at a reached shop is not, and a recipe or year-2 line
+    /// is a different fact.</summary>
+    [Fact]
+    public void Items_Sold_Only_At_Unplaced_Or_Flagged_Shops_Are_Recorded()
+    {
+        LocationWeeks walk = LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town") }, _ => false);
+        ShopWeeks shops = ShopWeeks.Build(
+            new[]
+            {
+                new RawShopListing("(O)Island", "Custom_IslandShop"),
+                new RawShopListing("(O)Joja", "JojaVendor"),
+                new RawShopListing("(O)Both", "Custom_IslandShop"),
+                new RawShopListing("(O)Both", "TownShop"),
+                new RawShopListing("(O)Recipe", "Custom_IslandShop", IsRecipe: true),
+                new RawShopListing("(O)Locked", "TownShop", LockedAfterYearOne: true),
+                new RawShopListing("Bare", "Custom_IslandShop"),
+            },
+            new[] { new RawShopPlacement("JojaVendor", "Town"), new RawShopPlacement("TownShop", "Town") },
+            walk,
+            new HashSet<string>(StringComparer.Ordinal) { "JojaVendor" });
+
+        Assert.Equal(new[] { "(O)Bare", "(O)Island", "(O)Joja" }, shops.UnplacedItems.OrderBy(id => id, StringComparer.Ordinal));
+        Assert.True(shops.TryGet("(O)Both", out _));
+    }
+
     /// <summary>A map the forbidden predicate rejects (a layer's year-2 map) is not reached, and
     /// neither is any map reached only through it.</summary>
     [Fact]
@@ -242,6 +269,23 @@ public class CropSeedShopWeekTests
         var crop = new[] { new RawCropGrowth("(O)Mod_Leek", 6, false, false, new[] { Season.Spring }, "(O)Mod_LeekSeed") };
         Assert.Null(CropForageAvailability.DeriveCrop("(O)Mod_Leek", crop, WeekMode.Pacing,
             Shops(new RawShopListing("(O)Mod_LeekSeed", "DesertTrade"))));
+    }
+
+    /// <summary>Vanilla Pineapple: its seed is sold only by the Island Trader, so the crop has
+    /// no year-1 week, though its seasons alone read as a Summer harvest.</summary>
+    [Fact]
+    public void A_Seed_Sold_Only_Outside_Year_One_Leaves_The_Crop_Unplaced()
+    {
+        var pineapple = new[] { new RawCropGrowth("(O)832", 14, true, false, new[] { Season.Summer }, "(O)833") };
+        ShopWeeks shops = Shops(new RawShopListing("(O)833", "Custom_IslandShop"));
+        Assert.Contains("(O)833", shops.UnplacedItems);
+
+        ItemEffort effort = CropForageAvailability.DeriveCrop("(O)832", pineapple, WeekMode.Pacing, shops)!;
+        Assert.Null(effort.EarliestWeek);
+        Assert.Null(effort.HardWeek);
+        Assert.Equal("crop, seed sold only outside year 1", effort.Basis);
+
+        Assert.NotNull(CropForageAvailability.DeriveCrop("(O)832", pineapple, WeekMode.Pacing, Shops())!.EarliestWeek);
     }
 
     [Fact]

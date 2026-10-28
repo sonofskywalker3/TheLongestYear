@@ -30,16 +30,30 @@ public sealed class ShopWeeks
         };
 
     private readonly IReadOnlyDictionary<string, PlaceWeek> _weeks;
+    private readonly IReadOnlySet<string> _unplaced;
 
-    private ShopWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks) => _weeks = weeks;
+    private ShopWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IReadOnlySet<string> unplaced)
+    {
+        _weeks = weeks;
+        _unplaced = unplaced;
+    }
 
-    /// <summary>The shop weeks as recorded (<see cref="Weeks"/>), for an offline rebuild of the
-    /// availability inputs (<see cref="Lexicon.AvailabilityInputs"/>).</summary>
-    internal static ShopWeeks FromWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks)
-        => new(new Dictionary<string, PlaceWeek>(weeks ?? throw new ArgumentNullException(nameof(weeks)), StringComparer.Ordinal));
+    /// <summary>The shop weeks and unplaced items as recorded (<see cref="Weeks"/>,
+    /// <see cref="UnplacedItems"/>), for an offline rebuild of the availability inputs
+    /// (<see cref="Lexicon.AvailabilityInputs"/>). Null unplaced = none.</summary>
+    internal static ShopWeeks FromWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IEnumerable<string>? unplaced = null)
+        => new(new Dictionary<string, PlaceWeek>(weeks ?? throw new ArgumentNullException(nameof(weeks)), StringComparer.Ordinal),
+            new HashSet<string>(unplaced ?? Array.Empty<string>(), StringComparer.Ordinal));
 
     /// <summary>Every item some walkable shop sells, with its earliest weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Weeks => _weeks;
+
+    /// <summary>Items (normalized ids) a non-recipe, year-1 listing sells only at shops that are
+    /// unplaced or flagged, so they have no <see cref="Weeks"/> entry: vanilla's Pineapple Seeds
+    /// (Island Trader), SVE's Joja Berry and Joja Veggie seeds (Joja-route vendors). An item no shop
+    /// lists at all is not here: nothing says where it comes from, so the rules keep their own
+    /// arithmetic for it.</summary>
+    public IReadOnlySet<string> UnplacedItems => _unplaced;
 
     /// <param name="flaggedShops">Shop ids a supported mod's layer marks as year-2 or Ginger Island
     /// content (<see cref="Obtainability.YearTwoMarks.Shops"/>): their listings are skipped, so a
@@ -66,15 +80,21 @@ public sealed class ShopWeeks
             Place(fixedShop.Key, fixedShop.Value);
 
         var weeks = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);
+        var unplaced = new HashSet<string>(StringComparer.Ordinal);
         foreach (RawShopListing listing in listings)
         {
             if (listing == null || listing.IsRecipe || listing.LockedAfterYearOne || string.IsNullOrEmpty(listing.ItemId)) continue;
-            if (flaggedShops != null && flaggedShops.Contains(listing.ShopId ?? "")) continue;
-            if (!shopWeek.TryGetValue(listing.ShopId ?? "", out PlaceWeek? week)) continue;
             string id = BundleParsing.NormalizeItemId(listing.ItemId);
+            if ((flaggedShops != null && flaggedShops.Contains(listing.ShopId ?? ""))
+                || !shopWeek.TryGetValue(listing.ShopId ?? "", out PlaceWeek? week))
+            {
+                unplaced.Add(id);
+                continue;
+            }
             weeks[id] = weeks.TryGetValue(id, out PlaceWeek? known) ? known.EarlierOf(week) : week;
         }
-        return new ShopWeeks(weeks);
+        unplaced.ExceptWith(weeks.Keys);
+        return new ShopWeeks(weeks, unplaced);
     }
 
     public bool TryGet(string qualifiedItemId, out PlaceWeek week)

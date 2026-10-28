@@ -21,6 +21,7 @@ public sealed record AvailabilityInputs(
     IReadOnlyList<PoolItem>? Metals, IReadOnlyList<string>? TrapFishIds,
     IReadOnlyDictionary<string, RawFishEntry>? FishRows,
     IReadOnlyDictionary<string, PlaceWeek>? LocationWeeks, IReadOnlyDictionary<string, PlaceWeek>? ShopWeeks,
+    IReadOnlyList<string>? UnplacedShopItems,
     IReadOnlyList<PoolItem>? Saplings, IReadOnlyList<PoolItem>? Artifacts, IReadOnlyList<PoolItem>? Books,
     EffortData? EffortData,
     IReadOnlyDictionary<string, Season>? SeasonOverrides, IReadOnlyDictionary<string, int>? EffortOverrides,
@@ -30,7 +31,9 @@ public sealed record AvailabilityInputs(
 {
     private const int HashChars = 16;
 
-    /// <summary>The projection of the live inputs; the trap fish set is sorted ordinally.</summary>
+    /// <summary>The projection of the live inputs; the trap fish set and the items sold only
+    /// outside year 1 (<see cref="ShopWeeks.UnplacedItems"/>, null when there are none) are sorted
+    /// ordinally.</summary>
     public static AvailabilityInputs From(
         ItemPools pools, EffortData? effortData,
         IReadOnlyDictionary<string, Season>? seasonOverrides, IReadOnlyDictionary<string, int>? effortOverrides,
@@ -42,6 +45,9 @@ public sealed record AvailabilityInputs(
             pools.TrapFishIds?.OrderBy(id => id, StringComparer.Ordinal).ToList(),
             pools.FishRows,
             pools.LocationWeeks?.Reached, pools.ShopWeeks?.Weeks,
+            pools.ShopWeeks?.UnplacedItems is { Count: > 0 } unplaced
+                ? unplaced.OrderBy(id => id, StringComparer.Ordinal).ToList()
+                : null,
             pools.Saplings, pools.Artifacts, pools.Books,
             effortData, seasonOverrides, effortOverrides, weekOverrides, yearTwoCapped,
             pools.CatchRates);
@@ -65,7 +71,7 @@ public sealed record AvailabilityInputs(
         TrapFishIds = new HashSet<string>(TrapFishIds ?? Array.Empty<string>(), StringComparer.Ordinal),
         FishRows = FishRows ?? new Dictionary<string, RawFishEntry>(),
         LocationWeeks = LocationWeeks == null ? null : Availability.LocationWeeks.FromReached(LocationWeeks),
-        ShopWeeks = ShopWeeks == null ? null : Availability.ShopWeeks.FromWeeks(ShopWeeks),
+        ShopWeeks = ShopWeeks == null ? null : Availability.ShopWeeks.FromWeeks(ShopWeeks, UnplacedShopItems),
         Saplings = Saplings ?? new List<PoolItem>(),
         Artifacts = Artifacts ?? new List<PoolItem>(),
         Books = Books ?? new List<PoolItem>(),
