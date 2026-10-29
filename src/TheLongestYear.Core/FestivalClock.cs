@@ -10,7 +10,8 @@ namespace TheLongestYear.Core;
 /// minutes. Spirit's Eve runs 22:00 to 23:50, which is under a minute and a half of real time to
 /// shop at Pierre's stall AND walk the haunted maze. While the player is on such a festival's
 /// grounds the game minute is stretched by <see cref="ExtraMillisecondsPerGameMinute"/>, fed into
-/// vanilla's own per-location knob <c>GameLocation.ExtraMillisecondsPerInGameMinute</c>.
+/// vanilla's own per-location knob <c>GameLocation.ExtraMillisecondsPerInGameMinute</c> on the
+/// festival's temporary map only (see <see cref="TargetExtraMs"/>).
 ///
 /// Only Spirit's Eve qualifies. The Moonlight Jellies were considered and left out: the jellies
 /// themselves are the festival's main event, a scripted sequence the game runs with
@@ -33,6 +34,28 @@ public static class FestivalClock
 
     /// <summary>Normal speed: the setting's top end, and today's behaviour.</summary>
     public const double NormalSpeed = 1.0;
+
+    /// <summary>The shipped default: half speed. The one place the default lives
+    /// (GameplayConfig.FestivalClockSlowdown and FestivalTimeFlow.ClockSpeed both read it).</summary>
+    public const double DefaultSpeed = 0.5;
+
+    /// <summary>
+    /// What the mod should write to the current location's ExtraMillisecondsPerInGameMinute this
+    /// tick: the slowed amount, or null for "this location is not ours to slow" (the caller then
+    /// puts back to 0 any value it wrote earlier, and leaves everything else alone).
+    ///
+    /// <paramref name="isTemporary"/> matters. At festival entry vanilla attaches the festival
+    /// event to the REAL Town first (GameLocation.checkForEvents) and only swaps to the festival's
+    /// temporary "Temp" map on a later tick (Event.changeToTemporaryMap). A write on that first
+    /// tick would land on the persistent Town, which the game keeps for the whole session, so only
+    /// the temporary map may be written.
+    /// </summary>
+    public static int? TargetExtraMs(bool featureOn, bool runActive, string? eventId, bool isTemporary,
+        double speed, int realMsPerGameMinute)
+    {
+        if (!featureOn || !runActive || !isTemporary || !IsSlowed(eventId)) return null;
+        return ExtraMillisecondsPerGameMinute(speed, realMsPerGameMinute);
+    }
 
     /// <summary>Vanilla festival event ids are "festival_&lt;season&gt;&lt;day&gt;".</summary>
     private const string FestivalEventPrefix = "festival_";

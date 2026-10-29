@@ -38,8 +38,19 @@ namespace TheLongestYear.Loop
         private static bool _pendingAutoEnd;
 
         /// <summary>Mirrors GameplayConfig.FestivalClockSlowdown: the clock speed at Spirit's Eve as a
-        /// fraction of normal (0.5 = half speed). Set by ModEntry at config load and from GMCM.</summary>
-        internal static double ClockSpeed = 0.5;
+        /// fraction of normal (0.5 = half speed). Set by ModEntry at config load and from GMCM.
+        /// The setter clamps, so <c>tly_festival state</c> prints the speed that actually runs.</summary>
+        internal static double ClockSpeed
+        {
+            get => _clockSpeed;
+            set => _clockSpeed = FestivalClock.ClampSpeed(value);
+        }
+        private static double _clockSpeed = FestivalClock.DefaultSpeed;
+
+        /// <summary>The location this mod last slowed, and the value it wrote, so the write can be
+        /// undone without touching a value another source (vanilla's MineShaft) set itself.</summary>
+        private static GameLocation _slowedLocation;
+        private static int _slowedValue;
 
         public static void Reset() => _pendingAutoEnd = false;
 
@@ -51,23 +62,42 @@ namespace TheLongestYear.Loop
         /// which <c>Game1.UpdateGameClock</c> adds to the real time each 10-minute advance waits for.
         /// The advance itself (<c>performTenMinuteClockUpdate</c>) still runs at every 10 game minutes,
         /// only further apart in real time, so nothing keyed to the clock is skipped or reordered.
-        /// The knob is set on the festival's temporary map, which the game throws away when the
-        /// festival ends, so the real Town never keeps it and there is nothing to undo.
-        /// Other festivals are left alone (their maps start at 0 and we never write them).
+        ///
+        /// Only the festival's temporary map is written (<see cref="FestivalClock.TargetExtraMs"/>):
+        /// on the entry tick the festival event is still attached to the real Town, and the knob is
+        /// not saved but does live on that location for the whole session. Any tick where there is
+        /// nothing to slow puts the last write back to 0, if it is still the value this mod wrote.
         /// </summary>
         public static void ApplyClockSpeed()
         {
-            if (!Enabled) return;
-            if (!Core.RunActivation.IsActive) return;
-            if (!Game1.isFestival()) return;
-            Event ev = Game1.CurrentEvent;
             GameLocation here = Game1.currentLocation;
-            if (ev == null || here == null) return;
-            if (!FestivalClock.IsSlowed(ev.id)) return;
+            Event ev = Game1.isFestival() ? Game1.CurrentEvent : null;
+            int? target = here == null ? null : FestivalClock.TargetExtraMs(
+                Enabled, Core.RunActivation.IsActive, ev?.id, here.IsTemporary,
+                ClockSpeed, Game1.realMilliSecondsPerGameMinute);
 
-            int extra = FestivalClock.ExtraMillisecondsPerGameMinute(ClockSpeed, Game1.realMilliSecondsPerGameMinute);
-            if (here.ExtraMillisecondsPerInGameMinute != extra)
-                here.ExtraMillisecondsPerInGameMinute = extra;
+            if (target is int extra)
+            {
+                if (_slowedLocation != null && !ReferenceEquals(_slowedLocation, here))
+                    Undo();
+                if (here.ExtraMillisecondsPerInGameMinute != extra)
+                    here.ExtraMillisecondsPerInGameMinute = extra;
+                _slowedLocation = here;
+                _slowedValue = extra;
+                return;
+            }
+
+            Undo();
+        }
+
+        /// <summary>Put the last slowed location back to 0 if it still holds our value.</summary>
+        private static void Undo()
+        {
+            if (_slowedLocation == null) return;
+            if (_slowedLocation.ExtraMillisecondsPerInGameMinute == _slowedValue)
+                _slowedLocation.ExtraMillisecondsPerInGameMinute = 0;
+            _slowedLocation = null;
+            _slowedValue = 0;
         }
 
         /// <summary>Returns true if a festival is active AND the in-game clock has reached its

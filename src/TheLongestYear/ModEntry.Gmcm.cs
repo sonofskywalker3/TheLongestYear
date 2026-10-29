@@ -131,7 +131,7 @@ namespace TheLongestYear
 
             gmcm.AddNumberOption(this.ModManifest,
                 getValue: () => (float)_config.FestivalClockSlowdown,
-                setValue: v => { _config.FestivalClockSlowdown = v; TheLongestYear.Loop.FestivalTimeFlow.ClockSpeed = v; },
+                setValue: v => { _config.FestivalClockSlowdown = Math.Round(v, 2); TheLongestYear.Loop.FestivalTimeFlow.ClockSpeed = _config.FestivalClockSlowdown; },
                 name: () => Strings.Get("gmcm.festival-clock.name"),
                 tooltip: () => Strings.Get("gmcm.festival-clock.tooltip"),
                 min: (float)FestivalClock.MinSpeed, max: (float)FestivalClock.NormalSpeed, interval: 0.05f,

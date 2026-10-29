@@ -108,6 +108,50 @@ public class FestivalClockTests
     [Fact]
     public void Default_config_is_half_speed()
     {
-        Assert.Equal(0.5, new GameplayConfig().FestivalClockSlowdown);
+        Assert.Equal(0.5, FestivalClock.DefaultSpeed);
+        Assert.Equal(FestivalClock.DefaultSpeed, new GameplayConfig().FestivalClockSlowdown);
+    }
+
+    [Fact]
+    public void Spirits_eve_temporary_map_gets_the_slowed_value()
+    {
+        Assert.Equal(700, FestivalClock.TargetExtraMs(
+            featureOn: true, runActive: true, "festival_fall27", isTemporary: true, 0.5, VanillaMsPerGameMinute));
+    }
+
+    [Fact]
+    public void Entry_tick_on_the_real_town_is_never_written()
+    {
+        // Vanilla attaches festival_fall27 to the persistent Town first and swaps to the "Temp"
+        // map a tick later. Writing that tick would slow the real Town for the whole session.
+        Assert.Null(FestivalClock.TargetExtraMs(
+            featureOn: true, runActive: true, "festival_fall27", isTemporary: false, 0.5, VanillaMsPerGameMinute));
+    }
+
+    [Fact]
+    public void Town_before_temp_then_temp_writes_only_the_temp_map()
+    {
+        int? entryTick = FestivalClock.TargetExtraMs(true, true, "festival_fall27", isTemporary: false, 0.5, VanillaMsPerGameMinute);
+        int? nextTick = FestivalClock.TargetExtraMs(true, true, "festival_fall27", isTemporary: true, 0.5, VanillaMsPerGameMinute);
+        Assert.Null(entryTick);
+        Assert.Equal(700, nextTick);
+    }
+
+    [Theory]
+    [InlineData(false, true, "festival_fall27", true)]   // festivals-cost-hours off
+    [InlineData(true, false, "festival_fall27", true)]   // not a TLY run
+    [InlineData(true, true, null, true)]                 // no festival up
+    [InlineData(true, true, "festival_summer28", true)]  // Moonlight Jellies: normal time
+    [InlineData(true, true, "festival_fall16", true)]    // the Fair: normal time
+    [InlineData(true, true, null, false)]                // ordinary day in the real Town
+    public void Nothing_to_slow_gives_no_write(bool featureOn, bool runActive, string? eventId, bool isTemporary)
+    {
+        Assert.Null(FestivalClock.TargetExtraMs(featureOn, runActive, eventId, isTemporary, 0.5, VanillaMsPerGameMinute));
+    }
+
+    [Fact]
+    public void Normal_speed_writes_zero_on_the_festival_map()
+    {
+        Assert.Equal(0, FestivalClock.TargetExtraMs(true, true, "festival_fall27", true, 1.0, VanillaMsPerGameMinute));
     }
 }

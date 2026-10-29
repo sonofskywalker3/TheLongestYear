@@ -220,7 +220,7 @@ public sealed class GameplayConfig
     /// fraction of normal: 0.5 = half speed (the default), 1.0 = normal. Normal time leaves too
     /// little to shop and walk the maze (Nexus, 2026-10-27). Every other festival keeps the normal
     /// clock. Clamped to [0.25, 1.0]; see <see cref="FestivalClock"/>. GMCM "Features".</summary>
-    public double FestivalClockSlowdown { get; set; } = 0.5;
+    public double FestivalClockSlowdown { get; set; } = FestivalClock.DefaultSpeed;
 
     /// <summary>Run each festival's main event (Egg Hunt, Luau soup, ice fishing, Flower Dance)
     /// at most once per day. Only meaningful while <see cref="FestivalTimeFlows"/> is on, which is
