@@ -37,16 +37,22 @@ public readonly record struct SeasonReading(SeasonVerdict Verdict, IReadOnlyList
 /// <item><c>LOCATION_SEASON &lt;loc&gt; a [b...]</c>, only for <c>Here</c> / <c>Target</c> (the
 /// row's own location; another map's season can differ from the calendar, e.g. IslandSouth).
 /// The game compares the arguments to the season KEY as strings, so only names count:
-/// "LOCATION_SEASON Here 1" never matches.</item>
+/// "LOCATION_SEASON Here 1" never matches. Here / Target read the location's OWN season
+/// (GameLocation.GetSeason honours a context or map SeasonOverride, e.g. the island's Summer), so
+/// for a row at an overridden location LOCATION_SEASON gives no signal at all.</item>
 /// </list>
 /// A clause the game would reject (a SEASON argument that is not a season, an odd SEASON_DAY
 /// pair) and a positive LOCATION_SEASON naming no season are skipped rather than read as
-/// impossible: we do not drop a row on a guess.</summary>
+/// impossible: we do not drop a row on a guess. For the same reason a row is only
+/// <see cref="SeasonVerdict.Impossible"/> when its calendar clauses (SEASON / SEASON_DAY) alone
+/// rule out every season; when a LOCATION_SEASON clause takes part in the contradiction the
+/// calendar clauses' seasons are kept (or Unknown when there are none).</summary>
 public static class SeasonClauses
 {
     private const string SeasonQuery = "SEASON";
     private const string SeasonDayQuery = "SEASON_DAY";
     private const string LocationSeasonQuery = "LOCATION_SEASON";
+    private const string PassiveFestivalOpenQuery = "IS_PASSIVE_FESTIVAL_OPEN";
     private const string HereLocation = "Here";
     private const string TargetLocation = "Target";
     private const char NegationPrefix = '!';
@@ -105,11 +111,14 @@ public static class SeasonClauses
     }
 
     /// <summary>The season verdict of a whole Condition: positive season clauses intersect,
-    /// negated SEASON / LOCATION_SEASON clauses subtract, everything else is skipped.</summary>
-    public static SeasonReading Read(string? condition)
+    /// negated SEASON / LOCATION_SEASON clauses subtract, everything else is skipped.
+    /// <paramref name="locationHasOwnSeason"/>: the row's location overrides its season (context or
+    /// map SeasonOverride), so LOCATION_SEASON Here / Target says nothing about the calendar.</summary>
+    public static SeasonReading Read(string? condition, bool locationHasOwnSeason = false)
     {
         if (string.IsNullOrWhiteSpace(condition)) return SeasonReading.Unknown;
-        HashSet<Season>? allowed = null;
+        HashSet<Season>? calendar = null;   // SEASON / SEASON_DAY only
+        HashSet<Season>? allowed = null;    // every season clause read
         foreach (string clause in Split(condition))
         {
             IReadOnlyList<string> args = Args(clause.Trim());
@@ -118,22 +127,53 @@ public static class SeasonClauses
             bool negated = key.Length > 1 && key[0] == NegationPrefix;
             if (negated) key = key.Substring(1);
 
+            bool locationQuery = string.Equals(key, LocationSeasonQuery, StringComparison.OrdinalIgnoreCase);
+            if (locationQuery && locationHasOwnSeason) continue;
             HashSet<Season>? named = NamedSeasons(key, args, negated);
             if (named == null) continue;
-            if (negated)
-            {
-                allowed ??= new HashSet<Season>(AllSeasons);
-                allowed.ExceptWith(named);
-            }
-            else if (allowed == null) allowed = named;
-            else allowed.IntersectWith(named);
+            allowed = Combine(allowed, named, negated);
+            if (!locationQuery) calendar = Combine(calendar, named, negated);
         }
         if (allowed == null) return SeasonReading.Unknown;
-        if (allowed.Count == 0) return SeasonReading.Impossible;
+        if (allowed.Count == 0)
+        {
+            // Only the calendar clauses can prove a row never fires; a LOCATION_SEASON clause in
+            // the contradiction may be reading a season the model cannot see.
+            if (calendar == null) return SeasonReading.Unknown;
+            if (calendar.Count == 0) return SeasonReading.Impossible;
+            allowed = calendar;
+        }
         var ordered = new List<Season>();
         foreach (Season s in AllSeasons)
             if (allowed.Contains(s)) ordered.Add(s);
         return new SeasonReading(SeasonVerdict.Seasons, ordered);
+    }
+
+    private static HashSet<Season> Combine(HashSet<Season>? set, HashSet<Season> named, bool negated)
+    {
+        if (negated)
+        {
+            set = set == null ? new HashSet<Season>(AllSeasons) : new HashSet<Season>(set);
+            set.ExceptWith(named);
+            return set;
+        }
+        if (set == null) return new HashSet<Season>(named);
+        set = new HashSet<Season>(set);
+        set.IntersectWith(named);
+        return set;
+    }
+
+    /// <summary>The festival ids of the top-level, non-negated <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c>
+    /// clauses, in order. Never looks inside ANY or another query's quoted arguments.</summary>
+    public static IEnumerable<string> PassiveFestivalsRequired(string? condition)
+    {
+        if (string.IsNullOrWhiteSpace(condition)) yield break;
+        foreach (string clause in Split(condition))
+        {
+            IReadOnlyList<string> args = Args(clause.Trim());
+            if (args.Count > 1 && string.Equals(args[0], PassiveFestivalOpenQuery, StringComparison.OrdinalIgnoreCase))
+                yield return args[1];
+        }
     }
 
     /// <summary>The seasons one season query names, or null when the clause is not one we read

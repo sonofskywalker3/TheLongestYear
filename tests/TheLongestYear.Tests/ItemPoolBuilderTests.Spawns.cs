@@ -309,13 +309,63 @@ public partial class ItemPoolBuilderTests
             ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"PLAYER_HAS_MAIL Current \\\"x, SEASON winter\" \"WEATHER Here rain\", SEASON summer"));
     }
 
+    /// <summary>LOCATION_SEASON Here / Target reads the location's own season, which a context or
+    /// map SeasonOverride can pin (the island is always Summer). There it says nothing about the
+    /// calendar, and a contradiction it takes part in never makes a row impossible.</summary>
+    [Fact]
+    public void ReadSpawnSeasons_LocationSeasonAtAnOverriddenLocation_IsNoSignal()
+    {
+        var own = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "SummerCove" };
+        SeasonReading atOwn = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "SummerCove", null, own);
+        Assert.Equal(SeasonVerdict.Seasons, atOwn.Verdict);
+        Assert.Equal(new[] { Season.Winter }, atOwn.Seasons);
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "SummerCove", null, own).Verdict);
+        // The same rows at a calendar location read as before.
+        Assert.Equal(new[] { Season.Spring, Season.Summer, Season.Fall },
+            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "Beach", null, own).Seasons);
+        // A LOCATION_SEASON clause in a contradiction keeps the calendar clauses' seasons, never Impossible.
+        SeasonReading atCalendar = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "Beach", null, own);
+        Assert.Equal(SeasonVerdict.Seasons, atCalendar.Verdict);
+        Assert.Equal(new[] { Season.Winter }, atCalendar.Seasons);
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer, !LOCATION_SEASON Here summer", "Beach").Verdict);
+    }
+
+    [Fact]
+    public void SeasonsFromSpawn_FestivalInsideAny_IsNotAGate()
+    {
+        var festivals = new Dictionary<string, Season> { ["NightMarket"] = Season.Winter };
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null,
+            "ANY \"SEASON spring\" \"YEAR 1, IS_PASSIVE_FESTIVAL_OPEN NightMarket, YEAR 1\"", "Beach", festivals));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!IS_PASSIVE_FESTIVAL_OPEN NightMarket", "Beach", festivals));
+        Assert.Equal(new[] { Season.Winter },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "YEAR 1, IS_PASSIVE_FESTIVAL_OPEN NightMarket", "Beach", festivals));
+    }
+
+    [Fact]
+    public void FishPool_OverriddenLocation_LocationSeasonDoesNotDropTheRow()
+    {
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("151", Obj(category: -4, price: 80, type: "Fish"))),
+            new List<RawSpawnEntry>(),
+            new[] { new RawSpawnEntry("151", null, "SEASON winter, LOCATION_SEASON Target summer", "SummerCove") },
+            new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
+            new List<RawGeodeDropEntry>(), Tuning,
+            ownSeasonLocations: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "SummerCove" });
+        Assert.Equal(new[] { Season.Winter }, pools.Fish.Single(p => p.ItemId == "(O)151").Seasons);
+    }
+
     [Fact]
     public void ReadSpawnSeasons_TellsUnknownSeasonsAndImpossibleApart()
     {
         Assert.Equal(SeasonVerdict.Unknown, ItemPoolBuilder.ReadSpawnSeasons(null, "!WEATHER Here rain", "Beach").Verdict);
         Assert.Equal(SeasonVerdict.Seasons, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring", "Beach").Verdict);
         Assert.Equal(SeasonVerdict.Impossible, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, !SEASON spring", "Beach").Verdict);
-        Assert.Equal(SeasonVerdict.Impossible, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, LOCATION_SEASON Here winter", "Beach").Verdict);
+        Assert.Equal(SeasonVerdict.Impossible, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, SEASON_DAY winter 5", "Beach").Verdict);
+        Assert.Equal(new[] { Season.Spring },   // LOCATION_SEASON took part: calendar clauses kept
+            ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, LOCATION_SEASON Here winter", "Beach").Seasons);
         Assert.True(ItemPoolBuilder.IsSeasonImpossible(null, "SEASON spring, !SEASON spring"));
         Assert.False(ItemPoolBuilder.IsSeasonImpossible(Season.Spring, "SEASON spring, !SEASON spring"));   // the field wins
         Assert.False(ItemPoolBuilder.IsSeasonImpossible(null, null));

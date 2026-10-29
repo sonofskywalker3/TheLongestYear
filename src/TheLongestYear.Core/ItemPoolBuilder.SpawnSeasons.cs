@@ -30,8 +30,6 @@ public static partial class ItemPoolBuilder
             ["DesertFestival"] = Season.Spring,
         };
 
-    private const string PassiveFestivalOpenQuery = "IS_PASSIVE_FESTIVAL_OPEN";
-    private static readonly char[] ConditionSeparators = { ' ', ',' };
     private static readonly char[] ClauseSeparator = { ',' };
 
     /// <summary>Game state queries that gate a Data/Locations row on a special order being
@@ -92,8 +90,9 @@ public static partial class ItemPoolBuilder
 
     /// <summary>True when a row's season clauses rule out every season, so the row never spawns
     /// and the pool builders drop it (the caller logs these).</summary>
-    public static bool IsSeasonImpossible(Season? season, string? condition)
-        => season == null && SeasonClauses.Read(condition).Verdict == SeasonVerdict.Impossible;
+    public static bool IsSeasonImpossible(Season? season, string? condition, string? location = null,
+        IReadOnlySet<string>? ownSeasonLocations = null)
+        => ReadSpawnSeasons(season, condition, location, null, ownSeasonLocations).Verdict == SeasonVerdict.Impossible;
 
     /// <summary>The season verdict for one spawn entry. An explicit Season wins. Otherwise the
     /// Condition's season queries decide (<see cref="SeasonClauses.Read"/>): these seasons, or
@@ -108,26 +107,27 @@ public static partial class ItemPoolBuilder
     /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as any
     /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
     /// row makes the whole fish any-season.</summary>
+    /// <param name="ownSeasonLocations">Locations whose season is overridden (a location context's
+    /// or the map's SeasonOverride, e.g. the island's Summer): there LOCATION_SEASON Here / Target
+    /// reads that season, not the calendar's, so it gives no signal. Null = none known.</param>
     public static SeasonReading ReadSpawnSeasons(
         Season? season, string? condition, string? location,
-        IReadOnlyDictionary<string, Season>? festivalSeasons = null)
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null,
+        IReadOnlySet<string>? ownSeasonLocations = null)
     {
         if (season != null)
             return new SeasonReading(SeasonVerdict.Seasons, new[] { season.Value });
 
-        SeasonReading fromCondition = SeasonClauses.Read(condition);
+        bool ownSeason = location != null && ownSeasonLocations != null && ownSeasonLocations.Contains(location);
+        SeasonReading fromCondition = SeasonClauses.Read(condition, ownSeason);
         if (fromCondition.Verdict != SeasonVerdict.Unknown)
             return fromCondition;
 
-        string[] tokens = (condition ?? "").Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries);
         string? festival = null;
         if (!string.IsNullOrEmpty(location) && BuiltInFestivalLocations.TryGetValue(location, out string? byLocation))
             festival = byLocation;
-        for (int i = 0; festival == null && i + 1 < tokens.Length; i++)
-        {
-            if (string.Equals(tokens[i], PassiveFestivalOpenQuery, StringComparison.OrdinalIgnoreCase))
-                festival = tokens[i + 1];
-        }
+        // Only a top-level, non-negated clause: a festival inside ANY is one alternative, not a gate.
+        festival ??= SeasonClauses.PassiveFestivalsRequired(condition).FirstOrDefault();
         if (festival != null)
         {
             if (festivalSeasons != null && festivalSeasons.TryGetValue(festival, out Season fromData))
