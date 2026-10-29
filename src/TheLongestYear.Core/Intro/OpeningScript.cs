@@ -27,8 +27,8 @@ public static class OpeningScript
         Prefix + "lewis-hall-1", Prefix + "lewis-hall-2",
         Prefix + "junimo-1", Prefix + "junimo-2", Prefix + "junimo-3", Prefix + "junimo-4",
         Prefix + "junimo-5", Prefix + "junimo-6", Prefix + "junimo-7", Prefix + "junimo-8",
-        Prefix + "tour-1", Prefix + "tour-2", Prefix + "tour-3", Prefix + "tour-4", Prefix + "tour-5", Prefix + "tour-6",
-        Prefix + "tour-herd", Prefix + "tour-7", Prefix + "tour-8", Prefix + "tour-9",
+        Prefix + "tour-1", Prefix + "tour-2", Prefix + "tour-3", Prefix + "tour-book", Prefix + "tour-4", Prefix + "tour-5",
+        Prefix + "tour-herd", Prefix + "tour-6", Prefix + "tour-7", Prefix + "tour-8", Prefix + "tour-9",
     };
 
     public static string Build(Func<string, string> text, string ccSeenMail)
@@ -264,24 +264,15 @@ public static class OpeningScript
             Say("Junimo1", "tour-3"),
             "pause 300",
             "faceDirection farmer 1",
-            HoldUp(Interactables.BookKit.CookbookId),
-            Say("Junimo0", "tour-4"),
-            HandOver(Interactables.BookKit.CookbookId),
-            "pause 3000",
-            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
-            HoldUp(Interactables.BookKit.CraftbookId),
-            Say("Junimo0", "tour-5"),
-            HandOver(Interactables.BookKit.CraftbookId),
+            // One book with a page per section (2026-10-28): it is named once, then each page.
+            HoldUp(Interactables.OneBook.BookId),
+            SayPages("Junimo0", "tour-book", "tour-4", "tour-5", "tour-herd"),
+            HandOver(Interactables.OneBook.BookId),
             "pause 3000",
             "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             HoldUp(Interactables.BookKit.BundleLogId),
             Say("Junimo0", "tour-6"),
             HandOver(Interactables.BookKit.BundleLogId),
-            "pause 3000",
-            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
-            HoldUp(Interactables.BookKit.HerdBookId),
-            Say("Junimo0", "tour-herd"),
-            HandOver(Interactables.BookKit.HerdBookId),
             "pause 3000",
             "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
             SayPages("Junimo0", "tour-7", "tour-8", "tour-9"),

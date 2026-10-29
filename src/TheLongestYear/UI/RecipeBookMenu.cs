@@ -78,15 +78,24 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollUp;
         private ClickableTextureComponent _scrollDown;
 
+        /// <summary>Screen width kept free on the left for the <see cref="OneBookMenu"/> tab strip
+        /// (0 when the page is shown on its own).</summary>
+        private readonly int _leftInset;
+
+        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>), restored after the
+        /// remove confirmation; null when the page is the active menu itself.</summary>
+        internal IClickableMenu Host { get; set; }
+
         /// <param name="tierPrefix">Upgrade id prefix of the book's tier ladder ("cookbook_").</param>
         /// <param name="slotCountFor">Slot count for a tier (<see cref="UpgradeCatalog.CookbookSlotCount"/>).</param>
         /// <param name="isCooking">Cooking recipes (true) or crafting recipes (false), for display names.</param>
         /// <param name="rowIdBase">First row control id; the scroll ids follow the book's own range.</param>
         protected RecipeBookMenu(IMonitor monitor, MetaState meta, string subtitle,
             string tierPrefix, Func<int, int> slotCountFor, bool isCooking, string dismissKey,
-            int rowIdBase, int scrollUpId, int scrollDownId)
+            int rowIdBase, int scrollUpId, int scrollDownId, int leftInset = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
+            _leftInset = leftInset;
             _monitor = monitor;
             _meta    = meta;
             _subtitle = subtitle;
@@ -114,9 +123,9 @@ namespace TheLongestYear.UI
 
         private void RecomputeLayout()
         {
-            width  = Math.Min(PanelWidth,  Game1.uiViewport.Width  - 64);
+            width  = Math.Min(PanelWidth,  Game1.uiViewport.Width  - 64 - _leftInset);
             height = Math.Min(PanelHeight, Game1.uiViewport.Height - 64);
-            xPositionOnScreen = (Game1.uiViewport.Width  - width)  / 2;
+            xPositionOnScreen = _leftInset + (Game1.uiViewport.Width - _leftInset - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPad;
@@ -304,9 +313,9 @@ namespace TheLongestYear.UI
                     Game1.playSound("trashcan");
                     _monitor.Log($"{GetType().Name}: removed recipe '{recipeId}' from slot {slotIndex}.", LogLevel.Trace);
                     RecomputeLayout();   // the over-cap notice may have just cleared
-                    Game1.activeClickableMenu = this;
+                    Game1.activeClickableMenu = Host ?? this;
                 },
-                _ => Game1.activeClickableMenu = this);
+                _ => Game1.activeClickableMenu = Host ?? this);
         }
 
         private void Scroll(int delta)

@@ -10,9 +10,9 @@ namespace TheLongestYear.UI
     /// from the placeable Cookbook. Everything else lives in <see cref="RecipeBookMenu"/>.</summary>
     internal sealed class CookbookMenu : RecipeBookMenu
     {
-        public CookbookMenu(IMonitor monitor, MetaState meta, string subtitle = null)
+        public CookbookMenu(IMonitor monitor, MetaState meta, string subtitle = null, int leftInset = 0)
             : base(monitor, meta, subtitle, "cookbook_", UpgradeCatalog.CookbookSlotCount, isCooking: true,
-                IntroQuestIds.LegacyCookbookDismissed, rowIdBase: 8100, scrollUpId: 8900, scrollDownId: 8901)
+                IntroQuestIds.LegacyCookbookDismissed, rowIdBase: 8100, scrollUpId: 8900, scrollDownId: 8901, leftInset)
         {
         }
 

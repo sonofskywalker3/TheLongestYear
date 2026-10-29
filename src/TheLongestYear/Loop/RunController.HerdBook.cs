@@ -6,8 +6,9 @@ using TheLongestYear.Core;
 namespace TheLongestYear.Loop
 {
     /// <summary>The Herd Book's place in the rewind night (spec 2026-09-25, section 4): after the
-    /// Cookbook and Craftbook, open it when an owned slot is empty and an animal on the farm fits it,
-    /// then continue to the reset once it closes. Same watchdog as the books and the shrine.</summary>
+    /// Cookbook and Craftbook, open the book on its Herd Book tab when an owned slot is empty and an
+    /// animal on the farm fits it, then continue to the reset once it closes. Same watchdog as the
+    /// other tabs and the shrine.</summary>
     internal sealed partial class RunController
     {
         private void OfferHerdBook(System.Action onContinue)
@@ -25,12 +26,8 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            WatchRewindMenu(
-                "Herd Book",
-                $"slots={slots.Count}, registered={registered}, animals={live.Count}",
-                () => _launcher.OpenHerdBook(Strings.Get("menu.herdbook.bank-before-reset")),
-                menu => menu is TheLongestYear.UI.HerdBookMenu,
-                onContinue);
+            OfferBookTab(TheLongestYear.Core.Interactables.BookTab.HerdBook, "Herd Book",
+                $"slots={slots.Count}, registered={registered}, animals={live.Count}", onContinue);
         }
     }
 }

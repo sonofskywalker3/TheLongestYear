@@ -65,9 +65,9 @@ namespace TheLongestYear.DebugCommands
         private static void List(IMonitor monitor, MetaState meta)
         {
             var slots = HerdBookRules.SlotsFor(meta);
-            int held = Game1.player.Items.Count(i => i?.ItemId == BookKit.HerdBookId);
+            int held = Game1.player.Items.Count(i => i?.ItemId == OneBook.BookId);
             int placed = 0;
-            Utility.ForEachLocation(loc => { placed += loc.furniture.Count(f => f.ItemId == BookKit.HerdBookId); return true; });
+            Utility.ForEachLocation(loc => { placed += loc.furniture.Count(f => f.ItemId == OneBook.BookId); return true; });
             monitor.Log(
                 $"tly_herdbook: {slots.Count} slots, {HerdBookRules.Used(meta.HerdBook, slots.Count)} registered; " +
                 $"book held={held} placed={placed}.",

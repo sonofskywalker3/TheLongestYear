@@ -62,9 +62,18 @@ namespace TheLongestYear.UI
 
         private int HeaderHeight => _subtitle == null ? HeaderPlain : HeaderWithSubtitle;
 
-        public HerdBookMenu(IMonitor monitor, MetaState meta, string subtitle = null)
+        /// <summary>Screen width kept free on the left for the <see cref="OneBookMenu"/> tab strip
+        /// (0 when the page is shown on its own).</summary>
+        private readonly int _leftInset;
+
+        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>), restored after the
+        /// remove confirmation; null when the page is the active menu itself.</summary>
+        internal IClickableMenu Host { get; set; }
+
+        public HerdBookMenu(IMonitor monitor, MetaState meta, string subtitle = null, int leftInset = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
+            _leftInset = leftInset;
             _monitor = monitor;
             _meta = meta;
             _subtitle = subtitle;
@@ -85,9 +94,9 @@ namespace TheLongestYear.UI
 
         private void RecomputeLayout()
         {
-            width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64);
+            width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64 - _leftInset);
             height = Math.Min(PanelHeight, Game1.uiViewport.Height - 64);
-            xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
+            xPositionOnScreen = _leftInset + (Game1.uiViewport.Width - _leftInset - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPad;
@@ -220,9 +229,9 @@ namespace TheLongestYear.UI
                 {
                     HerdBookService.Remove(_meta, slotIndex, _monitor);
                     Game1.playSound("trashcan");
-                    Game1.activeClickableMenu = this;
+                    Game1.activeClickableMenu = Host ?? this;
                 },
-                _ => Game1.activeClickableMenu = this);
+                _ => Game1.activeClickableMenu = Host ?? this);
         }
 
         private void Scroll(int delta)
