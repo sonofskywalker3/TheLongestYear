@@ -45,9 +45,10 @@ namespace TheLongestYear.Core.Interactables
 
         /// <summary>The three books the combined one replaced. Their Data/Furniture rows stay so a
         /// copy the sweep cannot reach is never an Error Item, and still opens its tab.</summary>
-        public static readonly string[] RetiredIds = { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId };
+        public static readonly IReadOnlyList<string> RetiredIds =
+            Array.AsReadOnly(new[] { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId });
 
-        public static bool IsRetired(string itemId) => System.Array.IndexOf(RetiredIds, itemId) >= 0;
+        public static bool IsRetired(string itemId) => RetiredIds.Contains(itemId);
 
         /// <summary>The tab a retired book stands for.</summary>
         public static BookTab? TabForRetired(string itemId) => itemId switch
@@ -102,7 +103,8 @@ namespace TheLongestYear.Core.Interactables
             return tabs[next];
         }
 
-        private static int IndexOf(IReadOnlyList<BookTab> tabs, BookTab tab)
+        /// <summary>Where <paramref name="tab"/> sits in <paramref name="tabs"/>, or -1.</summary>
+        public static int IndexOf(IReadOnlyList<BookTab> tabs, BookTab tab)
         {
             for (int i = 0; i < tabs.Count; i++)
                 if (tabs[i] == tab) return i;

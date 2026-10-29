@@ -126,6 +126,11 @@ namespace TheLongestYear.Integration
             }
         }
 
+        /// <summary>Every copy of the combined book and the retired books, in the same places the
+        /// reconcile looks (for <c>tly_herdbook</c>).</summary>
+        internal static List<(BookCopy Copy, string Where)> ListBookCopies(StardewValley.Farmer p)
+            => FindBookCopies(p).Select(f => (f.Copy, f.Where)).ToList();
+
         private static List<FoundCopy> FindBookCopies(StardewValley.Farmer p)
         {
             var found = new List<FoundCopy>();

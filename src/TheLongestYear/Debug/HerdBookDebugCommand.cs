@@ -65,12 +65,15 @@ namespace TheLongestYear.DebugCommands
         private static void List(IMonitor monitor, MetaState meta)
         {
             var slots = HerdBookRules.SlotsFor(meta);
-            int held = Game1.player.Items.Count(i => i?.ItemId == OneBook.BookId);
-            int placed = 0;
-            Utility.ForEachLocation(loc => { placed += loc.furniture.Count(f => f.ItemId == OneBook.BookId); return true; });
+            // The same places the book reconcile counts: bag, floor or table, chest or fridge.
+            var copies = TheLongestYear.Integration.BookFurniture.ListBookCopies(Game1.player);
+            int held = copies.Count(c => !c.Copy.IsRetired && c.Copy.Spot == BookSpot.Carried);
+            int placed = copies.Count(c => !c.Copy.IsRetired && c.Copy.Spot == BookSpot.Placed);
+            int stored = copies.Count(c => !c.Copy.IsRetired && c.Copy.Spot == BookSpot.Stored);
+            int retired = copies.Count(c => c.Copy.IsRetired);
             monitor.Log(
                 $"tly_herdbook: {slots.Count} slots, {HerdBookRules.Used(meta.HerdBook, slots.Count)} registered; " +
-                $"book held={held} placed={placed}.",
+                $"book held={held} placed={placed} stored={stored}, retired books left={retired}.",
                 LogLevel.Info);
             for (int i = 0; i < slots.Count; i++)
             {

@@ -33,9 +33,9 @@ namespace TheLongestYear.UI
         private const int TabHeight = 48;
         private const int TabSpacing = 4;
         private const int TabGap = 8;
-        /// <summary>The first tab lines up with the page's first row (the pages' plain header).</summary>
-        private const int TabTop = 80;
         private const int TabIdBase = 8700;
+        /// <summary>One control id per possible tab, from <see cref="TabIdBase"/>.</summary>
+        private static readonly int MaxTabs = Enum.GetValues(typeof(BookTab)).Length;
         private const int NoNeighbor = -1;
 
         /// <summary>Screen width each page leaves free on its left for the strip.</summary>
@@ -110,12 +110,8 @@ namespace TheLongestYear.UI
             _monitor.Log($"Book: showing the {tab} tab (tabs: {string.Join(", ", _tabs)}).", LogLevel.Trace);
         }
 
-        private int IndexOf(BookTab tab)
-        {
-            for (int i = 0; i < _tabs.Count; i++)
-                if (_tabs[i] == tab) return i;
-            return 0;
-        }
+        /// <summary>The tab's place in the strip (0 when it is not shown).</summary>
+        private int IndexOf(BookTab tab) => Math.Max(0, OneBook.IndexOf(_tabs, tab));
 
         private void SwitchTo(BookTab tab, bool snapToTab)
         {
@@ -144,10 +140,13 @@ namespace TheLongestYear.UI
             height = _page.height;
             upperRightCloseButton = _page.upperRightCloseButton;
 
+            // The first tab lines up with the page's first row, below a taller header when the
+            // page shows a subtitle (the rewind night) or the over-cap notice.
+            int tabTop = ((IBookPage)_page).HeaderHeight;
             _tabButtons.Clear();
             for (int i = 0; i < _tabs.Count; i++)
             {
-                var bounds = new Rectangle(xPositionOnScreen, _page.yPositionOnScreen + TabTop + i * (TabHeight + TabSpacing),
+                var bounds = new Rectangle(xPositionOnScreen, _page.yPositionOnScreen + tabTop + i * (TabHeight + TabSpacing),
                     TabWidth, TabHeight);
                 _tabButtons.Add(new ClickableComponent(bounds, _tabs[i].ToString())
                 {
@@ -170,7 +169,7 @@ namespace TheLongestYear.UI
             allClickableComponents = components;
         }
 
-        private static bool IsTabButton(ClickableComponent c) => c.myID >= TabIdBase && c.myID < TabIdBase + 3;
+        private static bool IsTabButton(ClickableComponent c) => c.myID >= TabIdBase && c.myID < TabIdBase + MaxTabs;
 
         private BookTab? TabAt(int x, int y)
         {
@@ -241,8 +240,11 @@ namespace TheLongestYear.UI
         public override void update(GameTime time)
         {
             _page.update(time);
-            // The page rebuilt its components (a recipe removed): put the tabs back.
-            if (_tabButtons.Count > 0 && _page.allClickableComponents?.Contains(_tabButtons[0]) != true)
+            // The page rebuilt its components (a recipe removed) or its header changed height (the
+            // over-cap notice cleared): put the tabs back in line.
+            if (_tabButtons.Count > 0
+                && (_page.allClickableComponents?.Contains(_tabButtons[0]) != true
+                    || _tabButtons[0].bounds.Y != _page.yPositionOnScreen + ((IBookPage)_page).HeaderHeight))
                 SyncLayout();
             currentlySnappedComponent = _page.currentlySnappedComponent;
         }
@@ -265,14 +267,16 @@ namespace TheLongestYear.UI
             }
         }
 
+        /// <summary>Dim the screen, then the tabs, then the page: a hosted page skips its own
+        /// dimming (<see cref="IBookPage.Host"/>), so its cursor and any hover text are drawn
+        /// once, above the tabs.</summary>
         public override void draw(SpriteBatch b)
         {
-            _page.draw(b);
+            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+                Color.Black * 0.5f);
             for (int i = 0; i < _tabButtons.Count; i++)
                 TabStrip.DrawTab(b, _tabButtons[i].bounds, TabLabel(_tabs[i]), _tabs[i] == ActiveTab);
-            // The page drew the cursor before the tabs; draw it again on top.
-            Game1.mouseCursorTransparency = 1f;
-            drawMouse(b);
+            _page.draw(b);
         }
 
         private static string TabLabel(BookTab tab) => tab switch

@@ -11,7 +11,8 @@ using TheLongestYear.Core;
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// Slot-grid menu for managing banked recipes, shared by the <see cref="CookbookMenu"/> and the
+    /// Slot-grid page for managing banked recipes, shown as a tab of the one book
+    /// (<see cref="OneBookMenu"/>), shared by the <see cref="CookbookMenu"/> and the
     /// <see cref="CraftbookMenu"/>, which differ only in which recipe list they bank into, their
     /// tier ladder, their control ids and their two titles.
     ///
@@ -24,7 +25,7 @@ namespace TheLongestYear.UI
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets the book's legacy dismissal key
     /// (<see cref="IntroQuestIds"/>).
     /// </summary>
-    internal abstract class RecipeBookMenu : IClickableMenu, IRecipeBookMenu
+    internal abstract class RecipeBookMenu : IClickableMenu, IRecipeBookMenu, IBookPage
     {
         private const int PanelWidth  = 900;
         private const int PanelHeight = 640;
@@ -62,7 +63,7 @@ namespace TheLongestYear.UI
         /// over-cap notice while the book holds more recipes than it has slots, else nothing.</summary>
         private string Notice => _subtitle
             ?? (RecipeBanking.IsOverCap(_slotCount, Banked.Count) ? Strings.Get("menu.books.over-cap") : null);
-        private int HeaderHeight => Notice == null ? 80 : 120;
+        public int HeaderHeight => Notice == null ? 80 : 120;
 
         /// <summary>Rows drawn: every slot plus any grandfathered overflow.</summary>
         private int RowCount => RecipeBanking.VisibleRows(_slotCount, Banked.Count);
@@ -82,9 +83,9 @@ namespace TheLongestYear.UI
         /// (0 when the page is shown on its own).</summary>
         private readonly int _leftInset;
 
-        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>), restored after the
-        /// remove confirmation; null when the page is the active menu itself.</summary>
-        internal IClickableMenu Host { get; set; }
+        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>); null when the page is
+        /// the active menu itself.</summary>
+        public IClickableMenu Host { get; set; }
 
         /// <param name="tierPrefix">Upgrade id prefix of the book's tier ladder ("cookbook_").</param>
         /// <param name="slotCountFor">Slot count for a tier (<see cref="UpgradeCatalog.CookbookSlotCount"/>).</param>
@@ -354,9 +355,10 @@ namespace TheLongestYear.UI
 
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect,
-                new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
-                Color.Black * 0.5f);
+            if (Host == null)   // a hosting book dims the screen itself, under its tabs
+                b.Draw(Game1.fadeToBlackRect,
+                    new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height),
+                    Color.Black * 0.5f);
 
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 

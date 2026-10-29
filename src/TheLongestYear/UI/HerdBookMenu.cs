@@ -12,15 +12,16 @@ using TheLongestYear.Loop;
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// The Herd Book (spec 2026-09-25), laid out like <see cref="CookbookMenu"/>. One row per owned
+    /// The Herd Book tab of the one book (spec 2026-09-25; <see cref="OneBookMenu"/>), laid out like
+    /// <see cref="CookbookMenu"/>. One row per owned
     /// slot in ladder order, labeled with its kind. An empty row opens a picker of the farm animals
     /// that slot accepts and that are not registered yet; a filled row asks to remove the animal.
     /// Animal rows (picker and filled slots) are drawn like the game's Animals tab by
     /// <see cref="AnimalRowRenderer"/>. A row whose building keep is not owned says which keep it needs.
-    /// Opened from the placed book, <c>tly_openherdbook</c>, and the rewind night
-    /// (RunController.OfferHerdBook, with a subtitle).
+    /// Shown when the book is opened on its Herd Book tab: from the placed book, <c>tly_openherdbook</c>,
+    /// and the rewind night (RunController.OfferHerdBook through OfferBookTab, with a subtitle).
     /// </summary>
-    internal sealed class HerdBookMenu : IClickableMenu
+    internal sealed class HerdBookMenu : IClickableMenu, IBookPage
     {
         // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
         // never overlap; the panel grows to match. Base sizes kept in comments for reference.
@@ -60,15 +61,15 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollUp;
         private ClickableTextureComponent _scrollDown;
 
-        private int HeaderHeight => _subtitle == null ? HeaderPlain : HeaderWithSubtitle;
+        public int HeaderHeight => _subtitle == null ? HeaderPlain : HeaderWithSubtitle;
 
         /// <summary>Screen width kept free on the left for the <see cref="OneBookMenu"/> tab strip
         /// (0 when the page is shown on its own).</summary>
         private readonly int _leftInset;
 
-        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>), restored after the
-        /// remove confirmation; null when the page is the active menu itself.</summary>
-        internal IClickableMenu Host { get; set; }
+        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>); null when the page is
+        /// the active menu itself.</summary>
+        public IClickableMenu Host { get; set; }
 
         public HerdBookMenu(IMonitor monitor, MetaState meta, string subtitle = null, int leftInset = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
@@ -257,7 +258,8 @@ namespace TheLongestYear.UI
 
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
+            if (Host == null)   // a hosting book dims the screen itself, under its tabs
+                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             string title = _pickerList != null

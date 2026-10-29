@@ -6,8 +6,9 @@ using TheLongestYear.Core;
 namespace TheLongestYear.UI
 {
     /// <summary>The Craftbook: banks crafting recipes in <see cref="MetaState.CraftbookRecipes"/>, with
-    /// <see cref="UpgradeCatalog.CraftbookSlotCount"/> slots for the highest owned craftbook tier. Opened
-    /// from the placeable Craftbook. Everything else lives in <see cref="RecipeBookMenu"/>.</summary>
+    /// <see cref="UpgradeCatalog.CraftbookSlotCount"/> slots for the highest owned craftbook tier. The
+    /// Craftbook tab of the one book (<see cref="OneBookMenu"/>). Everything else lives in
+    /// <see cref="RecipeBookMenu"/>.</summary>
     internal sealed class CraftbookMenu : RecipeBookMenu
     {
         public CraftbookMenu(IMonitor monitor, MetaState meta, string subtitle = null, int leftInset = 0)

@@ -121,6 +121,35 @@ public class OneBookTests
         Assert.Equal(new[] { 0, 2 }, plan.Remove);
     }
 
+    [Theory]
+    [InlineData(Stored)]
+    [InlineData(Carried)]
+    public void A_combined_book_stays_put_and_a_placed_retired_book_goes(BookSpot newSpot)
+    {
+        // The combined book already exists, so the retired one on the shelf is removed rather
+        // than swapped: the book is never moved, and the shelf spot is simply freed.
+        BookReconcilePlan plan = OneBook.Plan(new[] { Old(Placed), New(newSpot) }, owned: true);
+        Assert.Equal(new[] { 0 }, plan.Remove);
+        Assert.Null(plan.ReplaceAt);
+        Assert.False(plan.Grant);
+    }
+
+    [Fact]
+    public void Step_from_a_tab_that_is_not_shown_counts_from_the_first_tab()
+    {
+        BookTab[] tabs = { Cookbook, HerdBook };
+        Assert.Equal(HerdBook, OneBook.Step(tabs, Craftbook, +1));
+        Assert.Equal(HerdBook, OneBook.Step(tabs, Craftbook, -1));
+        Assert.Equal(Craftbook, OneBook.Step(new BookTab[0], Craftbook, +1));
+    }
+
+    [Fact]
+    public void IndexOf_finds_a_tab_or_returns_minus_one()
+    {
+        Assert.Equal(1, OneBook.IndexOf(new[] { Cookbook, HerdBook }, HerdBook));
+        Assert.Equal(-1, OneBook.IndexOf(new[] { Cookbook, HerdBook }, Craftbook));
+    }
+
     [Fact]
     public void Duplicate_new_books_keep_the_placed_one()
     {
