@@ -316,6 +316,156 @@ public class BanishTests
             BanishCandidates.Items(board).OrderBy(x => x, StringComparer.Ordinal));
     }
 
+    [Fact]
+    public void Pick_list_leaves_out_a_bundle_that_is_the_only_candidate_somewhere()
+    {
+        var positions = new Dictionary<string, IReadOnlyList<IReadOnlyList<string>>>
+        {
+            ["Pantry"] = new List<IReadOnlyList<string>> { new[] { "Orchard", "Quality Crops" }, new[] { "Animal", "Animal II" } },
+            ["Vault"] = new List<IReadOnlyList<string>> { new[] { "2,500g" } },
+        };
+        IReadOnlySet<string> sole = BanishCandidates.SoleCandidates(positions);
+        Assert.Equal(new[] { "Animal" }, sole);
+
+        var board = new Dictionary<string, string>
+        {
+            ["Pantry/1"] = "Orchard/O 1 1/613 1 0/0/1",
+            ["Pantry/2"] = "Animal/O 1 1/176 1 0/0/1",
+        };
+        Assert.Equal(new[] { "Orchard" }, BanishCandidates.Bundles(board, sole).Select(b => b.Name));
+    }
+
+    // ---------- take-back re-pricing ----------
+
+    [Fact]
+    public void Taking_back_the_first_banish_re_prices_the_second_to_the_first_step()
+    {
+        var s = new MetaState { JunimoPoints = 300 };
+        BanishRules.Buy(s, BanishKind.Item, "(O)1", "a");   // 100
+        BanishRules.Buy(s, BanishKind.Item, "(O)2", "b");   // 200
+        Assert.Equal(200, BanishRules.Cancel(s, 0));       // 100 back + 100 overpaid on b
+        Assert.Equal(100, s.PendingBanishes[0].Paid);
+        BanishRules.Buy(s, BanishKind.Item, "(O)3", "c");   // 200
+        Assert.Equal(300, s.PendingBanishes.Sum(p => p.Paid));
+        Assert.Equal(0, s.JunimoPoints);
+    }
+
+    [Fact]
+    public void Taking_back_the_second_banish_leaves_the_first_alone()
+    {
+        var s = new MetaState { JunimoPoints = 300 };
+        BanishRules.Buy(s, BanishKind.Item, "(O)1", "a");
+        BanishRules.Buy(s, BanishKind.Item, "(O)2", "b");
+        Assert.Equal(200, BanishRules.Cancel(s, 1));
+        Assert.Equal(100, s.PendingBanishes[0].Paid);
+        Assert.Equal(200, s.JunimoPoints);
+    }
+
+    // ---------- the reset's three branches (WriteBoard) ----------
+
+    private static (BanishBoardOutcome, List<string>) Built(IReadOnlyList<BanishPick> banishes, List<string> log)
+    {
+        log.Add(string.Join("+", banishes.Select(b => b.Key)));
+        bool hasItem = !banishes.Any(b => b.Key == "(O)24");
+        return (new BanishBoardOutcome(new[] { Bundle("Pantry", 0, "Spring Crops", hasItem ? "(O)24" : "(O)192") }, 0), log);
+    }
+
+    [Fact]
+    public void Reset_holding_rebuilds_with_the_boards_own_banishes_and_refunds_pending()
+    {
+        var s = new MetaState { JunimoPoints = 0 };
+        s.BoardBanishes.Add(Item("(O)1"));
+        s.PendingBanishes.Add(Item("(O)24", 100));
+        var log = new List<string>();
+
+        (List<string> build, IReadOnlyList<BanishPick> refunded) = BanishRules.ApplyAtReset(s, holdingBoard: true, b => Built(b, log));
+
+        Assert.Equal(new[] { "(O)1" }, build);
+        Assert.Single(refunded);
+        Assert.Equal(100, s.JunimoPoints);
+        Assert.Equal(new[] { "(O)1" }, s.BoardBanishes.Select(p => p.Key));
+        Assert.Empty(s.PendingBanishes);
+    }
+
+    [Fact]
+    public void Reset_with_nothing_pending_builds_once_with_no_banish_and_expires_the_old_ones()
+    {
+        var s = new MetaState();
+        s.BoardBanishes.Add(Item("(O)1"));
+        var log = new List<string>();
+
+        (List<string> build, IReadOnlyList<BanishPick> refunded) = BanishRules.ApplyAtReset(s, holdingBoard: false, b => Built(b, log));
+
+        Assert.Equal(new[] { "" }, build);
+        Assert.Empty(refunded);
+        Assert.Empty(s.BoardBanishes);
+        Assert.Null(BanishRules.PeekNotice(s));
+    }
+
+    [Fact]
+    public void Reset_with_pending_banishes_resolves_them()
+    {
+        var s = new MetaState { JunimoPoints = 0 };
+        s.PendingBanishes.Add(Item("(O)24", 100));
+        s.PendingBanishes.Add(Item("(O)999", 200));   // never leaves this fake board? it is never on it: honoured
+        var log = new List<string>();
+
+        (List<string> build, IReadOnlyList<BanishPick> refunded) = BanishRules.ApplyAtReset(s, holdingBoard: false, b => Built(b, log));
+
+        Assert.Equal(new[] { "", "(O)24", "(O)24+(O)999" }, build);
+        Assert.Empty(refunded);
+        Assert.Equal(new[] { "(O)24", "(O)999" }, s.BoardBanishes.Select(p => p.Key));
+        Assert.Equal(2, s.BanishesHonoured);
+    }
+
+    // ---------- through the engine's hooks, on a real small pool ----------
+
+    [Fact]
+    public void A_banished_bundle_is_never_picked_by_the_room_selector()
+    {
+        var positions = new List<IReadOnlyList<BundleSpec>>
+        {
+            new[] { Bundle("Crafts Room", 13, "Spring Foraging", "(O)16"), Bundle("Crafts Room", 13, "Sticky", "(O)92") },
+            new[] { Bundle("Crafts Room", 14, "Summer Foraging", "(O)396"), Bundle("Crafts Room", 14, "Spring Foraging", "(O)16") },
+        };
+        IReadOnlySet<string> banned = BanishRules.BundleNames(new[] { BundleBanish("Spring Foraging") });
+        bool everPickedWithout = false;
+        for (int seed = 0; seed < 200; seed++)
+        {
+            IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(
+                BanishRules.WithoutBanishedBundles(positions, banned), seed, "Crafts Room");
+            Assert.DoesNotContain(picks, p => p.Name == "Spring Foraging");
+            everPickedWithout |= RemixSelector.PickForRoom(positions, seed, "Crafts Room").Any(p => p.Name == "Spring Foraging");
+        }
+        Assert.True(everPickedWithout);   // the banish is what keeps it off
+    }
+
+    [Fact]
+    public void A_banished_item_leaves_the_item_pools()
+    {
+        IReadOnlySet<string>? excluded = BanishRules.ExcludedIds(
+            YearTwoCrops.ExcludedFor(_ => true, DifficultyStep.Normal), new[] { Item("(O)24") });
+        ItemPools pools = ItemPoolBuilder.Build(
+            crops: new[] { new RawCropEntry("24", new[] { Season.Spring }), new RawCropEntry("192", new[] { Season.Spring }) },
+            objects: new Dictionary<string, RawObjectEntry>
+            {
+                ["24"] = new("Basic", -75, 35, false, Array.Empty<string>(), "Parsnip"),
+                ["192"] = new("Basic", -75, 80, false, Array.Empty<string>(), "Potato"),
+            },
+            forageSpawns: Array.Empty<RawSpawnEntry>(),
+            fishSpawns: Array.Empty<RawSpawnEntry>(),
+            trapFishIds: new HashSet<string>(StringComparer.Ordinal),
+            monsterDrops: Array.Empty<RawMonsterDropEntry>(),
+            fruitTrees: Array.Empty<RawFruitTreeEntry>(),
+            geodeDrops: Array.Empty<RawGeodeDropEntry>(),
+            tuning: new BundleGenerationTuning(),
+            extraExcludedIds: excluded);
+
+        Assert.Contains("(O)24", pools.ExcludedIds);
+        Assert.DoesNotContain(pools.Crops, c => c.ItemId == "(O)24");
+        Assert.Contains(pools.Crops, c => c.ItemId == "(O)192");
+    }
+
     [Theory]
     [InlineData("Orchard II", "Orchard")]
     [InlineData("Orchard IV", "Orchard")]

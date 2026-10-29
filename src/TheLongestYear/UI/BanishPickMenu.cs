@@ -160,8 +160,14 @@ namespace TheLongestYear.UI
                 _armed = true;
         }
 
+        /// <summary>Set once closed: a gamepad B arrives both as the button and as its mapped Escape
+        /// key in the same frame, and the second must not play the close sound again.</summary>
+        private bool _closed;
+
         private void Close()
         {
+            if (_closed) return;
+            _closed = true;
             Game1.playSound("bigDeSelect");
             GetParentMenu()?.SetChildMenu(null);
         }
@@ -230,6 +236,7 @@ namespace TheLongestYear.UI
             {
                 int index = _scroll + (id - RowIdBase);
                 if (index < Active.Count) Pick(Active[index]);
+                else if (_armed) Game1.playSound("cancel");   // an empty row: refuse, do nothing
             }
         }
 
@@ -252,7 +259,12 @@ namespace TheLongestYear.UI
 
         private void Pick(Choice choice)
         {
-            if (!_armed || choice.Taken) return;
+            if (_closed || !_armed) return;
+            if (choice.Taken)
+            {
+                Game1.playSound("cancel");   // already banished: refuse, do nothing
+                return;
+            }
             _armed = false;   // one press, one purchase
             if (_onPick(choice.Kind, choice.Key, choice.Label))
                 GetParentMenu()?.SetChildMenu(null);
@@ -290,9 +302,11 @@ namespace TheLongestYear.UI
 
             long price = _price();
             bool affordable = _jp() >= price;
-            string subtitle = Strings.Get("banish.pick.subtitle") + "  "
-                + Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = price.ToString() })
-                + (affordable ? "" : Strings.Get("menu.shrine.insufficient"));
+            string subtitle = Strings.Get("banish.pick.subtitle", new Dictionary<string, string>
+            {
+                ["cost"] = price.ToString(),
+                ["insufficient"] = affordable ? "" : Strings.Get("menu.shrine.insufficient"),
+            });
             Utility.drawTextWithShadow(b, subtitle, Game1.smallFont,
                 new Vector2(xPositionOnScreen + Pad, yPositionOnScreen + Pad + titleSize.Y + 16),
                 affordable ? Game1.textColor : Color.Red);
@@ -331,7 +345,9 @@ namespace TheLongestYear.UI
                     choice.Icon.drawInMenu(b, new Vector2(r.X + 8, r.Y + (r.Height - 64) / 2f), IconSize / 64f);
                     textX = r.X + 16 + IconSize + 8;
                 }
-                string text = choice.Taken ? choice.Label + "  (" + Strings.Get("banish.pick.taken") + ")" : choice.Label;
+                string text = choice.Taken
+                    ? Strings.Get("banish.pick.taken", new Dictionary<string, string> { ["name"] = choice.Label })
+                    : choice.Label;
                 Vector2 size = Game1.smallFont.MeasureString(text);
                 Utility.drawTextWithShadow(b, text, Game1.smallFont,
                     new Vector2(textX, r.Y + (r.Height - size.Y) / 2f),

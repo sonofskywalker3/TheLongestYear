@@ -112,7 +112,7 @@ namespace TheLongestYear.UI
                 return;
             TheLongestYear.Integration.VaultPaymentSync.Reconcile(_store.Run);
 
-            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, focusRows ? _focus : null);
+            Game1.activeClickableMenu = new JunimoShrineMenu(_monitor, _store, _purchases, focusRows ? _focus : null, banishRows: focusRows);
             _monitor.Log($"Opened Junimo Shrine (JP: {_store.State.JunimoPoints}).", LogLevel.Info);
             // The XP hand-over runs just before the rewind shrine, so its refund is spendable here.
             if (NoticeMenu.ShowXpHandoverIfPending(_store.State, Game1.activeClickableMenu))

@@ -10,9 +10,13 @@ public static class BanishText
     public static string RefundNotice(IReadOnlyList<BanishPick> refunded)
     {
         List<string> names = refunded.Select(p => string.IsNullOrEmpty(p.Label) ? p.Key : p.Label).ToList();
-        string joined = names.Count == 2
-            ? Strings.Get("banish.and", new Dictionary<string, string> { ["a"] = names[0], ["b"] = names[1] })
-            : string.Join(", ", names);
+        // "A", "A and B", "A, B and C": the separator and the "and" are both translatable.
+        string joined = names.Count == 0 ? "" : names[^1];
+        if (names.Count >= 2)
+        {
+            string head = string.Join(Strings.Get("banish.list-separator"), names.Take(names.Count - 1));
+            joined = Strings.Get("banish.and", new Dictionary<string, string> { ["a"] = head, ["b"] = names[^1] });
+        }
         long jp = refunded.Sum(p => p.Paid);
         return Strings.Get("banish.refund", new Dictionary<string, string>
         {

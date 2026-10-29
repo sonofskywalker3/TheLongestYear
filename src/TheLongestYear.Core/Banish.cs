@@ -103,15 +103,54 @@ public static class BanishRules
     }
 
     /// <summary>Take back a banish bought for the next board (the loop has not reset yet), refunding
-    /// what was paid. Returns the refund, 0 when there is no such banish.
-    /// The later pick, if any, keeps the price it was bought at.</summary>
-    public static long Cancel(MetaState state, int index)
+    /// what was paid. The banishes still pending are then re-priced to the ladder steps they now hold,
+    /// and any overpayment comes back too, so the ones held never cost more than the ladder for that
+    /// many (buy 100 + 200, take back the first, rebuy: 300 in all). A re-price never charges more.
+    /// Returns the total refund, 0 when there is no such banish.</summary>
+    public static long Cancel(MetaState state, int index, double factor = 1.0)
     {
         if (index < 0 || index >= state.PendingBanishes.Count) return 0;
         BanishPick pick = state.PendingBanishes[index];
         state.PendingBanishes.RemoveAt(index);
-        state.JunimoPoints += pick.Paid;
-        return pick.Paid;
+        long refund = pick.Paid;
+        for (int i = 0; i < state.PendingBanishes.Count; i++)
+        {
+            BanishPick held = state.PendingBanishes[i];
+            long step = BanishLadder.CostFor(state.BanishesHonoured + i, factor);
+            if (step >= held.Paid) continue;
+            refund += held.Paid - step;
+            held.Paid = step;
+        }
+        state.JunimoPoints += refund;
+        return refund;
+    }
+
+    /// <summary>The reset's banish step, whichever board it builds.
+    /// <list type="bullet">
+    /// <item>A held board (<paramref name="holdingBoard"/>) is rebuilt from the banishes it was built
+    /// under; everything pending is refunded.</item>
+    /// <item>Nothing pending: the board is built with no banish, and last loop's banishes expire.</item>
+    /// <item>Otherwise <see cref="BanishResolver.Resolve{T}"/> decides, and the result is applied.</item>
+    /// </list>
+    /// Returns the build to write, and the banishes refunded at this reset.</summary>
+    public static (T Build, IReadOnlyList<BanishPick> Refunded) ApplyAtReset<T>(
+        MetaState state, bool holdingBoard,
+        Func<IReadOnlyList<BanishPick>, (BanishBoardOutcome Outcome, T Build)> generate)
+    {
+        if (holdingBoard)
+        {
+            T held = generate(state.BoardBanishes.ToList()).Build;
+            return (held, RefundAllPending(state));
+        }
+        if (state.PendingBanishes.Count == 0)
+        {
+            T plain = generate(Array.Empty<BanishPick>()).Build;
+            ApplyResolution(state, new BanishResolution(Array.Empty<BanishPick>(), Array.Empty<BanishPick>()));
+            return (plain, Array.Empty<BanishPick>());
+        }
+        (BanishResolution resolution, T build) = BanishResolver.Resolve(state.PendingBanishes.ToList(), generate);
+        ApplyResolution(state, resolution);
+        return (build, resolution.Refused);
     }
 
     /// <summary>The reset's half when this reset does NOT build a new board (a held board, or a
@@ -146,6 +185,12 @@ public static class BanishRules
         state.BanishRefundNotice ??= new List<BanishPick>();
         state.BanishRefundNotice.AddRange(refunded);
     }
+
+    /// <summary>The refund notice waiting to be shown, left in place. Null when there is none.
+    /// The glue clears it with <see cref="TakeNotice"/> only once the message is on screen, so a
+    /// quit before then shows it again on the next load.</summary>
+    public static IReadOnlyList<BanishPick>? PeekNotice(MetaState state)
+        => state.BanishRefundNotice is { Count: > 0 } notice ? notice : null;
 
     /// <summary>The refund notice to show, cleared so it shows once. Null when there is none.</summary>
     public static IReadOnlyList<BanishPick>? TakeNotice(MetaState state)

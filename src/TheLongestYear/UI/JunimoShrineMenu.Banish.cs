@@ -19,9 +19,13 @@ namespace TheLongestYear.UI
     {
         private const UpgradeCategory BanishTab = UpgradeCategory.Foresight;
 
+        /// <summary>Show the banish rows. Only the rewind shrine does, like the focus rows: at the win
+        /// shrine, a banish bought before "Keep playing" would hold its JP for the rest of the run.</summary>
+        private readonly bool _banishRows;
+
         private IEnumerable<ShrineRow> BanishRows()
         {
-            if (_activeCategory != BanishTab || !Context.IsMainPlayer || !BanishRules.IsOfferable(_store.State))
+            if (!_banishRows || _activeCategory != BanishTab || !Context.IsMainPlayer || !BanishRules.IsOfferable(_store.State))
                 yield break;
             List<BanishPick> pending = _store.State.PendingBanishes;
             for (int i = 0; i < pending.Count; i++)
@@ -73,8 +77,10 @@ namespace TheLongestYear.UI
         internal BanishPickMenu OpenBanishPick()
         {
             IReadOnlyDictionary<string, string> board = Game1.netWorldState.Value.BundleData;
+            // A bundle that is the only candidate at a position is on every board, so it is not offered.
+            IReadOnlySet<string> sole = BanishCandidates.SoleCandidates(TheLongestYear.Loop.BundleEngine.CandidateNames(_monitor));
             var menu = new BanishPickMenu(
-                BanishCandidates.Bundles(board), BanishCandidates.Items(board),
+                BanishCandidates.Bundles(board, sole), BanishCandidates.Items(board),
                 _store.State.PendingBanishes,
                 (kind, key, label) => _purchases.TryBanish(kind, key, label) == BanishRules.BuyResult.Bought,
                 () => _purchases.BanishCost(),
@@ -108,7 +114,8 @@ namespace TheLongestYear.UI
                 affordable ? Color.White : Color.White * 0.55f, 1f, false);
             Utility.drawTextWithShadow(b, Strings.Get("banish.row.name"), Game1.dialogueFont,
                 new Vector2(slot.bounds.X + 16, slot.bounds.Y + 12), Game1.textColor);
-            string tag = Strings.Get("banish.row.limit");
+            string tag = Strings.Get("banish.row.limit",
+                new Dictionary<string, string> { ["count"] = BanishLadder.MaxPerLoop.ToString() });
             Vector2 tagSize = Game1.smallFont.MeasureString(tag);
             Utility.drawTextWithShadow(b, tag, Game1.smallFont,
                 new Vector2(slot.bounds.Right - 16 - tagSize.X, slot.bounds.Y + 16), Game1.textColor * 0.7f);

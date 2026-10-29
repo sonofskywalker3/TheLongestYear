@@ -140,39 +140,30 @@ namespace TheLongestYear.Loop
                     built.LayerRandomShopPicks = LayerRandomShopPicks?.Invoke();
                     built.AllowModItems = _meta.BoardAllowsModItems.Value;
                     built.Banishes = banishes;
-                    return (built, built.Generate(seed, _meta.RandomBundleRewardsBoard));
+                    var passTimer = System.Diagnostics.Stopwatch.StartNew();
+                    GeneratedBundleSet set = built.Generate(seed, _meta.RandomBundleRewardsBoard);
+                    // One line per generation pass: a reset with banishes runs up to three.
+                    _monitor.Log(
+                        $"Reset timing: board generation pass with {banishes.Count} banish(es) " +
+                        $"[{string.Join(", ", banishes.Select(b => $"{b.Kind} {b.Key}"))}]: {passTimer.ElapsedMilliseconds} ms, " +
+                        $"{set.Bundles.Count} bundles, {built.LastKeptVanillaCount} kept template slots.",
+                        LogLevel.Info);
+                    return (built, set);
                 }
 
-                BundleEngine engine;
-                GeneratedBundleSet generatedSet;
-                if (holdingBoard)
-                {
-                    // A held board is re-derived from the inputs it was built under, its banishes
-                    // included. Banishes bought for the next board have nothing to apply to.
-                    (engine, generatedSet) = Build(_meta.BoardBanishes);
-                    LogBanishRefunds(TheLongestYear.Core.BanishRules.RefundAllPending(_meta), "the board is being held");
-                }
-                else if (_meta.PendingBanishes.Count == 0)
-                {
-                    (engine, generatedSet) = Build(System.Array.Empty<BanishPick>());
-                    // Last loop's banishes expire with its board.
-                    TheLongestYear.Core.BanishRules.ApplyResolution(_meta,
-                        new BanishResolution(System.Array.Empty<BanishPick>(), System.Array.Empty<BanishPick>()));
-                }
-                else
-                {
-                    (BanishResolution resolution, (BundleEngine Engine, GeneratedBundleSet Set) chosen) =
-                        BanishResolver.Resolve(_meta.PendingBanishes.ToList(), banishes =>
-                        {
-                            (BundleEngine e, GeneratedBundleSet s) = Build(banishes);
-                            return (new BanishBoardOutcome(s.Bundles, e.LastKeptVanillaCount), (e, s));
-                        });
-                    (engine, generatedSet) = chosen;
-                    foreach (BanishPick pick in resolution.Honoured)
+                bool hadPending = _meta.PendingBanishes.Count > 0;
+                // Held: rebuilt from the banishes it was built under, pending ones refunded. Nothing
+                // pending: no banish, last loop's expire. Otherwise the resolver decides (BanishRules).
+                ((BundleEngine engine, GeneratedBundleSet generatedSet), IReadOnlyList<BanishPick> refunded) =
+                    TheLongestYear.Core.BanishRules.ApplyAtReset(_meta, holdingBoard, banishes =>
+                    {
+                        (BundleEngine e, GeneratedBundleSet s) = Build(banishes);
+                        return (new BanishBoardOutcome(s.Bundles, e.LastKeptVanillaCount), (e, s));
+                    });
+                if (hadPending && !holdingBoard)
+                    foreach (BanishPick pick in _meta.BoardBanishes)
                         _monitor.Log($"Reset: banish honoured, {pick.Kind} '{pick.Key}' ({pick.Label}) is off this loop's board.", LogLevel.Info);
-                    TheLongestYear.Core.BanishRules.ApplyResolution(_meta, resolution);
-                    LogBanishRefunds(resolution.Refused, "the board could not fill every slot without it");
-                }
+                LogBanishRefunds(refunded, holdingBoard ? "the board is being held" : "the board could not fill every slot without it");
                 _timing.Mark("11a engine.Generate");
                 engine.WriteToWorld(generatedSet, _monitor);
                 _timing.Mark("11a engine.WriteToWorld");

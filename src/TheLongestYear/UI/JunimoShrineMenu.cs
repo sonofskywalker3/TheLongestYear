@@ -86,13 +86,14 @@ namespace TheLongestYear.UI
             public bool IsBanish => BanishSlot != NotBanish;
         }
 
-        public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases, FocusService focus = null)
+        public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases, FocusService focus = null, bool banishRows = false)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
             _monitor = monitor;
             _store = store;
             _purchases = purchases;
             _focus = focus;
+            _banishRows = banishRows;
             RefreshFocusCards();
 
             // #3 diagnostic: dump what the live tool reach sees the instant the spend shrine opens

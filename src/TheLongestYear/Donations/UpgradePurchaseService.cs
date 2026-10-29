@@ -76,7 +76,7 @@ namespace TheLongestYear.Donations
             string what = index >= 0 && index < _store.State.PendingBanishes.Count
                 ? $"{_store.State.PendingBanishes[index].Kind} '{_store.State.PendingBanishes[index].Key}'"
                 : "(none)";
-            long refund = BanishRules.Cancel(_store.State, index);
+            long refund = BanishRules.Cancel(_store.State, index, PriceFactor);
             if (refund > 0) Game1.playSound("coin");
             _monitor.Log($"Banish {what} taken back: refunded {refund} JP. JP {_store.State.JunimoPoints}.", LogLevel.Info);
             return refund;

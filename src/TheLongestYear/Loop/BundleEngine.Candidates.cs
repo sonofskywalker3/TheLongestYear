@@ -47,6 +47,23 @@ namespace TheLongestYear.Loop
             return filtered;
         }
 
+        /// <summary>Every room position's candidate NAMES, the way <see cref="Generate"/> sees them:
+        /// vanilla's templates plus each authored bundle on every position of its room. No item pools
+        /// are built, so the shrine's banish pick can call it cheaply (it only needs the names, to
+        /// leave out a bundle that is the only candidate somewhere).</summary>
+        public static IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<string>>> CandidateNames(IMonitor monitor)
+        {
+            var result = new Dictionary<string, IReadOnlyList<IReadOnlyList<string>>>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> room in new VanillaBundlePool(monitor).BuildRoomPools())
+            {
+                List<string> authored = AuthoredBundleCatalog.All.Where(def => def.Room == room.Key).Select(def => def.Name).ToList();
+                result[room.Key] = room.Value
+                    .Select(candidates => (IReadOnlyList<string>)candidates.Select(c => c.Name).Concat(authored).ToList())
+                    .ToList();
+            }
+            return result;
+        }
+
         /// <summary>Drops Helper's from every position that has another candidate to pick instead,
         /// for a board with no Mystery Box allowance: its only items are the Prize Ticket and the
         /// Mystery Box, so a fill with the box banned cannot fill it and would fall back to

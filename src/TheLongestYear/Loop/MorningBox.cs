@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using TheLongestYear.Core.Sabotage;
@@ -19,6 +20,10 @@ namespace TheLongestYear.Loop
         private sealed class Entry
         {
             public string Text;
+            /// <summary>Optional caller tag, so a caller can tell its own message is already queued.</summary>
+            public string Tag;
+            /// <summary>Run the first time the box shows, then cleared.</summary>
+            public Action OnShown;
             /// <summary>Played the first time the box shows, then cleared so a re-show is silent.</summary>
             public string Sound;
         }
@@ -37,11 +42,17 @@ namespace TheLongestYear.Loop
         public static int Pending => Waiting.Count + (_showing != null ? 1 : 0);
 
         /// <summary>Queue a message. <paramref name="sound"/> plays when it first shows.</summary>
-        public static void Enqueue(string text, string sound = null)
+        /// <param name="tag">Optional; see <see cref="IsQueued"/>.</param>
+        /// <param name="onShown">Optional; runs once, when the box first shows.</param>
+        public static void Enqueue(string text, string sound = null, string tag = null, Action onShown = null)
         {
             if (string.IsNullOrWhiteSpace(text)) return;
-            Waiting.AddLast(new Entry { Text = text, Sound = sound });
+            Waiting.AddLast(new Entry { Text = text, Sound = sound, Tag = tag, OnShown = onShown });
         }
+
+        /// <summary>Whether a message with this tag is waiting or on screen.</summary>
+        public static bool IsQueued(string tag)
+            => tag != null && (_showingEntry?.Tag == tag || Waiting.Any(e => e.Tag == tag));
 
         /// <summary>Forget everything waiting (day end, back to the title). A box on screen fades
         /// by itself.</summary>
@@ -87,6 +98,9 @@ namespace TheLongestYear.Loop
             _showingEntry = next;
             if (next.Sound != null) Game1.playSound(next.Sound);
             next.Sound = null;
+            Action shown = next.OnShown;
+            next.OnShown = null;
+            shown?.Invoke();
             Monitor?.Log($"Darkness: morning box: {next.Text}", LogLevel.Trace);
         }
 

@@ -157,13 +157,20 @@ namespace TheLongestYear
             // that wrote it (spec 2026-10-08-custom-board-vanilla-only), unless that board was built
             // with mod items allowed (its stamp, never the live choice). A Normal or Remixed board
             // keeps the shared pools, other mods' items included, as before.
+            // A Custom board built under banishes swaps from pools without the banished items too,
+            // so a repair can never put one back (BanishRules.ExcludedIds, the engine's own rule).
+            bool vanillaBoard = BundleSourceNames.IsVanilla(_meta.State.BundleSource);
+            bool banishedItems = !vanillaBoard && _meta.State.BoardBanishes.Any(b => b.Kind == TheLongestYear.Core.BanishKind.Item);
             TheLongestYear.Core.ItemPools repairPools =
-                BundleSourceNames.IsVanilla(_meta.State.BundleSource) || _meta.State.ModItemsOnBoard()
+                vanillaBoard || (_meta.State.ModItemsOnBoard() && !banishedItems)
                 ? ctx.EnginePools
                 : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(
-                        _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
-                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds, LayerMarks(), LayerRandomShopPicks());
+                    TheLongestYear.Core.BanishRules.ExcludedIds(
+                        TheLongestYear.Core.YearTwoCrops.ExcludedFor(
+                            _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
+                        _meta.State.BoardBanishes),
+                    _meta.State.ModItemsOnBoard() ? null : TheLongestYear.Loop.BundleEngine.VanillaOnlyIds,
+                    LayerMarks(), LayerRandomShopPicks());
             int repaired = new TheLongestYear.Loop.BoardRepairService(
                 this.Monitor, ctx.EnginePoolReader.LastReachability, repairPools,
                 _config.PoolTuning, _availability,
