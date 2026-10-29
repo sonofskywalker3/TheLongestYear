@@ -401,7 +401,7 @@ namespace TheLongestYear.UI
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                     tab.bounds.X, tab.bounds.Y, tab.bounds.Width, tab.bounds.Height, tint, 1f, false);
 
-                string label = ThemeDisplay.CategoryName((UpgradeCategory)i);
+                string label = ThemeDisplay.CategoryTabName((UpgradeCategory)i);
                 // Scale the label down if it would overflow the tab (e.g. "Obtainability"),
                 // so long category names always fit inside the frame.
                 Vector2 labelSize = Game1.smallFont.MeasureString(label);
@@ -415,6 +415,14 @@ namespace TheLongestYear.UI
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int startIndex);
             for (int i = 0; i < rows.Count; i++)
                 DrawRow(b, _rowSlots[i], rows[i]);
+
+            if (ThemeDisplay.ShowsEmptyNote(_activeCategory, rows.Count) && _rowSlots.Count > 0)
+            {
+                Rectangle area = _rowSlots[0].bounds;
+                string note = Game1.parseText(Strings.Get("menu.shrine.gifts.empty"), Game1.smallFont, area.Width - 32);
+                Utility.drawTextWithShadow(b, note, Game1.smallFont,
+                    new Vector2(area.X + 16, area.Y + 12), Game1.textColor);
+            }
 
             _scrollUp.draw(b, _scrollIndex > 0 ? Color.White : Color.Gray, 1f);
             _scrollDown.draw(b, (startIndex + _rowsPerPage) < total ? Color.White : Color.Gray, 1f);

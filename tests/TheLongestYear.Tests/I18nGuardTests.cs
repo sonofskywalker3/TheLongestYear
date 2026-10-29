@@ -125,7 +125,10 @@ public class I18nGuardTests
                 _ = ThemeModifiers.DisplayNameFor(liability);
             }
             foreach (UpgradeCategory c in Enum.GetValues<UpgradeCategory>())
+            {
                 _ = ThemeDisplay.CategoryName(c);
+                _ = ThemeDisplay.CategoryTabName(c);
+            }
             foreach (var def in UpgradeCatalog.All)
             {
                 _ = def.DisplayName;
