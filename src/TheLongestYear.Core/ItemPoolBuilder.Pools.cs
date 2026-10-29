@@ -87,7 +87,10 @@ public static partial class ItemPoolBuilder
             // Thrippa, 2026-09-25). The Animal and Chef's bundles still reach them by kind.
             if (IsAnimalProduct(objects[bare]))
                 continue;
-            AddSeasons(id, SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons));
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            if (reading.Verdict == SeasonVerdict.Impossible)
+                continue;   // the row never fires
+            AddSeasons(id, reading.Seasons);
         }
 
         foreach ((Season season, string rawId) in BuiltInSeasonalForageAdditions)

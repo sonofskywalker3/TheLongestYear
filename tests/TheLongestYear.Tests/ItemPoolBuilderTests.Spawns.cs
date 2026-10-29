@@ -268,34 +268,80 @@ public partial class ItemPoolBuilderTests
             ItemPoolBuilder.SeasonsFromSpawn(Season.Fall, "!LOCATION_SEASON Here fall"));
     }
 
-    /// <summary>Outside a SEASON / LOCATION_SEASON clause a number is not a season: "3" is a fishing
-    /// level, not Winter. Inside one, the game's Utility.TryParseEnum does read 0-3.</summary>
+    /// <summary>Only the real season queries say anything about seasons, read as the game reads
+    /// them: SEASON parses the enum (names or 0-3), LOCATION_SEASON compares season-name strings
+    /// and only means the calendar for Here / Target, and no other query's words are seasons.</summary>
     [Fact]
-    public void SeasonsFromSpawn_NumbersOutsideSeasonClauses_AreNotSeasons()
+    public void SeasonsFromSpawn_OnlyRealSeasonQueriesCount()
     {
+        // Numbers outside SEASON are not seasons ("3" is a fishing level, "2" a year).
         Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, PLAYER_FISHING_LEVEL Current 3"));
         Assert.Equal(new[] { Season.Summer },
             ItemPoolBuilder.SeasonsFromSpawn(null, "LOCATION_SEASON Here summer, PLAYER_FISHING_LEVEL Current 3"));
         Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, YEAR 2"));
+        // SEASON reads the enum, numbers included; LOCATION_SEASON compares names only.
         Assert.Equal(new[] { Season.Summer }, ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON 1"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON Here 1"));
+        // Another map's season can differ from the calendar (the island is always summer).
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON IslandSouth winter"));
+        Assert.Equal(new[] { Season.Fall },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "LOCATION_SEASON Target fall"));
+        // A word that happens to be a season name is not a season query.
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "PLAYER_HAS_MAIL Current spring, !WEATHER Here rain"));
+        // SEASON_DAY narrows to its seasons; negated it only removes a day.
+        Assert.Equal(new[] { Season.Spring, Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON_DAY spring 5 summer 10"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!SEASON_DAY winter 25"));
+        // Quoted arguments are unquoted.
+        Assert.Equal(new[] { Season.Spring, Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON \"spring\" summer, !WEATHER Here rain"));
     }
 
     [Fact]
-    public void SeasonsFromSpawn_AnyClause_IsNoSeasonSignal()
+    public void SeasonsFromSpawn_AnyClause_IsNoSeasonSignal_AndNeverLeaksInnerClauses()
     {
         Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"!SEASON winter fall\" \"WEATHER Here rain\""));
         Assert.Equal(new[] { Season.Summer },
             ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON summer, ANY \"SEASON spring\" \"WEATHER Here rain\""));
+        // An escaped quote inside a quoted ANY argument does not close it, so the inner
+        // ", SEASON winter" stays inside the ANY instead of joining the outer AND.
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"PLAYER_HAS_MAIL Current \\\"x, SEASON winter\" \"WEATHER Here rain\", SEASON summer"));
     }
 
     [Fact]
-    public void HasContradictorySeasons_OnlyForRowsThatRuleOutEverySeason()
+    public void ReadSpawnSeasons_TellsUnknownSeasonsAndImpossibleApart()
     {
-        Assert.True(ItemPoolBuilder.HasContradictorySeasons(null, "SEASON spring, !SEASON spring"));
-        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON spring, !SEASON spring"));   // read as any
-        Assert.False(ItemPoolBuilder.HasContradictorySeasons(Season.Spring, "SEASON spring, !SEASON spring"));
-        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, "!WEATHER Here rain"));
-        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, null));
+        Assert.Equal(SeasonVerdict.Unknown, ItemPoolBuilder.ReadSpawnSeasons(null, "!WEATHER Here rain", "Beach").Verdict);
+        Assert.Equal(SeasonVerdict.Seasons, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring", "Beach").Verdict);
+        Assert.Equal(SeasonVerdict.Impossible, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, !SEASON spring", "Beach").Verdict);
+        Assert.Equal(SeasonVerdict.Impossible, ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON spring, LOCATION_SEASON Here winter", "Beach").Verdict);
+        Assert.True(ItemPoolBuilder.IsSeasonImpossible(null, "SEASON spring, !SEASON spring"));
+        Assert.False(ItemPoolBuilder.IsSeasonImpossible(Season.Spring, "SEASON spring, !SEASON spring"));   // the field wins
+        Assert.False(ItemPoolBuilder.IsSeasonImpossible(null, null));
+    }
+
+    /// <summary>A row whose season clauses rule out every season never fires: it is dropped, so it
+    /// neither makes the fish any-season nor adds its map.</summary>
+    [Fact]
+    public void FishPool_ImpossibleRow_IsDropped()
+    {
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("138", Obj(category: -4, price: 65, type: "Fish")), ("151", Obj(category: -4, price: 80, type: "Fish"))),
+            new List<RawSpawnEntry>(),
+            new[]
+            {
+                new RawSpawnEntry("138", Season.Summer, null, "Mountain"),
+                new RawSpawnEntry("138", null, "SEASON spring, !SEASON spring", "ModdedLake"),
+                new RawSpawnEntry("151", null, "SEASON summer, SEASON winter", "ModdedLake"),
+            },
+            new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
+            new List<RawGeodeDropEntry>(), Tuning);
+        PoolItem trout = pools.Fish.Single(p => p.ItemId == "(O)138");
+        Assert.Equal(new[] { Season.Summer }, trout.Seasons);
+        Assert.Equal(new[] { "Mountain" }, trout.Locations);
+        Assert.DoesNotContain(pools.Fish, p => p.ItemId == "(O)151");
     }
 
     [Fact]

@@ -55,7 +55,10 @@ public static partial class ItemPoolBuilder
                 || !string.Equals(spawnObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            if (reading.Verdict == SeasonVerdict.Impossible)
+                continue; // the row never fires: it proves neither a season nor a place
+            IReadOnlyList<Season> seasons = reading.Seasons;
             if (seasons.Count == 0)
                 anySeasonById.Add(id); // one any-season spawn makes the item any-season
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
@@ -147,7 +150,9 @@ public static partial class ItemPoolBuilder
             if (!string.Equals(objects[bare].Type, FishType, StringComparison.OrdinalIgnoreCase)) continue;
             if (!locationWeeks.TryGet(spawn.Location ?? "", out _)) continue;
 
-            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            if (reading.Verdict == SeasonVerdict.Impossible) continue;   // never fires
+            IReadOnlyList<Season> seasons = reading.Seasons;
             if (seasons.Count == 0) anySeasonById.Add(id);
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
                 seasonsById[id] = list = new List<Season>();

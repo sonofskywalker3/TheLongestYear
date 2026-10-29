@@ -447,11 +447,11 @@ namespace TheLongestYear.Loop
                 foreach (var reason in reachability.Reasons)
                     _monitor?.Log($"  {reason.Key}: {reason.Value}", LogLevel.Trace);
             }
-            // A row whose season clauses rule out every season never fires, but the pools read it
-            // as any season; list them so a modded map's odd row can be found from the log.
+            // A row whose season clauses rule out every season never fires, so the pools drop it;
+            // list them so a modded map's odd row can be found from the log.
             foreach (RawSpawnEntry row in fish.Concat(forage))
-                if (ItemPoolBuilder.HasContradictorySeasons(row.Season, row.Condition))
-                    _monitor?.Log($"Spawn row {row.ItemId} at {row.Location}: season clauses rule out every season, read as any season (\"{row.Condition}\").", LogLevel.Trace);
+                if (ItemPoolBuilder.IsSeasonImpossible(row.Season, row.Condition))
+                    _monitor?.Log($"Spawn row {row.ItemId} at {row.Location}: season clauses rule out every season, row dropped (\"{row.Condition}\").", LogLevel.Trace);
             return pools;
         }
 

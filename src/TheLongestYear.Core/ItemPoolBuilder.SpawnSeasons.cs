@@ -78,27 +78,46 @@ public static partial class ItemPoolBuilder
     }
 
     /// <summary>Season list for one spawn entry: an explicit Season wins; otherwise the seasons
-    /// the Condition allows, read clause by clause (<see cref="SeasonsFromCondition"/>);
-    /// otherwise empty = any season.</summary>
+    /// the Condition's season queries allow (<see cref="SeasonClauses.Read"/>); otherwise
+    /// empty = any season. An impossible row also comes back empty here; the pool builders use
+    /// <see cref="ReadSpawnSeasons"/>, which tells the two apart and drops impossible rows.</summary>
     public static IReadOnlyList<Season> SeasonsFromSpawn(Season? season, string? condition)
         => SeasonsFromSpawn(season, condition, null, null);
 
-    /// <summary>As above, plus the passive-festival rule: a row on a festival-only map
-    /// (<see cref="BuiltInFestivalLocations"/>) or conditioned on
+    /// <summary>As above, plus the passive-festival rule (see <see cref="ReadSpawnSeasons"/>).</summary>
+    public static IReadOnlyList<Season> SeasonsFromSpawn(
+        Season? season, string? condition, string? location,
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null)
+        => ReadSpawnSeasons(season, condition, location, festivalSeasons).Seasons;
+
+    /// <summary>True when a row's season clauses rule out every season, so the row never spawns
+    /// and the pool builders drop it (the caller logs these).</summary>
+    public static bool IsSeasonImpossible(Season? season, string? condition)
+        => season == null && SeasonClauses.Read(condition).Verdict == SeasonVerdict.Impossible;
+
+    /// <summary>The season verdict for one spawn entry. An explicit Season wins. Otherwise the
+    /// Condition's season queries decide (<see cref="SeasonClauses.Read"/>): these seasons, or
+    /// impossible (the row never fires). With no season signal, the passive-festival rule: a row
+    /// on a festival-only map (<see cref="BuiltInFestivalLocations"/>) or conditioned on
     /// <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c> is only reachable in that festival's season,
     /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded
-    /// festivals count) with <see cref="BuiltInFestivalSeasons"/> as the fallback. Explicit
-    /// seasons and season clauses still win; an unknown festival is no signal.</summary>
-    public static IReadOnlyList<Season> SeasonsFromSpawn(
+    /// festivals count) with <see cref="BuiltInFestivalSeasons"/> as the fallback; an unknown
+    /// festival is no signal.
+    ///
+    /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
+    /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as any
+    /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
+    /// row makes the whole fish any-season.</summary>
+    public static SeasonReading ReadSpawnSeasons(
         Season? season, string? condition, string? location,
         IReadOnlyDictionary<string, Season>? festivalSeasons = null)
     {
         if (season != null)
-            return new[] { season.Value };
+            return new SeasonReading(SeasonVerdict.Seasons, new[] { season.Value });
 
-        HashSet<Season>? allowed = SeasonsFromCondition(condition);
-        if (allowed != null && allowed.Count > 0)
-            return AllSeasons.Where(allowed.Contains).ToArray();
+        SeasonReading fromCondition = SeasonClauses.Read(condition);
+        if (fromCondition.Verdict != SeasonVerdict.Unknown)
+            return fromCondition;
 
         string[] tokens = (condition ?? "").Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries);
         string? festival = null;
@@ -112,65 +131,10 @@ public static partial class ItemPoolBuilder
         if (festival != null)
         {
             if (festivalSeasons != null && festivalSeasons.TryGetValue(festival, out Season fromData))
-                return new[] { fromData };
+                return new SeasonReading(SeasonVerdict.Seasons, new[] { fromData });
             if (BuiltInFestivalSeasons.TryGetValue(festival, out Season builtIn))
-                return new[] { builtIn };
+                return new SeasonReading(SeasonVerdict.Seasons, new[] { builtIn });
         }
-        return Array.Empty<Season>();
-    }
-
-    /// <summary>True when a row with no Season field has season clauses that rule out every season
-    /// (e.g. "SEASON spring, !SEASON spring"). Such a row never fires in the game, but
-    /// <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
-    /// reads it as any season, so the pool builder's caller logs it.</summary>
-    public static bool HasContradictorySeasons(Season? season, string? condition)
-        => season == null && SeasonsFromCondition(condition) is { Count: 0 };
-
-    private static readonly Season[] AllSeasons ={ Season.Spring, Season.Summer, Season.Fall, Season.Winter };
-
-    /// <summary>The seasons a Condition allows, or null when no clause says anything about seasons.
-    /// A Condition is a comma-separated AND, so it is read one clause at a time:
-    /// <list type="bullet">
-    /// <item>a non-negated clause that names seasons narrows the set: SEASON / LOCATION_SEASON by
-    /// their season arguments (a name or 0-3, as the game reads them), any other clause by its bare
-    /// season NAMES only (SEASON_DAY spring 5; "YEAR 2" is not Fall); several such clauses
-    /// intersect;</item>
-    /// <item>a negated SEASON / LOCATION_SEASON clause removes the seasons it names;</item>
-    /// <item>any other negated clause, and any ANY clause (its quoted OR does not split into
-    /// clauses), says nothing about seasons and is skipped.</item>
-    /// </list>
-    /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
-    /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as ANY
-    /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
-    /// row makes the whole fish any-season. An empty set (contradictory clauses: a row that never
-    /// fires) is returned as is; <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
-    /// treats it as no signal; <see cref="HasContradictorySeasons"/> lets the caller log those rows.</summary>
-    internal static HashSet<Season>? SeasonsFromCondition(string? condition)
-    {
-        if (string.IsNullOrWhiteSpace(condition)) return null;
-        HashSet<Season>? allowed = null;
-        foreach (string clause in SeasonClauses.Split(condition))
-        {
-            if (SeasonClauses.IsAnyQuery(clause)) continue;   // an OR of quoted sub-queries: no signal
-            HashSet<Season>? named = SeasonClauses.SeasonsNamedBy(clause, out bool negated);
-            if (negated)
-            {
-                if (named == null || named.Count == 0) continue;
-                allowed ??= new HashSet<Season>(AllSeasons);
-                allowed.ExceptWith(named);
-                continue;
-            }
-            if (named == null)
-            {
-                named = new HashSet<Season>();
-                foreach (string token in clause.Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries))
-                    if (SeasonClauses.TryParseSeasonName(token, out Season s))
-                        named.Add(s);
-            }
-            if (named.Count == 0) continue;
-            if (allowed == null) allowed = named;
-            else allowed.IntersectWith(named);
-        }
-        return allowed;
+        return SeasonReading.Unknown;
     }
 }
