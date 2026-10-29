@@ -49,10 +49,16 @@ namespace TheLongestYear.Loop
 
         /// <summary>The location this mod last slowed, and the value it wrote, so the write can be
         /// undone without touching a value another source (vanilla's MineShaft) set itself.</summary>
-        private static GameLocation _slowedLocation;
-        private static int _slowedValue;
+        private static readonly RememberedWrite<GameLocation> Slowed = new();
 
-        public static void Reset() => _pendingAutoEnd = false;
+        /// <summary>Clears per-session festival state. Called when TLY goes dormant (return to
+        /// title, or a non-TLY save loads), where the per-tick path no longer runs: undoes the
+        /// clock write and drops the reference so a discarded festival map is not kept alive.</summary>
+        public static void Reset()
+        {
+            _pendingAutoEnd = false;
+            Undo();
+        }
 
         /// <summary>
         /// Slows the clock on a qualifying festival's grounds (Spirit's Eve; see
@@ -78,12 +84,11 @@ namespace TheLongestYear.Loop
 
             if (target is int extra)
             {
-                if (_slowedLocation != null && !ReferenceEquals(_slowedLocation, here))
+                if (Slowed.Target != null && !ReferenceEquals(Slowed.Target, here))
                     Undo();
                 if (here.ExtraMillisecondsPerInGameMinute != extra)
                     here.ExtraMillisecondsPerInGameMinute = extra;
-                _slowedLocation = here;
-                _slowedValue = extra;
+                Slowed.Remember(here, extra);
                 return;
             }
 
@@ -93,11 +98,9 @@ namespace TheLongestYear.Loop
         /// <summary>Put the last slowed location back to 0 if it still holds our value.</summary>
         private static void Undo()
         {
-            if (_slowedLocation == null) return;
-            if (_slowedLocation.ExtraMillisecondsPerInGameMinute == _slowedValue)
-                _slowedLocation.ExtraMillisecondsPerInGameMinute = 0;
-            _slowedLocation = null;
-            _slowedValue = 0;
+            GameLocation ours = Slowed.TakeForUndo(loc => loc.ExtraMillisecondsPerInGameMinute);
+            if (ours != null)
+                ours.ExtraMillisecondsPerInGameMinute = 0;
         }
 
         /// <summary>Returns true if a festival is active AND the in-game clock has reached its
