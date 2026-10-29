@@ -80,12 +80,13 @@ namespace TheLongestYear
             // year-1 location walk the pools read, so it is constructed before the pools are built.
             EnsureLexicon();
             _reset.LayerMarks = LayerMarks;
+            _reset.LayerRandomShopPicks = LayerRandomShopPicks;
             ctx.EnginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             ctx.EnginePools =
                 ctx.EnginePoolReader.Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
-                    marks: LayerMarks());
+                    marks: LayerMarks(), randomShopPicks: LayerRandomShopPicks());
             long poolsMs = stageTimer.ElapsedMilliseconds;
             _seasonResolver = new SeasonResolver(
                 TheLongestYear.Core.SpawnSeasonMap.FromPools(ctx.EnginePools));
@@ -162,7 +163,7 @@ namespace TheLongestYear
                 : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
                     TheLongestYear.Core.YearTwoCrops.ExcludedFor(
                         _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
-                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds, LayerMarks());
+                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIds, LayerMarks(), LayerRandomShopPicks());
             int repaired = new TheLongestYear.Loop.BoardRepairService(
                 this.Monitor, ctx.EnginePoolReader.LastReachability, repairPools,
                 _config.PoolTuning, _availability,

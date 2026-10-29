@@ -34,7 +34,7 @@ namespace TheLongestYear
             var enginePoolReader = new TheLongestYear.Loop.GameDataPools(this.Monitor);
             ItemPools pools = enginePoolReader
                 .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity),
-                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIdsFor(state.ModItemsOnBoard()), LayerMarks());
+                    TheLongestYear.Loop.BundleEngine.VanillaOnlyIdsFor(state.ModItemsOnBoard()), LayerMarks(), LayerRandomShopPicks());
             pools = TheLongestYear.Core.RarityBias.Apply(pools, difficulty.RarityBias, _config.RarityThresholds);
 
             var sb = new System.Text.StringBuilder();
@@ -113,6 +113,7 @@ namespace TheLongestYear
                 candidateDifficulty, _meta.State.HasUpgrade);
             engine.Availability = _availability;
             engine.LayerMarks = LayerMarks();
+            engine.LayerRandomShopPicks = LayerRandomShopPicks();
             engine.AllowModItems = _meta.State.ModItemsOnBoard();
             int candidateSeed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop);

@@ -68,7 +68,7 @@ namespace TheLongestYear
                     _config.PoolTuning, gateCheckDifficulty);
                 foreach (var kv in new TheLongestYear.Loop.GameDataPools(this.Monitor)
                         .Build(tuning, TheLongestYear.Core.YearTwoCrops.ExcludedFor(
-                            state.HasUpgrade, gateCheckDifficulty.Steps.ItemRarity), marks: LayerMarks())
+                            state.HasUpgrade, gateCheckDifficulty.Steps.ItemRarity), marks: LayerMarks(), randomShopPicks: LayerRandomShopPicks())
                         .DerivedSeasonPins)
                     pins[kv.Key] = kv.Value;
             }

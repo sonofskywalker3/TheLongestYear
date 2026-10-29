@@ -46,8 +46,11 @@ namespace TheLongestYear.Loop
         /// (<see cref="TheLongestYear.Core.Lexicon.LayerSet.Marks"/>): a flagged map is left out of the
         /// year-1 location walk (and so is every map reached only through it), and a flagged shop sells
         /// nothing in year 1. Null = <see cref="YearTwoMarks.None"/>.</param>
+        /// <param name="randomShopPicks">The layers' daily shop picks
+        /// (<see cref="TheLongestYear.Core.Lexicon.LayerSet.RandomShopItems"/>): the shop weeks list each
+        /// in full (<see cref="RandomShopPicks"/>), so they do not depend on which id rolled today. Null = none.</param>
         public ItemPools Build(BundleGenerationTuning tuning, IReadOnlySet<string> extraExcludedIds = null, IReadOnlySet<string> vanillaOnlyIds = null,
-            YearTwoMarks marks = null)
+            YearTwoMarks marks = null, IReadOnlyList<Core.Lexicon.RandomShopItem> randomShopPicks = null)
         {
             marks ??= YearTwoMarks.None;
             IReadOnlySet<string> closedRules = ClosedSpecialOrderRules.Load(_monitor);
@@ -197,7 +200,7 @@ namespace TheLongestYear.Loop
                         {
                             bool lockedHere = locked
                                 && !YearTwoCrops.TlyUnlockedSeedIds.Contains(BundleParsing.NormalizeItemId(id));
-                            shopListings.Add(new RawShopListing(id, kv.Key, entry.IsRecipe, lockedHere, randomPick));
+                            shopListings.Add(new RawShopListing(id, kv.Key, entry.IsRecipe, lockedHere, randomPick, entry.Condition));
                         }
                     }
                     foreach (var owner in kv.Value.Owners ?? new List<ShopOwnerData>())
@@ -428,7 +431,7 @@ namespace TheLongestYear.Loop
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
                 festivalSeasons, reachability, vanillaOnlyIds, locationWeeks)
-                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks) };
+                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks, randomShopPicks) };
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
@@ -482,12 +485,13 @@ namespace TheLongestYear.Loop
         /// <summary>The earliest week a walkable shop sells each item, from the listings and
         /// placements the reachability read already gathered. Null when either read failed. A shop a
         /// layer flags as year-2 content sells nothing.</summary>
-        private ShopWeeks ReadShopWeeks(List<RawShopListing> listings, List<RawShopPlacement> placements, LocationWeeks locationWeeks, YearTwoMarks marks)
+        private ShopWeeks ReadShopWeeks(List<RawShopListing> listings, List<RawShopPlacement> placements, LocationWeeks locationWeeks, YearTwoMarks marks,
+            IReadOnlyList<Core.Lexicon.RandomShopItem> randomShopPicks)
         {
             if (listings == null || placements == null || locationWeeks == null) return null;
             try
             {
-                ShopWeeks weeks = ShopWeeks.Build(listings, placements, locationWeeks,
+                ShopWeeks weeks = ShopWeeks.Build(RandomShopPicks.Expand(listings, randomShopPicks), placements, locationWeeks,
                     new HashSet<string>(marks.Shops.Keys, StringComparer.Ordinal));
                 _monitor?.Log($"Shop weeks: {weeks.Weeks.Count} items sold by a walkable shop.", LogLevel.Trace);
                 return weeks;

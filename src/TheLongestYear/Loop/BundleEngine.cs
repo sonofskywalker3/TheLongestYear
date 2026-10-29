@@ -231,6 +231,10 @@ namespace TheLongestYear.Loop
         /// pools. Set the same way at every construction site, like <see cref="Availability"/>.
         /// Null = none.</summary>
         public Core.Obtainability.YearTwoMarks LayerMarks { get; set; }
+
+        /// <summary>The supported-mod layers' daily shop picks, forwarded to
+        /// <see cref="GameDataPools.Build"/> beside <see cref="LayerMarks"/>. Null = none.</summary>
+        public IReadOnlyList<Core.Lexicon.RandomShopItem> LayerRandomShopPicks { get; set; }
         private int _lastSeed;
 
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }

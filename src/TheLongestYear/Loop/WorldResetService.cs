@@ -89,6 +89,10 @@ namespace TheLongestYear.Loop
         /// the SaveLoaded pools. Set by ModEntry; null, or returning null, = none.</summary>
         public Func<TheLongestYear.Core.Obtainability.YearTwoMarks> LayerMarks { get; set; }
 
+        /// <summary>The supported-mod layers' daily shop picks (the lexicon's
+        /// <c>LayerSet.RandomShopItems</c>), read beside <see cref="LayerMarks"/>. Null, or returning null, = none.</summary>
+        public Func<System.Collections.Generic.IReadOnlyList<TheLongestYear.Core.Lexicon.RandomShopItem>> LayerRandomShopPicks { get; set; }
+
         /// <summary>The bundle-requirement manifest the most recent <see cref="PerformReset"/> call
         /// generated for the new loop (owned-bundle engine wiring) -- RunController.FinalizeReset
         /// re-injects this into the run via RunController.ReplaceRequirements right after PerformReset

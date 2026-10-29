@@ -228,6 +228,10 @@ namespace TheLongestYear
         /// (none) before the lexicon exists.</summary>
         private TheLongestYear.Core.Obtainability.YearTwoMarks LayerMarks() => _lexicon?.Loaded.Set.Marks;
 
+        /// <summary>The supported-mod layers' daily shop picks for every pool build, or null (none)
+        /// before the lexicon exists.</summary>
+        private System.Collections.Generic.IReadOnlyList<TheLongestYear.Core.Lexicon.RandomShopItem> LayerRandomShopPicks() => _lexicon?.Loaded.Set.RandomShopItems;
+
         /// <summary>Reads the obtainability inputs from the live game data and publishes the models
         /// the path lexicon resolves them to: the shipped answers when the data is the unmodded game's,
         /// else the disk cache entry for this exact data, else a build (<see cref="BuildLexiconVariant"/>).</summary>

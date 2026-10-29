@@ -210,9 +210,11 @@ public sealed record RawLocationLink(string From, string To);
 /// a closed one in a loop that never leaves year 1. <paramref name="RandomPick"/> marks one item a
 /// filtered <c>RANDOM_ITEMS (O)</c> line can draw (Cornucopia's cart seed lines): the shop may offer
 /// it, so it is a year-1 source for <see cref="Availability.ShopWeeks.UnplacedItems"/>, but a lottery
-/// proves no week and no reachability (<see cref="Availability.ItemQueryRules"/>).</summary>
+/// proves no week and no reachability (<see cref="Availability.ItemQueryRules"/>). <paramref name="Condition"/>
+/// is the line's own Condition text, read only to match a layer's daily pick
+/// (<see cref="Availability.RandomShopPicks"/>).</summary>
 public sealed record RawShopListing(string ItemId, string ShopId, bool IsRecipe = false, bool LockedAfterYearOne = false,
-    bool RandomPick = false);
+    bool RandomPick = false, string? Condition = null);
 
 /// <summary>Where a shop can actually be opened. A shop with no known placement leaves everything
 /// it sells allowed, per the conservative rule.</summary>

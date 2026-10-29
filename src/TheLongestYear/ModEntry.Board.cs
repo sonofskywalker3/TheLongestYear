@@ -119,6 +119,7 @@ namespace TheLongestYear
                     var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, difficultyTuning, nonObject, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(state.HasUpgrade, difficulty.Steps.ItemRarity), difficulty, state.HasUpgrade);
                     engine.Availability = _availability;
                     engine.LayerMarks = LayerMarks();
+                    engine.LayerRandomShopPicks = LayerRandomShopPicks();
                     engine.AllowModItems = allowModItems;
                     GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
@@ -167,6 +168,7 @@ namespace TheLongestYear
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty, _meta.State.HasUpgrade);
                 engine.Availability = _availability;
                 engine.LayerMarks = LayerMarks();
+                engine.LayerRandomShopPicks = LayerRandomShopPicks();
                 // A NEW board takes the save's "Allow mod items in custom bundles" choice (written
                 // from the new-game default above) and stamps it with the board.
                 state.BoardAllowsModItems = state.ModItemsChosen();
