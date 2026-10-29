@@ -110,6 +110,22 @@ public sealed class MetaState
     /// tly_reset, post-win new loop), which must reshuffle. Cleared by PerformReset.</summary>
     public bool HoldChoiceMadeForReset { get; set; }
 
+    /// <summary>Banishes bought at a shrine for the NEXT board (<see cref="BanishRules"/>). Only a
+    /// loop boundary adds to it; the reset that builds the next board empties it, honouring each
+    /// banish or refunding it.</summary>
+    public List<BanishPick> PendingBanishes { get; set; } = new();
+
+    /// <summary>The banishes the CURRENT board was built under. A generation input, like the seed:
+    /// the load-time re-derivation and a held board pass these, so they rebuild the same board.
+    /// Replaced at every reset that builds a new board, which is how a banish expires after its loop.</summary>
+    public List<BanishPick> BoardBanishes { get; set; } = new();
+
+    /// <summary>Banishes ever honoured. Sets the step on <see cref="BanishLadder"/>.</summary>
+    public int BanishesHonoured { get; set; }
+
+    /// <summary>Banishes refunded at the last reset, shown once on the next morning. Null when none.</summary>
+    public List<BanishPick>? BanishRefundNotice { get; set; }
+
     /// <summary>Randomizer "Random bundle rewards" as it stood when the CURRENT board was built.
     /// Stamped from live config only where a new board is built (a reset that does not hold the
     /// board, and the fresh-run Engine board); a held board keeps its stamp. Every reproduction
