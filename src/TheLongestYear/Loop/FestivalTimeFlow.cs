@@ -37,7 +37,38 @@ namespace TheLongestYear.Loop
         /// <summary>Guard so OnUpdateTicked's auto-eject only triggers once per festival.</summary>
         private static bool _pendingAutoEnd;
 
+        /// <summary>Mirrors GameplayConfig.FestivalClockSlowdown: the clock speed at Spirit's Eve as a
+        /// fraction of normal (0.5 = half speed). Set by ModEntry at config load and from GMCM.</summary>
+        internal static double ClockSpeed = 0.5;
+
         public static void Reset() => _pendingAutoEnd = false;
+
+        /// <summary>
+        /// Slows the clock on a qualifying festival's grounds (Spirit's Eve; see
+        /// <see cref="FestivalClock"/>). Called every tick from ModEntry.OnUpdateTicked.
+        ///
+        /// Mechanism: vanilla's own per-location knob, <see cref="GameLocation.ExtraMillisecondsPerInGameMinute"/>,
+        /// which <c>Game1.UpdateGameClock</c> adds to the real time each 10-minute advance waits for.
+        /// The advance itself (<c>performTenMinuteClockUpdate</c>) still runs at every 10 game minutes,
+        /// only further apart in real time, so nothing keyed to the clock is skipped or reordered.
+        /// The knob is set on the festival's temporary map, which the game throws away when the
+        /// festival ends, so the real Town never keeps it and there is nothing to undo.
+        /// Other festivals are left alone (their maps start at 0 and we never write them).
+        /// </summary>
+        public static void ApplyClockSpeed()
+        {
+            if (!Enabled) return;
+            if (!Core.RunActivation.IsActive) return;
+            if (!Game1.isFestival()) return;
+            Event ev = Game1.CurrentEvent;
+            GameLocation here = Game1.currentLocation;
+            if (ev == null || here == null) return;
+            if (!FestivalClock.IsSlowed(ev.id)) return;
+
+            int extra = FestivalClock.ExtraMillisecondsPerGameMinute(ClockSpeed, Game1.realMilliSecondsPerGameMinute);
+            if (here.ExtraMillisecondsPerInGameMinute != extra)
+                here.ExtraMillisecondsPerInGameMinute = extra;
+        }
 
         /// <summary>Returns true if a festival is active AND the in-game clock has reached its
         /// scheduled end time. Called from ModEntry.OnUpdateTicked.</summary>

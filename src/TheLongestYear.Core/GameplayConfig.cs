@@ -216,6 +216,12 @@ public sealed class GameplayConfig
     /// day. On by default: a time-loop cannot afford to hand away a day.</summary>
     public bool FestivalTimeFlows { get; set; } = true;
 
+    /// <summary>Clock speed at Spirit's Eve while <see cref="FestivalTimeFlows"/> is on, as a
+    /// fraction of normal: 0.5 = half speed (the default), 1.0 = normal. Normal time leaves too
+    /// little to shop and walk the maze (Nexus, 2026-10-27). Every other festival keeps the normal
+    /// clock. Clamped to [0.25, 1.0]; see <see cref="FestivalClock"/>. GMCM "Features".</summary>
+    public double FestivalClockSlowdown { get; set; } = 0.5;
+
     /// <summary>Run each festival's main event (Egg Hunt, Luau soup, ice fishing, Flower Dance)
     /// at most once per day. Only meaningful while <see cref="FestivalTimeFlows"/> is on, which is
     /// what makes the festival map re-enterable in the first place. A new loop always starts

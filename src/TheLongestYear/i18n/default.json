@@ -865,6 +865,8 @@
     "gmcm.features.blurb": "Turn individual parts of the mod off, or tune them. Changes apply straight away; nothing here needs a restart.",
     "gmcm.festival-time.name": "Festivals cost hours, not the day",
     "gmcm.festival-time.tooltip": "On: time runs normally inside a festival and leaving just leaves, so a festival costs you the hours you spend there. Off: vanilla, where walking into a festival ends your day.",
+    "gmcm.festival-clock.name": "Spirit's Eve clock speed",
+    "gmcm.festival-clock.tooltip": "How fast time runs at Spirit's Eve while festivals cost hours. At 50% there is time for the shop and the maze. 100% is normal speed.",
     "gmcm.festival-once.name": "One festival minigame per day",
     "gmcm.festival-once.tooltip": "On: the Egg Hunt, the Luau soup and the rest run once each day. Off: they can be repeated by leaving the festival and walking back in. A new loop always starts clean either way.",
     "gmcm.non-object.name": "Gear slots in Gil's Trophies",
