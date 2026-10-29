@@ -173,6 +173,9 @@ public static class MadeSources
             Derived.Input needed = Derived.Input.Free;
             foreach (string ingredient in recipe.Ingredients)
                 needed = needed.Both(IngredientWeeks(ingredient, objects, snapshot));
+            // A recipe the museum teaches is learned once the donated item can be had.
+            if (EventTaughtUnlocks.TryGetValue(recipe.Name, out string? eventUnlock) && DonatedItem(eventUnlock) is string donated)
+                needed = needed.Both(Derived.Of(snapshot, donated));
             bool taughtByShop = recipeShopWeeks.TryGetValue(recipe.OutputId, out WeekMask taught);
             DayTable? taughtTable = taughtByShop ? DayTable.InWeeks(taught) : null;
             var outputs = new List<string> { recipe.OutputId };
@@ -219,15 +222,34 @@ public static class MadeSources
             ? episode
             : NoEpisode;
 
-    /// <summary>Recipes whose Data/CraftingRecipes unlock is "null" but which an event or letter
-    /// teaches on a friendship level (Jeff's ruling 2026-09-16). Tea Sapling: the Sunroom opens at
-    /// Caroline 2 hearts (GameLocation.cs 8863-8871) and its event mails CarolineTea. Wild Bait: Linus's
-    /// event 26 needs 4 hearts and adds the recipe (Event.cs 10463-10465).</summary>
+    /// <summary>Recipes whose Data/CraftingRecipes unlock is "null" but which an event, letter or
+    /// donation teaches (Jeff's ruling 2026-09-16). Tea Sapling: the Sunroom opens at Caroline 2 hearts
+    /// (GameLocation.cs 8863-8871) and its event mails CarolineTea. Wild Bait: Linus's event 26 needs 4
+    /// hearts and adds the recipe (Event.cs 10463-10465). Flute Block and Drum Block: Robin's six-heart
+    /// event 33 adds both (Event.cs 10377-10385). Ancient Seeds: the museum teaches it for donating the
+    /// Ancient Seed artifact (Data/MuseumRewards), written "donate &lt;id&gt;" (<see cref="DonatedItem"/>).</summary>
     internal static readonly IReadOnlyDictionary<string, string> EventTaughtUnlocks = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Tea Sapling"] = "f Caroline 2",
         ["Wild Bait"] = "f Linus 4",
+        ["Flute Block"] = "f Robin 6",
+        ["Drum Block"] = "f Robin 6",
+        ["Ancient Seeds"] = "donate (O)114",
     };
+
+    /// <summary>The first word of an <see cref="EventTaughtUnlocks"/> value the museum teaches.</summary>
+    private const string DonateUnlockPrefix = "donate";
+    private const int DonateUnlockTokens = 2;
+
+    /// <summary>The item a "donate &lt;id&gt;" unlock asks the player to give the museum, or null for
+    /// any other unlock. The recipe is learned once that item can be had.</summary>
+    internal static string? DonatedItem(string? unlock)
+    {
+        string[] tokens = (unlock ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length == DonateUnlockTokens && tokens[0].Equals(DonateUnlockPrefix, StringComparison.OrdinalIgnoreCase)
+            ? BundleParsing.NormalizeItemId(tokens[1])
+            : null;
+    }
 
     /// <summary>True when nothing in the recipe row itself unlocks it: a shop, a letter, a friend, an
     /// event or the TV teaches it.</summary>
@@ -304,7 +326,12 @@ public static class MadeSources
     private static ObtainConditions UnlockConditions(RecipeRow recipe, bool taughtByShop)
     {
         if (EventTaughtUnlocks.TryGetValue(recipe.Name, out string? taughtBy))
-            return ObtainConditions.None with { Requires = new[] { "recipe:" + recipe.Name, "unlock:" + taughtBy } };
+            return ObtainConditions.None with
+            {
+                Requires = DonatedItem(taughtBy) is string donated
+                    ? new[] { "recipe:" + recipe.Name, "unlock:" + taughtBy, "item:" + donated }
+                    : new[] { "recipe:" + recipe.Name, "unlock:" + taughtBy },
+            };
         string[] tokens = recipe.Unlock.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var requires = new List<string> { "recipe:" + recipe.Name };
         string first = tokens.Length == 0 ? "" : tokens[0].ToLowerInvariant();

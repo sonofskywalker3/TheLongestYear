@@ -274,6 +274,47 @@ public class ObtainabilityMadeTests
     }
 
     [Fact]
+    public void Robins_event_teaches_the_music_blocks()
+    {
+        var rows = new[]
+        {
+            new RecipeRow("Flute Block", new[] { "(O)771" }, "(O)464", "null", IsCooking: false),
+            new RecipeRow("Drum Block", new[] { "(O)771" }, "(O)463", "null", IsCooking: false),
+        };
+        var objects = new Dictionary<string, ObjInfo> { ["(O)771"] = new("(O)771", "Fiber", -16, 1, new List<string>(), false) };
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)771"] = new[] { new ObtainSource(SourceKind.Forage, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "weeds") },
+        });
+        var made = MadeSources.Recipes(rows, objects, new Dictionary<string, WeekMask>(), snapshot).ToList();
+        foreach (string id in new[] { "(O)464", "(O)463" })
+        {
+            ObtainSource block = made.First(m => m.ItemId == id).Source;
+            Assert.False(block.Conditions.Unresolved);
+            Assert.Contains("unlock:f Robin 6", block.Conditions.Requires);
+        }
+    }
+
+    [Fact]
+    public void Donating_the_ancient_seed_teaches_ancient_seeds_once_the_artifact_lands()
+    {
+        // The recipe row here asks for fiber only, so the landing day proves the unlock itself
+        // waits for the donated artifact.
+        var rows = new[] { new RecipeRow("Ancient Seeds", new[] { "(O)771" }, "(O)499", "null", IsCooking: false) };
+        var objects = new Dictionary<string, ObjInfo> { ["(O)771"] = new("(O)771", "Fiber", -16, 1, new List<string>(), false) };
+        var snapshot = new ObtainabilityModel(new Dictionary<string, IReadOnlyList<ObtainSource>>
+        {
+            ["(O)771"] = new[] { new ObtainSource(SourceKind.Forage, DayTable.Always, Reliability.Dependable, ObtainConditions.None, "weeds") },
+            ["(O)114"] = new[] { new ObtainSource(SourceKind.ArtifactSpot, DayTable.Available(d => d >= 40), Reliability.Dependable, ObtainConditions.None, "dig") },
+        });
+        ObtainSource seeds = MadeSources.Recipes(rows, objects, new Dictionary<string, WeekMask>(), snapshot).First(m => m.ItemId == "(O)499").Source;
+        Assert.False(seeds.Conditions.Unresolved);
+        Assert.Contains("unlock:donate (O)114", seeds.Conditions.Requires);
+        Assert.Contains("item:(O)114", seeds.Conditions.Requires);
+        Assert.Equal(40, seeds.Lands.Lands(1));
+    }
+
+    [Fact]
     public void The_any_wild_seed_ingredient_reads_the_four_seed_packets()
     {
         var rows = new[]

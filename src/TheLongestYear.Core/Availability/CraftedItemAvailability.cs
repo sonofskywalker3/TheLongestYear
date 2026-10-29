@@ -12,7 +12,9 @@ namespace TheLongestYear.Core.Availability;
 /// recipe ("l N" leans on the shop price alone). An empty unlock is "default". A "null" or "none"
 /// unlock is taught by a shop, letter or event, so only a shop price places it, unless the recipe
 /// is in <see cref="MadeSources.EventTaughtUnlocks"/> (Jeff's ruling 2026-09-16): then the event's
-/// friendship condition stands in for the unlock, and the basis shows the substitution.
+/// friendship condition (or, for a recipe the museum teaches, "donate &lt;id&gt;": the week that item can
+/// first be had, at the special-unlock effort) stands in for the unlock, and the basis shows the
+/// substitution.
 /// A recipe that asks for "any wild seed" (-777, a code-only group the dish rule never meets) is
 /// skipped rather than guessed at.</summary>
 public static class CraftedItemAvailability
@@ -66,6 +68,9 @@ public static class CraftedItemAvailability
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
             int? recipeWeek = CookedDishAvailability.CraftingRecipeWeek(unlock, recipe.OutputId, data, step, shopWeeks);
+            // A museum-taught recipe is learned the week the donated item can first be had.
+            if (MadeSources.DonatedItem(unlock) is string donated && weekOf(donated) is int donatedWeek)
+                recipeWeek = recipeWeek == null ? donatedWeek : Math.Min(recipeWeek.Value, donatedWeek);
             if (recipeWeek == null) latestWeek = null;
             else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
             ItemEffort candidate = missing != null

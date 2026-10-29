@@ -123,6 +123,48 @@ public class CraftedItemAvailabilityTests
         Assert.Contains("unlock 'null → f Linus 4'", result.Basis);
     }
 
+    [Theory]
+    [InlineData("Flute Block", "(O)464")]
+    [InlineData("Drum Block", "(O)463")]
+    public void Robins_six_heart_event_teaches_the_music_blocks(string name, string output)
+    {
+        var recipe = new CraftingRecipe(name, output, new[] { new RecipeIngredient(Acorn, 1) }, "null");
+        ItemEffort? result = CraftedItemAvailability.Derive(output, Data(recipe), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(UnlockWeeks.ForFriendship("Robin", 6), result!.EarliestWeek);
+        Assert.Equal(2 + CookedDishAvailability.UnlockEffort("f Robin 6"), result.Effort);
+        Assert.Contains("unlock 'null → f Robin 6'", result.Basis);
+    }
+
+    private const string AncientSeed = "(O)114";
+    private const string AncientSeeds = "(O)499";
+    private static CraftingRecipe AncientSeedsRecipe()
+        => new("Ancient Seeds", AncientSeeds, new[] { new RecipeIngredient(AncientSeed, 1) }, "null");
+
+    [Fact]
+    public void Donating_the_ancient_seed_teaches_ancient_seeds_the_week_the_artifact_is_found()
+    {
+        int? EffortWithSeed(string id) => id == AncientSeed ? 4 : EffortOf(id);
+        int? WeekWithSeed(string id) => id == AncientSeed ? 6 : WeekOf(id);
+        ItemEffort? result = CraftedItemAvailability.Derive(AncientSeeds, Data(AncientSeedsRecipe()), EffortWithSeed, WeekWithSeed, DifficultyStep.Normal);
+        Assert.Equal(6, result!.EarliestWeek);
+        Assert.Equal(4 + 3, result.Effort);
+        Assert.Equal(3, CookedDishAvailability.UnlockEffort("donate (O)114"));
+        Assert.Contains("unlock 'null → donate (O)114'", result.Basis);
+    }
+
+    [Fact]
+    public void A_donation_unlock_for_an_artifact_not_found_in_year_1_is_unplaced()
+    {
+        // The recipe asks for the seed too, so a second recipe that does not proves the unlock itself
+        // waits for the donated item.
+        var recipe = new CraftingRecipe("Ancient Seeds", AncientSeeds, new[] { new RecipeIngredient(Acorn, 1) }, "null");
+        ItemEffort? result = CraftedItemAvailability.Derive(AncientSeeds, Data(recipe), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Null(result!.EarliestWeek);
+        Assert.Contains("recipe not in year 1", result.Basis);
+        int? WeekWithSeed(string id) => id == AncientSeed ? 9 : WeekOf(id);
+        Assert.Equal(9, CraftedItemAvailability.Derive(AncientSeeds, Data(recipe), EffortOf, WeekWithSeed, DifficultyStep.Normal)!.EarliestWeek);
+    }
+
     [Fact]
     public void An_unlock_outside_year_1_leaves_it_unplaced()
     {
