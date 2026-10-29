@@ -237,6 +237,15 @@ namespace TheLongestYear.Loop
         public IReadOnlyList<Core.Lexicon.RandomShopItem> LayerRandomShopPicks { get; set; }
         private int _lastSeed;
 
+        /// <summary>Banishes this board is built under (<see cref="Core.BanishRules"/>). A generation
+        /// input like the seed: the reset sets the ones it honours, the load-time re-derivation sets
+        /// <c>MetaState.BoardBanishes</c>. Null or empty = no banish, the board as before.</summary>
+        public IReadOnlyList<Core.BanishPick> Banishes { get; set; }
+
+        /// <summary>How many re-rolled bundles of the last <see cref="Generate"/> could not fill
+        /// every slot from their pool and kept their template's slots (the banish check reads it).</summary>
+        public int LastKeptVanillaCount { get; private set; }
+
         public IReadOnlyDictionary<string, Core.Season> LastDerivedSeasonPins { get; private set; }
             = new Dictionary<string, Core.Season>();
 

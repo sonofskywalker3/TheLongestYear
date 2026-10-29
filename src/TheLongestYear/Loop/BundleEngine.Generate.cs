@@ -23,7 +23,12 @@ namespace TheLongestYear.Loop
             _lastRecipes.Clear();
             _lastVanillaOnlyRecipes.Clear();
             var timing = _monitor != null ? new ResetTiming(_monitor, "BundleEngine.Generate") : null;
-            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, _extraExcludedIds, VanillaFilter, LayerMarks, LayerRandomShopPicks);
+            LastKeptVanillaCount = 0;
+            // Banishes (shrine purchase): banished items leave the item pools, banished bundles
+            // leave their positions' candidates. With no banish both are the inputs as before.
+            IReadOnlySet<string> excludedIds = Core.BanishRules.ExcludedIds(_extraExcludedIds, Banishes);
+            IReadOnlySet<string> banishedBundles = Core.BanishRules.BundleNames(Banishes);
+            ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, excludedIds, VanillaFilter, LayerMarks, LayerRandomShopPicks);
             timing?.Mark("GameDataPools.Build");
             // Item-rarity modifier (spec 2026-08-26): bias the pool weights the sampler already
             // reads, rather than teaching the sampler about difficulty. A bias of 1.0 returns the
@@ -125,6 +130,7 @@ namespace TheLongestYear.Loop
                 IReadOnlyList<IReadOnlyList<BundleSpec>> positions = cappedAllowance == 0
                     ? WithoutHelpers(roomEntry.Value)
                     : roomEntry.Value;
+                positions = Core.BanishRules.WithoutBanishedBundles(positions, banishedBundles);
                 IReadOnlyList<BundleSpec> picks = RemixSelector.PickForRoom(positions, seed, roomEntry.Key);
                 picks = ApplyBundleCount(roomEntry.Key, picks, positions, seed, reservedIndices);
                 foreach (BundleSpec pick in picks)
@@ -241,6 +247,7 @@ namespace TheLongestYear.Loop
                         LogLevel.Trace);
                     composed = SlotTrimmer.Trim(pick, slotRng);
                     record.KeptVanilla = true;
+                    LastKeptVanillaCount++;
                 }
                 AddAskedItems(asked, composed);
                 record.Composed = composed;

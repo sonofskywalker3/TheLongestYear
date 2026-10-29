@@ -625,6 +625,10 @@ namespace TheLongestYear
                 return state != null && slot < state.Length && state[slot];
             });
             _pastSeasonSpawns?.Refresh(TodayDayOfYear());
+            // Banishes the last reset could not honour: say so once, on the new loop's first morning.
+            // Same helper as the reset's own path: cleared only once the box shows, never queued twice.
+            if (_runController?.IsRewindChainRunning != true)
+                TheLongestYear.Loop.BanishNotice.QueueIfPending(() => _meta.State, this.Monitor);
             // Catches Sneak Peek expiring at the season roll: the Wednesday channel goes back to
             // being a rerun, so the label has to go back with it.
             this.RefreshSneakPeekChannelLabel();
