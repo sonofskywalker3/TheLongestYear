@@ -177,3 +177,20 @@ public class AvailabilityInputsOrderTests
             EffortData.SortedSpots(spots.Reverse()));
     }
 }
+
+/// <summary>The offline rebuild reads the same inputs the live game hashed: the vanilla fixture's
+/// pools, projected back through <see cref="AvailabilityInputs.From"/>, carry every member and stamp
+/// the same.</summary>
+public class AvailabilityInputsRoundTripTests
+{
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void The_Vanilla_Inputs_Rebuild_Offline_To_The_Same_Stamp(bool pierre)
+    {
+        AvailabilityInputs inputs = VanillaInputsFixture.LoadAvailability(pierre);
+        AvailabilityInputs rebuilt = AvailabilityInputs.From(inputs.Pools(), inputs.EffortData,
+            inputs.SeasonOverrides, inputs.EffortOverrides, inputs.WeekOverrides, inputs.YearTwoCapped);
+        Assert.Equal(inputs.Hash(), rebuilt.Hash());
+    }
+}
