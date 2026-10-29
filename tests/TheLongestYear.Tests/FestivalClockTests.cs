@@ -4,22 +4,24 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>
-/// Nijah, Nexus, 2026-10-27: on normal time there is not enough of Spirit's Eve to buy from the
-/// shop and finish the maze. The clock there runs at a configurable fraction of normal speed;
-/// every other festival keeps the normal clock.
+/// Nijah, Nexus, 2026-10-27, and Jeff, 2026-10-28: on normal time the night festivals leave too
+/// little to talk, shop and explore before the main event. Spirit's Eve and the Moonlight Jellies
+/// run at a configurable fraction of normal speed; every other festival keeps the normal clock.
 /// </summary>
 public class FestivalClockTests
 {
     private const int VanillaMsPerGameMinute = 700;
 
-    [Fact]
-    public void Spirits_eve_is_slowed()
+    [Theory]
+    [InlineData("festival_fall27")]   // Spirit's Eve
+    [InlineData("festival_summer28")] // Dance of the Moonlight Jellies
+    public void Night_festivals_are_slowed(string eventId)
     {
-        Assert.True(FestivalClock.IsSlowed("festival_fall27"));
+        Assert.True(FestivalClock.IsSlowed(eventId));
+        Assert.Equal(700, FestivalClock.ExtraMillisecondsFor(eventId, 0.5, VanillaMsPerGameMinute));
     }
 
     [Theory]
-    [InlineData("festival_summer28")] // Moonlight Jellies: the jellies are a scripted main event, already frozen
     [InlineData("festival_spring13")] // Egg Festival
     [InlineData("festival_spring24")] // Flower Dance
     [InlineData("festival_summer11")] // Luau
@@ -47,6 +49,8 @@ public class FestivalClockTests
     [InlineData(0.5, 700)]   // half speed: each game minute takes twice as long
     [InlineData(1.0, 0)]     // normal: today's behaviour
     [InlineData(0.25, 2100)] // quarter speed: four times as long
+    [InlineData(0.1, 6300)]  // the minimum: ten times as long
+    [InlineData(0.15, 3967)]
     [InlineData(0.8, 175)]
     public void Extra_milliseconds_stretch_the_game_minute(double speed, int expectedExtra)
     {
@@ -56,12 +60,38 @@ public class FestivalClockTests
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
-    [InlineData(0.1)]
+    [InlineData(0.05)]
     [InlineData(double.NaN)]
     public void Too_slow_or_broken_settings_clamp_to_the_minimum(double speed)
     {
         Assert.Equal(FestivalClock.MinSpeed, FestivalClock.ClampSpeed(speed));
-        Assert.Equal(2100, FestivalClock.ExtraMillisecondsPerGameMinute(speed, VanillaMsPerGameMinute));
+        Assert.Equal(6300, FestivalClock.ExtraMillisecondsPerGameMinute(speed, VanillaMsPerGameMinute));
+    }
+
+    [Fact]
+    public void The_minimum_is_ten_percent()
+    {
+        Assert.Equal(0.10, FestivalClock.MinSpeed);
+        Assert.Equal(0.10, FestivalClock.ClampSpeed(0.10));
+        // The GMCM slider's float 0.1f, rounded to two places on save, stays at the minimum.
+        Assert.Equal(6300, FestivalClock.ExtraMillisecondsPerGameMinute(System.Math.Round((double)0.1f, 2), VanillaMsPerGameMinute));
+    }
+
+    [Fact]
+    public void Ten_percent_is_seventy_seconds_per_ten_minutes()
+    {
+        int extra = FestivalClock.ExtraMillisecondsFor("festival_summer28", 0.1, VanillaMsPerGameMinute);
+        Assert.Equal(70_000, FestivalClock.RealMillisecondsPerTenMinutes(VanillaMsPerGameMinute, extra));
+    }
+
+    [Fact]
+    public void Jellies_window_at_ten_percent_fits_an_int()
+    {
+        // 22:00 to 24:00 is twelve 10-minute advances: 14 real minutes at the minimum speed.
+        int extra = FestivalClock.ExtraMillisecondsFor("festival_summer28", 0.1, VanillaMsPerGameMinute);
+        long total = 12L * FestivalClock.RealMillisecondsPerTenMinutes(VanillaMsPerGameMinute, extra);
+        Assert.Equal(840_000L, total);
+        Assert.True(total < int.MaxValue);
     }
 
     [Theory]
@@ -120,6 +150,13 @@ public class FestivalClockTests
     }
 
     [Fact]
+    public void Jellies_temporary_map_gets_the_slowed_value()
+    {
+        Assert.Equal(700, FestivalClock.TargetExtraMs(
+            featureOn: true, runActive: true, "festival_summer28", isTemporary: true, 0.5, VanillaMsPerGameMinute));
+    }
+
+    [Fact]
     public void Entry_tick_on_the_real_town_is_never_written()
     {
         // Vanilla attaches festival_fall27 to the persistent Town first and swaps to the "Temp"
@@ -141,7 +178,6 @@ public class FestivalClockTests
     [InlineData(false, true, "festival_fall27", true)]   // festivals-cost-hours off
     [InlineData(true, false, "festival_fall27", true)]   // not a TLY run
     [InlineData(true, true, null, true)]                 // no festival up
-    [InlineData(true, true, "festival_summer28", true)]  // Moonlight Jellies: normal time
     [InlineData(true, true, "festival_fall16", true)]    // the Fair: normal time
     [InlineData(true, true, null, false)]                // ordinary day in the real Town
     public void Nothing_to_slow_gives_no_write(bool featureOn, bool runActive, string? eventId, bool isTemporary)

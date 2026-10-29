@@ -37,7 +37,7 @@ namespace TheLongestYear.Loop
         /// <summary>Guard so OnUpdateTicked's auto-eject only triggers once per festival.</summary>
         private static bool _pendingAutoEnd;
 
-        /// <summary>Mirrors GameplayConfig.FestivalClockSlowdown: the clock speed at Spirit's Eve as a
+        /// <summary>Mirrors GameplayConfig.FestivalClockSlowdown: the clock speed at the night festivals as a
         /// fraction of normal (0.5 = half speed). Set by ModEntry at config load and from GMCM.
         /// The setter clamps, so <c>tly_festival state</c> prints the speed that actually runs.</summary>
         internal static double ClockSpeed
@@ -61,7 +61,7 @@ namespace TheLongestYear.Loop
         }
 
         /// <summary>
-        /// Slows the clock on a qualifying festival's grounds (Spirit's Eve; see
+        /// Slows the clock on a night festival's grounds (Spirit's Eve, the Moonlight Jellies; see
         /// <see cref="FestivalClock"/>). Called every tick from ModEntry.OnUpdateTicked.
         ///
         /// Mechanism: vanilla's own per-location knob, <see cref="GameLocation.ExtraMillisecondsPerInGameMinute"/>,

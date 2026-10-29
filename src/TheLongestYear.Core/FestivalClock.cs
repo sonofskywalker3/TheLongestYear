@@ -4,33 +4,37 @@ using System.Collections.Generic;
 namespace TheLongestYear.Core;
 
 /// <summary>
-/// A slower clock for the festivals where normal time is too short (Nijah, Nexus, 2026-10-27).
+/// A slower clock for the two night festivals (Nijah, Nexus, 2026-10-27; Jeff, 2026-10-28: "the
+/// point was they couldn't do all the stuff and then get to Lewis").
 ///
 /// With FestivalTimeFlow on, a festival runs on the normal clock: 7 real seconds per 10 game
-/// minutes. Spirit's Eve runs 22:00 to 23:50, which is under a minute and a half of real time to
-/// shop at Pierre's stall AND walk the haunted maze. While the player is on such a festival's
+/// minutes. Spirit's Eve runs 22:00 to 23:50 and the Moonlight Jellies 22:00 to 24:00, so a player
+/// gets under a minute and a half to talk to villagers, shop and explore (the haunted maze) before
+/// the eject or before reaching Lewis. While the player is on such a festival's
 /// grounds the game minute is stretched by <see cref="ExtraMillisecondsPerGameMinute"/>, fed into
 /// vanilla's own per-location knob <c>GameLocation.ExtraMillisecondsPerInGameMinute</c> on the
 /// festival's temporary map only (see <see cref="TargetExtraMs"/>).
 ///
-/// Only Spirit's Eve qualifies. The Moonlight Jellies were considered and left out: the jellies
-/// themselves are the festival's main event, a scripted sequence the game runs with
-/// playerControlSequence off, and <see cref="FestivalPhase"/> already freezes the clock for those.
-/// The Night Market is a passive festival (no festival map, no clock change) and is not touched.
+/// Only the night festivals qualify: every other vanilla festival starts in the morning. What gets
+/// longer is the free walk before the main event; the jellies show itself is a scripted sequence
+/// (playerControlSequence off) that <see cref="FestivalPhase"/> already freezes. The Night Market
+/// is a passive festival (no festival event or map) and is not touched.
 /// </summary>
 public static class FestivalClock
 {
     /// <summary>Festival ids (the part after "festival_") that get the slower clock.</summary>
     private static readonly HashSet<string> SlowedFestivalIds = new(StringComparer.Ordinal)
     {
-        "fall27", // Spirit's Eve
+        "fall27",   // Spirit's Eve, 22:00-23:50
+        "summer28", // Dance of the Moonlight Jellies, 22:00-24:00
     };
 
     /// <summary>Read-only view of the qualifying festival ids.</summary>
     public static IReadOnlyCollection<string> SlowedFestivals => SlowedFestivalIds;
 
-    /// <summary>Lowest speed the setting allows: a quarter of normal speed.</summary>
-    public const double MinSpeed = 0.25;
+    /// <summary>Lowest speed the setting allows: a tenth of normal speed (70 real seconds per 10
+    /// game minutes).</summary>
+    public const double MinSpeed = 0.10;
 
     /// <summary>Normal speed: the setting's top end, and today's behaviour.</summary>
     public const double NormalSpeed = 1.0;
