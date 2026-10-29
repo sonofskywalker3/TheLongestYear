@@ -21,6 +21,11 @@ public sealed record RawMachineRule(
     string MachineItemId, string? RequiredItemId, IReadOnlyList<string> RequiredTags,
     IReadOnlyList<string> OutputItemIds, int MinutesUntilReady, int DaysUntilReady);
 
+/// <summary>One Data/Shops recipe row without a Condition: the recipe's output id (qualified), the
+/// shop that sells it and its price. A recipe is dated by its shop as well as its price, so a row at a
+/// festival stall or an unreached shop teaches nothing in year 1.</summary>
+public sealed record RawRecipeShopRow(string ItemId, string ShopId, int Price);
+
 /// <summary>One Data/FarmAnimals entry reduced to what the animal-product rule reads.</summary>
 public sealed record RawFarmAnimal(
     string Name, string Building, int PurchasePrice, int DaysToProduce,
@@ -96,7 +101,13 @@ public sealed class EffortData
     public IReadOnlyList<RawArtifactSpot> ObjectArtifactSpots { get; init; } = new List<RawArtifactSpot>();
     public IReadOnlyList<RawMachineRule> MachineRules { get; init; } = new List<RawMachineRule>();
     public IReadOnlyDictionary<string, string> MachineUnlocks { get; init; } = new Dictionary<string, string>();
+    /// <summary>The cheapest recipe price per output id across every shop. Machine recipes read it;
+    /// dishes and crafted objects read <see cref="RecipeShopRows"/>, which keeps the shop.</summary>
     public IReadOnlyDictionary<string, int> RecipePrices { get; init; } = new Dictionary<string, int>();
+    /// <summary>Every unconditioned Data/Shops recipe row with its shop, in Data/Shops order. Empty in
+    /// data recorded before the shop was kept (and in hand-built data), where the dish and crafting
+    /// rules fall back to <see cref="RecipePrices"/> alone.</summary>
+    public IReadOnlyList<RawRecipeShopRow> RecipeShopRows { get; init; } = new List<RawRecipeShopRow>();
     public IReadOnlyList<RawFarmAnimal> Animals { get; init; } = new List<RawFarmAnimal>();
     public IReadOnlyList<RawBuilding> Buildings { get; init; } = new List<RawBuilding>();
     public IReadOnlyList<RawCookingRecipe> CookingRecipes { get; init; } = new List<RawCookingRecipe>();
@@ -144,6 +155,7 @@ public sealed class EffortData
         MachineRules = MachineRules,
         MachineUnlocks = OrdinalOrder.Of(MachineUnlocks)!,
         RecipePrices = OrdinalOrder.Of(RecipePrices)!,
+        RecipeShopRows = RecipeShopRows,
         Animals = Animals,
         Buildings = Buildings,
         CookingRecipes = CookingRecipes,

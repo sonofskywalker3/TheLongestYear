@@ -31,19 +31,24 @@ public sealed class ShopWeeks
 
     private readonly IReadOnlyDictionary<string, PlaceWeek> _weeks;
     private readonly IReadOnlySet<string> _unplaced;
+    private readonly IReadOnlyDictionary<string, PlaceWeek> _shops;
 
-    private ShopWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IReadOnlySet<string> unplaced)
+    private ShopWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IReadOnlySet<string> unplaced,
+        IReadOnlyDictionary<string, PlaceWeek> shops)
     {
         _weeks = weeks;
         _unplaced = unplaced;
+        _shops = shops;
     }
 
     /// <summary>The shop weeks and unplaced items as recorded (<see cref="Weeks"/>,
-    /// <see cref="UnplacedItems"/>), for an offline rebuild of the availability inputs
-    /// (<see cref="Lexicon.AvailabilityInputs"/>). Null unplaced = none.</summary>
-    internal static ShopWeeks FromWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IEnumerable<string>? unplaced = null)
+    /// <see cref="UnplacedItems"/>, <see cref="Shops"/>), for an offline rebuild of the availability
+    /// inputs (<see cref="Lexicon.AvailabilityInputs"/>). Null unplaced = none; null shops = none.</summary>
+    internal static ShopWeeks FromWeeks(IReadOnlyDictionary<string, PlaceWeek> weeks, IEnumerable<string>? unplaced = null,
+        IReadOnlyDictionary<string, PlaceWeek>? shops = null)
         => new(new Dictionary<string, PlaceWeek>(weeks ?? throw new ArgumentNullException(nameof(weeks)), StringComparer.Ordinal),
-            new HashSet<string>(unplaced ?? Array.Empty<string>(), StringComparer.Ordinal));
+            new HashSet<string>(unplaced ?? Array.Empty<string>(), StringComparer.Ordinal),
+            new Dictionary<string, PlaceWeek>(shops ?? new Dictionary<string, PlaceWeek>(), StringComparer.Ordinal));
 
     /// <summary>Every item some walkable shop sells, with its earliest weeks. For the log and tests.</summary>
     public IReadOnlyDictionary<string, PlaceWeek> Weeks => _weeks;
@@ -57,6 +62,11 @@ public sealed class ShopWeeks
     /// Trader but also at the Luau and the cart. An item no shop lists at all is not here: nothing says where it comes
     /// from, so the rules keep their own arithmetic for it.</summary>
     public IReadOnlySet<string> UnplacedItems => _unplaced;
+
+    /// <summary>Every shop the walk placed and no layer flagged, with the earliest week it opens. A
+    /// recipe row is dated by its shop through this (<see cref="CookedDishAvailability"/>): the recipe
+    /// lines this class skips teach, and a shop missing here teaches nothing in year 1.</summary>
+    public IReadOnlyDictionary<string, PlaceWeek> Shops => _shops;
 
     /// <param name="flaggedShops">Shop ids a supported mod's layer marks as year-2 or Ginger Island
     /// content (<see cref="Obtainability.YearTwoMarks.Shops"/>): their listings are skipped, so a
@@ -112,7 +122,10 @@ public sealed class ShopWeeks
         }
         unplaced.ExceptWith(weeks.Keys);
         unplaced.ExceptWith(soldUndated);
-        return new ShopWeeks(weeks, unplaced);
+        var shops = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, PlaceWeek> shop in shopWeek)
+            if (flaggedShops == null || !flaggedShops.Contains(shop.Key)) shops[shop.Key] = shop.Value;
+        return new ShopWeeks(weeks, unplaced, shops);
     }
 
     /// <summary>The Traveling Cart's shop id. The cart stands in the Forest from year 1, but on two
@@ -128,6 +141,15 @@ public sealed class ShopWeeks
     /// The Desert Festival's stalls ("DesertFestival_…") are not here: they need the bus.</summary>
     public static bool OpensInYearOneUndated(string shopId)
         => shopId == CartShopId || shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal);
+
+    /// <summary>The week a placed, unflagged shop first opens (<see cref="Shops"/>).</summary>
+    public bool TryGetShop(string shopId, out PlaceWeek week)
+    {
+        week = null!;
+        if (string.IsNullOrEmpty(shopId) || !_shops.TryGetValue(shopId, out PlaceWeek? found)) return false;
+        week = found;
+        return true;
+    }
 
     public bool TryGet(string qualifiedItemId, out PlaceWeek week)
     {

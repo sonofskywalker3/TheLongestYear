@@ -81,8 +81,10 @@ public static class CookedDishAvailability
     /// <param name="step">Required, no default: the difficulty step decides whether the year-2
     /// Queen of Sauce episodes are a route at all (Easy has no Sneak Peek Boost), so a caller that
     /// silently fell back to Normal would place dishes the board cannot deliver.</param>
+    /// <param name="shopWeeks">The shops the walk placed, which date a recipe's shop rows
+    /// (<see cref="RecipePriceWeek"/>).</param>
     public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf, bool hasKitchen,
-        Func<string, int?>? weekOf, DifficultyStep step)
+        Func<string, int?>? weekOf, DifficultyStep step, ShopWeeks? shopWeeks = null)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
@@ -114,7 +116,7 @@ public static class CookedDishAvailability
                 if (w == null) latestWeek = null;
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
-            RecipeWeekResult recipeResult = ComputeRecipeWeek(recipe, data, step);
+            RecipeWeekResult recipeResult = ComputeRecipeWeek(recipe, data, step, shopWeeks);
             int? recipeWeek = recipeResult.Week;
             if (recipeWeek == null) latestWeek = null;
             else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
@@ -156,8 +158,8 @@ public static class CookedDishAvailability
     /// (the Boost replaced the rerun; see <see cref="AvailabilityWeeks.YearTwoLastReachableEpisode"/>).
     /// On Easy, without the Boost route, it stays unplaced — and so does episode 32, which no
     /// Wednesday in the run can reach.</summary>
-    public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
-        => ComputeRecipeWeek(recipe, data, step).Week;
+    public static int? RecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step, ShopWeeks? shopWeeks = null)
+        => ComputeRecipeWeek(recipe, data, step, shopWeeks).Week;
 
     /// <summary>A recipe's placed week, plus the Sneak Peek Boost basis note when (and only when)
     /// the year-2 episode route is the one that actually won the week (spec
@@ -173,8 +175,8 @@ public static class CookedDishAvailability
     /// detection can never drift apart (fix round 2, 2026-08-29).</summary>
     public const string SneakPeekBasisMarker = "year-2 episode, Sneak Peek Boost";
 
-    private static RecipeWeekResult ComputeRecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step)
-        => ComputeRecipeWeek(recipe.UnlockCondition, recipe.OutputItemId, recipe.Name, AvailabilityWeeks.CookiesWeek, data, step);
+    private static RecipeWeekResult ComputeRecipeWeek(RawCookingRecipe recipe, EffortData data, DifficultyStep step, ShopWeeks? shopWeeks)
+        => ComputeRecipeWeek(recipe.UnlockCondition, recipe.OutputItemId, recipe.Name, AvailabilityWeeks.CookiesWeek, data, step, shopWeeks);
 
     /// <summary>Week a crafting recipe (Data/CraftingRecipes) is learned, or null when it is not in
     /// year 1. Same reading as a dish's, with three differences: an empty unlock is "default" (known
@@ -183,11 +185,32 @@ public static class CookedDishAvailability
     /// substitutes an event-taught recipe's friendship condition first); and no Queen of Sauce
     /// episode teaches an "l N" crafting recipe (the game grants crafting recipes only by "default",
     /// a skill level-up and friendship mail), so that one leans on the shop price alone.</summary>
-    internal static int? CraftingRecipeWeek(string unlock, string outputId, EffortData data, DifficultyStep step)
+    internal static int? CraftingRecipeWeek(string unlock, string outputId, EffortData data, DifficultyStep step,
+        ShopWeeks? shopWeeks = null)
     {
         string text = (unlock ?? "").Trim();
         if (text.Length == 0) text = DefaultUnlock;
-        return ComputeRecipeWeek(text, outputId, channelName: null, nullUnlockWeek: null, data, step).Week;
+        return ComputeRecipeWeek(text, outputId, channelName: null, nullUnlockWeek: null, data, step, shopWeeks).Week;
+    }
+
+    /// <summary>The week a shop first teaches the recipe for <paramref name="outputId"/>, or null. Each
+    /// shop row is dated by both its price (<see cref="UnlockWeeks.ForCost"/>) and its shop: a row at a
+    /// shop <paramref name="shopWeeks"/> has not placed (a festival stall, an unreached map) or that a
+    /// layer flagged teaches nothing in year 1, and a row at a placed shop waits for the later of the
+    /// two. The earliest such row wins. Data without <see cref="EffortData.RecipeShopRows"/> (recorded
+    /// before the shop was kept, or hand-built) reads the cheapest price alone.</summary>
+    internal static int? RecipePriceWeek(string outputId, EffortData data, ShopWeeks? shopWeeks)
+    {
+        if (data.RecipeShopRows.Count == 0)
+            return data.RecipePrices.TryGetValue(outputId, out int price) ? UnlockWeeks.ForCost(price) : null;
+        int? best = null;
+        foreach (RawRecipeShopRow row in data.RecipeShopRows)
+        {
+            if (row == null || BundleParsing.NormalizeItemId(row.ItemId) != outputId) continue;
+            if (shopWeeks == null || !shopWeeks.TryGetShop(row.ShopId, out PlaceWeek shop)) continue;
+            best = Min(best, Math.Max(UnlockWeeks.ForCost(row.Price), shop.Week));
+        }
+        return best;
     }
 
     private const string DefaultUnlock = "default";
@@ -197,11 +220,11 @@ public static class CookedDishAvailability
     /// <param name="nullUnlockWeek">The week a "null" (or empty) unlock is learned, or null to
     /// fall back to the price week.</param>
     private static RecipeWeekResult ComputeRecipeWeek(string? unlock, string outputId, string? channelName, int? nullUnlockWeek,
-        EffortData data, DifficultyStep step)
+        EffortData data, DifficultyStep step, ShopWeeks? shopWeeks)
     {
         string text = ReadUnlock(unlock);
         if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return new RecipeWeekResult(1, null);
-        int? priceWeek = data.RecipePrices.TryGetValue(outputId, out int price) ? UnlockWeeks.ForCost(price) : null;
+        int? priceWeek = RecipePriceWeek(outputId, data, shopWeeks);
         if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase))
             return new RecipeWeekResult(nullUnlockWeek ?? priceWeek, null);
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);

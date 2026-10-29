@@ -51,6 +51,7 @@ namespace TheLongestYear.Loop
             var machineRules = new List<RawMachineRule>();
             var machineUnlocks = new Dictionary<string, string>(StringComparer.Ordinal);
             var recipePrices = new Dictionary<string, int>(StringComparer.Ordinal);
+            var recipeShopRows = new List<RawRecipeShopRow>();
             var animals = new List<RawFarmAnimal>();
             var buildings = new List<RawBuilding>();
             var cooking = new List<RawCookingRecipe>();
@@ -164,7 +165,9 @@ namespace TheLongestYear.Loop
                 // player can count on and it must not become an item's shop-price week. The rest
                 // dedupe by the CHEAPEST price across shops, not the first row seen: the same
                 // recipe sells at different prices in different shops and the cheapest is the one
-                // that decides when a player can afford it.
+                // that decides when a player can afford it. Every row is also kept with its shop:
+                // dishes and crafted objects are dated by the shop as well as the price, since a
+                // festival stall or an unreached shop teaches nothing in year 1.
                 int skippedConditionRecipeRows = 0;
                 foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
                 {
@@ -173,6 +176,7 @@ namespace TheLongestYear.Loop
                         if (item == null || !item.IsRecipe || item.Price <= 0 || string.IsNullOrEmpty(item.ItemId)) continue;
                         if (!string.IsNullOrWhiteSpace(item.Condition)) { skippedConditionRecipeRows++; continue; }
                         string key = BundleParsing.NormalizeItemId(item.ItemId);
+                        recipeShopRows.Add(new RawRecipeShopRow(key, kv.Key, item.Price));
                         recipePrices[key] = recipePrices.TryGetValue(key, out int existing)
                             ? Math.Min(existing, item.Price)
                             : item.Price;
@@ -282,7 +286,7 @@ namespace TheLongestYear.Loop
                 Objects = objects, GeodeDrops = geodeDrops, MonsterDrops = monsterDrops,
                 ArtifactSpots = artifactSpots, ForageSpawns = forage, ForageRates = forageRates,
                 MachineRules = machineRules,
-                MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, Animals = animals, Buildings = buildings,
+                MachineUnlocks = machineUnlocks, RecipePrices = recipePrices, RecipeShopRows = recipeShopRows, Animals = animals, Buildings = buildings,
                 CookingRecipes = cooking, CraftingRecipes = crafting, FishPonds = ponds, Crops = crops, TapItems = tapItems,
                 CookingChannel = cookingChannel, FruitTrees = fruitTrees, ObjectArtifactSpots = objectArtifactSpots,
                 WildTrees = wildTrees, WildTreeSpots = wildTreeSpots,

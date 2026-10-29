@@ -37,8 +37,9 @@ public static class CraftedItemAvailability
 
     /// <param name="step">Required for the same reason as the dish rule's: the recipe-week reading
     /// it shares takes the difficulty step.</param>
+    /// <param name="shopWeeks">The shops the walk placed, which date a recipe's shop rows.</param>
     public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf,
-        Func<string, int?>? weekOf, DifficultyStep step)
+        Func<string, int?>? weekOf, DifficultyStep step, ShopWeeks? shopWeeks = null)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
@@ -64,7 +65,7 @@ public static class CraftedItemAvailability
                 if (w == null) { latestWeek = null; unplaced ??= ingredient.Id; }
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
-            int? recipeWeek = CookedDishAvailability.CraftingRecipeWeek(unlock, recipe.OutputId, data, step);
+            int? recipeWeek = CookedDishAvailability.CraftingRecipeWeek(unlock, recipe.OutputId, data, step, shopWeeks);
             if (recipeWeek == null) latestWeek = null;
             else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
             ItemEffort candidate = missing != null

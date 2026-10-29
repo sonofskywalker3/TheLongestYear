@@ -9,7 +9,7 @@ namespace TheLongestYear.Core.Lexicon;
 
 /// <summary>Everything <see cref="ItemAvailabilityBuilder"/> reads besides the step and the kitchen
 /// state, as plain data: the <see cref="ItemPools"/> members it reads (the map and shop weeks as their
-/// dictionaries), the effort data whole, the season, effort and week overrides, and whether the
+/// dictionaries, the placed shops as <see cref="ShopPlacements"/>), the effort data whole, the season, effort and week overrides, and whether the
 /// year-two crops are capped (the one thing the save's upgrades decide there).
 /// <para><see cref="AvailabilityAnswers.InputsHash"/> is the hash of this record's
 /// <see cref="LexiconJson.Options"/> JSON, so the members, their names, their order and their types
@@ -27,7 +27,8 @@ public sealed record AvailabilityInputs(
     IReadOnlyDictionary<string, Season>? SeasonOverrides, IReadOnlyDictionary<string, int>? EffortOverrides,
     IReadOnlyDictionary<string, int>? WeekOverrides,
     bool YearTwoCapped,
-    IReadOnlyDictionary<string, CatchRate>? CatchRates = null)
+    IReadOnlyDictionary<string, CatchRate>? CatchRates = null,
+    IReadOnlyDictionary<string, PlaceWeek>? ShopPlacements = null)
 {
     private const int HashChars = 16;
 
@@ -53,7 +54,8 @@ public sealed record AvailabilityInputs(
             pools.Saplings, pools.Artifacts, pools.Books,
             effortData?.Ordered(), OrdinalOrder.Of(seasonOverrides), OrdinalOrder.Of(effortOverrides),
             OrdinalOrder.Of(weekOverrides), yearTwoCapped,
-            OrdinalOrder.Of(pools.CatchRates));
+            OrdinalOrder.Of(pools.CatchRates),
+            OrdinalOrder.Of(pools.ShopWeeks?.Shops));
     }
 
     /// <summary>The first <see cref="HashChars"/> lower-case hex digits of the SHA-256 of this record's
@@ -74,7 +76,7 @@ public sealed record AvailabilityInputs(
         TrapFishIds = new HashSet<string>(TrapFishIds ?? Array.Empty<string>(), StringComparer.Ordinal),
         FishRows = FishRows ?? new Dictionary<string, RawFishEntry>(),
         LocationWeeks = LocationWeeks == null ? null : Availability.LocationWeeks.FromReached(LocationWeeks),
-        ShopWeeks = ShopWeeks == null ? null : Availability.ShopWeeks.FromWeeks(ShopWeeks, UnplacedShopItems),
+        ShopWeeks = ShopWeeks == null ? null : Availability.ShopWeeks.FromWeeks(ShopWeeks, UnplacedShopItems, ShopPlacements),
         Saplings = Saplings ?? new List<PoolItem>(),
         Artifacts = Artifacts ?? new List<PoolItem>(),
         Books = Books ?? new List<PoolItem>(),
