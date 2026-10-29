@@ -106,7 +106,7 @@ public sealed class EffortComposer
             FruitTreeAvailability.Derive(qualifiedId, _data.FruitTrees, _shopWeeks, _mode),
             PoolArtifact(qualifiedId),
             PoolBook(qualifiedId),
-            ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf),
+            ArtisanAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _shopWeeks),
             FishPondAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _step),
             CookedDishAvailability.Derive(qualifiedId, _data, EffortOf, _hasKitchen, WeekOf, _step, _shopWeeks),
             CraftedItemAvailability.Derive(qualifiedId, _data, EffortOf, WeekOf, _step, _shopWeeks),

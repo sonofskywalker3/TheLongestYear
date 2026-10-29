@@ -97,6 +97,55 @@ public class RecipeSellerTests
         Assert.Equal(2, placed.Derive(Crafted)!.EarliestWeek);
     }
 
+    // ---- A machine recipe a shop sells ------------------------------------------------------
+
+    private const string Tub = "(BC)108";
+    private const string FlowerStall = "Festival_FlowerDance_Pierre";
+    private const string Keg = "(BC)12";
+
+    private static EffortData MachineData(string machineId, params RawRecipeShopRow[] rows)
+    {
+        var prices = new Dictionary<string, int>();
+        foreach (RawRecipeShopRow row in rows) prices[row.ItemId] = row.Price;
+        return new EffortData { RecipePrices = prices, RecipeShopRows = rows };
+    }
+
+    [Fact]
+    public void A_machine_recipe_sold_only_at_a_festival_stall_is_not_placed_by_its_price()
+        => Assert.Equal(AvailabilityWeeks.SpecialOrderMachineWeek, ArtisanAvailability.MachineWeek(Tub, "null",
+            MachineData(Tub, new RawRecipeShopRow(Tub, FlowerStall, 2000)), Placed()));
+
+    [Fact]
+    public void A_machine_recipe_at_a_placed_shop_waits_for_the_shop()
+        => Assert.Equal(7, ArtisanAvailability.MachineWeek(Tub, "null",
+            MachineData(Tub, new RawRecipeShopRow(Tub, Krobus, 2000)), Placed((Krobus, SewerWeek))));
+
+    [Fact]
+    public void A_machine_recipe_at_a_placed_shop_waits_for_its_price()
+        => Assert.Equal(UnlockWeeks.ForCost(30000), ArtisanAvailability.MachineWeek(Tub, "null",
+            MachineData(Tub, new RawRecipeShopRow(Tub, Robin, 30000)), Placed((Robin, WeekTwo))));
+
+    [Fact]
+    public void A_machine_recipe_from_a_skill_level_is_unchanged_by_the_shops()
+        => Assert.Equal(AvailabilityWeeks.MachineLevelWeek(8), ArtisanAvailability.MachineWeek(Keg, "s Farming 8",
+            MachineData(Tub, new RawRecipeShopRow(Tub, FlowerStall, 2000)), Placed()));
+
+    [Fact]
+    public void The_composer_dates_a_machine_by_its_seller()
+    {
+        EffortData data = new()
+        {
+            MachineRules = new[] { new RawMachineRule(Tub, null, new string[0], new[] { "(O)9001" }, 600, -1) },
+            RecipePrices = new Dictionary<string, int> { [Tub] = 2000 },
+            RecipeShopRows = new[] { new RawRecipeShopRow(Tub, FlowerStall, 2000) },
+        };
+        var none = new Dictionary<string, ItemAvailability>();
+        Assert.Equal(AvailabilityWeeks.SpecialOrderMachineWeek,
+            new EffortComposer(data, none, hasKitchen: true, shopWeeks: Placed()).Derive("(O)9001")!.EarliestWeek);
+        Assert.Equal(7, new EffortComposer(data, none, hasKitchen: true, shopWeeks: Placed((FlowerStall, SewerWeek)))
+            .Derive("(O)9001")!.EarliestWeek);
+    }
+
     // ---- ShopWeeks records which shops it placed -------------------------------------------
 
     private static ShopWeeks Built(IReadOnlySet<string>? flagged = null)

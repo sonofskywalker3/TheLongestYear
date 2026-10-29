@@ -27,8 +27,9 @@ public static class ArtisanAvailability
     /// first-year player gets.</summary>
     public const int QuestUnlockLevel = 10;
 
+    /// <param name="shopWeeks">The shops the walk placed, which date a machine recipe's shop rows.</param>
     public static ItemEffort? Derive(string qualifiedId, EffortData data, Func<string, int?> effortOf,
-        Func<string, int?>? weekOf = null)
+        Func<string, int?>? weekOf = null, ShopWeeks? shopWeeks = null)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         if (effortOf == null) throw new ArgumentNullException(nameof(effortOf));
@@ -43,7 +44,7 @@ public static class ArtisanAvailability
             int machine = MachineUnlockEffort(unlock);
             int time = TimeStep(rule.MinutesUntilReady, rule.DaysUntilReady);
             int effort = inputEffort + machine + time;
-            int machineWeek = MachineWeek(rule.MachineItemId, unlock, data);
+            int machineWeek = MachineWeek(rule.MachineItemId, unlock, data, shopWeeks);
             int runWeeks = RunDays(rule.MinutesUntilReady, rule.DaysUntilReady) / Calendar.DaysPerWeek;
             int? week = hasInput && inputWeek == null
                 ? null
@@ -135,10 +136,12 @@ public static class ArtisanAvailability
         => daysUntilReady >= 0 ? daysUntilReady : minutesUntilReady / MinutesPerDay;
 
     /// <summary>Week a machine's recipe is realistically in hand: the later of a skill/friendship
-    /// unlock and a bought recipe's price week (Data/Shops), then the earlier of that and any
-    /// route with no recipe field (AvailabilityWeeks.MachineRouteWeeks). A machine with none of
-    /// these placed lands at the special-order mail week.</summary>
-    public static int MachineWeek(string machineId, string? unlock, EffortData data)
+    /// unlock and the week a shop teaches the recipe (<see cref="CookedDishAvailability.RecipePriceWeek"/>:
+    /// a row at an unplaced or flagged shop teaches nothing, a placed one waits for the later of its
+    /// price and its shop), then the earlier of that and any route with no recipe field
+    /// (AvailabilityWeeks.MachineRouteWeeks). A machine with none of these placed lands at the
+    /// special-order mail week.</summary>
+    public static int MachineWeek(string machineId, string? unlock, EffortData data, ShopWeeks? shopWeeks = null)
     {
         if (data == null) throw new ArgumentNullException(nameof(data));
         string text = (unlock ?? "").Trim();
@@ -149,8 +152,8 @@ public static class ArtisanAvailability
             week = UnlockWeeks.ForFriendship(tokens[1], hearts) ?? AvailabilityWeeks.UnknownWeek;
         else if (MachineUnlockLevel(unlock) != QuestUnlockLevel)
             week = AvailabilityWeeks.MachineLevelWeek(MachineUnlockLevel(unlock));
-        if (data.RecipePrices.TryGetValue(machineId, out int price))
-            week = Math.Min(week ?? int.MaxValue, UnlockWeeks.ForCost(price));
+        if (CookedDishAvailability.RecipePriceWeek(machineId, data, shopWeeks) is int shopWeek)
+            week = Math.Min(week ?? int.MaxValue, shopWeek);
         if (AvailabilityWeeks.MachineRouteWeeks.TryGetValue(machineId, out (int Week, string Note) route))
             week = Math.Min(week ?? int.MaxValue, route.Week);
         return week ?? AvailabilityWeeks.SpecialOrderMachineWeek;
