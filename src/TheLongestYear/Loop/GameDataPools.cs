@@ -58,6 +58,7 @@ namespace TheLongestYear.Loop
             var objects = new Dictionary<string, RawObjectEntry>(StringComparer.Ordinal);
             var forage = new List<RawSpawnEntry>();
             var fish = new List<RawSpawnEntry>();
+            var locationSeasons = new Dictionary<string, SeasonSource>(StringComparer.OrdinalIgnoreCase);
             var trapIds = new HashSet<string>(StringComparer.Ordinal);
             var fishRows = new List<RawFishEntry>();
             var drops = new List<RawMonsterDropEntry>();
@@ -119,6 +120,7 @@ namespace TheLongestYear.Loop
                     }
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
+                    locationSeasons[kv.Key] = SeasonSourceFor(kv.Key);
                     // A row gated to year 2 or later never spawns in a loop (YearOneCondition).
                     foreach (SpawnForageData f in (loc.Forage ?? new List<SpawnForageData>()).Where(r => !PastSeasonSpawn.IsCopy(r?.Id) && YearOneCondition.Allows(r?.Condition, closedRules)))
                         foreach (string id in OfferedObjectIds(f.ItemId, f.RandomItemId, f.PerItemCondition))
@@ -430,7 +432,7 @@ namespace TheLongestYear.Loop
                 crops, objects, forage, fish, trapIds, drops,
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
-                festivalSeasons, reachability, vanillaOnlyIds, locationWeeks)
+                festivalSeasons, reachability, vanillaOnlyIds, locationWeeks, locationSeasons)
                 with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks, randomShopPicks) };
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
@@ -447,12 +449,54 @@ namespace TheLongestYear.Loop
                 foreach (var reason in reachability.Reasons)
                     _monitor?.Log($"  {reason.Key}: {reason.Value}", LogLevel.Trace);
             }
-            // A row whose season clauses rule out every season never fires, but the pools read it
-            // as any season; list them so a modded map's odd row can be found from the log.
+            // A row whose season clauses rule out every season never fires, so the pools drop it;
+            // list them so a modded map's odd row can be found from the log.
             foreach (RawSpawnEntry row in fish.Concat(forage))
-                if (ItemPoolBuilder.HasContradictorySeasons(row.Season, row.Condition))
-                    _monitor?.Log($"Spawn row {row.ItemId} at {row.Location}: season clauses rule out every season, read as any season (\"{row.Condition}\").", LogLevel.Trace);
+                if (ItemPoolBuilder.IsSeasonImpossible(row.Season, row.Condition, row.Location, locationSeasons))
+                    _monitor?.Log($"Spawn row {row.ItemId} at {row.Location}: season clauses rule out every season, row dropped (\"{row.Condition}\").", LogLevel.Trace);
+            foreach (SeasonSource source in new[] { SeasonSource.Own, SeasonSource.Unknown })
+            {
+                string[] names = locationSeasons.Where(kv => kv.Value == source).Select(kv => kv.Key)
+                    .OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray();
+                if (names.Length > 0)
+                    _monitor?.Log($"Locations whose season is {source} (their Season fields and LOCATION_SEASON rows give no calendar season): {string.Join(", ", names)}.", LogLevel.Trace);
+            }
             return pools;
+        }
+
+        private const string SeasonOverrideProperty = "SeasonOverride";
+        private const string FarmDataKeyPrefix = "Farm_";
+
+        /// <summary>The <see cref="SeasonSource"/> of a Data/Locations key, faithful to
+        /// GameLocation.GetSeason: the map's SeasonOverride property, then the location context's
+        /// SeasonOverride, then the parent location's season, then the calendar. A key with no loaded
+        /// location (or an invalid override value, which the game logs and skips) is Unknown, never
+        /// assumed to follow the calendar. Farm_&lt;type&gt; keys are the farm's own data entry.
+        /// Locations are looked up in Game1.locations directly: getLocationFromName can generate
+        /// mine levels as a side effect.</summary>
+        private SeasonSource SeasonSourceFor(string key)
+        {
+            try
+            {
+                GameLocation location = Game1.locations.FirstOrDefault(l => string.Equals(l?.Name, key, StringComparison.OrdinalIgnoreCase));
+                if (location == null && key.StartsWith(FarmDataKeyPrefix, StringComparison.OrdinalIgnoreCase))
+                    location = Game1.getFarm();
+                if (location == null) return SeasonSource.Unknown;
+
+                var visited = new HashSet<GameLocation>(ReferenceEqualityComparer.Instance);
+                for (; location != null && visited.Add(location); location = location.GetParentLocation())
+                {
+                    string mapOverride = location.TryGetMapProperty(SeasonOverrideProperty, out string value) ? value : null;
+                    SeasonSource? step = SeasonClauses.OverrideStep(mapOverride, location.GetLocationContext()?.SeasonOverride != null);
+                    if (step != null) return step.Value;
+                }
+                return location == null ? SeasonSource.Calendar : SeasonSource.Unknown;   // non-null: a parent cycle
+            }
+            catch (Exception ex)
+            {
+                _monitor?.Log($"Season source of '{key}' could not be read ({ex.GetType().Name}: {ex.Message}); treated as unknown.", LogLevel.Trace);
+                return SeasonSource.Unknown;
+            }
         }
 
         /// <summary>When each loaded map can first be reached: the maps' own warps and door warps

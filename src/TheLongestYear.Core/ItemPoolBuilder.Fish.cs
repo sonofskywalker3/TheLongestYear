@@ -16,7 +16,7 @@ public static partial class ItemPoolBuilder
         IReadOnlyDictionary<string, RawObjectEntry> objects,
         HashSet<string> excluded, BundleGenerationTuning tuning,
         IReadOnlyDictionary<string, Season>? festivalSeasons,
-        LocationWeeks? locationWeeks)
+        LocationWeeks? locationWeeks, IReadOnlyDictionary<string, SeasonSource>? locationSeasons)
     {
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
@@ -55,7 +55,10 @@ public static partial class ItemPoolBuilder
                 || !string.Equals(spawnObj.Type, FishType, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, locationSeasons);
+            if (reading.Verdict == SeasonVerdict.Impossible)
+                continue; // the row never fires: it proves neither a season nor a place
+            IReadOnlyList<Season> seasons = reading.Seasons;
             if (seasons.Count == 0)
                 anySeasonById.Add(id); // one any-season spawn makes the item any-season
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
@@ -114,7 +117,7 @@ public static partial class ItemPoolBuilder
         }
 
         return (Finish(fish), Finish(crabPot),
-            BuildUnpooledFish(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks, seenIds, marketFish));
+            BuildUnpooledFish(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks, seenIds, marketFish, locationSeasons));
     }
 
     /// <summary>Rod fish the pool vet leaves out ONLY for their ExcludeFromRandomSale flag, which
@@ -131,7 +134,8 @@ public static partial class ItemPoolBuilder
         IReadOnlyDictionary<string, RawObjectEntry> objects,
         HashSet<string> excluded, BundleGenerationTuning tuning,
         IReadOnlyDictionary<string, Season>? festivalSeasons,
-        LocationWeeks? locationWeeks, IReadOnlySet<string> pooledIds, IReadOnlySet<string> marketFish)
+        LocationWeeks? locationWeeks, IReadOnlySet<string> pooledIds, IReadOnlySet<string> marketFish,
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons)
     {
         if (locationWeeks == null) return Array.Empty<PoolItem>();
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
@@ -147,7 +151,9 @@ public static partial class ItemPoolBuilder
             if (!string.Equals(objects[bare].Type, FishType, StringComparison.OrdinalIgnoreCase)) continue;
             if (!locationWeeks.TryGet(spawn.Location ?? "", out _)) continue;
 
-            IReadOnlyList<Season> seasons = SeasonsFromSpawn(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons);
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, locationSeasons);
+            if (reading.Verdict == SeasonVerdict.Impossible) continue;   // never fires
+            IReadOnlyList<Season> seasons = reading.Seasons;
             if (seasons.Count == 0) anySeasonById.Add(id);
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
                 seasonsById[id] = list = new List<Season>();

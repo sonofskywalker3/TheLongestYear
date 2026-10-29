@@ -30,8 +30,6 @@ public static partial class ItemPoolBuilder
             ["DesertFestival"] = Season.Spring,
         };
 
-    private const string PassiveFestivalOpenQuery = "IS_PASSIVE_FESTIVAL_OPEN";
-    private static readonly char[] ConditionSeparators = { ' ', ',' };
     private static readonly char[] ClauseSeparator = { ',' };
 
     /// <summary>Game state queries that gate a Data/Locations row on a special order being
@@ -78,99 +76,87 @@ public static partial class ItemPoolBuilder
     }
 
     /// <summary>Season list for one spawn entry: an explicit Season wins; otherwise the seasons
-    /// the Condition allows, read clause by clause (<see cref="SeasonsFromCondition"/>);
-    /// otherwise empty = any season.</summary>
+    /// the Condition's season queries allow (<see cref="SeasonClauses.Read"/>); otherwise
+    /// empty = any season. An impossible row also comes back empty here; the pool builders use
+    /// <see cref="ReadSpawnSeasons"/>, which tells the two apart and drops impossible rows.</summary>
     public static IReadOnlyList<Season> SeasonsFromSpawn(Season? season, string? condition)
         => SeasonsFromSpawn(season, condition, null, null);
 
-    /// <summary>As above, plus the passive-festival rule: a row on a festival-only map
-    /// (<see cref="BuiltInFestivalLocations"/>) or conditioned on
-    /// <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c> is only reachable in that festival's season,
-    /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded
-    /// festivals count) with <see cref="BuiltInFestivalSeasons"/> as the fallback. Explicit
-    /// seasons and season clauses still win; an unknown festival is no signal.</summary>
+    /// <summary>As above, plus the passive-festival rule (see <see cref="ReadSpawnSeasons"/>).</summary>
     public static IReadOnlyList<Season> SeasonsFromSpawn(
         Season? season, string? condition, string? location,
         IReadOnlyDictionary<string, Season>? festivalSeasons = null)
+        => ReadSpawnSeasons(season, condition, location, festivalSeasons).Seasons;
+
+    /// <summary>The Data/Locations entry every map inherits rows from: its rows run at many maps,
+    /// so "Here" in them is no one location.</summary>
+    public const string SharedDefaultLocation = "Default";
+
+    /// <summary>True when a row's season clauses rule out every season, so the row never spawns
+    /// and the pool builders drop it (the caller logs these).</summary>
+    public static bool IsSeasonImpossible(Season? season, string? condition, string? location = null,
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons = null)
+        => ReadSpawnSeasons(season, condition, location, null, locationSeasons).Verdict == SeasonVerdict.Impossible;
+
+    /// <summary>Whose season the row's location follows. The shared Default entry is always
+    /// Unknown. With no table (pools and rows built by hand in tests) any other location reads as
+    /// Calendar; with a table (the game's pool build always passes one), a location missing from it
+    /// is Unknown, never assumed to be the calendar.</summary>
+    public static SeasonSource SeasonSourceOf(string? location, IReadOnlyDictionary<string, SeasonSource>? locationSeasons)
     {
-        if (season != null)
-            return new[] { season.Value };
+        if (string.Equals(location, SharedDefaultLocation, StringComparison.OrdinalIgnoreCase))
+            return SeasonSource.Unknown;
+        if (locationSeasons == null) return SeasonSource.Calendar;
+        if (string.IsNullOrEmpty(location)) return SeasonSource.Unknown;
+        return locationSeasons.TryGetValue(location, out SeasonSource source) ? source : SeasonSource.Unknown;
+    }
 
-        HashSet<Season>? allowed = SeasonsFromCondition(condition);
-        if (allowed != null && allowed.Count > 0)
-            return AllSeasons.Where(allowed.Contains).ToArray();
+    /// <summary>The season verdict for one spawn entry.
+    /// <list type="bullet">
+    /// <item>The explicit Season field: the game compares it with the LOCATION's season
+    /// (GameLocation.GetSeason), so it is a calendar season only at a <see cref="SeasonSource.Calendar"/>
+    /// location; elsewhere it is no signal (a safe superset).</item>
+    /// <item>Otherwise the Condition's season queries decide (<see cref="SeasonClauses.Read"/>): these
+    /// seasons, or impossible (the row never fires). LOCATION_SEASON Here / Target narrows only at a
+    /// Calendar location: Here is the map being fished, and the Default entry's rows run at many.</item>
+    /// <item>With no season signal, the passive-festival rule: a row on a festival-only map
+    /// (<see cref="BuiltInFestivalLocations"/>) or conditioned on a top-level
+    /// <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c> is only reachable in that festival's season,
+    /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded festivals
+    /// count) with <see cref="BuiltInFestivalSeasons"/> as the fallback; an unknown festival is no
+    /// signal.</item>
+    /// </list>
+    /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
+    /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as any
+    /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
+    /// row makes the whole fish any-season.</summary>
+    /// <param name="locationSeasons">Each Data/Locations key's <see cref="SeasonSource"/>
+    /// (see <see cref="SeasonSourceOf"/>).</param>
+    public static SeasonReading ReadSpawnSeasons(
+        Season? season, string? condition, string? location,
+        IReadOnlyDictionary<string, Season>? festivalSeasons = null,
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons = null)
+    {
+        bool calendar = SeasonSourceOf(location, locationSeasons) == SeasonSource.Calendar;
+        if (season != null && calendar)
+            return new SeasonReading(SeasonVerdict.Seasons, new[] { season.Value });
 
-        string[] tokens = (condition ?? "").Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries);
+        SeasonReading fromCondition = SeasonClauses.Read(condition, locationHasOwnSeason: !calendar);
+        if (fromCondition.Verdict != SeasonVerdict.Unknown)
+            return fromCondition;
+
         string? festival = null;
         if (!string.IsNullOrEmpty(location) && BuiltInFestivalLocations.TryGetValue(location, out string? byLocation))
             festival = byLocation;
-        for (int i = 0; festival == null && i + 1 < tokens.Length; i++)
-        {
-            if (string.Equals(tokens[i], PassiveFestivalOpenQuery, StringComparison.OrdinalIgnoreCase))
-                festival = tokens[i + 1];
-        }
+        // Only a top-level, non-negated clause: a festival inside ANY is one alternative, not a gate.
+        festival ??= SeasonClauses.PassiveFestivalsRequired(condition).FirstOrDefault();
         if (festival != null)
         {
             if (festivalSeasons != null && festivalSeasons.TryGetValue(festival, out Season fromData))
-                return new[] { fromData };
+                return new SeasonReading(SeasonVerdict.Seasons, new[] { fromData });
             if (BuiltInFestivalSeasons.TryGetValue(festival, out Season builtIn))
-                return new[] { builtIn };
+                return new SeasonReading(SeasonVerdict.Seasons, new[] { builtIn });
         }
-        return Array.Empty<Season>();
-    }
-
-    /// <summary>True when a row with no Season field has season clauses that rule out every season
-    /// (e.g. "SEASON spring, !SEASON spring"). Such a row never fires in the game, but
-    /// <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
-    /// reads it as any season, so the pool builder's caller logs it.</summary>
-    public static bool HasContradictorySeasons(Season? season, string? condition)
-        => season == null && SeasonsFromCondition(condition) is { Count: 0 };
-
-    private static readonly Season[] AllSeasons ={ Season.Spring, Season.Summer, Season.Fall, Season.Winter };
-
-    /// <summary>The seasons a Condition allows, or null when no clause says anything about seasons.
-    /// A Condition is a comma-separated AND, so it is read one clause at a time:
-    /// <list type="bullet">
-    /// <item>a non-negated clause that names seasons narrows the set: SEASON / LOCATION_SEASON by
-    /// their season arguments (a name or 0-3, as the game reads them), any other clause by its bare
-    /// season NAMES only (SEASON_DAY spring 5; "YEAR 2" is not Fall); several such clauses
-    /// intersect;</item>
-    /// <item>a negated SEASON / LOCATION_SEASON clause removes the seasons it names;</item>
-    /// <item>any other negated clause, and any ANY clause (its quoted OR does not split into
-    /// clauses), says nothing about seasons and is skipped.</item>
-    /// </list>
-    /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
-    /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as ANY
-    /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
-    /// row makes the whole fish any-season. An empty set (contradictory clauses: a row that never
-    /// fires) is returned as is; <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
-    /// treats it as no signal; <see cref="HasContradictorySeasons"/> lets the caller log those rows.</summary>
-    internal static HashSet<Season>? SeasonsFromCondition(string? condition)
-    {
-        if (string.IsNullOrWhiteSpace(condition)) return null;
-        HashSet<Season>? allowed = null;
-        foreach (string clause in SeasonClauses.Split(condition))
-        {
-            if (SeasonClauses.IsAnyQuery(clause)) continue;   // an OR of quoted sub-queries: no signal
-            HashSet<Season>? named = SeasonClauses.SeasonsNamedBy(clause, out bool negated);
-            if (negated)
-            {
-                if (named == null || named.Count == 0) continue;
-                allowed ??= new HashSet<Season>(AllSeasons);
-                allowed.ExceptWith(named);
-                continue;
-            }
-            if (named == null)
-            {
-                named = new HashSet<Season>();
-                foreach (string token in clause.Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries))
-                    if (SeasonClauses.TryParseSeasonName(token, out Season s))
-                        named.Add(s);
-            }
-            if (named.Count == 0) continue;
-            if (allowed == null) allowed = named;
-            else allowed.IntersectWith(named);
-        }
-        return allowed;
+        return SeasonReading.Unknown;
     }
 }
