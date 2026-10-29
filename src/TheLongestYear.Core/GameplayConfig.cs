@@ -216,10 +216,11 @@ public sealed class GameplayConfig
     /// day. On by default: a time-loop cannot afford to hand away a day.</summary>
     public bool FestivalTimeFlows { get; set; } = true;
 
-    /// <summary>Clock speed at Spirit's Eve while <see cref="FestivalTimeFlows"/> is on, as a
-    /// fraction of normal: 0.5 = half speed (the default), 1.0 = normal. Normal time leaves too
-    /// little to shop and walk the maze (Nexus, 2026-10-27). Every other festival keeps the normal
-    /// clock. Clamped to [0.25, 1.0]; see <see cref="FestivalClock"/>. GMCM "Features".</summary>
+    /// <summary>Clock speed at the night festivals (Spirit's Eve, the Moonlight Jellies) while
+    /// <see cref="FestivalTimeFlows"/> is on, as a fraction of normal: 0.5 = half speed (the
+    /// default), 1.0 = normal. Normal time leaves too little to talk, shop and explore before the
+    /// main event (Nexus, 2026-10-27). Every other festival keeps the normal clock. Clamped to
+    /// [0.10, 1.0]; see <see cref="FestivalClock"/>. GMCM "Features".</summary>
     public double FestivalClockSlowdown { get; set; } = FestivalClock.DefaultSpeed;
 
     /// <summary>Run each festival's main event (Egg Hunt, Luau soup, ice fishing, Flower Dance)

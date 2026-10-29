@@ -694,7 +694,7 @@ namespace TheLongestYear
                 // The darkness's morning boxes, one at a time, held while anything holds the screen.
                 TheLongestYear.Loop.MorningBox.Tick();
 
-                // Spirit's Eve's slower clock: re-asserted every tick so a GMCM change applies at once.
+                // The night festivals' slower clock: re-asserted every tick so a GMCM change applies at once.
                 FestivalTimeFlow.ApplyClockSpeed();
 
                 // Festival auto-eject runs every tick (cheap conditional — most ticks bail in the first check).

@@ -4,7 +4,7 @@ using Xunit;
 namespace TheLongestYear.Tests;
 
 /// <summary>
-/// The Spirit's Eve clock remembers the festival map it slowed so it can undo the write. Taking the
+/// The night-festival clock remembers the festival map it slowed so it can undo the write. Taking the
 /// undo (every tick with nothing to slow, and FestivalTimeFlow.Reset on return to title) must drop
 /// the reference, and must never reset a value someone else set.
 /// </summary>
