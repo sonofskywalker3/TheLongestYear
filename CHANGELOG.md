@@ -3,6 +3,32 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.0 - 2026-10-29
+
+### Added
+
+- **Stardew Valley Expanded support.** A lexicon layer for SVE 1.15.11: year-1 routes, flagged post-Community-Center, Ginger Island and Joja maps and shops, and 76 ruled year-2 weeks and efforts served beside the year-1 answers.
+- **Crafted objects are dated** from their recipe's unlock and ingredients. A shop-sold recipe (cooking, crafting or machine) is dated by its seller; an event-taught one (Flute Block, Drum Block, Ancient Seeds, Tea Sapling, Wild Bait) by the event.
+
+### Fixed
+
+- A crop whose seed is sold only at shops unreachable in year 1 (Pineapple, Taro, SVE's Joja crops) has no year-1 week. Seed spots, festival stalls, the cart, tag-filtered cart lines and the seed maker still count as sources.
+- A layer's year-2 maps and shops leave the year-1 location walk, so a fish or forage on a locked map (SVE's Sprite Spring) is not dated week 1.
+- The availability inputs stamp no longer depends on the order the game lists maps or on which item a Content Patcher random shop line rolled, so the shipped answers are served on every save.
+- A recipe unlocked by "<Skill> <n>" without the `s` prefix (as SVE writes it) reads as a skill unlock.
+
+## 1.1.9 - 2026-10-28
+
+### Added
+
+- **Cornucopia More Crops support.** A lexicon layer with its own shipped answers.
+- Fish catch rates are worked out in the cold build and stored with the answers; they size fish asks and decide the rare-catch rule.
+
+### Changed
+
+- Shop lines filtered by context tag are listed through the game's item query. Wild-tree shake, seed and chop drops are read. Layer answers record the vanilla rows a mod removes, and a layer can name a shop line the mod re-picks each day.
+- The Traveling Cart's random stock no longer counts as a route (142 cart-only items dropped).
+
 ## 1.1.8 - 2026-10-28
 
 ### Fixed

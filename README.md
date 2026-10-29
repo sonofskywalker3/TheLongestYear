@@ -23,7 +23,23 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.1.8
+## What's New in 1.2.0
+
+**New: Stardew Valley Expanded is supported.** The Longest Year now knows every SVE item: what you can reach in year 1, what sits behind the Community Center, Ginger Island or the Joja route, and for the year-2 content, when it opens and how hard it is. Boards and the fairness check no longer treat a post-Community-Center vendor as a day-1 shop.
+
+**New: Cornucopia More Crops is supported.** Its crops, seeds, saplings and shop lines ship with their own answers, so a Cornucopia save loads as fast as a vanilla one.
+
+**Fixed: crops whose seeds you cannot buy in year 1 no longer get a year-1 date.** Pineapple, Taro and the Joja crops were dated as if their seeds were on Pierre's shelf. Seeds from seed spots, festivals, the cart or the seed maker still count.
+
+**New: crafted items have dates.** Fences, paths, fertilizers, sprinklers, totems, Field Snack, Tea Sapling and the rest are now dated from their recipe and ingredients. A recipe bought from a shop waits for that shop (Jack-O-Lantern for Spirit's Eve, Crystal Floor for the Sewer), and a recipe an event teaches waits for the event (Robin's Flute and Drum Blocks, the museum's Ancient Seeds).
+
+**Fixed: the shipped answers are now used on every save.** Some modded saves computed their item answers on every load because the check that decides whether the stored answers fit depended on the order the game listed maps, or on which item a mod's random shop line happened to roll that day. Both are stable now.
+
+**Changed: fish asks are sized from how often a fish really bites.** The bite rate of every fish at every spot is worked out when the answers are built and stored with them. A catch that lands under twice on a full day of fishing is luck, not a route the board can ask for.
+
+**Changed: the Traveling Cart's random stock no longer counts as a route.** 142 items that only the cart could sell by chance were listed as obtainable. They are not, and the board no longer asks for them.
+
+## 1.1.8
 
 **Fixed: day 2 would not save after a rewind with Farm Type Manager packs.** The save right after the rewind made the game announce a second morning, so Farm Type Manager spawned its monsters twice and lost track of some. A ghost it forgot stayed in the world and stopped the next night's save. The rewind's save no longer counts as a new morning. Thanks to SylviaStormsinger for the report and the log.
 
