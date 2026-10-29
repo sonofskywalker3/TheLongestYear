@@ -76,6 +76,9 @@ namespace TheLongestYear.Loop
                 _meta.WrittenBoardSeasonPins = null;
                 _meta.WrittenBoardFlavors = null;
                 LastGeneratedRequirements = null;
+                // The game builds this board, so a banish has nothing to apply to.
+                LogBanishRefunds(TheLongestYear.Core.BanishRules.RefundAllPending(_meta), "the next board is the game's own");
+                _meta.BoardBanishes = new List<BanishPick>();
                 // Normal or Remixed with Tech's Cross-Mod Bundles: roll a fresh Tech board in place
                 // of the old one, before the difficulty and reward passes below run over it (spec
                 // 2026-10-08 addendum 2). Skipped for a held board and TLY Custom; a failure logs
@@ -118,22 +121,58 @@ namespace TheLongestYear.Loop
                 // chance off this object, so scaling it applies both modifiers with no edit to
                 // generation. Scale returns the same instance at Normal.
                 var difficultyTuning = TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, _meta.Difficulty);
-                var engine = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
-                    TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty, _meta.HasUpgrade);
-                engine.Availability = AvailabilityModel;
-                engine.LayerMarks = LayerMarks?.Invoke();
-                engine.LayerRandomShopPicks = LayerRandomShopPicks?.Invoke();
                 // "Allow mod items in custom bundles" (spec 2026-10-08 addendum 1): a new board takes
                 // the save's choice, a held board keeps the value it was built under. Stamped with the
                 // board so the load-time check re-derives it the same way after a mid-loop toggle.
                 _meta.BoardAllowsModItems = TheLongestYear.Core.CustomBoardModItems.ForReset(
                     holdingBoard, _meta.BoardAllowsModItems, _meta.AllowModItemsInCustomBundles);
-                engine.AllowModItems = _meta.BoardAllowsModItems.Value;
                 // Keep-bundles hold (spec 2026-08-24): the seed loop is EffectiveBundleSeedLoop, which
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
-                GeneratedBundleSet generatedSet = engine.Generate(seed, _meta.RandomBundleRewardsBoard);
+
+                (BundleEngine Engine, GeneratedBundleSet Set) Build(IReadOnlyList<BanishPick> banishes)
+                {
+                    var built = new BundleEngine(_monitor, difficultyTuning, _config.EnableNonObjectDonations, _config.RarityThresholds,
+                        TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.HasUpgrade, _meta.Difficulty.Steps.ItemRarity), _meta.Difficulty, _meta.HasUpgrade);
+                    built.Availability = AvailabilityModel;
+                    built.LayerMarks = LayerMarks?.Invoke();
+                    built.LayerRandomShopPicks = LayerRandomShopPicks?.Invoke();
+                    built.AllowModItems = _meta.BoardAllowsModItems.Value;
+                    built.Banishes = banishes;
+                    return (built, built.Generate(seed, _meta.RandomBundleRewardsBoard));
+                }
+
+                BundleEngine engine;
+                GeneratedBundleSet generatedSet;
+                if (holdingBoard)
+                {
+                    // A held board is re-derived from the inputs it was built under, its banishes
+                    // included. Banishes bought for the next board have nothing to apply to.
+                    (engine, generatedSet) = Build(_meta.BoardBanishes);
+                    LogBanishRefunds(TheLongestYear.Core.BanishRules.RefundAllPending(_meta), "the board is being held");
+                }
+                else if (_meta.PendingBanishes.Count == 0)
+                {
+                    (engine, generatedSet) = Build(System.Array.Empty<BanishPick>());
+                    // Last loop's banishes expire with its board.
+                    TheLongestYear.Core.BanishRules.ApplyResolution(_meta,
+                        new BanishResolution(System.Array.Empty<BanishPick>(), System.Array.Empty<BanishPick>()));
+                }
+                else
+                {
+                    (BanishResolution resolution, (BundleEngine Engine, GeneratedBundleSet Set) chosen) =
+                        BanishResolver.Resolve(_meta.PendingBanishes.ToList(), banishes =>
+                        {
+                            (BundleEngine e, GeneratedBundleSet s) = Build(banishes);
+                            return (new BanishBoardOutcome(s.Bundles, e.LastKeptVanillaCount), (e, s));
+                        });
+                    (engine, generatedSet) = chosen;
+                    foreach (BanishPick pick in resolution.Honoured)
+                        _monitor.Log($"Reset: banish honoured, {pick.Kind} '{pick.Key}' ({pick.Label}) is off this loop's board.", LogLevel.Info);
+                    TheLongestYear.Core.BanishRules.ApplyResolution(_meta, resolution);
+                    LogBanishRefunds(resolution.Refused, "the board could not fill every slot without it");
+                }
                 _timing.Mark("11a engine.Generate");
                 engine.WriteToWorld(generatedSet, _monitor);
                 _timing.Mark("11a engine.WriteToWorld");
@@ -153,6 +192,12 @@ namespace TheLongestYear.Loop
                     generatedSet, _itemSeasonPins, _bundleQuotas, AvailabilityModel);
                 _timing.Mark("11a engine.BuildRequirements");
             }
+        }
+
+        private void LogBanishRefunds(IReadOnlyList<BanishPick> refunded, string why)
+        {
+            foreach (BanishPick pick in refunded)
+                _monitor.Log($"Reset: banish of {pick.Kind} '{pick.Key}' ({pick.Label}) not applied ({why}); refunded {pick.Paid} JP.", LogLevel.Info);
         }
     }
 }

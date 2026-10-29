@@ -89,6 +89,7 @@ namespace TheLongestYear
             firstEngine.LayerMarks = LayerMarks();
             firstEngine.LayerRandomShopPicks = LayerRandomShopPicks();
             firstEngine.AllowModItems = _meta.State.ModItemsOnBoard();
+            firstEngine.Banishes = seedLoop == _meta.State.EffectiveBundleSeedLoop ? _meta.State.BoardBanishes : null;
             GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
@@ -100,6 +101,7 @@ namespace TheLongestYear
             secondEngine.LayerMarks = LayerMarks();
             secondEngine.LayerRandomShopPicks = LayerRandomShopPicks();
             secondEngine.AllowModItems = _meta.State.ModItemsOnBoard();
+            secondEngine.Banishes = seedLoop == _meta.State.EffectiveBundleSeedLoop ? _meta.State.BoardBanishes : null;
             GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)

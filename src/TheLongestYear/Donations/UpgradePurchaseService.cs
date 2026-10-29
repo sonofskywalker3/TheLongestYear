@@ -52,6 +52,36 @@ namespace TheLongestYear.Donations
             return result;
         }
 
+        /// <summary>What the next banish costs at the current difficulty (shown and charged).</summary>
+        public long BanishCost() => BanishLadder.NextCost(_store.State, PriceFactor);
+
+        /// <summary>Buy a banish for the next board (<see cref="BanishRules.Buy"/>).</summary>
+        public BanishRules.BuyResult TryBanish(BanishKind kind, string key, string label)
+        {
+            long cost = BanishCost();
+            BanishRules.BuyResult result = BanishRules.Buy(_store.State, kind, key, label, PriceFactor);
+            if (result == BanishRules.BuyResult.Bought)
+                Game1.playSound("purchase");
+            _monitor.Log(
+                $"Banish {kind} '{key}' ({label}): {result}" +
+                (result == BanishRules.BuyResult.Bought ? $" for {cost} JP" : $" (costs {cost} JP)") +
+                $". JP {_store.State.JunimoPoints}, pending {_store.State.PendingBanishes.Count}.",
+                result == BanishRules.BuyResult.Bought ? LogLevel.Info : LogLevel.Debug);
+            return result;
+        }
+
+        /// <summary>Take back a banish bought this visit; logs and returns the refund.</summary>
+        public long CancelBanish(int index)
+        {
+            string what = index >= 0 && index < _store.State.PendingBanishes.Count
+                ? $"{_store.State.PendingBanishes[index].Kind} '{_store.State.PendingBanishes[index].Key}'"
+                : "(none)";
+            long refund = BanishRules.Cancel(_store.State, index);
+            if (refund > 0) Game1.playSound("coin");
+            _monitor.Log($"Banish {what} taken back: refunded {refund} JP. JP {_store.State.JunimoPoints}.", LogLevel.Info);
+            return refund;
+        }
+
         private void LogResult(string requestedId, UpgradeDefinition def, UpgradePurchase.PurchaseResult result, long charged)
         {
             switch (result)

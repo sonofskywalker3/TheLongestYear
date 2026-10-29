@@ -121,6 +121,7 @@ namespace TheLongestYear
                     engine.LayerMarks = LayerMarks();
                     engine.LayerRandomShopPicks = LayerRandomShopPicks();
                     engine.AllowModItems = allowModItems;
+                    engine.Banishes = state.BoardBanishes;
                     GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))

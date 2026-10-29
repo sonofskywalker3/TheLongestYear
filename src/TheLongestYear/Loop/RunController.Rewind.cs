@@ -361,6 +361,14 @@ namespace TheLongestYear.Loop
             _reset.ProfessionPicker.DrainOnDayStart();
             _monitor.Log($"Loop reset complete. Run {Run.RunNumber} begins (seed {Run.Seed}).", LogLevel.Info);
             DoDayStartSeasonAndHub();
+            // Banishes this reset could not honour (BanishRules): the corner box waits for the hub
+            // to close, then says which and that the JP came back. Taken here so the save below
+            // stores it as shown; OnDayStarted shows any a reset left behind some other way.
+            if (BanishRules.TakeNotice(_store.State) is { } refunded)
+            {
+                MorningBox.Enqueue(BanishText.RefundNotice(refunded));
+                _monitor.Log($"Banish refund notice queued for {refunded.Count} banish(es).", LogLevel.Info);
+            }
             // Re-persist the meta AFTER the hub opened. DoDayStartSeasonAndHub → PresentOffer sets
             // Run.OfferPresentedWeek when the week-1 hub appears, but that happens after the Save()
             // above — so the on-disk run-state still has the marker UNSET. A deferred SaveLoaded

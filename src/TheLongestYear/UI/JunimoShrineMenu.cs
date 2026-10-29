@@ -70,11 +70,20 @@ namespace TheLongestYear.UI
             public readonly FocusTheme? FocusTheme;
             public readonly FocusQuote Quote;
             public ShrineRow(UpgradeDefinition def, bool owned, string blockReason = null)
-            { Def = def; Owned = owned; BlockReason = blockReason; FocusTheme = null; Quote = null; }
+            { Def = def; Owned = owned; BlockReason = blockReason; FocusTheme = null; Quote = null; BanishSlot = NotBanish; }
             public ShrineRow(UpgradeDefinition def, FocusTheme theme, FocusQuote quote)
-            { Def = def; Owned = false; BlockReason = null; FocusTheme = theme; Quote = quote; }
+            { Def = def; Owned = false; BlockReason = null; FocusTheme = theme; Quote = quote; BanishSlot = NotBanish; }
+            /// <summary>Banish rows (JunimoShrineMenu.Banish.cs): <see cref="BanishBuySlot"/> for the
+            /// buy row, 0 or 1 for a banish already bought this visit, <see cref="NotBanish"/> otherwise.
+            /// Banish rows have no catalog definition (Def is null).</summary>
+            public readonly int BanishSlot;
+            public const int NotBanish = int.MinValue;
+            public const int BanishBuySlot = -1;
+            public ShrineRow(int banishSlot)
+            { Def = null; Owned = false; BlockReason = null; FocusTheme = null; Quote = null; BanishSlot = banishSlot; }
             public bool Buyable => !Owned && BlockReason == null;
             public bool IsFocus => FocusTheme.HasValue;
+            public bool IsBanish => BanishSlot != NotBanish;
         }
 
         public JunimoShrineMenu(IMonitor monitor, MetaStore store, UpgradePurchaseService purchases, FocusService focus = null)
@@ -212,6 +221,7 @@ namespace TheLongestYear.UI
             {
                 if (_rowSlots[i].containsPoint(x, y))
                 {
+                    if (rows[i].IsBanish) { _hoverText = BanishHover(rows[i]); return; }
                     UpgradeDefinition def = rows[i].Def;
                     string footer = rows[i].IsFocus
                         ? FocusFooter(rows[i])
@@ -288,6 +298,7 @@ namespace TheLongestYear.UI
             if (Game1.ticks == _lastPurchaseTick)
                 return; // duplicate dispatch of the same press — see _lastPurchaseTick
             _lastPurchaseTick = Game1.ticks;
+            if (row.IsBanish) { ClickBanish(row); return; }
             if (row.IsFocus) BuyFocus(row);
             else _purchases.TryPurchase(row.Def.Id);
             // A plain keep can lower a focus card's price (it kept one of the card's lower rungs),
@@ -311,7 +322,7 @@ namespace TheLongestYear.UI
                 performHoverAction(_rowSlots[hoverRow].bounds.Center.X, _rowSlots[hoverRow].bounds.Center.Y);
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int start);
             _monitor.Log($"tly_openshop: tab {category}, rows {start}..{start + rows.Count - 1} of {total}: " +
-                         string.Join(", ", rows.Select(r => r.Def.Id + (r.IsFocus ? " (your focus)" : r.Owned ? " (owned)" : r.BlockReason != null ? " (blocked)" : ""))) +
+                         string.Join(", ", rows.Select(r => r.IsBanish ? "banish" + (r.BanishSlot >= 0 ? $" (pending {r.BanishSlot})" : "") : r.Def.Id +(r.IsFocus ? " (your focus)" : r.Owned ? " (owned)" : r.BlockReason != null ? " (blocked)" : ""))) +
                          (_hoverText.Length > 0 ? "; hover: " + _hoverText.Replace("\n", " / ") : ""),
                 LogLevel.Info);
         }
@@ -345,6 +356,7 @@ namespace TheLongestYear.UI
         {
             // "Your focus" rows lead the tab; the plain row for the same upgrade is dropped.
             List<ShrineRow> rows = FocusRows(out HashSet<string> focusIds);
+            rows.AddRange(BanishRows());
             foreach (UpgradeDefinition def in
                 KeepShopFilter.BuyableInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: false));
@@ -430,6 +442,12 @@ namespace TheLongestYear.UI
 
         private void DrawRow(SpriteBatch b, ClickableComponent slot, ShrineRow row)
         {
+            if (row.IsBanish)
+            {
+                DrawBanishRow(b, slot, row);
+                return;
+            }
+
             UpgradeDefinition def = row.Def;
 
             if (row.IsFocus)
