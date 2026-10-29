@@ -21,8 +21,8 @@ public static class MadeSources
     private static readonly string[] MushroomLogItems = { "(O)404", "(O)420", "(O)422", "(O)257", "(O)281" };
     /// <summary>Recipe ingredient code for "any wild seed packet" (CraftingRecipe.cs 16, matched at 209):
     /// Spring, Summer, Fall or Winter Seeds.</summary>
-    private const string AnyWildSeed = "-777";
-    private static readonly string[] WildSeedIds = { "(O)495", "(O)496", "(O)497", "(O)498" };
+    internal const string AnyWildSeed = "-777";
+    internal static readonly IReadOnlyList<string> WildSeedIds = new[] { "(O)495", "(O)496", "(O)497", "(O)498" };
     internal static readonly string[] KnownFromStartWords = { "default", "" };
     internal static readonly string[] TaughtElsewhereWords = { "none", "null" };
     /// <summary>A cooking recipe unlocked by farmhouse level ("l 0", "l 100") has no automatic unlock

@@ -15,11 +15,11 @@ namespace TheLongestYear.Core.Availability;
 /// friendship condition (or, for a recipe the museum teaches, "donate &lt;id&gt;": the week that item can
 /// first be had, at the special-unlock effort) stands in for the unlock, and the basis shows the
 /// substitution.
-/// A recipe that asks for "any wild seed" (-777, a code-only group the dish rule never meets) is
-/// skipped rather than guessed at.</summary>
+/// A recipe that asks for "any wild seed" (-777, a code-only group the dish rule never meets) reads it
+/// as the cheapest of the four packets (<see cref="MadeSources.WildSeedIds"/>): the earliest week, then
+/// the lowest effort.</summary>
 public static class CraftedItemAvailability
 {
-    private const string AnyWildSeed = "-777";
     private const string DefaultUnlock = "default";
     private const string TaughtElsewhereUnlock = "null";
 
@@ -37,6 +37,18 @@ public static class CraftedItemAvailability
             : (TaughtElsewhereUnlock, text);
     }
 
+    /// <summary>The wild seed packet an "any wild seed" ingredient is read as: of the packets with an
+    /// effort, the one with the earliest week (an unplaced packet last), then the lowest effort, then
+    /// the first in <see cref="MadeSources.WildSeedIds"/>. Null when no packet has an effort.</summary>
+    private static string? CheapestWildSeed(Func<string, int?> effortOf, Func<string, int?> weekOf)
+        => MadeSources.WildSeedIds
+            .Select(id => (Id: id, Effort: effortOf(id), Week: weekOf(id)))
+            .Where(p => p.Effort != null)
+            .OrderBy(p => p.Week ?? int.MaxValue)
+            .ThenBy(p => p.Effort)
+            .Select(p => p.Id)
+            .FirstOrDefault();
+
     /// <param name="step">Required for the same reason as the dish rule's: the recipe-week reading
     /// it shares takes the difficulty step.</param>
     /// <param name="shopWeeks">The shops the walk placed, which date a recipe's shop rows.</param>
@@ -50,7 +62,6 @@ public static class CraftedItemAvailability
         foreach (CraftingRecipe recipe in data.CraftingRecipes)
         {
             if (recipe.OutputId != qualifiedId) continue;
-            if (recipe.Ingredients.Any(i => i.Id == AnyWildSeed)) continue;
             (string unlock, string unlockLabel) = EffectiveUnlock(recipe);
             int unlockEffort = CookedDishAvailability.UnlockEffort(unlock);
             int hardest = 0;
@@ -60,11 +71,12 @@ public static class CraftedItemAvailability
             int? latestWeek = 1;
             foreach (RecipeIngredient ingredient in recipe.Ingredients)
             {
-                int? e = CookedDishAvailability.IngredientEffort(ingredient.Id, data, effortOf);
+                string id = ingredient.Id == MadeSources.AnyWildSeed ? CheapestWildSeed(effortOf, weekOf) ?? ingredient.Id : ingredient.Id;
+                int? e = id == MadeSources.AnyWildSeed ? null : CookedDishAvailability.IngredientEffort(id, data, effortOf);
                 if (e == null) { missing = ingredient.Id; break; }
-                if (e >= hardest) { hardest = e.Value; hardestId = ingredient.Id; }
-                int? w = CookedDishAvailability.IngredientWeek(ingredient.Id, data, weekOf);
-                if (w == null) { latestWeek = null; unplaced ??= ingredient.Id; }
+                if (e >= hardest) { hardest = e.Value; hardestId = id; }
+                int? w = CookedDishAvailability.IngredientWeek(id, data, weekOf);
+                if (w == null) { latestWeek = null; unplaced ??= id; }
                 else if (latestWeek != null && w > latestWeek) latestWeek = w;
             }
             int? recipeWeek = CookedDishAvailability.CraftingRecipeWeek(unlock, recipe.OutputId, data, step, shopWeeks);

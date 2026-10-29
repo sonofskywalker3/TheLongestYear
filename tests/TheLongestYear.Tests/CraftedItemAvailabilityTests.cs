@@ -185,11 +185,44 @@ public class CraftedItemAvailabilityTests
         Assert.Equal(UnlockWeeks.ForCost(100), result!.EarliestWeek);
     }
 
+    private const string TeaSapling = "(O)251";
+    private const string SpringSeeds = "(O)495";
+    private const string SummerSeeds = "(O)496";
+    private const string FallSeeds = "(O)497";
+
+    private static CraftingRecipe TeaSaplingRecipe()
+        => new("Tea Sapling", TeaSapling, new[] { new RecipeIngredient("-777", 2), new RecipeIngredient(Acorn, 5) }, "null");
+
     [Fact]
-    public void A_recipe_with_an_any_wild_seed_ingredient_is_skipped()
+    public void Tea_sapling_takes_the_earliest_wild_seed_packet_and_caroline_two_hearts()
     {
-        CraftingRecipe recipe = Cookie("default", new RecipeIngredient("-777", 2));
-        Assert.Null(CraftedItemAvailability.Derive(SeedCookie, Data(recipe), EffortOf, WeekOf, DifficultyStep.Normal));
+        var efforts = new Dictionary<string, int> { [Acorn] = 2, [SpringSeeds] = 3, [SummerSeeds] = 1, [FallSeeds] = 1 };
+        var weeks = new Dictionary<string, int> { [Acorn] = 1, [SpringSeeds] = 1, [SummerSeeds] = 5, [FallSeeds] = 9 };
+        ItemEffort? result = CraftedItemAvailability.Derive(TeaSapling, Data(TeaSaplingRecipe()),
+            id => efforts.TryGetValue(id, out int e) ? e : null, id => weeks.TryGetValue(id, out int w) ? w : null, DifficultyStep.Normal);
+        Assert.Equal(UnlockWeeks.ForFriendship("Caroline", 2), result!.EarliestWeek);
+        Assert.Equal(3 + CookedDishAvailability.UnlockEffort("f Caroline 2"), result.Effort);
+        Assert.Contains($"hardest ingredient {SpringSeeds} (3)", result.Basis);
+    }
+
+    [Fact]
+    public void Wild_seed_packets_of_the_same_week_take_the_lower_effort()
+    {
+        var efforts = new Dictionary<string, int> { [Acorn] = 0, [SpringSeeds] = 3, [SummerSeeds] = 1 };
+        var weeks = new Dictionary<string, int> { [Acorn] = 1, [SpringSeeds] = 4, [SummerSeeds] = 4 };
+        ItemEffort? result = CraftedItemAvailability.Derive(TeaSapling, Data(TeaSaplingRecipe()),
+            id => efforts.TryGetValue(id, out int e) ? e : null, id => weeks.TryGetValue(id, out int w) ? w : null, DifficultyStep.Normal);
+        Assert.Equal(4, result!.EarliestWeek);
+        Assert.Equal(1 + CookedDishAvailability.UnlockEffort("f Caroline 2"), result.Effort);
+        Assert.Contains($"hardest ingredient {SummerSeeds} (1)", result.Basis);
+    }
+
+    [Fact]
+    public void Without_any_wild_seed_packet_the_recipe_is_extreme()
+    {
+        ItemEffort? result = CraftedItemAvailability.Derive(TeaSapling, Data(TeaSaplingRecipe()), EffortOf, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(CookedDishAvailability.ExtremeEffort, result!.Effort);
+        Assert.Contains("ingredient -777 unrecognised", result.Basis);
     }
 
     [Fact]
