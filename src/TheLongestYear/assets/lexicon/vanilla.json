@@ -1,7 +1,7 @@
 {
   "GameVersion": "1.6.15",
   "Layers": ["vanilla"],
-  "ModVersion": "1.1.9",
+  "ModVersion": "1.2.0",
   "RowHashes": {
     "animal|Blue Chicken": 16814020348455846045,
     "animal|Brown Chicken": 7639843212290246011,
