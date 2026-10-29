@@ -119,29 +119,39 @@ public static partial class ItemPoolBuilder
         return Array.Empty<Season>();
     }
 
-    private static readonly Season[] AllSeasons = { Season.Spring, Season.Summer, Season.Fall, Season.Winter };
+    /// <summary>True when a row with no Season field has season clauses that rule out every season
+    /// (e.g. "SEASON spring, !SEASON spring"). Such a row never fires in the game, but
+    /// <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
+    /// reads it as any season, so the pool builder's caller logs it.</summary>
+    public static bool HasContradictorySeasons(Season? season, string? condition)
+        => season == null && SeasonsFromCondition(condition) is { Count: 0 };
+
+    private static readonly Season[] AllSeasons ={ Season.Spring, Season.Summer, Season.Fall, Season.Winter };
 
     /// <summary>The seasons a Condition allows, or null when no clause says anything about seasons.
     /// A Condition is a comma-separated AND, so it is read one clause at a time:
     /// <list type="bullet">
     /// <item>a non-negated clause that names seasons narrows the set: SEASON / LOCATION_SEASON by
-    /// their season arguments, any other clause by its bare season tokens (SEASON_DAY spring 5);
-    /// several such clauses intersect;</item>
+    /// their season arguments (a name or 0-3, as the game reads them), any other clause by its bare
+    /// season NAMES only (SEASON_DAY spring 5; "YEAR 2" is not Fall); several such clauses
+    /// intersect;</item>
     /// <item>a negated SEASON / LOCATION_SEASON clause removes the seasons it names;</item>
-    /// <item>any other negated clause says nothing about seasons and is skipped.</item>
+    /// <item>any other negated clause, and any ANY clause (its quoted OR does not split into
+    /// clauses), says nothing about seasons and is skipped.</item>
     /// </list>
     /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
     /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as ANY
     /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
     /// row makes the whole fish any-season. An empty set (contradictory clauses: a row that never
     /// fires) is returned as is; <see cref="SeasonsFromSpawn(Season?, string?, string?, IReadOnlyDictionary{string, Season}?)"/>
-    /// treats it as no signal.</summary>
+    /// treats it as no signal; <see cref="HasContradictorySeasons"/> lets the caller log those rows.</summary>
     internal static HashSet<Season>? SeasonsFromCondition(string? condition)
     {
         if (string.IsNullOrWhiteSpace(condition)) return null;
         HashSet<Season>? allowed = null;
         foreach (string clause in SeasonClauses.Split(condition))
         {
+            if (SeasonClauses.IsAnyQuery(clause)) continue;   // an OR of quoted sub-queries: no signal
             HashSet<Season>? named = SeasonClauses.SeasonsNamedBy(clause, out bool negated);
             if (negated)
             {
@@ -154,7 +164,7 @@ public static partial class ItemPoolBuilder
             {
                 named = new HashSet<Season>();
                 foreach (string token in clause.Split(ConditionSeparators, StringSplitOptions.RemoveEmptyEntries))
-                    if (SeasonClauses.TryParseSeason(token, out Season s))
+                    if (SeasonClauses.TryParseSeasonName(token, out Season s))
                         named.Add(s);
             }
             if (named.Count == 0) continue;

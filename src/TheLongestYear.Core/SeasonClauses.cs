@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core;
 
@@ -10,6 +11,7 @@ public static class SeasonClauses
 {
     private const string SeasonQuery = "SEASON";
     private const string LocationSeasonQuery = "LOCATION_SEASON";
+    private const string AnyQuery = "ANY";
     private const char NegationPrefix = '!';
     private const char Quote = '"';
     private const char ClauseSeparator = ',';
@@ -33,7 +35,7 @@ public static class SeasonClauses
 
     /// <summary>The seasons a <c>SEASON x [y...]</c> or <c>LOCATION_SEASON &lt;loc&gt; x [y...]</c>
     /// clause names, or null for any other clause. <paramref name="negated"/> reports a leading
-    /// '!'. Only season NAMES count (IsDefined: Enum.TryParse accepts any integer).</summary>
+    /// '!'. Arguments are read like the game's Utility.TryParseEnum: a name or 0-3.</summary>
     public static HashSet<Season>? SeasonsNamedBy(string clause, out bool negated)
     {
         string body = clause.Trim();
@@ -54,8 +56,29 @@ public static class SeasonClauses
         return seasons;
     }
 
-    /// <summary>True when <paramref name="token"/> is a season NAME. Enum.TryParse alone accepts any
-    /// integer ("TIME 0600 1800" would read as two nonsense seasons).</summary>
+    /// <summary>True when <paramref name="token"/> is a season name or one of the season numbers
+    /// 0-3, as the game's Utility.TryParseEnum reads a SEASON argument. The IsDefined check only
+    /// rejects numbers outside 0-3 ("TIME 0600 1800"); "1" still reads as Summer. Use
+    /// <see cref="TryParseSeasonName"/> where a number is not a season argument.</summary>
     public static bool TryParseSeason(string token, out Season season)
         => Enum.TryParse(token, ignoreCase: true, out season) && Enum.IsDefined(typeof(Season), season);
+
+    /// <summary>True only for a season NAME (all letters): the bare-token scan of a clause that is
+    /// not a season query, where "PLAYER_FISHING_LEVEL Current 3" or "YEAR 2" must not read as
+    /// Winter or Fall.</summary>
+    public static bool TryParseSeasonName(string token, out Season season)
+    {
+        season = default;
+        return token.Length > 0 && token.All(char.IsLetter) && TryParseSeason(token, out season);
+    }
+
+    /// <summary>True for an ANY clause (negated or not). Its quoted sub-queries are an OR and do not
+    /// split on spaces or commas, so its tokens say nothing reliable about seasons.</summary>
+    public static bool IsAnyQuery(string clause)
+    {
+        string body = clause.Trim().TrimStart(NegationPrefix).TrimStart();
+        int space = body.IndexOf(' ');
+        string query = space < 0 ? body : body.Substring(0, space);
+        return string.Equals(query, AnyQuery, StringComparison.OrdinalIgnoreCase);
+    }
 }

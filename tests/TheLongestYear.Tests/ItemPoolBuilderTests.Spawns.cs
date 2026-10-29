@@ -268,6 +268,36 @@ public partial class ItemPoolBuilderTests
             ItemPoolBuilder.SeasonsFromSpawn(Season.Fall, "!LOCATION_SEASON Here fall"));
     }
 
+    /// <summary>Outside a SEASON / LOCATION_SEASON clause a number is not a season: "3" is a fishing
+    /// level, not Winter. Inside one, the game's Utility.TryParseEnum does read 0-3.</summary>
+    [Fact]
+    public void SeasonsFromSpawn_NumbersOutsideSeasonClauses_AreNotSeasons()
+    {
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, PLAYER_FISHING_LEVEL Current 3"));
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "LOCATION_SEASON Here summer, PLAYER_FISHING_LEVEL Current 3"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, YEAR 2"));
+        Assert.Equal(new[] { Season.Summer }, ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON 1"));
+    }
+
+    [Fact]
+    public void SeasonsFromSpawn_AnyClause_IsNoSeasonSignal()
+    {
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"!SEASON winter fall\" \"WEATHER Here rain\""));
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON summer, ANY \"SEASON spring\" \"WEATHER Here rain\""));
+    }
+
+    [Fact]
+    public void HasContradictorySeasons_OnlyForRowsThatRuleOutEverySeason()
+    {
+        Assert.True(ItemPoolBuilder.HasContradictorySeasons(null, "SEASON spring, !SEASON spring"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON spring, !SEASON spring"));   // read as any
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(Season.Spring, "SEASON spring, !SEASON spring"));
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, "!WEATHER Here rain"));
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, null));
+    }
+
     [Fact]
     public void FishPool_ModdedRowWithNegatedWeather_KeepsTheFishInItsSeason()
     {
