@@ -40,6 +40,12 @@ namespace TheLongestYear.Integration
         {
             StardewValley.Farmer p = StardewValley.Game1.player;
             if (p == null) return;
+            // The sweep edits shared locations and chests: only the host may remove or swap copies.
+            if (!Context.IsMainPlayer)
+            {
+                _monitor.Log("BookFurniture: not the host; the book reconcile is left to the host.", LogLevel.Trace);
+                return;
+            }
 
             ReconcileOneBook(p, meta);
 
@@ -100,7 +106,8 @@ namespace TheLongestYear.Integration
         }
 
         /// <summary>The count-exact reconcile of the one book, mirroring the Circle of Warding's
-        /// (placed anywhere, on a table, carried, or in a chest or fridge all count). The rules
+        /// (placed anywhere, on a table, carried, or in a chest, Junimo Chest, fridge, dresser or
+        /// building chest all count). Host only (see <see cref="ReconcileInventory"/>). The rules
         /// are <see cref="OneBook.Plan"/>; this finds the copies and carries the plan out.</summary>
         private void ReconcileOneBook(StardewValley.Farmer p, TheLongestYear.Core.MetaState meta)
         {
@@ -137,6 +144,7 @@ namespace TheLongestYear.Integration
             // A Junimo Chest shows the same shared inventory from every chest, so each inventory is
             // walked once, however many chests show it.
             var seenInventories = new HashSet<object>(ReferenceEqualityComparer.Instance);
+            long playerId = p.UniqueMultiplayerID;
 
             StardewValley.Utility.ForEachLocation(loc =>
             {
@@ -177,14 +185,22 @@ namespace TheLongestYear.Integration
                                 table.heldObject.Value = item as StardewValley.Object;
                             }));
                     }
+                    // A dresser (or other storage furniture) holds items of its own.
+                    if (f is StardewValley.Objects.StorageFurniture dresser)
+                        AddStored(found, seenInventories, dresser.heldItems, $"in a dresser in {where} at {f.TileLocation}");
                 }
                 foreach (StardewValley.Object obj in loc.objects.Values)
                     if (obj is StardewValley.Objects.Chest chest)
-                        AddStored(found, seenInventories, chest, $"in a chest in {where} at {chest.TileLocation}");
+                        AddStored(found, seenInventories, chest.GetItemsForPlayer(playerId), $"in a chest in {where} at {chest.TileLocation}");
+                // Building-owned chests (a mill's input and output, for example), as Utility walks them.
+                foreach (StardewValley.Buildings.Building building in loc.buildings)
+                    foreach (StardewValley.Objects.Chest buildingChest in building.buildingChests)
+                        AddStored(found, seenInventories, buildingChest.GetItemsForPlayer(playerId),
+                            $"in a {building.buildingType.Value} chest in {where}");
                 if (loc is StardewValley.Locations.FarmHouse house && house.fridge.Value is { } fridge)
-                    AddStored(found, seenInventories, fridge, $"in the fridge in {where}");
+                    AddStored(found, seenInventories, fridge.GetItemsForPlayer(playerId), $"in the fridge in {where}");
                 if (loc is StardewValley.Locations.IslandFarmHouse islandHouse && islandHouse.fridge.Value is { } islandFridge)
-                    AddStored(found, seenInventories, islandFridge, $"in the fridge in {where}");
+                    AddStored(found, seenInventories, islandFridge.GetItemsForPlayer(playerId), $"in the fridge in {where}");
                 return true;
             });
 
@@ -198,10 +214,12 @@ namespace TheLongestYear.Integration
             return found;
         }
 
+        /// <summary>Every book in one container's item list. Read chests through
+        /// <c>Chest.GetItemsForPlayer</c>: a Junimo Chest's <c>Items</c> is not the shared
+        /// inventory it shows (vanilla Chest.GetItemsForPlayer).</summary>
         private static void AddStored(List<FoundCopy> found, HashSet<object> seenInventories,
-            StardewValley.Objects.Chest chest, string where)
+            IList<StardewValley.Item> items, string where)
         {
-            StardewValley.Inventories.IInventory items = chest.Items;
             if (items == null || !seenInventories.Add(items)) return;
             for (int i = 0; i < items.Count; i++)
             {

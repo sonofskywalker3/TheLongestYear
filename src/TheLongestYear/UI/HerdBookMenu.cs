@@ -142,6 +142,13 @@ namespace TheLongestYear.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
+            // In the picker, the close button steps back to the slot list instead of closing the
+            // book, the same as the recipe pages (RecipeBookMenu.receiveLeftClick).
+            if (_pickerList != null && upperRightCloseButton != null && upperRightCloseButton.containsPoint(x, y))
+            {
+                BackOutOfPicker();
+                return;
+            }
             base.receiveLeftClick(x, y, playSound);
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
@@ -191,6 +198,26 @@ namespace TheLongestYear.UI
                 return;
             }
             base.receiveGamePadButton(b);
+        }
+
+        /// <summary>Escape, the menu key and controller B step back from the picker the same way
+        /// the close button does; on the slot list they close the book. Same as the recipe pages.</summary>
+        public override void receiveKeyPress(Microsoft.Xna.Framework.Input.Keys key)
+        {
+            if (_pickerList != null && key != Microsoft.Xna.Framework.Input.Keys.None
+                && (key == Microsoft.Xna.Framework.Input.Keys.Escape
+                    || Game1.options.doesInputListContain(Game1.options.menuButton, key)))
+            {
+                BackOutOfPicker();
+                return;
+            }
+            base.receiveKeyPress(key);
+        }
+
+        private void BackOutOfPicker()
+        {
+            ClosePicker();
+            Game1.playSound("bigDeSelect");
         }
 
         private void OpenPicker(int slotIndex)
