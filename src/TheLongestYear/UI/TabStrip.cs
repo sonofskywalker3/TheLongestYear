@@ -7,7 +7,8 @@ namespace TheLongestYear.UI
 {
     /// <summary>The look of a tab in the Junimo Shrine's left-hand strip, shared with the one
     /// book's tabs (<see cref="OneBookMenu"/>): a menu box, dimmed when not selected, with its
-    /// label in the small font, shrunk to fit when it would overflow the tab.</summary>
+    /// label in the small font, shrunk to fit when it would overflow the tab and centred on its
+    /// ink (<see cref="TextInk"/>).</summary>
     internal static class TabStrip
     {
         private const float InactiveAlpha = 0.7f;
@@ -23,7 +24,7 @@ namespace TheLongestYear.UI
             float available = bounds.Width - LabelInset * 2;
             float labelScale = labelSize.X > available ? available / labelSize.X : 1f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                new Vector2(bounds.X + LabelInset, bounds.Y + (bounds.Height - labelSize.Y * labelScale) / 2),
+                new Vector2(bounds.X + LabelInset, TextInk.CentredY(Game1.smallFont, label, bounds.Y, bounds.Height, labelScale)),
                 Game1.textColor, labelScale);
         }
     }
