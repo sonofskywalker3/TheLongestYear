@@ -23,7 +23,19 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.0
+## What's New in 1.2.1
+
+**New: one Keeping Book.** The Cookbook, Craftbook and Herd Book are now one book with a tab for each page. Your old books turn into it the next time you load. Thanks to tanky24u for the idea.
+
+**New: Banish.** At the rewind, the shrine's Foresight tab lets you spend JP to keep a bundle or an item off the next loop's board, up to two a loop. If the board can't be filled without it, your JP comes back. Thanks to RosemaryBagels for the idea.
+
+**Changed: more time at the night festivals.** With Festivals cost hours on, the clock at Spirit's Eve and the Moonlight Jellies runs at half speed, so there is time to talk, shop and explore before the main event. Night festival clock speed in the settings goes as low as 10%. Thanks to Nijah.
+
+**Fixed: weekly goals asked for fish that were out of season.** A map mod that lists a fish with a condition like "Summer, and not raining" made TLY think that fish was catchable all year, so a Spring goal could ask for Rainbow Trout. Thanks to Thrippa.
+
+**Changed: the shrine's Gifts of the Junimos tab is now Gifts.** When it is empty, it tells you what fills it.
+
+## 1.2.0
 
 **New: Stardew Valley Expanded is supported.** The Longest Year now knows every SVE item: what you can reach in year 1, what sits behind the Community Center, Ginger Island or the Joja route, and for the year-2 content, when it opens and how hard it is. Boards and the fairness check no longer treat a post-Community-Center vendor as a day-1 shop.
 

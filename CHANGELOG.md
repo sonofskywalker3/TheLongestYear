@@ -3,6 +3,23 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.1 - 2026-10-29
+
+### Added
+
+- **One Keeping Book.** The Cookbook, Craftbook and Herd Book are one book with a tab per page; existing saves swap the old books for it on load. Requested by tanky24u.
+- **Banish.** A Foresight row at the rewind shrine keeps a chosen bundle or item off the next board (up to two a loop, 100/200/350/550/800 JP); refunded with a morning note when the board can't be filled without it. Requested by RosemaryBagels.
+- `tly_circleprobe [place]` logs the chest-placement check on each Circle of Warding tile.
+
+### Changed
+
+- **Night festival clock.** With Festivals cost hours on, Spirit's Eve and the Moonlight Jellies run at half speed by default; the Night festival clock speed setting goes from 10% to 100%. Suggested by Nijah.
+- The shrine's Gifts of the Junimos tab is labelled Gifts and explains an empty panel. Book pages share one size, and button labels are centred.
+
+### Fixed
+
+- **Out-of-season fish as weekly goals.** A spawn row's condition is read clause by clause: any `!` used to make the fish catchable all year (Rainbow Trout as a Spring goal on maps with `LOCATION_SEASON Here summer, !WEATHER Here rain`). Only real season queries narrow, location seasons count only at maps that follow the calendar, and impossible rows are dropped. Reported by Thrippa.
+
 ## 1.2.0 - 2026-10-29
 
 ### Added
