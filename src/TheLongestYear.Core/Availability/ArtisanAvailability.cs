@@ -38,7 +38,7 @@ public static class ArtisanAvailability
         foreach (RawMachineRule rule in data.MachineRules)
         {
             if (!rule.OutputItemIds.Contains(qualifiedId)) continue;
-            if (!MachineObtainable(rule.MachineItemId, data)) continue;
+            if (!MachineObtainable(rule.MachineItemId, data, shopWeeks)) continue;
             (int inputEffort, string inputNote, int? inputWeek, bool hasInput) = InputEffort(rule, data, effortOf, weekOf);
             string? unlock = data.MachineUnlocks.TryGetValue(rule.MachineItemId, out string? u) ? u : null;
             int machine = MachineUnlockEffort(unlock);
@@ -93,11 +93,30 @@ public static class ArtisanAvailability
     /// recipe (Data/CraftingRecipes), a recipe shop row (Data/Shops) or a hand-ruled route
     /// (AvailabilityWeeks.MachineRouteWeeks). A machine with none of these is a reward or a
     /// placed object (the Statue Of True Perfection, (BC)280, makes Prismatic Shards with no input
-    /// but needs 100% Perfection), so its outputs get no route from it.</summary>
-    public static bool MachineObtainable(string machineId, EffortData data)
-        => data.MachineUnlocks.ContainsKey(machineId)
-           || data.RecipePrices.ContainsKey(machineId)
-           || AvailabilityWeeks.MachineRouteWeeks.ContainsKey(machineId);
+    /// but needs 100% Perfection), so its outputs get no route from it. A recipe a shop sells counts
+    /// only when a seller teaches it in year 1 (<see cref="CookedDishAvailability.RecipePriceWeek"/>),
+    /// and a recipe with a "null" unlock that only an unplaced or flagged shop sells (the Flower
+    /// Dance stall's) has no other route, so it is not one. A "null" recipe no shop sells at all
+    /// keeps the special-order mail route (<see cref="MachineWeek"/>).</summary>
+    public static bool MachineObtainable(string machineId, EffortData data, ShopWeeks? shopWeeks = null)
+    {
+        if (AvailabilityWeeks.MachineRouteWeeks.ContainsKey(machineId)) return true;
+        bool soldByShop = data.RecipePrices.ContainsKey(machineId)
+            || data.RecipeShopRows.Any(row => row != null && BundleParsing.NormalizeItemId(row.ItemId) == machineId);
+        bool sellerTeaches = soldByShop && CookedDishAvailability.RecipePriceWeek(machineId, data, shopWeeks) != null;
+        if (sellerTeaches) return true;
+        if (!data.MachineUnlocks.TryGetValue(machineId, out string? unlock)) return false;
+        return !(soldByShop && IsNullUnlock(unlock));
+    }
+
+    /// <summary>An unlock that names no skill, friendship or default: the recipe comes from a shop,
+    /// letter or event.</summary>
+    private static bool IsNullUnlock(string? unlock)
+    {
+        string text = (unlock ?? "").Trim();
+        return text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase)
+            || text.Equals("none", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>1 for a machine unlocked by default or a skill level under 4, 2 for levels 4 to 7,
     /// 3 for level 8 and up or a friendship, quest or purchase unlock ("null" in the recipe data).</summary>
@@ -115,9 +134,7 @@ public static class ArtisanAvailability
     {
         string text = (unlockCondition ?? "").Trim();
         if (text.Equals("default", StringComparison.OrdinalIgnoreCase)) return 0;
-        if (text.Length == 0 || text.Equals("null", StringComparison.OrdinalIgnoreCase)
-            || text.Equals("none", StringComparison.OrdinalIgnoreCase))
-            return QuestUnlockLevel;
+        if (IsNullUnlock(text)) return QuestUnlockLevel;
         string[] tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (tokens[0].Equals(FriendshipPrefix, StringComparison.OrdinalIgnoreCase)) return QuestUnlockLevel;
         if (tokens[0].Equals(SkillPrefix, StringComparison.OrdinalIgnoreCase)) tokens = tokens.Skip(1).ToArray();

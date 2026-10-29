@@ -130,20 +130,44 @@ public class RecipeSellerTests
         => Assert.Equal(AvailabilityWeeks.MachineLevelWeek(8), ArtisanAvailability.MachineWeek(Keg, "s Farming 8",
             MachineData(Tub, new RawRecipeShopRow(Tub, FlowerStall, 2000)), Placed()));
 
-    [Fact]
-    public void The_composer_dates_a_machine_by_its_seller()
+    private static EffortData TubData(params RawRecipeShopRow[] rows)
     {
-        EffortData data = new()
+        var prices = new Dictionary<string, int>();
+        foreach (RawRecipeShopRow row in rows) prices[row.ItemId] = row.Price;
+        return new EffortData
         {
+            RecipePrices = prices,
+            RecipeShopRows = rows,
             MachineRules = new[] { new RawMachineRule(Tub, null, new string[0], new[] { "(O)9001" }, 600, -1) },
-            RecipePrices = new Dictionary<string, int> { [Tub] = 2000 },
-            RecipeShopRows = new[] { new RawRecipeShopRow(Tub, FlowerStall, 2000) },
+            MachineUnlocks = new Dictionary<string, string> { [Tub] = "null" },
         };
-        var none = new Dictionary<string, ItemAvailability>();
-        Assert.Equal(AvailabilityWeeks.SpecialOrderMachineWeek,
-            new EffortComposer(data, none, hasKitchen: true, shopWeeks: Placed()).Derive("(O)9001")!.EarliestWeek);
-        Assert.Equal(7, new EffortComposer(data, none, hasKitchen: true, shopWeeks: Placed((FlowerStall, SewerWeek)))
-            .Derive("(O)9001")!.EarliestWeek);
+    }
+
+    [Fact]
+    public void A_null_unlock_machine_sold_only_at_a_festival_stall_is_unplaced()
+    {
+        EffortData data = TubData(new RawRecipeShopRow(Tub, FlowerStall, 2000));
+        Assert.False(ArtisanAvailability.MachineObtainable(Tub, data, Placed()));
+        Assert.Null(new EffortComposer(data, new Dictionary<string, ItemAvailability>(), hasKitchen: true, shopWeeks: Placed())
+            .Derive("(O)9001")?.EarliestWeek);
+    }
+
+    [Fact]
+    public void A_null_unlock_machine_sold_at_a_placed_shop_still_lands()
+    {
+        EffortData data = TubData(new RawRecipeShopRow(Tub, FlowerStall, 2000));
+        Assert.True(ArtisanAvailability.MachineObtainable(Tub, data, Placed((FlowerStall, SewerWeek))));
+        Assert.Equal(7, new EffortComposer(data, new Dictionary<string, ItemAvailability>(), hasKitchen: true,
+            shopWeeks: Placed((FlowerStall, SewerWeek))).Derive("(O)9001")!.EarliestWeek);
+    }
+
+    [Fact]
+    public void A_null_unlock_machine_no_shop_sells_keeps_the_special_order_route()
+    {
+        EffortData data = TubData();
+        Assert.True(ArtisanAvailability.MachineObtainable(Tub, data, Placed()));
+        Assert.Equal(AvailabilityWeeks.SpecialOrderMachineWeek, new EffortComposer(data, new Dictionary<string, ItemAvailability>(),
+            hasKitchen: true, shopWeeks: Placed()).Derive("(O)9001")!.EarliestWeek);
     }
 
     // ---- ShopWeeks records which shops it placed -------------------------------------------
