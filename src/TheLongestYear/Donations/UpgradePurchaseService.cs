@@ -58,6 +58,12 @@ namespace TheLongestYear.Donations
         /// <summary>Buy a banish for the next board (<see cref="BanishRules.Buy"/>).</summary>
         public BanishRules.BuyResult TryBanish(BanishKind kind, string key, string label)
         {
+            // Host only, like the shrine's banish rows: MetaState is the host's.
+            if (!Context.IsMainPlayer)
+            {
+                _monitor.Log("Banish refused: only the host can banish.", LogLevel.Debug);
+                return BanishRules.BuyResult.Invalid;
+            }
             long cost = BanishCost();
             BanishRules.BuyResult result = BanishRules.Buy(_store.State, kind, key, label, PriceFactor);
             if (result == BanishRules.BuyResult.Bought)
@@ -73,6 +79,11 @@ namespace TheLongestYear.Donations
         /// <summary>Take back a banish bought this visit; logs and returns the refund.</summary>
         public long CancelBanish(int index)
         {
+            if (!Context.IsMainPlayer)
+            {
+                _monitor.Log("Banish take-back refused: only the host can banish.", LogLevel.Debug);
+                return 0;
+            }
             string what = index >= 0 && index < _store.State.PendingBanishes.Count
                 ? $"{_store.State.PendingBanishes[index].Kind} '{_store.State.PendingBanishes[index].Key}'"
                 : "(none)";

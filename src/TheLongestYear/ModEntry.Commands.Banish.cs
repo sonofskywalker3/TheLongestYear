@@ -13,6 +13,7 @@ namespace TheLongestYear
         private void CmdBanish(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (!Context.IsMainPlayer) { this.Monitor.Log("tly_banish: host only, like the shrine's banish rows.", LogLevel.Warn); return; }
             MetaState s = _meta.State;
             string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
             switch (mode)

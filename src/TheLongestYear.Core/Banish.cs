@@ -169,8 +169,17 @@ public static class BanishRules
     /// <summary>The reset's half when it builds a new board: the honoured banishes become the new
     /// board's banishes (and climb the ladder), the refused ones are refunded and queued for the
     /// morning notice. Last loop's board banishes expire here: they are replaced, not added to.</summary>
+    /// <remarks>The prices paid are first handed to the honoured banishes cheapest first, and the
+    /// rest go with the refused ones. So when an EARLIER banish is refused and a later one honoured,
+    /// the honoured one ends up on the first ladder step and the refund is the higher price: the
+    /// player pays the ladder for the number actually honoured (100, not 200, for one), the same rule
+    /// as the take-back re-price in <see cref="Cancel"/>. The total JP moved is unchanged.</remarks>
     public static void ApplyResolution(MetaState state, BanishResolution resolution)
     {
+        List<long> prices = resolution.Honoured.Concat(resolution.Refused).Select(p => p.Paid).OrderBy(p => p).ToList();
+        int next = 0;
+        foreach (BanishPick pick in resolution.Honoured) pick.Paid = prices[next++];
+        foreach (BanishPick pick in resolution.Refused) pick.Paid = prices[next++];
         state.BoardBanishes = resolution.Honoured.ToList();
         state.BanishesHonoured += resolution.Honoured.Count;
         foreach (BanishPick pick in resolution.Refused)

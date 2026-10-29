@@ -258,6 +258,22 @@ public class BanishTests
     }
 
     [Fact]
+    public void An_earlier_refused_banish_hands_the_cheaper_price_to_the_honoured_one()
+    {
+        var s = new MetaState { JunimoPoints = 0 };
+        var first = Item("(O)1", 100);
+        var second = Item("(O)2", 200);
+        s.PendingBanishes.AddRange(new[] { first, second });
+
+        BanishRules.ApplyResolution(s, new BanishResolution(new[] { second }, new[] { first }));
+
+        Assert.Equal(100, second.Paid);   // one honoured banish costs the first step
+        Assert.Equal(200, first.Paid);
+        Assert.Equal(200, s.JunimoPoints);
+        Assert.Equal(200, BanishRules.TakeNotice(s)!.Sum(p => p.Paid));   // the notice names what came back
+    }
+
+    [Fact]
     public void A_banish_expires_after_the_loop_it_applied_to()
     {
         var s = new MetaState();
