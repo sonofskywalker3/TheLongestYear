@@ -228,6 +228,9 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.RarityStepCommand.Run(this.Monitor, _config, _meta?.State,
                     BuildAvailabilityModelFor, _enginePools, _catalog.Select(c => c.Id), DisplayName,
                     this.Helper.DirectoryPath, a));
+            yield return new DebugCommand(TheLongestYear.DebugCommands.CircleProbeCommand.Name,
+                "Debug: run the chest placement check on every tile of each Circle of Warding here and list mods patching it. " + TheLongestYear.DebugCommands.CircleProbeCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.CircleProbeCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_fixcheck", FixCheckUsage, this.CmdFixCheck);
             yield return new DebugCommand("tly_fishspots", FishSpotsUsage, this.CmdFishSpots);
             yield return new DebugCommand(TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name,
