@@ -41,4 +41,20 @@ public class ThemeDisplayTests
         Assert.Equal("Loadout", ThemeDisplay.CategoryName(UpgradeCategory.Loadout));
         Assert.Equal("Mine entrance closed all week", ThemeModifiers.DisplayNameFor("mines_closed"));
     }
+
+    [Fact]
+    public void GiftsTab_IsShortButHeadingStaysFull()
+    {
+        Assert.Equal("Gifts", ThemeDisplay.CategoryTabName(UpgradeCategory.Gifts));
+        Assert.Equal("Gifts of the Junimos", ThemeDisplay.CategoryName(UpgradeCategory.Gifts));
+        Assert.Equal("Loadout", ThemeDisplay.CategoryTabName(UpgradeCategory.Loadout));
+    }
+
+    [Fact]
+    public void EmptyPanelNote_OnlyForEmptyGifts()
+    {
+        Assert.True(ThemeDisplay.ShowsEmptyNote(UpgradeCategory.Gifts, 0));
+        Assert.False(ThemeDisplay.ShowsEmptyNote(UpgradeCategory.Gifts, 1));
+        Assert.False(ThemeDisplay.ShowsEmptyNote(UpgradeCategory.Loadout, 0));
+    }
 }

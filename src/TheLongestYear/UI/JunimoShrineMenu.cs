@@ -407,12 +407,21 @@ namespace TheLongestYear.UI
 
             // TabStrip scales a long label (e.g. "Obtainability") down to fit inside the frame.
             for (int i = 0; i < _tabs.Count; i++)
-                TabStrip.DrawTab(b, _tabs[i].bounds, ThemeDisplay.CategoryName((UpgradeCategory)i),
+                TabStrip.DrawTab(b, _tabs[i].bounds, ThemeDisplay.CategoryTabName((UpgradeCategory)i),
                     (UpgradeCategory)i == _activeCategory);
+
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int startIndex);
             for (int i = 0; i < rows.Count; i++)
                 DrawRow(b, _rowSlots[i], rows[i]);
+
+            if (ThemeDisplay.ShowsEmptyNote(_activeCategory, rows.Count) && _rowSlots.Count > 0)
+            {
+                Rectangle area = _rowSlots[0].bounds;
+                string note = Game1.parseText(Strings.Get("menu.shrine.gifts.empty"), Game1.smallFont, area.Width - 32);
+                Utility.drawTextWithShadow(b, note, Game1.smallFont,
+                    new Vector2(area.X + 16, area.Y + 12), Game1.textColor);
+            }
 
             _scrollUp.draw(b, _scrollIndex > 0 ? Color.White : Color.Gray, 1f);
             _scrollDown.draw(b, (startIndex + _rowsPerPage) < total ? Color.White : Color.Gray, 1f);
