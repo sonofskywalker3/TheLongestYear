@@ -5,14 +5,13 @@ namespace TheLongestYear.Tests;
 public class BookKitTests
 {
     [Fact]
-    public void Four_book_ids_are_stable()
+    public void Book_ids_are_stable()
     {
-        Assert.Equal(
-            new[] { "sonofskywalker3.TheLongestYear_Cookbook",
-                    "sonofskywalker3.TheLongestYear_Craftbook",
-                    "sonofskywalker3.TheLongestYear_BundleLog",
-                    "sonofskywalker3.TheLongestYear_HerdBook" },
-            BookKit.AllBookQualifiedIds);
+        // Saves hold these ids; the retired three must still match what older saves wrote.
+        Assert.Equal("sonofskywalker3.TheLongestYear_Cookbook", BookKit.CookbookId);
+        Assert.Equal("sonofskywalker3.TheLongestYear_Craftbook", BookKit.CraftbookId);
+        Assert.Equal("sonofskywalker3.TheLongestYear_BundleLog", BookKit.BundleLogId);
+        Assert.Equal("sonofskywalker3.TheLongestYear_HerdBook", BookKit.HerdBookId);
     }
 
     [Theory]

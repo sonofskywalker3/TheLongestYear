@@ -7,6 +7,7 @@ using StardewValley;
 using TheLongestYear.Core;
 using CoreSeason = TheLongestYear.Core.Season;
 using TheLongestYear.Core.Day28;
+using TheLongestYear.Core.Interactables;
 
 namespace TheLongestYear.Loop
 {
@@ -166,7 +167,45 @@ namespace TheLongestYear.Loop
         /// torn down underneath us still ends in a reset. The Herd Book follows the Craftbook
         /// (RunController.HerdBook.cs).</summary>
         private void OfferRecipeBanking(System.Action onContinue)
-            => OfferBook(isCooking: true, () => OfferBook(isCooking: false, () => OfferHerdBook(onContinue)));
+        {
+            _rewindTabsSeen.Clear();
+            OfferBook(isCooking: true, () => OfferBook(isCooking: false, () => OfferHerdBook(onContinue)));
+        }
+
+        /// <summary>Tabs of the one book the player already had open this rewind night. The three
+        /// offers above each open the book on their own tab; one the player already visited (say,
+        /// the Craftbook tab while the book was open for the Cookbook) is not opened again.</summary>
+        private readonly HashSet<BookTab> _rewindTabsSeen = new HashSet<BookTab>();
+
+        private static string RewindSubtitle(BookTab tab)
+            => Strings.Get(tab == BookTab.HerdBook ? "menu.herdbook.bank-before-reset" : "menu.books.bank-before-reset");
+
+        /// <summary>Open the one book on <paramref name="tab"/> for the rewind night (see
+        /// <see cref="WatchRewindMenu"/>), unless that tab was already visited tonight.</summary>
+        private void OfferBookTab(BookTab tab, string name, string detail, System.Action onContinue)
+        {
+            if (_rewindTabsSeen.Contains(tab))
+            {
+                _monitor.Log($"{name} not offered again before the reset: its tab was already open tonight ({detail}).", LogLevel.Trace);
+                onContinue();
+                return;
+            }
+            TheLongestYear.UI.OneBookMenu opened = null;
+            WatchRewindMenu(
+                name,
+                detail,
+                () =>
+                {
+                    _launcher.OpenBook(tab, RewindSubtitle);
+                    opened = Game1.activeClickableMenu as TheLongestYear.UI.OneBookMenu;
+                },
+                menu => menu is TheLongestYear.UI.OneBookMenu,
+                () =>
+                {
+                    if (opened != null) _rewindTabsSeen.UnionWith(opened.Visited);
+                    onContinue();
+                });
+        }
 
         private void OfferBook(bool isCooking, System.Action onContinue)
         {
@@ -189,13 +228,8 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            string subtitle = Strings.Get("menu.books.bank-before-reset");
-            WatchRewindMenu(
-                bookName,
-                $"slots={slots}, banked={banked.Count}, bankable={bankable}",
-                () => { if (isCooking) _launcher.OpenCookbook(subtitle); else _launcher.OpenCraftbook(subtitle); },
-                menu => menu is TheLongestYear.UI.CookbookMenu or TheLongestYear.UI.CraftbookMenu,
-                onContinue);
+            OfferBookTab(isCooking ? BookTab.Cookbook : BookTab.Craftbook, bookName,
+                $"slots={slots}, banked={banked.Count}, bankable={bankable}", onContinue);
         }
 
         /// <summary>Shared by the rewind-night books (Cookbook, Craftbook, Herd Book): open the menu,

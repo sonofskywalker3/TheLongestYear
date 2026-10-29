@@ -1,6 +1,7 @@
 using StardewModdingAPI;
 using StardewValley;
 using TheLongestYear.Core;
+using TheLongestYear.Core.Interactables;
 using TheLongestYear.Donations;
 using TheLongestYear.Focus;
 using TheLongestYear.Loop;
@@ -119,26 +120,28 @@ namespace TheLongestYear.UI
                 _monitor.Log("Showed the XP hand-over notice over the Junimo Shrine.", LogLevel.Info);
         }
 
-        public void OpenCookbook(string subtitle = null)
+        /// <summary>Open the one book (<see cref="OneBookMenu"/>) on <paramref name="tab"/>, or its
+        /// first tab when that section is not owned. Does nothing when no section is owned.</summary>
+        /// <param name="subtitleFor">Line under each tab's title (the rewind night), or null.</param>
+        public void OpenBook(BookTab tab, System.Func<BookTab, string> subtitleFor = null)
         {
             if (!CanOpen()) return;
-            Game1.activeClickableMenu = new CookbookMenu(_monitor, _store.State, subtitle);
-            _monitor.Log("Opened Cookbook menu.", LogLevel.Info);
+            System.Collections.Generic.IReadOnlyList<BookTab> tabs = OneBook.TabsFor(_store.State);
+            if (tabs.Count == 0)
+            {
+                _monitor.Log($"Book not opened on {tab}: no section is owned.", LogLevel.Info);
+                return;
+            }
+            var menu = new OneBookMenu(_monitor, _store.State, tabs, tab, subtitleFor);
+            Game1.activeClickableMenu = menu;
+            _monitor.Log($"Opened the book on the {menu.ActiveTab} tab (tabs: {string.Join(", ", tabs)}).", LogLevel.Info);
         }
 
-        public void OpenCraftbook(string subtitle = null)
-        {
-            if (!CanOpen()) return;
-            Game1.activeClickableMenu = new CraftbookMenu(_monitor, _store.State, subtitle);
-            _monitor.Log("Opened Craftbook menu.", LogLevel.Info);
-        }
+        public void OpenCookbook() => OpenBook(BookTab.Cookbook);
 
-        public void OpenHerdBook(string subtitle = null)
-        {
-            if (!CanOpen()) return;
-            Game1.activeClickableMenu = new HerdBookMenu(_monitor, _store.State, subtitle);
-            _monitor.Log("Opened Herd Book menu.", LogLevel.Info);
-        }
+        public void OpenCraftbook() => OpenBook(BookTab.Craftbook);
+
+        public void OpenHerdBook() => OpenBook(BookTab.HerdBook);
 
         /// <summary>UX2: per-season goal tracker, separate from the weekly hub selection surface.
         /// Opened on demand via the SeasonGoalsHotkey config.</summary>

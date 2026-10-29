@@ -12,15 +12,16 @@ using TheLongestYear.Loop;
 namespace TheLongestYear.UI
 {
     /// <summary>
-    /// The Herd Book (spec 2026-09-25), laid out like <see cref="CookbookMenu"/>. One row per owned
+    /// The Herd Book tab of the one book (spec 2026-09-25; <see cref="OneBookMenu"/>), laid out like
+    /// <see cref="CookbookMenu"/>. One row per owned
     /// slot in ladder order, labeled with its kind. An empty row opens a picker of the farm animals
     /// that slot accepts and that are not registered yet; a filled row asks to remove the animal.
     /// Animal rows (picker and filled slots) are drawn like the game's Animals tab by
     /// <see cref="AnimalRowRenderer"/>. A row whose building keep is not owned says which keep it needs.
-    /// Opened from the placed book, <c>tly_openherdbook</c>, and the rewind night
-    /// (RunController.OfferHerdBook, with a subtitle).
+    /// Shown when the book is opened on its Herd Book tab: from the placed book, <c>tly_openherdbook</c>,
+    /// and the rewind night (RunController.OfferHerdBook through OfferBookTab, with a subtitle).
     /// </summary>
-    internal sealed class HerdBookMenu : IClickableMenu
+    internal sealed class HerdBookMenu : IClickableMenu, IBookPage
     {
         // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
         // never overlap; the panel grows to match. Base sizes kept in comments for reference.
@@ -60,11 +61,20 @@ namespace TheLongestYear.UI
         private ClickableTextureComponent _scrollUp;
         private ClickableTextureComponent _scrollDown;
 
-        private int HeaderHeight => _subtitle == null ? HeaderPlain : HeaderWithSubtitle;
+        public int HeaderHeight => _subtitle == null ? HeaderPlain : HeaderWithSubtitle;
 
-        public HerdBookMenu(IMonitor monitor, MetaState meta, string subtitle = null)
+        /// <summary>Screen width kept free on the left for the <see cref="OneBookMenu"/> tab strip
+        /// (0 when the page is shown on its own).</summary>
+        private readonly int _leftInset;
+
+        /// <summary>The menu that hosts this page (<see cref="OneBookMenu"/>); null when the page is
+        /// the active menu itself.</summary>
+        public IClickableMenu Host { get; set; }
+
+        public HerdBookMenu(IMonitor monitor, MetaState meta, string subtitle = null, int leftInset = 0)
             : base(0, 0, 0, 0, showUpperRightCloseButton: true)
         {
+            _leftInset = leftInset;
             _monitor = monitor;
             _meta = meta;
             _subtitle = subtitle;
@@ -85,9 +95,9 @@ namespace TheLongestYear.UI
 
         private void RecomputeLayout()
         {
-            width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64);
+            width = Math.Min(PanelWidth, Game1.uiViewport.Width - 64 - _leftInset);
             height = Math.Min(PanelHeight, Game1.uiViewport.Height - 64);
-            xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
+            xPositionOnScreen = _leftInset + (Game1.uiViewport.Width - _leftInset - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPad;
@@ -132,6 +142,13 @@ namespace TheLongestYear.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
+            // In the picker, the close button steps back to the slot list instead of closing the
+            // book, the same as the recipe pages (RecipeBookMenu.receiveLeftClick).
+            if (_pickerList != null && upperRightCloseButton != null && upperRightCloseButton.containsPoint(x, y))
+            {
+                BackOutOfPicker();
+                return;
+            }
             base.receiveLeftClick(x, y, playSound);
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
@@ -183,6 +200,26 @@ namespace TheLongestYear.UI
             base.receiveGamePadButton(b);
         }
 
+        /// <summary>Escape, the menu key and controller B step back from the picker the same way
+        /// the close button does; on the slot list they close the book. Same as the recipe pages.</summary>
+        public override void receiveKeyPress(Microsoft.Xna.Framework.Input.Keys key)
+        {
+            if (_pickerList != null && key != Microsoft.Xna.Framework.Input.Keys.None
+                && (key == Microsoft.Xna.Framework.Input.Keys.Escape
+                    || Game1.options.doesInputListContain(Game1.options.menuButton, key)))
+            {
+                BackOutOfPicker();
+                return;
+            }
+            base.receiveKeyPress(key);
+        }
+
+        private void BackOutOfPicker()
+        {
+            ClosePicker();
+            Game1.playSound("bigDeSelect");
+        }
+
         private void OpenPicker(int slotIndex)
         {
             _pendingSlot = slotIndex;
@@ -220,9 +257,9 @@ namespace TheLongestYear.UI
                 {
                     HerdBookService.Remove(_meta, slotIndex, _monitor);
                     Game1.playSound("trashcan");
-                    Game1.activeClickableMenu = this;
+                    Game1.activeClickableMenu = Host ?? this;
                 },
-                _ => Game1.activeClickableMenu = this);
+                _ => Game1.activeClickableMenu = Host ?? this);
         }
 
         private void Scroll(int delta)
@@ -248,7 +285,8 @@ namespace TheLongestYear.UI
 
         public override void draw(SpriteBatch b)
         {
-            b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
+            if (Host == null)   // a hosting book dims the screen itself, under its tabs
+                b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
             string title = _pickerList != null

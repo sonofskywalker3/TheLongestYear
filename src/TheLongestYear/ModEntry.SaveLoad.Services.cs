@@ -343,8 +343,8 @@ namespace TheLongestYear
             _boostEffects.ApplyDailyBuffs();
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
-            // Mid-run safety: ensure a loaded save has exactly one of each book in inventory.
-            _bookFurniture.ReconcileInventory();
+            // Mid-run safety: exactly one book and one Bundle Log; an older save's three books become the one.
+            _bookFurniture.ReconcileInventory(_meta.State);
             _circles.Reconcile();
             // Fire intro quests (cookbook / craftbook / stash / fireplace) on every save load,
             // not just after reset. AddIntroQuest is idempotent against the questLog, so this

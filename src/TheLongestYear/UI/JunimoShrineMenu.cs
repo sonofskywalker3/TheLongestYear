@@ -392,25 +392,10 @@ namespace TheLongestYear.UI
                 new Vector2(xPositionOnScreen + width - PanelPadding - jpSize.X, yPositionOnScreen + 24),
                 Game1.textColor);
 
+            // TabStrip scales a long label (e.g. "Obtainability") down to fit inside the frame.
             for (int i = 0; i < _tabs.Count; i++)
-            {
-                var tab = _tabs[i];
-                Color tint = ((UpgradeCategory)i == _activeCategory)
-                    ? Color.White
-                    : Color.White * 0.7f;
-                IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
-                    tab.bounds.X, tab.bounds.Y, tab.bounds.Width, tab.bounds.Height, tint, 1f, false);
-
-                string label = ThemeDisplay.CategoryName((UpgradeCategory)i);
-                // Scale the label down if it would overflow the tab (e.g. "Obtainability"),
-                // so long category names always fit inside the frame.
-                Vector2 labelSize = Game1.smallFont.MeasureString(label);
-                float available = tab.bounds.Width - 24;
-                float labelScale = labelSize.X > available ? available / labelSize.X : 1f;
-                Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                    new Vector2(tab.bounds.X + 12, tab.bounds.Y + (tab.bounds.Height - labelSize.Y * labelScale) / 2),
-                    Game1.textColor, labelScale);
-            }
+                TabStrip.DrawTab(b, _tabs[i].bounds, ThemeDisplay.CategoryName((UpgradeCategory)i),
+                    (UpgradeCategory)i == _activeCategory);
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int startIndex);
             for (int i = 0; i < rows.Count; i++)
