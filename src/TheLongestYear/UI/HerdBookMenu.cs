@@ -26,20 +26,21 @@ namespace TheLongestYear.UI
         // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
         // never overlap; the panel grows to match. Base sizes kept in comments for reference.
         private const float RowGrowth = 1.15f;
-        private const int PanelWidth = 1035;   // 900 * RowGrowth
-        private const int PanelHeight = 828;   // 720 * RowGrowth
-        private const int PanelPad = 32;
+        // 900 x 720 * RowGrowth; shared with the recipe pages so all three tabs match (BookPageLayout).
+        private const int PanelWidth = BookPageLayout.PanelWidth;
+        private const int PanelHeight = BookPageLayout.PanelHeight;
+        private const int PanelPad = BookPageLayout.PanelPad;
         private const int RowHeight = 134;   // 116 * RowGrowth; the Animals tab's 112px slot plus 2px above and below the sprite
         private const int RowSpacing = 4;
         private const int RowTextInset = 16;
-        private const int ScrollbarGutter = 52;   // arrow width/offset reserved to the right of each row
+        private const int ScrollbarGutter = BookPageLayout.ScrollbarGutter;   // arrow width/offset reserved to the right of each row
         private const int RowIdBase = 8300;
         private const int ScrollUpId = 8950;
         private const int ScrollDownId = 8951;
-        private const int HeaderPlain = 80;
-        private const int HeaderWithSubtitle = 120;
-        private const int TitleY = 24;
-        private const int SubtitleY = 84;
+        private const int HeaderPlain = BookPageLayout.HeaderPlain;
+        private const int HeaderWithSubtitle = BookPageLayout.HeaderWithSubtitle;
+        private const int TitleY = BookPageLayout.TitleY;
+        private const int SubtitleY = BookPageLayout.SubtitleY;
         private const float EmptyRowAlpha = 0.6f;
         private const float NoteAlpha = 0.8f;
 
@@ -393,8 +394,8 @@ namespace TheLongestYear.UI
                 row.X, row.Y, row.Width, row.Height, tint, 1f, false);
 
         /// <summary>A text-only row: <paramref name="label"/> in the dialogue font, and the optional
-        /// <paramref name="note"/> on its own line under it in the small font, the pair centred in
-        /// the row. Each line shrinks to the row's width if it would run past it, so the two never
+        /// <paramref name="note"/> on its own line under it in the small font, the pair's ink centred
+        /// in the row. Each line shrinks to the row's width if it would run past it, so the two never
         /// share a line and nothing leaves the box.</summary>
         private static void DrawRow(SpriteBatch b, Rectangle row, string label, Color tint, string note = null)
         {
@@ -405,8 +406,17 @@ namespace TheLongestYear.UI
             float labelH = labelSize.Y * labelScale;
             Vector2 noteSize = note == null ? Vector2.Zero : Game1.smallFont.MeasureString(note);
             float noteScale = FitScale(noteSize.X, maxW);
-            float noteH = noteSize.Y * noteScale;
-            float top = row.Y + (int)((row.Height - labelH - noteH) / 2);
+            // Centre the drawn ink of the pair (TextInk), not the fonts' line heights, which
+            // leave the text high in the row with a gap below.
+            (float labelInkTop, float labelInkH) = TextInk.Extent(Game1.dialogueFont, label);
+            float inkTop = labelInkTop * labelScale;
+            float inkBottom = (labelInkTop + labelInkH) * labelScale;
+            if (note != null)
+            {
+                (float noteInkTop, float noteInkH) = TextInk.Extent(Game1.smallFont, note);
+                inkBottom = labelH + (noteInkTop + noteInkH) * noteScale;
+            }
+            float top = TextCentering.InkCentredY(row.Y, row.Height, inkTop, inkBottom - inkTop, 1f);
             Utility.drawTextWithShadow(b, label, Game1.dialogueFont,
                 new Vector2(row.X + RowTextInset, top), Game1.textColor, labelScale);
             if (note != null)

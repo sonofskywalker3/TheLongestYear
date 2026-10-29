@@ -27,9 +27,10 @@ namespace TheLongestYear.UI
     /// </summary>
     internal abstract class RecipeBookMenu : IClickableMenu, IRecipeBookMenu, IBookPage
     {
-        private const int PanelWidth  = 900;
-        private const int PanelHeight = 640;
-        private const int PanelPad    = 32;
+        // Panel size and header band shared with the Herd Book page (BookPageLayout).
+        private const int PanelWidth  = BookPageLayout.PanelWidth;
+        private const int PanelHeight = BookPageLayout.PanelHeight;
+        private const int PanelPad    = BookPageLayout.PanelPad;
         private const int RowHeight   = 72;
         private const int RowSpacing  = 8;
         private readonly int RowIdBase;
@@ -63,7 +64,7 @@ namespace TheLongestYear.UI
         /// over-cap notice while the book holds more recipes than it has slots, else nothing.</summary>
         private string Notice => _subtitle
             ?? (RecipeBanking.IsOverCap(_slotCount, Banked.Count) ? Strings.Get("menu.books.over-cap") : null);
-        public int HeaderHeight => Notice == null ? 80 : 120;
+        public int HeaderHeight => Notice == null ? BookPageLayout.HeaderPlain : BookPageLayout.HeaderWithSubtitle;
 
         /// <summary>Rows drawn: every slot plus any grandfathered overflow.</summary>
         private int RowCount => RecipeBanking.VisibleRows(_slotCount, Banked.Count);
@@ -131,7 +132,7 @@ namespace TheLongestYear.UI
 
             int listX = xPositionOnScreen + PanelPad;
             int listY = yPositionOnScreen + HeaderHeight;
-            int listW = width - PanelPad * 2 - 52;   // leave room for scroll arrows
+            int listW = width - PanelPad * 2 - BookPageLayout.ScrollbarGutter;   // leave room for scroll arrows
             int listH = height - HeaderHeight - PanelPad;
             _rowsPerPage = Math.Max(1, listH / (RowHeight + RowSpacing));
 
@@ -366,13 +367,13 @@ namespace TheLongestYear.UI
                 ? Strings.Get("menu.books.choose")
                 : TitleText(Banked.Count, _slotCount);
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
-                b, title, xPositionOnScreen + width / 2, yPositionOnScreen + 24);
+                b, title, xPositionOnScreen + width / 2, yPositionOnScreen + BookPageLayout.TitleY);
             string notice = Notice;
             if (notice != null)
             {
                 Vector2 size = Game1.smallFont.MeasureString(notice);
                 Utility.drawTextWithShadow(b, notice, Game1.smallFont,
-                    new Vector2(xPositionOnScreen + (width - size.X) / 2, yPositionOnScreen + 84),
+                    new Vector2(xPositionOnScreen + (width - size.X) / 2, yPositionOnScreen + BookPageLayout.SubtitleY),
                     Game1.textColor);
             }
 
@@ -411,7 +412,7 @@ namespace TheLongestYear.UI
                     slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, tint, 1f, false);
 
                 Utility.drawTextWithShadow(b, label, Game1.dialogueFont,
-                    new Vector2(slot.bounds.X + 16, slot.bounds.Y + (slot.bounds.Height - (int)Game1.dialogueFont.MeasureString(label).Y) / 2),
+                    new Vector2(slot.bounds.X + 16, TextInk.CentredY(Game1.dialogueFont, label, slot.bounds.Y, slot.bounds.Height)),
                     Game1.textColor);
             }
         }
@@ -431,7 +432,7 @@ namespace TheLongestYear.UI
                     slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, Color.White, 1f, false);
 
                 Utility.drawTextWithShadow(b, label, Game1.dialogueFont,
-                    new Vector2(slot.bounds.X + 16, slot.bounds.Y + (slot.bounds.Height - (int)Game1.dialogueFont.MeasureString(label).Y) / 2),
+                    new Vector2(slot.bounds.X + 16, TextInk.CentredY(Game1.dialogueFont, label, slot.bounds.Y, slot.bounds.Height)),
                     Game1.textColor);
             }
         }
