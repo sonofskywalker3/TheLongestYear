@@ -76,7 +76,7 @@ public static partial class ItemPoolBuilder
         SourceReachability? reachability = null,
         IReadOnlySet<string>? vanillaOnlyIds = null,
         LocationWeeks? locationWeeks = null,
-        IReadOnlySet<string>? ownSeasonLocations = null)
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons = null)
     {
         var excluded = new HashSet<string>(tuning.ExcludedItemIds, StringComparer.Ordinal);
         // Save-specific exclusions (YearTwoCrops: Pierre's year-2 seeds until the upgrade is owned).
@@ -105,8 +105,8 @@ public static partial class ItemPoolBuilder
         }
 
         var cropPool = BuildCropPool(crops, objects, excluded, tuning);
-        var (fishPool, crabPotPool, unpooledFish) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks, ownSeasonLocations);
-        var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning, festivalSeasons, ownSeasonLocations);
+        var (fishPool, crabPotPool, unpooledFish) = BuildFishPools(fishSpawns, trapFishIds, objects, excluded, tuning, festivalSeasons, locationWeeks, locationSeasons);
+        var foragePool = BuildForagePool(forageSpawns, objects, excluded, tuning, festivalSeasons, locationSeasons);
         var shallowWaterFish = new HashSet<string>(StringComparer.Ordinal);
         var qualityEligible = BuildQualityEligibleIds(crops, objects, forageSpawns, fishSpawns, trapFishIds, excluded, shallowWaterFish);
         var monsterPool = BuildMonsterPool(monsterDrops, objects, excluded, tuning);

@@ -88,38 +88,60 @@ public static partial class ItemPoolBuilder
         IReadOnlyDictionary<string, Season>? festivalSeasons = null)
         => ReadSpawnSeasons(season, condition, location, festivalSeasons).Seasons;
 
+    /// <summary>The Data/Locations entry every map inherits rows from: its rows run at many maps,
+    /// so "Here" in them is no one location.</summary>
+    public const string SharedDefaultLocation = "Default";
+
     /// <summary>True when a row's season clauses rule out every season, so the row never spawns
     /// and the pool builders drop it (the caller logs these).</summary>
     public static bool IsSeasonImpossible(Season? season, string? condition, string? location = null,
-        IReadOnlySet<string>? ownSeasonLocations = null)
-        => ReadSpawnSeasons(season, condition, location, null, ownSeasonLocations).Verdict == SeasonVerdict.Impossible;
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons = null)
+        => ReadSpawnSeasons(season, condition, location, null, locationSeasons).Verdict == SeasonVerdict.Impossible;
 
-    /// <summary>The season verdict for one spawn entry. An explicit Season wins. Otherwise the
-    /// Condition's season queries decide (<see cref="SeasonClauses.Read"/>): these seasons, or
-    /// impossible (the row never fires). With no season signal, the passive-festival rule: a row
-    /// on a festival-only map (<see cref="BuiltInFestivalLocations"/>) or conditioned on
+    /// <summary>Whose season the row's location follows. The shared Default entry is always
+    /// Unknown. With no table (pools and rows built by hand in tests) any other location reads as
+    /// Calendar; with a table (the game's pool build always passes one), a location missing from it
+    /// is Unknown, never assumed to be the calendar.</summary>
+    public static SeasonSource SeasonSourceOf(string? location, IReadOnlyDictionary<string, SeasonSource>? locationSeasons)
+    {
+        if (string.Equals(location, SharedDefaultLocation, StringComparison.OrdinalIgnoreCase))
+            return SeasonSource.Unknown;
+        if (locationSeasons == null) return SeasonSource.Calendar;
+        if (string.IsNullOrEmpty(location)) return SeasonSource.Unknown;
+        return locationSeasons.TryGetValue(location, out SeasonSource source) ? source : SeasonSource.Unknown;
+    }
+
+    /// <summary>The season verdict for one spawn entry.
+    /// <list type="bullet">
+    /// <item>The explicit Season field: the game compares it with the LOCATION's season
+    /// (GameLocation.GetSeason), so it is a calendar season only at a <see cref="SeasonSource.Calendar"/>
+    /// location; elsewhere it is no signal (a safe superset).</item>
+    /// <item>Otherwise the Condition's season queries decide (<see cref="SeasonClauses.Read"/>): these
+    /// seasons, or impossible (the row never fires). LOCATION_SEASON Here / Target narrows only at a
+    /// Calendar location: Here is the map being fished, and the Default entry's rows run at many.</item>
+    /// <item>With no season signal, the passive-festival rule: a row on a festival-only map
+    /// (<see cref="BuiltInFestivalLocations"/>) or conditioned on a top-level
     /// <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c> is only reachable in that festival's season,
-    /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded
-    /// festivals count) with <see cref="BuiltInFestivalSeasons"/> as the fallback; an unknown
-    /// festival is no signal.
-    ///
+    /// looked up in <paramref name="festivalSeasons"/> (Data/PassiveFestivals, so modded festivals
+    /// count) with <see cref="BuiltInFestivalSeasons"/> as the fallback; an unknown festival is no
+    /// signal.</item>
+    /// </list>
     /// Player reports 2026-10-29: Rainbow Trout and Squid were asked for in Spring weeks 1-2. A map
     /// mod's row such as "LOCATION_SEASON Here summer, !WEATHER Here rain" used to read as any
     /// season, because a '!' anywhere in the string meant "no season signal", and one any-season
     /// row makes the whole fish any-season.</summary>
-    /// <param name="ownSeasonLocations">Locations whose season is overridden (a location context's
-    /// or the map's SeasonOverride, e.g. the island's Summer): there LOCATION_SEASON Here / Target
-    /// reads that season, not the calendar's, so it gives no signal. Null = none known.</param>
+    /// <param name="locationSeasons">Each Data/Locations key's <see cref="SeasonSource"/>
+    /// (see <see cref="SeasonSourceOf"/>).</param>
     public static SeasonReading ReadSpawnSeasons(
         Season? season, string? condition, string? location,
         IReadOnlyDictionary<string, Season>? festivalSeasons = null,
-        IReadOnlySet<string>? ownSeasonLocations = null)
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons = null)
     {
-        if (season != null)
+        bool calendar = SeasonSourceOf(location, locationSeasons) == SeasonSource.Calendar;
+        if (season != null && calendar)
             return new SeasonReading(SeasonVerdict.Seasons, new[] { season.Value });
 
-        bool ownSeason = location != null && ownSeasonLocations != null && ownSeasonLocations.Contains(location);
-        SeasonReading fromCondition = SeasonClauses.Read(condition, ownSeason);
+        SeasonReading fromCondition = SeasonClauses.Read(condition, locationHasOwnSeason: !calendar);
         if (fromCondition.Verdict != SeasonVerdict.Unknown)
             return fromCondition;
 

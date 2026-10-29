@@ -309,27 +309,69 @@ public partial class ItemPoolBuilderTests
             ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"PLAYER_HAS_MAIL Current \\\"x, SEASON winter\" \"WEATHER Here rain\", SEASON summer"));
     }
 
-    /// <summary>LOCATION_SEASON Here / Target reads the location's own season, which a context or
-    /// map SeasonOverride can pin (the island is always Summer). There it says nothing about the
-    /// calendar, and a contradiction it takes part in never makes a row impossible.</summary>
+    private static IReadOnlyDictionary<string, SeasonSource> Sources(params (string Location, SeasonSource Source)[] entries)
+        => entries.ToDictionary(e => e.Location, e => e.Source, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>LOCATION_SEASON Here / Target and the explicit Season field read the location's own
+    /// season (GameLocation.GetSeason), which a context or map SeasonOverride can pin (the island is
+    /// always Summer). They narrow to calendar seasons only at one concrete location known to follow
+    /// the calendar; at an overridden, unresolved or shared (Default) location they give no signal,
+    /// and a contradiction a LOCATION_SEASON clause takes part in never makes a row impossible.</summary>
     [Fact]
-    public void ReadSpawnSeasons_LocationSeasonAtAnOverriddenLocation_IsNoSignal()
+    public void ReadSpawnSeasons_LocationSeasonAndSeasonField_OnlyNarrowAtCalendarLocations()
     {
-        var own = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "SummerCove" };
-        SeasonReading atOwn = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "SummerCove", null, own);
+        var sources = Sources(("SummerCove", SeasonSource.Own), ("BrokenMap", SeasonSource.Unknown),
+            ("Beach", SeasonSource.Calendar), ("ModdedLake", SeasonSource.Calendar));
+
+        // Own season: LOCATION_SEASON and the Season field are no calendar signal.
+        SeasonReading atOwn = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "SummerCove", null, sources);
         Assert.Equal(SeasonVerdict.Seasons, atOwn.Verdict);
         Assert.Equal(new[] { Season.Winter }, atOwn.Seasons);
         Assert.Equal(SeasonVerdict.Unknown,
-            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "SummerCove", null, own).Verdict);
-        // The same rows at a calendar location read as before.
+            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "SummerCove", null, sources).Verdict);
+        Assert.Equal(SeasonVerdict.Unknown, ItemPoolBuilder.ReadSpawnSeasons(Season.Summer, null, "SummerCove", null, sources).Verdict);
+
+        // Unknown (unresolved map, or missing from the table) and the shared Default entry: same.
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer", "BrokenMap", null, sources).Verdict);
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer", "NotInTable", null, sources).Verdict);
+        Assert.Equal(SeasonVerdict.Unknown, ItemPoolBuilder.ReadSpawnSeasons(Season.Winter, null, "BrokenMap", null, sources).Verdict);
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer", "Default", null, sources).Verdict);
+        Assert.Equal(SeasonVerdict.Unknown,
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer", "Default").Verdict);
+        // ... but a calendar clause still narrows there.
+        Assert.Equal(new[] { Season.Fall },
+            ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON fall, LOCATION_SEASON Here summer", "Default", null, sources).Seasons);
+
+        // Calendar: the Rainbow Trout report's modded-map row reads Summer; the Season field wins.
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer, !WEATHER Here rain", "ModdedLake", null, sources).Seasons);
+        Assert.Equal(new[] { Season.Summer }, ItemPoolBuilder.ReadSpawnSeasons(Season.Summer, null, "ModdedLake", null, sources).Seasons);
         Assert.Equal(new[] { Season.Spring, Season.Summer, Season.Fall },
-            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "Beach", null, own).Seasons);
+            ItemPoolBuilder.ReadSpawnSeasons(null, "!LOCATION_SEASON Here winter", "Beach", null, sources).Seasons);
         // A LOCATION_SEASON clause in a contradiction keeps the calendar clauses' seasons, never Impossible.
-        SeasonReading atCalendar = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "Beach", null, own);
+        SeasonReading atCalendar = ItemPoolBuilder.ReadSpawnSeasons(null, "SEASON winter, LOCATION_SEASON Target summer", "Beach", null, sources);
         Assert.Equal(SeasonVerdict.Seasons, atCalendar.Verdict);
         Assert.Equal(new[] { Season.Winter }, atCalendar.Seasons);
         Assert.Equal(SeasonVerdict.Unknown,
-            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer, !LOCATION_SEASON Here summer", "Beach").Verdict);
+            ItemPoolBuilder.ReadSpawnSeasons(null, "LOCATION_SEASON Here summer, !LOCATION_SEASON Here summer", "Beach", null, sources).Verdict);
+    }
+
+    /// <summary>GameLocation.GetSeason's chain: a valid map SeasonOverride or a context override pins
+    /// the season; an invalid nonempty map value is Unknown (never assumed calendar); nothing set
+    /// means the parent decides.</summary>
+    [Fact]
+    public void OverrideStep_FollowsGetSeason()
+    {
+        Assert.Equal(SeasonSource.Own, SeasonClauses.OverrideStep("summer", false));
+        Assert.Equal(SeasonSource.Own, SeasonClauses.OverrideStep("2", false));
+        Assert.Equal(SeasonSource.Own, SeasonClauses.OverrideStep(null, true));
+        Assert.Equal(SeasonSource.Unknown, SeasonClauses.OverrideStep("monsoon", false));
+        Assert.Equal(SeasonSource.Unknown, SeasonClauses.OverrideStep("monsoon", true));
+        Assert.Null(SeasonClauses.OverrideStep(null, false));
+        Assert.Null(SeasonClauses.OverrideStep("  ", false));
     }
 
     [Fact]
@@ -353,7 +395,7 @@ public partial class ItemPoolBuilderTests
             new[] { new RawSpawnEntry("151", null, "SEASON winter, LOCATION_SEASON Target summer", "SummerCove") },
             new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
             new List<RawGeodeDropEntry>(), Tuning,
-            ownSeasonLocations: new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "SummerCove" });
+            locationSeasons: Sources(("SummerCove", SeasonSource.Own)));
         Assert.Equal(new[] { Season.Winter }, pools.Fish.Single(p => p.ItemId == "(O)151").Seasons);
     }
 

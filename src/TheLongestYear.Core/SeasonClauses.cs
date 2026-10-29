@@ -15,6 +15,20 @@ public enum SeasonVerdict
     Impossible,
 }
 
+/// <summary>Whose season a spawn row's location follows, as GameLocation.GetSeason resolves it
+/// (map SeasonOverride property, then the location context's SeasonOverride, then the parent
+/// location, then the calendar).</summary>
+public enum SeasonSource
+{
+    /// <summary>Resolved, and no override anywhere in the chain: the location's season is the calendar's.</summary>
+    Calendar,
+    /// <summary>An override pins the location's season (the island's Summer).</summary>
+    Own,
+    /// <summary>Not resolved (map not loaded, an invalid override value, the shared Default entry):
+    /// never assumed to be the calendar.</summary>
+    Unknown,
+}
+
 /// <summary>A Condition's season verdict, with the allowed seasons (calendar order) when it is
 /// <see cref="SeasonVerdict.Seasons"/>, and empty otherwise.</summary>
 public readonly record struct SeasonReading(SeasonVerdict Verdict, IReadOnlyList<Season> Seasons)
@@ -161,6 +175,20 @@ public static class SeasonClauses
         set = new HashSet<Season>(set);
         set.IntersectWith(named);
         return set;
+    }
+
+    /// <summary>One step of GameLocation.GetSeason's chain, for one location: its map's
+    /// SeasonOverride property value (null when unset) and whether its location context sets a
+    /// SeasonOverride. Returns <see cref="SeasonSource.Own"/> for a valid map override (a season
+    /// name or 0-3, as Utility.TryParseEnum reads it) or a context override,
+    /// <see cref="SeasonSource.Unknown"/> for a nonempty map value that is not a season (the game
+    /// logs it and moves on; we do not guess), and null when this location sets nothing and the
+    /// parent decides.</summary>
+    public static SeasonSource? OverrideStep(string? mapSeasonOverride, bool contextHasSeasonOverride)
+    {
+        if (!string.IsNullOrWhiteSpace(mapSeasonOverride))
+            return TryParseSeasonEnum(mapSeasonOverride.Trim(), out _) ? SeasonSource.Own : SeasonSource.Unknown;
+        return contextHasSeasonOverride ? SeasonSource.Own : null;
     }
 
     /// <summary>The festival ids of the top-level, non-negated <c>IS_PASSIVE_FESTIVAL_OPEN &lt;id&gt;</c>

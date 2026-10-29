@@ -54,7 +54,7 @@ public static partial class ItemPoolBuilder
         IReadOnlyDictionary<string, RawObjectEntry> objects,
         HashSet<string> excluded, BundleGenerationTuning tuning,
         IReadOnlyDictionary<string, Season>? festivalSeasons,
-        IReadOnlySet<string>? ownSeasonLocations)
+        IReadOnlyDictionary<string, SeasonSource>? locationSeasons)
     {
         var seasonsById = new Dictionary<string, List<Season>>(StringComparer.Ordinal);
         var anySeasonById = new HashSet<string>(StringComparer.Ordinal);
@@ -88,7 +88,7 @@ public static partial class ItemPoolBuilder
             // Thrippa, 2026-09-25). The Animal and Chef's bundles still reach them by kind.
             if (IsAnimalProduct(objects[bare]))
                 continue;
-            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, ownSeasonLocations);
+            SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, locationSeasons);
             if (reading.Verdict == SeasonVerdict.Impossible)
                 continue;   // the row never fires
             AddSeasons(id, reading.Seasons);
