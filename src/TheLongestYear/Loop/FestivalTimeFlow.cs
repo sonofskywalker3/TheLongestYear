@@ -37,7 +37,71 @@ namespace TheLongestYear.Loop
         /// <summary>Guard so OnUpdateTicked's auto-eject only triggers once per festival.</summary>
         private static bool _pendingAutoEnd;
 
-        public static void Reset() => _pendingAutoEnd = false;
+        /// <summary>Mirrors GameplayConfig.FestivalClockSlowdown: the clock speed at Spirit's Eve as a
+        /// fraction of normal (0.5 = half speed). Set by ModEntry at config load and from GMCM.
+        /// The setter clamps, so <c>tly_festival state</c> prints the speed that actually runs.</summary>
+        internal static double ClockSpeed
+        {
+            get => _clockSpeed;
+            set => _clockSpeed = FestivalClock.ClampSpeed(value);
+        }
+        private static double _clockSpeed = FestivalClock.DefaultSpeed;
+
+        /// <summary>The location this mod last slowed, and the value it wrote, so the write can be
+        /// undone without touching a value another source (vanilla's MineShaft) set itself.</summary>
+        private static readonly RememberedWrite<GameLocation> Slowed = new();
+
+        /// <summary>Clears per-session festival state. Called when TLY goes dormant (return to
+        /// title, or a non-TLY save loads), where the per-tick path no longer runs: undoes the
+        /// clock write and drops the reference so a discarded festival map is not kept alive.</summary>
+        public static void Reset()
+        {
+            _pendingAutoEnd = false;
+            Undo();
+        }
+
+        /// <summary>
+        /// Slows the clock on a qualifying festival's grounds (Spirit's Eve; see
+        /// <see cref="FestivalClock"/>). Called every tick from ModEntry.OnUpdateTicked.
+        ///
+        /// Mechanism: vanilla's own per-location knob, <see cref="GameLocation.ExtraMillisecondsPerInGameMinute"/>,
+        /// which <c>Game1.UpdateGameClock</c> adds to the real time each 10-minute advance waits for.
+        /// The advance itself (<c>performTenMinuteClockUpdate</c>) still runs at every 10 game minutes,
+        /// only further apart in real time, so nothing keyed to the clock is skipped or reordered.
+        ///
+        /// Only the festival's temporary map is written (<see cref="FestivalClock.TargetExtraMs"/>):
+        /// on the entry tick the festival event is still attached to the real Town, and the knob is
+        /// not saved but does live on that location for the whole session. Any tick where there is
+        /// nothing to slow puts the last write back to 0, if it is still the value this mod wrote.
+        /// </summary>
+        public static void ApplyClockSpeed()
+        {
+            GameLocation here = Game1.currentLocation;
+            Event ev = Game1.isFestival() ? Game1.CurrentEvent : null;
+            int? target = here == null ? null : FestivalClock.TargetExtraMs(
+                Enabled, Core.RunActivation.IsActive, ev?.id, here.IsTemporary,
+                ClockSpeed, Game1.realMilliSecondsPerGameMinute);
+
+            if (target is int extra)
+            {
+                if (Slowed.Target != null && !ReferenceEquals(Slowed.Target, here))
+                    Undo();
+                if (here.ExtraMillisecondsPerInGameMinute != extra)
+                    here.ExtraMillisecondsPerInGameMinute = extra;
+                Slowed.Remember(here, extra);
+                return;
+            }
+
+            Undo();
+        }
+
+        /// <summary>Put the last slowed location back to 0 if it still holds our value.</summary>
+        private static void Undo()
+        {
+            GameLocation ours = Slowed.TakeForUndo(loc => loc.ExtraMillisecondsPerInGameMinute);
+            if (ours != null)
+                ours.ExtraMillisecondsPerInGameMinute = 0;
+        }
 
         /// <summary>Returns true if a festival is active AND the in-game clock has reached its
         /// scheduled end time. Called from ModEntry.OnUpdateTicked.</summary>

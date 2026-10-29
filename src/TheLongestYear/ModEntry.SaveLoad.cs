@@ -341,6 +341,8 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            // The per-tick festival clock path stops running once dormant: undo its write here.
+            TheLongestYear.Loop.FestivalTimeFlow.Reset();
             TheLongestYear.Loop.ResetSave.Clear();
             TheLongestYear.Focus.FocusBuildSession.Abort();
             TheLongestYear.Loop.GroundDrop.ResetDropsOnGround = false;

@@ -174,6 +174,8 @@ namespace TheLongestYear
                 $"tly_festival state: time={Game1.timeOfDay} isFestival={Game1.isFestival()} event={(ev == null ? "none" : ev.id)} " +
                 $"timer={(ev?.festivalTimer ?? -1)} control={(ev?.playerControlSequence ?? false)} id={(ev?.playerControlSequenceID ?? "-")} " +
                 $"shouldTimePass={Game1.shouldTimePass()} autoEnd={FestivalTimeFlow.ShouldAutoEnd()} " +
+                $"clockSpeed={FestivalTimeFlow.ClockSpeed} extraMsPerMinute={(Game1.currentLocation?.ExtraMillisecondsPerInGameMinute ?? 0)} " +
+                $"msPerTenMinutes={Game1.realMilliSecondsPerGameTenMinutes + (Game1.currentLocation?.ExtraMillisecondsPerInGameMinute ?? 0) * 10} " +
                 $"usingTool={p.UsingTool} tool={(p.CurrentTool?.GetType().Name ?? "none")} temp={(p.TemporaryItem?.Name ?? "none")} canMove={p.CanMove} " +
                 $"eventUp={Game1.eventUp} freeze={Game1.freezeControls} fade={Game1.fadeToBlack}/{Game1.globalFade} dialogue={Game1.dialogueUp} menu={(Game1.activeClickableMenu?.GetType().Name ?? "none")} " +
                 $"farmEvent={(Game1.farmEvent != null)} paused={Game1.paused}/{Game1.isTimePaused} festDay={Utility.isFestivalDay()} where={Game1.whereIsTodaysFest ?? "-"} loc={Game1.currentLocation?.Name}",
