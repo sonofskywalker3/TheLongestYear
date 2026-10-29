@@ -239,10 +239,80 @@ public partial class ItemPoolBuilderTests
         Assert.Equal(Season.Winter, pools.DerivedSeasonPins["(O)800"]);
     }
 
+    /// <summary>Player reports 2026-10-29: Rainbow Trout (Summer) and Squid (Winter) asked for in
+    /// Spring weeks 1-2 on a save with map mods. A '!' anywhere in a row's Condition used to mean
+    /// "no season signal" = any season. A Condition is a comma-separated AND, read clause by clause.</summary>
     [Fact]
-    public void SeasonsFromSpawn_NegatedCondition_TreatedAsNoSignal()
+    public void SeasonsFromSpawn_NegatedClauses_ReadClauseByClause()
     {
-        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON Here winter"));
+        // A negated clause that names no season leaves the season clause in charge.
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "LOCATION_SEASON Here summer, !WEATHER Here rain"));
+        Assert.Equal(new[] { Season.Winter },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "!IS_PASSIVE_FESTIVAL_OPEN SquidFest, SEASON winter"));
+        // A negated season clause removes its seasons.
+        Assert.Equal(new[] { Season.Spring, Season.Summer, Season.Fall },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "!LOCATION_SEASON Here winter"));
+        Assert.Equal(new[] { Season.Spring },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON spring summer, !SEASON summer"));
+        Assert.Equal(new[] { Season.Spring },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "!SEASON summer, SEASON spring summer"));
+        // Positive season clauses intersect.
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON spring summer, LOCATION_SEASON Here summer fall"));
+        // Negated clauses alone with no season are still no signal; so is no condition.
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, null));
+        // The explicit Season field still wins over the condition.
+        Assert.Equal(new[] { Season.Fall },
+            ItemPoolBuilder.SeasonsFromSpawn(Season.Fall, "!LOCATION_SEASON Here fall"));
+    }
+
+    /// <summary>Outside a SEASON / LOCATION_SEASON clause a number is not a season: "3" is a fishing
+    /// level, not Winter. Inside one, the game's Utility.TryParseEnum does read 0-3.</summary>
+    [Fact]
+    public void SeasonsFromSpawn_NumbersOutsideSeasonClauses_AreNotSeasons()
+    {
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, PLAYER_FISHING_LEVEL Current 3"));
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "LOCATION_SEASON Here summer, PLAYER_FISHING_LEVEL Current 3"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "!WEATHER Here rain, YEAR 2"));
+        Assert.Equal(new[] { Season.Summer }, ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON 1"));
+    }
+
+    [Fact]
+    public void SeasonsFromSpawn_AnyClause_IsNoSeasonSignal()
+    {
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "ANY \"!SEASON winter fall\" \"WEATHER Here rain\""));
+        Assert.Equal(new[] { Season.Summer },
+            ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON summer, ANY \"SEASON spring\" \"WEATHER Here rain\""));
+    }
+
+    [Fact]
+    public void HasContradictorySeasons_OnlyForRowsThatRuleOutEverySeason()
+    {
+        Assert.True(ItemPoolBuilder.HasContradictorySeasons(null, "SEASON spring, !SEASON spring"));
+        Assert.Empty(ItemPoolBuilder.SeasonsFromSpawn(null, "SEASON spring, !SEASON spring"));   // read as any
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(Season.Spring, "SEASON spring, !SEASON spring"));
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, "!WEATHER Here rain"));
+        Assert.False(ItemPoolBuilder.HasContradictorySeasons(null, null));
+    }
+
+    [Fact]
+    public void FishPool_ModdedRowWithNegatedWeather_KeepsTheFishInItsSeason()
+    {
+        var pools = ItemPoolBuilder.Build(
+            new List<RawCropEntry>(),
+            Objects(("138", Obj(category: -4, price: 65, type: "Fish"))),
+            new List<RawSpawnEntry>(),
+            new[]
+            {
+                new RawSpawnEntry("138", Season.Summer, null, "Mountain"),
+                new RawSpawnEntry("138", null, "LOCATION_SEASON Here summer, !WEATHER Here rain", "ModdedLake"),
+            },
+            new HashSet<string>(), new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(),
+            new List<RawGeodeDropEntry>(), Tuning);
+        Assert.Equal(new[] { Season.Summer }, pools.Fish.Single(p => p.ItemId == "(O)138").Seasons); // Rainbow Trout
     }
 
     /// <summary>Winter Root and Snow Yam are dug up, not picked, so they have no Data/Locations

@@ -46,10 +46,6 @@ public static class PastSeasonSpawn
     /// this prefix, so the availability model never mistakes a copy for a year-round spawn.</summary>
     public const string IdPrefix = "TLY_PastSeason_";
 
-    private const string LocationSeasonQuery = "LOCATION_SEASON";
-    private const string SeasonQuery = "SEASON";
-    private const string NegationPrefix = "!";
-
     /// <summary>True for a row this feature added.</summary>
     public static bool IsCopy(string? id) => id != null && id.StartsWith(IdPrefix, StringComparison.Ordinal);
 
@@ -90,21 +86,5 @@ public static class PastSeasonSpawn
 
     /// <summary>The seasons a LOCATION_SEASON or SEASON clause names, or null for any other clause.</summary>
     private static HashSet<Season>? SeasonsNamedBy(string clause, out bool negated)
-    {
-        string[] words = clause.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        string query = words.Length > 0 ? words[0] : "";
-        negated = query.StartsWith(NegationPrefix, StringComparison.Ordinal);
-        if (negated) query = query.Substring(NegationPrefix.Length);
-
-        int firstSeason;
-        if (string.Equals(query, LocationSeasonQuery, StringComparison.OrdinalIgnoreCase)) firstSeason = 2;
-        else if (string.Equals(query, SeasonQuery, StringComparison.OrdinalIgnoreCase)) firstSeason = 1;
-        else return null;
-
-        var seasons = new HashSet<Season>();
-        for (int i = firstSeason; i < words.Length; i++)
-            if (Enum.TryParse(words[i], ignoreCase: true, out Season s))
-                seasons.Add(s);
-        return seasons;
-    }
+        => SeasonClauses.SeasonsNamedBy(clause, out negated);
 }

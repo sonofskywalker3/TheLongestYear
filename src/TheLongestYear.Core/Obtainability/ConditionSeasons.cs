@@ -257,21 +257,7 @@ public static class ConditionSeasons
         };
 
     /// <summary>Splits on commas outside double quotes (ANY "a, b" "c" keeps its arguments together).</summary>
-    private static IEnumerable<string> SplitClauses(string condition)
-    {
-        int start = 0;
-        bool quoted = false;
-        for (int i = 0; i < condition.Length; i++)
-        {
-            if (condition[i] == '"') quoted = !quoted;
-            else if (condition[i] == ',' && !quoted)
-            {
-                yield return condition.Substring(start, i - start);
-                start = i + 1;
-            }
-        }
-        yield return condition.Substring(start);
-    }
+    private static IEnumerable<string> SplitClauses(string condition) => SeasonClauses.Split(condition);
 
     private static WeekMask SeasonsIn(IEnumerable<string> tokens)
     {
