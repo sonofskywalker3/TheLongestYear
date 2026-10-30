@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -100,33 +99,15 @@ public class SaveSafetyTests
     }
 
     [Fact]
-    public void Serializer_writes_registered_types_and_what_they_bring_in()
+    public void Only_unregistered_mod_characters_are_named_once_each()
     {
-        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(RegisteredMonster) });
+        var present = new[] { typeof(GameThing), typeof(ModThing), typeof(OtherModThing), typeof(ModThing) };
 
-        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new RegisteredMonster(), out _));
-        // Brought in by an XmlInclude on the registered type's unregistered base.
-        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new SiblingMonster(), out _));
-        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new ProbeRoot(), out _));
+        List<Type> named = ForeignCharacters.Unregistered(
+            present, isGameType: t => t == typeof(GameThing), registered: new HashSet<Type> { typeof(OtherModThing) });
+
+        Assert.Equal(new[] { typeof(ModThing) }, named);
     }
-
-    [Fact]
-    public void Serializer_rejects_an_unknown_type()
-    {
-        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(RegisteredMonster) });
-
-        Assert.Equal(SerializerProbe.Verdict.TypeRejected, SerializerProbe.Probe(serializer, new UnregisteredMonster(), out var error));
-        Assert.NotNull(error);
-    }
-
-    [Fact]
-    public void Other_write_failures_say_nothing_about_the_type()
-    {
-        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(ThrowingMonster) });
-
-        Assert.Equal(SerializerProbe.Verdict.ProbeFailed, SerializerProbe.Probe(serializer, new ThrowingMonster(), out _));
-    }
-
     [Fact]
     public void Save_folder_holding_someone_elses_save_is_left_to_the_game()
     {
@@ -134,6 +115,7 @@ public class SaveSafetyTests
         Assert.Equal(NewSaveFolderPlan.Action.AdoptAndPin, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: false));
         Assert.Equal(NewSaveFolderPlan.Action.LeaveToGame, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: true));
     }
+
     [Fact]
     public void Null_values_are_left_alone()
     {
@@ -147,20 +129,4 @@ public class SaveSafetyTests
 
         Assert.Empty(picked);
     }
-}
-
-public class ProbeRoot { public int Hearts { get; set; } }
-
-[XmlInclude(typeof(SiblingMonster))]
-public class BaseOfRegistered : ProbeRoot { }
-
-public class RegisteredMonster : BaseOfRegistered { }
-
-public class SiblingMonster : ProbeRoot { }
-
-public class UnregisteredMonster : ProbeRoot { }
-
-public class ThrowingMonster : ProbeRoot
-{
-    public string Broken { get => throw new ArgumentException("mod state not ready"); set { } }
 }

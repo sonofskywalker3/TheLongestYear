@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
 namespace TheLongestYear.Core;
 
@@ -120,52 +119,24 @@ public static class UnsaveableObjects
     }
 }
 
-/// <summary>Asks a real XmlSerializer whether it can write one value.</summary>
-public static class SerializerProbe
+/// <summary>Mod characters worth naming in the log before a save.</summary>
+public static class ForeignCharacters
 {
-    public enum Verdict
+    /// <summary>The distinct character types, in first-seen order, that are not the game's own
+    /// and not registered with the save serializer.</summary>
+    public static List<Type> Unregistered(IEnumerable<Type> present, Func<Type, bool> isGameType, ISet<Type> registered)
     {
-        /// <summary>The serializer wrote it.</summary>
-        Writable,
-        /// <summary>The serializer does not know the value's type ("The type ... was not expected").</summary>
-        TypeRejected,
-        /// <summary>The write failed for some other reason; nothing can be concluded about the type.</summary>
-        ProbeFailed,
-    }
-
-    /// <summary>Write <paramref name="value"/> to a discarded stream. Serializing only reads the
-    /// value, the same reads the save itself makes a moment later; nothing is moved or changed.</summary>
-    public static Verdict Probe(XmlSerializer serializer, object value, out Exception? error)
-    {
-        error = null;
-        try
+        var seen = new HashSet<Type>();
+        var result = new List<Type>();
+        foreach (Type type in present)
         {
-            serializer.Serialize(System.IO.Stream.Null, value);
-            return Verdict.Writable;
+            if (type == null || !seen.Add(type)) continue;
+            if (isGameType(type) || registered.Contains(type)) continue;
+            result.Add(type);
         }
-        catch (Exception ex)
-        {
-            error = ex;
-            return Classify(ex, value.GetType());
-        }
-    }
-
-    /// <summary>The serializer wraps an unknown type as InvalidOperationException ("There was an
-    /// error generating the XML document") around InvalidOperationException ("The type X was not
-    /// expected..."). Only that shape, naming this type, counts as a rejection of the type.</summary>
-    public static Verdict Classify(Exception ex, Type type)
-    {
-        for (Exception? e = ex; e != null; e = e.InnerException)
-        {
-            if (e is InvalidOperationException
-                && e.Message.Contains(type.FullName ?? type.Name, StringComparison.Ordinal)
-                && e.Message.Contains("not expected", StringComparison.OrdinalIgnoreCase))
-                return Verdict.TypeRejected;
-        }
-        return Verdict.ProbeFailed;
+        return result;
     }
 }
-
 /// <summary>What the reset does with the folder the next save will write.</summary>
 public static class NewSaveFolderPlan
 {

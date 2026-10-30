@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.Serialization;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -22,26 +23,39 @@ namespace TheLongestYear.Loop
     /// after; if one is left behind for any reason, the save throws "The type ... was not expected"
     /// and hangs on the saving screen. Just before the write (after every other mod's Saving
     /// handler), probe each non-game object type with the save's own serializer, set aside the ones
-    /// it rejects, and put them back on Saved, so the save succeeds and the world in memory is
-    /// unchanged. Only those objects are missing from the file, which is all the save could ever
+    /// it rejects, and put them back after the save, so the save succeeds and the world in memory
+    /// is unchanged. Only those objects are missing from the file, which is all the save could ever
     /// hold anyway.
     ///
-    /// Characters get the same treatment: a mod's monster or NPC subclass left in a location
-    /// (Farm Type Manager's MummyFTM after a duplicate day start, Celjhyn 1.2.0) fails the save
-    /// with the same exception. Each mod character type is tried once with the save's own NPC
-    /// serializer, and only the ones it rejects as an unknown type are set aside. The game's own
-    /// characters, and every pet, horse and child, are never touched.</summary>
+    /// Characters are never set aside. A mod character the save cannot write fails the save the
+    /// same way (Farm Type Manager's MummyFTM after a duplicate day start, Celjhyn 1.2.0), but
+    /// deciding that safely for another mod's NPC is not possible from here, so the guard only
+    /// names any mod character it finds, so a failed save points at its cause in the log.</summary>
     internal static class UnsaveableObjectGuard
     {
         private static readonly Assembly GameAssembly = typeof(SObject).Assembly;
 
-        private static IMonitor _monitor;
-        private static XmlSerializer _objectSerializer;
-        private static XmlSerializer _characterSerializer;
-        private static readonly List<(GameLocation Location, Vector2 Tile, SObject Obj)> _setAside = new();
-        private static readonly List<(GameLocation Location, NPC Npc)> _setAsideCharacters = new();
+        /// <summary>How far from its own tile a set-aside object looks for a free one when its tile
+        /// was taken while it was out.</summary>
+        private const int PutBackRadius = 8;
 
-        public static void Init(IMonitor monitor) => _monitor = monitor;
+        /// <summary>SpaceCore registers mod types with the save serializer (best-effort read, for the log only).</summary>
+        private const string SpaceCoreId = "spacechase0.SpaceCore";
+        private const string SpaceCoreTypeName = "SpaceCore.SpaceCore";
+        private const string SpaceCoreModTypesField = "ModTypes";
+
+        private static IMonitor _monitor;
+        private static IModRegistry _registry;
+        private static XmlSerializer _objectSerializer;
+        private static readonly List<(GameLocation Location, Vector2 Tile, SObject Obj)> _setAside = new();
+        /// <summary>Mod character types already named at WARN this session.</summary>
+        private static readonly HashSet<Type> _namedCharacterTypes = new();
+
+        public static void Init(IMonitor monitor, IModRegistry registry)
+        {
+            _monitor = monitor;
+            _registry = registry;
+        }
 
         [EventPriority(EventPriority.Low)]
         public static void OnSaving(object sender, SavingEventArgs e)
@@ -50,7 +64,7 @@ namespace TheLongestYear.Loop
             PutBack("Saving");   // a write that threw never raised Saved
 
             var verdicts = new Dictionary<Type, bool>();
-            var characterVerdicts = new Dictionary<Type, bool>();
+            var characters = new List<(Type Type, string Location)>();
             Utility.ForEachLocation(location =>
             {
                 List<Vector2> tiles = UnsaveableObjects.Pick(
@@ -58,10 +72,12 @@ namespace TheLongestYear.Loop
                 foreach (Vector2 tile in tiles)
                 {
                     SObject obj = location.objects[tile];
-                    location.objects.Remove(tile);
+                    // Recorded before it leaves the world, so nothing taken out can go unrecorded.
                     _setAside.Add((location, tile, obj));
+                    location.objects.Remove(tile);
                 }
-                SetAsideCharacters(location, characterVerdicts);
+                foreach (NPC npc in location.characters)
+                    if (npc != null) characters.Add((npc.GetType(), location.NameOrUniqueName));
                 return true;
             }, includeInteriors: true, includeGenerated: false);
 
@@ -74,15 +90,7 @@ namespace TheLongestYear.Loop
                     $"Save guard: set aside {_setAside.Count} object(s) the save cannot write ({summary}). Another mod left them " +
                     "in the world at save time; they go back after the save so nothing changes in play.", LogLevel.Warn);
             }
-            if (_setAsideCharacters.Count > 0)
-            {
-                string summary = string.Join(", ", _setAsideCharacters
-                    .GroupBy(x => (x.Npc.GetType().FullName, x.Location.NameOrUniqueName))
-                    .Select(g => $"{g.Count()}x {g.Key.FullName} in {g.Key.NameOrUniqueName}"));
-                _monitor?.Log(
-                    $"Save guard: set aside {_setAsideCharacters.Count} character(s) the save cannot write ({summary}). Another mod " +
-                    "left them in the world at save time; they go back after the save so nothing changes in play.", LogLevel.Warn);
-            }
+            NameModCharacters(characters);
         }
 
         [EventPriority(EventPriority.High)]
@@ -92,134 +100,129 @@ namespace TheLongestYear.Loop
         /// aside at a tick belongs to a save that ended without Saved (the write threw).</summary>
         public static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (_setAside.Count > 0 || _setAsideCharacters.Count > 0)
+            if (_setAside.Count > 0)
                 PutBack("the tick after a save that raised no Saved");
         }
 
         public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e) => PutBack("returning to title");
 
-        /// <summary>Put everything set aside back. Each entry is put back on its own, so one that
-        /// throws does not keep the rest out of the world, and the lists are always emptied.</summary>
+        /// <summary>Put every set-aside object back. Each is put back on its own, so one that throws
+        /// does not keep the rest out of the world, and the list is always emptied. An object whose
+        /// tile was taken meanwhile goes to the nearest free tile, or onto the ground as a dropped
+        /// item if there is none; nothing is thrown away.</summary>
         private static void PutBack(string when)
         {
-            if (_setAside.Count > 0)
-            {
-                int back = 0, failed = 0, total = _setAside.Count;
-                try
-                {
-                    foreach (var (location, tile, obj) in _setAside)
-                    {
-                        try
-                        {
-                            if (location.objects.ContainsKey(tile)) continue;   // something else took the tile meanwhile
-                            location.objects[tile] = obj;
-                            back++;
-                        }
-                        catch (Exception ex)
-                        {
-                            failed++;
-                            _monitor?.Log($"Save guard: could not put back {obj?.GetType().FullName} at {tile} in {location?.NameOrUniqueName} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
-                        }
-                    }
-                }
-                finally
-                {
-                    _setAside.Clear();
-                    _monitor?.Log($"Save guard: put back {back} of {total} object(s) set aside for the save ({when}{(failed > 0 ? $", {failed} failed" : "")}).", LogLevel.Trace);
-                }
-            }
-            if (_setAsideCharacters.Count > 0)
-            {
-                int back = 0, failed = 0, total = _setAsideCharacters.Count;
-                var names = new List<string>();
-                try
-                {
-                    foreach (var (location, npc) in _setAsideCharacters)
-                    {
-                        try
-                        {
-                            if (location.characters.Contains(npc)) continue;   // its mod already put it back
-                            location.characters.Add(npc);
-                            back++;
-                            names.Add($"{npc.GetType().FullName} in {location.NameOrUniqueName}");
-                        }
-                        catch (Exception ex)
-                        {
-                            failed++;
-                            _monitor?.Log($"Save guard: could not put back {npc?.GetType().FullName} in {location?.NameOrUniqueName} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
-                        }
-                    }
-                }
-                finally
-                {
-                    _setAsideCharacters.Clear();
-                    _monitor?.Log(
-                        $"Save guard: put back {back} of {total} character(s) set aside for the save ({when}{(failed > 0 ? $", {failed} failed" : "")})" +
-                        (names.Count > 0 ? $": {string.Join(", ", names)}." : "."), LogLevel.Info);
-                }
-            }
-        }
-
-        /// <summary>Set aside the characters in a location whose type the save cannot write.</summary>
-        private static void SetAsideCharacters(GameLocation location, Dictionary<Type, bool> verdicts)
-        {
-            if (location.characters.Count == 0) return;
-            var entries = new List<KeyValuePair<int, NPC>>(location.characters.Count);
-            for (int i = 0; i < location.characters.Count; i++)
-                entries.Add(new KeyValuePair<int, NPC>(i, location.characters[i]));
-
-            List<int> picked = UnsaveableObjects.Pick(entries, IsProtectedCharacterType, CanWriteCharacter, verdicts);
-            if (picked.Count == 0) return;
-            var remove = picked.Select(i => location.characters[i]).ToList();
-            foreach (NPC npc in remove)
-            {
-                location.characters.Remove(npc);
-                _setAsideCharacters.Add((location, npc));
-            }
-        }
-
-        /// <summary>Never set aside: the game's own characters (villagers, monsters, junimos), and
-        /// any pet, horse or child, even a mod's subclass of one.</summary>
-        private static bool IsProtectedCharacterType(Type type)
-            => type.Assembly == GameAssembly
-               || typeof(StardewValley.Characters.Pet).IsAssignableFrom(type)
-               || typeof(StardewValley.Characters.Horse).IsAssignableFrom(type)
-               || typeof(StardewValley.Characters.Child).IsAssignableFrom(type);
-
-        /// <summary>Ask the save's own NPC serializer to write this character to a discarded
-        /// stream. <c>SaveSerializer.GetSerializer(typeof(NPC))</c> is the game's serializer for
-        /// the type, and SpaceCore replaces it with one built with every type registered with it,
-        /// the same list it rebuilds the save's location serializer with; so this answers exactly
-        /// as the save would. Only a "type was not expected" failure sets the character aside. Any
-        /// other failure says nothing about the type: the character stays and a WARN names it.</summary>
-        private static bool CanWriteCharacter(NPC npc)
-        {
-            XmlSerializer serializer;
+            if (_setAside.Count == 0) return;
+            int back = 0, moved = 0, dropped = 0, failed = 0, total = _setAside.Count;
+            var entries = _setAside.ToList();
+            _setAside.Clear();
             try
             {
-                serializer = _characterSerializer ??= SaveSerializer.GetSerializer(typeof(NPC));
-            }
-            catch (Exception ex)
-            {
-                _monitor?.Log($"Save guard: could not get the save's character serializer ({ex.GetType().Name}: {ex.Message}); {npc.GetType().FullName} is left in place.", LogLevel.Warn);
-                return true;
-            }
+                foreach (var (location, tile, obj) in entries)
+                {
+                    try
+                    {
+                        if (obj == null || location == null) continue;
+                        if (location.objects.TryGetValue(tile, out SObject there) && ReferenceEquals(there, obj))
+                        {
+                            back++;   // its mod already put it back
+                            continue;
+                        }
+                        if (!location.objects.ContainsKey(tile))
+                        {
+                            location.objects[tile] = obj;
+                            back++;
+                            continue;
+                        }
 
-            SerializerProbe.Verdict verdict = SerializerProbe.Probe(serializer, npc, out Exception error);
-            switch (verdict)
+                        DecorTile? free = DropSpot.Nearest(
+                            new DecorTile((int)tile.X, (int)tile.Y),
+                            (x, y) => IsFreeTile(location, new Vector2(x, y)),
+                            PutBackRadius);
+                        if (free.HasValue)
+                        {
+                            var spot = new Vector2(free.Value.X, free.Value.Y);
+                            obj.TileLocation = spot;
+                            location.objects[spot] = obj;
+                            moved++;
+                            _monitor?.Log(
+                                $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
+                                $"while it was out for the save, so it went to {spot}.", LogLevel.Info);
+                        }
+                        else
+                        {
+                            Game1.createItemDebris(obj, tile * Game1.tileSize, -1, location);
+                            dropped++;
+                            _monitor?.Log(
+                                $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
+                                "and no free tile was near, so it was dropped on the ground there.", LogLevel.Info);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        _monitor?.Log(
+                            $"Save guard: could not put back {obj?.GetType().FullName} at {tile} in {location?.NameOrUniqueName} " +
+                            $"({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+                    }
+                }
+            }
+            finally
             {
-                case SerializerProbe.Verdict.TypeRejected:
-                    _monitor?.Log($"Save guard: the save cannot write character type {npc.GetType().FullName} ({error?.InnerException?.Message ?? error?.Message}).", LogLevel.Trace);
-                    return false;
-                case SerializerProbe.Verdict.ProbeFailed:
-                    _monitor?.Log(
-                        $"Save guard: checking {npc.GetType().FullName} ({npc.Name}) failed for a reason other than its type " +
-                        $"({error?.GetType().Name}: {error?.InnerException?.Message ?? error?.Message}); it is left in place.", LogLevel.Warn);
-                    return true;
-                default:
-                    return true;
+                _monitor?.Log(
+                    $"Save guard: put back {back + moved + dropped} of {total} object(s) set aside for the save ({when}; " +
+                    $"{back} on their own tile, {moved} moved, {dropped} dropped, {failed} failed).", LogLevel.Trace);
             }
         }
+
+        private static bool IsFreeTile(GameLocation location, Vector2 tile)
+            => location.isTileOnMap(tile)
+               && !location.objects.ContainsKey(tile)
+               && !location.terrainFeatures.ContainsKey(tile)
+               && location.CanItemBePlacedHere(tile);
+
+        /// <summary>Detection only: name, once a session per type, every character from outside the
+        /// game that is not registered with SpaceCore. If the save then fails with "The type ... was
+        /// not expected", the line right before it says which mod left the character. Nothing is
+        /// removed. Registered types are skipped when SpaceCore's list can be read; when it cannot,
+        /// every mod character is named.</summary>
+        private static void NameModCharacters(List<(Type Type, string Location)> characters)
+        {
+            ISet<Type> registered = RegisteredSerializerTypes();
+            List<Type> unregistered = ForeignCharacters.Unregistered(
+                characters.Select(c => c.Type), type => type.Assembly == GameAssembly, registered);
+            foreach (Type type in unregistered)
+            {
+                bool first = _namedCharacterTypes.Add(type);
+                string where = string.Join(", ", characters.Where(c => c.Type == type)
+                    .GroupBy(c => c.Location).Select(g => $"{g.Count()}x in {g.Key}"));
+                _monitor?.Log(
+                    $"Save guard: a mod character the save may not be able to write is in the world: {type.FullName} " +
+                    $"from {type.Assembly.GetName().Name} ({where}). If this save fails with \"The type ... was not expected\", " +
+                    "that mod left it behind. Nothing is removed.",
+                    first ? LogLevel.Warn : LogLevel.Trace);
+            }
+        }
+
+        /// <summary>SpaceCore's registered serializer types, or an empty set when SpaceCore is not
+        /// installed or its list cannot be read.</summary>
+        private static ISet<Type> RegisteredSerializerTypes()
+        {
+            if (_registry == null || !_registry.IsLoaded(SpaceCoreId))
+                return new HashSet<Type>();
+            try
+            {
+                Type spaceCore = AccessTools.TypeByName(SpaceCoreTypeName);
+                if (spaceCore != null && AccessTools.Field(spaceCore, SpaceCoreModTypesField)?.GetValue(null) is IEnumerable<Type> types)
+                    return new HashSet<Type>(types.Where(t => t != null));
+            }
+            catch (Exception ex) when (ex is TargetInvocationException or FieldAccessException or InvalidOperationException)
+            {
+                _monitor?.Log($"Save guard: reading SpaceCore's serializer types failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
+            }
+            return new HashSet<Type>();
+        }
+
         /// <summary>True if the serializer the save uses for a location's objects can write this
         /// one. That is the static value serializer of SerializableDictionary&lt;Vector2, Object&gt;
         /// (where the reported exceptions came from), so a type another mod registered with it

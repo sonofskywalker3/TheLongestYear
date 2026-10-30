@@ -373,7 +373,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.DayStarted += TheLongestYear.Loop.PostSaveDayStartDrop.OnDayStarted;
             helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.PostSaveDayStartDrop.OnUpdateTicked;
             // A foreign object the save cannot write is set aside for the write instead of failing it.
-            TheLongestYear.Loop.UnsaveableObjectGuard.Init(this.Monitor);
+            TheLongestYear.Loop.UnsaveableObjectGuard.Init(this.Monitor, helper.ModRegistry);
             helper.Events.GameLoop.Saving += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaving;
             helper.Events.GameLoop.Saved += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaved;
             helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.UnsaveableObjectGuard.OnReturnedToTitle;
