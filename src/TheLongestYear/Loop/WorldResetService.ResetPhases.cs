@@ -209,11 +209,26 @@ namespace TheLongestYear.Loop
         /// is the one it shows. The next save of this session fills it.</summary>
         private void CreateNewSaveFolder()
         {
-            string path = Path.Combine(Constants.SavesPath, ModSaveDataCarryover.NewSaveFolderName());
+            string name = ModSaveDataCarryover.NewSaveFolderName();
+            string path = Path.Combine(Constants.SavesPath, name);
+            NewSaveFolderPlan.Action plan = NewSaveFolderPlan.Decide(
+                folderExists: Directory.Exists(path), holdsSaveFile: File.Exists(Path.Combine(path, name)));
+            _pinSaveName = plan != NewSaveFolderPlan.Action.LeaveToGame;
+            if (plan == NewSaveFolderPlan.Action.LeaveToGame)
+            {
+                // Same farm name and the same id (ids are seconds since an epoch, not random): that
+                // folder is another save. Leave it alone and let the game pick a free name itself.
+                _monitor.Log(
+                    $"In-place reset: the save folder {name} already holds another save, so it is left alone; this save will " +
+                    "take the next free name. Other mods may log errors about a missing save path until the post-reset save.", LogLevel.Warn);
+                return;
+            }
             try
             {
                 Directory.CreateDirectory(path);
-                _monitor.Log($"In-place reset: made the new save folder {Path.GetFileName(path)} for the save that follows.", LogLevel.Trace);
+                _monitor.Log(
+                    $"In-place reset: {(plan == NewSaveFolderPlan.Action.AdoptAndPin ? "using the empty" : "made the new")} save folder {name} " +
+                    "for the save that follows.", LogLevel.Trace);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -226,8 +241,15 @@ namespace TheLongestYear.Loop
         /// <summary>loadForNewGame forgets the save name, and the next save picks one again from the
         /// farm name, skipping any whose folder exists. The folder made by
         /// <see cref="CreateNewSaveFolder"/> is ours, so the name is set to the farm name outright:
-        /// the save writes into that folder, and SMAPI finds it at SaveLoaded.</summary>
-        private static void PinSaveName() => Game1.SetSaveName(Game1.MasterPlayer.farmName.Value);
+        /// the save writes into that folder, and SMAPI finds it at SaveLoaded. Not when that folder
+        /// already held another save: then the game's own collision handling picks the name.</summary>
+        private void PinSaveName()
+        {
+            if (_pinSaveName) Game1.SetSaveName(Game1.MasterPlayer.farmName.Value);
+        }
+
+        /// <summary>False when the new save's folder already held another save (<see cref="CreateNewSaveFolder"/>).</summary>
+        private bool _pinSaveName = true;
 
         /// <summary>Reset phase (steps 0a to 0h): capture everything the rebuild would wipe that a keep upgrade carries over.</summary>
         private void CaptureCarryovers(ResetContext ctx)
