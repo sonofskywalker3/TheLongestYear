@@ -66,6 +66,39 @@ public static class XpMultiplierRules
         _ => null
     };
 
+    /// <summary>Level at which a single skill is maxed.</summary>
+    public const int MaxSkillLevel = 10;
+
+    /// <summary>Vanilla Farmer.Level at which gainExperience routes XP into mastery.</summary>
+    public const int MasteryRoutingLevel = 25;
+
+    /// <summary>What vanilla Farmer.gainExperience adds to MasteryExp for a gain: farming at half
+    /// rate, never less than one.</summary>
+    public static int VanillaMasteryGain(int which, int howMuch) =>
+        System.Math.Max(1, which == 0 ? howMuch / 2 : howMuch);
+
+    /// <summary>The MasteryExp one gain should add: vanilla's amount for the ORIGINAL (unscaled)
+    /// howMuch, with Mastery Boost or Junimo Insight applied. Computed from the original so Exp
+    /// Boost on the skill part never leaks into mastery.</summary>
+    public static int PlannedMastery(MetaState meta, int which, int originalHowMuch) =>
+        Apply(VanillaMasteryGain(which, originalHowMuch), PercentFor(meta, which, true));
+
+    /// <summary>The two destinations of one gain. At vanilla Level 25+ the game adds the same
+    /// howMuch to MasteryExp AND to the skill's own XP, so each is scaled on its own: the skill
+    /// by Exp Boost only while that skill is below 10 (unmodified level, not buffed), the mastery
+    /// by Mastery Boost (or a better Junimo Insight). Mastery is 0 when vanilla is not routing.</summary>
+    public static (int Skill, int Mastery) PlanGain(
+        MetaState meta, int which, int howMuch, int baseSkillLevel, int vanillaLevel)
+    {
+        int skill = baseSkillLevel >= MaxSkillLevel
+            ? howMuch
+            : Apply(howMuch, PercentFor(meta, which, false));
+        int mastery = vanillaLevel >= MasteryRoutingLevel
+            ? PlannedMastery(meta, which, howMuch)
+            : 0;
+        return (skill, mastery);
+    }
+
     /// <summary>Percent to scale an XP gain to: 100 means unchanged, 125 means +25%. Always
     /// &gt;= 100. Percent rather than a factor because the steps are fractional and integer
     /// percent keeps the maths exact - see <see cref="Apply"/> for the rounding.</summary>

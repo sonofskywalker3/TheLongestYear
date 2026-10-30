@@ -128,4 +128,85 @@ public class XpMultiplierRulesTests
     {
         Assert.Equal(expected, XpMultiplierRules.SlugForVanillaSkill(which));
     }
+
+    [Fact]
+    public void ExactExample_Plus25Skill_Plus50Mastery_LuckLevel25()
+    {
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        Assert.Equal(25, XpMultiplierRules.ExpBoostBonus(meta));
+        Assert.Equal(50, XpMultiplierRules.MasteryBoostBonus(meta));
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 2, 100, baseSkillLevel: 7, vanillaLevel: 25);
+        Assert.Equal((125, 150), (skill, m));
+    }
+
+    [Fact]
+    public void DifferentTiers_AwardIndependently()
+    {
+        var meta = With("exp_boost_3", "mastery_boost_2"); // +75 skill, +100 mastery
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 4, 40, 5, 25);
+        Assert.Equal((70, 80), (skill, m));
+    }
+
+    [Fact]
+    public void MaxedSkill_GetsNoExpBoost_ButMasteryIsBoosted()
+    {
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 3, 100, 10, 25);
+        Assert.Equal((100, 150), (skill, m));
+    }
+
+    [Fact]
+    public void BuffedButUnmaxedSkill_StillGetsExpBoost()
+    {
+        // Callers pass the UNMODIFIED level (buffs excluded); a skill at base 8 buffed to 11 is 8.
+        var meta = With("exp_boost_1");
+        var (skill, _) = XpMultiplierRules.PlanGain(meta, 1, 100, 8, 25);
+        Assert.Equal(125, skill);
+    }
+
+    [Fact]
+    public void BelowLevel25_NoMastery_ExpBoostOnUnmaxedSkill()
+    {
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 1, 100, 6, 24);
+        Assert.Equal((125, 0), (skill, m));
+    }
+
+    [Fact]
+    public void FarmingMastery_IsHalfRate_MinimumOne()
+    {
+        var meta = With("mastery_boost_1");
+        Assert.Equal(1, XpMultiplierRules.VanillaMasteryGain(0, 1));
+        Assert.Equal(50, XpMultiplierRules.VanillaMasteryGain(0, 100));
+        var (_, m) = XpMultiplierRules.PlanGain(meta, 0, 100, 10, 25);
+        Assert.Equal(75, m);
+    }
+
+    [Fact]
+    public void NoBoosts_PlanIsVanilla()
+    {
+        var (skill, m) = XpMultiplierRules.PlanGain(With(), 4, 40, 8, 25);
+        Assert.Equal((40, 40), (skill, m));
+    }
+
+    [Fact]
+    public void PlannedMastery_UsesOriginalAmount_NotExpBoostedOne()
+    {
+        var meta = With("exp_boost_5", "mastery_boost_1"); // +150 skill, +50 mastery
+        Assert.Equal(150, XpMultiplierRules.PlannedMastery(meta, 2, 100));
+        Assert.Equal(75, XpMultiplierRules.PlannedMastery(meta, 0, 100)); // farming half rate first
+    }
+
+    [Fact]
+    public void PlannedMastery_NoBoost_IsVanilla_AndMinimumOne()
+    {
+        Assert.Equal(40, XpMultiplierRules.PlannedMastery(With(), 4, 40));
+        Assert.Equal(1, XpMultiplierRules.PlannedMastery(With(), 0, 1));
+    }
+
+    [Fact]
+    public void PlannedMastery_Tier2_DoublesVanilla()
+    {
+        Assert.Equal(200, XpMultiplierRules.PlannedMastery(With("mastery_boost_2"), 3, 100));
+    }
 }
