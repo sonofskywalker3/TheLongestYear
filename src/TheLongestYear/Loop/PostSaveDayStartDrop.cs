@@ -26,7 +26,13 @@ namespace TheLongestYear.Loop
     ///
     /// The event is found by reflection on SMAPI's internals; if a SMAPI update moves it, the drop
     /// is skipped with a warning and the reset behaves as before. If a day start ever gets past
-    /// the drop, our own DayStarted handler sees the armed latch and warns.</summary>
+    /// the drop, our own DayStarted handler sees the armed latch and warns.
+    ///
+    /// Limits: this covers SMAPI's own raise, which goes through RaiseEmpty and its listener check.
+    /// Anything calling the event's Raise directly bypasses the flag. A Saved handler at the same
+    /// lowest priority registered after ours that adds a DayStarted handler switches the event back
+    /// on; the leak warning catches both. SMAPI's event manager is shared by every split-screen
+    /// screen, and the latch is too; the post-reset save runs on the main screen only.</summary>
     internal static class PostSaveDayStartDrop
     {
         private const string ManagedEventTypeName = "StardewModdingAPI.Framework.Events.ManagedEvent`1";
@@ -40,6 +46,8 @@ namespace TheLongestYear.Loop
         private static PropertyInfo _hasListeners;
         /// <summary>We switched the event off and owe a switch back on.</summary>
         private static bool _switchedOff;
+        private static bool _loggedReEnabled;
+        private static bool _loggedRestoreFailure;
 
         /// <summary>Find SMAPI's DayStarted event behind this mod's helper.</summary>
         public static void Init(IModHelper helper, IMonitor monitor)
@@ -110,15 +118,7 @@ namespace TheLongestYear.Loop
         public static void Settle()
         {
             PostSaveDayStartLatch.Outcome outcome = Latch.Settle();
-            if (_switchedOff)
-            {
-                _switchedOff = false;
-                try { _hasListeners.SetValue(_dayStarted, true); }
-                catch (Exception ex)
-                {
-                    _monitor?.Log($"Day-28 save: could not switch the day start event back on ({ex.GetType().Name}: {ex.Message}).", LogLevel.Error);
-                }
-            }
+            TryRestore();
             switch (outcome)
             {
                 case PostSaveDayStartLatch.Outcome.Dropped:
@@ -132,11 +132,41 @@ namespace TheLongestYear.Loop
             }
         }
 
-        public static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
+        /// <summary>Switch the day start back on. The flag that says we owe it is cleared only once
+        /// the switch has worked, so a failure is tried again next tick rather than leaving every
+        /// later morning without its day start.</summary>
+        private static void TryRestore()
         {
-            if (Latch.Armed || _switchedOff) Settle();
+            if (!_switchedOff) return;
+            try
+            {
+                // Something turned it back on between our Saved handler and now: a Saved handler
+                // that ran after ours (same lowest priority, registered later) adding a DayStarted
+                // handler. That day start then ran, and OnDayStarted has already warned.
+                if ((bool)_hasListeners.GetValue(_dayStarted) && !_loggedReEnabled)
+                {
+                    _loggedReEnabled = true;
+                    _monitor?.Log("Day-28 save: the day start event was switched back on by something else before the drop could hold.", LogLevel.Info);
+                }
+                _hasListeners.SetValue(_dayStarted, true);
+                _switchedOff = false;
+                _loggedRestoreFailure = false;
+            }
+            catch (Exception ex)
+            {
+                if (_loggedRestoreFailure) return;
+                _loggedRestoreFailure = true;
+                _monitor?.Log(
+                    $"Day-28 save: could not switch the day start event back on ({ex.GetType().Name}: {ex.Message}); retrying every tick. " +
+                    "Until it works, mods get no day start.", LogLevel.Error);
+            }
         }
 
+        public static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
+        {
+            if (Latch.Armed || Latch.Gated) Settle();
+            else if (_switchedOff) TryRestore();
+        }
         private static object MemberValue(object owner, string name)
         {
             Type type = owner.GetType();
