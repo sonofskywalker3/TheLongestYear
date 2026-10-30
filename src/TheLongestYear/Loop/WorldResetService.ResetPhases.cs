@@ -186,6 +186,8 @@ namespace TheLongestYear.Loop
                 $"In-place reset: new uniqueIDForThisGame={Game1.uniqueIDForThisGame}.",
                 LogLevel.Trace);
 
+            CreateNewSaveFolder();
+
             // Other mods' per-save data keyed on the old folder or id moves to the new key now,
             // before SMAPI raises the SaveLoaded the rebuilt world owes them (they read it there).
             _carriedModData = null;
@@ -193,6 +195,39 @@ namespace TheLongestYear.Loop
                 _carriedModData = ModSaveDataCarryover.Carry(
                     _monitor, _abandonedSaveFolder, oldId, OtherModFolders?.Invoke(), _modDirectory));
         }
+
+        /// <summary>Make the new save's folder now, empty. SMAPI gives mods a save path only when
+        /// the folder exists, and it raises SaveLoaded for the rebuilt world before the post-reset
+        /// save writes anything: mods that build a path from it on load got null and threw
+        /// (SpaceCore, SVE's item migrator; Celjhyn, 1.2.0). The folder is named the way the save
+        /// will name it (<see cref="ModSaveDataCarryover.NewSaveFolderName"/>); the save name is
+        /// pinned to match after the reload (<see cref="PinSaveName"/>), or the save would see the
+        /// folder as taken and write "&lt;farm&gt;2_&lt;id&gt;" instead.
+        ///
+        /// A crash before the save leaves this folder empty. That is harmless: the load menu lists
+        /// only folders holding a save file of their own name, and the old folder, still intact,
+        /// is the one it shows. The next save of this session fills it.</summary>
+        private void CreateNewSaveFolder()
+        {
+            string path = Path.Combine(Constants.SavesPath, ModSaveDataCarryover.NewSaveFolderName());
+            try
+            {
+                Directory.CreateDirectory(path);
+                _monitor.Log($"In-place reset: made the new save folder {Path.GetFileName(path)} for the save that follows.", LogLevel.Trace);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                _monitor.Log(
+                    $"In-place reset: could not make the new save folder {Path.GetFileName(path)} ({ex.Message}). Other mods may log " +
+                    "errors about a missing save path until the post-reset save writes it.", LogLevel.Warn);
+            }
+        }
+
+        /// <summary>loadForNewGame forgets the save name, and the next save picks one again from the
+        /// farm name, skipping any whose folder exists. The folder made by
+        /// <see cref="CreateNewSaveFolder"/> is ours, so the name is set to the farm name outright:
+        /// the save writes into that folder, and SMAPI finds it at SaveLoaded.</summary>
+        private static void PinSaveName() => Game1.SetSaveName(Game1.MasterPlayer.farmName.Value);
 
         /// <summary>Reset phase (steps 0a to 0h): capture everything the rebuild would wipe that a keep upgrade carries over.</summary>
         private void CaptureCarryovers(ResetContext ctx)
