@@ -26,18 +26,49 @@ public class SaveSafetyTests
     }
 
     [Fact]
-    public void Post_save_day_start_is_dropped_once_per_reset_save()
+    public void Ordinary_save_keeps_its_day_start()
     {
         var latch = new PostSaveDayStartLatch();
-        Assert.False(latch.TryConsume());   // an ordinary night save keeps its DayStarted
+        Assert.False(latch.Gate());
+        Assert.False(latch.DayStartArrived());
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Idle, latch.Settle());
+    }
 
+    [Fact]
+    public void Reset_save_day_start_is_switched_off_once_and_back_on_after()
+    {
+        var latch = new PostSaveDayStartLatch();
         latch.Arm();
-        Assert.True(latch.TryConsume());    // the reset save's DayStarted is dropped
-        Assert.False(latch.TryConsume());   // the next real morning is not
+        Assert.True(latch.Gate());          // Saved: switch the day start off
+        Assert.False(latch.Gate());         // only once
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Dropped, latch.Settle());
 
+        // The next real morning is not touched.
+        Assert.False(latch.Gate());
+        Assert.False(latch.DayStartArrived());
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Idle, latch.Settle());
+    }
+
+    [Fact]
+    public void Day_start_that_gets_past_the_gate_is_reported_once()
+    {
+        var latch = new PostSaveDayStartLatch();
         latch.Arm();
-        latch.Disarm();                     // left the save before SMAPI raised it
-        Assert.False(latch.TryConsume());
+        latch.Gate();
+        Assert.True(latch.DayStartArrived());
+        Assert.False(latch.DayStartArrived());   // a later morning is not a leak
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Leaked, latch.Settle());
+        Assert.False(latch.Armed);
+        Assert.False(latch.Gated);
+    }
+
+    [Fact]
+    public void Save_that_never_raised_saved_switches_nothing_off()
+    {
+        var latch = new PostSaveDayStartLatch();
+        latch.Arm();
+        Assert.Equal(PostSaveDayStartLatch.Outcome.NoSaved, latch.Settle());
+        Assert.False(latch.Gate());
     }
 
     private class GameThing { }

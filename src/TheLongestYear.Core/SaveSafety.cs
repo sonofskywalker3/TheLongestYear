@@ -22,22 +22,70 @@ public static class ResetSaveGate
 /// Manager reloads its records on DayStarted and respawns everything again, losing track of what it
 /// had already placed; a ghost it no longer knew about stayed in the world and broke the next
 /// night's save (SylviaStormsinger, TLY 1.0.27, Seven Deadly Sins pack). The post-reset save is not
-/// a new day, so that one DayStarted is dropped: armed when the save's Saving runs, spent by the
-/// DayStarted SMAPI raises with its Saved.</summary>
+/// a new day, so that one DayStarted is dropped.
+///
+/// The steps: armed when the save's Saving runs; on its Saved the caller switches the day start
+/// off (<see cref="Gate"/>); SMAPI raises nothing for a day start with no listeners, so the first
+/// tick after finds the latch still armed and gated, which means the drop held, and the caller
+/// switches the day start back on (<see cref="Settle"/>). If a day start reaches our own handler
+/// while armed (<see cref="DayStartArrived"/>), the drop failed and the caller says so.</summary>
 public sealed class PostSaveDayStartLatch
 {
+    /// <summary>How the latch ended at <see cref="Settle"/>.</summary>
+    public enum Outcome
+    {
+        /// <summary>Never armed: an ordinary save, nothing to do.</summary>
+        Idle,
+        /// <summary>Gated and no day start got through: the drop worked. Switch the day start back on.</summary>
+        Dropped,
+        /// <summary>A day start reached our handler while armed. Switch it back on if it was switched off; the leak was already reported.</summary>
+        Leaked,
+        /// <summary>Armed, but no Saved came (the save menu closed without one). Nothing was switched off.</summary>
+        NoSaved,
+    }
+
     public bool Armed { get; private set; }
+
+    /// <summary>The caller switched the day start off and owes a switch back on.</summary>
+    public bool Gated { get; private set; }
+
+    /// <summary>A day start arrived while armed (after the gate, or with no gate).</summary>
+    private bool _leaked;
 
     public void Arm() => Armed = true;
 
-    public void Disarm() => Armed = false;
+    /// <summary>The save's Saved: true once per <see cref="Arm"/>, and the caller switches the
+    /// day start off now. The following DayStarted is raised in the same step.</summary>
+    public bool Gate()
+    {
+        if (!Armed || Gated) return false;
+        Gated = true;
+        return true;
+    }
 
-    /// <summary>True once per <see cref="Arm"/>: the caller drops that DayStarted.</summary>
-    public bool TryConsume()
+    /// <summary>Our own DayStarted handler: true if this day start should have been dropped and
+    /// was not. That day start has already run for every mod, so the latch is spent.</summary>
+    public bool DayStartArrived()
     {
         if (!Armed) return false;
         Armed = false;
+        _leaked = true;
         return true;
+    }
+
+    /// <summary>The first tick after the save (or leaving the save): reports what happened and
+    /// resets the latch. The caller switches the day start back on for Dropped and Leaked.</summary>
+    public Outcome Settle()
+    {
+        Outcome outcome =
+            _leaked ? Outcome.Leaked
+            : !Armed ? Outcome.Idle
+            : Gated ? Outcome.Dropped
+            : Outcome.NoSaved;
+        Armed = false;
+        Gated = false;
+        _leaked = false;
+        return outcome;
     }
 }
 
