@@ -35,7 +35,8 @@ namespace TheLongestYear.Loop
             var meta = _meta;
             if (meta == null) return;
 
-            int percent = XpMultiplierRules.PercentFor(meta, which, __instance.Level >= 25);
+            int percent = XpMultiplierRules.PercentFor(
+                meta, which, XpMultiplierRules.IsMasteryGain(__instance.GetSkillLevel(which), __instance.Level));
             if (percent <= 100) return;
 
             howMuch = XpMultiplierRules.Apply(howMuch, percent);

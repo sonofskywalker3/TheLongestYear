@@ -128,4 +128,23 @@ public class XpMultiplierRulesTests
     {
         Assert.Equal(expected, XpMultiplierRules.SlugForVanillaSkill(which));
     }
+
+    [Theory]
+    [InlineData(7, 25, false)]   // luck-inflated Level, gaining skill still below 10: Exp Boost
+    [InlineData(10, 25, true)]   // skill maxed and vanilla routing into mastery
+    [InlineData(10, 26, true)]
+    [InlineData(10, 24, false)]  // below 25: vanilla still levels skills
+    [InlineData(3, 12, false)]
+    public void IsMasteryGain_NeedsGainingSkillMaxedAndVanillaRouting(int skill, int level, bool expected)
+    {
+        Assert.Equal(expected, XpMultiplierRules.IsMasteryGain(skill, level));
+    }
+
+    [Fact]
+    public void LuckInflatedLevel_StillGetsExpBoostOnUnmaxedSkill()
+    {
+        var meta = With("xp_boost_1");
+        int exp = XpMultiplierRules.PercentFor(meta, 2, XpMultiplierRules.IsMasteryGain(7, 25));
+        Assert.Equal(XpMultiplierRules.PercentFor(meta, 2, false), exp);
+    }
 }

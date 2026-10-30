@@ -66,6 +66,18 @@ public static class XpMultiplierRules
         _ => null
     };
 
+    /// <summary>Level at which a single skill is maxed.</summary>
+    public const int MaxSkillLevel = 10;
+
+    /// <summary>Vanilla Farmer.Level at which gainExperience routes XP into mastery.</summary>
+    public const int MasteryRoutingLevel = 25;
+
+    /// <summary>True when this gain is mastery XP: the gaining skill is itself at 10 and vanilla
+    /// is routing into mastery. Farmer.Level includes luckLevel, so luck-skill mods can reach 25
+    /// while a skill is still below 10; that skill still earns Exp Boost.</summary>
+    public static bool IsMasteryGain(int gainingSkillLevel, int vanillaLevel) =>
+        gainingSkillLevel >= MaxSkillLevel && vanillaLevel >= MasteryRoutingLevel;
+
     /// <summary>Percent to scale an XP gain to: 100 means unchanged, 125 means +25%. Always
     /// &gt;= 100. Percent rather than a factor because the steps are fractional and integer
     /// percent keeps the maths exact - see <see cref="Apply"/> for the rounding.</summary>
