@@ -189,22 +189,24 @@ public class XpMultiplierRulesTests
         Assert.Equal((40, 40), (skill, m));
     }
 
-    [Theory]
-    [InlineData(9880, 9980, 0)]    // vanilla +125 would cross 10000; final stays below: no announcement
-    [InlineData(9880, 10030, 1)]   // final crosses one
-    [InlineData(10000, 10500, 0)]  // already past, still within the level
-    [InlineData(9990, 25100, 2)]   // two levels in one call: one per level
-    [InlineData(100000, 100500, 0)]
-    public void MasteryLevelsGained_ComparesBeforeAgainstFinal(long before, long after, int expected)
+    [Fact]
+    public void PlannedMastery_UsesOriginalAmount_NotExpBoostedOne()
     {
-        Assert.Equal(expected, XpMultiplierRules.MasteryLevelsGained(before, after));
+        var meta = With("exp_boost_5", "mastery_boost_1"); // +150 skill, +50 mastery
+        Assert.Equal(150, XpMultiplierRules.PlannedMastery(meta, 2, 100));
+        Assert.Equal(75, XpMultiplierRules.PlannedMastery(meta, 0, 100)); // farming half rate first
     }
 
     [Fact]
-    public void MasteryLevelFor_MatchesVanillaThresholds()
+    public void PlannedMastery_NoBoost_IsVanilla_AndMinimumOne()
     {
-        Assert.Equal(0, XpMultiplierRules.MasteryLevelFor(9999));
-        Assert.Equal(1, XpMultiplierRules.MasteryLevelFor(10000));
-        Assert.Equal(5, XpMultiplierRules.MasteryLevelFor(1_000_000));
+        Assert.Equal(40, XpMultiplierRules.PlannedMastery(With(), 4, 40));
+        Assert.Equal(1, XpMultiplierRules.PlannedMastery(With(), 0, 1));
+    }
+
+    [Fact]
+    public void PlannedMastery_Tier2_DoublesVanilla()
+    {
+        Assert.Equal(200, XpMultiplierRules.PlannedMastery(With("mastery_boost_2"), 3, 100));
     }
 }

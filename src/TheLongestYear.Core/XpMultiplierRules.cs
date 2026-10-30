@@ -77,22 +77,11 @@ public static class XpMultiplierRules
     public static int VanillaMasteryGain(int which, int howMuch) =>
         System.Math.Max(1, which == 0 ? howMuch / 2 : howMuch);
 
-    /// <summary>Vanilla MasteryTrackerMenu.getMasteryExpNeededForLevel for levels 1-5.</summary>
-    public static readonly int[] MasteryLevelThresholds = { 10000, 25000, 45000, 70000, 100000 };
-
-    /// <summary>Mastery level (0-5) for a MasteryExp total, as vanilla getCurrentMasteryLevel.</summary>
-    public static int MasteryLevelFor(long masteryExp)
-    {
-        int level = 0;
-        foreach (int need in MasteryLevelThresholds)
-            if (masteryExp >= need) level++;
-        return level;
-    }
-
-    /// <summary>How many mastery levels a gain crossed: the level before the call against the
-    /// level after the final adjustment. The announcement is decided once, from this.</summary>
-    public static int MasteryLevelsGained(long expBefore, long expAfter) =>
-        System.Math.Max(0, MasteryLevelFor(expAfter) - MasteryLevelFor(expBefore));
+    /// <summary>The MasteryExp one gain should add: vanilla's amount for the ORIGINAL (unscaled)
+    /// howMuch, with Mastery Boost or Junimo Insight applied. Computed from the original so Exp
+    /// Boost on the skill part never leaks into mastery.</summary>
+    public static int PlannedMastery(MetaState meta, int which, int originalHowMuch) =>
+        Apply(VanillaMasteryGain(which, originalHowMuch), PercentFor(meta, which, true));
 
     /// <summary>The two destinations of one gain. At vanilla Level 25+ the game adds the same
     /// howMuch to MasteryExp AND to the skill's own XP, so each is scaled on its own: the skill
@@ -105,7 +94,7 @@ public static class XpMultiplierRules
             ? howMuch
             : Apply(howMuch, PercentFor(meta, which, false));
         int mastery = vanillaLevel >= MasteryRoutingLevel
-            ? Apply(VanillaMasteryGain(which, howMuch), PercentFor(meta, which, true))
+            ? PlannedMastery(meta, which, howMuch)
             : 0;
         return (skill, mastery);
     }
