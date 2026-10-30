@@ -157,3 +157,34 @@ public static class NewSaveFolderPlan
            : holdsSaveFile ? Action.LeaveToGame
            : Action.AdoptAndPin;
 }
+
+/// <summary>How one object set aside for a save goes back into the world.</summary>
+public static class SetAsideRestore
+{
+    /// <summary>How many hooks (Saved, the tick after a failed save, the next Saving) try to put
+    /// one entry back before it is given up with a warning.</summary>
+    public const int MaxAttempts = 3;
+
+    public enum Placement
+    {
+        /// <summary>The same object is already in the world (its mod put it back, or the player
+        /// has it): nothing to do.</summary>
+        AlreadyBack,
+        /// <summary>Its own tile is free: back where it was.</summary>
+        OwnTile,
+        /// <summary>Its tile was taken: the nearest free tile.</summary>
+        NearbyTile,
+        /// <summary>No free tile near: dropped on the ground as an item.</summary>
+        Dropped,
+    }
+
+    public static Placement Decide(bool alreadyInWorld, bool ownTileFree, bool nearbyTileFree)
+        => alreadyInWorld ? Placement.AlreadyBack
+           : ownTileFree ? Placement.OwnTile
+           : nearbyTileFree ? Placement.NearbyTile
+           : Placement.Dropped;
+
+    /// <summary>After a failed attempt (the count includes it): true keeps the entry for the next
+    /// hook, false gives it up.</summary>
+    public static bool KeepAfterFailure(int attempts) => attempts < MaxAttempts;
+}

@@ -47,7 +47,16 @@ namespace TheLongestYear.Loop
         private static IMonitor _monitor;
         private static IModRegistry _registry;
         private static XmlSerializer _objectSerializer;
-        private static readonly List<(GameLocation Location, Vector2 Tile, SObject Obj)> _setAside = new();
+        private static readonly List<SetAsideObject> _setAside = new();
+
+        /// <summary>One object out of the world for a save, and how many times putting it back failed.</summary>
+        private sealed class SetAsideObject
+        {
+            public GameLocation Location { get; init; }
+            public Vector2 Tile { get; init; }
+            public SObject Obj { get; init; }
+            public int Attempts { get; set; }
+        }
         /// <summary>Mod character types already named at WARN this session.</summary>
         private static readonly HashSet<Type> _namedCharacterTypes = new();
 
@@ -73,7 +82,7 @@ namespace TheLongestYear.Loop
                 {
                     SObject obj = location.objects[tile];
                     // Recorded before it leaves the world, so nothing taken out can go unrecorded.
-                    _setAside.Add((location, tile, obj));
+                    _setAside.Add(new SetAsideObject { Location = location, Tile = tile, Obj = obj });
                     location.objects.Remove(tile);
                 }
                 foreach (NPC npc in location.characters)
@@ -104,77 +113,108 @@ namespace TheLongestYear.Loop
                 PutBack("the tick after a save that raised no Saved");
         }
 
-        public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e) => PutBack("returning to title");
+        /// <summary>Leaving to the title discards the world, so nothing is put back: the objects
+        /// were never in the save on disk, which is unaffected.</summary>
+        public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        {
+            if (_setAside.Count == 0) return;
+            _monitor?.Log(
+                $"Save guard: returned to title with {_setAside.Count} object(s) still set aside; the world is discarded, so they " +
+                "are let go (they were never in the save on disk).", LogLevel.Info);
+            _setAside.Clear();
+        }
 
-        /// <summary>Put every set-aside object back. Each is put back on its own, so one that throws
-        /// does not keep the rest out of the world, and the list is always emptied. An object whose
-        /// tile was taken meanwhile goes to the nearest free tile, or onto the ground as a dropped
-        /// item if there is none; nothing is thrown away.</summary>
+        /// <summary>Put every set-aside object back. Each is tried on its own: one that throws stays
+        /// listed for the next hook (up to <see cref="SetAsideRestore.MaxAttempts"/> tries, then it
+        /// is given up with a warning), and the rest still go back. An object already in the world
+        /// (its mod put it back, or the player has it) is left alone; one whose tile was taken goes
+        /// to the nearest free tile, or onto the ground as a dropped item; nothing is thrown away.</summary>
         private static void PutBack(string when)
         {
             if (_setAside.Count == 0) return;
-            int back = 0, moved = 0, dropped = 0, failed = 0, total = _setAside.Count;
-            var entries = _setAside.ToList();
-            _setAside.Clear();
+            int already = 0, back = 0, moved = 0, dropped = 0, failed = 0, total = _setAside.Count;
+            var pending = new List<SetAsideObject>();
             try
             {
-                foreach (var (location, tile, obj) in entries)
+                foreach (SetAsideObject entry in _setAside)
                 {
+                    GameLocation location = entry.Location;
+                    Vector2 tile = entry.Tile;
+                    SObject obj = entry.Obj;
                     try
                     {
                         if (obj == null || location == null) continue;
-                        if (location.objects.TryGetValue(tile, out SObject there) && ReferenceEquals(there, obj))
-                        {
-                            back++;   // its mod already put it back
-                            continue;
-                        }
-                        if (!location.objects.ContainsKey(tile))
-                        {
-                            location.objects[tile] = obj;
-                            back++;
-                            continue;
-                        }
+                        bool ownTileFree = !location.objects.ContainsKey(tile);
+                        DecorTile? free = null;
+                        bool inWorld = IsInWorld(location, obj);
+                        if (!inWorld && !ownTileFree)
+                            free = DropSpot.Nearest(
+                                new DecorTile((int)tile.X, (int)tile.Y),
+                                (x, y) => IsFreeTile(location, new Vector2(x, y)),
+                                PutBackRadius);
 
-                        DecorTile? free = DropSpot.Nearest(
-                            new DecorTile((int)tile.X, (int)tile.Y),
-                            (x, y) => IsFreeTile(location, new Vector2(x, y)),
-                            PutBackRadius);
-                        if (free.HasValue)
+                        switch (SetAsideRestore.Decide(inWorld, ownTileFree, free.HasValue))
                         {
-                            var spot = new Vector2(free.Value.X, free.Value.Y);
-                            obj.TileLocation = spot;
-                            location.objects[spot] = obj;
-                            moved++;
-                            _monitor?.Log(
-                                $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
-                                $"while it was out for the save, so it went to {spot}.", LogLevel.Info);
-                        }
-                        else
-                        {
-                            Game1.createItemDebris(obj, tile * Game1.tileSize, -1, location);
-                            dropped++;
-                            _monitor?.Log(
-                                $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
-                                "and no free tile was near, so it was dropped on the ground there.", LogLevel.Info);
+                            case SetAsideRestore.Placement.AlreadyBack:
+                                already++;
+                                break;
+                            case SetAsideRestore.Placement.OwnTile:
+                                location.objects[tile] = obj;
+                                back++;
+                                break;
+                            case SetAsideRestore.Placement.NearbyTile:
+                                var spot = new Vector2(free.Value.X, free.Value.Y);
+                                obj.TileLocation = spot;
+                                location.objects[spot] = obj;
+                                moved++;
+                                _monitor?.Log(
+                                    $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
+                                    $"while it was out for the save, so it went to {spot}.", LogLevel.Info);
+                                break;
+                            default:
+                                Game1.createItemDebris(obj, tile * Game1.tileSize, -1, location);
+                                dropped++;
+                                _monitor?.Log(
+                                    $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
+                                    "and no free tile was near, so it was dropped on the ground there.", LogLevel.Info);
+                                break;
                         }
                     }
                     catch (Exception ex)
                     {
                         failed++;
+                        entry.Attempts++;
+                        bool keep = SetAsideRestore.KeepAfterFailure(entry.Attempts);
+                        if (keep) pending.Add(entry);
                         _monitor?.Log(
                             $"Save guard: could not put back {obj?.GetType().FullName} at {tile} in {location?.NameOrUniqueName} " +
-                            $"({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+                            $"(try {entry.Attempts} of {SetAsideRestore.MaxAttempts}; {ex.GetType().Name}: {ex.Message}). " +
+                            (keep ? "It is tried again at the next save hook." : "Giving up on it; it stays out of the world."),
+                            LogLevel.Warn);
                     }
                 }
             }
             finally
             {
+                _setAside.Clear();
+                _setAside.AddRange(pending);
                 _monitor?.Log(
                     $"Save guard: put back {back + moved + dropped} of {total} object(s) set aside for the save ({when}; " +
-                    $"{back} on their own tile, {moved} moved, {dropped} dropped, {failed} failed).", LogLevel.Trace);
+                    $"{back} on their own tile, {moved} moved, {dropped} dropped, {already} already back, {failed} failed, " +
+                    $"{pending.Count} still waiting).", LogLevel.Trace);
             }
         }
 
+        /// <summary>The same instance is already in the world: in this location at any tile, or in
+        /// the player's inventory.</summary>
+        private static bool IsInWorld(GameLocation location, SObject obj)
+        {
+            foreach (SObject placed in location.objects.Values)
+                if (ReferenceEquals(placed, obj)) return true;
+            foreach (Item item in Game1.player?.Items ?? Enumerable.Empty<Item>())
+                if (ReferenceEquals(item, obj)) return true;
+            return false;
+        }
         private static bool IsFreeTile(GameLocation location, Vector2 tile)
             => location.isTileOnMap(tile)
                && !location.objects.ContainsKey(tile)

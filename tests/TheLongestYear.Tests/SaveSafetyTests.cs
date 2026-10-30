@@ -129,4 +129,21 @@ public class SaveSafetyTests
 
         Assert.Empty(picked);
     }
+
+    [Theory]
+    [InlineData(true, true, true, SetAsideRestore.Placement.AlreadyBack)]
+    [InlineData(true, false, false, SetAsideRestore.Placement.AlreadyBack)]
+    [InlineData(false, true, true, SetAsideRestore.Placement.OwnTile)]
+    [InlineData(false, false, true, SetAsideRestore.Placement.NearbyTile)]
+    [InlineData(false, false, false, SetAsideRestore.Placement.Dropped)]
+    public void Set_aside_object_is_never_put_in_the_world_twice(bool inWorld, bool ownFree, bool nearbyFree, SetAsideRestore.Placement expected)
+        => Assert.Equal(expected, SetAsideRestore.Decide(inWorld, ownFree, nearbyFree));
+
+    [Fact]
+    public void Failed_restore_is_retried_a_bounded_number_of_times()
+    {
+        Assert.True(SetAsideRestore.KeepAfterFailure(1));
+        Assert.True(SetAsideRestore.KeepAfterFailure(SetAsideRestore.MaxAttempts - 1));
+        Assert.False(SetAsideRestore.KeepAfterFailure(SetAsideRestore.MaxAttempts));
+    }
 }
