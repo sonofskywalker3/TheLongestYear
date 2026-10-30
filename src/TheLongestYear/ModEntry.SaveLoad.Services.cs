@@ -30,6 +30,7 @@ namespace TheLongestYear
             var farmerReset = new FarmerReset(this.Monitor)
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
+                ResetCustomSkills = new SpaceCoreSkillReset(this.Helper.ModRegistry, this.Monitor).Apply,
             };
             // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no
             // marriage behind it; clear it so that villager goes home (FarmerReset.Marriage.cs).
