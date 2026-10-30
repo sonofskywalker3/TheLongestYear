@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
@@ -25,6 +26,15 @@ namespace TheLongestYear.Loop
     /// Custom professions live in <c>Farmer.professions</c> (by vanilla id), which FarmerReset
     /// already clears. SpaceCore only puts them back from the skill level (on warp, with All
     /// Professions installed), and the level is now 0.
+    ///
+    /// Host only, on purpose: the rewind resets only <c>Game1.player</c>'s vanilla skills
+    /// (WorldResetService passes Game1.player to FarmerReset; farmhands are untouched, and
+    /// the README lists multiplayer as untested). Zeroing farmhands' custom skills
+    /// while their vanilla skills stay would be a half reset, so their saved rows are left as
+    /// they are. If the rewind ever resets farmhands, zero their rows here too.
+    ///
+    /// Fail open: each phase (and each skill) is isolated. A SpaceCore change must never throw
+    /// out of FarmerReset, which would leave a half-applied rewind.
     /// </summary>
     internal sealed class SpaceCoreSkillReset
     {
@@ -37,20 +47,60 @@ namespace TheLongestYear.Loop
             _monitor = monitor;
         }
 
-        /// <summary>Wipe every custom skill for <paramref name="p"/>. Only the local player:
-        /// a farmhand's SpaceCore table is its own, on its own machine.</summary>
+        /// <summary>Wipe every custom skill for <paramref name="p"/>, the local player.</summary>
         public void Apply(Farmer p)
         {
-            if (p == null || !p.IsLocalPlayer || !_registry.IsLoaded(CustomSkillReset.SpaceCoreModId))
-                return;
-
-            var reset = new List<string>();
-            ISpaceCoreApi api = _registry.GetApi<ISpaceCoreApi>(CustomSkillReset.SpaceCoreModId);
-            if (api == null)
-                _monitor.Log("Rewind: SpaceCore is loaded but its API could not be read; clearing only its saved skill data.", LogLevel.Warn);
-            else
+            try
             {
-                foreach (string skill in CustomSkillReset.SkillsToReset(api.GetCustomSkills()))
+                if (p == null || !p.IsLocalPlayer)
+                    return;
+                if (!_registry.IsLoaded(CustomSkillReset.SpaceCoreModId))
+                {
+                    _monitor.Log("Rewind: SpaceCore is not installed; no custom skills to reset.", LogLevel.Trace);
+                    return;
+                }
+
+                List<string> reset = ResetLiveXp(p);
+                IReadOnlyList<string> savedZeroed = Context.IsMainPlayer ? ZeroSavedTable(p) : Array.Empty<string>();
+                int queued = ClearQueuedLevelUps();
+
+                string names = reset.Count > 0 ? string.Join(", ", reset) : "none had XP";
+                _monitor.Log(
+                    $"Rewind: reset SpaceCore custom skills to 0: {names}. Saved entries zeroed: {savedZeroed.Count}" +
+                    (queued > 0 ? $"; dropped {queued} queued custom level-up menu(s)." : "."),
+                    LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Rewind: SpaceCore custom-skill reset failed; the rest of the rewind goes on. {ex}", LogLevel.Warn);
+            }
+        }
+
+        /// <summary>Phase 1: lower each skill's live XP to 0 through the API.</summary>
+        private List<string> ResetLiveXp(Farmer p)
+        {
+            var reset = new List<string>();
+            ISpaceCoreApi api;
+            string[] skills;
+            try
+            {
+                api = _registry.GetApi<ISpaceCoreApi>(CustomSkillReset.SpaceCoreModId);
+                if (api == null)
+                {
+                    _monitor.Log("Rewind: SpaceCore is loaded but its API could not be read; clearing only its saved skill data.", LogLevel.Warn);
+                    return reset;
+                }
+                skills = api.GetCustomSkills();
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Rewind: could not read SpaceCore's skill list (phase: live XP): {ex.Message}", LogLevel.Warn);
+                return reset;
+            }
+
+            foreach (string skill in CustomSkillReset.SkillsToReset(skills))
+            {
+                try
                 {
                     int xp = api.GetExperienceForCustomSkill(p, skill);
                     if (xp == 0)
@@ -58,33 +108,44 @@ namespace TheLongestYear.Loop
                     api.AddExperienceForCustomSkill(p, skill, CustomSkillReset.AmountToZero(xp));
                     reset.Add($"{skill} ({xp} XP)");
                 }
+                catch (Exception ex)
+                {
+                    _monitor.Log($"Rewind: could not reset SpaceCore skill {skill} (phase: live XP): {ex.Message}", LogLevel.Warn);
+                }
             }
-
-            IReadOnlyList<string> savedZeroed = Context.IsMainPlayer ? ZeroSavedTable(p) : System.Array.Empty<string>();
-            int queued = ClearQueuedLevelUps();
-
-            string names = reset.Count > 0 ? string.Join(", ", reset) : "none had XP";
-            _monitor.Log(
-                $"Rewind: reset SpaceCore custom skills to 0: {names}. Saved entries zeroed: {savedZeroed.Count}" +
-                (queued > 0 ? $"; dropped {queued} queued custom level-up menu(s)." : "."),
-                LogLevel.Info);
+            return reset;
         }
 
-        /// <summary>Zero this player's entries in the saved table, in both places SMAPI reads it
-        /// from (Game1.CustomData first, then SaveGame.loaded's copy).</summary>
-        private static IReadOnlyList<string> ZeroSavedTable(Farmer p)
+        /// <summary>Phase 2: zero this player's row in the saved table, in both places SMAPI reads
+        /// it from (Game1.CustomData first, then SaveGame.loaded's copy).</summary>
+        private IReadOnlyList<string> ZeroSavedTable(Farmer p)
         {
-            IReadOnlyList<string> zeroed = System.Array.Empty<string>();
-            foreach (IDictionary<string, string> data in SavedDataFields())
+            IReadOnlyList<string> zeroed = Array.Empty<string>();
+            try
             {
-                if (!data.TryGetValue(CustomSkillReset.SpaceCoreSkillsDataKey, out string json))
-                    continue;
-                string rewritten = CustomSkillReset.ZeroPlayerInSavedTable(json, p.UniqueMultiplayerID, out IReadOnlyList<string> changed);
-                if (rewritten == null)
-                    continue;
-                data[CustomSkillReset.SpaceCoreSkillsDataKey] = rewritten;
-                if (changed.Count > zeroed.Count)
-                    zeroed = changed;
+                foreach (IDictionary<string, string> data in SavedDataFields())
+                {
+                    if (!data.TryGetValue(CustomSkillReset.SpaceCoreSkillsDataKey, out string json))
+                        continue;
+                    var outcome = CustomSkillReset.ZeroPlayerInSavedTable(
+                        json, p.UniqueMultiplayerID, out string rewritten, out IReadOnlyList<string> changed);
+                    if (outcome == CustomSkillReset.SavedTableOutcome.Unexpected)
+                    {
+                        _monitor.Log(
+                            "Rewind: SpaceCore's saved skill data is not in the expected shape; left as is, so SpaceCore " +
+                            "may reload last loop's custom skill XP on the next load.", LogLevel.Warn);
+                        continue;
+                    }
+                    if (outcome != CustomSkillReset.SavedTableOutcome.Zeroed)
+                        continue;
+                    data[CustomSkillReset.SpaceCoreSkillsDataKey] = rewritten;
+                    if (changed.Count > zeroed.Count)
+                        zeroed = changed;
+                }
+            }
+            catch (Exception ex)
+            {
+                _monitor.Log($"Rewind: could not clear SpaceCore's saved skill data (phase: saved data): {ex.Message}", LogLevel.Warn);
             }
             return zeroed;
         }
@@ -97,8 +158,8 @@ namespace TheLongestYear.Loop
                 yield return SaveGame.loaded.CustomData;
         }
 
-        /// <summary>SpaceCore.Skills.NewLevels (internal) is tonight's queue of custom level-up
-        /// menus for the local player. Best effort: a renamed member only skips this step.</summary>
+        /// <summary>Phase 3: SpaceCore.Skills.NewLevels (internal) is tonight's queue of custom
+        /// level-up menus for the local player. Best effort: a renamed member skips this step.</summary>
         private int ClearQueuedLevelUps()
         {
             try
@@ -106,16 +167,16 @@ namespace TheLongestYear.Loop
                 var skillsType = AccessTools.TypeByName("SpaceCore.Skills");
                 if (skillsType == null || AccessTools.Property(skillsType, "NewLevels")?.GetValue(null) is not IList queue)
                 {
-                    _monitor.Log("Rewind: SpaceCore's level-up queue was not found; skipped clearing it.", LogLevel.Trace);
+                    _monitor.Log("Rewind: SpaceCore's level-up queue was not found; skipped clearing it.", LogLevel.Warn);
                     return 0;
                 }
                 int count = queue.Count;
                 queue.Clear();
                 return count;
             }
-            catch (System.Reflection.TargetInvocationException ex)
+            catch (Exception ex)
             {
-                _monitor.Log($"Rewind: could not clear SpaceCore's level-up queue: {ex.InnerException?.Message}", LogLevel.Trace);
+                _monitor.Log($"Rewind: could not clear SpaceCore's level-up queue (phase: level-up queue): {ex.Message}", LogLevel.Warn);
                 return 0;
             }
         }

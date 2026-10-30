@@ -39,32 +39,50 @@ namespace TheLongestYear.Core
         /// SpaceCore's AddExperience adds the amount without clamping, so this is exact.</summary>
         public static int AmountToZero(int currentXp) => -currentXp;
 
+        /// <summary>What <see cref="ZeroPlayerInSavedTable"/> found in the saved table.</summary>
+        public enum SavedTableOutcome
+        {
+            /// <summary>Some of the player's XP was not zero; the rewritten JSON is returned.</summary>
+            Zeroed,
+            /// <summary>Nothing saved yet, no row for this player, or every value already 0.</summary>
+            NothingToChange,
+            /// <summary>The JSON does not parse, or is not { id: { skill: xp } } for this player.
+            /// The caller warns: SpaceCore will reload the old XP from it.</summary>
+            Unexpected,
+        }
+
         /// <summary>
         /// Zero one player's entries in SpaceCore's saved skill table, leaving every other
         /// player's entries as they are. SpaceCore re-reads this table on SaveLoaded, which SMAPI
         /// raises again after the rewind, so the live table alone is not enough.
-        /// Returns the rewritten JSON, or null when there is nothing to change (no entry for the
-        /// player, every value already zero, or JSON that is not the expected shape).
+        /// <paramref name="rewritten"/> is the new JSON when the outcome is Zeroed, else null;
         /// <paramref name="zeroed"/> lists the skills whose saved XP was not zero.
         /// </summary>
-        public static string? ZeroPlayerInSavedTable(string? json, long playerId, out IReadOnlyList<string> zeroed)
+        public static SavedTableOutcome ZeroPlayerInSavedTable(
+            string? json, long playerId, out string? rewritten, out IReadOnlyList<string> zeroed)
         {
+            rewritten = null;
             zeroed = Array.Empty<string>();
             if (string.IsNullOrWhiteSpace(json))
-                return null;
+                return SavedTableOutcome.NothingToChange;
 
-            JsonObject? table;
+            JsonNode? root;
             try
             {
-                table = JsonNode.Parse(json) as JsonObject;
+                root = JsonNode.Parse(json);
             }
             catch (JsonException)
             {
-                return null;
+                return SavedTableOutcome.Unexpected;
             }
 
-            if (table == null || table[playerId.ToString()] is not JsonObject skills)
-                return null;
+            if (root is not JsonObject table)
+                return SavedTableOutcome.Unexpected;
+            JsonNode? row = table[playerId.ToString()];
+            if (row == null)
+                return SavedTableOutcome.NothingToChange;
+            if (row is not JsonObject skills)
+                return SavedTableOutcome.Unexpected;
 
             var changed = new List<string>();
             foreach (string skill in skills.Select(kv => kv.Key).ToList())
@@ -76,9 +94,10 @@ namespace TheLongestYear.Core
             }
 
             if (changed.Count == 0)
-                return null;
+                return SavedTableOutcome.NothingToChange;
             zeroed = changed;
-            return table.ToJsonString();
+            rewritten = table.ToJsonString();
+            return SavedTableOutcome.Zeroed;
         }
     }
 }
