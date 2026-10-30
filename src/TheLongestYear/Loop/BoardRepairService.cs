@@ -81,12 +81,21 @@ namespace TheLongestYear.Loop
         private readonly int _seed;
         private readonly bool _oncePerLoopAsksOne;
         private readonly Dictionary<string, string> _storedBoard;
+        private readonly HashSet<string> _cropPoolIds;
 
+        /// <param name="replaceNonCropAsks">Also replace an open ask in Quality Crops or a season's
+        /// Crops bundle that is not in the crop pool (<see cref="BoardRepairRules.MustReplaceInCropBundle"/>).
+        /// On for boards the engine rolled; off for a Normal or Remixed board, whose crop bundles
+        /// come from the game's own data.</param>
         public BoardRepairService(
             IMonitor monitor, SourceReachability reachability, ItemPools pools,
             BundleGenerationTuning tuning, ItemAvailabilityModel availability, int seed,
-            bool oncePerLoopAsksOne = true, Dictionary<string, string> storedBoard = null)
+            bool oncePerLoopAsksOne = true, Dictionary<string, string> storedBoard = null,
+            bool replaceNonCropAsks = false)
         {
+            _cropPoolIds = replaceNonCropAsks && pools?.Crops != null
+                ? new HashSet<string>(pools.Crops.Select(p => p.ItemId), StringComparer.Ordinal)
+                : null;
             // The stored board of record (MetaState.WrittenBoard), when the save has one: every swap
             // is mirrored into it, like ClampUnstackableAsks, so the next load restores or verifies
             // the repaired board instead of the unreachable one (0.19.9).
@@ -150,9 +159,12 @@ namespace TheLongestYear.Loop
                 List<BundleIngredient> slots = bundle.Ingredients.ToList();
                 bool changed = false;
 
-                BundleSpec spec = null;
-                DomainMatch match = null;
+                // Classified up front: the crop-bundle rule needs the bundle's domain to decide
+                // whether a slot must go, before anything is drawn.
+                BundleSpec spec = SpecFor(bundle, slots);
+                DomainMatch match = PoolDomainClassifier.Classify(spec, _pools);
                 PoolRecipe recipe = null;
+                bool recipeRead = false;
 
                 for (int i = 0; i < slots.Count; i++)
                 {
@@ -162,15 +174,14 @@ namespace TheLongestYear.Loop
 
                     slotsRead++;
                     string oldId = BundleParsing.NormalizeItemId(slot.ItemRef);
-                    if (!MustReplace(oldId)) continue;
+                    if (!MustReplace(oldId, match)) continue;
 
-                    if (spec == null)
+                    if (!recipeRead)
                     {
-                        spec = SpecFor(bundle, slots);
-                        match = PoolDomainClassifier.Classify(spec, _pools);
                         recipe = match.Domain == PoolDomain.Recipe
                             ? BundleSlotFiller.RecipeFor(spec, _pools, _availability)
                             : null;
+                        recipeRead = true;
                     }
 
                     PoolItem pick = Draw(spec, i, match, recipe, bundle.Index, avoid);
@@ -179,14 +190,17 @@ namespace TheLongestYear.Loop
                         unfixable++;
                         _monitor?.Log(
                             $"Board repair: '{bundle.Name}' slot {i} asks for {oldId}, which this run cannot reach " +
-                            $"({Reason(oldId)}), and its pool has nothing to put there. Leaving the ask alone.",
+                            $"({Reason(oldId, match)}), and its pool has nothing to put there. Leaving the ask alone.",
                             LogLevel.Warn);
                         continue;
                     }
 
                     int stack = CappedAsks.ClampStack(pick.ItemId,
                         OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne));
-                    int quality = LegendaryFishRules.ClampQuality(pick.ItemId, KeepQuality(pick.ItemId, slot.Quality));
+                    int quality = LegendaryFishRules.ClampQuality(pick.ItemId,
+                        BoardRepairRules.ReplacementQuality(match,
+                            KeepQuality(pick.ItemId, BoardRepairRules.QualityGold) == BoardRepairRules.QualityGold,
+                            KeepQuality(pick.ItemId, slot.Quality)));
                     slots[i] = new BundleIngredient(pick.ItemId, stack, quality);
 
                     // The old id can never be asked for again on this board; the new one must not
@@ -195,7 +209,7 @@ namespace TheLongestYear.Loop
                     changed = true;
                     repaired++;
                     _monitor?.Log(
-                        $"Board repair: '{bundle.Name}' slot {i}: {oldId} ({Reason(oldId)}) -> " +
+                        $"Board repair: '{bundle.Name}' slot {i}: {oldId} ({Reason(oldId, match)}) -> " +
                         $"{pick.ItemId} x{stack} quality {quality}.",
                         LogLevel.Info);
 
@@ -300,7 +314,7 @@ namespace TheLongestYear.Loop
                     // would repeat the same line up to MaxDrawAttempts times.
                     attempt == 0 ? note => _monitor?.Log($"Board repair: {note}", LogLevel.Trace) : null);
                 if (pick == null) return null;
-                if (!MustReplace(pick.ItemId)) return pick;
+                if (!MustReplace(pick.ItemId, match)) return pick;
                 rejected.Add(pick.ItemId);
             }
             return null;
@@ -378,10 +392,19 @@ namespace TheLongestYear.Loop
         private bool MustReplace(string itemId)
             => BoardRepairRules.MustReplace(itemId, _reachability == null ? null : _reachability.IsUnreachable);
 
-        private string Reason(string itemId)
+        /// <summary><see cref="MustReplace(string)"/>, or an ask in a named crop bundle that is not
+        /// a crop (<see cref="BoardRepairRules.MustReplaceInCropBundle"/>), when that rule is on.</summary>
+        private bool MustReplace(string itemId, DomainMatch match)
+            => MustReplace(itemId) || IsNonCropAsk(itemId, match);
+
+        private bool IsNonCropAsk(string itemId, DomainMatch match)
+            => _cropPoolIds != null && BoardRepairRules.MustReplaceInCropBundle(match, itemId, _cropPoolIds);
+
+        private string Reason(string itemId, DomainMatch match)
         {
             string banned = BoardRepairRules.BannedReason(itemId);
             if (banned != null) return banned;
+            if (!MustReplace(itemId) && IsNonCropAsk(itemId, match)) return BoardRepairRules.NotACropReason;
             return _reachability != null && _reachability.Reasons.TryGetValue(itemId, out string why) && !string.IsNullOrEmpty(why)
                 ? why
                 : "no reachable source";

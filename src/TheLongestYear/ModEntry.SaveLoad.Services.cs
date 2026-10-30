@@ -179,7 +179,11 @@ namespace TheLongestYear
                 // the repaired board and the repair finds nothing left to do (0.19.9).
                 TheLongestYear.Core.BoardRepairStability.Seed(
                     unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.State.EffectiveBundleSeedLoop),
-                oncePerLoopAsksOne, _meta.State.WrittenBoard).RepairIfNeeded();
+                oncePerLoopAsksOne, _meta.State.WrittenBoard,
+                // An engine-rolled board may hold a non-crop ask in a crop bundle (Fiber in Quality
+                // Crops, from before the crop pool kept only produce). A Normal or Remixed board's
+                // crop bundles are the game's own and are left as they are.
+                replaceNonCropAsks: !vanillaBoard).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",
