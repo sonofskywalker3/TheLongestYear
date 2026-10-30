@@ -377,6 +377,7 @@ namespace TheLongestYear
             helper.Events.GameLoop.Saving += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaving;
             helper.Events.GameLoop.Saved += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaved;
             helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.UnsaveableObjectGuard.OnReturnedToTitle;
+            helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.UnsaveableObjectGuard.OnUpdateTicked;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;

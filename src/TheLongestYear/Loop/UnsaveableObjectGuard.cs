@@ -88,39 +88,78 @@ namespace TheLongestYear.Loop
         [EventPriority(EventPriority.High)]
         public static void OnSaved(object sender, SavedEventArgs e) => PutBack("Saved");
 
-        public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
+        /// <summary>SMAPI raises no UpdateTicked while a save is running, so anything still set
+        /// aside at a tick belongs to a save that ended without Saved (the write threw).</summary>
+        public static void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            _setAside.Clear();
-            _setAsideCharacters.Clear();
+            if (_setAside.Count > 0 || _setAsideCharacters.Count > 0)
+                PutBack("the tick after a save that raised no Saved");
         }
 
+        public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e) => PutBack("returning to title");
+
+        /// <summary>Put everything set aside back. Each entry is put back on its own, so one that
+        /// throws does not keep the rest out of the world, and the lists are always emptied.</summary>
         private static void PutBack(string when)
         {
             if (_setAside.Count > 0)
             {
-                int back = 0;
-                foreach (var (location, tile, obj) in _setAside)
+                int back = 0, failed = 0, total = _setAside.Count;
+                try
                 {
-                    if (location.objects.ContainsKey(tile)) continue;   // something else took the tile meanwhile
-                    location.objects[tile] = obj;
-                    back++;
+                    foreach (var (location, tile, obj) in _setAside)
+                    {
+                        try
+                        {
+                            if (location.objects.ContainsKey(tile)) continue;   // something else took the tile meanwhile
+                            location.objects[tile] = obj;
+                            back++;
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            _monitor?.Log($"Save guard: could not put back {obj?.GetType().FullName} at {tile} in {location?.NameOrUniqueName} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+                        }
+                    }
                 }
-                _monitor?.Log($"Save guard: put back {back} of {_setAside.Count} object(s) set aside for the save.", LogLevel.Trace);
-                _setAside.Clear();
+                finally
+                {
+                    _setAside.Clear();
+                    _monitor?.Log($"Save guard: put back {back} of {total} object(s) set aside for the save ({when}{(failed > 0 ? $", {failed} failed" : "")}).", LogLevel.Trace);
+                }
             }
             if (_setAsideCharacters.Count > 0)
             {
-                int back = 0;
-                foreach (var (location, npc) in _setAsideCharacters)
+                int back = 0, failed = 0, total = _setAsideCharacters.Count;
+                var names = new List<string>();
+                try
                 {
-                    if (location.characters.Contains(npc)) continue;   // its mod already put it back
-                    location.characters.Add(npc);
-                    back++;
+                    foreach (var (location, npc) in _setAsideCharacters)
+                    {
+                        try
+                        {
+                            if (location.characters.Contains(npc)) continue;   // its mod already put it back
+                            location.characters.Add(npc);
+                            back++;
+                            names.Add($"{npc.GetType().FullName} in {location.NameOrUniqueName}");
+                        }
+                        catch (Exception ex)
+                        {
+                            failed++;
+                            _monitor?.Log($"Save guard: could not put back {npc?.GetType().FullName} in {location?.NameOrUniqueName} ({ex.GetType().Name}: {ex.Message}).", LogLevel.Warn);
+                        }
+                    }
                 }
-                _monitor?.Log($"Save guard: put back {back} of {_setAsideCharacters.Count} character(s) set aside for the save.", LogLevel.Trace);
-                _setAsideCharacters.Clear();
+                finally
+                {
+                    _setAsideCharacters.Clear();
+                    _monitor?.Log(
+                        $"Save guard: put back {back} of {total} character(s) set aside for the save ({when}{(failed > 0 ? $", {failed} failed" : "")})" +
+                        (names.Count > 0 ? $": {string.Join(", ", names)}." : "."), LogLevel.Info);
+                }
             }
         }
+
         /// <summary>Set aside the characters in a location whose type the save cannot write.</summary>
         private static void SetAsideCharacters(GameLocation location, Dictionary<Type, bool> verdicts)
         {
