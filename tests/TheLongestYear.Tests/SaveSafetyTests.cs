@@ -98,6 +98,36 @@ public class SaveSafetyTests
         Assert.Equal(new[] { typeof(ModThing), typeof(OtherModThing) }, probed);
     }
 
+    [System.Xml.Serialization.XmlInclude(typeof(IncludedMonster))]
+    private class RegisteredMonster : GameThing { }
+    [System.Xml.Serialization.XmlInclude(typeof(RegisteredMonster))]   // a cycle must not loop
+    private sealed class IncludedMonster : GameThing { }
+    private sealed class SubclassOfRegistered : RegisteredMonster { }
+
+    [Fact]
+    public void Registered_serializer_types_and_their_includes_are_known()
+    {
+        HashSet<Type> known = SerializerKnownTypes.Closure(new[] { typeof(RegisteredMonster) });
+
+        Assert.Contains(typeof(RegisteredMonster), known);
+        Assert.Contains(typeof(IncludedMonster), known);
+        // The serializer wants the exact type: a subclass of a registered type is not known.
+        Assert.DoesNotContain(typeof(SubclassOfRegistered), known);
+        Assert.DoesNotContain(typeof(ModThing), known);
+    }
+
+    [Fact]
+    public void Without_registrations_no_foreign_character_is_known()
+    {
+        var entries = new List<KeyValuePair<int, GameThing>> { new(0, new GameThing()), new(1, new ModThing()) };
+        HashSet<Type> known = SerializerKnownTypes.Closure(Array.Empty<Type>());
+
+        List<int> picked = UnsaveableObjects.Pick(
+            entries, isGameType: t => t == typeof(GameThing), canWrite: v => known.Contains(v.GetType()), verdicts: new Dictionary<Type, bool>());
+
+        Assert.Equal(new[] { 1 }, picked);
+    }
+
     [Fact]
     public void Null_values_are_left_alone()
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace TheLongestYear.Core;
 
@@ -116,5 +117,28 @@ public static class UnsaveableObjects
             if (!writable) picked.Add(pair.Key);
         }
         return picked;
+    }
+}
+
+/// <summary>Which types a mod has taught the save serializer to write.</summary>
+public static class SerializerKnownTypes
+{
+    /// <summary>The types the save serializer knows beyond the game's own: every type registered
+    /// with it (SpaceCore's serializer types), plus every type those name with [XmlInclude],
+    /// followed through. The serializer accepts a value only if its exact runtime type is known,
+    /// so a subclass of a known type is not covered; and the game's own types never name a mod's
+    /// type, so for a type from outside the game this set is the whole answer.</summary>
+    public static HashSet<Type> Closure(IEnumerable<Type> registered)
+    {
+        var known = new HashSet<Type>();
+        var pending = new Stack<Type>(registered);
+        while (pending.Count > 0)
+        {
+            Type type = pending.Pop();
+            if (type == null || !known.Add(type)) continue;
+            foreach (XmlIncludeAttribute include in type.GetCustomAttributes(typeof(XmlIncludeAttribute), inherit: false))
+                if (include.Type != null) pending.Push(include.Type);
+        }
+        return known;
     }
 }
