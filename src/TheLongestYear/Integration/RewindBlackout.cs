@@ -47,7 +47,8 @@ namespace TheLongestYear.Integration
 
         /// <summary>Backstop. Nothing should hold the black this long with the surface never going
         /// quiet, but a black screen with no way out is the worst failure this could have, so it
-        /// gives up and says so rather than stranding the player.</summary>
+        /// gives up and says so rather than stranding the player. Counts only time with no menu
+        /// up, since a menu draws above the black.</summary>
         private const float MaxBlackMs = 180000f;
 
         private enum State { Idle, Black, FadingIn }
@@ -158,12 +159,13 @@ namespace TheLongestYear.Integration
                 return;
             }
 
-            _held += ms;
+            // Only bare black counts toward the backstop: a menu draws above it (RewindBlackoutClock).
+            _held = RewindBlackoutClock.HeldAfter(_held, ms, menuOpen: Game1.activeClickableMenu != null);
             if (_held >= MaxBlackMs)
             {
                 _monitor?.Log(
                     "RewindBlackout: the screen never went quiet; lifting the black rather than leaving " +
-                    "the player looking at nothing.", LogLevel.Error);
+                    "the player looking at nothing.", LogLevel.Warn);
                 StartFadingIn();
                 return;
             }

@@ -14,7 +14,7 @@ namespace TheLongestYear.Loop
     /// <summary>The game's own save menu, run for the save right after a loop reset. SMAPI raises
     /// GameLoop.Saving while a <see cref="SaveGameMenu"/> (or a subclass) is the active menu and
     /// GameLoop.Saved once it closes, so every mod gets its save hooks. SMAPI also raises
-    /// DayStarted with that Saved; <see cref="ResetSaveDayStartPatch"/> drops it, since mods already
+    /// DayStarted with that Saved; <see cref="PostSaveDayStartDrop"/> drops it, since mods already
     /// had Spring 1's day start after the reload. The other change: a write that throws is caught
     /// and the menu closes, instead of hanging on "Saving..." forever.</summary>
     internal sealed class ResetSaveMenu : SaveGameMenu
@@ -110,24 +110,18 @@ namespace TheLongestYear.Loop
         /// Saved event (normally <see cref="OnSaved"/> settles it first, in the same tick).</summary>
         public static void Tick()
         {
-            // SMAPI raises Saved and DayStarted before the first tick after a save, so a latch still
-            // armed here means that DayStarted never came; it must not eat the next real morning's.
-            if (ResetSaveDayStartPatch.Latch.Armed)
-            {
-                ResetSaveDayStartPatch.Latch.Disarm();
-                _monitor?.Log("Day-28 save: no day start followed the post-reset save; nothing was dropped.", LogLevel.Trace);
-            }
             if (_queued) { TryOpen(); return; }
             if (_menu != null && !ReferenceEquals(Game1.activeClickableMenu, _menu))
                 Settle("tick");
         }
 
         /// <summary>SMAPI's GameLoop.Saving for our save menu: the DayStarted SMAPI raises with the
-        /// coming Saved is dropped (<see cref="ResetSaveDayStartPatch"/>).</summary>
+        /// coming Saved is dropped (<see cref="PostSaveDayStartDrop"/>, which switches it back on
+        /// at the next tick).</summary>
         public static void OnSaving()
         {
             if (_menu != null && ReferenceEquals(Game1.activeClickableMenu, _menu))
-                ResetSaveDayStartPatch.Latch.Arm();
+                PostSaveDayStartDrop.Arm();
         }
 
         /// <summary>SMAPI's GameLoop.Saved. The reset's tail (the planning hub, the meta save) has
@@ -143,7 +137,7 @@ namespace TheLongestYear.Loop
         public static void Clear()
         {
             ReattachWeather();
-            ResetSaveDayStartPatch.Latch.Disarm();
+            PostSaveDayStartDrop.Settle();
             _menu = null;
             _queued = false;
             _attempts = 0;

@@ -26,18 +26,49 @@ public class SaveSafetyTests
     }
 
     [Fact]
-    public void Post_save_day_start_is_dropped_once_per_reset_save()
+    public void Ordinary_save_keeps_its_day_start()
     {
         var latch = new PostSaveDayStartLatch();
-        Assert.False(latch.TryConsume());   // an ordinary night save keeps its DayStarted
+        Assert.False(latch.Gate());
+        Assert.False(latch.DayStartArrived());
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Idle, latch.Settle());
+    }
 
+    [Fact]
+    public void Reset_save_day_start_is_switched_off_once_and_back_on_after()
+    {
+        var latch = new PostSaveDayStartLatch();
         latch.Arm();
-        Assert.True(latch.TryConsume());    // the reset save's DayStarted is dropped
-        Assert.False(latch.TryConsume());   // the next real morning is not
+        Assert.True(latch.Gate());          // Saved: switch the day start off
+        Assert.False(latch.Gate());         // only once
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Dropped, latch.Settle());
 
+        // The next real morning is not touched.
+        Assert.False(latch.Gate());
+        Assert.False(latch.DayStartArrived());
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Idle, latch.Settle());
+    }
+
+    [Fact]
+    public void Day_start_that_gets_past_the_gate_is_reported_once()
+    {
+        var latch = new PostSaveDayStartLatch();
         latch.Arm();
-        latch.Disarm();                     // left the save before SMAPI raised it
-        Assert.False(latch.TryConsume());
+        latch.Gate();
+        Assert.True(latch.DayStartArrived());
+        Assert.False(latch.DayStartArrived());   // a later morning is not a leak
+        Assert.Equal(PostSaveDayStartLatch.Outcome.Leaked, latch.Settle());
+        Assert.False(latch.Armed);
+        Assert.False(latch.Gated);
+    }
+
+    [Fact]
+    public void Save_that_never_raised_saved_switches_nothing_off()
+    {
+        var latch = new PostSaveDayStartLatch();
+        latch.Arm();
+        Assert.Equal(PostSaveDayStartLatch.Outcome.NoSaved, latch.Settle());
+        Assert.False(latch.Gate());
     }
 
     private class GameThing { }
@@ -68,6 +99,24 @@ public class SaveSafetyTests
     }
 
     [Fact]
+    public void Only_unregistered_mod_characters_are_named_once_each()
+    {
+        var present = new[] { typeof(GameThing), typeof(ModThing), typeof(OtherModThing), typeof(ModThing) };
+
+        List<Type> named = ForeignCharacters.Unregistered(
+            present, isGameType: t => t == typeof(GameThing), registered: new HashSet<Type> { typeof(OtherModThing) });
+
+        Assert.Equal(new[] { typeof(ModThing) }, named);
+    }
+    [Fact]
+    public void Save_folder_holding_someone_elses_save_is_left_to_the_game()
+    {
+        Assert.Equal(NewSaveFolderPlan.Action.CreateAndPin, NewSaveFolderPlan.Decide(folderExists: false, holdsSaveFile: false));
+        Assert.Equal(NewSaveFolderPlan.Action.AdoptAndPin, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: false));
+        Assert.Equal(NewSaveFolderPlan.Action.LeaveToGame, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: true));
+    }
+
+    [Fact]
     public void Null_values_are_left_alone()
     {
         var entries = new List<KeyValuePair<int, GameThing?>> { new(1, null) };
@@ -79,5 +128,22 @@ public class SaveSafetyTests
             verdicts: new Dictionary<Type, bool>());
 
         Assert.Empty(picked);
+    }
+
+    [Theory]
+    [InlineData(true, true, true, SetAsideRestore.Placement.AlreadyBack)]
+    [InlineData(true, false, false, SetAsideRestore.Placement.AlreadyBack)]
+    [InlineData(false, true, true, SetAsideRestore.Placement.OwnTile)]
+    [InlineData(false, false, true, SetAsideRestore.Placement.NearbyTile)]
+    [InlineData(false, false, false, SetAsideRestore.Placement.Dropped)]
+    public void Set_aside_object_is_never_put_in_the_world_twice(bool inWorld, bool ownFree, bool nearbyFree, SetAsideRestore.Placement expected)
+        => Assert.Equal(expected, SetAsideRestore.Decide(inWorld, ownFree, nearbyFree));
+
+    [Fact]
+    public void Failed_restore_is_retried_a_bounded_number_of_times()
+    {
+        Assert.True(SetAsideRestore.KeepAfterFailure(1));
+        Assert.True(SetAsideRestore.KeepAfterFailure(SetAsideRestore.MaxAttempts - 1));
+        Assert.False(SetAsideRestore.KeepAfterFailure(SetAsideRestore.MaxAttempts));
     }
 }

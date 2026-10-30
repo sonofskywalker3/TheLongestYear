@@ -20,8 +20,9 @@ namespace TheLongestYear.Loop
     ///
     /// Files keyed by name are copied to the new key right after the id changes, before SMAPI
     /// raises that SaveLoaded. Files inside the save folder are copied only after the new save is
-    /// written: creating the new folder early makes the game think the name is taken, and it
-    /// saves to "&lt;farm&gt;2_&lt;id&gt;" instead (seen live 2026-10-26). The old-keyed copies
+    /// written. The reset makes the new folder early, empty, so SMAPI has a save path at
+    /// SaveLoaded, and pins the save name so the game does not take that folder for someone
+    /// else's and save to "&lt;farm&gt;2_&lt;id&gt;" (seen live 2026-10-26). The old-keyed copies
     /// are deleted with the old save folder, once the new save is on disk.
     /// </summary>
     internal static class ModSaveDataCarryover
@@ -39,6 +40,11 @@ namespace TheLongestYear.Loop
             public string NewName { get; init; }
         }
 
+        /// <summary>The folder name the next save writes: &lt;farm&gt;_&lt;id&gt;, the same name SMAPI's
+        /// SaveFolderName gives once the save name is set to the farm name.</summary>
+        public static string NewSaveFolderName()
+            => SaveGame.FilterFileName(Game1.MasterPlayer.farmName.Value) + "_" + Game1.uniqueIDForThisGame;
+
         /// <summary>Copy every other mod's data keyed on the old save to the new key. Call right
         /// after the id changes, before loadForNewGame (the farm name is read from the master
         /// player, which loadForNewGame keeps).</summary>
@@ -48,7 +54,7 @@ namespace TheLongestYear.Loop
             string oldName = !string.IsNullOrEmpty(oldSaveFolder) ? Path.GetFileName(oldSaveFolder) : null;
             // loadForNewGame clears the game's cached save name, and the next save names its folder
             // from the farm name again: <farm>_<id>, the same name SMAPI's SaveFolderName gives.
-            string newName = SaveGame.FilterFileName(Game1.MasterPlayer.farmName.Value) + "_" + Game1.uniqueIDForThisGame;
+            string newName = NewSaveFolderName();
             var carried = new Carried
             {
                 Rename = new SaveKeyRename(oldName, oldId.ToString(), newName, Game1.uniqueIDForThisGame.ToString()),

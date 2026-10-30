@@ -160,6 +160,9 @@ namespace TheLongestYear.Loop
             Game1.game1.loadForNewGame(loadedGame: false);
             _timing.Mark("1 loadForNewGame");
 
+            // 1-name. The save writes into the folder made at the reseed, under the farm's own name.
+            RestoreStep("save name", PinSaveName);
+
             // 1-display. Put the zoom + UI scale back on the new Options instance. Game1.Update
             // notices the change on its next tick and calls refreshWindowSettings itself.
             RestoreStep("display options", () => DisplayOptionsCarryover.Restore(ctx.DisplayOptions, _monitor));

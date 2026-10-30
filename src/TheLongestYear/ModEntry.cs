@@ -367,11 +367,17 @@ namespace TheLongestYear
             helper.Events.GameLoop.Saving += (_, _) => TheLongestYear.Loop.ResetSave.OnSaving();
             helper.Events.GameLoop.Saved += (_, _) => TheLongestYear.Loop.ResetSave.OnSaved();
             helper.Events.Specialized.LoadStageChanged += TheLongestYear.Loop.ResetSave.OnLoadStageChanged;
+            // The post-reset save's extra DayStarted (Farm Type Manager double spawns) is dropped.
+            TheLongestYear.Loop.PostSaveDayStartDrop.Init(helper, this.Monitor);
+            helper.Events.GameLoop.Saved += TheLongestYear.Loop.PostSaveDayStartDrop.OnSaved;
+            helper.Events.GameLoop.DayStarted += TheLongestYear.Loop.PostSaveDayStartDrop.OnDayStarted;
+            helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.PostSaveDayStartDrop.OnUpdateTicked;
             // A foreign object the save cannot write is set aside for the write instead of failing it.
-            TheLongestYear.Loop.UnsaveableObjectGuard.Init(this.Monitor);
+            TheLongestYear.Loop.UnsaveableObjectGuard.Init(this.Monitor, helper.ModRegistry);
             helper.Events.GameLoop.Saving += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaving;
             helper.Events.GameLoop.Saved += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaved;
             helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.UnsaveableObjectGuard.OnReturnedToTitle;
+            helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.UnsaveableObjectGuard.OnUpdateTicked;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
@@ -443,8 +449,6 @@ namespace TheLongestYear
                 return taintedItems;
             };
             TheLongestYear.Loop.TaintedAuraPatch.Apply(harmony);
-            // The post-reset save's extra DayStarted (Farm Type Manager double spawns): manual, SMAPI-internal target.
-            TheLongestYear.Loop.ResetSaveDayStartPatch.Apply(harmony, this.Monitor);
             // The same glow marks a bundle slot the darkness emptied, until it is filled again.
             TheLongestYear.Loop.DarkenedSlotMarkPatch.Marks = () => _meta?.Run?.DarkenedSlots;
             this.Monitor.Log(
