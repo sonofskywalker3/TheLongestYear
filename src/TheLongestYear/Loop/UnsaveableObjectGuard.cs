@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.Serialization;
-using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -29,38 +28,28 @@ namespace TheLongestYear.Loop
     ///
     /// Characters get the same treatment: a mod's monster or NPC subclass left in a location
     /// (Farm Type Manager's MummyFTM after a duplicate day start, Celjhyn 1.2.0) fails the save
-    /// with the same exception. The game's own characters, and every pet, horse and child, are
-    /// never touched.</summary>
+    /// with the same exception. Each mod character type is tried once with the save's own NPC
+    /// serializer, and only the ones it rejects as an unknown type are set aside. The game's own
+    /// characters, and every pet, horse and child, are never touched.</summary>
     internal static class UnsaveableObjectGuard
     {
         private static readonly Assembly GameAssembly = typeof(SObject).Assembly;
 
-        /// <summary>SpaceCore registers mod types with the save serializer and rebuilds it with them.</summary>
-        private const string SpaceCoreId = "spacechase0.SpaceCore";
-        private const string SpaceCoreTypeName = "SpaceCore.SpaceCore";
-        private const string SpaceCoreModTypesField = "ModTypes";
-
         private static IMonitor _monitor;
-        private static IModRegistry _registry;
         private static XmlSerializer _objectSerializer;
-        private static bool _warnedUnknownSerializerTypes;
+        private static XmlSerializer _characterSerializer;
         private static readonly List<(GameLocation Location, Vector2 Tile, SObject Obj)> _setAside = new();
         private static readonly List<(GameLocation Location, NPC Npc)> _setAsideCharacters = new();
 
-        public static void Init(IMonitor monitor, IModRegistry registry)
-        {
-            _monitor = monitor;
-            _registry = registry;
-        }
+        public static void Init(IMonitor monitor) => _monitor = monitor;
 
         [EventPriority(EventPriority.Low)]
         public static void OnSaving(object sender, SavingEventArgs e)
         {
             if (!RunActivation.IsActive || !Context.IsMainPlayer) return;
-            PutBack();   // a write that threw never raised Saved
+            PutBack("Saving");   // a write that threw never raised Saved
 
             var verdicts = new Dictionary<Type, bool>();
-            HashSet<Type> knownCharacterTypes = KnownForeignCharacterTypes();
             var characterVerdicts = new Dictionary<Type, bool>();
             Utility.ForEachLocation(location =>
             {
@@ -72,8 +61,7 @@ namespace TheLongestYear.Loop
                     location.objects.Remove(tile);
                     _setAside.Add((location, tile, obj));
                 }
-                if (knownCharacterTypes != null)
-                    SetAsideCharacters(location, knownCharacterTypes, characterVerdicts);
+                SetAsideCharacters(location, characterVerdicts);
                 return true;
             }, includeInteriors: true, includeGenerated: false);
 
@@ -98,7 +86,7 @@ namespace TheLongestYear.Loop
         }
 
         [EventPriority(EventPriority.High)]
-        public static void OnSaved(object sender, SavedEventArgs e) => PutBack();
+        public static void OnSaved(object sender, SavedEventArgs e) => PutBack("Saved");
 
         public static void OnReturnedToTitle(object sender, ReturnedToTitleEventArgs e)
         {
@@ -106,7 +94,7 @@ namespace TheLongestYear.Loop
             _setAsideCharacters.Clear();
         }
 
-        private static void PutBack()
+        private static void PutBack(string when)
         {
             if (_setAside.Count > 0)
             {
@@ -133,16 +121,15 @@ namespace TheLongestYear.Loop
                 _setAsideCharacters.Clear();
             }
         }
-
         /// <summary>Set aside the characters in a location whose type the save cannot write.</summary>
-        private static void SetAsideCharacters(GameLocation location, HashSet<Type> known, Dictionary<Type, bool> verdicts)
+        private static void SetAsideCharacters(GameLocation location, Dictionary<Type, bool> verdicts)
         {
             if (location.characters.Count == 0) return;
             var entries = new List<KeyValuePair<int, NPC>>(location.characters.Count);
             for (int i = 0; i < location.characters.Count; i++)
                 entries.Add(new KeyValuePair<int, NPC>(i, location.characters[i]));
 
-            List<int> picked = UnsaveableObjects.Pick(entries, IsProtectedCharacterType, npc => CanWriteCharacter(npc, known), verdicts);
+            List<int> picked = UnsaveableObjects.Pick(entries, IsProtectedCharacterType, CanWriteCharacter, verdicts);
             if (picked.Count == 0) return;
             var remove = picked.Select(i => location.characters[i]).ToList();
             foreach (NPC npc in remove)
@@ -160,41 +147,40 @@ namespace TheLongestYear.Loop
                || typeof(StardewValley.Characters.Horse).IsAssignableFrom(type)
                || typeof(StardewValley.Characters.Child).IsAssignableFrom(type);
 
-        private static bool CanWriteCharacter(NPC npc, HashSet<Type> known)
+        /// <summary>Ask the save's own NPC serializer to write this character to a discarded
+        /// stream. <c>SaveSerializer.GetSerializer(typeof(NPC))</c> is the game's serializer for
+        /// the type, and SpaceCore replaces it with one built with every type registered with it,
+        /// the same list it rebuilds the save's location serializer with; so this answers exactly
+        /// as the save would. Only a "type was not expected" failure sets the character aside. Any
+        /// other failure says nothing about the type: the character stays and a WARN names it.</summary>
+        private static bool CanWriteCharacter(NPC npc)
         {
-            bool writable = known.Contains(npc.GetType());
-            if (!writable)
-                _monitor?.Log($"Save guard: the save cannot write character type {npc.GetType().FullName} (not registered with the save serializer).", LogLevel.Trace);
-            return writable;
-        }
-
-        /// <summary>The mod types the save serializer was taught (see <see cref="SerializerKnownTypes"/>),
-        /// or null if SpaceCore is installed but its list cannot be read: then nothing is known
-        /// for sure, and no character is set aside.</summary>
-        private static HashSet<Type> KnownForeignCharacterTypes()
-        {
-            if (_registry == null || !_registry.IsLoaded(SpaceCoreId))
-                return SerializerKnownTypes.Closure(Array.Empty<Type>());
+            XmlSerializer serializer;
             try
             {
-                Type spaceCore = AccessTools.TypeByName(SpaceCoreTypeName);
-                if (spaceCore != null && AccessTools.Field(spaceCore, SpaceCoreModTypesField)?.GetValue(null) is IEnumerable<Type> registered)
-                    return SerializerKnownTypes.Closure(registered.ToList());
+                serializer = _characterSerializer ??= SaveSerializer.GetSerializer(typeof(NPC));
             }
-            catch (Exception ex) when (ex is TargetInvocationException or FieldAccessException or InvalidOperationException)
+            catch (Exception ex)
             {
-                _monitor?.Log($"Save guard: reading SpaceCore's serializer types failed ({ex.GetType().Name}: {ex.Message}).", LogLevel.Trace);
+                _monitor?.Log($"Save guard: could not get the save's character serializer ({ex.GetType().Name}: {ex.Message}); {npc.GetType().FullName} is left in place.", LogLevel.Warn);
+                return true;
             }
-            if (!_warnedUnknownSerializerTypes)
-            {
-                _warnedUnknownSerializerTypes = true;
-                _monitor?.Log(
-                    "Save guard: could not read the mod types SpaceCore adds to the save, so mod characters are not checked before saving.",
-                    LogLevel.Warn);
-            }
-            return null;
-        }
 
+            SerializerProbe.Verdict verdict = SerializerProbe.Probe(serializer, npc, out Exception error);
+            switch (verdict)
+            {
+                case SerializerProbe.Verdict.TypeRejected:
+                    _monitor?.Log($"Save guard: the save cannot write character type {npc.GetType().FullName} ({error?.InnerException?.Message ?? error?.Message}).", LogLevel.Trace);
+                    return false;
+                case SerializerProbe.Verdict.ProbeFailed:
+                    _monitor?.Log(
+                        $"Save guard: checking {npc.GetType().FullName} ({npc.Name}) failed for a reason other than its type " +
+                        $"({error?.GetType().Name}: {error?.InnerException?.Message ?? error?.Message}); it is left in place.", LogLevel.Warn);
+                    return true;
+                default:
+                    return true;
+            }
+        }
         /// <summary>True if the serializer the save uses for a location's objects can write this
         /// one. That is the static value serializer of SerializableDictionary&lt;Vector2, Object&gt;
         /// (where the reported exceptions came from), so a type another mod registered with it

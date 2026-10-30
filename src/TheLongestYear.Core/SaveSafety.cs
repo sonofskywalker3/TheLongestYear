@@ -120,25 +120,69 @@ public static class UnsaveableObjects
     }
 }
 
-/// <summary>Which types a mod has taught the save serializer to write.</summary>
-public static class SerializerKnownTypes
+/// <summary>Asks a real XmlSerializer whether it can write one value.</summary>
+public static class SerializerProbe
 {
-    /// <summary>The types the save serializer knows beyond the game's own: every type registered
-    /// with it (SpaceCore's serializer types), plus every type those name with [XmlInclude],
-    /// followed through. The serializer accepts a value only if its exact runtime type is known,
-    /// so a subclass of a known type is not covered; and the game's own types never name a mod's
-    /// type, so for a type from outside the game this set is the whole answer.</summary>
-    public static HashSet<Type> Closure(IEnumerable<Type> registered)
+    public enum Verdict
     {
-        var known = new HashSet<Type>();
-        var pending = new Stack<Type>(registered);
-        while (pending.Count > 0)
-        {
-            Type type = pending.Pop();
-            if (type == null || !known.Add(type)) continue;
-            foreach (XmlIncludeAttribute include in type.GetCustomAttributes(typeof(XmlIncludeAttribute), inherit: false))
-                if (include.Type != null) pending.Push(include.Type);
-        }
-        return known;
+        /// <summary>The serializer wrote it.</summary>
+        Writable,
+        /// <summary>The serializer does not know the value's type ("The type ... was not expected").</summary>
+        TypeRejected,
+        /// <summary>The write failed for some other reason; nothing can be concluded about the type.</summary>
+        ProbeFailed,
     }
+
+    /// <summary>Write <paramref name="value"/> to a discarded stream. Serializing only reads the
+    /// value, the same reads the save itself makes a moment later; nothing is moved or changed.</summary>
+    public static Verdict Probe(XmlSerializer serializer, object value, out Exception? error)
+    {
+        error = null;
+        try
+        {
+            serializer.Serialize(System.IO.Stream.Null, value);
+            return Verdict.Writable;
+        }
+        catch (Exception ex)
+        {
+            error = ex;
+            return Classify(ex, value.GetType());
+        }
+    }
+
+    /// <summary>The serializer wraps an unknown type as InvalidOperationException ("There was an
+    /// error generating the XML document") around InvalidOperationException ("The type X was not
+    /// expected..."). Only that shape, naming this type, counts as a rejection of the type.</summary>
+    public static Verdict Classify(Exception ex, Type type)
+    {
+        for (Exception? e = ex; e != null; e = e.InnerException)
+        {
+            if (e is InvalidOperationException
+                && e.Message.Contains(type.FullName ?? type.Name, StringComparison.Ordinal)
+                && e.Message.Contains("not expected", StringComparison.OrdinalIgnoreCase))
+                return Verdict.TypeRejected;
+        }
+        return Verdict.ProbeFailed;
+    }
+}
+
+/// <summary>What the reset does with the folder the next save will write.</summary>
+public static class NewSaveFolderPlan
+{
+    public enum Action
+    {
+        /// <summary>No folder yet: make it, and pin the save name so the save writes into it.</summary>
+        CreateAndPin,
+        /// <summary>The folder exists but holds no save (one we made before a crash): use it and pin.</summary>
+        AdoptAndPin,
+        /// <summary>The folder holds someone's save: leave it, and let the game pick a free name itself.</summary>
+        LeaveToGame,
+    }
+
+    /// <param name="folderExists">The folder &lt;farm&gt;_&lt;id&gt; exists.</param>
+    /// <param name="holdsSaveFile">It holds a save file of its own name (what the load menu lists).</param>
+    public static Action Decide(bool folderExists, bool holdsSaveFile)
+        => !folderExists ? Action.CreateAndPin
+           : holdsSaveFile ? Action.LeaveToGame
+           : Action.AdoptAndPin;
 }

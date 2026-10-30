@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Xml.Serialization;
 using TheLongestYear.Core;
 using Xunit;
 
@@ -98,36 +99,41 @@ public class SaveSafetyTests
         Assert.Equal(new[] { typeof(ModThing), typeof(OtherModThing) }, probed);
     }
 
-    [System.Xml.Serialization.XmlInclude(typeof(IncludedMonster))]
-    private class RegisteredMonster : GameThing { }
-    [System.Xml.Serialization.XmlInclude(typeof(RegisteredMonster))]   // a cycle must not loop
-    private sealed class IncludedMonster : GameThing { }
-    private sealed class SubclassOfRegistered : RegisteredMonster { }
-
     [Fact]
-    public void Registered_serializer_types_and_their_includes_are_known()
+    public void Serializer_writes_registered_types_and_what_they_bring_in()
     {
-        HashSet<Type> known = SerializerKnownTypes.Closure(new[] { typeof(RegisteredMonster) });
+        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(RegisteredMonster) });
 
-        Assert.Contains(typeof(RegisteredMonster), known);
-        Assert.Contains(typeof(IncludedMonster), known);
-        // The serializer wants the exact type: a subclass of a registered type is not known.
-        Assert.DoesNotContain(typeof(SubclassOfRegistered), known);
-        Assert.DoesNotContain(typeof(ModThing), known);
+        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new RegisteredMonster(), out _));
+        // Brought in by an XmlInclude on the registered type's unregistered base.
+        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new SiblingMonster(), out _));
+        Assert.Equal(SerializerProbe.Verdict.Writable, SerializerProbe.Probe(serializer, new ProbeRoot(), out _));
     }
 
     [Fact]
-    public void Without_registrations_no_foreign_character_is_known()
+    public void Serializer_rejects_an_unknown_type()
     {
-        var entries = new List<KeyValuePair<int, GameThing>> { new(0, new GameThing()), new(1, new ModThing()) };
-        HashSet<Type> known = SerializerKnownTypes.Closure(Array.Empty<Type>());
+        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(RegisteredMonster) });
 
-        List<int> picked = UnsaveableObjects.Pick(
-            entries, isGameType: t => t == typeof(GameThing), canWrite: v => known.Contains(v.GetType()), verdicts: new Dictionary<Type, bool>());
-
-        Assert.Equal(new[] { 1 }, picked);
+        Assert.Equal(SerializerProbe.Verdict.TypeRejected, SerializerProbe.Probe(serializer, new UnregisteredMonster(), out var error));
+        Assert.NotNull(error);
     }
 
+    [Fact]
+    public void Other_write_failures_say_nothing_about_the_type()
+    {
+        var serializer = new XmlSerializer(typeof(ProbeRoot), new[] { typeof(ThrowingMonster) });
+
+        Assert.Equal(SerializerProbe.Verdict.ProbeFailed, SerializerProbe.Probe(serializer, new ThrowingMonster(), out _));
+    }
+
+    [Fact]
+    public void Save_folder_holding_someone_elses_save_is_left_to_the_game()
+    {
+        Assert.Equal(NewSaveFolderPlan.Action.CreateAndPin, NewSaveFolderPlan.Decide(folderExists: false, holdsSaveFile: false));
+        Assert.Equal(NewSaveFolderPlan.Action.AdoptAndPin, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: false));
+        Assert.Equal(NewSaveFolderPlan.Action.LeaveToGame, NewSaveFolderPlan.Decide(folderExists: true, holdsSaveFile: true));
+    }
     [Fact]
     public void Null_values_are_left_alone()
     {
@@ -141,4 +147,20 @@ public class SaveSafetyTests
 
         Assert.Empty(picked);
     }
+}
+
+public class ProbeRoot { public int Hearts { get; set; } }
+
+[XmlInclude(typeof(SiblingMonster))]
+public class BaseOfRegistered : ProbeRoot { }
+
+public class RegisteredMonster : BaseOfRegistered { }
+
+public class SiblingMonster : ProbeRoot { }
+
+public class UnregisteredMonster : ProbeRoot { }
+
+public class ThrowingMonster : ProbeRoot
+{
+    public string Broken { get => throw new ArgumentException("mod state not ready"); set { } }
 }
