@@ -129,22 +129,63 @@ public class XpMultiplierRulesTests
         Assert.Equal(expected, XpMultiplierRules.SlugForVanillaSkill(which));
     }
 
-    [Theory]
-    [InlineData(7, 25, false)]   // luck-inflated Level, gaining skill still below 10: Exp Boost
-    [InlineData(10, 25, true)]   // skill maxed and vanilla routing into mastery
-    [InlineData(10, 26, true)]
-    [InlineData(10, 24, false)]  // below 25: vanilla still levels skills
-    [InlineData(3, 12, false)]
-    public void IsMasteryGain_NeedsGainingSkillMaxedAndVanillaRouting(int skill, int level, bool expected)
+    [Fact]
+    public void ExactExample_Plus25Skill_Plus50Mastery_LuckLevel25()
     {
-        Assert.Equal(expected, XpMultiplierRules.IsMasteryGain(skill, level));
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        Assert.Equal(25, XpMultiplierRules.ExpBoostBonus(meta));
+        Assert.Equal(50, XpMultiplierRules.MasteryBoostBonus(meta));
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 2, 100, baseSkillLevel: 7, vanillaLevel: 25);
+        Assert.Equal((125, 150), (skill, m));
     }
 
     [Fact]
-    public void LuckInflatedLevel_StillGetsExpBoostOnUnmaxedSkill()
+    public void DifferentTiers_AwardIndependently()
     {
-        var meta = With("xp_boost_1");
-        int exp = XpMultiplierRules.PercentFor(meta, 2, XpMultiplierRules.IsMasteryGain(7, 25));
-        Assert.Equal(XpMultiplierRules.PercentFor(meta, 2, false), exp);
+        var meta = With("exp_boost_3", "mastery_boost_2"); // +75 skill, +100 mastery
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 4, 40, 5, 25);
+        Assert.Equal((70, 80), (skill, m));
+    }
+
+    [Fact]
+    public void MaxedSkill_GetsNoExpBoost_ButMasteryIsBoosted()
+    {
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 3, 100, 10, 25);
+        Assert.Equal((100, 150), (skill, m));
+    }
+
+    [Fact]
+    public void BuffedButUnmaxedSkill_StillGetsExpBoost()
+    {
+        // Callers pass the UNMODIFIED level (buffs excluded); a skill at base 8 buffed to 11 is 8.
+        var meta = With("exp_boost_1");
+        var (skill, _) = XpMultiplierRules.PlanGain(meta, 1, 100, 8, 25);
+        Assert.Equal(125, skill);
+    }
+
+    [Fact]
+    public void BelowLevel25_NoMastery_ExpBoostOnUnmaxedSkill()
+    {
+        var meta = With("exp_boost_1", "mastery_boost_1");
+        var (skill, m) = XpMultiplierRules.PlanGain(meta, 1, 100, 6, 24);
+        Assert.Equal((125, 0), (skill, m));
+    }
+
+    [Fact]
+    public void FarmingMastery_IsHalfRate_MinimumOne()
+    {
+        var meta = With("mastery_boost_1");
+        Assert.Equal(1, XpMultiplierRules.VanillaMasteryGain(0, 1));
+        Assert.Equal(50, XpMultiplierRules.VanillaMasteryGain(0, 100));
+        var (_, m) = XpMultiplierRules.PlanGain(meta, 0, 100, 10, 25);
+        Assert.Equal(75, m);
+    }
+
+    [Fact]
+    public void NoBoosts_PlanIsVanilla()
+    {
+        var (skill, m) = XpMultiplierRules.PlanGain(With(), 4, 40, 8, 25);
+        Assert.Equal((40, 40), (skill, m));
     }
 }
