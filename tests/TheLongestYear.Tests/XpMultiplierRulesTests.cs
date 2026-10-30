@@ -188,4 +188,23 @@ public class XpMultiplierRulesTests
         var (skill, m) = XpMultiplierRules.PlanGain(With(), 4, 40, 8, 25);
         Assert.Equal((40, 40), (skill, m));
     }
+
+    [Theory]
+    [InlineData(9880, 9980, 0)]    // vanilla +125 would cross 10000; final stays below: no announcement
+    [InlineData(9880, 10030, 1)]   // final crosses one
+    [InlineData(10000, 10500, 0)]  // already past, still within the level
+    [InlineData(9990, 25100, 2)]   // two levels in one call: one per level
+    [InlineData(100000, 100500, 0)]
+    public void MasteryLevelsGained_ComparesBeforeAgainstFinal(long before, long after, int expected)
+    {
+        Assert.Equal(expected, XpMultiplierRules.MasteryLevelsGained(before, after));
+    }
+
+    [Fact]
+    public void MasteryLevelFor_MatchesVanillaThresholds()
+    {
+        Assert.Equal(0, XpMultiplierRules.MasteryLevelFor(9999));
+        Assert.Equal(1, XpMultiplierRules.MasteryLevelFor(10000));
+        Assert.Equal(5, XpMultiplierRules.MasteryLevelFor(1_000_000));
+    }
 }

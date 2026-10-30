@@ -10,7 +10,7 @@ namespace TheLongestYear.Loop
     /// Junimo Insight until their hand-over): prefix on Farmer.gainExperience scaling howMuch by
     /// XpMultiplierRules.PercentFor. At vanilla Level >= 25 the game adds the same howMuch to MasteryExp and
     /// to the skill, so the prefix scales howMuch for the skill part (Exp Boost, only while that
-    /// skill is below 10) and the postfix corrects MasteryExp to the Mastery Boost amount.
+    /// skill is below 10) and a finalizer sets MasteryExp to the Mastery Boost amount and announces once.
     ///
     /// MetaState is reached via the same explicit <see cref="Connect"/> wiring
     /// JunimoStashCapacityPatch/JunimoStashCapPatch use (ModEntry.OnSaveLoaded) —
@@ -25,13 +25,19 @@ namespace TheLongestYear.Loop
 
         public static void Connect(MetaState meta) => _meta = meta;
 
-        /// <summary>Carried from prefix to postfix: the mastery XP vanilla will add for the
-        /// (skill-scaled) howMuch, and the mastery XP we want instead.</summary>
+        /// <summary>Above the top mastery threshold (100000): while vanilla runs, MasteryExp is
+        /// parked here so its own before/after level comparison can never announce.</summary>
+        private const uint ParkedMasteryExp = 1_000_000;
+
+        private const string MasteryExpKey = "MasteryExp";
+
+        /// <summary>Carried from prefix to finalizer: MasteryExp before the call and the amount
+        /// we want it to gain.</summary>
         internal readonly struct MasteryFix
         {
-            public readonly int Vanilla;
+            public readonly uint Before;
             public readonly int Wanted;
-            public MasteryFix(int vanilla, int wanted) { Vanilla = vanilla; Wanted = wanted; }
+            public MasteryFix(uint before, int wanted) { Before = before; Wanted = wanted; }
         }
 
         // ReSharper disable once InconsistentNaming — Harmony convention.
@@ -47,30 +53,37 @@ namespace TheLongestYear.Loop
 
             var plan = XpMultiplierRules.PlanGain(
                 meta, which, howMuch, __instance.GetUnmodifiedSkillLevel(which), __instance.Level);
-            if (plan.Mastery > 0)
-                __state = new MasteryFix(XpMultiplierRules.VanillaMasteryGain(which, plan.Skill), plan.Mastery);
             howMuch = plan.Skill;
+
+            // Vanilla's own mastery increment already equals what we want: leave it alone, its
+            // announcement is then correct.
+            if (plan.Mastery <= 0 || plan.Mastery == XpMultiplierRules.VanillaMasteryGain(which, plan.Skill))
+                return;
+
+            // Otherwise take over mastery for this call: park the stat above the top level so
+            // vanilla's increment cannot announce, and let the finalizer set the real total and
+            // announce once from before-vs-after.
+            __state = new MasteryFix(Game1.stats.Get(MasteryExpKey), plan.Mastery);
+            Game1.stats.Set(MasteryExpKey, ParkedMasteryExp);
         }
 
-        // Vanilla has just added VanillaMasteryGain(skill-scaled howMuch) to MasteryExp; move the
-        // total to the Mastery-Boost-scaled amount.
+        // Finalizer, not Postfix, so the stat is restored even if vanilla throws.
         // ReSharper disable once InconsistentNaming — Harmony convention.
-        private static void Postfix(MasteryFix? __state)
+        private static Exception Finalizer(Exception __exception, MasteryFix? __state)
         {
-            if (__state == null) return;
-            int diff = __state.Value.Wanted - __state.Value.Vanilla;
-            if (diff == 0) return;
+            if (__state == null) return __exception;
 
-            const string key = "MasteryExp";
-            uint current = Game1.stats.Get(key);
-            long target = System.Math.Max(0L, (long)current + diff);
-            int before = StardewValley.Menus.MasteryTrackerMenu.getCurrentMasteryLevel();
-            Game1.stats.Set(key, (uint)target);
-            if (diff > 0 && StardewValley.Menus.MasteryTrackerMenu.getCurrentMasteryLevel() > before)
+            var fix = __state.Value;
+            long after = __exception == null ? (long)fix.Before + fix.Wanted : fix.Before;
+            Game1.stats.Set(MasteryExpKey, (uint)System.Math.Min(after, uint.MaxValue));
+
+            int gained = XpMultiplierRules.MasteryLevelsGained(fix.Before, after);
+            for (int i = 0; i < gained; i++)
             {
                 Game1.showGlobalMessage(Game1.content.LoadString("Strings\\1_6_Strings:Mastery_newlevel"));
                 Game1.playSound("newArtifact");
             }
+            return __exception;
         }
     }
 }
