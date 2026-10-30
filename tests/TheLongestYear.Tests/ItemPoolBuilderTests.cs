@@ -259,9 +259,59 @@ public partial class ItemPoolBuilderTests
                 ("771", Obj(category: -16)),
                 ("24", Obj(category: -75))));
 
-        Assert.Contains(pools.Crops, p => p.ItemId == "(O)771");
+        // Fiber is a resource, not produce: it never joins the crop pool (player report: Fiber in
+        // Quality Crops), and it still has no star.
+        Assert.DoesNotContain(pools.Crops, p => p.ItemId == "(O)771");
         Assert.DoesNotContain("(O)771", pools.QualityEligibleIds!);
         Assert.Contains("(O)24", pools.QualityEligibleIds!);
+    }
+
+    [Fact]
+    public void Crops_FiberHarvest_LeftOut_StaysAResource()
+    {
+        var pools = Build(
+            crops: new[]
+            {
+                new RawCropEntry("771", new[] { Season.Spring, Season.Summer, Season.Fall, Season.Winter },
+                    HarvestMaxQuality: 0),
+            },
+            objects: Objects(("771", Obj(category: -16))));
+
+        Assert.DoesNotContain(pools.Crops, p => p.ItemId == "(O)771");
+        Assert.Contains(pools.ByKind[ItemKind.Resource], p => p.ItemId == "(O)771");
+    }
+
+    [Theory]
+    [InlineData("24", -75)]    // Parsnip: vegetable
+    [InlineData("254", -79)]   // Melon: fruit
+    [InlineData("591", -80)]   // Tulip: flower
+    public void Crops_ProduceCategoryHarvest_Kept(string id, int category)
+    {
+        var pools = Build(
+            crops: new[] { new RawCropEntry(id, new[] { Season.Spring }) },
+            objects: Objects((id, Obj(category: category))));
+        Assert.Contains(pools.Crops, p => p.ItemId == "(O)" + id);
+    }
+
+    [Fact]
+    public void Crops_CoffeeBean_KeptDespiteSeedCategory()
+    {
+        var pools = Build(
+            crops: new[] { new RawCropEntry("433", new[] { Season.Spring, Season.Summer }) },
+            objects: Objects(("433", Obj(category: -74))));
+        Assert.Contains(pools.Crops, p => p.ItemId == "(O)433");
+    }
+
+    [Theory]
+    [InlineData("16", Season.Spring)]    // Spring Seeds -> Wild Horseradish placeholder
+    [InlineData("404", Season.Fall)]     // Fall Seeds -> Common Mushroom placeholder
+    [InlineData("412", Season.Winter)]   // Winter Seeds -> Winter Root placeholder
+    public void Crops_WildSeedPlaceholderHarvest_LeftOut(string id, Season season)
+    {
+        var pools = Build(
+            crops: new[] { new RawCropEntry(id, new[] { season }) },
+            objects: Objects((id, Obj(category: -81))));
+        Assert.DoesNotContain(pools.Crops, p => p.ItemId == "(O)" + id);
     }
 
     [Fact]

@@ -7,6 +7,23 @@ namespace TheLongestYear.Core;
 
 public static partial class ItemPoolBuilder
 {
+    /// <summary>The object categories a grown crop belongs to: vegetable, fruit, flower. A
+    /// Data/Crops harvest outside them is not produce a crop bundle should ask for: Fiber Seeds
+    /// grow Fiber (a resource, player report: Fiber in Quality Crops), and the wild seeds name
+    /// one forage item as a placeholder harvest while the real crop is a random forage spawn.</summary>
+    public static readonly IReadOnlySet<int> CropHarvestCategories = new HashSet<int> { -75, -79, -80 };
+
+    /// <summary>Real harvests outside <see cref="CropHarvestCategories"/> that a player grows on
+    /// purpose, so they stay in the crop pool: Coffee Bean (a seed-category item, and the crop's
+    /// own harvest).</summary>
+    public static readonly IReadOnlySet<string> CropHarvestCategoryExceptions =
+        new HashSet<string>(StringComparer.Ordinal) { "(O)433" };
+
+    /// <summary>True when a Data/Crops harvest belongs in the crop pool by its object category
+    /// or the exception list.</summary>
+    private static bool IsProduceHarvest(string id, RawObjectEntry obj)
+        => CropHarvestCategories.Contains(obj.Category) || CropHarvestCategoryExceptions.Contains(id);
+
     private static IReadOnlyList<PoolItem> BuildCropPool(
         IReadOnlyList<RawCropEntry> crops,
         IReadOnlyDictionary<string, RawObjectEntry> objects,
@@ -17,7 +34,7 @@ public static partial class ItemPoolBuilder
         {
             string bare = Unqualify(crop.HarvestItemId);
             string id = Qualify(bare);
-            if (!Vets(bare, id, objects, excluded))
+            if (!Vets(bare, id, objects, excluded) || !IsProduceHarvest(id, objects[bare]))
                 continue;
             if (!bySeasons.TryGetValue(id, out List<Season>? seasons))
                 bySeasons[id] = seasons = new List<Season>();
