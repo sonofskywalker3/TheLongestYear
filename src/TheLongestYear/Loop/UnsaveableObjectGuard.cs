@@ -129,6 +129,14 @@ namespace TheLongestYear.Loop
         /// is given up with a warning), and the rest still go back. An object already in the world
         /// (its mod put it back, or the player has it) is left alone; one whose tile was taken goes
         /// to the nearest free tile, or onto the ground as a dropped item; nothing is thrown away.</summary>
+        /// <summary>Logs a message built by <paramref name="message"/>, swallowing any failure to build or
+        /// write it, so a put-back that has already happened is never retried because its log line threw.</summary>
+        private static void LogSafely(Func<string> message, LogLevel level)
+        {
+            try { _monitor?.Log(message(), level); }
+            catch (Exception) { /* the object is already back; a broken description is not worth a retry */ }
+        }
+
         private static void PutBack(string when)
         {
             if (_setAside.Count == 0) return;
@@ -167,14 +175,16 @@ namespace TheLongestYear.Loop
                                 obj.TileLocation = spot;
                                 location.objects[spot] = obj;
                                 moved++;
-                                _monitor?.Log(
+                                // The object is placed; a failure while describing it must not send it round again.
+                                LogSafely(() =>
                                     $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
                                     $"while it was out for the save, so it went to {spot}.", LogLevel.Info);
                                 break;
                             default:
                                 Game1.createItemDebris(obj, tile * Game1.tileSize, -1, location);
                                 dropped++;
-                                _monitor?.Log(
+                                // The debris exists now; a failure while describing it must not drop it a second time.
+                                LogSafely(() =>
                                     $"Save guard: {obj.GetType().FullName} ({obj.Name}) in {location.NameOrUniqueName}: its tile {tile} was taken " +
                                     "and no free tile was near, so it was dropped on the ground there.", LogLevel.Info);
                                 break;
