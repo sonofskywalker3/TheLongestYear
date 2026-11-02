@@ -14,6 +14,10 @@ public static class TextCentering
     public static float InkCentredY(float boxTop, float boxHeight, float inkTop, float inkHeight, float scale)
         => boxTop + (boxHeight - inkHeight * scale) / 2f - inkTop * scale;
 
+    /// <summary>False for whitespace. A font can give the space glyph a real height and top offset,
+    /// so a label with a space would otherwise be measured taller than its letters and sit off centre.</summary>
+    public static bool DrawsInk(char c) => !char.IsWhiteSpace(c);
+
     /// <summary>The ink extent of a line from each glyph's top offset and height (unscaled):
     /// (top of the highest glyph, height to the bottom of the lowest). Null when nothing is drawn.</summary>
     public static (float Top, float Height)? InkExtent(System.Collections.Generic.IEnumerable<(int Top, int Height)> glyphs)
