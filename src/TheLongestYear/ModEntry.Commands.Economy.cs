@@ -416,6 +416,18 @@ namespace TheLongestYear
             _boostPurchases.TryBuy(id, skillArg);
         }
 
+        /// <summary>Diagnostics only: the raw numbers behind a skill bar, for reports of XP moving
+        /// unexpectedly. Level is what vanilla compares to 25 before adding Mastery XP.</summary>
+        private void CmdXp(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            StardewValley.Farmer p = Game1.player;
+            string[] names = { "farming", "fishing", "foraging", "mining", "combat", "luck" };
+            for (int i = 0; i < names.Length; i++)
+                this.Monitor.Log($"tly_xp: {names[i]} level {p.GetUnmodifiedSkillLevel(i)}, xp {p.experiencePoints[i]}", LogLevel.Info);
+            this.Monitor.Log($"tly_xp: total level {p.Level}, MasteryExp {Game1.stats.Get("MasteryExp")}", LogLevel.Info);
+        }
+
         private void CmdHold(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
