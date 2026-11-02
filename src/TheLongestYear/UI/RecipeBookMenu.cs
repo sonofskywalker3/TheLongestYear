@@ -121,6 +121,7 @@ namespace TheLongestYear.UI
         {
             base.gameWindowSizeChanged(oldBounds, newBounds);
             RecomputeLayout();
+            RestoreSnap();
         }
 
         private void RecomputeLayout()
@@ -198,8 +199,7 @@ namespace TheLongestYear.UI
                     return;
                 }
                 // Click outside rows → cancel picker
-                _pickerList = null;
-                _pickerScroll = 0;
+                EndPicker();
                 return;
             }
 
@@ -224,6 +224,12 @@ namespace TheLongestYear.UI
             Scroll(direction > 0 ? -1 : +1);
         }
 
+        /// <summary>While a component is snapped this page handles A itself, so the game must not
+        /// also send its emulated click at the cursor: that second dispatch reached the picker the
+        /// first had just opened and chose a row unseen (Celjhyn, 2026-10-27). With a free cursor
+        /// (snappy menus off) nothing is snapped, and the game's click is the only dispatch.</summary>
+        public override bool areGamePadControlsImplemented() => currentlySnappedComponent != null;
+
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
@@ -232,8 +238,12 @@ namespace TheLongestYear.UI
                 if (id == ScrollUpId)   { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
                 if (id >= RowIdBase && id < RowIdBase + _rowsPerPage)
-                    receiveLeftClick(_rowSlots[id - RowIdBase].bounds.Center.X,
-                                     _rowSlots[id - RowIdBase].bounds.Center.Y);
+                {
+                    int row = id - RowIdBase;
+                    // Past the end of the picker's list a row draws nothing: nothing to choose.
+                    if (_pickerList != null && !BookRows.HoldsEntry(row, _pickerScroll, _pickerList.Count)) return;
+                    receiveLeftClick(_rowSlots[row].bounds.Center.X, _rowSlots[row].bounds.Center.Y);
+                }
                 return;
             }
             base.receiveGamePadButton(b);
@@ -265,10 +275,34 @@ namespace TheLongestYear.UI
 
         private void ClosePicker()
         {
+            EndPicker();
+            Game1.playSound("bigDeSelect");
+        }
+
+        /// <summary>Back to the slot list, with the controller's selection on the slot it left.</summary>
+        private void EndPicker()
+        {
+            int slot = _pendingSlot;
             _pickerList   = null;
             _pickerScroll = 0;
             _pendingSlot  = -1;
-            Game1.playSound("bigDeSelect");
+            SnapToRow(BookRows.RowForSlot(slot, _scroll, _rowsPerPage));
+        }
+
+        /// <summary>Put the controller's selection and cursor on a row. Mouse players keep their cursor.</summary>
+        private void SnapToRow(int row)
+        {
+            if (!Game1.options.snappyMenus || !Game1.options.gamepadControls) return;
+            currentlySnappedComponent = _rowSlots[row];
+            this.snapCursorToCurrentSnappedComponent();
+        }
+
+        /// <summary>Find the selection again after the rows were rebuilt or a dialog moved the cursor.</summary>
+        private void RestoreSnap()
+        {
+            if (!Game1.options.snappyMenus || !Game1.options.gamepadControls || currentlySnappedComponent == null) return;
+            currentlySnappedComponent = getComponentWithID(currentlySnappedComponent.myID) ?? _rowSlots[0];
+            this.snapCursorToCurrentSnappedComponent();
         }
 
         private void OpenPicker(int slotIndex)
@@ -281,7 +315,9 @@ namespace TheLongestYear.UI
                 Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.books.no-new"), HUDMessage.newQuest_type));
                 _pickerList = null;
                 _pendingSlot = -1;
+                return;
             }
+            SnapToRow(0);
         }
 
         private void BankRecipe(string recipeId)
@@ -292,15 +328,13 @@ namespace TheLongestYear.UI
                 // No free slot (full, or over the cap after a tier ladder change): refuse.
                 _monitor.Log($"{GetType().Name}: refused '{recipeId}', slots={_slotCount}, banked={Banked.Count}.", LogLevel.Info);
                 Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.books.over-cap"), HUDMessage.newQuest_type));
-                _pickerList  = null;
-                _pendingSlot = -1;
+                EndPicker();
                 return;
             }
             Banked.Add(recipeId);
             Game1.playSound("smallSelect");
             _monitor.Log($"{GetType().Name}: banked recipe '{recipeId}'.", LogLevel.Trace);
-            _pickerList  = null;
-            _pendingSlot = -1;
+            EndPicker();
         }
 
         private void PromptRemove(int slotIndex)
@@ -316,8 +350,13 @@ namespace TheLongestYear.UI
                     _monitor.Log($"{GetType().Name}: removed recipe '{recipeId}' from slot {slotIndex}.", LogLevel.Trace);
                     RecomputeLayout();   // the over-cap notice may have just cleared
                     Game1.activeClickableMenu = Host ?? this;
+                    RestoreSnap();
                 },
-                _ => Game1.activeClickableMenu = Host ?? this);
+                _ =>
+                {
+                    Game1.activeClickableMenu = Host ?? this;
+                    RestoreSnap();
+                });
         }
 
         private void Scroll(int delta)
