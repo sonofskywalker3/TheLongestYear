@@ -67,11 +67,13 @@ namespace TheLongestYear.Donations
                 {
                     // Full width of the target level on top of current XP (ruling 9): at 80/100
                     // buying level 1 lands at 180. getBaseExperienceForLevel(0) is -1, hence the guard.
+                    // Exact: Exp Boost would stretch one bought level into several, past the rule
+                    // that level 10 must be earned.
                     int current = ctx.SkillLevels[ctx.Skill];
                     int width = current == 0
                         ? Farmer.getBaseExperienceForLevel(1)
                         : Farmer.getBaseExperienceForLevel(current + 1) - Farmer.getBaseExperienceForLevel(current);
-                    p.gainExperience(ctx.Skill, width);
+                    Loop.XpMultiplierPatch.GrantExact(p, ctx.Skill, width);
                     _monitor.Log($"Crash Course: +{width} XP in skill {ctx.Skill} (level {current} to {current + 1} at bedtime).", LogLevel.Info);
                     break;
                 }

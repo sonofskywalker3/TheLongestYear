@@ -36,11 +36,26 @@ namespace TheLongestYear.Loop
         /// when TLY is not boosting it. Read by <see cref="MasteryAmount"/> from inside vanilla.</summary>
         [ThreadStatic] private static int _originalHowMuch;
 
+        /// <summary>True during <see cref="GrantExact"/>: this gain skips every XP upgrade and adds
+        /// no Mastery.</summary>
+        [ThreadStatic] private static bool _exactGrant;
+
+        /// <summary>Gives exactly <paramref name="amount"/> skill XP through vanilla's level-up path:
+        /// no Exp Boost, and no Mastery XP. For XP the player bought rather than earned (Crash Course),
+        /// whose price and level limits assume the amount is exact.</summary>
+        public static void GrantExact(Farmer who, int skill, int amount)
+        {
+            _exactGrant = true;
+            try { who.gainExperience(skill, amount); }
+            finally { _exactGrant = false; }
+        }
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         private static void Prefix(Farmer __instance, int which, ref int howMuch, out int __state)
         {
             __state = _originalHowMuch;
             _originalHowMuch = 0;
+            if (_exactGrant) return;
             if (!RunActivation.IsActive) return;
             if (!__instance.IsLocalPlayer) return;
             if (howMuch <= 0 || which < 0 || which > 4) return;
@@ -66,6 +81,7 @@ namespace TheLongestYear.Loop
         /// boosting this call.</summary>
         public static int MasteryAmount(int vanillaAmount, int which)
         {
+            if (_exactGrant) return 0;
             int original = _originalHowMuch;
             var meta = _meta;
             if (original <= 0 || meta == null) return vanillaAmount;

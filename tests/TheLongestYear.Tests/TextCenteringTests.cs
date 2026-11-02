@@ -26,6 +26,14 @@ public class TextCenteringTests
         Assert.Equal((3f, 16f), extent);
     }
 
+    [Theory]
+    [InlineData(' ', false)]
+    [InlineData('\t', false)]
+    [InlineData('H', true)]
+    [InlineData('k', true)]
+    public void Only_non_whitespace_draws_ink(char c, bool expected)
+        => Assert.Equal(expected, TextCentering.DrawsInk(c));
+
     [Fact]
     public void InkExtent_of_nothing_drawn_is_null()
     {

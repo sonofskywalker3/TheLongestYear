@@ -33,7 +33,7 @@ namespace TheLongestYear.UI
             // GetGlyphs builds a new dictionary each call, so it is read once per font.
             Dictionary<char, SpriteFont.Glyph> glyphs = GlyphsByFont.GetValue(font, f => f.GetGlyphs());
             (float Top, float Height)? ink = TextCentering.InkExtent(text
-                .Where(c => glyphs.ContainsKey(c))
+                .Where(c => TextCentering.DrawsInk(c) && glyphs.ContainsKey(c))
                 .Select(c => (glyphs[c].Cropping.Y, glyphs[c].BoundsInTexture.Height)));
             (float, float) result = ink ?? (0f, font.MeasureString(text).Y);
             cache[text] = result;
