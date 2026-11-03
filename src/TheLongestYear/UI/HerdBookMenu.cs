@@ -92,6 +92,7 @@ namespace TheLongestYear.UI
         {
             base.gameWindowSizeChanged(oldBounds, newBounds);
             RecomputeLayout();
+            RestoreSnap();
         }
 
         private void RecomputeLayout()
@@ -187,6 +188,12 @@ namespace TheLongestYear.UI
             Scroll(direction > 0 ? -1 : +1);
         }
 
+        /// <summary>While a component is snapped this page handles A itself, so the game must not
+        /// also send its emulated click at the cursor: that second dispatch reached the picker the
+        /// first had just opened and chose a row unseen (as on the recipe pages). With a free cursor
+        /// (snappy menus off) nothing is snapped, and the game's click is the only dispatch.</summary>
+        public override bool areGamePadControlsImplemented() => currentlySnappedComponent != null;
+
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
@@ -195,7 +202,12 @@ namespace TheLongestYear.UI
                 if (id == ScrollUpId) { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
                 if (id >= RowIdBase && id < RowIdBase + _rowsPerPage)
-                    receiveLeftClick(_rowSlots[id - RowIdBase].bounds.Center.X, _rowSlots[id - RowIdBase].bounds.Center.Y);
+                {
+                    int row = id - RowIdBase;
+                    // Past the end of the picker's list a row draws nothing: nothing to choose.
+                    if (_pickerList != null && !BookRows.HoldsEntry(row, _pickerScroll, _pickerList.Count)) return;
+                    receiveLeftClick(_rowSlots[row].bounds.Center.X, _rowSlots[row].bounds.Center.Y);
+                }
                 return;
             }
             base.receiveGamePadButton(b);
@@ -231,15 +243,36 @@ namespace TheLongestYear.UI
             {
                 Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.herdbook.no-animals"), HUDMessage.newQuest_type));
                 ClosePicker();
+                return;
             }
+            SnapToRow(0);
         }
 
+        /// <summary>Back to the slot list, with the controller's selection on the slot it left.</summary>
         private void ClosePicker()
         {
+            int slot = _pendingSlot;
             _pickerList = null;
             _pickerRows = null;
             _pendingSlot = -1;
             _pickerScroll = 0;
+            SnapToRow(BookRows.RowForSlot(slot, _scroll, _rowsPerPage));
+        }
+
+        /// <summary>Put the controller's selection and cursor on a row. Mouse players keep their cursor.</summary>
+        private void SnapToRow(int row)
+        {
+            if (!Game1.options.snappyMenus || !Game1.options.gamepadControls) return;
+            currentlySnappedComponent = _rowSlots[row];
+            this.snapCursorToCurrentSnappedComponent();
+        }
+
+        /// <summary>Find the selection again after the rows were rebuilt or a dialog moved the cursor.</summary>
+        private void RestoreSnap()
+        {
+            if (!Game1.options.snappyMenus || !Game1.options.gamepadControls || currentlySnappedComponent == null) return;
+            currentlySnappedComponent = getComponentWithID(currentlySnappedComponent.myID) ?? _rowSlots[0];
+            this.snapCursorToCurrentSnappedComponent();
         }
 
         private void RegisterAnimal(FarmAnimal animal)
@@ -259,8 +292,13 @@ namespace TheLongestYear.UI
                     HerdBookService.Remove(_meta, slotIndex, _monitor);
                     Game1.playSound("trashcan");
                     Game1.activeClickableMenu = Host ?? this;
+                    RestoreSnap();
                 },
-                _ => Game1.activeClickableMenu = Host ?? this);
+                _ =>
+                {
+                    Game1.activeClickableMenu = Host ?? this;
+                    RestoreSnap();
+                });
         }
 
         private void Scroll(int delta)

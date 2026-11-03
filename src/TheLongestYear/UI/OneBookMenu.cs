@@ -51,11 +51,6 @@ namespace TheLongestYear.UI
         private IClickableMenu _page;
         private bool _pageClosed;
 
-        /// <summary>Tick of the last tab switch. With a controller one A press reaches the menu
-        /// twice in the same tick (receiveGamePadButton, then a synthesized left click), and the
-        /// second must not land on the new page's first row.</summary>
-        private int _switchTick = -1;
-
         public BookTab ActiveTab { get; private set; }
 
         /// <summary>The tabs shown during this visit (the rewind night skips their offers).</summary>
@@ -116,7 +111,6 @@ namespace TheLongestYear.UI
         private void SwitchTo(BookTab tab, bool snapToTab)
         {
             if (tab == ActiveTab) return;
-            _switchTick = Game1.ticks;
             Game1.playSound("smallSelect");
             ShowTab(tab, snapToTab);
         }
@@ -188,7 +182,6 @@ namespace TheLongestYear.UI
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            if (Game1.ticks == _switchTick) return;
             if (TabAt(x, y) is BookTab tab) { SwitchTo(tab, snapToTab: false); return; }
             _page.receiveLeftClick(x, y, playSound);
         }
@@ -204,7 +197,6 @@ namespace TheLongestYear.UI
                     SwitchTo(OneBook.Step(_tabs, ActiveTab, +1), snapToTab: false);
                     return;
                 case Buttons.A:
-                    if (Game1.ticks == _switchTick) return;
                     int index = _tabButtons.IndexOf(_page.currentlySnappedComponent);
                     if (index >= 0) { SwitchTo(_tabs[index], snapToTab: true); return; }
                     break;
