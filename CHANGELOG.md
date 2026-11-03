@@ -3,6 +3,24 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.2 - 2026-11-03
+
+### Fixed
+
+- **SpaceCore skills carried through the rewind.** Luck Skill, Cooking, Archaeology and any other SpaceCore skill now reset at the rewind like the vanilla five. A carried Luck Skill level also counted toward mastery, so mastery could start too early. Thanks to SylviaStormsinger.
+- **Exp Boost and Mastery Boost are decided skill by skill.** With a luck mod, your skill total could reach mastery while a skill was still under 10, and that skill lost its Exp Boost. Skill XP and mastery XP now scale separately, and a mastery level is announced once. Thanks to SylviaStormsinger.
+- **Crash Course gives exactly what you paid for.** Exp Boost could stretch one bought level into several. Crash Course now skips Exp Boost and adds no mastery XP.
+- **Crop bundles no longer ask for things that aren't crops.** Fiber and wild seeds could turn up in Quality Crops and the season Crops bundles. They are out of the crop pool, and an open ask like that on your current board is swapped the next time you load. Thanks to elaineofshalott.
+- **The rewind with larger mod lists.** The rewind's save no longer announces a second morning, even when another mod patches SMAPI's events, so Farm Type Manager can't spawn twice and block the next save. The new save folder now exists before the reload, so mods that need its path, like SpaceCore and Stardew Valley Expanded, no longer fail there. Thanks to Celjhyn.
+- **Safer saves when a mod leaves something behind.** An object the game can't save is set aside for the save and put back more reliably, even when the save fails. If a mod's character is what breaks a save, the log now names it and its mod.
+- **The old farmhouse could show during the rewind.** A long stay in the Junimo Shrine could lift the black screen behind the menu.
+- **The Keeping Book with a controller.** One press of A on an empty slot opened the picker and chose an entry at the same moment. It now opens the picker and waits for you. Thanks to Celjhyn.
+- **Tab labels with a space are centered on their letters.** This is for the Herd Book tab's off-center label. Thanks to SylviaStormsinger.
+
+### Added
+
+- `tly_xp` logs each skill's level and XP, the total level and mastery XP.
+
 ## 1.2.1 - 2026-10-29
 
 ### Added

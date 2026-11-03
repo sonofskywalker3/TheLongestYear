@@ -23,7 +23,27 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.1
+## What's New in 1.2.2
+
+**Fixed: SpaceCore skills carried through the rewind.** Luck Skill, Cooking, Archaeology and any other SpaceCore skill now reset at the rewind like the vanilla five. A carried Luck Skill level also counted toward mastery, so mastery could start too early. Thanks to SylviaStormsinger.
+
+**Fixed: Exp Boost and Mastery Boost are decided skill by skill.** With a luck mod, your skill total could reach mastery while a skill was still under 10, and that skill lost its Exp Boost. Skill XP and mastery XP now scale separately, and a mastery level is announced once. Thanks to SylviaStormsinger.
+
+**Fixed: Crash Course gives exactly what you paid for.** Exp Boost could stretch one bought level into several. Crash Course now skips Exp Boost and adds no mastery XP.
+
+**Fixed: crop bundles no longer ask for things that aren't crops.** Fiber and wild seeds could turn up in Quality Crops and the season Crops bundles. They are out of the crop pool, and an open ask like that on your current board is swapped the next time you load. Thanks to elaineofshalott.
+
+**Fixed: the rewind with larger mod lists.** The rewind's save no longer announces a second morning, even when another mod patches SMAPI's events, so Farm Type Manager can't spawn twice and block the next save. The new save folder now exists before the reload, so mods that need its path, like SpaceCore and Stardew Valley Expanded, no longer fail there. Thanks to Celjhyn.
+
+**Fixed: safer saves when a mod leaves something behind.** An object the game can't save is set aside for the save and put back more reliably, even when the save fails. If a mod's character is what breaks a save, the log now names it and its mod.
+
+**Fixed: the old farmhouse could show during the rewind.** A long stay in the Junimo Shrine could lift the black screen behind the menu.
+
+**Fixed: the Keeping Book with a controller.** One press of A on an empty slot opened the picker and chose an entry at the same moment. It now opens the picker and waits for you. Thanks to Celjhyn.
+
+**Changed: tab labels with a space are centered on their letters.** This is for the Herd Book tab's off-center label. Thanks to SylviaStormsinger.
+
+## 1.2.1
 
 **New: one Keeping Book.** The Cookbook, Craftbook and Herd Book are now one book with a tab for each page. Your old books turn into it the next time you load. Thanks to tanky24u for the idea.
 
