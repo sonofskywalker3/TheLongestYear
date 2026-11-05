@@ -11,7 +11,7 @@ namespace TheLongestYear.Core.Availability;
 /// The tree has to exist too, and the tap only starts once the player has both the Tapper and the
 /// tree, so the wait counts from the later of the two. The tree's week is the first map where a
 /// full-grown one stands. A tree that can never be planned on gets the last week of the year: the
-/// green rain trees (ids "10" to "12", Summer only, gone the next day), the
+/// green rain trees (ids "10" to "12", nothing before the first green rain in Summer), the
 /// Mystic Tree (id "13", planted from the Foraging Mastery reward) and
 /// the Mushroom Tree (id "7", a farm tree turning at 5% a Fall night, Farm.cs). A tree that drops
 /// its own seed needs no spot: spots are read from the live world, and chopping every oak must not
