@@ -37,6 +37,7 @@ namespace TheLongestYear.Loop
             ISet<string> exclude,
             bool enabled,
             bool resendBetterStartGift,
+            bool sveInstalled,
             IMonitor monitor)
         {
             if (!enabled)
@@ -101,6 +102,32 @@ namespace TheLongestYear.Loop
                 if (exclude != null && exclude.Contains(id)) continue;
                 if (_ids.Add(id)) triggerMarkers++;
             }
+            // Power scenes (Data/Powers "PLAYER_HAS_SEEN_EVENT"): the scene is the power, so it
+            // rewinds with the loop like Bear's Knowledge unless its keep is owned.
+            int powerMarkers = 0;
+            HashSet<string> powerIds = LoadPowerEventIds(content);
+            foreach (string id in powerIds)
+            {
+                if (exclude != null && exclude.Contains(id)) continue;
+                if (_ids.Add(id)) powerMarkers++;
+            }
+
+            // Stardew Valley Expanded's story orders and scene-only unlocks (SveUnlocks), plus the
+            // scene each one's key requires, where SVE puts the real requirement.
+            int sveMarkers = 0;
+            if (sveInstalled)
+            {
+                var seeds = new HashSet<string>(SveUnlocks.RewoundEventIds, StringComparer.Ordinal);
+                seeds.UnionWith(powerIds);
+                seeds.ExceptWith(baseReplayableIds);
+                foreach (string id in SveUnlocks.RewoundEventIds)
+                {
+                    if (exclude != null && exclude.Contains(id)) continue;
+                    if (_ids.Add(id)) sveMarkers++;
+                }
+                sveMarkers += EventGatingTables.AddDirectPrerequisites(keys, seeds, _ids, exclude);
+            }
+
             int grants = _ids.Count;
             // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
             // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
@@ -109,7 +136,8 @@ namespace TheLongestYear.Loop
             EventGatingTables.PropagateChains(keys, _ids, roots, exclude);
             monitor.Log(
                 $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
-                $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s)) and " +
+                $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s), " +
+                $"{powerMarkers} power scene(s), {sveMarkers} Stardew Valley Expanded unlock scene(s)) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
         }
@@ -132,6 +160,26 @@ namespace TheLongestYear.Loop
             foreach (MuseumRewards reward in rewards.Values)
                 lists.Add(reward?.RewardActions);
             return MuseumRewardMarkers.EventIds(lists);
+        }
+
+        /// <summary>Event ids that Data/Powers rows read as their unlock.</summary>
+        private static HashSet<string> LoadPowerEventIds(IGameContentHelper content)
+        {
+            Dictionary<string, StardewValley.GameData.Powers.PowersData> powers;
+            try
+            {
+                powers = content.Load<Dictionary<string, StardewValley.GameData.Powers.PowersData>>("Data/Powers");
+            }
+            catch (Exception ex)
+            {
+                PatchLog.Trace($"Data/Powers: not loaded ({ex.GetType().Name}); no power scenes.");
+                return new HashSet<string>(StringComparer.Ordinal);
+            }
+            var conditions = new List<string>();
+            if (powers != null)
+                foreach (StardewValley.GameData.Powers.PowersData power in powers.Values)
+                    conditions.Add(power?.UnlockedCondition);
+            return PowerEventMarkers.EventIds(conditions);
         }
 
         /// <summary>Event ids the trigger actions mark seen, read from the live Data/TriggerActions.</summary>

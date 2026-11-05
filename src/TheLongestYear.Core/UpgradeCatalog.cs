@@ -282,6 +282,12 @@ public static class UpgradeCatalog
         new UpgradeDefinition(SpecialOrdersBoardKeep.UpgradeId, UpgradeCategory.Buildings, SpecialOrdersBoardKeep.Cost,
             metaRequirement: null, runReachRequirement: SpecialOrdersBoardKeep.ReachMetric),
 
+        // Keep Grandpa's Shed (Jeff, 2026-11-05): Stardew Valley Expanded's repaired shed stays
+        // repaired across the rewind, empty. Offered only with SVE installed (WalletKeepTable.RequiredModFor).
+        // Reach: Robin's "all done" scene has played this loop.
+        new UpgradeDefinition(SveUnlocks.KeepShedId, UpgradeCategory.Buildings, SveUnlocks.KeepShedCost,
+            metaRequirement: null, runReachRequirement: WalletKeepTable.EventMetric + ":" + SveUnlocks.ShedCompleteEvent),
+
         // (Keep Pet moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
         // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)

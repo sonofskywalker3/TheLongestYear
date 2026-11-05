@@ -280,6 +280,9 @@ namespace TheLongestYear
             // Generalize the replayable-cutscene set: scan the live save's Data/Events for any
             // unlock-granting cutscene (recipe/mail/quest) so a mod's teach/unlock scene re-fires each
             // loop, merged with the vanilla furnace/cave ids. FarmerReset consults it at reset time.
+            // Heart events first: the scan's exclusions read them, and a mod's maps are only known
+            // once the save's locations are loaded.
+            TheLongestYear.Loop.RelationshipEventIndex.Rebuild(Game1.locations);
             TheLongestYear.Loop.ReplayableEventScan.Populate(
                 this.Helper.GameContent,
                 Game1.locations,
@@ -287,6 +290,7 @@ namespace TheLongestYear
                 BuildReplayableExclude(),
                 _config.AutoDetectReplayableUnlockCutscenes,
                 _config.ResendBetterStartGift,
+                this.Helper.ModRegistry.IsLoaded(SveUnlocks.ModId),
                 this.Monitor);
         }
 
