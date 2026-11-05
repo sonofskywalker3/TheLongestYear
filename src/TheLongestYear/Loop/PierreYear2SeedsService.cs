@@ -24,6 +24,8 @@ namespace TheLongestYear.Loop
         public const string ShopAssetName = "Data/Shops";
         private const string SeedShopId = "SeedShop";
         private static readonly string[] Year2SeedIds = { "(O)476", "(O)485", "(O)489" };
+        private const string CornucopiaSeedRowPrefix = "Cornucopia.MoreCrops_CropSeeds";
+        private const string CornucopiaRareRowSuffix = "Rare";
         private static readonly Regex YearClause = new Regex(
             @"\s*,?\s*\bYEAR\s+\d+\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -52,7 +54,8 @@ namespace TheLongestYear.Loop
                 {
                     if (item == null || string.IsNullOrEmpty(item.Condition)) continue;
                     if (Array.IndexOf(Year2SeedIds, item.ItemId ?? "") < 0
-                        && Array.IndexOf(Year2SeedIds, item.Id ?? "") < 0) continue;
+                        && Array.IndexOf(Year2SeedIds, item.Id ?? "") < 0
+                        && !IsCornucopiaYear2Row(item.Id)) continue;
 
                     string stripped = StripYearClause(item.Condition);
                     if (stripped == item.Condition) continue;
@@ -63,6 +66,15 @@ namespace TheLongestYear.Loop
                 _monitor.Log($"PierreYear2Seeds: unlocked {edited} year-2 seed line(s) at Pierre's for year 1.", LogLevel.Info);
             }, AssetEditPriority.Late);
         }
+
+        /// <summary>Cornucopia More Crops' four seasonal "rare seeds" rows at Pierre's, its only
+        /// year-2 lines (Jeff, 2026-11-05: the same purchase opens them). Each sells that season's
+        /// whole seed list and skips what the year-1 row already stocks, so opening it adds only the
+        /// rare seeds. Shop access only: the bundle board still treats those crops as year 2.</summary>
+        internal static bool IsCornucopiaYear2Row(string rowId)
+            => rowId != null
+               && rowId.StartsWith(CornucopiaSeedRowPrefix, StringComparison.Ordinal)
+               && rowId.EndsWith(CornucopiaRareRowSuffix, StringComparison.Ordinal);
 
         /// <summary>Remove every <c>YEAR n</c> clause from a comma-separated game-state query;
         /// returns null when nothing else remains (null condition = always available).</summary>
