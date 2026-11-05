@@ -25,6 +25,12 @@ public static class WalletKeepTable
     public const string MailMetric = "mail";
     public const string EventMetric = "event";
     public const string StardropMinesMetric = "stardrop_mines";
+    /// <summary>Deep Woods' Unicorn Stardrop (Jeff, 2026-11-05: "yes that keep is good"). Deep Woods
+    /// marks it claimed in its own save data, not with a mail, so the row has no mail marker: the
+    /// rewind keeps the player's claim instead (DeepWoodsStateReset) and the stamina comes back
+    /// through the kept-Stardrop count like the seven vanilla rows.</summary>
+    public const string StardropUnicornMetric = "stardrop_unicorn";
+    public const string UnicornKeepId = StardropIdPrefix + "unicorn";
     public const string BearEventId = "2120303";
     public const string SpringOnionEventId = "3910979";
     public const int BaseStamina = 270;
@@ -75,7 +81,12 @@ public static class WalletKeepTable
         Drop("spouse", "CF_Spouse"),
         Drop("statue", "CF_Statue"),
         Drop("museum", "museumComplete"),
+        new(UnicornKeepId, WalletKeepKind.Stardrop, StardropUnicornMetric, new List<string>(), null, Stardrop, null),
     };
+
+    /// <summary>The mod a row needs installed to be offered, or null for every vanilla row.</summary>
+    public static string? RequiredModFor(string upgradeId)
+        => upgradeId == UnicornKeepId ? DeepWoodsStateReset.DeepWoodsModId : null;
 
     public static WalletKeep? TryGet(string upgradeId) => Entries.FirstOrDefault(e => e.UpgradeId == upgradeId);
 }

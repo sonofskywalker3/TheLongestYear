@@ -7,13 +7,13 @@ namespace TheLongestYear.Tests;
 public class WalletKeepTests
 {
     [Fact]
-    public void Table_has_eighteen_rows_totalling_6950_jp()
+    public void Table_has_nineteen_rows_totalling_7450_jp()
     {
-        Assert.Equal(18, WalletKeepTable.Entries.Count);
-        Assert.Equal(6950, WalletKeepTable.Entries.Sum(e => e.Cost));
-        Assert.Equal(18, WalletKeepTable.Entries.Select(e => e.UpgradeId).Distinct().Count());
+        Assert.Equal(19, WalletKeepTable.Entries.Count);   // + Deep Woods' Unicorn (2026-11-05)
+        Assert.Equal(7450, WalletKeepTable.Entries.Sum(e => e.Cost));
+        Assert.Equal(19, WalletKeepTable.Entries.Select(e => e.UpgradeId).Distinct().Count());
         Assert.Equal(11, WalletKeepTable.Entries.Count(e => e.UpgradeId.StartsWith("keep_wallet_")));
-        Assert.Equal(7, WalletKeepTable.Entries.Count(e => e.Kind == WalletKeepKind.Stardrop));
+        Assert.Equal(8, WalletKeepTable.Entries.Count(e => e.Kind == WalletKeepKind.Stardrop));
     }
 
     [Theory]

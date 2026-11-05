@@ -88,6 +88,17 @@ public sealed class DayTable : IEquatable<DayTable>
 
     public DayTable Delay(int days) => days <= 0 ? this : Map(l => l + days <= Days ? l + days : (int?)null);
 
+    /// <summary>A start before <paramref name="day"/> waits for that day: a map that opens on a week
+    /// (<see cref="MapWeekGate"/>). Starting on or after it lands as before.</summary>
+    public DayTable StartNoEarlierThan(int day)
+        => day <= FirstDay ? this : Exact(start => Lands(Math.Max(start, day)));
+
+    /// <summary>The route can only begin <paramref name="days"/> days after the start, and the table
+    /// then lands as it would from that later start: preparation that overlaps any wait the table
+    /// already holds, unlike <see cref="Delay"/>, which adds the days after the landing.</summary>
+    public DayTable StartLater(int days)
+        => days <= 0 ? this : Exact(start => start + days > Days ? null : Lands(start + days));
+
     /// <summary>Land this, then start <paramref name="next"/> on that day.</summary>
     public DayTable Then(DayTable next) => Map(l => next.Lands(l));
 

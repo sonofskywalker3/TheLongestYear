@@ -52,6 +52,7 @@ public static class FairnessRule
     };
     private const string MineFloorPrefix = MineDepth.FloorPrefix;
     private const string SkullCavern = MineDepth.SkullCavernRequirement;
+    private const string DeepWoodsLevelPrefix = MineDepth.DeepWoodsLevelPrefix;
     private const string Desert = "location:Desert";
     private const string BusMail = "ccVault";
     private const string ShopPrefix = "shop:";
@@ -309,6 +310,21 @@ public static class FairnessRule
                 }
                 if (!staircase) added += SkillGapDays(mining, SabotageTuning.StaircaseMiningLevel);
                 if (!minesCleared) added += MineGapDays(save.DeepestMineFloor, MineDepth.MinesBottomFloor);
+                continue;
+            }
+            if (r.StartsWith(DeepWoodsLevelPrefix, StringComparison.Ordinal))
+            {
+                // Deep Woods depth is matched by monsters (Jeff, 2026-11-05): levels 1 to 9 hold nothing
+                // past mines floor 119 and open with the woods (already in the table, MapWeekGate);
+                // from level 10 they hold Skull Cavern monsters, so they need what the cavern's fights
+                // need, the mines cleared, priced like an unreached mine floor. No bus or Staircases:
+                // the woods are walked into.
+                if (!int.TryParse(r.Substring(DeepWoodsLevelPrefix.Length), out int level)) continue;
+                if (level < MineDepth.DeepWoodsSkullCavernTierLevel) continue;
+                if (save.DeepestMineFloor >= MineDepth.MinesBottomFloor) continue;
+                if (!policy.AddDays)
+                    return $"Deep Woods level {level}: Skull Cavern monsters, the mines are not cleared (deepest {save.DeepestMineFloor})";
+                added += MineGapDays(save.DeepestMineFloor, MineDepth.MinesBottomFloor);
                 continue;
             }
             if (r == Desert)

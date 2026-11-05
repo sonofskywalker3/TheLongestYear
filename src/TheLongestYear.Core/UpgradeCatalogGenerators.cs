@@ -190,7 +190,8 @@ internal static class UpgradeCatalogGenerators
         }
     }
 
-    /// <summary>Seven Keep Stardrop (source) rows, one per vanilla Stardrop source.</summary>
+    /// <summary>Keep Stardrop (source) rows: one per vanilla Stardrop source, plus Deep Woods' Unicorn
+    /// (offered only with Deep Woods installed, UpgradeCatalog.ByCategory).</summary>
     public static IEnumerable<UpgradeDefinition> CarryoverStardropKeeps()
     {
         foreach (WalletKeep keep in WalletKeepTable.Entries)

@@ -31,6 +31,7 @@ namespace TheLongestYear
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
                 ResetCustomSkills = new SpaceCoreSkillReset(this.Helper.ModRegistry, this.Monitor).Apply,
+                ResetOtherModProgress = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor).Apply,
             };
             // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no
             // marriage behind it; clear it so that villager goes home (FarmerReset.Marriage.cs).
@@ -354,6 +355,7 @@ namespace TheLongestYear
             ActiveEffectsProvider.AttachBoosts(() => TheLongestYear.Core.BoostState.ActiveModifierIds(_meta.Run, TodayDayOfYear()));
             _boostEffects.ApplyDailyBuffs();
             TheLongestYear.Integration.RunReachEvaluator.AttachRunState(() => _meta.Run);
+            UpgradeCatalog.IsModLoaded = this.Helper.ModRegistry.IsLoaded;
             TheLongestYear.Integration.RunReachEvaluator.DebugLog = s => this.Monitor.Log(s, LogLevel.Info);
             // Mid-run safety: exactly one book and one Bundle Log; an older save's three books become the one.
             _bookFurniture.ReconcileInventory(_meta.State);

@@ -72,6 +72,10 @@ public static class ObtainabilityBuilder
         // Mine depth goes into the landing day here, once, and only here: a direct route needing floor N
         // lands the days it takes to get there from nothing later (ruling 2026-09-16), and everything
         // made from it inherits that through its input's table, so no derived pass adds it again.
+        // A map that opens on a week (the Secret Woods, Deep Woods) holds its routes to that week first,
+        // so a Deep Woods depth wait below overlaps it rather than adding to it (MapWeekGate).
+        for (int i = 0; i < direct.Count; i++)
+            direct[i] = (direct[i].ItemId, MapWeekGate.Apply(direct[i].Source));
         if (mineTravel)
             for (int i = 0; i < direct.Count; i++)
                 direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
@@ -82,7 +86,8 @@ public static class ObtainabilityBuilder
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
-            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates));
+            all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates)
+                .Select(s => (s.ItemId, MapWeekGate.Apply(s.Source))));
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));

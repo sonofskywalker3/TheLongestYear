@@ -25,8 +25,15 @@ public static class UpgradeCatalog
 
     public static IReadOnlyList<UpgradeDefinition> All => _all;
 
+    /// <summary>Whether a mod is installed; set by ModEntry. A row that needs a mod
+    /// (<see cref="WalletKeepTable.RequiredModFor"/>) is left out of every category list without it.</summary>
+    public static Func<string, bool> IsModLoaded { get; set; } = _ => false;
+
     public static IReadOnlyList<UpgradeDefinition> ByCategory(UpgradeCategory category)
-        => _all.Where(u => u.Category == category).ToList();
+        => _all.Where(u => u.Category == category && IsOffered(u)).ToList();
+
+    private static bool IsOffered(UpgradeDefinition u)
+        => WalletKeepTable.RequiredModFor(u.Id) is not string mod || IsModLoaded(mod);
 
     public static UpgradeDefinition? TryGet(string id)
         => id != null && _byId.TryGetValue(id, out UpgradeDefinition? u) ? u : null;

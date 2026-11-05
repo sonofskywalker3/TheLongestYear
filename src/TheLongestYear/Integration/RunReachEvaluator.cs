@@ -85,6 +85,7 @@ namespace TheLongestYear.Integration
                 "event"    => r.Key != null && p.eventsSeen.Contains(r.Key) ? 1 : 0, // Data/Powers SEEN_EVENT grants
                 "stardrop_mines" => (HasMail(p, "CF_Mines")
                                      || p.chestConsumedMineLevels.GetValueOrDefault(100, false)) ? 1 : 0,
+                "stardrop_unicorn" => TheLongestYear.Loop.DeepWoodsRewind.HasUnicornStardrop(p) ? 1 : 0,
                 "scythe"   => p.mailReceived.Contains("gotGoldenScythe") ? 1 : 0,
                 "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
                 "house"    => p.HouseUpgradeLevel,

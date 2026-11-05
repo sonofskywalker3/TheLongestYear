@@ -423,6 +423,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.GearReach.Monitor = this.Monitor;
             TheLongestYear.Integration.BundleLogSideTab.Monitor = this.Monitor;
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
+            helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.DeepWoodsForageOffPatch.Apply(harmony, this.Monitor);
             int patched = 0, failed = 0;
             foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
             {

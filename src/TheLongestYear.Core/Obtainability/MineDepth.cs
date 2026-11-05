@@ -31,6 +31,13 @@ public static class MineDepth
     /// so it lands the day after the mines are cleared.</summary>
     public const int SkullCavernFloor = MinesBottomFloor + 1;
     public const string SkullCavernRequirement = "location:SkullCave";
+    /// <summary>A Deep Woods route names its level as "deepwoods:level N" (the Deep Woods layer).</summary>
+    public const string DeepWoodsLevelPrefix = "deepwoods:level ";
+    /// <summary>The first Deep Woods level whose monsters are the Skull Cavern's (iridium crab, purple
+    /// slime: Deep Woods' DeepWoodsSettings.Monsters). Jeff, 2026-11-05: depth is matched by monsters, so
+    /// levels 1 to 9 (nothing past mines floor 119) open with the woods, and level 10 and below waits as
+    /// the Skull Cavern does, for the mines to be cleared.</summary>
+    public const int DeepWoodsSkullCavernTierLevel = 10;
     private const int NoDays = 0;
 
     /// <summary>max(0, ceil(floor / 10) - 1): floor 1 to 10 the same day, floor 80 seven days later.</summary>
@@ -71,10 +78,37 @@ public static class MineDepth
         return FloorOf(source.Conditions) is int floor ? DaysToReach(floor) : NoDays;
     }
 
-    /// <summary>The source with its floor's wait built into its table (unchanged when it has none).</summary>
+    /// <summary>The deepest Deep Woods level any "deepwoods:level N" requirement names, or null.</summary>
+    public static int? DeepWoodsLevelOf(ObtainConditions conditions)
+    {
+        if (conditions is null) throw new ArgumentNullException(nameof(conditions));
+        int? deepest = null;
+        foreach (string r in conditions.Requires)
+        {
+            if (!r.StartsWith(DeepWoodsLevelPrefix, StringComparison.Ordinal)) continue;
+            if (!int.TryParse(r.Substring(DeepWoodsLevelPrefix.Length), out int level)) continue;
+            if (deepest is null || level > deepest.Value) deepest = level;
+        }
+        return deepest;
+    }
+
+    /// <summary>True when a route needs a Deep Woods level that holds Skull Cavern monsters.</summary>
+    public static bool NeedsDeepWoodsSkullCavernTier(ObtainConditions conditions)
+        => DeepWoodsLevelOf(conditions) is int level && level >= DeepWoodsSkullCavernTierLevel;
+
+    /// <summary>The source with its floor's wait built into its table (unchanged when it has none).
+    /// A mine floor adds its days after the landing (<see cref="DayTable.Delay"/>). A Deep Woods level in
+    /// the Skull Cavern tier needs what a direct Skull Cavern route needs, the mines cleared
+    /// (<see cref="SkullCavernFloor"/>), but that preparation overlaps the wait for the woods to open
+    /// (<see cref="DayTable.StartLater"/>): started on day 1 it lands when the woods open, not 12 days
+    /// after. The table must already hold the woods' opening day (<see cref="MapWeekGate"/>).</summary>
     public static ObtainSource WithTravel(ObtainSource source)
     {
         int days = DaysBuiltIn(source);
-        return days == NoDays ? source : source with { Lands = source.Lands.Delay(days), UndelayedLands = source.Lands };
+        if (days != NoDays)
+            return source with { Lands = source.Lands.Delay(days), UndelayedLands = source.Lands };
+        if (source.Inputs.Count == 0 && NeedsDeepWoodsSkullCavernTier(source.Conditions))
+            return source with { Lands = source.Lands.StartLater(DaysToReach(SkullCavernFloor)), UndelayedLands = source.Lands };
+        return source;
     }
 }
