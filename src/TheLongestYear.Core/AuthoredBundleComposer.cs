@@ -21,7 +21,6 @@ public static class AuthoredBundleComposer
     private const int TrophyQuality = 0;
     private const int MaxSeasonSpreadAttempts = 8;
     private const int MinSeasonSpreadCoverage = 3;
-    private const int AllSeasonsCoverage = 4;
     private const int SlotStack = 1;
 
     public static BundleSpec? Compose(
@@ -95,20 +94,27 @@ public static class AuthoredBundleComposer
         var asked = new HashSet<string>(composed.Slots.Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? "")), StringComparer.Ordinal);
         string current = BundleParsing.NormalizeItemId(composed.Slots[slotIndex].ItemId ?? "");
         PoolItem? was = candidates.FirstOrDefault(p => p.ItemId == current);
+        var othersSeasons = new HashSet<Season>(composed.Slots
+            .Where((_, i) => i != slotIndex)
+            .Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? ""))
+            .SelectMany(id => candidates.FirstOrDefault(p => p.ItemId == id)?.Seasons ?? Array.Empty<Season>()));
         List<PoolItem> pool = candidates
             .Where(p => !asked.Contains(p.ItemId)
                         && !(banned != null && banned.Contains(p.ItemId))
                         && !LegendaryFishRules.IsLegendary(p.ItemId)
                         && !CappedAsks.IsCapped(p.ItemId)
-                        && (!def.SeasonSpread || was == null || CoversSeasonsOf(p, was)))
+                        && (!def.SeasonSpread || was == null || KeepsSpread(p, was, othersSeasons)))
             .ToList();
         return WeightedSampler.Sample(pool, pool.Count, rng).Select(p => p.ItemId).ToList();
     }
 
-    /// <summary>An any-season item covers everything; otherwise every season of the old item.</summary>
-    private static bool CoversSeasonsOf(PoolItem candidate, PoolItem old)
-        => candidate.Seasons.Count == 0
-           || (old.Seasons.Count > 0 && old.Seasons.All(s => candidate.Seasons.Contains(s)));
+    /// <summary>A swap may not thin the spread: the candidate names every season the old item
+    /// did, or the bundle still names the minimum number of seasons with it. Any-season items
+    /// (the beach's shells, the desert's fruit) only get through on the second test, so the
+    /// board-wide no-repeat pass keeps its way out of a repeat without undoing the spread.</summary>
+    private static bool KeepsSpread(PoolItem candidate, PoolItem old, IReadOnlySet<Season> othersSeasons)
+        => (old.Seasons.Count > 0 && old.Seasons.All(s => candidate.Seasons.Contains(s)))
+           || othersSeasons.Union(candidate.Seasons).Count() >= MinSeasonSpreadCoverage;
 
     private static List<PoolItem> TrophyCandidates(bool nonObjectDonationsEnabled)
     {
@@ -172,18 +178,9 @@ public static class AuthoredBundleComposer
         return null;
     }
 
-    /// <summary>An any-season item (empty Seasons list) counts as covering all four
-    /// seasons on its own.</summary>
+    /// <summary>The distinct seasons the chosen items name. An any-season item (empty Seasons
+    /// list, the desert's Coconut and Cactus Fruit) adds nothing: it says nothing about when the
+    /// bundle can be worked on, and it used to pass the check alone.</summary>
     private static int SeasonCoverage(IReadOnlyList<PoolItem> chosen)
-    {
-        var seasons = new HashSet<Season>();
-        foreach (PoolItem item in chosen)
-        {
-            if (item.Seasons.Count == 0)
-                return AllSeasonsCoverage;
-            foreach (Season season in item.Seasons)
-                seasons.Add(season);
-        }
-        return seasons.Count;
-    }
+        => chosen.SelectMany(item => item.Seasons).Distinct().Count();
 }
