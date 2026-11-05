@@ -36,6 +36,7 @@ public static class MineralNodeAvailability
             ["(O)64"] = new(MineAreas.Area80, "Ruby node"),
             ["(O)60"] = new(MineAreas.Area80, "Emerald node"),
             ["(O)72"] = new(MineAreas.Area80, "Diamond node"),
+            ["(O)422"] = new(MineAreas.Area80, "Purple Mushroom, 5% a find below floor 80 (MineShaft.cs getRandomItemForThisLevel)", RareStoneDropStep),
             ["(O)74"] = new(MineAreas.SkullCavern, "Prismatic Shard, iridium nodes and mystic stones"),
             ["(O)535"] = new(MineAreas.Area0, "Geode, mine stones at 2.2%"),
             ["(O)536"] = new(MineAreas.Area40, "Frozen Geode, mine stones at 2.2%"),

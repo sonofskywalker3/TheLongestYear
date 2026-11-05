@@ -63,7 +63,7 @@ public static class WildTreeAvailability
                     $"chop drop at {drop.Chance:0.###}");
     }
 
-    private static PlaceWeek? EarliestPlace(string treeId, IReadOnlyList<RawWildTreeSpot> spots, LocationWeeks? weeks,
+    internal static PlaceWeek? EarliestPlace(string treeId, IReadOnlyList<RawWildTreeSpot> spots, LocationWeeks? weeks,
         out string location, out int maps)
     {
         location = "";

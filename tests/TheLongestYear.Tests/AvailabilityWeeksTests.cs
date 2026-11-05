@@ -108,17 +108,16 @@ public class AvailabilityWeeksTests
     /// <summary>The regression that matters: the tapper rule on its own answers early (Foraging 4
     /// plus the tap wait), so the pin only helps if the composer's late floor actually beats it.</summary>
     [Fact]
-    public void Mystic_syrup_late_floor_beats_the_tapper_rule()
+    public void Mystic_syrup_waits_for_the_end_of_the_year()
     {
         var data = new EffortData
         {
             TapItems = new List<RawTapItem> { new("13", "(O)MysticSyrup", 7) },
         };
 
-        int rawTapperWeek = TapperAvailability.Derive("(O)MysticSyrup", data)!.EarliestWeek!.Value;
-        Assert.True(rawTapperWeek < Calendar.WeeksPerYear,
-            "the tapper rule is expected to answer early on its own; that is why the pin exists");
-        Assert.True(AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week > rawTapperWeek);
+        int tapperWeek = TapperAvailability.Derive("(O)MysticSyrup", data, null)!.EarliestWeek!.Value;
+        Assert.Equal(Calendar.WeeksPerYear, tapperWeek);   // no Mystic Tree stands at the start of the year
+        Assert.Equal(Calendar.WeeksPerYear, AvailabilityWeeks.LateFloors["(O)MysticSyrup"].Week);
     }
 
     [Fact]
