@@ -23,6 +23,10 @@ public class MineralNodeAvailabilityTests
     }
 
     [Fact]
+    public void Red_mushroom_is_a_shallow_mine_find()
+        => Assert.Equal(MineAreas.Week(MineAreas.Area10), MineralNodeAvailability.Derive("(O)420")!.EarliestWeek);
+
+    [Fact]
     public void Purple_mushroom_is_a_deep_mine_find()
         => Assert.Equal(MineAreas.Week(MineAreas.Area80), MineralNodeAvailability.Derive("(O)422")!.EarliestWeek);
 
