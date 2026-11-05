@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.3 - 2026-11-05
+
+### Fixed
+
+- **The Four Seasons Sampler could miss most of the year.** Coconut and Cactus Fruit have no season, and just one of them made the bundle count as covering all four, so it could roll with only Summer and Winter items. It now names at least three seasons, and those two don't count toward that. Your current board keeps its items until the next loop. Thanks to JazzDaxx.
+- **Tapper goods only checked for the Tapper, not the tree.** Fiddlehead Fern, Red Mushroom and Purple Mushroom could be asked for in Spring because the mod assumed you could tap a tree for them, but those trees only turn up with green rain or by chance in Fall. Fiddlehead Fern now comes due from Summer. Thanks to JazzDaxx.
+
+### Changed
+
+- **Red and Purple Mushroom now follow the mines.** With the tree route gone, they date from where you can really find them. Red Mushroom can be asked for from week 1, as a hard roll: a 10% find below floor 20, except on floors 40 to 79. Purple Mushroom can be asked for from week 3: a 5% find below floor 80.
+
 ## 1.2.2 - 2026-11-03
 
 ### Fixed
