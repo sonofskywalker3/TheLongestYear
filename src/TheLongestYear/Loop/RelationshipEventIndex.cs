@@ -5,7 +5,7 @@ using StardewValley;
 namespace TheLongestYear.Loop
 {
     /// <summary>
-    /// Identifies vanilla relationship/heart events — those whose Data/Events key carries a
+    /// Identifies relationship/heart events — those whose Data/Events key carries a
     /// friendship precondition ("f &lt;npc&gt; &lt;points&gt;"). These must RESET each loop: the player
     /// rebuilds every friendship from zero on a reset, so a heart event watched in a prior run should
     /// be re-watchable as the relationship is rebuilt. <see cref="FarmerReset"/> therefore excludes
@@ -16,7 +16,8 @@ namespace TheLongestYear.Loop
     /// </summary>
     internal static class RelationshipEventIndex
     {
-        // Vanilla event-bearing locations. Missing files are skipped (try/catch per location).
+        // Vanilla event-bearing locations, read even before a save is loaded; Rebuild adds the
+        // live world's. Missing files are skipped (try/catch per location).
         private static readonly string[] Locations =
         {
             "Farm", "FarmHouse", "Town", "Mountain", "Beach", "Forest", "BusStop", "Backwoods",
@@ -43,12 +44,29 @@ namespace TheLongestYear.Loop
             return _npcByEvent != null && _npcByEvent.TryGetValue(eventId, out string npc) ? npc : null;
         }
 
-        private static HashSet<string> Build()
+        /// <summary>Build the index again for the save just loaded. A mod's own maps (Stardew
+        /// Valley Expanded's Custom_* locations hold most of its heart events) are known only from
+        /// the live world, and Content Patcher's events differ per save; with the vanilla list
+        /// alone those scenes were re-seeded as seen and never played again after the first loop.</summary>
+        public static void Rebuild(IEnumerable<GameLocation> liveLocations)
+        {
+            var names = new List<string>();
+            if (liveLocations != null)
+                foreach (GameLocation loc in liveLocations)
+                    if (!string.IsNullOrEmpty(loc?.Name))
+                        names.Add(loc.Name);
+            _ids = Build(names);
+        }
+
+        private static HashSet<string> Build(IEnumerable<string> liveLocationNames = null)
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
             var byEvent = new Dictionary<string, string>(StringComparer.Ordinal);
             _npcByEvent = byEvent;
-            foreach (string loc in Locations)
+            var locations = new HashSet<string>(Locations, StringComparer.OrdinalIgnoreCase);
+            if (liveLocationNames != null)
+                locations.UnionWith(liveLocationNames);
+            foreach (string loc in locations)
             {
                 Dictionary<string, string> data;
                 try
