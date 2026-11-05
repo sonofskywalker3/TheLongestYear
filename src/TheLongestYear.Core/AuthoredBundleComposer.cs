@@ -21,7 +21,6 @@ public static class AuthoredBundleComposer
     private const int TrophyQuality = 0;
     private const int MaxSeasonSpreadAttempts = 8;
     private const int MinSeasonSpreadCoverage = 3;
-    private const int AllSeasonsCoverage = 4;
     private const int SlotStack = 1;
 
     public static BundleSpec? Compose(
@@ -95,20 +94,49 @@ public static class AuthoredBundleComposer
         var asked = new HashSet<string>(composed.Slots.Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? "")), StringComparer.Ordinal);
         string current = BundleParsing.NormalizeItemId(composed.Slots[slotIndex].ItemId ?? "");
         PoolItem? was = candidates.FirstOrDefault(p => p.ItemId == current);
+        bool mayThin = def.SeasonSpread && SpareSlots(composed, candidates).Contains(slotIndex);
         List<PoolItem> pool = candidates
             .Where(p => !asked.Contains(p.ItemId)
                         && !(banned != null && banned.Contains(p.ItemId))
                         && !LegendaryFishRules.IsLegendary(p.ItemId)
                         && !CappedAsks.IsCapped(p.ItemId)
-                        && (!def.SeasonSpread || was == null || CoversSeasonsOf(p, was)))
+                        && (!def.SeasonSpread || was == null || mayThin || KeepsSeasonsOf(p, was)))
             .ToList();
         return WeightedSampler.Sample(pool, pool.Count, rng).Select(p => p.ItemId).ToList();
     }
 
-    /// <summary>An any-season item covers everything; otherwise every season of the old item.</summary>
-    private static bool CoversSeasonsOf(PoolItem candidate, PoolItem old)
-        => candidate.Seasons.Count == 0
-           || (old.Seasons.Count > 0 && old.Seasons.All(s => candidate.Seasons.Contains(s)));
+    /// <summary>The candidate names every season the old item did, so the swap cannot thin the
+    /// spread. An any-season old item names none, so anything may replace it.</summary>
+    private static bool KeepsSeasonsOf(PoolItem candidate, PoolItem old)
+        => old.Seasons.All(s => candidate.Seasons.Contains(s));
+
+    /// <summary>The slots allowed a swap that drops their seasons: each one, in turn, that the
+    /// rest of the bundle still names the minimum number of seasons without. The no-repeat pass
+    /// applies every slot's swap together and judges each alone, so "the others cover it" per slot
+    /// is not enough: two slots could each count on the other. The slots left out keep their
+    /// seasons, so the spread holds however many spare slots move. The beach's shells and the
+    /// desert's fruit have no season and can only take a spare slot.</summary>
+    private static HashSet<int> SpareSlots(BundleSpec composed, IReadOnlyList<PoolItem> candidates)
+    {
+        IReadOnlyList<Season> SeasonsAt(int i)
+        {
+            string id = BundleParsing.NormalizeItemId(composed.Slots[i].ItemId ?? "");
+            return candidates.FirstOrDefault(p => p.ItemId == id)?.Seasons ?? Array.Empty<Season>();
+        }
+        var spare = new HashSet<int>();
+        // Widest item first: a Red Mushroom left holding three seasons has nothing to swap to.
+        foreach (int i in Enumerable.Range(0, composed.Slots.Count).OrderByDescending(i => SeasonsAt(i).Count).ThenBy(i => i))
+        {
+            int kept = Enumerable.Range(0, composed.Slots.Count)
+                .Where(j => j != i && !spare.Contains(j))
+                .SelectMany(SeasonsAt)
+                .Distinct()
+                .Count();
+            if (kept >= MinSeasonSpreadCoverage)
+                spare.Add(i);
+        }
+        return spare;
+    }
 
     private static List<PoolItem> TrophyCandidates(bool nonObjectDonationsEnabled)
     {
@@ -172,18 +200,9 @@ public static class AuthoredBundleComposer
         return null;
     }
 
-    /// <summary>An any-season item (empty Seasons list) counts as covering all four
-    /// seasons on its own.</summary>
+    /// <summary>The distinct seasons the chosen items name. An any-season item (empty Seasons
+    /// list, the desert's Coconut and Cactus Fruit) adds nothing: it says nothing about when the
+    /// bundle can be worked on, and it used to pass the check alone.</summary>
     private static int SeasonCoverage(IReadOnlyList<PoolItem> chosen)
-    {
-        var seasons = new HashSet<Season>();
-        foreach (PoolItem item in chosen)
-        {
-            if (item.Seasons.Count == 0)
-                return AllSeasonsCoverage;
-            foreach (Season season in item.Seasons)
-                seasons.Add(season);
-        }
-        return seasons.Count;
-    }
+        => chosen.SelectMany(item => item.Seasons).Distinct().Count();
 }
