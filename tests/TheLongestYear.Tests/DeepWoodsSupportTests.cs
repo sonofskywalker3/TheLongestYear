@@ -55,6 +55,28 @@ public class DeepWoodsSupportTests
         Assert.Equal(WoodsDay, built.Undelayed.Lands(1));
     }
 
+    [Theory]
+    [InlineData("Woods")]
+    [InlineData("DeepWoods")]
+    [InlineData("Sewer")]
+    [InlineData("BugLand")]
+    [InlineData("WitchSwamp")]
+    [InlineData("WitchHut")]
+    public void Every_gated_map_opens_the_week_the_board_gives_it(string map)
+        => Assert.Equal(TheLongestYear.Core.Availability.LocationGating.WeekFor(map == "DeepWoods" ? "Woods" : map), MapWeekGate.OpeningWeeks[map]);
+
+    [Theory]
+    [InlineData("location:Sewer", 43)]
+    [InlineData("location:BugLand", 43)]
+    [InlineData("location:WitchSwamp", 85)]
+    [InlineData("location:WitchHut", 85)]
+    [InlineData("shop:ShadowShop", 43)]
+    public void Sewer_and_swamp_routes_wait_for_their_week(string requires, int day)
+    {
+        Assert.Equal(day, AsBuilt(Forage(requires)).Lands.Lands(1));
+        Assert.Equal(day, AsBuilt(Forage(requires)).Undelayed.Lands(1));
+    }
+
     [Fact]
     public void Only_the_exact_woods_maps_are_gated()
     {

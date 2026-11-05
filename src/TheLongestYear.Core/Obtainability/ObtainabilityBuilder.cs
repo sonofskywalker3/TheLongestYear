@@ -91,7 +91,7 @@ public static class ObtainabilityBuilder
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
-            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current));
+            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source))));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
             all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));
