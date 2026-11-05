@@ -94,27 +94,49 @@ public static class AuthoredBundleComposer
         var asked = new HashSet<string>(composed.Slots.Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? "")), StringComparer.Ordinal);
         string current = BundleParsing.NormalizeItemId(composed.Slots[slotIndex].ItemId ?? "");
         PoolItem? was = candidates.FirstOrDefault(p => p.ItemId == current);
-        var othersSeasons = new HashSet<Season>(composed.Slots
-            .Where((_, i) => i != slotIndex)
-            .Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? ""))
-            .SelectMany(id => candidates.FirstOrDefault(p => p.ItemId == id)?.Seasons ?? Array.Empty<Season>()));
+        bool mayThin = def.SeasonSpread && SpareSlots(composed, candidates).Contains(slotIndex);
         List<PoolItem> pool = candidates
             .Where(p => !asked.Contains(p.ItemId)
                         && !(banned != null && banned.Contains(p.ItemId))
                         && !LegendaryFishRules.IsLegendary(p.ItemId)
                         && !CappedAsks.IsCapped(p.ItemId)
-                        && (!def.SeasonSpread || was == null || KeepsSpread(p, was, othersSeasons)))
+                        && (!def.SeasonSpread || was == null || mayThin || KeepsSeasonsOf(p, was)))
             .ToList();
         return WeightedSampler.Sample(pool, pool.Count, rng).Select(p => p.ItemId).ToList();
     }
 
-    /// <summary>A swap may not thin the spread: the candidate names every season the old item
-    /// did, or the bundle still names the minimum number of seasons with it. Any-season items
-    /// (the beach's shells, the desert's fruit) only get through on the second test, so the
-    /// board-wide no-repeat pass keeps its way out of a repeat without undoing the spread.</summary>
-    private static bool KeepsSpread(PoolItem candidate, PoolItem old, IReadOnlySet<Season> othersSeasons)
-        => (old.Seasons.Count > 0 && old.Seasons.All(s => candidate.Seasons.Contains(s)))
-           || othersSeasons.Union(candidate.Seasons).Count() >= MinSeasonSpreadCoverage;
+    /// <summary>The candidate names every season the old item did, so the swap cannot thin the
+    /// spread. An any-season old item names none, so anything may replace it.</summary>
+    private static bool KeepsSeasonsOf(PoolItem candidate, PoolItem old)
+        => old.Seasons.All(s => candidate.Seasons.Contains(s));
+
+    /// <summary>The slots allowed a swap that drops their seasons: each one, in turn, that the
+    /// rest of the bundle still names the minimum number of seasons without. The no-repeat pass
+    /// applies every slot's swap together and judges each alone, so "the others cover it" per slot
+    /// is not enough: two slots could each count on the other. The slots left out keep their
+    /// seasons, so the spread holds however many spare slots move. The beach's shells and the
+    /// desert's fruit have no season and can only take a spare slot.</summary>
+    private static HashSet<int> SpareSlots(BundleSpec composed, IReadOnlyList<PoolItem> candidates)
+    {
+        IReadOnlyList<Season> SeasonsAt(int i)
+        {
+            string id = BundleParsing.NormalizeItemId(composed.Slots[i].ItemId ?? "");
+            return candidates.FirstOrDefault(p => p.ItemId == id)?.Seasons ?? Array.Empty<Season>();
+        }
+        var spare = new HashSet<int>();
+        // Widest item first: a Red Mushroom left holding three seasons has nothing to swap to.
+        foreach (int i in Enumerable.Range(0, composed.Slots.Count).OrderByDescending(i => SeasonsAt(i).Count).ThenBy(i => i))
+        {
+            int kept = Enumerable.Range(0, composed.Slots.Count)
+                .Where(j => j != i && !spare.Contains(j))
+                .SelectMany(SeasonsAt)
+                .Distinct()
+                .Count();
+            if (kept >= MinSeasonSpreadCoverage)
+                spare.Add(i);
+        }
+        return spare;
+    }
 
     private static List<PoolItem> TrophyCandidates(bool nonObjectDonationsEnabled)
     {

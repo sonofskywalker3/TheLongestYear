@@ -148,4 +148,31 @@ public class AuthoredBundleComposerTests
             def, composed, 0, pools, true, null, new Random(1));
         Assert.Equal(new[] { "(O)372" }, options);
     }
+
+    /// <summary>The no-repeat pass applies every slot's swap together, so two slots judged one at a
+    /// time must not both lean on each other.</summary>
+    [Fact]
+    public void SeasonSpread_SwapsTogetherCannotThinTheSpread()
+    {
+        var def = AuthoredBundleCatalog.All.Single(d => d.Name == "Four Seasons Sampler");
+        string[] ids = { "(O)16", "(O)18", "(O)396", "(O)398", "(O)404", "(O)406" };
+        var pools = new ItemPools
+        {
+            Forage = new[]
+            {
+                Item("(O)16", new[] { Season.Spring }), Item("(O)18", new[] { Season.Spring }),
+                Item("(O)396", new[] { Season.Summer }), Item("(O)398", new[] { Season.Summer }),
+                Item("(O)404", new[] { Season.Fall }), Item("(O)406", new[] { Season.Fall }),
+                Item("(O)402", new[] { Season.Summer }),
+            },
+        };
+        var composed = new BundleSpec("Crafts Room", 43, def.Name, def.Name, def.RewardField, def.Color, 5,
+            ids.Select(id => new BundleSlotSpec(id, 1, 0)).ToList());
+        IReadOnlyList<string> Options(int slot) => AuthoredBundleComposer.ReplacementOptions(
+            def, composed, slot, pools, true, null, new Random(1));
+
+        Assert.Equal(new[] { "(O)402" }, Options(0));   // a slot the bundle can spare
+        Assert.Empty(Options(1));                       // Spring would go with both
+        Assert.Equal(new[] { "(O)402" }, Options(2));   // Summer for Summer always keeps the spread
+    }
 }
