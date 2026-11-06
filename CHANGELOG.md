@@ -3,6 +3,24 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.4 - 2026-11-05
+
+### Added
+
+- **Deep Woods is supported.** The Longest Year now knows what the Deep Woods hold and how deep you have to go for it. Levels 1 to 9 open with the Secret Woods in week 4. From level 10 the woods hold Skull Cavern monsters, so those items wait until the mines are cleared. The rewind takes your Deep Woods progress back to a fresh game, and the unicorn's Stardrop can be won again each loop.
+- **Keep Stardrop (Unicorn).** A new shrine keep for 500 JP. The Deep Woods unicorn's Stardrop stays with you every loop. It is only shown with Deep Woods installed.
+- **Four shrine keeps for Stardew Valley Expanded.** Keep Cheese Mastery (150 JP), Keep Craft Mastery (350 JP), Keep Brewing Mastery (350 JP) and Keep Grandpa's Shed (1,800 JP). The shed comes back repaired and empty. They are only shown with SVE installed.
+
+### Changed
+
+- **Stardew Valley Expanded unlocks rewind with the loop.** SVE's story orders, Grandpa's Shed, the Summit shortcut and its three masteries carried into every later loop for free. They now wipe at the rewind like the base game's unlocks, and you can earn them again each loop.
+- **Pierre's Special Order covers Cornucopia More Crops.** With that upgrade, Pierre also sells Cornucopia's year 2 seeds in year 1.
+
+### Fixed
+
+- **Heart events in a mod's own maps replay each loop.** A heart event set in a place a mod adds stayed seen after the rewind and never played again. Heart events now replay wherever they happen.
+- **The Secret Woods, the Sewer and the Witch's Swamp counted from day 1.** The darkness and the Traveling Cart treated their items as within reach on Spring 1. Secret Woods items now wait for week 4, the Sewer, the Mutant Bug Lair and Krobus's shop for week 7, and the Witch's Swamp for week 13, the weeks the board already opens them.
+
 ## 1.2.3 - 2026-11-05
 
 ### Fixed
