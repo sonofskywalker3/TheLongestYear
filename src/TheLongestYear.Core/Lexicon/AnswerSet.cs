@@ -80,13 +80,25 @@ public sealed record AnswerSet(
     /// door on this save (<see cref="MapBackDoor.WhenUpgrade"/>): "base+keep_minecarts".</summary>
     public const string DoorJoiner = "+";
 
-    /// <summary>The variant a save reads: its stem, then each owned door upgrade in ordinal order.</summary>
-    public static string VariantName(bool pierreOwned, IReadOnlyList<string>? doorUpgrades = null)
+    /// <summary>The tag of a game where another mod keeps a pool of seeds for Mixed Seeds
+    /// (<see cref="ObtainabilityInputs.MixedSeedPool"/> holds rows): "base+mixed_seed_pool". The pool's
+    /// rows are in the data, so no row is added for the tag. A layer whose mod fills the pool
+    /// (<see cref="LayerInputs.FillsMixedSeedPool"/>) holds such a variant beside the one without.</summary>
+    public const string MixedSeedPoolTag = "mixed_seed_pool";
+
+    /// <summary>The tags the live data gives a save's variant, beside its upgrades: today only
+    /// <see cref="MixedSeedPoolTag"/>.</summary>
+    public static IReadOnlyList<string> DataTags(ObtainabilityInputs inputs)
+        => inputs.MixedSeedPool.Count > 0 ? new[] { MixedSeedPoolTag } : Array.Empty<string>();
+
+    /// <summary>The variant a save reads: its stem, then each owned door upgrade and each data tag
+    /// (<see cref="DataTags"/>) together in ordinal order.</summary>
+    public static string VariantName(bool pierreOwned, IReadOnlyList<string>? doorUpgrades = null, IReadOnlyList<string>? dataTags = null)
     {
         string stem = pierreOwned ? PierreVariant : BaseVariant;
-        return doorUpgrades == null || doorUpgrades.Count == 0
-            ? stem
-            : stem + DoorJoiner + string.Join(DoorJoiner, doorUpgrades.OrderBy(u => u, StringComparer.Ordinal));
+        List<string> suffixes = (doorUpgrades ?? Array.Empty<string>()).Concat(dataTags ?? Array.Empty<string>())
+            .Distinct(StringComparer.Ordinal).OrderBy(u => u, StringComparer.Ordinal).ToList();
+        return suffixes.Count == 0 ? stem : stem + DoorJoiner + string.Join(DoorJoiner, suffixes);
     }
 
     /// <summary>The stem of a variant name: the part before the first <see cref="DoorJoiner"/>.</summary>

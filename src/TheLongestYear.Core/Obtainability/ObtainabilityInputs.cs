@@ -61,6 +61,13 @@ public sealed record MonsterDropRow(string Monster, string ItemId, double Chance
 /// <see cref="RegrowDays"/> is CropData.RegrowDays (-1 or 0 means none), <see cref="Seasons"/> empty means any season.</summary>
 public sealed record CropRow(string SeedId, string HarvestId, IReadOnlyList<Season> Seasons, int GrowthDays, int RegrowDays);
 
+/// <summary>One entry of the pool another mod keeps for Mixed Seeds (Item Extensions' MixedSeeds
+/// asset, key "770", as that mod holds it once loaded): the seed, the game state query that must hold
+/// where the bag is planted, and how many slots the entry takes. The row whose <see cref="SeedId"/>
+/// is Mixed Seeds itself is the vanilla roll's slot, its <see cref="Weight"/> the slots it takes.
+/// <see cref="MixedSeedPool"/> reads them.</summary>
+public sealed record MixedSeedRow(string SeedId, string? Condition, int Weight);
+
 /// <summary>One fruit a tree grows: its own season overrides the tree's; Chance and Condition are FruitTreeFruitData's.
 /// <see cref="ItemId"/> may be an item query; <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
 public sealed record FruitRow(string ItemId, Season? Season, double Chance, string? Condition, bool IsRandom = false);
@@ -147,6 +154,9 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<ShopRow> Shops { get; init; } = Array.Empty<ShopRow>();
     public IReadOnlyList<MonsterDropRow> MonsterDrops { get; init; } = Array.Empty<MonsterDropRow>();
     public IReadOnlyList<CropRow> Crops { get; init; } = Array.Empty<CropRow>();
+    /// <summary>The Mixed Seeds pool another mod keeps; empty when no mod keeps one, or it holds no
+    /// entry. Empty adds no row to <see cref="Lexicon.RowHashes"/>.</summary>
+    public IReadOnlyList<MixedSeedRow> MixedSeedPool { get; init; } = Array.Empty<MixedSeedRow>();
     public IReadOnlyList<FruitTreeRow> FruitTrees { get; init; } = Array.Empty<FruitTreeRow>();
     public IReadOnlyList<MachineRow> Machines { get; init; } = Array.Empty<MachineRow>();
     public IReadOnlyList<RecipeRow> Recipes { get; init; } = Array.Empty<RecipeRow>();

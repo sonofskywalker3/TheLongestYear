@@ -60,6 +60,7 @@ public static class RowHashes
         foreach (var r in inputs.Shops) PutN($"shop|{r.ShopId}|{r.ItemId}|{r.Condition}", r);
         foreach (var r in inputs.MonsterDrops) PutN($"drop|{r.Monster}|{r.ItemId}", r);
         foreach (var r in inputs.Crops) Put("crop|" + r.SeedId, r);
+        foreach (var r in inputs.MixedSeedPool) PutN($"mixedseed|{r.SeedId}|{r.Condition}", r);
         foreach (var r in inputs.FruitTrees) Put("tree|" + r.SaplingId, r);
         foreach (var r in inputs.Machines) PutN("machine|" + r.MachineId, r);
         foreach (var r in inputs.Recipes) Put("recipe|" + r.Name, r);

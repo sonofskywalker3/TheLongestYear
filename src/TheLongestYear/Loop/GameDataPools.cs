@@ -179,6 +179,7 @@ namespace TheLongestYear.Loop
             // Read first: the spawn-row rule below needs the one-way door walk as well as the warp graph.
             LocationWeeks locationWeeks = ReadLocationWeeks(tuning, marks);
             SourceReachability reachability = null;
+            MixedSeedInputs mixedSeeds = null;
             List<RawShopListing> listingsForWeeks = null;
             List<RawShopPlacement> placementsForWeeks = null;
             try
@@ -407,9 +408,28 @@ namespace TheLongestYear.Loop
                         a.EggItemIds ?? new List<string>(), produce));
                 }
 
+                // Seeds another mod's Mixed Seeds pool hands out are a seed route of their own.
+                var seedSeasons = new Dictionary<string, IReadOnlyList<TheLongestYear.Core.Season>>(StringComparer.Ordinal);
+                foreach (RawCropEntry crop in crops)
+                    if (!string.IsNullOrEmpty(crop.SeedItemId))
+                        seedSeasons[BundleParsing.NormalizeItemId(crop.SeedItemId)] = crop.Seasons;
+                IReadOnlyList<TheLongestYear.Core.Obtainability.MixedSeedRow> mixedSeedPool =
+                    TheLongestYear.Integration.ItemExtensionsMixedSeeds.Read(_monitor);
+                IReadOnlySet<string> mixedSeedIds = MixedSeedPool.FarmSeeds(
+                    mixedSeedPool,
+                    seed => seedSeasons.TryGetValue(seed, out IReadOnlyList<TheLongestYear.Core.Season> grows) ? grows : null);
                 reachability = new SourceReachability(
                     unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                    machineRules, animals, closedCatch);
+                    machineRules, animals, closedCatch, mixedSeedIds);
+                if (mixedSeedPool.Count > 0)
+                {
+                    // Which of the pool's seeds nothing else gives a year-1 farm: the same question
+                    // asked without the pool.
+                    var withoutPool = new SourceReachability(
+                        unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
+                        machineRules, animals, closedCatch);
+                    mixedSeeds = new MixedSeedInputs(mixedSeedPool, ReadMixedSeedCrops(mixedSeedPool, mixedSeedIds, withoutPool));
+                }
                 // Only now, with the whole read done: a failure above leaves every row in, as before.
                 forage = forageSplit.Kept.ToList();
                 fish = fishSplit.Kept.ToList();
@@ -435,7 +455,11 @@ namespace TheLongestYear.Loop
                 fruitTrees, geodeDrops, tuning, extraExcludedIds,
                 fishRows.ToDictionary(r => r.ItemId, StringComparer.Ordinal),
                 festivalSeasons, reachability, vanillaOnlyIds, locationWeeks, locationSeasons)
-                with { ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks, randomShopPicks) };
+                with
+                {
+                    ShopWeeks = ReadShopWeeks(listingsForWeeks, placementsForWeeks, locationWeeks, marks, randomShopPicks),
+                    MixedSeeds = mixedSeeds,
+                };
             _monitor?.Log(
                 $"GameDataPools: crops {pools.Crops.Count}, fish {pools.Fish.Count}, " +
                 $"crab-pot {pools.CrabPot.Count}, forage {pools.Forage.Count}, " +
@@ -464,6 +488,29 @@ namespace TheLongestYear.Loop
                     _monitor?.Log($"Locations whose season is {source} (their Season fields and LOCATION_SEASON rows give no calendar season): {string.Join(", ", names)}.", LogLevel.Trace);
             }
             return pools;
+        }
+
+        /// <summary>The Data/Crops facts of each seed in another mod's Mixed Seeds pool, for the supply
+        /// estimate (<see cref="MixedSeedSupply"/>). A seed with no crop row is left out, as the other
+        /// mod leaves it out of its pick.</summary>
+        private static List<MixedSeedCrop> ReadMixedSeedCrops(
+            IReadOnlyList<TheLongestYear.Core.Obtainability.MixedSeedRow> pool, IReadOnlySet<string> farmSeeds, SourceReachability withoutPool)
+        {
+            var cropData = Game1.content.Load<Dictionary<string, CropData>>("Data/Crops");
+            var result = new List<MixedSeedCrop>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (TheLongestYear.Core.Obtainability.MixedSeedRow row in MixedSeedPool.Entries(pool))
+            {
+                if (!seen.Add(row.SeedId)) continue;
+                string key = BundleParsing.StripQualifier(row.SeedId);
+                if (!cropData.TryGetValue(key, out CropData c) || c?.HarvestItemId == null) continue;
+                result.Add(new MixedSeedCrop(
+                    row.SeedId, BundleParsing.NormalizeItemId(c.HarvestItemId), MapSeasons(c.Seasons),
+                    (c.DaysInPhase ?? new List<int>()).Sum(), c.RegrowDays, c.HarvestMinStack,
+                    OnlyRoute: farmSeeds.Contains(row.SeedId)
+                        && (withoutPool.IsUnreachable(row.SeedId) || withoutPool.KnowsNoSource(row.SeedId))));
+            }
+            return result;
         }
 
         private const string SeasonOverrideProperty = "SeasonOverride";

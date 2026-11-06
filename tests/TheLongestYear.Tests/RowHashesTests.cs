@@ -123,8 +123,12 @@ public class RowHashesTests
         ["MonsterDrops"] = "drop|", ["Crops"] = "crop|", ["FruitTrees"] = "tree|", ["Machines"] = "machine|",
         ["Recipes"] = "recipe|", ["Animals"] = "animal|", ["Ponds"] = "pond|", ["TapItems"] = "tap|", ["TreeDrops"] = "treedrop|",
         ["GeodeDrops"] = "geode|", ["GeodesUsingDefaultTable"] = "geodedefault|", ["SlayerQuests"] = "slayer|",
-        ["Buildings"] = "building|", ["CookingChannel"] = "tv|",
+        ["Buildings"] = "building|", ["CookingChannel"] = "tv|", ["MixedSeedPool"] = "mixedseed|",
     };
+
+    /// <summary>Properties the unmodded game leaves empty, so the vanilla fixture has no row of theirs:
+    /// another mod's Mixed Seeds pool. Each is checked with a row of its own instead.</summary>
+    private static readonly IReadOnlySet<string> EmptyInVanilla = new HashSet<string> { "MixedSeedPool" };
 
     [Fact]
     public void EveryInputsPropertyHasRows()
@@ -136,7 +140,12 @@ public class RowHashesTests
 
         var keys = RowHashes.Of(VanillaInputsFixture.Load(), false).Keys.ToList();
         foreach (var (property, prefix) in PrefixByProperty)
-            Assert.True(keys.Any(k => k.StartsWith(prefix, System.StringComparison.Ordinal)), $"{property}: no rows under {prefix}");
+            Assert.Equal(!EmptyInVanilla.Contains(property), keys.Any(k => k.StartsWith(prefix, System.StringComparison.Ordinal)));
+
+        var pool = new[] { new MixedSeedRow("(O)x", "SEASON spring", 1), new MixedSeedRow("(O)x", "SEASON spring", 2) };
+        var poolKeys = RowHashes.Of(new ObtainabilityInputs { MixedSeedPool = pool }, false).Keys
+            .Where(k => k.StartsWith(PrefixByProperty["MixedSeedPool"], System.StringComparison.Ordinal)).OrderBy(k => k, System.StringComparer.Ordinal);
+        Assert.Equal(new[] { "mixedseed|(O)x|SEASON spring|0", "mixedseed|(O)x|SEASON spring|1" }, poolKeys);
     }
 
     [Fact]

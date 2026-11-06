@@ -105,6 +105,17 @@ public sealed class ItemAvailabilityModel
     /// save does not own Pierre's year-2 seeds; the quantity pass caps these asks with the crops.</summary>
     public IReadOnlyDictionary<string, int> YearTwoCropDishUnits { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
+    /// <summary>The quantity basis, Spring to Winter, of each crop only another mod's Mixed Seeds pool
+    /// gives (<see cref="MixedSeedSupply.Bases(MixedSeedInputs?)"/>): what the bags a farmer can gather yield
+    /// of it when every season wants them. The quantity pass bands these asks from it, like any other basis.</summary>
+    public IReadOnlyDictionary<string, double[]> MixedSeedCropBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
+
+    /// <summary>The same basis by the combination of seasons a board asks such crops from
+    /// (<see cref="MixedSeedSupply.BoardBases"/>): a saved bag carries over whole to a season nothing
+    /// else on the board wants it in. <see cref="MixedSeedBoardPass"/> reads it once a board is whole.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> MixedSeedBoardBases { get; init; }
+        = new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal);
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,

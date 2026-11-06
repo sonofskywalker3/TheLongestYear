@@ -56,7 +56,7 @@ public static class QuantityAskPass
             touched.Add(i);
             int stack = AskBands.Roll(basis.Value, profile, rng);
             if (slot.Quality >= QualityGold)
-                stack = AskBands.ForGold(stack, QuantityBasisTables.Crops.ContainsKey(BundleParsing.NormalizeItemId(slot.ItemId)) ? AskBands.CropGoldFactor : AskBands.GoldFactor);
+                stack = AskBands.ForGold(stack, IsCrop(slot.ItemId, model) ? AskBands.CropGoldFactor : AskBands.GoldFactor);
             // After the gold factor, so a gold ask is held to the same count.
             stack = YearTwoCrops.ClampAsk(slot.ItemId, stack, cropCap, hasUpgrade, model);
             if (stack == slot.Stack)
@@ -79,7 +79,16 @@ public static class QuantityAskPass
                || QuantityBasisTables.Minerals.ContainsKey(id) || QuantityBasisTables.Mines.ContainsKey(id)
                || QuantityBasisTables.Resources.ContainsKey(id)
                || SeasonalAskBasis.Rows.ContainsKey(id)
-               || model?.DishBases.ContainsKey(id) == true;
+               || model?.DishBases.ContainsKey(id) == true
+               || model?.MixedSeedCropBases.ContainsKey(id) == true;
+    }
+
+    /// <summary>A crop with a quantity basis: one of the generated table, or one only another mod's
+    /// Mixed Seeds pool gives.</summary>
+    private static bool IsCrop(string itemId, ItemAvailabilityModel? model)
+    {
+        string id = BundleParsing.NormalizeItemId(itemId);
+        return QuantityBasisTables.Crops.ContainsKey(id) || model?.MixedSeedCropBases.ContainsKey(id) == true;
     }
 
     /// <summary>One aggregation rule for every item (design review, 2026-09-04: the old fish-first,
@@ -93,8 +102,10 @@ public static class QuantityAskPass
     /// generated dish table.</summary>
     /// <param name="catchRates">The stored catch model to read when there is no <paramref name="model"/>
     /// (the dish table's ingredient lookup, built before the model it goes on).</param>
+    /// <param name="mixedSeedBases">The Mixed Seeds crop bases to read when there is no <paramref name="model"/>
+    /// (the same dish table lookup).</param>
     public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null,
-        IReadOnlyDictionary<string, CatchRate>? catchRates = null)
+        IReadOnlyDictionary<string, CatchRate>? catchRates = null, IReadOnlyDictionary<string, double[]>? mixedSeedBases = null)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
         double? best = FishAskBasis.BasisByDeadline(model?.CatchRates ?? catchRates, id, deadline);
@@ -111,6 +122,10 @@ public static class QuantityAskPass
             ? SeasonalAskBasis.BasisByDeadline(id, deadline)
             : model != null && model.DishBases.TryGetValue(id, out double[]? dish) ? SeasonalAskBasis.BestUpTo(dish, deadline) : null;
         if (seasonal != null && (best == null || seasonal > best)) best = seasonal;
+        // A crop only another mod's Mixed Seeds pool gives: what the season's bags yield of it.
+        if ((model?.MixedSeedCropBases ?? mixedSeedBases) is { } poolBases && poolBases.TryGetValue(id, out double[]? fromBags)
+            && SeasonalAskBasis.BestUpTo(fromBags, deadline) is double bags && (best == null || bags > best))
+            best = bags;
         return best;
     }
 }

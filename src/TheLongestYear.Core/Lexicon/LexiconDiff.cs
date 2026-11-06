@@ -103,6 +103,10 @@ public static class LexiconDiff
     private static string Show<T>(T value)
         => value is double[] d ? "[" + string.Join(",", d.Select(v => v.ToString("R", CultureInfo.InvariantCulture))) + "]" : value?.ToString() ?? "null";
 
+    private static readonly IReadOnlyDictionary<string, double[]> NoBases = new Dictionary<string, double[]>(StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> NoBoardBases
+        = new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal);
+
     private static void AvailabilitySets(
         IReadOnlyDictionary<string, AvailabilityAnswers> a, IReadOnlyDictionary<string, AvailabilityAnswers> b, List<string> lines)
     {
@@ -118,6 +122,9 @@ public static class LexiconDiff
             Keyed($"availability {key} effort", x.EffortDerived, y.EffortDerived, (p, q) => p.Equals(q), lines);
             Keyed($"availability {key} dishbases", x.DishBases, y.DishBases, (p, q) => p.SequenceEqual(q), lines);
             Keyed($"availability {key} yeartwo dish units", x.YearTwoCropDishUnits, y.YearTwoCropDishUnits, (p, q) => p == q, lines);
+            Keyed($"availability {key} mixed seed crop bases", x.MixedSeedCropBases ?? NoBases, y.MixedSeedCropBases ?? NoBases, (p, q) => p.SequenceEqual(q), lines);
+            Keyed($"availability {key} mixed seed board bases", x.MixedSeedBoardBases ?? NoBoardBases, y.MixedSeedBoardBases ?? NoBoardBases,
+                (p, q) => p.Count == q.Count && p.All(c => q.TryGetValue(c.Key, out double[]? other) && c.Value.SequenceEqual(other)), lines);
         }
     }
 }

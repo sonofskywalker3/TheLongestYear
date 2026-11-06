@@ -242,6 +242,11 @@ namespace TheLongestYear.DebugCommands
                 return;
             }
 
+            if (AnswerSet.DataTags(inputs).Count > 0)
+            {
+                monitor.Log("tly_lexicon write vanilla: another mod keeps a Mixed Seeds pool in this game, so these are not vanilla's answers; nothing written. Remove that mod first.", LogLevel.Warn);
+                return;
+            }
             IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(inputs, context.PierreYear2Owned);
             foreach (var owner in rows.Keys.GroupBy(RowHashes.Owner, StringComparer.Ordinal)
                          .Where(g => g.Key != RowHashes.Vanilla).OrderBy(g => g.Key, StringComparer.Ordinal))
@@ -305,7 +310,7 @@ namespace TheLongestYear.DebugCommands
                 with { Availability = context.Availability() };
             live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn)) };
             IReadOnlyList<string> doors = context.Layers.Set.Marks.DoorUpgrades(TheLongestYear.Loop.LexiconService.OwnsUpgrade);
-            string name = AnswerSet.VariantName(context.PierreYear2Owned, doors);
+            string name = AnswerSet.VariantName(context.PierreYear2Owned, doors, AnswerSet.DataTags(inputs));
 
             string path = Path.Combine(LayerFile.Folder(modDirectory), LayerFile.AnswersFileName(mods));
             LayerAnswers existing;

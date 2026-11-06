@@ -195,8 +195,12 @@ namespace TheLongestYear.Loop
                         continue;
                     }
 
-                    int stack = CappedAsks.ClampStack(pick.ItemId,
-                        OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne));
+                    // A crop only another mod's Mixed Seeds pool gives is held to what any
+                    // difficulty can gather: the replaced slot's stack was sized for another item.
+                    int stack = MixedSeedBoardPass.RepairStack(pick.ItemId,
+                        CappedAsks.ClampStack(pick.ItemId,
+                            OncePerLoopAsks.ClampStack(pick.ItemId, slot.Stack, _oncePerLoopAsksOne)),
+                        _availability);
                     int quality = LegendaryFishRules.ClampQuality(pick.ItemId,
                         BoardRepairRules.ReplacementQuality(match,
                             KeepQuality(pick.ItemId, BoardRepairRules.QualityGold) == BoardRepairRules.QualityGold,

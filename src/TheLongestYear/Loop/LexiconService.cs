@@ -86,7 +86,7 @@ namespace TheLongestYear.Loop
             Forget();
             _computedKeys.Clear();
             IReadOnlyList<string> doors = Loaded.Set.Marks.DoorUpgrades(OwnsUpgrade);
-            _variantName = AnswerSet.VariantName(pierreOwned, doors);
+            _variantName = AnswerSet.VariantName(pierreOwned, doors, AnswerSet.DataTags(live));
             Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers, doors);
             _current = r;
             _variant = r.Variant;
