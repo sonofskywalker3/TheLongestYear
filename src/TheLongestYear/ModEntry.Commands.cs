@@ -245,7 +245,7 @@ namespace TheLongestYear
                     () => _launcher?.OpenCookbook(), () => _launcher?.OpenCraftbook(), a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.FinalizerProbeCommand.Name,
                 "Debug: check whether a blocking garbage collection on the game thread would hang. " + TheLongestYear.DebugCommands.FinalizerProbeCommand.Usage,
-                (cmd, a) => TheLongestYear.DebugCommands.FinalizerProbeCommand.Run(this.Monitor));
+                (cmd, a) => TheLongestYear.DebugCommands.FinalizerProbeCommand.Run(this.Monitor, a));
         }
 
         /// <summary>The bridge's view of <see cref="DebugCommandTable"/>, built once in Entry.</summary>

@@ -154,6 +154,8 @@ namespace TheLongestYear.Loop
                 return false;
             _queued = false;
             _attempts++;
+            // Before any mod's Saving handler can block the game thread on a collection.
+            FinalizerDrain.Run(_monitor);
             DetachUnsaveableWeather();
             _menu = new ResetSaveMenu();
             Game1.activeClickableMenu = _menu;
