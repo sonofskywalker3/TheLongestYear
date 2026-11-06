@@ -23,7 +23,27 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.4
+## What's New in 1.2.5
+
+**New: Seven Deadly Sins is supported.** The Longest Year now knows the mod's crops, fish, machines and shops, and when each can first be reached. The mod's own way into the Secret Woods opens them in week 1. Thanks to SylviaStormsinger.
+
+**New: two shrine keeps for Seven Deadly Sins.** Keep Cliff Road (350 JP) and Keep Old Mine Open (1,000 JP). They are only shown with the mod installed.
+
+**Changed: Unlockable Bundles progress rewinds with the loop.** Paid bundles, their wallet currencies and prize machine progress carried into every later loop. They now reset at the rewind.
+
+**Changed: Keep Minecarts opens Deep Woods early.** With Deep Woods installed and Keep Minecarts owned, Deep Woods and the Secret Woods open in week 1.
+
+**Fixed: Midnight Carp asked for in Summer.** Seven Deadly Sins lists the carp with no season in a cave that opens late. It is back to Fall and Winter. Thanks to SylviaStormsinger.
+
+**Fixed: the Wolf Staff was lost after the first loop.** The pickup now resets with the loop, so the staff is in the woods again each time. Thanks to SylviaStormsinger.
+
+**Fixed: Deep Woods could not be walked into with Stardew Valley Expanded.** The passage from the Secret Woods was walled off. It is open again.
+
+**Fixed: Stardew Valley Expanded's western log stayed gone.** From the second loop the Secret Woods stood open on day 1. The log now comes back each loop.
+
+**Fixed: Mixed Seeds odds with Cornucopia and Item Extensions.** The Cultivation upgrades, the Year-Two Seeds boost and Fall Artichoke Seeds had dropped to a seventh of their odds. They are back to normal.
+
+## 1.2.4
 
 **New: Deep Woods is supported.** The Longest Year now knows what the Deep Woods hold and how deep you have to go for it. Levels 1 to 9 open with the Secret Woods in week 4. From level 10 the woods hold Skull Cavern monsters, so those items wait until the mines are cleared. The rewind takes your Deep Woods progress back to a fresh game, and the unicorn's Stardrop can be won again each loop.
 
@@ -351,6 +371,7 @@ As of 0.11.60, every player-visible string in the mod lives in a JSON file (`i18
 
 This mod is shaped by the players who report bugs and suggest ideas. Every one of these made it better. Thank you!
 
+- **SylviaStormsinger**: has done more than anyone to make The Longest Year work alongside other mods. Her reports and logs led to Seven Deadly Sins support, the SpaceCore skill reset, the Exp Boost and Mastery Boost fix, and the Farm Type Manager save fix.
 - **tanky24u**: suggested the Herd Book and Restart the year, and reported ten bugs and balance problems.
 - **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
 - **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.

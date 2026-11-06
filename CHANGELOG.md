@@ -3,6 +3,26 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.5 - 2026-11-06
+
+### Added
+
+- **Seven Deadly Sins is supported.** The Longest Year now knows the mod's crops, fish, machines and shops, and when each can first be reached. The mod's own way into the Secret Woods opens them in week 1. Thanks to SylviaStormsinger.
+- **Two shrine keeps for Seven Deadly Sins.** Keep Cliff Road (350 JP) and Keep Old Mine Open (1,000 JP). They are only shown with the mod installed.
+
+### Changed
+
+- **Unlockable Bundles progress rewinds with the loop.** Paid bundles, their wallet currencies and prize machine progress carried into every later loop. They now reset at the rewind.
+- **Keep Minecarts opens Deep Woods early.** With Deep Woods installed and Keep Minecarts owned, Deep Woods and the Secret Woods open in week 1.
+
+### Fixed
+
+- **Midnight Carp asked for in Summer.** Seven Deadly Sins lists the carp with no season in a cave that opens late. It is back to Fall and Winter. Thanks to SylviaStormsinger.
+- **The Wolf Staff was lost after the first loop.** The pickup now resets with the loop, so the staff is in the woods again each time. Thanks to SylviaStormsinger.
+- **Deep Woods could not be walked into with Stardew Valley Expanded.** The passage from the Secret Woods was walled off. It is open again.
+- **Stardew Valley Expanded's western log stayed gone.** From the second loop the Secret Woods stood open on day 1. The log now comes back each loop.
+- **Mixed Seeds odds with Cornucopia and Item Extensions.** The Cultivation upgrades, the Year-Two Seeds boost and Fall Artichoke Seeds had dropped to a seventh of their odds. They are back to normal.
+
 ## 1.2.4 - 2026-11-05
 
 ### Added
