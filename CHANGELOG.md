@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.7 - 2026-11-06
+
+### Fixed
+
+- **The save after a rewind could freeze with Ultra Smooth.** On a large mod list the game hung on the first save after a rewind while Ultra Smooth's memory cleanup was on. The Longest Year now clears the way before that save. Thanks to Celjhyn.
+- **Defense Division's characters said goodbye right after a rewind.** The mod's stay timer was wiped while its scenes stayed seen, so the goodbye letter came early. Mod countdowns like this now start over each loop. Thanks to Celjhyn.
+
 ## 1.2.6 - 2026-11-06
 
 ### Added

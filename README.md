@@ -23,7 +23,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.6
+## What's New in 1.2.7
+
+**Fixed: the save after a rewind could freeze with Ultra Smooth.** On a large mod list the game hung on the first save after a rewind while Ultra Smooth's memory cleanup was on. The Longest Year now clears the way before that save. Thanks to Celjhyn.
+
+**Fixed: Defense Division's characters said goodbye right after a rewind.** The mod's stay timer was wiped while its scenes stayed seen, so the goodbye letter came early. Mod countdowns like this now start over each loop. Thanks to Celjhyn.
+
+## 1.2.6
 
 **New: six more Cornucopia crops can be asked for.** With Cornucopia More Crops and Item Extensions installed, Sugar Beet, Asparagus, Chickpea, Zucchini, Barley and Celery can now turn up on a board with mod items allowed. Their seeds only come out of Mixed Seeds in year 1, so the amount asked is sized from how many Mixed Seeds you can gather and how likely each seed is. Bags you save carry over to later seasons, and a board that asks for several of these crops shares the bags between them.
 
