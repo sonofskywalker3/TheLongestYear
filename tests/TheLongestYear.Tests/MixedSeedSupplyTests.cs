@@ -106,32 +106,144 @@ public class MixedSeedSupplyTests
     public void HarvestsStopAtTheSeasonsEnd(int plantDay, int growth, int regrow, int expected)
         => Assert.Equal(expected, MixedSeedSupply.Harvests(plantDay, Season.Spring, growth, regrow));
 
+    private const double SpringBags = 763 * 0.025;
+    /// <summary>Fall's share: Artichoke Seeds keep their quarter.</summary>
+    private const double FallShare = 0.75 / 7;
+    /// <summary>Bags that turn up before Fall in this pool, where the only Summer crop is none: Summer 1,
+    /// the Railroad, Krobus twice and the green rain.</summary>
+    private static readonly double SummerBags = (15 + 45) * 0.025 + 20 + 1443 * 0.025 * 0.9;
+    /// <summary>What Fall's own bags yield of Zucchini: Fall 1's weeds get 7 harvests, Krobus' bags of
+    /// Fall 4 get 6, of Fall 11 get 2, and the later ones none.</summary>
+    private static readonly double FallOwnZucchini = FallShare * (MixedSeedSupply.FallStartWeeds * MixedSeedSupply.BagsPerWeed * 7 + 10 * 6 + 10 * 2);
+
+    private static double Basis(string crop, string combination, Season season)
+        => MixedSeedSupply.BoardBases(Inputs())[crop][combination][(int)season];
+
     [Fact]
-    public void ASpringCropYieldsItsShareOfSpringsBags()
+    public void ABoardThatAsksOnlyInSpringGetsAllOfSpringsBags()
     {
-        IReadOnlyDictionary<string, double[]> bases = MixedSeedSupply.Bases(Inputs());
         // 19.075 bags, 1 in 7 of them Asparagus Seeds, one harvest of one each.
-        Assert.Equal(763 * 0.025 / 7, bases[Asparagus][(int)Season.Spring], 6);
-        Assert.Equal(0, bases[Asparagus][(int)Season.Fall]);
+        Assert.Equal(SpringBags / 7, Basis(Asparagus, "Spring", Season.Spring), 6);
+        Assert.False(MixedSeedSupply.BoardBases(Inputs())[Asparagus].ContainsKey("Fall"));
     }
 
     [Fact]
-    public void AFallCropYieldsFromFallsBagsAndTheHarvestsEachStillGets()
+    public void ABoardThatAsksOnlyInFallGetsEverySavedBagOnFallsFirstDay()
     {
-        IReadOnlyDictionary<string, double[]> bases = MixedSeedSupply.Bases(Inputs());
-        // Fall's share is 0.75 / 7 (Artichoke Seeds keep their quarter). Fall 1's weeds get 7 harvests,
-        // Krobus' bags of Fall 4 get 6, of Fall 11 get 2, and the later ones none.
-        double share = 0.75 / 7;
-        double expected = share * (MixedSeedSupply.FallStartWeeds * MixedSeedSupply.BagsPerWeed * 7 + 10 * 6 + 10 * 2);
-        Assert.Equal(expected, bases[Zucchini][(int)Season.Fall], 6);
+        // This pool has no Summer crop, so every bag from before Fall is planted on Fall 1: 7 harvests.
+        double expected = FallShare * (SpringBags + SummerBags) * 7 + FallOwnZucchini;
+        Assert.Equal(expected, Basis(Zucchini, "Fall", Season.Fall), 6);
     }
 
     [Fact]
-    public void OnlyACropNothingElseGivesGetsABasis()
+    public void ABagWantedInTwoSeasonsIsSharedBetweenThem()
+    {
+        // Spring's bags are halved between Spring and Fall; Summer's are wanted only in Fall.
+        Assert.Equal(SpringBags / 2 / 7, Basis(Asparagus, "Spring+Fall", Season.Spring), 6);
+        double fall = FallShare * (SpringBags / 2 + SummerBags) * 7 + FallOwnZucchini;
+        Assert.Equal(fall, Basis(Zucchini, "Spring+Fall", Season.Fall), 6);
+        // No bag is counted twice: what Spring gives up is exactly what Fall gains.
+        double springLoss = SpringBags / 2;
+        double fallGain = (Basis(Zucchini, "Fall", Season.Fall) - fall) / (FallShare * 7);
+        Assert.Equal(springLoss, fallGain, 6);
+    }
+
+    [Fact]
+    public void ABagTooLateForItsOwnSeasonGoesOnWhole()
+    {
+        // With a Summer crop of 10 days, the green rain (Summer 23) and Krobus on Summer 25 cannot be
+        // harvested in Summer: they are Fall's whole, even on a board that asks in Summer too.
+        MixedSeedInputs inputs = Inputs();
+        var pool = inputs.Pool.ToList();
+        pool.Insert(0, new MixedSeedRow("(O)ChickSeeds", In("summer"), 1));
+        var crops = inputs.Crops.ToList();
+        crops.Add(new MixedSeedCrop("(O)ChickSeeds", "(O)Chick", new[] { Season.Summer }, 10, 5, 2, OnlyRoute: true));
+        var bases = MixedSeedSupply.BoardBases(new MixedSeedInputs(pool, crops));
+        double late = 1443 * 0.025 * 0.9 + 10;
+        double early = (15 + 45) * 0.025 + 10;   // Summer 1, the Railroad, Krobus on Summer 18
+        double fall = FallShare * (SpringBags / 2 + early / 2 + late) * 7 + FallOwnZucchini;
+        Assert.Equal(fall, bases[Zucchini]["Summer+Fall"][(int)Season.Fall], 6);
+        // Summer alone: Spring's bags from Summer 1 (4 harvests of 2), the early bags the day they come.
+        double summerShare = 1.0 / 2;   // one Summer entry and the vanilla slot
+        double summer = summerShare * 2 * (SpringBags * 4 + 15 * 0.025 * 4 + 45 * 0.025 * 4 + 10 * 1);
+        Assert.Equal(summer, bases["(O)Chick"]["Summer"][(int)Season.Summer], 6);
+    }
+
+    [Fact]
+    public void AnAskOutsideABoardReadsTheEverySeasonBasis()
     {
         IReadOnlyDictionary<string, double[]> bases = MixedSeedSupply.Bases(Inputs());
         Assert.Equal(new[] { Asparagus, Zucchini }, bases.Keys.OrderBy(k => k, StringComparer.Ordinal));
+        // This pool has crops in Spring and Fall only, so those are the seasons that share a bag.
+        Assert.Equal("Spring+Fall", MixedSeedSupply.EverySeason(Inputs()));
+        Assert.Equal(Basis(Asparagus, "Spring+Fall", Season.Spring), bases[Asparagus][(int)Season.Spring], 6);
         Assert.Empty(MixedSeedSupply.Bases(null));
+    }
+
+    // ---- The board pass ----
+
+    private static ItemAvailabilityModel Model()
+    {
+        return new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(StringComparer.Ordinal))
+            { MixedSeedBoardBases = MixedSeedSupply.BoardBases(Inputs()), MixedSeedCropBases = MixedSeedSupply.Bases(Inputs()) };
+    }
+
+    private static BundleSpec Bundle(int index, params (string Id, int Stack)[] slots)
+        => new("Pantry", index, "B" + index, "B" + index, "O 495 30", 0, slots.Length,
+            slots.Select(s => new BundleSlotSpec(s.Id, s.Stack, 0)).ToList());
+
+    private static DifficultyProfile Profile(DifficultyStep step)
+        => DifficultyResolver.Resolve(new DifficultySettings { StackSize = step }, new GameplayConfig());
+
+    [Fact]
+    public void TheBoardsSeasonsAreReadOffItsSlots()
+    {
+        ItemAvailabilityModel model = Model();
+        Assert.Empty(MixedSeedBoardPass.AskedSeasons(new[] { Bundle(1, ("(O)24", 5)) }, model));
+        Assert.Equal(new[] { Season.Fall }, MixedSeedBoardPass.AskedSeasons(new[] { Bundle(1, (Zucchini, 1)) }, model));
+        Assert.Equal(new[] { Season.Spring, Season.Fall },
+            MixedSeedBoardPass.AskedSeasons(new[] { Bundle(1, (Zucchini, 1)), Bundle(2, (Asparagus, 1)) }, model));
+        // An Artichoke grows from the same bags: it makes Fall an asked season beside a pool crop,
+        Assert.Equal(new[] { Season.Spring, Season.Fall },
+            MixedSeedBoardPass.AskedSeasons(new[] { Bundle(1, (Asparagus, 1), (YearTwoCrops.Artichoke, 2)) }, model));
+        // and alone it is not this pass's business.
+        Assert.Empty(MixedSeedBoardPass.AskedSeasons(new[] { Bundle(1, (YearTwoCrops.Artichoke, 2)) }, model));
+    }
+
+    [Fact]
+    public void ALoneFallCropIsSizedFromEverySavedBag()
+    {
+        ItemAvailabilityModel model = Model();
+        double basis = Basis(Zucchini, "Fall", Season.Fall);
+        var board = new[] { Bundle(1, ("(O)24", 5), (Zucchini, 1)) };
+        IReadOnlyList<BundleSpec> sized = MixedSeedBoardPass.Apply(board, model, Profile(DifficultyStep.Normal), seed: 42);
+        int whole = (int)Math.Round(basis, MidpointRounding.AwayFromZero);
+        Assert.InRange(sized[0].Slots[1].Stack, (int)Math.Ceiling(whole * 0.20), (int)Math.Ceiling(whole * 0.50));
+        Assert.Equal(5, sized[0].Slots[0].Stack);
+        // The same board and seed give the same ask.
+        Assert.Equal(sized[0].Slots[1].Stack, MixedSeedBoardPass.Apply(board, model, Profile(DifficultyStep.Normal), seed: 42)[0].Slots[1].Stack);
+    }
+
+    [Fact]
+    public void AnArtichokeOnTheBoardHalvesWhatSpringKeeps()
+    {
+        ItemAvailabilityModel model = Model();
+        var board = new[] { Bundle(1, (Asparagus, 9), (YearTwoCrops.Artichoke, 3)) };
+        IReadOnlyList<BundleSpec> sized = MixedSeedBoardPass.Apply(board, model, Profile(DifficultyStep.Extreme), seed: 7);
+        // Spring keeps half its bags: about 1.4 Asparagus, so even Extreme asks one.
+        Assert.Equal(1, sized[0].Slots[0].Stack);
+        Assert.Equal(3, sized[0].Slots[1].Stack);
+    }
+
+    [Fact]
+    public void ABoardWithoutSuchCropsOrAModelWithoutAPoolIsLeftAsItIs()
+    {
+        var board = new[] { Bundle(1, ("(O)24", 5)) };
+        Assert.Same(board, MixedSeedBoardPass.Apply(board, Model(), Profile(DifficultyStep.Normal), seed: 1));
+        var poolBoard = new[] { Bundle(1, (Zucchini, 3)) };
+        var noPool = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(StringComparer.Ordinal));
+        Assert.Same(poolBoard, MixedSeedBoardPass.Apply(poolBoard, noPool, Profile(DifficultyStep.Normal), seed: 1));
+        Assert.Same(poolBoard, MixedSeedBoardPass.Apply(poolBoard, null, Profile(DifficultyStep.Normal), seed: 1));
     }
 
     [Fact]
@@ -141,9 +253,10 @@ public class MixedSeedSupplyTests
             { MixedSeedCropBases = MixedSeedSupply.Bases(Inputs()) };
         Assert.True(QuantityAskPass.Covers(Asparagus, model));
         Assert.False(QuantityAskPass.Covers(Asparagus));
-        double basis = QuantityAskPass.BasisByDeadline(Asparagus, Season.Spring, model)!.Value;
-        Assert.Equal(763 * 0.025 / 7, basis, 6);
-        // About 2.7 Asparagus in a Spring: Easy asks 1, Normal 1 or 2, Hard 2, Extreme 2 or 3.
+        // Outside a board Spring keeps half its bags here (this pool has no Summer crop): about 1.4.
+        Assert.Equal(SpringBags / 2 / 7, QuantityAskPass.BasisByDeadline(Asparagus, Season.Spring, model)!.Value, 6);
+        double basis = Basis(Asparagus, "Spring", Season.Spring);
+        // A board that asks only in Spring: about 2.7 Asparagus. Easy asks 1, Normal 1 or 2, Hard 2, Extreme 2 or 3.
         (int Low, int High) Range(DifficultyStep step)
         {
             DifficultyProfile profile = DifficultyResolver.Resolve(new DifficultySettings { StackSize = step }, new GameplayConfig());
@@ -201,7 +314,11 @@ public class MixedSeedSupplyTests
         Assert.DoesNotContain("MixedSeedCropBases", System.Text.Json.JsonSerializer.Serialize(answers, LexiconJson.Options));
         string with = System.Text.Json.JsonSerializer.Serialize(answers with { MixedSeedCropBases = MixedSeedSupply.Bases(Inputs()) }, LexiconJson.Options);
         AvailabilityAnswers back = System.Text.Json.JsonSerializer.Deserialize<AvailabilityAnswers>(with, LexiconJson.Options)!;
-        Assert.Equal(763 * 0.025 / 7, back.MixedSeedCropBases![Asparagus][0], 6);
+        Assert.Equal(SpringBags / 2 / 7, back.MixedSeedCropBases![Asparagus][0], 6);
+        Assert.DoesNotContain("MixedSeedBoardBases", System.Text.Json.JsonSerializer.Serialize(answers, LexiconJson.Options));
+        string board = System.Text.Json.JsonSerializer.Serialize(answers with { MixedSeedBoardBases = MixedSeedSupply.BoardBases(Inputs()) }, LexiconJson.Options);
+        AvailabilityAnswers boardBack = System.Text.Json.JsonSerializer.Deserialize<AvailabilityAnswers>(board, LexiconJson.Options)!;
+        Assert.Equal(SpringBags / 7, boardBack.MixedSeedBoardBases![Asparagus]["Spring"][0], 6);
     }
 
     // ---- The layer variant ----

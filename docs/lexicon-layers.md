@@ -246,11 +246,16 @@ nothing changes.
   greenhouse. A pool seed is in reach whatever its shop lines say, so a crop whose seed is sold only from year 2 can
   be asked for.
 - **How much is asked.** A crop only the pool gives has a quantity basis, worked out in the cold build and stored with
-  the availability answers (`MixedSeedCropBases`): the bags of Mixed Seeds that turn up in the crop's season, times
-  the seed's share, times the harvests a planting that day still gets, times the least a harvest gives. The ask is
-  the difficulty's band of that basis, like every other basis. The supply table is in `MixedSeedSupply`: weeds at
-  2.5% a bag each (counted on a Standard farm with `tly_weedsweep`, 2026-11-06) and Krobus' ten bags each Thursday
-  from the Sewer's week. Each bag is counted once, in the season it turns up.
+  the availability answers: the bags of Mixed Seeds the crop's season gets, times the seed's share, times the
+  harvests the planting still gets, times the least a harvest gives. The ask is the difficulty's band of that basis,
+  like every other basis. The supply table is in `MixedSeedSupply`: weeds at 2.5% a bag each (counted on a Standard
+  farm with `tly_weedsweep`, 2026-11-06) and Krobus' ten bags each Thursday from the Sewer's week.
+- **Saved bags.** A bag carries over to later seasons and is counted once: it is shared evenly between the seasons
+  asks come from, from its own season on (a bag too late for its own season goes on whole). The basis is stored for
+  each of the seven combinations of Spring, Summer and Fall (`MixedSeedBoardBases`). When a board is whole,
+  `MixedSeedBoardPass` reads which seasons it asks such crops from (an Artichoke counts as Fall) and sizes those
+  slots from that combination's basis. A weekly or shrine goal, a dish and an artisan good read the basis for all
+  three seasons (`MixedSeedCropBases`), the smallest.
 - **Variants.** A game whose pool holds rows reads the variant `<stem>+mixed_seed_pool` (`base+mixed_seed_pool`,
   `pierre_year2_seeds+mixed_seed_pool`; a door upgrade joins in ordinal order). `vanilla.json` and layers that do not
   fill the pool are read at the stem. A layer with `FillsMixedSeedPool` holds the variants itself: write each with

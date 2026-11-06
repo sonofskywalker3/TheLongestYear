@@ -45,6 +45,8 @@ public static class ItemAvailabilityBuilder
         {
             DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits,
             MixedSeedCropBases = answers.MixedSeedCropBases ?? new Dictionary<string, double[]>(StringComparer.Ordinal),
+            MixedSeedBoardBases = answers.MixedSeedBoardBases
+                ?? new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal),
             CatchRates = catchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
         };
     }
@@ -129,14 +131,18 @@ public static class ItemAvailabilityBuilder
 
         // What the bags of Mixed Seeds a farmer can gather yield of each crop only another mod's pool
         // gives: worked out here, in the cold build, and stored with the answers.
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> mixedSeedBoardBases = MixedSeedSupply.BoardBases(pools.MixedSeeds);
         IReadOnlyDictionary<string, double[]> mixedSeedBases = MixedSeedSupply.Bases(pools.MixedSeeds);
         var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases };
+            { CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases };
         var noEffort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         if (effortData == null)
             return (model, new AvailabilityAnswers(derived, effortDerived ?? noEffort,
                 new Dictionary<string, double[]>(StringComparer.Ordinal), new Dictionary<string, int>(StringComparer.Ordinal))
-                { MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null });
+                {
+                    MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null,
+                    MixedSeedBoardBases = mixedSeedBoardBases.Count > 0 ? mixedSeedBoardBases : null,
+                });
 
         // The dish table needs the model's placements, so it is built from this first model and
         // handed to the one returned. Its effort cap reads a composer that never counts the
@@ -157,9 +163,15 @@ public static class ItemAvailabilityBuilder
         // Built here, not through FromAnswers, so the tests comparing the two compare two constructions.
         IReadOnlyDictionary<string, int> dishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade);
         var built = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases };
+            {
+                DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates,
+                MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases,
+            };
         return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits)
-            { MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null });
+            {
+                MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null,
+                MixedSeedBoardBases = mixedSeedBoardBases.Count > 0 ? mixedSeedBoardBases : null,
+            });
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

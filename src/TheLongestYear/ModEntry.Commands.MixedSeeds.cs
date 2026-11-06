@@ -76,9 +76,12 @@ namespace TheLongestYear
             foreach (var arrival in TheLongestYear.Core.MixedSeedSupply.Arrivals)
                 this.Monitor.Log($"  supply day {arrival.DayOfYear} (week {TheLongestYear.Core.Calendar.WeekOfYear((arrival.DayOfYear - 1) / TheLongestYear.Core.Calendar.DaysPerMonth, TheLongestYear.Core.Calendar.DayOfMonthOf(arrival.DayOfYear))}): {arrival.Bags.ToString("0.0", inv)} bag(s), {arrival.Source}", LogLevel.Info);
             var bases = TheLongestYear.Core.MixedSeedSupply.Bases(inputs);
+            foreach (var crop in TheLongestYear.Core.MixedSeedSupply.BoardBases(inputs))
+                this.Monitor.Log($"  board basis {crop.Key}: " + string.Join("; ", crop.Value.Select(c =>
+                    $"{c.Key} {c.Value.Max().ToString("0.0", inv)}")), LogLevel.Info);
             foreach (var crop in inputs.Crops.OrderBy(c => c.SeedId, System.StringComparer.Ordinal))
             {
-                string basis = bases.TryGetValue(crop.HarvestId, out double[] b) ? "basis " + string.Join("/", b.Select(v => v.ToString("0.0", inv))) : "no basis";
+                string basis = bases.TryGetValue(crop.HarvestId, out double[] b) ? "basis outside a board " + string.Join("/", b.Select(v => v.ToString("0.0", inv))) : "no basis";
                 string served = _availability != null && _availability.MixedSeedCropBases.TryGetValue(crop.HarvestId, out double[] m)
                     ? "; model " + string.Join("/", m.Select(v => v.ToString("0.0", inv))) : "";
                 this.Monitor.Log($"  crop {crop.HarvestId} from {crop.SeedId}: seasons [{string.Join(",", crop.Seasons)}], grows {crop.GrowthDays}d, regrow {crop.RegrowDays}, least harvest {crop.HarvestMinStack}, only route {crop.OnlyRoute}; {basis}{served}", LogLevel.Info);

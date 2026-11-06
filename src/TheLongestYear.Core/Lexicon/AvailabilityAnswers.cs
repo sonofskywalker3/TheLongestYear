@@ -26,8 +26,12 @@ public sealed record AvailabilityAnswers(
     public string Inputs { get; init; } = "";
 
     /// <summary>The quantity basis, Spring to Winter, of each crop only another mod's Mixed Seeds pool
-    /// gives (<see cref="MixedSeedSupply.Bases"/>). Null, and so not written, when there is none.</summary>
+    /// gives, for an ask outside a board (<see cref="MixedSeedSupply.Bases(MixedSeedInputs?)"/>). Null, and so not written, when there is none.</summary>
     public IReadOnlyDictionary<string, double[]>? MixedSeedCropBases { get; init; }
+
+    /// <summary>The same basis for each combination of seasons a board asks such crops from
+    /// (<see cref="MixedSeedSupply.BoardBases"/>). Null, and so not written, when there is none.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>>? MixedSeedBoardBases { get; init; }
 
     /// <summary>The <see cref="AnswerVariant.Availability"/> key: <c>"{step}|kitchen"</c> or <c>"{step}|no_kitchen"</c>.
     /// The week mode follows from the step (<see cref="WeekModes.For"/>).</summary>

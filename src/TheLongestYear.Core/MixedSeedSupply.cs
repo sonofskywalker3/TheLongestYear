@@ -38,10 +38,16 @@ public sealed record MixedSeedArrival(int DayOfYear, double Bags, string Source)
 /// too: it opens with the Dark Talisman quest, after the Community Center.
 /// </para>
 /// <para>
-/// <b>Each bag is counted once, in the season it turns up, planted that day.</b> A bag kept for a
-/// later season is the player's own gain; counting it again there would promise the same bag to two
-/// asks. The green rain falls on one of eight Summer days and the last of them is used, which is too
-/// late for any Summer crop here, so its bags size nothing.
+/// <b>A saved bag carries over, and each bag is counted once</b> (Jeff, 2026-11-06). Bags only
+/// compete between seasons: inside one season the shares already split them between its crops. So a
+/// bag is shared evenly between the seasons that still want it, which are the seasons the asks come
+/// from (<see cref="Combination"/>), from the bag's own season on. In its own season it is planted
+/// the day it turns up, in a later one on that season's first day. A bag that turns up too late in
+/// its season for any of the pool's crops there to be harvested goes on to the later seasons whole:
+/// the green rain falls on one of eight Summer days and the last of them is used, so its bags are
+/// Fall's. The yields are worked out for every combination of seasons in the cold build and stored;
+/// the board reads the one for the seasons it asks from, and an ask rolled outside a board (a weekly
+/// or shrine goal) reads the one for all three, the smallest.
 /// </para></summary>
 public static class MixedSeedSupply
 {
@@ -109,46 +115,106 @@ public static class MixedSeedSupply
         return 1 + (regrowDays > 0 ? (last - first) / regrowDays : 0);
     }
 
-    /// <summary>What one crop can yield in each season (Spring to Winter) from the bags that turn up
-    /// in it: bags, times the seed's share of a bag that season, times the harvests a planting that
-    /// day still gets, times the least a harvest gives.</summary>
-    public static double[] YieldBySeason(MixedSeedCrop crop, IReadOnlyList<MixedSeedRow> pool, Func<string, IReadOnlyList<Season>?> cropSeasons)
+    private const string CombinationJoiner = "+";
+
+    /// <summary>The name of a set of seasons asks come from: "Spring", "Spring+Fall",
+    /// "Spring+Summer+Fall". Winter is never one of them.</summary>
+    public static string Combination(IEnumerable<Season> seasons)
+        => string.Join(CombinationJoiner, GrowingSeasons.Where(seasons.Contains));
+
+    /// <summary>Every season asks could come from with this pool, which is the combination an ask
+    /// outside a board reads: each season one of the pool-only crops grows in, and Fall, whose
+    /// Artichoke grows from the same bags in any game.</summary>
+    public static string EverySeason(MixedSeedInputs inputs)
+        => Combination(GrowingSeasons.Where(s => s == Season.Fall
+            || inputs.Crops.Any(c => c.OnlyRoute && (c.Seasons.Count == 0 || c.Seasons.Contains(s)))));
+
+    /// <summary>The seven combinations of Spring, Summer and Fall.</summary>
+    public static IReadOnlyList<IReadOnlyList<Season>> Combinations { get; } = Enumerable.Range(1, (1 << GrowingSeasons.Length) - 1)
+        .Select(mask => (IReadOnlyList<Season>)GrowingSeasons.Where((_, i) => (mask & (1 << i)) != 0).ToList()).ToList();
+
+    private static Season SeasonOfDay(int dayOfYear) => (Season)((dayOfYear - 1) / Calendar.DaysPerMonth);
+
+    /// <summary>Whether a bag turning up on <paramref name="arrival"/> can still be planted in its own
+    /// season for something: one of the pool-only crops of that season is harvested from it in time.</summary>
+    private static bool UsableInOwnSeason(MixedSeedArrival arrival, IReadOnlyList<MixedSeedCrop> crops)
+    {
+        Season season = SeasonOfDay(arrival.DayOfYear);
+        return crops.Any(c => c.OnlyRoute && (c.Seasons.Count == 0 || c.Seasons.Contains(season))
+            && Harvests(arrival.DayOfYear, season, c.GrowthDays, c.RegrowDays) > 0);
+    }
+
+    /// <summary>What one crop can yield in each season (Spring to Winter) when the asks come from the
+    /// seasons in <paramref name="asked"/>: for each arrival, the part of its bags that season gets
+    /// (an even split between the asked seasons from its own on that can use it), times the seed's
+    /// share of a bag that season, times the harvests the planting still gets, times the least a
+    /// harvest gives. A season not in <paramref name="asked"/> yields nothing.</summary>
+    public static double[] YieldBySeason(
+        MixedSeedCrop crop, MixedSeedInputs inputs, IReadOnlyCollection<Season> asked, Func<string, IReadOnlyList<Season>?> cropSeasons)
     {
         if (crop == null) throw new ArgumentNullException(nameof(crop));
+        if (inputs == null) throw new ArgumentNullException(nameof(inputs));
         var bySeason = new double[Calendar.MonthsPerYear];
         foreach (Season season in GrowingSeasons)
         {
+            if (!asked.Contains(season)) continue;
             if (crop.Seasons.Count > 0 && !crop.Seasons.Contains(season)) continue;
-            if (!MixedSeedPool.Shares(season, indoors: false, pool, cropSeasons).TryGetValue(crop.SeedId, out double share)) continue;
+            if (!MixedSeedPool.Shares(season, indoors: false, inputs.Pool, cropSeasons).TryGetValue(crop.SeedId, out double share)) continue;
             foreach (MixedSeedArrival arrival in Arrivals)
             {
-                if (arrival.DayOfYear < FirstDay(season) || arrival.DayOfYear > LastDay(season)) continue;
-                bySeason[(int)season] += arrival.Bags * share
-                    * Harvests(arrival.DayOfYear, season, crop.GrowthDays, crop.RegrowDays) * Math.Max(1, crop.HarvestMinStack);
+                Season own = SeasonOfDay(arrival.DayOfYear);
+                if (own > season) continue;
+                bool ownUses = UsableInOwnSeason(arrival, inputs.Crops);
+                int takers = GrowingSeasons.Count(s => asked.Contains(s) && (s > own || (s == own && ownUses)));
+                if (takers == 0 || (own == season && !ownUses)) continue;
+                int plantDay = own == season ? arrival.DayOfYear : FirstDay(season);
+                bySeason[(int)season] += arrival.Bags / takers * share
+                    * Harvests(plantDay, season, crop.GrowthDays, crop.RegrowDays) * Math.Max(1, crop.HarvestMinStack);
             }
         }
         return bySeason;
     }
 
     /// <summary>The quantity basis of every crop only the pool gives (<see cref="MixedSeedCrop.OnlyRoute"/>),
-    /// by qualified harvest id: its <see cref="YieldBySeason"/>, the largest when two seeds grow one
-    /// crop. A crop the estimate gives nothing in any season is left out. Read like the other bases:
-    /// the difficulty's band of it is the ask (<see cref="AskBands"/>).</summary>
-    public static IReadOnlyDictionary<string, double[]> Bases(MixedSeedInputs? inputs)
+    /// by qualified harvest id and then by <see cref="Combination"/> of the seasons asks come from: its
+    /// <see cref="YieldBySeason"/>, the largest when two seeds grow one crop. A combination that
+    /// yields the crop nothing is left out, and so is a crop no combination yields. Read like the
+    /// other bases: the difficulty's band of it is the ask (<see cref="AskBands"/>).</summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> BoardBases(MixedSeedInputs? inputs)
     {
-        var bases = new Dictionary<string, double[]>(StringComparer.Ordinal);
+        var bases = new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal);
         if (inputs == null || inputs.Pool.Count == 0) return bases;
         var seasons = inputs.Crops.GroupBy(c => c.SeedId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Seasons, StringComparer.Ordinal);
         IReadOnlyList<Season>? SeasonsOf(string seed) => seasons.TryGetValue(seed, out IReadOnlyList<Season>? s) ? s : null;
         foreach (MixedSeedCrop crop in inputs.Crops.Where(c => c.OnlyRoute).OrderBy(c => c.SeedId, StringComparer.Ordinal))
         {
-            double[] yield = YieldBySeason(crop, inputs.Pool, SeasonsOf);
-            if (yield.All(y => y <= 0)) continue;
             string id = BundleParsing.NormalizeItemId(crop.HarvestId);
-            if (bases.TryGetValue(id, out double[]? had))
-                for (int i = 0; i < had.Length; i++) yield[i] = Math.Max(yield[i], had[i]);
-            bases[id] = yield;
+            var byCombination = bases.TryGetValue(id, out var had)
+                ? new SortedDictionary<string, double[]>(had.ToDictionary(p => p.Key, p => p.Value), StringComparer.Ordinal)
+                : new SortedDictionary<string, double[]>(StringComparer.Ordinal);
+            foreach (IReadOnlyList<Season> asked in Combinations)
+            {
+                double[] yield = YieldBySeason(crop, inputs, asked, SeasonsOf);
+                if (yield.All(y => y <= 0)) continue;
+                string key = Combination(asked);
+                if (byCombination.TryGetValue(key, out double[]? other))
+                    for (int i = 0; i < other.Length; i++) yield[i] = Math.Max(yield[i], other[i]);
+                byCombination[key] = yield;
+            }
+            if (byCombination.Count > 0) bases[id] = byCombination;
         }
+        return bases;
+    }
+
+    /// <summary>The basis an ask outside a board reads: each crop's <see cref="BoardBases"/> entry for
+    /// <see cref="EverySeason"/>, where every bag is shared the most ways.</summary>
+    public static IReadOnlyDictionary<string, double[]> Bases(MixedSeedInputs? inputs)
+    {
+        var bases = new Dictionary<string, double[]>(StringComparer.Ordinal);
+        if (inputs == null || inputs.Pool.Count == 0) return bases;
+        string every = EverySeason(inputs);
+        foreach (var (id, byCombination) in BoardBases(inputs))
+            if (byCombination.TryGetValue(every, out double[]? yield)) bases[id] = yield;
         return bases;
     }
 }

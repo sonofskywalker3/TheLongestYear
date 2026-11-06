@@ -305,6 +305,17 @@ namespace TheLongestYear.Loop
             timing?.Mark("pass 3 emit");
             timing?.Total();
 
+            // With the whole board in hand: the crops only another mod's Mixed Seeds pool gives are
+            // sized for the seasons this board asks them from, so a saved bag is promised once.
+            IReadOnlyList<BundleSpec> sized = Core.MixedSeedBoardPass.Apply(allPicks, Availability, _difficulty, seed);
+            if (!ReferenceEquals(sized, allPicks))
+            {
+                _monitor?.Log(
+                    $"BundleEngine: Mixed Seeds crops sized for a board asking them in {Core.MixedSeedSupply.Combination(Core.MixedSeedBoardPass.AskedSeasons(allPicks, Availability))}.",
+                    LogLevel.Trace);
+                allPicks = sized.ToList();
+            }
+
             // Guard, not the rule: the fill budgets above are what hold the allowance.
             List<BundleSpec> themed = allPicks.Where(b => !CappedCountSkipsRoom(b.Room)).ToList();
             foreach (string id in Core.CappedAsks.Ids.OrderBy(id => id, StringComparer.Ordinal))
