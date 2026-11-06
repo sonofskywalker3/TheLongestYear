@@ -371,7 +371,7 @@ As of 0.11.60, every player-visible string in the mod lives in a JSON file (`i18
 
 This mod is shaped by the players who report bugs and suggest ideas. Every one of these made it better. Thank you!
 
-- **SylviaStormsinger**: has done more than anyone to make The Longest Year work alongside other mods. Her reports and logs led to Seven Deadly Sins support, the SpaceCore skill reset, the Exp Boost and Mastery Boost fix, and the Farm Type Manager save fix.
+- **SylviaStormsinger**: has done more than anyone to make The Longest Year work alongside other mods. Those reports and logs led to Seven Deadly Sins support, the SpaceCore skill reset, the Exp Boost and Mastery Boost fix, and the Farm Type Manager save fix.
 - **tanky24u**: suggested the Herd Book and Restart the year, and reported ten bugs and balance problems.
 - **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
 - **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.
