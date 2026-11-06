@@ -80,6 +80,7 @@ namespace TheLongestYear
                 return;
             ApplyNewSaveStamps(wasNewGame);
             RunActivation.Activate();
+            _sveDeepWoodsPassage?.Reload();
             _metaLoaded = true;
             RestoreBoardFromOtherMods(wasNewGame);
             ApplyPerSaveFlags();
@@ -346,6 +347,7 @@ namespace TheLongestYear
         private void DeactivateTly()
         {
             RunActivation.Deactivate();
+            _sveDeepWoodsPassage?.Reload();
             // The per-tick festival clock path stops running once dormant: undo its write here.
             TheLongestYear.Loop.FestivalTimeFlow.Reset();
             TheLongestYear.Loop.ResetSave.Clear();

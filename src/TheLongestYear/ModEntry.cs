@@ -112,6 +112,7 @@ namespace TheLongestYear
         private TheLongestYear.Loop.JojaLetterService _jojaLetters;
         private Integration.JojaOfferDriver _jojaOffer;
         private TheLongestYear.Loop.PierreYear2SeedsService _pierreSeeds;
+        private Integration.SveDeepWoodsPassage _sveDeepWoodsPassage;
         private Integration.MorrisDarkSprite _morrisDark;
         private Integration.MorrisDarkPortrait _morrisDarkPortrait;
         private Integration.JunimoPortrait _junimoPortrait;
@@ -328,6 +329,8 @@ namespace TheLongestYear
             helper.Events.Content.AssetRequested += _openingEvent.OnAssetRequested;
             // Circle of Warding furniture (Data/Furniture row + texture), granted per loop below.
             _circles = new TheLongestYear.Loop.CircleOfWardingService(this.Monitor, _meta, helper);
+            // Stardew Valley Expanded with Deep Woods: SVE's own passage patch, which no longer runs by itself.
+            _sveDeepWoodsPassage = new Integration.SveDeepWoodsPassage(helper, this.Monitor);
             // pierre_year2_seeds: Data/Shops edit gated on ownership (UpgradeChecker, per save).
             _pierreSeeds = new TheLongestYear.Loop.PierreYear2SeedsService(this.Monitor);
             helper.Events.Content.AssetRequested += _pierreSeeds.OnAssetRequested;
