@@ -52,4 +52,12 @@ public static class SdsUnlocks
         ids.UnionWith(StationScenes);
         return ids;
     }
+
+    /// <summary>The mod's Unlockable Bundles records the rewind leaves paid for this player's keeps
+    /// (<see cref="UnlockableBundlesStateReset"/>). Every other bundle is paid again each loop.</summary>
+    public static IReadOnlySet<string> KeptBundles(Func<string, bool> hasUpgrade)
+    {
+        if (hasUpgrade is null) throw new ArgumentNullException(nameof(hasUpgrade));
+        return new HashSet<string>(StringComparer.Ordinal);
+    }
 }

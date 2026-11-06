@@ -23,6 +23,13 @@ namespace TheLongestYear
         /// <summary>Load phase: the unlock, stash and patch services, the config merges and the reset service.</summary>
         private void BuildResetServices(LoadContext ctx)
         {
+            var deepWoodsRewind = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor);
+            var bundlesRewind = new UnlockableBundlesRewind(this.Helper.ModRegistry, this.Monitor);
+            void ResetOtherModProgress(Farmer farmer)
+            {
+                deepWoodsRewind.Apply(farmer);
+                bundlesRewind.Apply(farmer);
+            }
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
@@ -31,7 +38,7 @@ namespace TheLongestYear
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
                 ResetCustomSkills = new SpaceCoreSkillReset(this.Helper.ModRegistry, this.Monitor).Apply,
-                ResetOtherModProgress = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor).Apply,
+                ResetOtherModProgress = ResetOtherModProgress,
             };
             // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no
             // marriage behind it; clear it so that villager goes home (FarmerReset.Marriage.cs).
