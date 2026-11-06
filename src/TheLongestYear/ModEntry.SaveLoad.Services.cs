@@ -23,6 +23,13 @@ namespace TheLongestYear
         /// <summary>Load phase: the unlock, stash and patch services, the config merges and the reset service.</summary>
         private void BuildResetServices(LoadContext ctx)
         {
+            var deepWoodsRewind = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor);
+            var bundlesRewind = new UnlockableBundlesRewind(this.Helper.ModRegistry, this.Monitor);
+            void ResetOtherModProgress(Farmer farmer)
+            {
+                deepWoodsRewind.Apply(farmer);
+                bundlesRewind.Apply(farmer);
+            }
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();
             _mountainUnlock = new MountainUnlock(this.Monitor);
@@ -31,7 +38,7 @@ namespace TheLongestYear
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
                 ResetCustomSkills = new SpaceCoreSkillReset(this.Helper.ModRegistry, this.Monitor).Apply,
-                ResetOtherModProgress = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor).Apply,
+                ResetOtherModProgress = ResetOtherModProgress,
             };
             // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no
             // marriage behind it; clear it so that villager goes home (FarmerReset.Marriage.cs).
@@ -252,6 +259,11 @@ namespace TheLongestYear
                 : ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
             _runController.ShrineExcludedIds = () => _enginePools?.ExcludedIds;
             _runController.SeasonsOf = id => _seasonResolver?.SeasonsFor(id);
+            _runController.SecretWoodsWeek = () =>
+                _lexicon?.Variant?.MapWeeks != null
+                && _lexicon.Variant.MapWeeks.TryGetValue(TheLongestYear.Core.Obtainability.MapWeekGate.SecretWoodsMap, out var woods)
+                    ? woods.Week
+                    : TheLongestYear.Core.Obtainability.MapWeekGate.WoodsOpeningWeek;
             // The theme week discount rewrites stacks on the board; that is our own write, not
             // another mod's, so the vanilla-mode fingerprint follows it.
             _runController.AfterBoardWrite = () =>

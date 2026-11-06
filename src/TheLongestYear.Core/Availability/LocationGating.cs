@@ -49,10 +49,14 @@ public static class LocationGating
     };
 
     /// <summary>First week of the year the player can stand in this location.</summary>
-    public static int WeekFor(string locationKey)
+    /// <param name="opened">Gated maps a supported mod opens sooner (<see cref="LocationWeeks.OpenedEarly"/>);
+    /// a map in it reads its week there. Null = none.</param>
+    public static int WeekFor(string locationKey, IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (string.IsNullOrEmpty(locationKey))
             return 1;
+        if (opened != null && opened.TryGetValue(locationKey, out PlaceWeek? early))
+            return early.Week;
         foreach ((string marker, int week, int _, int _, bool exact) in GatedMarkers)
             if (Matches(locationKey, marker, exact))
                 return week;
@@ -72,22 +76,23 @@ public static class LocationGating
 
     /// <summary>The EASIEST week among the given locations, because reaching any one of them is
     /// enough to get the item. An empty list means no location signal, which reads as ungated.</summary>
-    public static int WeekForAny(IReadOnlyList<string> locationKeys)
+    public static int WeekForAny(IReadOnlyList<string> locationKeys, IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (locationKeys == null || locationKeys.Count == 0)
             return 1;
         int best = Calendar.WeeksPerYear;
         foreach (string key in locationKeys)
-            best = Math.Min(best, WeekFor(key));
+            best = Math.Min(best, WeekFor(key, opened));
         return best;
     }
 
     /// <summary>First week the location can exist at all (facts, not pacing): a Hard-mode ask
     /// may demand it this early. A model built for Extreme (<see cref="WeekMode.HardAll"/>) reads
     /// the Extreme column; every other mode reads Hard's.</summary>
-    public static int HardWeekFor(string locationKey, WeekMode mode = WeekMode.Pacing)
+    public static int HardWeekFor(string locationKey, WeekMode mode = WeekMode.Pacing, IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (string.IsNullOrEmpty(locationKey)) return 1;
+        if (opened != null && opened.TryGetValue(locationKey, out PlaceWeek? early)) return early.HardFor(mode);
         foreach ((string marker, int _, int hard, int extreme, bool exact) in GatedMarkers)
             if (Matches(locationKey, marker, exact)) return mode == WeekMode.HardAll ? extreme : hard;
         return 1;
@@ -95,11 +100,12 @@ public static class LocationGating
 
     /// <summary>The EASIEST hard week among the given locations, because reaching any one of
     /// them is enough to get the item.</summary>
-    public static int HardWeekForAny(IReadOnlyList<string> locationKeys, WeekMode mode = WeekMode.Pacing)
+    public static int HardWeekForAny(IReadOnlyList<string> locationKeys, WeekMode mode = WeekMode.Pacing,
+        IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (locationKeys == null || locationKeys.Count == 0) return 1;
         int best = Calendar.WeeksPerYear;
-        foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key, mode));
+        foreach (string key in locationKeys) best = Math.Min(best, HardWeekFor(key, mode, opened));
         return best;
     }
 

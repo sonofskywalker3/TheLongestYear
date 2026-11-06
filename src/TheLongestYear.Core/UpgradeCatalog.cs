@@ -288,6 +288,14 @@ public static class UpgradeCatalog
         new UpgradeDefinition(SveUnlocks.KeepShedId, UpgradeCategory.Buildings, SveUnlocks.KeepShedCost,
             metaRequirement: null, runReachRequirement: WalletKeepTable.EventMetric + ":" + SveUnlocks.ShedCompleteEvent),
 
+        // Seven Deadly Sins' paid areas (2026-11-05): its Unlockable Bundles are paid again each loop
+        // unless kept. Offered only with the mod installed (WalletKeepTable.RequiredModFor).
+        // Reach: the bundle is paid this loop (the cliff row needs the second of its two).
+        new UpgradeDefinition(SdsUnlocks.KeepCliffRoadId, UpgradeCategory.Buildings, SdsUnlocks.KeepCliffRoadCost,
+            metaRequirement: null, runReachRequirement: SdsUnlocks.BundleReachMetric + ":" + SdsUnlocks.CliffBundle),
+        new UpgradeDefinition(SdsUnlocks.KeepOldMineId, UpgradeCategory.Buildings, SdsUnlocks.KeepOldMineCost,
+            metaRequirement: null, runReachRequirement: SdsUnlocks.BundleReachMetric + ":" + SdsUnlocks.OldMineBundle),
+
         // (Keep Pet moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
         // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)

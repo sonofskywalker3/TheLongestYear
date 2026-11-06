@@ -74,8 +74,10 @@ public static class ObtainabilityBuilder
         // made from it inherits that through its input's table, so no derived pass adds it again.
         // A map that opens on a week (the Secret Woods, Deep Woods) holds its routes to that week first,
         // so a Deep Woods depth wait below overlaps it rather than adding to it (MapWeekGate).
+        IReadOnlyDictionary<string, int>? layerMapWeeks = marks?.MapWeeks;
+        IReadOnlyDictionary<string, int>? openedEarly = marks?.OpenedEarly;
         for (int i = 0; i < direct.Count; i++)
-            direct[i] = (direct[i].ItemId, MapWeekGate.Apply(direct[i].Source));
+            direct[i] = (direct[i].ItemId, MapWeekGate.Apply(direct[i].Source, layerMapWeeks, openedEarly));
         if (mineTravel)
             for (int i = 0; i < direct.Count; i++)
                 direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
@@ -87,11 +89,11 @@ public static class ObtainabilityBuilder
         {
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
             all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates)
-                .Select(s => (s.ItemId, MapWeekGate.Apply(s.Source))));
+                .Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));
             all.AddRange(GrowSources.Crops(inputs.Crops, current));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
-            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source))));
+            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
             all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));

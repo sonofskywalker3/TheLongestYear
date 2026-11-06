@@ -38,6 +38,7 @@ namespace TheLongestYear.Loop
             bool enabled,
             bool resendBetterStartGift,
             bool sveInstalled,
+            bool sdsInstalled,
             IMonitor monitor)
         {
             if (!enabled)
@@ -128,6 +129,15 @@ namespace TheLongestYear.Loop
                 sveMarkers += EventGatingTables.AddDirectPrerequisites(keys, seeds, _ids, exclude);
             }
 
+            // Seven Deadly Sins' scene-only unlocks and its Wolf Staff pickup flag (SdsUnlocks).
+            int sdsMarkers = 0;
+            if (sdsInstalled)
+                foreach (string id in SdsUnlocks.RewoundEventIds)
+                {
+                    if (exclude != null && exclude.Contains(id)) continue;
+                    if (_ids.Add(id)) sdsMarkers++;
+                }
+
             int grants = _ids.Count;
             // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
             // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
@@ -137,7 +147,8 @@ namespace TheLongestYear.Loop
             monitor.Log(
                 $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
                 $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s), " +
-                $"{powerMarkers} power scene(s), {sveMarkers} Stardew Valley Expanded unlock scene(s)) and " +
+                $"{powerMarkers} power scene(s), {sveMarkers} Stardew Valley Expanded unlock scene(s), " +
+                $"{sdsMarkers} Seven Deadly Sins unlock marker(s)) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
         }

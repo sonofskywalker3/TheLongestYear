@@ -62,8 +62,16 @@ namespace TheLongestYear.Loop
                     (layers.UnmappedMods.Count + layers.UnmappedPairs.Count > 0 ? ", so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
-                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, layers.Marks));
+                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, SaveMarks(layers.Marks)));
         }
+
+        /// <summary>Whether the loaded save owns an upgrade (false with no save).</summary>
+        internal static bool OwnsUpgrade(string id) => UpgradeChecker.HasUpgrade?.Invoke(id) == true;
+
+        /// <summary>The layers' marks for the loaded save: the back doors its upgrades open are open
+        /// (<see cref="TheLongestYear.Core.Obtainability.YearTwoMarks.For"/>).</summary>
+        internal static TheLongestYear.Core.Obtainability.YearTwoMarks SaveMarks(TheLongestYear.Core.Obtainability.YearTwoMarks marks)
+            => marks?.For(OwnsUpgrade);
 
         /// <summary>The shipped vanilla answers, or null when the file is absent or unreadable.</summary>
         public AnswerSet Vanilla { get; }
@@ -77,8 +85,9 @@ namespace TheLongestYear.Loop
         {
             Forget();
             _computedKeys.Clear();
-            _variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
-            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers);
+            IReadOnlyList<string> doors = Loaded.Set.Marks.DoorUpgrades(OwnsUpgrade);
+            _variantName = AnswerSet.VariantName(pierreOwned, doors);
+            Resolved r = _resolver.Resolve(live, pierreOwned, gameVersion, modVersion, Loaded.Set.Layers, Loaded.Set.KeyLayers, doors);
             _current = r;
             _variant = r.Variant;
             string line = $"Lexicon: {r.Origin} ({r.Key[..KeyPrefixLength]}), {r.Variant.RoutedCount()} items, {r.Ms} ms";

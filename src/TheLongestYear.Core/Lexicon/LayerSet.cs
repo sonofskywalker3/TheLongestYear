@@ -182,7 +182,12 @@ public sealed class LayerSet
         IReadOnlyList<LayerInputs> inputs, IReadOnlyList<LayerAnswers> answers,
         Func<string, bool> isLoaded, Func<string, string?> installedVersionOf, Action<string> warn)
     {
-        var kept = inputs.Where(i => isLoaded(i.UniqueId)).ToList();
+        // A back door another installed mod closes is dropped here, the one place that knows what is loaded.
+        var kept = inputs.Where(i => isLoaded(i.UniqueId))
+            .Select(i => i.MapBackDoors.Any(d => d.UnlessMods != null && d.UnlessMods.Any(isLoaded))
+                ? i with { MapBackDoors = i.MapBackDoors.Where(d => d.UnlessMods == null || !d.UnlessMods.Any(isLoaded)).ToList() }
+                : i)
+            .ToList();
         var installed = new Dictionary<string, string?>(StringComparer.Ordinal);
         foreach (LayerInputs layer in kept) installed[layer.UniqueId] = installedVersionOf(layer.UniqueId);
 
@@ -239,7 +244,18 @@ public sealed class LayerSet
         var years = Rulings(inputs, i => i.YearRulings, warn, "year");
         var weeks = Rulings(inputs, i => i.WeekRulings, warn, "week");
         var marks = new YearTwoMarks(
-            Rulings(inputs, i => i.YearTwoMaps, warn, "year-2 map"), Rulings(inputs, i => i.YearTwoShops, warn, "year-2 shop"));
+            Rulings(inputs, i => i.YearTwoMaps, warn, "year-2 map"), Rulings(inputs, i => i.YearTwoShops, warn, "year-2 shop"))
+        {
+            MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
+            MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
+            OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade == null)
+                .GroupBy(d => d.Map, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
+            UpgradeDoors = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade != null).ToList(),
+            UpgradeDoorMods = inputs.SelectMany(i => i.MapBackDoors.Where(d => d.WhenUpgrade != null).Select(d => (d.WhenUpgrade!, i.UniqueId)))
+                .GroupBy(p => p.Item1, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)new HashSet<string>(g.Select(p => p.UniqueId), StringComparer.Ordinal), StringComparer.Ordinal),
+        };
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)
             foreach (var (id, sources) in layer.ExtraSources)
@@ -249,12 +265,16 @@ public sealed class LayerSet
         layers.AddRange(ids);
         layers.AddRange(applied.Where(a => a.Mods.Distinct(StringComparer.Ordinal).Count() > 1).Select(a => LayerFile.Name(a.Mods)));
         var keyLayers = new List<string> { RowHashes.Vanilla };
-        keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"));
+        // The file hash is the same whether or not another installed mod closed a back door
+        // (Active drops it from the inputs, not from the file), so the doors in force are named too.
+        keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"
+            + (i.MapBackDoors.Count == 0 ? "" : "+doors:" + string.Join(",", i.MapBackDoors
+                .Select(d => $"{d.Map}={d.Week}{(d.WhenUpgrade == null ? "" : "@" + d.WhenUpgrade)}").OrderBy(s => s, StringComparer.Ordinal)))));
         keyLayers.AddRange(applied.Select(a => $"{LayerFile.Name(a.Mods)}.answers#{HashOf(a.TextHash, () => LayerFile.WriteAnswers(a))}"));
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)
         {
-            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers);
+            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, marks.UpgradeDoorMods);
             composed = unmapped.Count == 0 && unmappedMods.Count == 0
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
@@ -270,26 +290,47 @@ public sealed class LayerSet
     private static string HashOf(string textHash, Func<string> written)
         => textHash.Length > 0 ? textHash : LayerFile.HashText(written());
 
-    private static AnswerSet Lay(AnswerSet vanilla, IReadOnlyList<LayerAnswers> applied, IReadOnlyList<string> layers)
+    /// <param name="upgradeDoorMods">Per door upgrade, the mods whose inputs name a back door it opens
+    /// (<see cref="YearTwoMarks.UpgradeDoorMods"/>). An answers file naming one of them must hold the
+    /// upgrade's variant itself: its answers are not the same with and without the upgrade.</param>
+    private static AnswerSet Lay(AnswerSet vanilla, IReadOnlyList<LayerAnswers> applied, IReadOnlyList<string> layers,
+        IReadOnlyDictionary<string, IReadOnlySet<string>> upgradeDoorMods)
     {
         AnswerSet? result = null;
         // Base first, so AnswerSetMerge stores the others as deltas over it.
-        foreach (string name in vanilla.Variants.Keys.OrderBy(k => k == AnswerSet.BaseVariant ? 0 : 1).ThenBy(k => k, StringComparer.Ordinal))
+        // A variant for a save that owns a door upgrade ("base+keep_minecarts") exists where a layer
+        // wrote one. The vanilla file and the layers that have no such back door say the same with or
+        // without the upgrade, so they are read at the variant's stem.
+        IEnumerable<string> names = vanilla.Variants.Keys.Concat(applied.SelectMany(a => a.Deltas.Keys)
+            .Where(k => AnswerSet.StemOf(k) != k && vanilla.Variants.ContainsKey(AnswerSet.StemOf(k)))).Distinct(StringComparer.Ordinal);
+        foreach (string name in names.OrderBy(k => k == AnswerSet.BaseVariant ? 0 : 1).ThenBy(k => k, StringComparer.Ordinal))
         {
-            AnswerVariant? whole = vanilla.Resolve(name);
+            string vanillaName = vanilla.StoredNameFor(name);
+            AnswerVariant? whole = vanilla.Resolve(vanillaName);
             if (whole == null) continue;
-            var rows = new Dictionary<string, ulong>(vanilla.RowHashesFor(name), StringComparer.Ordinal);
+            var rows = new Dictionary<string, ulong>(vanilla.RowHashesFor(vanillaName), StringComparer.Ordinal);
             bool mapped = true;
             foreach (LayerAnswers layer in applied)
             {
+                string stored = layer.Deltas.ContainsKey(name) ? name : AnswerSet.StemOf(name);
+                // The stem stands in only for a file none of whose mods the upgrade touches. A file
+                // that names such a mod (the mod's own layer, or its interaction with another) and
+                // lacks the variant would lay answers written without the upgrade over ones written
+                // with it, so those saves get no shipped answers until it is written.
+                if (stored != name && name.Split(AnswerSet.DoorJoiner).Skip(1).Any(upgrade =>
+                        upgradeDoorMods.TryGetValue(upgrade, out IReadOnlySet<string>? touched) && layer.Mods.Any(touched.Contains)))
+                {
+                    mapped = false;
+                    break;
+                }
                 if (layer.Deltas.Count > 0)
                 {
-                    if (!layer.Deltas.TryGetValue(name, out AnswerVariant? delta)) { mapped = false; break; }
+                    if (!layer.Deltas.TryGetValue(stored, out AnswerVariant? delta)) { mapped = false; break; }
                     whole = LayDelta(whole, delta);
                 }
-                if (layer.VariantRowHashes.TryGetValue(name, out var own))
+                if (layer.VariantRowHashes.TryGetValue(stored, out var own))
                     foreach (var (key, hash) in own) rows[key] = hash;
-                if (layer.Removals.TryGetValue(name, out LayerRemovals? removal))
+                if (layer.Removals.TryGetValue(stored, out LayerRemovals? removal))
                 {
                     whole = Remove(whole, removal);
                     foreach (string key in removal.Rows) rows.Remove(key);

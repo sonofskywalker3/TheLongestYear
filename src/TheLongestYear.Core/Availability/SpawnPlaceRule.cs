@@ -30,19 +30,27 @@ public sealed class SpawnPlaceRule
 
     private readonly IReadOnlySet<string>? _unreachablePlaces;
     private readonly LocationWeeks? _weeks;
+    private readonly IReadOnlySet<string>? _closedPlaces;
 
     /// <param name="unreachablePlaces"><see cref="ReachabilityGraph.UnreachableLocations"/>.</param>
     /// <param name="weeks"><see cref="LocationWeeks.Build"/> over the same world.</param>
-    public SpawnPlaceRule(IReadOnlySet<string>? unreachablePlaces, LocationWeeks? weeks)
+    /// <param name="closedPlaces">Maps a supported mod's layer says no year-1 player stands in
+    /// (its YearTwoMaps): out of reach whatever the walks say. A cave behind a paid bundle has a door
+    /// and warps both ways, so both walks reach it; its Midnight Carp row with no season made the carp
+    /// an any-season fish (Nexus bug 1166150, Seven Deadly Sins). Null = none.</param>
+    public SpawnPlaceRule(IReadOnlySet<string>? unreachablePlaces, LocationWeeks? weeks, IReadOnlySet<string>? closedPlaces = null)
     {
         _unreachablePlaces = unreachablePlaces;
         _weeks = weeks;
+        _closedPlaces = closedPlaces;
     }
 
     /// <summary>True when no walk from the farm reaches this Data/Locations key or map name.</summary>
     public bool IsOutOfReach(string? place)
     {
-        if (string.IsNullOrEmpty(place) || _unreachablePlaces == null || _weeks == null) return false;
+        if (string.IsNullOrEmpty(place)) return false;
+        if (_closedPlaces != null && _closedPlaces.Contains(place)) return true;
+        if (_unreachablePlaces == null || _weeks == null) return false;
         return _unreachablePlaces.Contains(place) && !_weeks.TryGet(place, out _);
     }
 

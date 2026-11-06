@@ -18,12 +18,17 @@ public static class RowHashes
     public const string Vanilla = "vanilla";
     private const string MetaType = "meta";
     private const string PierreKey = "meta|pierre_year2";
+    private const string DoorKeyPrefix = "meta|door|";
     private const ulong FnvOffset = 14695981039346656037UL;
     private const ulong FnvPrime = 1099511628211UL;
     private static readonly Regex QualifiedId = new(@"\([A-Za-z]+\)[^\s|,]+", RegexOptions.Compiled);
     private static readonly char[] PrefixEnd = { '.', '_' };
 
-    public static IReadOnlyDictionary<string, ulong> Of(ObtainabilityInputs inputs, bool pierreYear2Owned)
+    /// <param name="doorUpgrades">The upgrades that open a back door on this save
+    /// (<see cref="Obtainability.YearTwoMarks.DoorUpgrades"/>); each is one more row, so a save with
+    /// one never matches answers written without it. None adds no row.</param>
+    public static IReadOnlyDictionary<string, ulong> Of(ObtainabilityInputs inputs, bool pierreYear2Owned,
+        IReadOnlyList<string>? doorUpgrades = null)
     {
         var rows = new Dictionary<string, ulong>(StringComparer.Ordinal);
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -68,6 +73,8 @@ public static class RowHashes
         foreach (var (name, days) in inputs.Buildings) Put("building|" + name, days);
         foreach (var (recipe, episode) in inputs.CookingChannel) Put("tv|" + recipe, episode);
         Put(PierreKey, pierreYear2Owned);
+        if (doorUpgrades != null)
+            foreach (string upgrade in doorUpgrades) Put(DoorKeyPrefix + upgrade, true);
         return rows;
     }
 

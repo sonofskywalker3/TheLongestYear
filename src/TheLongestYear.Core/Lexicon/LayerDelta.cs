@@ -45,9 +45,11 @@ public static class LayerDelta
             ? activeAnswers.Where(a => !a.Mods.Contains(mods[0])).ToList()
             : activeAnswers.Where(a => a.Mods.Count == 1 && mods.Contains(a.Mods[0])).ToList();
         AnswerSet baseline = LayerSet.Compose(vanilla, baseInputs, baseAnswers, _ => { }).Overlay!;
-        AnswerVariant below = baseline.Resolve(variantName)
+        // What is below knows no door upgrade unless a layer there wrote one: read it at the stem then.
+        string belowName = baseline.StoredNameFor(variantName);
+        AnswerVariant below = baseline.Resolve(belowName)
             ?? throw new InvalidOperationException($"The answers below {name} have no '{variantName}' variant.");
-        IReadOnlyDictionary<string, ulong> belowRows = baseline.RowHashesFor(variantName);
+        IReadOnlyDictionary<string, ulong> belowRows = baseline.RowHashesFor(belowName);
 
         var rows = new Dictionary<string, ulong>(StringComparer.Ordinal);
         foreach (var (key, hash) in liveRows)

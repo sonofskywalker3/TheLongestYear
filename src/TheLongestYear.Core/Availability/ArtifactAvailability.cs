@@ -35,7 +35,8 @@ public static class ArtifactAvailability
     public static int ChanceStep(double chance)
         => chance >= CommonChance ? 0 : chance >= UncommonChance ? 1 : chance >= RareChance ? 2 : 3;
 
-    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawArtifactSpot> spots, WeekMode mode = WeekMode.Pacing)
+    public static ItemEffort? Derive(string qualifiedId, IReadOnlyList<RawArtifactSpot> spots, WeekMode mode = WeekMode.Pacing,
+        IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (spots == null) throw new ArgumentNullException(nameof(spots));
         ItemEffort? best = null;
@@ -44,13 +45,13 @@ public static class ArtifactAvailability
             if (spot.ItemId != qualifiedId) continue;
             int step = ChanceStep(spot.Chance);
             int effort = ReachEffort(spot.Location) + step;
-            int week = Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.WeekFor(spot.Location));
+            int week = Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.WeekFor(spot.Location, opened));
             bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
             if (better)
                 best = new ItemEffort(effort,
                     $"artifact spot, {spot.Location} at {spot.Chance:0.####} (+{step}), week {week}, effort {effort}",
                     week, AvailabilityWeeks.SeasonOf(week),
-                    HardWeek: Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.HardWeekFor(spot.Location, mode)));
+                    HardWeek: Math.Max(AvailabilityWeeks.ArtifactWeek, LocationGating.HardWeekFor(spot.Location, mode, opened)));
         }
         return best;
     }

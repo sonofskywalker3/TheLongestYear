@@ -130,7 +130,7 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      Condition as the game holds it, or leave it out>", "ItemIds": ["(O)a", "(O)b", "(O)c"] }]`. The
      live line is read as all of them, a random pick, before the data is hashed or built, so the
      answers match whichever item the mod chose today.
-   - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There are no map-week or pond-chance fields in an inputs file: a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
+   - **`WeekRulings`** pin an item's availability week (1 to 16). A ruling can only move an item LATER than TLY's own derived week, or place an item nothing placed; an earlier one is refused and logged `week override to N REJECTED, earlier than derived floor week W`. There is no pond-chance field in an inputs file. A map the walk dates too early or cannot reach is dated with `MapWeeks` and `MapLinks` (below); a map only a script enters stays unknown, so date its items with `WeekRulings`. The config's
      `AvailabilityWeekOverrides` win over a layer's ruling per id; two layers that rule one id
      differently produce a WARN naming both.
    - **`YearTwoMaps`** and **`YearTwoShops`** flag a map or a shop as reachable only in year 2:
@@ -141,6 +141,30 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      walker had placed as reachable stops counting for the sabotage fairness rule, and the Traveling
      Cart's year-2 sort reads its items as year 2, which is the intended correction for
      post-Community-Center, island and Joja content.
+   - **`MapWeeks`** hold a map to a week of year 1 (1 to 16) when its own doors do not say so: a door behind a paid
+     bundle, a wall a scene takes down, a friendship lock. `{ "<map name>": <week> }`. The map walk gives the map, and
+     every map reached only through it, the later of that week and its own gate, so the board dates what is fished,
+     foraged or sold there from it; a route whose `Requires` holds exactly `location:<map>` lands no earlier in the
+     obtain tables. A week can only make a map later, never earlier than TLY's own gate for it. Use `YearTwoMaps` instead
+     for a map a year-1 player does not reach at all.
+   - **`MapLinks`** name a way between two maps the walk cannot read from the maps (a `TouchAction Warp` tile, a warp
+     made in code): `[{ "From": "<map>", "To": "<map>" }]`, one way each. The walk follows them like a door.
+   - **`MapBackDoors`** name a way the mod adds into a map TLY holds to a week by name (the Secret Woods behind its
+     log at week 4, the Sewer, the Witch's Swamp): `{"Map": "Woods", "Week": 1, "From": "Custom_Woods1", "UnlessMods": [...]}`.
+     With the mod installed the map opens at `Week` (1 to 16) when that is earlier than TLY's own week, everywhere the
+     gate is read: the map walk, each route's landing table and the availability weeks, so the board may ask for the
+     map's items that much sooner. `Week` is the first week a new farmer can walk the whole way, and it is your ruling:
+     walk it in a game first (`tly_walkto <x> <y>` walks the farmer with the game's own path search and takes warps by
+     stepping on them). `From` is the map the way leads in from, for the reader. `UnlessMods` lists mods that close the
+     way when installed (a patch with `HasMod` false); the back door is ignored while one of them is loaded. A layer
+     week in `MapWeeks` for the same map still holds it later. The map walk must reach the map: when the way in is a
+     touch-action warp or a warp made in code, name it in `MapLinks` too, or the availability weeks keep the old gate.
+     `WhenUpgrade` names an upgrade the save must own for the way to be open (Deep Woods' minecart stop runs from
+     day 1 only with `keep_minecarts`). Such a save reads its own variant of the answers, named by its stem and the
+     upgrade (`base+keep_minecarts`, `pierre_year2_seeds+keep_minecarts`), and never the stem's. Write each on a farm
+     that owns the upgrade (`tly_buyupgrade <id>`, sleep, restart, load, `tly_lexicon write <UniqueID>`); until a layer
+     holds the variant those saves compute. `vanilla.json` and the layers with no such back door are read at the stem,
+     so they need nothing new.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.

@@ -37,6 +37,13 @@ public class SveSupportTests
         Assert.Contains(SveUnlocks.ShedCompleteEvent, SveUnlocks.RewoundEventIds);
     }
 
+    /// <summary>SVE's western forest leads into the Secret Woods past a large log that is placed only
+    /// while the woods' first-visit scene is unseen. Carried over as seen, the log was gone from the
+    /// second loop on and the woods were open on day 1.</summary>
+    [Fact]
+    public void The_secret_woods_first_visit_scene_rewinds_so_the_western_log_comes_back()
+        => Assert.Contains("7134028", SveUnlocks.RewoundEventIds);
+
     [Fact]
     public void The_scene_before_an_order_scene_is_rewound_with_it()
     {

@@ -46,7 +46,8 @@ public static class BonusSlotSampler
         int maxCount,
         Func<int, int>? remainingNeedForBundle = null,
         IReadOnlyList<GoalGroupCap>? caps = null,
-        GoalSamplingRules? rules = null)
+        GoalSamplingRules? rules = null,
+        bool secretWoodsOpen = false)
     {
         if (openSlots is null) throw new ArgumentNullException(nameof(openSlots));
         if (rarityOf is null) throw new ArgumentNullException(nameof(rarityOf));
@@ -64,7 +65,10 @@ public static class BonusSlotSampler
         IEnumerable<string> idPool = slotsById.Keys;
         if (weekOfYear <= EarlyGameMaxWeek)
         {
-            var filtered = slotsById.Keys.Where(id => !CcItemCatalog.EarlyGameAvoid.Contains(id)).ToList();
+            // secretWoodsOpen: a supported mod has opened the Secret Woods by this week, so what
+            // grows only there is no longer late-game.
+            var filtered = slotsById.Keys.Where(id => !CcItemCatalog.EarlyGameAvoid.Contains(id)
+                || (secretWoodsOpen && CcItemCatalog.SecretWoodsOnly.Contains(id))).ToList();
             if (filtered.Count > 0)
                 idPool = filtered;
         }

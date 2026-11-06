@@ -30,7 +30,8 @@ namespace TheLongestYear.Loop
         /// when unwired: only the vanilla skills reset.</summary>
         public System.Action<Farmer> ResetCustomSkills { get; set; }
 
-        /// <summary>Takes other mods' saved world progress back to a fresh game (DeepWoodsRewind).
+        /// <summary>Takes other mods' saved world progress back to a fresh game (DeepWoodsRewind,
+        /// UnlockableBundlesRewind).
         /// Null when unwired.</summary>
         public System.Action<Farmer> ResetOtherModProgress { get; set; }
 

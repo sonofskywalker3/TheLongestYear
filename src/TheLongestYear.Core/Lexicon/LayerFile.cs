@@ -44,6 +44,43 @@ public sealed record LayerInputs(
     /// <summary>Shops (by shop id) whose data routes are flagged as year 2 or Ginger Island.</summary>
     public IReadOnlyDictionary<string, YearTwoFlag> YearTwoShops { get; init; }
         = new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal);
+
+    /// <summary>Maps (by location name) a player cannot stand in before a week of year 1
+    /// (<see cref="MapWeekRange.First"/> to <see cref="MapWeekRange.Last"/>), when the map's own doors
+    /// do not say so: a door behind a paid bundle, a wall a scene takes down, a friendship lock. The
+    /// map walk holds the map, and every map reached only through it, to that week, and a route naming
+    /// <c>location:&lt;map&gt;</c> lands no earlier.</summary>
+    public IReadOnlyDictionary<string, int> MapWeeks { get; init; }
+        = new Dictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>Ways between maps the walk cannot read from the maps' warps and doors (a touch-action
+    /// warp tile, a warp made in code), each one way, From the map it stands in To the map it leads to.</summary>
+    public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
+
+    /// <summary>Ways the mod adds into a map this mod holds to a week by name (the Secret Woods behind
+    /// its log, the Sewer behind its key): with the mod installed the map opens at the back door's week
+    /// when that is earlier, in the map walk, the landing tables and the availability weeks alike.</summary>
+    public IReadOnlyList<MapBackDoor> MapBackDoors { get; init; } = Array.Empty<MapBackDoor>();
+}
+
+/// <summary>A way a mod adds into a gated map. <see cref="Map"/> is the gated map, <see cref="Week"/>
+/// (<see cref="MapWeekRange.First"/> to <see cref="MapWeekRange.Last"/>) the first week of year 1 a
+/// player can walk it, <see cref="From"/> the map it leads in from (for the reader; the week is the
+/// ruling). <see cref="UnlessMods"/> are mod ids that close it: the mod leaves the way out when one of
+/// them is installed, so the back door is ignored then. <see cref="WhenUpgrade"/> is an upgrade id the
+/// save must own for the way to be open (Deep Woods' minecart stop runs from day 1 only with Keep
+/// Minecarts): such a back door gives the save its own variant of the answers
+/// (<see cref="AnswerSet.VariantName"/>), written on a farm that owns the upgrade.</summary>
+public sealed record MapBackDoor(string Map, int Week, string From, IReadOnlyList<string>? UnlessMods = null)
+{
+    public string? WhenUpgrade { get; init; }
+}
+
+/// <summary>The bounds of a <see cref="LayerInputs.MapWeeks"/> week: the weeks of year 1.</summary>
+public static class MapWeekRange
+{
+    public const int First = 1;
+    public const int Last = 16;
 }
 
 /// <summary>What a year-2 map or shop route is flagged as.</summary>
@@ -156,12 +193,33 @@ public static class LayerFile
             }
         RequireFlags(json, "YearTwoMaps");
         RequireFlags(json, "YearTwoShops");
+        if (read.MapWeeks != null)
+            foreach (var (map, week) in read.MapWeeks)
+                if (string.IsNullOrWhiteSpace(map) || week < MapWeekRange.First || week > MapWeekRange.Last)
+                    throw new System.Text.Json.JsonException($"MapWeeks {map}: week {week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
+        if (read.MapLinks != null && read.MapLinks.Any(l => l == null || string.IsNullOrWhiteSpace(l.From) || string.IsNullOrWhiteSpace(l.To)))
+            throw new System.Text.Json.JsonException("MapLinks holds a null link or one with no From or To.");
+        if (read.MapBackDoors != null)
+            foreach (MapBackDoor door in read.MapBackDoors)
+            {
+                if (door == null || string.IsNullOrWhiteSpace(door.Map) || string.IsNullOrWhiteSpace(door.From))
+                    throw new System.Text.Json.JsonException("MapBackDoors holds a null entry or one with no Map or From.");
+                if (door.Week < MapWeekRange.First || door.Week > MapWeekRange.Last)
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: week {door.Week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
+                if (door.UnlessMods != null && door.UnlessMods.Any(string.IsNullOrWhiteSpace))
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: UnlessMods holds a null or empty mod id.");
+                if (door.WhenUpgrade != null && (string.IsNullOrWhiteSpace(door.WhenUpgrade) || door.WhenUpgrade.Contains(AnswerSet.DoorJoiner)))
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: WhenUpgrade is blank or holds '{AnswerSet.DoorJoiner}'.");
+            }
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
             YearTwoRulings = ToOrdinal(read.YearTwoRulings),
             YearTwoMaps = ToOrdinal(read.YearTwoMaps),
             YearTwoShops = ToOrdinal(read.YearTwoShops),
+            MapWeeks = ToOrdinal(read.MapWeeks),
+            MapLinks = read.MapLinks ?? Array.Empty<RawLocationLink>(),
+            MapBackDoors = read.MapBackDoors ?? Array.Empty<MapBackDoor>(),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
                 : read.ExtraSources.ToDictionary(
