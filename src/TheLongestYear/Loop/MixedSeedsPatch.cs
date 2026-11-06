@@ -115,9 +115,11 @@ namespace TheLongestYear.Loop
     /// Keeps the Mixed Seeds roll above when another mod swaps the seed as it goes into the ground
     /// (Item Extensions' own Mixed Seeds pool, which Cornucopia fills): the rule and the reasons
     /// are <see cref="TheLongestYear.Core.MixedSeedsOutcome"/>. Vanilla calls ResolveSeedId and then
-    /// HoeDirt.plant in one step (Object.placementAction), so the roll is remembered for the plant
-    /// call of the same game tick only and is used once. Last priority: it runs after the other
-    /// mod's prefix. With no other mod the seed arriving is the roll, and nothing changes.
+    /// HoeDirt.plant in one step (Object.placementAction), so the roll is remembered only inside a
+    /// placementAction of a Mixed Seeds bag (<see cref="MixedSeedsPlacementScope"/>), for the plant
+    /// call of the same game tick, and is used once: a seed planted any other way is never touched.
+    /// Last priority: it runs after the other mod's prefix. With no other mod the seed arriving is
+    /// the roll, and nothing changes.
     /// </summary>
     [HarmonyPatch(typeof(StardewValley.TerrainFeatures.HoeDirt), nameof(StardewValley.TerrainFeatures.HoeDirt.plant),
         new System.Type[] { typeof(string), typeof(Farmer), typeof(bool) })]
@@ -127,8 +129,19 @@ namespace TheLongestYear.Loop
         private static bool _substituted;
         private static int _tick = -1;
 
+        private static int _depth;
+
+        internal static void Enter() => _depth++;
+
+        internal static void Leave()
+        {
+            if (_depth > 0) _depth--;
+            if (_depth == 0) _rolled = null;
+        }
+
         internal static void Remember(string rolled, bool substituted)
         {
+            if (_depth == 0) return;
             _rolled = rolled;
             _substituted = substituted;
             _tick = Game1.ticks;
@@ -139,7 +152,7 @@ namespace TheLongestYear.Loop
         private static void Prefix(ref string itemId, bool isFertilizer)
         {
             string rolled = _rolled;
-            bool fresh = rolled != null && _tick == Game1.ticks;
+            bool fresh = rolled != null && _depth > 0 && _tick == Game1.ticks;
             _rolled = null;
             if (!fresh || isFertilizer || itemId == null) return;
             string final = TheLongestYear.Core.MixedSeedsOutcome.Final(itemId, rolled, _substituted);
@@ -147,5 +160,25 @@ namespace TheLongestYear.Loop
             PatchLog.Trace($"Mixed Seeds: planting {final}, the roll made when the bag was used, in place of {itemId}.");
             itemId = final;
         }
+    }
+
+    /// <summary>Marks the span of one Mixed Seeds bag being placed, so
+    /// <see cref="MixedSeedsPlantPatch"/> ties the roll to that planting alone. The finalizer runs
+    /// however the placement ends, so a planting that is refused leaves nothing behind.</summary>
+    [HarmonyPatch(typeof(StardewValley.Object), nameof(StardewValley.Object.placementAction))]
+    internal static class MixedSeedsPlacementScope
+    {
+        // ReSharper disable InconsistentNaming — Harmony convention.
+        private static void Prefix(StardewValley.Object __instance, out bool __state)
+        {
+            __state = __instance?.ItemId == TheLongestYear.Core.MixedSeedsOutcome.MixedSeedsId;
+            if (__state) MixedSeedsPlantPatch.Enter();
+        }
+
+        private static void Finalizer(bool __state)
+        {
+            if (__state) MixedSeedsPlantPatch.Leave();
+        }
+        // ReSharper restore InconsistentNaming
     }
 }

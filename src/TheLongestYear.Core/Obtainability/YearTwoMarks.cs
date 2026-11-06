@@ -33,6 +33,10 @@ public sealed record YearTwoMarks(IReadOnlyDictionary<string, YearTwoFlag> Maps,
     /// They are not in <see cref="OpenedEarly"/> until <see cref="For"/> puts the owned ones there.</summary>
     public IReadOnlyList<MapBackDoor> UpgradeDoors { get; init; } = Array.Empty<MapBackDoor>();
 
+    /// <summary>Per door upgrade, the ids of the mods whose layers name a back door it opens.</summary>
+    public IReadOnlyDictionary<string, IReadOnlySet<string>> UpgradeDoorMods { get; init; }
+        = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
+
     /// <summary>The upgrades this save owns that open a back door, in ordinal order: what names the
     /// save's variant (<see cref="AnswerSet.VariantName"/>).</summary>
     public IReadOnlyList<string> DoorUpgrades(Func<string, bool> hasUpgrade)

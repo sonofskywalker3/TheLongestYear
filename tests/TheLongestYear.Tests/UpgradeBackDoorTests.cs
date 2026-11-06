@@ -123,6 +123,31 @@ public class UpgradeBackDoorTests
     }
 
     [Fact]
+    public void An_interaction_file_of_that_mod_without_the_variant_does_not_stand_in_with_its_stem()
+    {
+        const string Other = "ModB";
+        LayerInputs deep = LayerFile.ReadInputs(Layer);
+        LayerInputs other = LayerFile.ReadInputs("{\"UniqueId\": \"" + Other + "\", \"CheckedVersion\": \"1.0.0\"}");
+        LayerAnswers single = Answers(("base", "woods week 4"), ("base+keep_minecarts", "woods week 1"));
+        var otherSingle = new LayerAnswers(new[] { Other }, Other + "@1.0.0",
+            new Dictionary<string, IReadOnlyDictionary<string, ulong>>(), new Dictionary<string, AnswerVariant>(StringComparer.Ordinal));
+        // Written on a save without the upgrade only: it says week 4 again.
+        var pair = new LayerAnswers(new[] { DeepWoods, Other }, DeepWoods + "@1.0.0+" + Other + "@1.0.0",
+            new Dictionary<string, IReadOnlyDictionary<string, ulong>>(),
+            new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { ["base"] = Variant("pair, woods week 4") });
+
+        AnswerSet composed = LayerSet.Compose(Vanilla(), new[] { deep, other }, new[] { single, otherSingle, pair }, _ => { }).Composed!;
+        Assert.Equal("pair, woods week 4", DetailOf(composed, "base"));
+        Assert.Null(composed.Resolve("base+keep_minecarts"));
+
+        // A layer the upgrade does not touch still stands in with its stem.
+        AnswerSet without = LayerSet.Compose(Vanilla(), new[] { deep, other }, new[] { single, otherSingle,
+            pair with { Deltas = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) { ["base"] = Variant("pair"), ["base+keep_minecarts"] = Variant("pair, woods week 1") } } },
+            _ => { }).Composed!;
+        Assert.Equal("pair, woods week 1", DetailOf(without, "base+keep_minecarts"));
+    }
+
+    [Fact]
     public void A_save_with_the_upgrade_is_not_served_the_stems_answers()
     {
         var rows = RowHashes.Of(Inputs.Value, false);

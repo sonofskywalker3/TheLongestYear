@@ -252,6 +252,9 @@ public sealed class LayerSet
                 .GroupBy(d => d.Map, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
             UpgradeDoors = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade != null).ToList(),
+            UpgradeDoorMods = inputs.SelectMany(i => i.MapBackDoors.Where(d => d.WhenUpgrade != null).Select(d => (d.WhenUpgrade!, i.UniqueId)))
+                .GroupBy(p => p.Item1, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)new HashSet<string>(g.Select(p => p.UniqueId), StringComparer.Ordinal), StringComparer.Ordinal),
         };
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)
@@ -271,7 +274,7 @@ public sealed class LayerSet
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)
         {
-            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers);
+            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, marks.UpgradeDoorMods);
             composed = unmapped.Count == 0 && unmappedMods.Count == 0
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
@@ -287,7 +290,11 @@ public sealed class LayerSet
     private static string HashOf(string textHash, Func<string> written)
         => textHash.Length > 0 ? textHash : LayerFile.HashText(written());
 
-    private static AnswerSet Lay(AnswerSet vanilla, IReadOnlyList<LayerAnswers> applied, IReadOnlyList<string> layers)
+    /// <param name="upgradeDoorMods">Per door upgrade, the mods whose inputs name a back door it opens
+    /// (<see cref="YearTwoMarks.UpgradeDoorMods"/>). An answers file naming one of them must hold the
+    /// upgrade's variant itself: its answers are not the same with and without the upgrade.</param>
+    private static AnswerSet Lay(AnswerSet vanilla, IReadOnlyList<LayerAnswers> applied, IReadOnlyList<string> layers,
+        IReadOnlyDictionary<string, IReadOnlySet<string>> upgradeDoorMods)
     {
         AnswerSet? result = null;
         // Base first, so AnswerSetMerge stores the others as deltas over it.
@@ -306,6 +313,16 @@ public sealed class LayerSet
             foreach (LayerAnswers layer in applied)
             {
                 string stored = layer.Deltas.ContainsKey(name) ? name : AnswerSet.StemOf(name);
+                // The stem stands in only for a file none of whose mods the upgrade touches. A file
+                // that names such a mod (the mod's own layer, or its interaction with another) and
+                // lacks the variant would lay answers written without the upgrade over ones written
+                // with it, so those saves get no shipped answers until it is written.
+                if (stored != name && name.Split(AnswerSet.DoorJoiner).Skip(1).Any(upgrade =>
+                        upgradeDoorMods.TryGetValue(upgrade, out IReadOnlySet<string>? touched) && layer.Mods.Any(touched.Contains)))
+                {
+                    mapped = false;
+                    break;
+                }
                 if (layer.Deltas.Count > 0)
                 {
                     if (!layer.Deltas.TryGetValue(stored, out AnswerVariant? delta)) { mapped = false; break; }
