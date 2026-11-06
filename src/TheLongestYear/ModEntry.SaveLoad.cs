@@ -291,6 +291,7 @@ namespace TheLongestYear
                 _config.AutoDetectReplayableUnlockCutscenes,
                 _config.ResendBetterStartGift,
                 this.Helper.ModRegistry.IsLoaded(SveUnlocks.ModId),
+                this.Helper.ModRegistry.IsLoaded(SdsUnlocks.ModId),
                 this.Monitor);
         }
 
