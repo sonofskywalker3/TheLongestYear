@@ -10373,13 +10373,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -11129,13 +11167,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -11896,13 +11972,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -12663,13 +12777,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -13430,13 +13582,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -14197,13 +14387,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -14963,13 +15191,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
@@ -15729,13 +15995,51 @@
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
           "Inputs": "fc58b44057263177",
+          "MixedSeedBoardBases": {
+            "(O)Cornucopia_Asparagus": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Barley": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Celery": {
+              "Fall": [0, 0, 11.053660714285714, 0],
+              "Spring\u002BFall": [0, 0, 10.031785714285713, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 9.075089285714284, 0],
+              "Summer\u002BFall": [0, 0, 9.415714285714285, 0]
+            },
+            "(O)Cornucopia_Chickpea": {
+              "Spring\u002BSummer": [0, 15.471428571428572, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0, 9.552380952380952, 0, 0],
+              "Summer": [0, 26.371428571428567, 0, 0],
+              "Summer\u002BFall": [0, 13.185714285714283, 0, 0]
+            },
+            "(O)Cornucopia_SugarBeet": {
+              "Spring": [2.7249999999999996, 0, 0, 0],
+              "Spring\u002BFall": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer": [1.3624999999999998, 0, 0, 0],
+              "Spring\u002BSummer\u002BFall": [0.9083333333333333, 0, 0, 0]
+            },
+            "(O)Cornucopia_Zucchini": {
+              "Fall": [0, 0, 63.447053571428576, 0],
+              "Spring\u002BFall": [0, 0, 56.29392857142857, 0],
+              "Spring\u002BSummer\u002BFall": [0, 0, 49.59705357142858, 0],
+              "Summer\u002BFall": [0, 0, 51.98142857142857, 0]
+            }
+          },
           "MixedSeedCropBases": {
-            "(O)Cornucopia_Asparagus": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Barley": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Celery": [0, 0, 3.227678571428571, 0],
-            "(O)Cornucopia_Chickpea": [0, 4.571428571428571, 0, 0],
-            "(O)Cornucopia_SugarBeet": [2.7249999999999996, 0, 0, 0],
-            "(O)Cornucopia_Zucchini": [0, 0, 8.665178571428571, 0]
+            "(O)Cornucopia_Asparagus": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Barley": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Celery": [0, 0, 9.075089285714284, 0],
+            "(O)Cornucopia_Chickpea": [0, 9.552380952380952, 0, 0],
+            "(O)Cornucopia_SugarBeet": [0.9083333333333333, 0, 0, 0],
+            "(O)Cornucopia_Zucchini": [0, 0, 49.59705357142858, 0]
           },
           "YearTwoCropDishUnits": {
             "(O)213": 1,
