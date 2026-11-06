@@ -39,6 +39,10 @@ namespace TheLongestYear.Loop
         /// The pool is re-derived from live CC state at call time; the selection-time result is
         /// persisted in RunState.CurrentWeekBonusSlots, so committed goals don't reshuffle as
         /// slots complete mid-week.</summary>
+        /// <summary>The week the Secret Woods open in the answers in force (week 4, or sooner with a
+        /// supported mod's back door). Set by ModEntry from the lexicon.</summary>
+        public System.Func<int> SecretWoodsWeek { get; set; } = () => TheLongestYear.Core.Obtainability.MapWeekGate.WoodsOpeningWeek;
+
         public System.Collections.Generic.IReadOnlyList<BonusSlot> SampleSlotsForTheme(
             Theme theme, CoreSeason season, int weekOfYear)
         {
@@ -58,7 +62,8 @@ namespace TheLongestYear.Loop
                 Run.Seed, weekOfYear, theme, pool, RarityForItem, budget,
                 remainingNeedForBundle: idx => SeasonNeedForBundle(idx, season),
                 caps: GoalCaps,
-                rules: RulesFor(season, weekOfYear)));
+                rules: RulesFor(season, weekOfYear),
+                secretWoodsOpen: SecretWoodsWeek() <= weekOfYear));
             // The card's favoured line is decided from this same seeded sample, so the hub preview
             // and the committed pick agree on it.
             MarkFavoured(sample);

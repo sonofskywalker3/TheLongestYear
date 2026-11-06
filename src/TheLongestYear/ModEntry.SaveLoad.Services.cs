@@ -259,6 +259,11 @@ namespace TheLongestYear
                 : ThemeEffortPools.IdsFor(theme, _enginePools, _effortData.Objects);
             _runController.ShrineExcludedIds = () => _enginePools?.ExcludedIds;
             _runController.SeasonsOf = id => _seasonResolver?.SeasonsFor(id);
+            _runController.SecretWoodsWeek = () =>
+                _lexicon?.Variant?.MapWeeks != null
+                && _lexicon.Variant.MapWeeks.TryGetValue(TheLongestYear.Core.Obtainability.MapWeekGate.SecretWoodsMap, out var woods)
+                    ? woods.Week
+                    : TheLongestYear.Core.Obtainability.MapWeekGate.WoodsOpeningWeek;
             // The theme week discount rewrites stacks on the board; that is our own write, not
             // another mod's, so the vanilla-mode fingerprint follows it.
             _runController.AfterBoardWrite = () =>

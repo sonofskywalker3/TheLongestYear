@@ -55,19 +55,26 @@ namespace TheLongestYear
             _walkWatch = (_, _) =>
             {
                 ticks++;
-                string now = Game1.currentLocation?.Name ?? "?";
+                if (!Context.IsWorldReady || Game1.player == null || Game1.currentLocation == null)
+                {
+                    this.Helper.Events.GameLoop.UpdateTicked -= _walkWatch;
+                    _walkWatch = null;
+                    this.Monitor.Log("tly_walkto: the save was left before the walk ended.", LogLevel.Info);
+                    return;
+                }
+                string now = Game1.currentLocation.Name ?? "?";
                 bool moved = now != from;
-                bool arrived = !moved && Game1.player.TilePoint == target;
-                // The last step onto a warp ends the path a moment before the game changes maps.
+                // The last step onto a warp ends the path a moment before the game changes maps, so
+                // the walk is only over once the farmer has stood still for a while.
                 if (!moved && Game1.player.controller == null) idle++;
-                bool stopped = !moved && idle > WarpSettleTicks;
-                if (!moved && !arrived && !stopped && ticks < WalkTimeoutTicks) return;
+                bool settled = !moved && idle > WarpSettleTicks;
+                if (!moved && !settled && ticks < WalkTimeoutTicks) return;
                 this.Helper.Events.GameLoop.UpdateTicked -= _walkWatch;
                 _walkWatch = null;
                 Point at = Game1.player.TilePoint;
                 string how = moved ? $"WARPED from '{from}' to '{now}'"
-                    : arrived ? "arrived"
-                    : stopped ? "STOPPED short" : "TIMED OUT";
+                    : at == target ? "arrived"
+                    : settled ? "STOPPED short" : "TIMED OUT";
                 this.Monitor.Log($"tly_walkto: {how}; farmer at ({at.X},{at.Y}) in '{now}' after {ticks} tick(s).", LogLevel.Info);
             };
             this.Helper.Events.GameLoop.UpdateTicked += _walkWatch;

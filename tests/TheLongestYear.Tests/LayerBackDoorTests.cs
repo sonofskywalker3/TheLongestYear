@@ -123,6 +123,40 @@ public class LayerBackDoorTests
     }
 
     [Fact]
+    public void A_shop_inside_the_map_opens_with_its_back_door()
+    {
+        ObtainSource krobus = Fish("shop:ShadowShop");
+        Assert.Equal(MapWeekGate.FirstDayOf(MapWeekGate.SewerOpeningWeek), MapWeekGate.Apply(krobus).Lands.Lands(1));
+        Assert.Equal(MapWeekGate.FirstDayOf(2),
+            MapWeekGate.Apply(krobus, openedEarly: new Dictionary<string, int> { ["Sewer"] = 2 }).Lands.Lands(1));
+        Assert.Equal(MapWeekGate.FirstDayOf(MapWeekGate.SewerOpeningWeek), MapWeekGate.Apply(krobus, openedEarly: Open).Lands.Lands(1));
+    }
+
+    [Fact]
+    public void The_cache_key_tells_a_closed_back_door_from_an_open_one()
+    {
+        LayerInputs read = LayerFile.ReadInputs(Head + BackDoor);
+        var (open, _) = LayerSet.Active(new[] { read }, Array.Empty<LayerAnswers>(), id => id == Sds, _ => "1.0.0", _ => { });
+        var (closed, _) = LayerSet.Active(new[] { read }, Array.Empty<LayerAnswers>(), id => id == Sds || id == Sve, _ => "1.0.0", _ => { });
+        IReadOnlyList<string> a = LayerSet.Compose(null, open, Array.Empty<LayerAnswers>(), _ => { }).KeyLayers;
+        IReadOnlyList<string> b = LayerSet.Compose(null, closed, Array.Empty<LayerAnswers>(), _ => { }).KeyLayers;
+        Assert.NotEqual(string.Join("|", a), string.Join("|", b));
+    }
+
+    [Fact]
+    public void Morel_is_not_held_back_in_week_one_once_the_woods_are_open()
+    {
+        var slots = new[] { new BonusSlot { BundleIndex = 1, ItemId = "(O)257" }, new BonusSlot { BundleIndex = 2, ItemId = "(O)16" } };
+        for (int seed = 0; seed < 40; seed++)
+            Assert.DoesNotContain(BonusSlotSampler.SampleSlots(seed, 1, Theme.Foraging, slots, _ => Rarity.Common, 1), s => s.ItemId == "(O)257");
+        bool seen = false;
+        for (int seed = 0; seed < 40 && !seen; seed++)
+            seen = BonusSlotSampler.SampleSlots(seed, 1, Theme.Foraging, slots, _ => Rarity.Common, 1, secretWoodsOpen: true)
+                .Any(s => s.ItemId == "(O)257");
+        Assert.True(seen);
+    }
+
+    [Fact]
     public void An_inputs_file_carries_a_back_door_into_the_marks()
     {
         LayerInputs read = LayerFile.ReadInputs(Head + BackDoor);

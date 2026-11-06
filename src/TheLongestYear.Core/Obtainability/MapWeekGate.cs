@@ -50,6 +50,13 @@ public static class MapWeekGate
         ["ShadowShop"] = SewerOpeningWeek,
     };
 
+    /// <summary>The gated map each shop of <see cref="ShopOpeningWeeks"/> stands in, so a back door into
+    /// the map opens the shop with it.</summary>
+    public static readonly IReadOnlyDictionary<string, string> ShopMaps = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["ShadowShop"] = "Sewer",
+    };
+
     /// <summary>The first day of a week.</summary>
     public static int FirstDayOf(int week) => (week - 1) * Calendar.DaysPerWeek + 1;
 
@@ -85,7 +92,11 @@ public static class MapWeekGate
             }
             else if (r.StartsWith(ShopPrefix, StringComparison.Ordinal))
             {
-                if (!ShopOpeningWeeks.TryGetValue(r.Substring(ShopPrefix.Length), out week)) continue;
+                string shop = r.Substring(ShopPrefix.Length);
+                if (!ShopOpeningWeeks.TryGetValue(shop, out week)) continue;
+                if (openedEarly != null && ShopMaps.TryGetValue(shop, out string? shopMap)
+                    && openedEarly.TryGetValue(shopMap, out int earlyShop))
+                    week = Math.Min(week, earlyShop);
             }
             else continue;
             int day = FirstDayOf(week);

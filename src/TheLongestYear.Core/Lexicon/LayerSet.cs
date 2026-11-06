@@ -260,7 +260,11 @@ public sealed class LayerSet
         layers.AddRange(ids);
         layers.AddRange(applied.Where(a => a.Mods.Distinct(StringComparer.Ordinal).Count() > 1).Select(a => LayerFile.Name(a.Mods)));
         var keyLayers = new List<string> { RowHashes.Vanilla };
-        keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"));
+        // The file hash is the same whether or not another installed mod closed a back door
+        // (Active drops it from the inputs, not from the file), so the doors in force are named too.
+        keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"
+            + (i.MapBackDoors.Count == 0 ? "" : "+doors:" + string.Join(",", i.MapBackDoors
+                .Select(d => $"{d.Map}={d.Week}").OrderBy(s => s, StringComparer.Ordinal)))));
         keyLayers.AddRange(applied.Select(a => $"{LayerFile.Name(a.Mods)}.answers#{HashOf(a.TextHash, () => LayerFile.WriteAnswers(a))}"));
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)

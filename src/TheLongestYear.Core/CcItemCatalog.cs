@@ -112,6 +112,14 @@ public static class CcItemCatalog
         "(O)726", // Pine Tar        // requires tapper + 5 days on a pine tree
     };
 
+    /// <summary>The ids of <see cref="EarlyGameAvoid"/> that are there only for the Secret Woods' log.
+    /// With a supported mod that opens the woods sooner they are not held back.</summary>
+    public static readonly IReadOnlySet<string> SecretWoodsOnly = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)257", // Morel
+        "(O)281", // Chanterelle
+    };
+
     private static CcItem Item(string id, Theme theme, Rarity rarity, params Season[] seasons)
         => new CcItem(id, theme, rarity, new HashSet<Season>(seasons));
 

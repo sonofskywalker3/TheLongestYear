@@ -157,7 +157,8 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      walk it in a game first (`tly_walkto <x> <y>` walks the farmer with the game's own path search and takes warps by
      stepping on them). `From` is the map the way leads in from, for the reader. `UnlessMods` lists mods that close the
      way when installed (a patch with `HasMod` false); the back door is ignored while one of them is loaded. A layer
-     week in `MapWeeks` for the same map still holds it later.
+     week in `MapWeeks` for the same map still holds it later. The map walk must reach the map: when the way in is a
+     touch-action warp or a warp made in code, name it in `MapLinks` too, or the availability weeks keep the old gate.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.
