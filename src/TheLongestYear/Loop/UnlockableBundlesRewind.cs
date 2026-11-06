@@ -21,8 +21,8 @@ namespace TheLongestYear.Loop
     {
         private const string ModDataTypeName = "Unlockable_Bundles.Lib.ModData";
         private const string InstanceField = "Instance";
-        private const string ApiTypeName = "Unlockable_Bundles.API.UnlockableBundlesAPI";
-        private const string ClearCacheMethod = "ClearCache";
+        private const string ShopPlacementTypeName = "Unlockable_Bundles.Lib.ShopPlacement";
+        private const string CleanupDayMethod = "CleanupDay";
         private const string PurchasedProperty = "Purchased";
 
         private const string CookingManagerTypeName = "SevenDeadlySins.CookingSystem.CookingManager";
@@ -104,7 +104,10 @@ namespace TheLongestYear.Loop
                         live += entries.Count;
                         entries.Clear();
                     }
-                AccessTools.Method(AccessTools.TypeByName(ApiTypeName), ClearCacheMethod)?.Invoke(null, null);
+                // The framework's own end-of-day cleanup: it empties its list of live bundles and its
+                // caches, which still say "paid", so the next day start builds them from the records
+                // above. A rewind at night has had it already (DayEnding); running it twice is harmless.
+                AccessTools.Method(AccessTools.TypeByName(ShopPlacementTypeName), CleanupDayMethod)?.Invoke(null, null);
             }
             _monitor.Log($"Rewind: reset Unlockable Bundles' progress (paid bundles, wallet currencies, prize machines) in {rewrote} saved " +
                 $"place(s) and {live} live record(s); kept bundle(s): {(kept.Count == 0 ? "none" : string.Join(", ", kept))}.", LogLevel.Info);
