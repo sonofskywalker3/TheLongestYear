@@ -46,6 +46,13 @@ public static class SveUnlocks
     /// <summary>Susan's Summit rail shortcut: no order, opens on a scene after 30 days played.</summary>
     private const string SummitShortcutEvent = "1000077";
 
+    /// <summary>The scene that plays on the first step into the Secret Woods. SVE's western forest has
+    /// a second way into the woods, shut by a large log that Farm Type Manager places only while this
+    /// scene is unseen (area "Forest West Log", one spawn a save). Put back as seen, the log never came
+    /// back, so from the second loop on the Secret Woods stood open on day 1 with no steel axe. The
+    /// same flag holds SVE's one Rare Seed in the woods.</summary>
+    public const string SecretWoodsFirstVisitEvent = "7134028";
+
     public const string KeepShedId = "keep_grandpas_shed";
     /// <summary>Priced with Keep Basement: the repaired shed is a second building with its own
     /// greenhouse room, well above a Fish Pond (750).</summary>
@@ -74,13 +81,13 @@ public static class SveUnlocks
     };
 
     /// <summary>Event ids that must not be re-seeded as seen: every story order's two scenes, the
-    /// shed's completion scene and the Summit shortcut. The powers are found from Data/Powers
+    /// shed's completion scene, the Summit shortcut and the Secret Woods first-visit scene. The powers are found from Data/Powers
     /// (<see cref="PowerEventMarkers"/>).</summary>
     public static IReadOnlySet<string> RewoundEventIds { get; } = BuildRewoundEventIds();
 
     private static HashSet<string> BuildRewoundEventIds()
     {
-        var ids = new HashSet<string>(StringComparer.Ordinal) { ShedCompleteEvent, SummitShortcutEvent };
+        var ids = new HashSet<string>(StringComparer.Ordinal) { ShedCompleteEvent, SummitShortcutEvent, SecretWoodsFirstVisitEvent };
         foreach (SveStoryOrder order in StoryOrders)
         {
             ids.Add(order.TriggerEvent);
