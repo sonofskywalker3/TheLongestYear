@@ -83,6 +83,7 @@ namespace TheLongestYear.Loop
             if (location == null) return;
             if (location is StardewValley.Locations.IslandLocation) return; // vanilla overrides island picks
 
+            string vanillaRoll = __result;
             StardewValley.Season here = location.GetSeason();
             foreach ((StardewValley.Season s, string upgrade, string seedId) in Cultivations)
             {
@@ -106,6 +107,45 @@ namespace TheLongestYear.Loop
                     PatchLog.Trace($"Year-Two Seeds: Mixed Seeds rolled {seed}");
                 }
             }
+            MixedSeedsPlantPatch.Remember(__result, substituted: __result != vanillaRoll);
+        }
+    }
+
+    /// <summary>
+    /// Keeps the Mixed Seeds roll above when another mod swaps the seed as it goes into the ground
+    /// (Item Extensions' own Mixed Seeds pool, which Cornucopia fills): the rule and the reasons
+    /// are <see cref="TheLongestYear.Core.MixedSeedsOutcome"/>. Vanilla calls ResolveSeedId and then
+    /// HoeDirt.plant in one step (Object.placementAction), so the roll is remembered for the plant
+    /// call of the same game tick only and is used once. Last priority: it runs after the other
+    /// mod's prefix. With no other mod the seed arriving is the roll, and nothing changes.
+    /// </summary>
+    [HarmonyPatch(typeof(StardewValley.TerrainFeatures.HoeDirt), nameof(StardewValley.TerrainFeatures.HoeDirt.plant),
+        new System.Type[] { typeof(string), typeof(Farmer), typeof(bool) })]
+    internal static class MixedSeedsPlantPatch
+    {
+        private static string _rolled;
+        private static bool _substituted;
+        private static int _tick = -1;
+
+        internal static void Remember(string rolled, bool substituted)
+        {
+            _rolled = rolled;
+            _substituted = substituted;
+            _tick = Game1.ticks;
+        }
+
+        // ReSharper disable once InconsistentNaming — Harmony convention.
+        [HarmonyPriority(Priority.Last)]
+        private static void Prefix(ref string itemId, bool isFertilizer)
+        {
+            string rolled = _rolled;
+            bool fresh = rolled != null && _tick == Game1.ticks;
+            _rolled = null;
+            if (!fresh || isFertilizer || itemId == null) return;
+            string final = TheLongestYear.Core.MixedSeedsOutcome.Final(itemId, rolled, _substituted);
+            if (final == itemId) return;
+            PatchLog.Trace($"Mixed Seeds: planting {final}, the roll made when the bag was used, in place of {itemId}.");
+            itemId = final;
         }
     }
 }
