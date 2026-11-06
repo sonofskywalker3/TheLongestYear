@@ -297,7 +297,8 @@ namespace TheLongestYear.Loop
                 IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                     links, allLocations,
                     name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
-                var spawnRule = new SpawnPlaceRule(unreachablePlaces, locationWeeks);
+                var spawnRule = new SpawnPlaceRule(unreachablePlaces, locationWeeks,
+                    new HashSet<string>(marks.Maps.Keys, StringComparer.Ordinal));
                 SpawnRowSplit forageSplit = spawnRule.Split(forage);
                 SpawnRowSplit fishSplit = spawnRule.Split(fish);
                 var closedCatch = new HashSet<string>(excludedCatch, StringComparer.Ordinal);

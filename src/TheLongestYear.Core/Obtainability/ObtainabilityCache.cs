@@ -25,7 +25,8 @@ public sealed class ObtainabilityCache
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         string key = Fingerprint(inputs) + (extraDirect is { Count: > 0 } ? ExtraFingerprint(extraDirect) : "")
-            + (marks is { IsEmpty: false } ? MarksFingerprint(marks) : "");
+            + (marks is { IsEmpty: false } ? MarksFingerprint(marks) : "")
+            + (marks is null ? "" : MapDatingFingerprint(marks));
         if (_build != null && key == _key)
         {
             reused = true;
@@ -52,9 +53,16 @@ public sealed class ObtainabilityCache
     {
         static string Pairs(IReadOnlyDictionary<string, Lexicon.YearTwoFlag> flags)
             => string.Join(";", flags.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
+        return "|maps:" + Pairs(marks.Maps) + "|shops:" + Pairs(marks.Shops);
+    }
+
+    /// <summary>The layer's map weeks and links, empty when it has neither.</summary>
+    private static string MapDatingFingerprint(YearTwoMarks marks)
+    {
+        if (marks.MapWeeks.Count == 0 && marks.MapLinks.Count == 0) return "";
         string weeks = string.Join(";", marks.MapWeeks.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
         string links = string.Join(";", marks.MapLinks.Select(l => $"{l.From}>{l.To}").OrderBy(s => s, StringComparer.Ordinal));
-        return "|maps:" + Pairs(marks.Maps) + "|shops:" + Pairs(marks.Shops) + "|mapweeks:" + weeks + "|maplinks:" + links;
+        return "|mapweeks:" + weeks + "|maplinks:" + links;
     }
 
     private static string Fingerprint(ObtainabilityInputs inputs)

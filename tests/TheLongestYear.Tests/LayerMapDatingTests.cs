@@ -130,3 +130,48 @@ public class LayerMapDatingTests
     public void A_bad_map_week_or_link_is_refused(string member)
         => Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head + member + "}"));
 }
+
+/// <summary>A map a layer calls year 2 closes its spawn rows whatever the walks say (Nexus bug
+/// 1166150: the Midnight Carp row with no season in a cave that has a door and warps both ways).</summary>
+public class LayerClosedMapSpawnTests
+{
+    private const string Cave = "Custom_SDS.Cave7";
+
+    private static readonly RawLocationLink[] Links =
+    {
+        new("Farm", "Mountain"), new("Mountain", "Custom_SDS.Cavebase"), new("Custom_SDS.Cavebase", Cave),
+        new(Cave, "Custom_SDS.Cavebase"),
+    };
+
+    private static readonly RawSpawnEntry[] CarpRows =
+    {
+        new("(O)269", Season.Fall, null, "Mountain"),
+        new("(O)269", Season.Winter, null, "Mountain"),
+        new("(O)269", null, null, Cave),
+    };
+
+    private static SpawnPlaceRule Rule(IReadOnlySet<string>? closed)
+    {
+        var all = new[] { "Farm", "Mountain", "Custom_SDS.Cavebase", Cave };
+        return new SpawnPlaceRule(
+            ReachabilityGraph.UnreachableLocations(Links, all, _ => false),
+            LocationWeeks.Build(Links, name => closed != null && closed.Contains(name)),
+            closed);
+    }
+
+    [Fact]
+    public void Read_by_its_doors_the_cave_row_stays()
+    {
+        SpawnRowSplit split = Rule(null).Split(CarpRows);
+        Assert.Equal(3, split.Kept.Count);
+    }
+
+    [Fact]
+    public void A_layer_closed_map_drops_its_rows()
+    {
+        SpawnRowSplit split = Rule(new HashSet<string> { Cave }).Split(CarpRows);
+        Assert.Equal(2, split.Kept.Count);
+        Assert.All(split.Kept, row => Assert.Equal("Mountain", row.Location));
+        Assert.Equal(Cave, Assert.Single(split.Dropped).Location);
+    }
+}
