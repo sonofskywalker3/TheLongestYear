@@ -171,6 +171,12 @@ public static class RunBaselineBuilder
             if (keep.EventId != null) keptEvents.Add(keep.EventId);
             if (keep.Kind == WalletKeepKind.Stardrop) keptStardrops++;
         }
+        // Keep Grandpa's Shed (Stardew Valley Expanded): the repair's scenes and reward mail.
+        if (meta.HasUpgrade(SveUnlocks.KeepShedId))
+        {
+            keptMail.AddRange(SveUnlocks.ShedKeptMail);
+            keptEvents.AddRange(SveUnlocks.ShedKeptEvents);
+        }
 
         return new RunBaseline
         {

@@ -27,7 +27,7 @@ namespace TheLongestYear.Loop
             for (int i = team.specialOrders.Count - 1; i >= 0; i--)
             {
                 SpecialOrder order = team.specialOrders[i];
-                if (order != null && !SpecialOrderResetRules.IsTownOrder(order.orderType.Value)) continue;
+                if (order != null && !SpecialOrderResetRules.IsRewoundOrder(order.orderType.Value)) continue;
                 team.specialOrders.RemoveAt(i);
                 dropped++;
             }
@@ -38,13 +38,17 @@ namespace TheLongestYear.Loop
             SpecialOrder.RemoveAllSpecialOrders(SpecialOrderResetRules.TownOrderType);
 
             // Forget completed town orders so the non-repeatable ones come back.
-            List<string> forget = SpecialOrderResetRules.CompletedToForget(team.completedSpecialOrders, LoadOrderTypes(monitor));
+            // Stardew Valley Expanded's story orders too, except one a bought keep holds done.
+            IReadOnlySet<string> keepCompleted =
+                SveUnlocks.KeptCompletedOrders(id => UpgradeChecker.HasUpgrade?.Invoke(id) == true);
+            List<string> forget = SpecialOrderResetRules.CompletedToForget(
+                team.completedSpecialOrders, LoadOrderTypes(monitor), keepCompleted);
             foreach (string id in forget)
                 team.completedSpecialOrders.Remove(id);
 
             monitor.Log(
-                $"In-place reset: special orders: dropped {dropped} town order(s), cleared the town board's offer, " +
-                $"forgot {forget.Count} completed town order(s). Qi and other boards untouched.",
+                $"In-place reset: special orders: dropped {dropped} town or Stardew Valley Expanded story order(s), " +
+                $"cleared the town board's offer, forgot {forget.Count} completed order(s). Qi and other boards untouched.",
                 LogLevel.Info);
         }
 

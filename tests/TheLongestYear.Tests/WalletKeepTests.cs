@@ -7,13 +7,13 @@ namespace TheLongestYear.Tests;
 public class WalletKeepTests
 {
     [Fact]
-    public void Table_has_eighteen_rows_totalling_6950_jp()
+    public void Table_has_twenty_two_rows_totalling_8300_jp()
     {
-        Assert.Equal(18, WalletKeepTable.Entries.Count);
-        Assert.Equal(6950, WalletKeepTable.Entries.Sum(e => e.Cost));
-        Assert.Equal(18, WalletKeepTable.Entries.Select(e => e.UpgradeId).Distinct().Count());
-        Assert.Equal(11, WalletKeepTable.Entries.Count(e => e.UpgradeId.StartsWith("keep_wallet_")));
-        Assert.Equal(7, WalletKeepTable.Entries.Count(e => e.Kind == WalletKeepKind.Stardrop));
+        Assert.Equal(22, WalletKeepTable.Entries.Count);   // + Deep Woods' Unicorn, three Stardew Valley Expanded masteries (2026-11-05)
+        Assert.Equal(8300, WalletKeepTable.Entries.Sum(e => e.Cost));
+        Assert.Equal(22, WalletKeepTable.Entries.Select(e => e.UpgradeId).Distinct().Count());
+        Assert.Equal(14, WalletKeepTable.Entries.Count(e => e.UpgradeId.StartsWith("keep_wallet_")));
+        Assert.Equal(8, WalletKeepTable.Entries.Count(e => e.Kind == WalletKeepKind.Stardrop));
     }
 
     [Theory]

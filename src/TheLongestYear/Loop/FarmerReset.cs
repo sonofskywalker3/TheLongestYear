@@ -30,6 +30,10 @@ namespace TheLongestYear.Loop
         /// when unwired: only the vanilla skills reset.</summary>
         public System.Action<Farmer> ResetCustomSkills { get; set; }
 
+        /// <summary>Takes other mods' saved world progress back to a fresh game (DeepWoodsRewind).
+        /// Null when unwired.</summary>
+        public System.Action<Farmer> ResetOtherModProgress { get; set; }
+
         /// <summary>Farmer.activeDialogueEvents key that makes every villager use their
         /// "Introduction" dialogue on first contact (vanilla Farmer ctor, Farmer.cs:2029).</summary>
         private const string IntroductionDialogueKey = "Introduction";
@@ -152,6 +156,9 @@ namespace TheLongestYear.Loop
             // Here, while the vanilla five are all 0: SpaceCore adds mastery XP on a custom-skill
             // change only when those five sum to 50, so the wipe cannot tick mastery.
             ResetCustomSkills?.Invoke(p);
+            // Other mods' saved progress (Deep Woods' depth and Unicorn Stardrop), re-read by them on
+            // the SaveLoaded after this reload.
+            ResetOtherModProgress?.Invoke(p);
             // Luck Skill copies its SpaceCore level into the vanilla luck slot (on SaveLoaded,
             // DayStarted and every TimeChanged). Zero it again after the SpaceCore wipe, so the
             // slot is 0 until that next sync, which now also writes 0. No keep covers luck.

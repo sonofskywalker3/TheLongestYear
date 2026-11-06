@@ -70,3 +70,55 @@ namespace TheLongestYear.Loop
         }
     }
 }
+
+namespace TheLongestYear.Loop
+{
+    /// <summary>
+    /// forage_off for Deep Woods (2026-11-05): its levels lay their mushrooms out in their own code
+    /// when a level is made (DeepWoods.FillLevel), not through <see cref="GameLocation.spawnObjects"/>,
+    /// so <see cref="ForageOffPatch"/> never sees them. A postfix on that method takes the spawned forage
+    /// back off the new level, the same test as <see cref="MineMushroomForageOffPatch"/>. Soft: applied
+    /// at GameLaunched, once every mod's assembly is loaded, and only when Deep Woods' type is found.
+    /// </summary>
+    internal static class DeepWoodsForageOffPatch
+    {
+        private const string DeepWoodsTypeName = "DeepWoodsMod.DeepWoods";
+        private const string FillLevelMethod = "FillLevel";
+
+        internal static void Apply(Harmony harmony, StardewModdingAPI.IMonitor monitor)
+        {
+            try
+            {
+                var type = AccessTools.TypeByName(DeepWoodsTypeName);
+                if (type == null)
+                    return;
+                var method = AccessTools.Method(type, FillLevelMethod);
+                if (method == null)
+                {
+                    monitor.Log("Deep Woods found but its level fill method was not; the forage-off drawback will not clear its mushrooms.", StardewModdingAPI.LogLevel.Warn);
+                    return;
+                }
+                harmony.Patch(method, postfix: new HarmonyMethod(typeof(DeepWoodsForageOffPatch), nameof(Postfix)));
+                monitor.Log("Deep Woods: forage-off drawback hooked into its level fill.", StardewModdingAPI.LogLevel.Trace);
+            }
+            catch (System.Exception ex)
+            {
+                monitor.Log($"Deep Woods forage-off hook failed: {ex.Message}", StardewModdingAPI.LogLevel.Warn);
+            }
+        }
+
+        private static void Postfix(GameLocation __instance)
+        {
+            if (!ActiveEffectsProvider.ActiveLiability("forage_off"))
+                return;
+            var toRemove = new System.Collections.Generic.List<Microsoft.Xna.Framework.Vector2>();
+            foreach (var pair in __instance.objects.Pairs)
+            {
+                if (pair.Value.IsSpawnedObject && pair.Value.isForage())
+                    toRemove.Add(pair.Key);
+            }
+            foreach (var tile in toRemove)
+                __instance.objects.Remove(tile);
+        }
+    }
+}

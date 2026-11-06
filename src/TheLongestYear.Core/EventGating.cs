@@ -143,6 +143,35 @@ public sealed class EventGatingTables
         }
     }
 
+    /// <summary>One step back from <paramref name="seeds"/>: every event a seed's precondition key
+    /// names with <c>e &lt;id&gt;</c> is added to <paramref name="flagged"/>. Stardew Valley Expanded
+    /// hangs an unlock's real requirement (the Skull Key, a friendship) on the scene BEFORE the one
+    /// that hands out the order, so with only the later scene rewound the earlier one stayed seen and
+    /// the requirement was skipped on the next loop. Never adds an <paramref name="exclude"/>d id.
+    /// Returns how many ids were added.</summary>
+    public static int AddDirectPrerequisites(
+        IEnumerable<(string id, string key)> events,
+        ISet<string> seeds,
+        HashSet<string> flagged,
+        ISet<string>? exclude)
+    {
+        int added = 0;
+        foreach ((string id, string key) in events)
+        {
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(key) || !seeds.Contains(id)) continue;
+            foreach (string seg in key.Split('/'))
+            {
+                if (!seg.StartsWith("e ", StringComparison.Ordinal)) continue;
+                foreach (string tok in seg.Substring(2).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (exclude != null && exclude.Contains(tok)) continue;
+                    if (flagged.Add(tok)) added++;
+                }
+            }
+        }
+        return added;
+    }
+
     /// <summary>True if the event script grants a run-wipe-able unlock (see <see cref="MatchedGrantToken"/>).</summary>
     public static bool ScriptGrantsUnlock(string? script) => MatchedGrantToken(script) != null;
 

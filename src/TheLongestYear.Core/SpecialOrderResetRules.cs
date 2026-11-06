@@ -11,7 +11,8 @@ namespace TheLongestYear.Core;
 /// <para>
 /// Rule: every town order (OrderType "", the board outside Mayor Lewis's house) is dropped, in progress or
 /// finished-but-unclaimed; the board's offer and its "already took one this week" mark are cleared
-/// so it re-rolls; completed town orders are forgotten so they can come back. Mr. Qi's orders and
+/// so it re-rolls; completed town orders are forgotten so they can come back. Stardew Valley Expanded's story orders
+/// go the same way (<see cref="IsRewoundOrder"/>). Mr. Qi's orders and
 /// any other board type (the Desert Festival's Marlon board) are left as they are. A completed id
 /// with no Data/SpecialOrders row (a removed mod) is left too: it can never be offered either way.
 /// </para>
@@ -24,16 +25,26 @@ public static class SpecialOrderResetRules
     /// <summary>True for a town-board order. Data/SpecialOrders leaves OrderType blank for them.</summary>
     public static bool IsTownOrder(string? orderType) => string.IsNullOrEmpty(orderType);
 
+    /// <summary>True for an order the rewind drops and forgets: a town-board order, or one of
+    /// Stardew Valley Expanded's story orders (<see cref="SveUnlocks"/>: SVE hands those out again
+    /// once their opening scene has replayed, and left completed they could never come back).</summary>
+    public static bool IsRewoundOrder(string? orderType)
+        => IsTownOrder(orderType) || orderType == SveUnlocks.StoryOrderType;
+
     /// <summary>The completed order ids to remove from <c>team.completedSpecialOrders</c>.</summary>
     /// <param name="completed">Every id in <c>completedSpecialOrders</c>.</param>
     /// <param name="orderTypeById">OrderType per Data/SpecialOrders row id.</param>
+    /// <param name="keepCompleted">Orders a bought keep leaves completed (Keep Grandpa's Shed).</param>
     public static List<string> CompletedToForget(
-        IEnumerable<string> completed, IReadOnlyDictionary<string, string?> orderTypeById)
+        IEnumerable<string> completed, IReadOnlyDictionary<string, string?> orderTypeById,
+        IReadOnlySet<string>? keepCompleted = null)
     {
         var forget = new List<string>();
         foreach (string id in completed ?? Array.Empty<string>())
         {
-            if (orderTypeById.TryGetValue(id, out string? type) && IsTownOrder(type))
+            if (keepCompleted != null && keepCompleted.Contains(id))
+                continue;
+            if (orderTypeById.TryGetValue(id, out string? type) && IsRewoundOrder(type))
                 forget.Add(id);
         }
         return forget;

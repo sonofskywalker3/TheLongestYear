@@ -36,6 +36,13 @@ namespace TheLongestYear.DebugCommands
                     monitor.Log($"tly_wallet: unknown Stardrop source '{source}' (fair, fish, mines, sewer, spouse, statue, museum).", LogLevel.Warn);
                     return;
                 }
+                if (keep.UpgradeId == WalletKeepTable.UnicornKeepId)
+                {
+                    // Deep Woods records this claim in its own state, which this command cannot set:
+                    // pet the Unicorn in a level 30+ clearing instead.
+                    monitor.Log("tly_wallet: the Unicorn's Stardrop is claimed in Deep Woods itself; pet the Unicorn instead.", LogLevel.Warn);
+                    return;
+                }
                 foreach (string flag in keep.MailFlags) p.mailReceived.Add(flag);
                 p.maxStamina.Value += WalletKeepTable.StardropStamina;
                 p.stamina = p.maxStamina.Value;

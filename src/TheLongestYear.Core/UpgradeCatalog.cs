@@ -25,8 +25,15 @@ public static class UpgradeCatalog
 
     public static IReadOnlyList<UpgradeDefinition> All => _all;
 
+    /// <summary>Whether a mod is installed; set by ModEntry. A row that needs a mod
+    /// (<see cref="WalletKeepTable.RequiredModFor"/>) is left out of every category list without it.</summary>
+    public static Func<string, bool> IsModLoaded { get; set; } = _ => false;
+
     public static IReadOnlyList<UpgradeDefinition> ByCategory(UpgradeCategory category)
-        => _all.Where(u => u.Category == category).ToList();
+        => _all.Where(u => u.Category == category && IsOffered(u)).ToList();
+
+    private static bool IsOffered(UpgradeDefinition u)
+        => WalletKeepTable.RequiredModFor(u.Id) is not string mod || IsModLoaded(mod);
 
     public static UpgradeDefinition? TryGet(string id)
         => id != null && _byId.TryGetValue(id, out UpgradeDefinition? u) ? u : null;
@@ -274,6 +281,12 @@ public static class UpgradeCatalog
         // Reach: the run got to Fall 2, the day vanilla opens the board.
         new UpgradeDefinition(SpecialOrdersBoardKeep.UpgradeId, UpgradeCategory.Buildings, SpecialOrdersBoardKeep.Cost,
             metaRequirement: null, runReachRequirement: SpecialOrdersBoardKeep.ReachMetric),
+
+        // Keep Grandpa's Shed (Jeff, 2026-11-05): Stardew Valley Expanded's repaired shed stays
+        // repaired across the rewind, empty. Offered only with SVE installed (WalletKeepTable.RequiredModFor).
+        // Reach: Robin's "all done" scene has played this loop.
+        new UpgradeDefinition(SveUnlocks.KeepShedId, UpgradeCategory.Buildings, SveUnlocks.KeepShedCost,
+            metaRequirement: null, runReachRequirement: WalletKeepTable.EventMetric + ":" + SveUnlocks.ShedCompleteEvent),
 
         // (Keep Pet moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
