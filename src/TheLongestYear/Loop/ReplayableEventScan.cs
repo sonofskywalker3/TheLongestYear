@@ -59,6 +59,7 @@ namespace TheLongestYear.Loop
 
             var events = new List<(string id, string script)>();
             var keys = new List<(string id, string key)>();
+            var timed = new List<(string id, string key, string script)>();
             foreach (string loc in locationNames)
             {
                 Dictionary<string, string> data;
@@ -80,10 +81,20 @@ namespace TheLongestYear.Loop
                     string id = slash < 0 ? kv.Key : kv.Key.Substring(0, slash);
                     events.Add((id, kv.Value ?? ""));
                     keys.Add((id, kv.Key));
+                    timed.Add((id, kv.Key, kv.Value ?? ""));
                 }
             }
 
             _ids = EventGatingTables.CollectReplayableIds(events, baseReplayableIds, exclude);
+            // Countdown scenes (TimerTopicEvents): a scene that starts a conversation topic another
+            // scene waits out. The rewind clears every topic, so the starting scene must replay or
+            // the wait reads as already over (Defense Division's stay timer).
+            var timerIds = new List<string>();
+            foreach (string id in TimerTopicEvents.EventIds(timed))
+            {
+                if (exclude != null && exclude.Contains(id)) continue;
+                if (_ids.Add(id)) timerIds.Add(id);
+            }
             // Museum reward markers (Data/MuseumRewards "MarkEventSeen"): the rewind empties the
             // museum and the reward pays out again, so its marker must not be re-seeded either. The
             // 60-donation marker 295672 gates Gunther's Rusty Key visit (Farm 66); re-seeded, the
@@ -148,7 +159,8 @@ namespace TheLongestYear.Loop
                 $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
                 $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s), " +
                 $"{powerMarkers} power scene(s), {sveMarkers} Stardew Valley Expanded unlock scene(s), " +
-                $"{sdsMarkers} Seven Deadly Sins unlock marker(s)) and " +
+                $"{sdsMarkers} Seven Deadly Sins unlock marker(s), " +
+                $"{timerIds.Count} countdown scene(s){(timerIds.Count > 0 ? " [" + string.Join(",", timerIds) + "]" : "")}) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
         }
