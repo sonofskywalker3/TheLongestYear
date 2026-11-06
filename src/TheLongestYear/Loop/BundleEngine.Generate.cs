@@ -260,6 +260,8 @@ namespace TheLongestYear.Loop
 
             // Pass 3: emit in the original room/position order (name uniquification and the
             // fixed write-key space depend on it).
+            // Each bundle's own deadline lookup, kept for the board-wide pass after the loop.
+            var slotDeadlines = new Dictionary<int, Func<string, Core.Season?>>();
             foreach (PickRecord record in picked)
             {
                 _lastDomains[record.Pick.Index] = record.Match; // for diagnostics (see below)
@@ -277,6 +279,7 @@ namespace TheLongestYear.Loop
                 // 4-of-4, which changes the deadline the classifier will give each slot, and the
                 // quantity pass must read that final shape, not the pre-dial one.
                 BundleSpec finished = Core.RequiredSlots.Apply(record.Composed!, _difficulty);
+                slotDeadlines[finished.Index] = id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability);
                 var fishRng = new Random(seed ^ (finished.Index * SlotSaltPrime) ^ FishAskSalt);
                 BundleSpec composed = Core.QuantityAskPass.Apply(finished, _difficulty,
                     id => BundleSlotFiller.DeadlineFor(finished, record.Match, finished.Slots, id, Availability), fishRng,
@@ -307,7 +310,8 @@ namespace TheLongestYear.Loop
 
             // With the whole board in hand: the crops only another mod's Mixed Seeds pool gives are
             // sized for the seasons this board asks them from, so a saved bag is promised once.
-            IReadOnlyList<BundleSpec> sized = Core.MixedSeedBoardPass.Apply(allPicks, Availability, _difficulty, seed);
+            IReadOnlyList<BundleSpec> sized = Core.MixedSeedBoardPass.Apply(allPicks, Availability, _difficulty, seed,
+                (spec, id) => slotDeadlines.TryGetValue(spec.Index, out Func<string, Core.Season?> due) ? due(id) : null);
             if (!ReferenceEquals(sized, allPicks))
             {
                 _monitor?.Log(

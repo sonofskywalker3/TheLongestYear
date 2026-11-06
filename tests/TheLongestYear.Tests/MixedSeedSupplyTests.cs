@@ -236,6 +236,31 @@ public class MixedSeedSupplyTests
     }
 
     [Fact]
+    public void ASlotDueBeforeItsCropCanBeHarvestedIsLeftAlone()
+    {
+        ItemAvailabilityModel model = Model();
+        var board = new[] { Bundle(1, (Zucchini, 4)) };
+        IReadOnlyList<BundleSpec> early = MixedSeedBoardPass.Apply(board, model, Profile(DifficultyStep.Normal), seed: 42, (_, _) => Season.Spring);
+        Assert.Same(board, early);
+        IReadOnlyList<BundleSpec> due = MixedSeedBoardPass.Apply(board, model, Profile(DifficultyStep.Normal), seed: 42, (_, _) => Season.Fall);
+        Assert.NotEqual(4, due[0].Slots[0].Stack);
+    }
+
+    [Fact]
+    public void ARepairedSlotIsHeldToWhatAnyDifficultyCanGather()
+    {
+        ItemAvailabilityModel model = Model();
+        // Outside a board Zucchini's basis here is about 56: the top of the Easy band is 30% of it.
+        double basis = MixedSeedSupply.Bases(Inputs())[Zucchini][(int)Season.Fall];
+        int top = (int)Math.Ceiling(Math.Round(basis, MidpointRounding.AwayFromZero) * 0.30);
+        Assert.Equal(top, MixedSeedBoardPass.RepairStack(Zucchini, 99, model));
+        Assert.Equal(2, MixedSeedBoardPass.RepairStack(Zucchini, 2, model));
+        Assert.Equal(1, MixedSeedBoardPass.RepairStack(Asparagus, 37, model));
+        Assert.Equal(37, MixedSeedBoardPass.RepairStack("(O)24", 37, model));
+        Assert.Equal(37, MixedSeedBoardPass.RepairStack(Asparagus, 37, null));
+    }
+
+    [Fact]
     public void ABoardWithoutSuchCropsOrAModelWithoutAPoolIsLeftAsItIs()
     {
         var board = new[] { Bundle(1, ("(O)24", 5)) };

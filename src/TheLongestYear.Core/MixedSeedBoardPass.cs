@@ -48,7 +48,25 @@ public static class MixedSeedBoardPass
         return seasons.ToList();
     }
 
-    public static IReadOnlyList<BundleSpec> Apply(IReadOnlyList<BundleSpec> board, ItemAvailabilityModel? model, DifficultyProfile profile, int seed)
+    /// <summary>The most a slot keeps when board repair puts one of these crops in place of an item
+    /// the run cannot reach: the replaced slot's stack was sized for another item, so it is held to
+    /// the top of the Easy band of the every-season basis, which any difficulty can meet. Any other
+    /// item keeps its stack.</summary>
+    public static int RepairStack(string? itemId, int stack, ItemAvailabilityModel? model)
+    {
+        if (itemId == null || model == null) return stack;
+        if (!model.MixedSeedCropBases.TryGetValue(BundleParsing.NormalizeItemId(itemId), out double[]? bySeason)
+            || SeasonalAskBasis.BestUpTo(bySeason, null) is not double basis)
+            return stack;
+        int whole = Math.Max(1, (int)Math.Round(basis, MidpointRounding.AwayFromZero));
+        return Math.Min(stack, Math.Max(1, (int)Math.Ceiling(whole * AskBands.EasyHigh)));
+    }
+
+    /// <param name="deadlineFor">The season a slot's item is due by on its bundle (the answer the
+    /// quantity pass read); a slot due before its crop can be harvested is left as it was. Null reads
+    /// every slot as due by Winter.</param>
+    public static IReadOnlyList<BundleSpec> Apply(IReadOnlyList<BundleSpec> board, ItemAvailabilityModel? model, DifficultyProfile profile, int seed,
+        Func<BundleSpec, string, Season?>? deadlineFor = null)
     {
         if (board == null) throw new ArgumentNullException(nameof(board));
         if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -69,7 +87,7 @@ public static class MixedSeedBoardPass
                 string id = BundleParsing.NormalizeItemId(slot.ItemId);
                 if (!model.MixedSeedBoardBases.TryGetValue(id, out var byCombination)
                     || !byCombination.TryGetValue(combination, out double[]? bySeason)
-                    || SeasonalAskBasis.BestUpTo(bySeason, null) is not double basis)
+                    || SeasonalAskBasis.BestUpTo(bySeason, deadlineFor?.Invoke(spec, slot.ItemId)) is not double basis)
                     continue;
                 var rng = new Random(seed ^ (spec.Index * SlotSaltPrime) ^ (i + 1) ^ Salt);
                 int stack = AskBands.Roll(basis, profile, rng);
