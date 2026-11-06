@@ -86,6 +86,8 @@ namespace TheLongestYear.Integration
                 "stardrop_mines" => (HasMail(p, "CF_Mines")
                                      || p.chestConsumedMineLevels.GetValueOrDefault(100, false)) ? 1 : 0,
                 "stardrop_unicorn" => TheLongestYear.Loop.DeepWoodsRewind.HasUnicornStardrop(p) ? 1 : 0,
+                // An Unlockable Bundles bundle paid this loop (Seven Deadly Sins' cliff road and old mine).
+                "bundle"   => TheLongestYear.Loop.UnlockableBundlesRewind.IsBundlePurchased(r.Key) ? 1 : 0,
                 "scythe"   => p.mailReceived.Contains("gotGoldenScythe") ? 1 : 0,
                 "building" => HasBuildingAtLeast(r.Key) ? 1 : 0,
                 "house"    => p.HouseUpgradeLevel,

@@ -40,7 +40,7 @@ public sealed class RunReachRequirement
         if (parts.Length == 2 && parts[1].Length > 0
             && (parts[0] == "scythe" || parts[0] == "building" || parts[0] == BookKeepTable.ReachMetric
                 || parts[0] == WalletKeepTable.MailMetric || parts[0] == WalletKeepTable.EventMetric
-                || parts[0] == GiftLadder.RoomReachMetric))
+                || parts[0] == GiftLadder.RoomReachMetric || parts[0] == SdsUnlocks.BundleReachMetric))
             return new RunReachRequirement(parts[0], parts[1], 1);
         // 2-part numeric: metric:threshold (rod / backpack / mine / mastery).
         if (parts.Length == 2 && parts[0].Length > 0 && int.TryParse(parts[1], out int t2))

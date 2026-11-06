@@ -58,6 +58,38 @@ public static class SdsUnlocks
     public static IReadOnlySet<string> KeptBundles(Func<string, bool> hasUpgrade)
     {
         if (hasUpgrade is null) throw new ArgumentNullException(nameof(hasUpgrade));
-        return new HashSet<string>(StringComparer.Ordinal);
+        var kept = new HashSet<string>(StringComparer.Ordinal);
+        if (hasUpgrade(KeepCliffRoadId))
+        {
+            kept.Add(CliffRoadBundle);
+            kept.Add(CliffBundle);
+        }
+        if (hasUpgrade(KeepOldMineId))
+            kept.Add(OldMineBundle);
+        return kept;
     }
+
+    /// <summary>Run-reach metric of a keep that needs a bundle paid this loop: "bundle:&lt;id&gt;".</summary>
+    public const string BundleReachMetric = "bundle";
+
+    /// <summary>The road up the cliff north of the Mountain (10,000g).</summary>
+    public const string CliffRoadBundle = "SDScliffroad.roadopen";
+    /// <summary>The way on from the cliff to the angels' hall (20 Solar Essence).</summary>
+    public const string CliffBundle = "SDScliff.open";
+    /// <summary>The sealed door in the old mine west of the Mountain (99 each of Solar Essence, Void
+    /// Essence, Slime and Bat Wing): the ten cave floors behind it.</summary>
+    public const string OldMineBundle = "SDSCavebase.open";
+
+    public const string KeepCliffRoadId = "keep_sds_cliff_road";
+    /// <summary>Priced with the yield wallet keeps: two cheap payments, and what is behind them is
+    /// people and scenes, not a supply.</summary>
+    public const long KeepCliffRoadCost = 350;
+
+    public const string KeepOldMineId = "keep_sds_old_mine";
+    /// <summary>Priced with Keep Bus Unlocked: a second dungeon, harder than the Skull Cavern, with
+    /// its own ore, loot and prize machine. Above Keep Skull Key (750).</summary>
+    public const long KeepOldMineCost = 1000;
+
+    /// <summary>The upgrade ids offered only with Seven Deadly Sins installed.</summary>
+    public static bool IsSdsRow(string upgradeId) => upgradeId == KeepCliffRoadId || upgradeId == KeepOldMineId;
 }
