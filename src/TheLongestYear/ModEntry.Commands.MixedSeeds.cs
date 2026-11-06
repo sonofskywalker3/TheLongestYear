@@ -90,7 +90,7 @@ namespace TheLongestYear
         /// <summary>Weeds whose cut always drops Mixed Seeds (Object.cutWeed).</summary>
         private static readonly HashSet<string> SeedWeedIds = new(System.StringComparer.Ordinal) { "792", "793", "794" };
 
-        /// <summary><c>tly_weedsweep [count]</c>: counts every weed on every map and takes them away, as a
+        /// <summary><c>tly_weedsweep [count | keep n]</c>: counts every weed on every map and takes them away, as a
         /// player who cut every weed everywhere today would (the same ceiling <c>tly_sweepforage</c>
         /// measures for forage). <c>count</c> only counts. A weed drops Mixed Seeds 2.5% of the time
         /// (Object.cutWeed: no Fiber half the time, then 5%), so the day's expected bags are the count
@@ -99,6 +99,8 @@ namespace TheLongestYear
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             bool countOnly = args.Length > 0 && args[0].Equals("count", System.StringComparison.OrdinalIgnoreCase);
+            // "keep n" leaves n weeds standing on each map, to see how fast a map grows back from a few.
+            int keep = args.Length > 1 && args[0].Equals("keep", System.StringComparison.OrdinalIgnoreCase) && int.TryParse(args[1], out int kept) && kept > 0 ? kept : 0;
             var perMap = new SortedDictionary<string, int>(System.StringComparer.Ordinal);
             int total = 0, sure = 0;
             foreach (GameLocation location in Game1.locations.ToList())
@@ -110,7 +112,7 @@ namespace TheLongestYear
                 total += weeds.Count;
                 sure += weeds.Count(p => SeedWeedIds.Contains(p.Value.ItemId));
                 if (!countOnly)
-                    foreach (var pair in weeds) location.objects.Remove(pair.Key);
+                    foreach (var pair in weeds.Skip(keep)) location.objects.Remove(pair.Key);
             }
             this.Monitor.Log($"tly_weedsweep: day {Game1.stats.DaysPlayed} ({Game1.currentSeason} {Game1.dayOfMonth}), {(countOnly ? "counted" : "cut")} {total} weed(s), {sure} that always drop Mixed Seeds: " +
                 string.Join(", ", perMap.OrderByDescending(m => m.Value).Select(m => $"{m.Key} {m.Value}")), LogLevel.Info);
