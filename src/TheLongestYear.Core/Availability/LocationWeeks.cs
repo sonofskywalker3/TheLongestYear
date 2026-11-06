@@ -59,10 +59,14 @@ public sealed class LocationWeeks
     /// <param name="directedLinks">Every map warp and door warp, From the map it stands in To the
     /// map it leads to.</param>
     /// <param name="isForbidden">Maps the run never enters (ItemPoolBuilder.IsExcludedLocation).</param>
+    /// <param name="openingWeeks">Maps a supported mod's layer holds to a week of year 1 (a door behind
+    /// a paid bundle, a wall a scene removes): the map's gate is the later of that week and its own,
+    /// in every column. Null = none.</param>
     public static LocationWeeks Build(
         IReadOnlyList<RawLocationLink> directedLinks,
         Func<string, bool> isForbidden,
-        string start = ReachabilityGraph.FarmLocation)
+        string start = ReachabilityGraph.FarmLocation,
+        IReadOnlyDictionary<string, int>? openingWeeks = null)
     {
         if (directedLinks == null) throw new ArgumentNullException(nameof(directedLinks));
         if (isForbidden == null) throw new ArgumentNullException(nameof(isForbidden));
@@ -79,7 +83,14 @@ public sealed class LocationWeeks
         var best = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);
         if (string.IsNullOrEmpty(start) || isForbidden(start))
             return new LocationWeeks(best);
-        best[start] = PlaceWeek.OwnGate(start);
+        PlaceWeek GateOf(string map)
+        {
+            PlaceWeek own = PlaceWeek.OwnGate(map);
+            return openingWeeks != null && openingWeeks.TryGetValue(map, out int week)
+                ? own.LaterOf(new PlaceWeek(week, week, week))
+                : own;
+        }
+        best[start] = GateOf(start);
         var queue = new Queue<string>();
         queue.Enqueue(start);
         // Weeks only ever go down and are bounded below by 1, so relaxing until nothing improves
@@ -92,7 +103,7 @@ public sealed class LocationWeeks
             foreach (string there in targets)
             {
                 if (isForbidden(there)) continue;
-                PlaceWeek candidate = hereWeek.LaterOf(PlaceWeek.OwnGate(there));
+                PlaceWeek candidate = hereWeek.LaterOf(GateOf(there));
                 if (best.TryGetValue(there, out PlaceWeek? known))
                 {
                     PlaceWeek merged = known.EarlierOf(candidate);

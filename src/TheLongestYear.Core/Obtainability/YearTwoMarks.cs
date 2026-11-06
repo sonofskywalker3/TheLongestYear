@@ -16,7 +16,16 @@ public sealed record YearTwoMarks(IReadOnlyDictionary<string, YearTwoFlag> Maps,
     public static readonly YearTwoMarks None = new(
         new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal), new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal));
 
+    /// <summary>No year-2 flag at all, so <see cref="Mark"/> changes nothing. Says nothing about
+    /// <see cref="MapWeeks"/> or <see cref="MapLinks"/>.</summary>
     public bool IsEmpty => Maps.Count == 0 && Shops.Count == 0;
+
+    /// <summary>Maps a layer holds to an opening week of year 1 (<see cref="LayerInputs.MapWeeks"/>):
+    /// read by the map walk and by <see cref="MapWeekGate"/>.</summary>
+    public IReadOnlyDictionary<string, int> MapWeeks { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>Ways between maps a layer adds to the walk (<see cref="LayerInputs.MapLinks"/>).</summary>
+    public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
 
     /// <summary>A source whose Requires holds <c>location:&lt;map&gt;</c> (Maps) or <c>shop:&lt;id&gt;</c>
     /// (Shops) gets YearTwo or GingerIsland set (ordinal, whole-string match of the part after the

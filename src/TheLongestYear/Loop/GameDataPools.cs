@@ -293,6 +293,7 @@ namespace TheLongestYear.Loop
                 // Ginger Island: Forager's Nooks and Crannies' Rainforest Retreat rows Lionfish) are
                 // island content: they neither feed the pools nor prove an item reachable, and a fish
                 // row there is a closed catch route like a row on the island itself (SpawnPlaceRule).
+                links.AddRange(marks.MapLinks);
                 IReadOnlySet<string> unreachablePlaces = ReachabilityGraph.UnreachableLocations(
                     links, allLocations,
                     name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers));
@@ -519,8 +520,11 @@ namespace TheLongestYear.Loop
                         if (!string.IsNullOrEmpty(door.Value))
                             links.Add(new RawLocationLink(location.Name, door.Value));
                 }
+                // Ways in that the maps do not show (a touch-action warp tile), named by a supported mod's layer.
+                links.AddRange(marks.MapLinks);
                 LocationWeeks weeks = LocationWeeks.Build(
-                    links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers) || marks.Maps.ContainsKey(name));
+                    links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers) || marks.Maps.ContainsKey(name),
+                    openingWeeks: marks.MapWeeks);
                 _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors; {marks.Maps.Count} year-2 map(s) flagged by layers left out).", LogLevel.Trace);
                 return weeks;
             }

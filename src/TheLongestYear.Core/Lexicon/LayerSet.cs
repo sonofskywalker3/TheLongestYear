@@ -239,7 +239,11 @@ public sealed class LayerSet
         var years = Rulings(inputs, i => i.YearRulings, warn, "year");
         var weeks = Rulings(inputs, i => i.WeekRulings, warn, "week");
         var marks = new YearTwoMarks(
-            Rulings(inputs, i => i.YearTwoMaps, warn, "year-2 map"), Rulings(inputs, i => i.YearTwoShops, warn, "year-2 shop"));
+            Rulings(inputs, i => i.YearTwoMaps, warn, "year-2 map"), Rulings(inputs, i => i.YearTwoShops, warn, "year-2 shop"))
+        {
+            MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
+            MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
+        };
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)
             foreach (var (id, sources) in layer.ExtraSources)

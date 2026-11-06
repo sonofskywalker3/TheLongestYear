@@ -52,7 +52,9 @@ public sealed class ObtainabilityCache
     {
         static string Pairs(IReadOnlyDictionary<string, Lexicon.YearTwoFlag> flags)
             => string.Join(";", flags.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
-        return "|maps:" + Pairs(marks.Maps) + "|shops:" + Pairs(marks.Shops);
+        string weeks = string.Join(";", marks.MapWeeks.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
+        string links = string.Join(";", marks.MapLinks.Select(l => $"{l.From}>{l.To}").OrderBy(s => s, StringComparer.Ordinal));
+        return "|maps:" + Pairs(marks.Maps) + "|shops:" + Pairs(marks.Shops) + "|mapweeks:" + weeks + "|maplinks:" + links;
     }
 
     private static string Fingerprint(ObtainabilityInputs inputs)

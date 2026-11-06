@@ -44,6 +44,25 @@ public sealed record LayerInputs(
     /// <summary>Shops (by shop id) whose data routes are flagged as year 2 or Ginger Island.</summary>
     public IReadOnlyDictionary<string, YearTwoFlag> YearTwoShops { get; init; }
         = new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal);
+
+    /// <summary>Maps (by location name) a player cannot stand in before a week of year 1
+    /// (<see cref="MapWeekRange.First"/> to <see cref="MapWeekRange.Last"/>), when the map's own doors
+    /// do not say so: a door behind a paid bundle, a wall a scene takes down, a friendship lock. The
+    /// map walk holds the map, and every map reached only through it, to that week, and a route naming
+    /// <c>location:&lt;map&gt;</c> lands no earlier.</summary>
+    public IReadOnlyDictionary<string, int> MapWeeks { get; init; }
+        = new Dictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>Ways between maps the walk cannot read from the maps' warps and doors (a touch-action
+    /// warp tile, a warp made in code), each one way, From the map it stands in To the map it leads to.</summary>
+    public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
+}
+
+/// <summary>The bounds of a <see cref="LayerInputs.MapWeeks"/> week: the weeks of year 1.</summary>
+public static class MapWeekRange
+{
+    public const int First = 1;
+    public const int Last = 16;
 }
 
 /// <summary>What a year-2 map or shop route is flagged as.</summary>
@@ -156,12 +175,20 @@ public static class LayerFile
             }
         RequireFlags(json, "YearTwoMaps");
         RequireFlags(json, "YearTwoShops");
+        if (read.MapWeeks != null)
+            foreach (var (map, week) in read.MapWeeks)
+                if (string.IsNullOrWhiteSpace(map) || week < MapWeekRange.First || week > MapWeekRange.Last)
+                    throw new System.Text.Json.JsonException($"MapWeeks {map}: week {week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
+        if (read.MapLinks != null && read.MapLinks.Any(l => l == null || string.IsNullOrWhiteSpace(l.From) || string.IsNullOrWhiteSpace(l.To)))
+            throw new System.Text.Json.JsonException("MapLinks holds a null link or one with no From or To.");
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
             YearTwoRulings = ToOrdinal(read.YearTwoRulings),
             YearTwoMaps = ToOrdinal(read.YearTwoMaps),
             YearTwoShops = ToOrdinal(read.YearTwoShops),
+            MapWeeks = ToOrdinal(read.MapWeeks),
+            MapLinks = read.MapLinks ?? Array.Empty<RawLocationLink>(),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
                 : read.ExtraSources.ToDictionary(
