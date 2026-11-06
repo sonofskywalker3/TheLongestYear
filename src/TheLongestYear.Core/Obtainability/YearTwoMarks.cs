@@ -29,6 +29,31 @@ public sealed record YearTwoMarks(IReadOnlyDictionary<string, YearTwoFlag> Maps,
     /// closes): the map's own gate is the earlier of the two.</summary>
     public IReadOnlyDictionary<string, int> OpenedEarly { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
+    /// <summary>Back doors that are open only on a save owning an upgrade (<see cref="MapBackDoor.WhenUpgrade"/>).
+    /// They are not in <see cref="OpenedEarly"/> until <see cref="For"/> puts the owned ones there.</summary>
+    public IReadOnlyList<MapBackDoor> UpgradeDoors { get; init; } = Array.Empty<MapBackDoor>();
+
+    /// <summary>The upgrades this save owns that open a back door, in ordinal order: what names the
+    /// save's variant (<see cref="AnswerSet.VariantName"/>).</summary>
+    public IReadOnlyList<string> DoorUpgrades(Func<string, bool> hasUpgrade)
+    {
+        if (hasUpgrade is null) throw new ArgumentNullException(nameof(hasUpgrade));
+        return UpgradeDoors.Select(d => d.WhenUpgrade!).Distinct(StringComparer.Ordinal).Where(hasUpgrade)
+            .OrderBy(u => u, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>These marks for one save: the back doors of the upgrades it owns are opened.</summary>
+    public YearTwoMarks For(Func<string, bool> hasUpgrade)
+    {
+        IReadOnlyList<string> owned = DoorUpgrades(hasUpgrade);
+        if (owned.Count == 0) return this;
+        var early = new Dictionary<string, int>(OpenedEarly, StringComparer.Ordinal);
+        foreach (MapBackDoor door in UpgradeDoors)
+            if (owned.Contains(door.WhenUpgrade!))
+                early[door.Map] = early.TryGetValue(door.Map, out int had) ? Math.Min(had, door.Week) : door.Week;
+        return this with { OpenedEarly = early };
+    }
+
     /// <summary>Ways between maps a layer adds to the walk (<see cref="LayerInputs.MapLinks"/>).</summary>
     public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
 

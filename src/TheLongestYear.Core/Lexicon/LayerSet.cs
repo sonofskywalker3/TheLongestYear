@@ -248,8 +248,10 @@ public sealed class LayerSet
         {
             MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
             MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
-            OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).GroupBy(d => d.Map, StringComparer.Ordinal)
+            OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade == null)
+                .GroupBy(d => d.Map, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
+            UpgradeDoors = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade != null).ToList(),
         };
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)
@@ -264,7 +266,7 @@ public sealed class LayerSet
         // (Active drops it from the inputs, not from the file), so the doors in force are named too.
         keyLayers.AddRange(inputs.Select(i => $"{i.UniqueId}#{HashOf(i.TextHash, () => LayerFile.WriteInputs(i))}"
             + (i.MapBackDoors.Count == 0 ? "" : "+doors:" + string.Join(",", i.MapBackDoors
-                .Select(d => $"{d.Map}={d.Week}").OrderBy(s => s, StringComparer.Ordinal)))));
+                .Select(d => $"{d.Map}={d.Week}{(d.WhenUpgrade == null ? "" : "@" + d.WhenUpgrade)}").OrderBy(s => s, StringComparer.Ordinal)))));
         keyLayers.AddRange(applied.Select(a => $"{LayerFile.Name(a.Mods)}.answers#{HashOf(a.TextHash, () => LayerFile.WriteAnswers(a))}"));
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)
@@ -289,22 +291,29 @@ public sealed class LayerSet
     {
         AnswerSet? result = null;
         // Base first, so AnswerSetMerge stores the others as deltas over it.
-        foreach (string name in vanilla.Variants.Keys.OrderBy(k => k == AnswerSet.BaseVariant ? 0 : 1).ThenBy(k => k, StringComparer.Ordinal))
+        // A variant for a save that owns a door upgrade ("base+keep_minecarts") exists where a layer
+        // wrote one. The vanilla file and the layers that have no such back door say the same with or
+        // without the upgrade, so they are read at the variant's stem.
+        IEnumerable<string> names = vanilla.Variants.Keys.Concat(applied.SelectMany(a => a.Deltas.Keys)
+            .Where(k => AnswerSet.StemOf(k) != k && vanilla.Variants.ContainsKey(AnswerSet.StemOf(k)))).Distinct(StringComparer.Ordinal);
+        foreach (string name in names.OrderBy(k => k == AnswerSet.BaseVariant ? 0 : 1).ThenBy(k => k, StringComparer.Ordinal))
         {
-            AnswerVariant? whole = vanilla.Resolve(name);
+            string vanillaName = vanilla.StoredNameFor(name);
+            AnswerVariant? whole = vanilla.Resolve(vanillaName);
             if (whole == null) continue;
-            var rows = new Dictionary<string, ulong>(vanilla.RowHashesFor(name), StringComparer.Ordinal);
+            var rows = new Dictionary<string, ulong>(vanilla.RowHashesFor(vanillaName), StringComparer.Ordinal);
             bool mapped = true;
             foreach (LayerAnswers layer in applied)
             {
+                string stored = layer.Deltas.ContainsKey(name) ? name : AnswerSet.StemOf(name);
                 if (layer.Deltas.Count > 0)
                 {
-                    if (!layer.Deltas.TryGetValue(name, out AnswerVariant? delta)) { mapped = false; break; }
+                    if (!layer.Deltas.TryGetValue(stored, out AnswerVariant? delta)) { mapped = false; break; }
                     whole = LayDelta(whole, delta);
                 }
-                if (layer.VariantRowHashes.TryGetValue(name, out var own))
+                if (layer.VariantRowHashes.TryGetValue(stored, out var own))
                     foreach (var (key, hash) in own) rows[key] = hash;
-                if (layer.Removals.TryGetValue(name, out LayerRemovals? removal))
+                if (layer.Removals.TryGetValue(stored, out LayerRemovals? removal))
                 {
                     whole = Remove(whole, removal);
                     foreach (string key in removal.Rows) rows.Remove(key);

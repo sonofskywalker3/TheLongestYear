@@ -177,7 +177,7 @@ namespace TheLongestYear.DebugCommands
             Resolved current = service.Current;
             // Exactly what a cache miss builds: the composed layers' extra sources and year-2 flags, this save's weeks and shops.
             var extra = context.Layers?.Set.ExtraDirectSources;
-            var marks = context.Layers?.Set.Marks;
+            var marks = TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers?.Set.Marks);
             AnswerVariant cold;
             IReadOnlyList<string> lines;
             try
@@ -299,12 +299,13 @@ namespace TheLongestYear.DebugCommands
             var timer = Stopwatch.StartNew();
             var extra = context.Layers.Set.ExtraDirectSources;
             ObtainabilityInputs built = context.Layers.Set.WithFishSpawns(inputs);
-            ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: context.Layers.Set.Marks);
-            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: context.Layers.Set.Marks);
+            ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers.Set.Marks));
+            ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers.Set.Marks));
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                 with { Availability = context.Availability() };
             live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn)) };
-            string name = context.PierreYear2Owned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
+            IReadOnlyList<string> doors = context.Layers.Set.Marks.DoorUpgrades(TheLongestYear.Loop.LexiconService.OwnsUpgrade);
+            string name = AnswerSet.VariantName(context.PierreYear2Owned, doors);
 
             string path = Path.Combine(LayerFile.Folder(modDirectory), LayerFile.AnswersFileName(mods));
             LayerAnswers existing;
@@ -322,7 +323,7 @@ namespace TheLongestYear.DebugCommands
             {
                 answers = LayerDelta.Write(
                     target, context.Vanilla, context.Layers.Inputs, context.Layers.Answers, name, live,
-                    RowHashes.Of(inputs, context.PierreYear2Owned), context.Layers.InstalledVersionOf, existing);
+                    RowHashes.Of(inputs, context.PierreYear2Owned, doors), context.Layers.InstalledVersionOf, existing);
             }
             catch (InvalidOperationException e)
             {

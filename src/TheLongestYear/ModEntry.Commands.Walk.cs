@@ -28,7 +28,15 @@ namespace TheLongestYear
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
             if (args.Length < 2 || !int.TryParse(args[0], out int x) || !int.TryParse(args[1], out int y))
             {
-                this.Monitor.Log("Usage: tly_walkto <x> <y>", LogLevel.Warn);
+                this.Monitor.Log("Usage: tly_walkto <x> <y> [up|down|left|right]", LogLevel.Warn);
+                return;
+            }
+            // Some maps change when the farmer walks off the edge, with no warp tile to step on
+            // (Deep Woods): a direction keeps the farmer walking that way once the path is done.
+            int push = args.Length < 3 ? -1 : Array.IndexOf(new[] { "up", "right", "down", "left" }, args[2].ToLowerInvariant());
+            if (args.Length >= 3 && push < 0)
+            {
+                this.Monitor.Log("Usage: tly_walkto <x> <y> [up|down|left|right]", LogLevel.Warn);
                 return;
             }
             Farmer p = Game1.player;
@@ -66,7 +74,17 @@ namespace TheLongestYear
                 bool moved = now != from;
                 // The last step onto a warp ends the path a moment before the game changes maps, so
                 // the walk is only over once the farmer has stood still for a while.
-                if (!moved && Game1.player.controller == null) idle++;
+                if (!moved && Game1.player.controller == null)
+                {
+                    idle++;
+                    if (push >= 0 && idle <= WarpSettleTicks)
+                    {
+                        Game1.player.setMoving((byte)(1 << push));
+                        Game1.player.faceDirection(push);
+                    }
+                    else if (push >= 0)
+                        Game1.player.Halt();
+                }
                 bool settled = !moved && idle > WarpSettleTicks;
                 if (!moved && !settled && ticks < WalkTimeoutTicks) return;
                 this.Helper.Events.GameLoop.UpdateTicked -= _walkWatch;

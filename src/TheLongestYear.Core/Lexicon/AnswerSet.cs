@@ -76,6 +76,30 @@ public sealed record AnswerSet(
     public const string BaseVariant = "base";
     /// <summary>The variant for a save that owns the <c>pierre_year2_seeds</c> upgrade.</summary>
     public const string PierreVariant = "pierre_year2_seeds";
+    /// <summary>Joins a variant's stem ("base" or the Pierre variant) to the upgrades that open a back
+    /// door on this save (<see cref="MapBackDoor.WhenUpgrade"/>): "base+keep_minecarts".</summary>
+    public const string DoorJoiner = "+";
+
+    /// <summary>The variant a save reads: its stem, then each owned door upgrade in ordinal order.</summary>
+    public static string VariantName(bool pierreOwned, IReadOnlyList<string>? doorUpgrades = null)
+    {
+        string stem = pierreOwned ? PierreVariant : BaseVariant;
+        return doorUpgrades == null || doorUpgrades.Count == 0
+            ? stem
+            : stem + DoorJoiner + string.Join(DoorJoiner, doorUpgrades.OrderBy(u => u, StringComparer.Ordinal));
+    }
+
+    /// <summary>The stem of a variant name: the part before the first <see cref="DoorJoiner"/>.</summary>
+    public static string StemOf(string name)
+    {
+        int at = name.IndexOf(DoorJoiner, StringComparison.Ordinal);
+        return at < 0 ? name : name.Substring(0, at);
+    }
+
+    /// <summary>The name to read for <paramref name="name"/> in a set that knows no door upgrades (the
+    /// vanilla file, a layer with no upgrade back door): the name itself when stored, else its stem.
+    /// Such a set says the same thing with or without the upgrade.</summary>
+    public string StoredNameFor(string name) => Variants.ContainsKey(name) ? name : StemOf(name);
 
     /// <summary>Per non-base variant, every row hash its inputs had. Empty when the set holds only base.</summary>
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, ulong>> VariantRowHashes { get; init; }

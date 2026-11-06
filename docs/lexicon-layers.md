@@ -159,6 +159,12 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      way when installed (a patch with `HasMod` false); the back door is ignored while one of them is loaded. A layer
      week in `MapWeeks` for the same map still holds it later. The map walk must reach the map: when the way in is a
      touch-action warp or a warp made in code, name it in `MapLinks` too, or the availability weeks keep the old gate.
+     `WhenUpgrade` names an upgrade the save must own for the way to be open (Deep Woods' minecart stop runs from
+     day 1 only with `keep_minecarts`). Such a save reads its own variant of the answers, named by its stem and the
+     upgrade (`base+keep_minecarts`, `pierre_year2_seeds+keep_minecarts`), and never the stem's. Write each on a farm
+     that owns the upgrade (`tly_buyupgrade <id>`, sleep, restart, load, `tly_lexicon write <UniqueID>`); until a layer
+     holds the variant those saves compute. `vanilla.json` and the layers with no such back door are read at the stem,
+     so they need nothing new.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.

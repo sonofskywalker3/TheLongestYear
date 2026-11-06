@@ -226,7 +226,7 @@ namespace TheLongestYear
 
         /// <summary>The supported-mod layers' year-2 maps and shops for every pool build, or null
         /// (none) before the lexicon exists.</summary>
-        private TheLongestYear.Core.Obtainability.YearTwoMarks LayerMarks() => _lexicon?.Loaded.Set.Marks;
+        private TheLongestYear.Core.Obtainability.YearTwoMarks LayerMarks() => TheLongestYear.Loop.LexiconService.SaveMarks(_lexicon?.Loaded.Set.Marks);
 
         /// <summary>The supported-mod layers' daily shop picks for every pool build, or null (none)
         /// before the lexicon exists.</summary>

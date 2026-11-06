@@ -67,8 +67,14 @@ public sealed record LayerInputs(
 /// (<see cref="MapWeekRange.First"/> to <see cref="MapWeekRange.Last"/>) the first week of year 1 a
 /// player can walk it, <see cref="From"/> the map it leads in from (for the reader; the week is the
 /// ruling). <see cref="UnlessMods"/> are mod ids that close it: the mod leaves the way out when one of
-/// them is installed, so the back door is ignored then.</summary>
-public sealed record MapBackDoor(string Map, int Week, string From, IReadOnlyList<string>? UnlessMods = null);
+/// them is installed, so the back door is ignored then. <see cref="WhenUpgrade"/> is an upgrade id the
+/// save must own for the way to be open (Deep Woods' minecart stop runs from day 1 only with Keep
+/// Minecarts): such a back door gives the save its own variant of the answers
+/// (<see cref="AnswerSet.VariantName"/>), written on a farm that owns the upgrade.</summary>
+public sealed record MapBackDoor(string Map, int Week, string From, IReadOnlyList<string>? UnlessMods = null)
+{
+    public string? WhenUpgrade { get; init; }
+}
 
 /// <summary>The bounds of a <see cref="LayerInputs.MapWeeks"/> week: the weeks of year 1.</summary>
 public static class MapWeekRange
@@ -202,6 +208,8 @@ public static class LayerFile
                     throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: week {door.Week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
                 if (door.UnlessMods != null && door.UnlessMods.Any(string.IsNullOrWhiteSpace))
                     throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: UnlessMods holds a null or empty mod id.");
+                if (door.WhenUpgrade != null && (string.IsNullOrWhiteSpace(door.WhenUpgrade) || door.WhenUpgrade.Contains(AnswerSet.DoorJoiner)))
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: WhenUpgrade is blank or holds '{AnswerSet.DoorJoiner}'.");
             }
         return read with
         {

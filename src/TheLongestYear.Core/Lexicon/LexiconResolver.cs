@@ -66,13 +66,13 @@ public sealed class LexiconResolver
     /// the ids with their files' hashes); null uses <paramref name="layers"/>.</param>
     public Resolved Resolve(
         ObtainabilityInputs live, bool pierreOwned, string gameVersion, string modVersion, IReadOnlyList<string> layers,
-        IReadOnlyList<string>? keyLayers = null)
+        IReadOnlyList<string>? keyLayers = null, IReadOnlyList<string>? doorUpgrades = null)
     {
         if (live == null) throw new ArgumentNullException(nameof(live));
         var timer = Stopwatch.StartNew();
-        IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, pierreOwned);
+        IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, pierreOwned, doorUpgrades);
         string key = RowHashes.Key(rows, keyLayers ?? layers, gameVersion, modVersion, _codeStamp);
-        string variantName = pierreOwned ? AnswerSet.PierreVariant : AnswerSet.BaseVariant;
+        string variantName = AnswerSet.VariantName(pierreOwned, doorUpgrades);
 
         if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.ModVersion == modVersion
             && _shipped.Variants.ContainsKey(variantName)
