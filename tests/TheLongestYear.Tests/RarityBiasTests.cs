@@ -153,6 +153,8 @@ public class RarityBiasTests
             ShopWeeks = TheLongestYear.Core.Availability.ShopWeeks.Build(
                 new[] { new RawShopListing("(O)24", "SeedShop") }, new[] { new RawShopPlacement("SeedShop", "Farm") },
                 TheLongestYear.Core.Availability.LocationWeeks.Build(new RawLocationLink[0], _ => false)),
+            MixedSeeds = new MixedSeedInputs(
+                new[] { new TheLongestYear.Core.Obtainability.MixedSeedRow("(O)472", null, 1) }, new List<MixedSeedCrop>()),
         };
 
         ItemPools biased = RarityBias.Apply(pools, 2.4, new RarityThresholds());

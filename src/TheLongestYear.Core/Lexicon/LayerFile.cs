@@ -61,6 +61,14 @@ public sealed record LayerInputs(
     /// its log, the Sewer behind its key): with the mod installed the map opens at the back door's week
     /// when that is earlier, in the map walk, the landing tables and the availability weeks alike.</summary>
     public IReadOnlyList<MapBackDoor> MapBackDoors { get; init; } = Array.Empty<MapBackDoor>();
+
+    /// <summary>True when the mod puts seeds into another mod's Mixed Seeds pool (Cornucopia fills Item
+    /// Extensions' when that mod is installed). Its answers are then not the same with and without the
+    /// pool, so every answers file naming it must hold the <see cref="AnswerSet.MixedSeedPoolTag"/>
+    /// variants itself, written in a game where the pool is filled; a layer without this is read at the
+    /// variant's stem. Left out of a written file when false.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+    public bool FillsMixedSeedPool { get; init; }
 }
 
 /// <summary>A way a mod adds into a gated map. <see cref="Map"/> is the gated map, <see cref="Week"/>

@@ -72,7 +72,7 @@ public sealed class LexiconResolver
         var timer = Stopwatch.StartNew();
         IReadOnlyDictionary<string, ulong> rows = RowHashes.Of(live, pierreOwned, doorUpgrades);
         string key = RowHashes.Key(rows, keyLayers ?? layers, gameVersion, modVersion, _codeStamp);
-        string variantName = AnswerSet.VariantName(pierreOwned, doorUpgrades);
+        string variantName = AnswerSet.VariantName(pierreOwned, doorUpgrades, AnswerSet.DataTags(live));
 
         if (_shipped != null && _shipped.GameVersion == gameVersion && _shipped.ModVersion == modVersion
             && _shipped.Variants.ContainsKey(variantName)

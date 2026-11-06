@@ -90,7 +90,7 @@ public static class ObtainabilityBuilder
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
             all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates)
                 .Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));
-            all.AddRange(GrowSources.Crops(inputs.Crops, current));
+            all.AddRange(GrowSources.Crops(inputs.Crops, current, inputs.MixedSeedPool));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
             all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));

@@ -25,6 +25,10 @@ public sealed record AvailabilityAnswers(
     /// <summary><see cref="InputsHash"/> of the inputs these answers were computed from; empty when unknown.</summary>
     public string Inputs { get; init; } = "";
 
+    /// <summary>The quantity basis, Spring to Winter, of each crop only another mod's Mixed Seeds pool
+    /// gives (<see cref="MixedSeedSupply.Bases"/>). Null, and so not written, when there is none.</summary>
+    public IReadOnlyDictionary<string, double[]>? MixedSeedCropBases { get; init; }
+
     /// <summary>The <see cref="AnswerVariant.Availability"/> key: <c>"{step}|kitchen"</c> or <c>"{step}|no_kitchen"</c>.
     /// The week mode follows from the step (<see cref="WeekModes.For"/>).</summary>
     public static string Key(DifficultyStep step, bool hasKitchen) => $"{step}|{(hasKitchen ? Kitchen : NoKitchen)}";

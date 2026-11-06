@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -19,6 +20,7 @@ public sealed class SourceReachability
     private readonly Dictionary<string, List<string>> _seedByHarvest;
     private readonly IReadOnlySet<string> _reachableSpawnIds;
     private readonly IReadOnlySet<string> _excludedCatchIds;
+    private readonly IReadOnlySet<string> _mixedSeedIds;
     private readonly Dictionary<string, bool> _memo = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _reasons = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<RawRecipeEntry>> _recipesByOutput;
@@ -36,6 +38,9 @@ public sealed class SourceReachability
     /// row anywhere reachable, which is in <paramref name="reachableSpawnIds"/>, or a reachable
     /// shop). Fish rows only: forage rows on the island (Purple Mushroom in the island cave) name
     /// items the game also hands out from code with no data row, so they prove nothing.</param>
+    /// <param name="mixedSeedIds">Seeds a bag of Mixed Seeds can become on a year-1 farm through
+    /// another mod's pool (<see cref="MixedSeedPool.FarmSeeds"/>). Such a seed is in reach whatever its
+    /// shop lines say, so its crop is too.</param>
     public SourceReachability(
         IReadOnlySet<string> unreachableLocations,
         IReadOnlyList<RawShopListing> shopListings,
@@ -45,9 +50,11 @@ public sealed class SourceReachability
         IReadOnlySet<string> reachableSpawnIds,
         IReadOnlyList<RawMachineRule>? machineRules = null,
         IReadOnlyList<RawAnimalSource>? animals = null,
-        IReadOnlySet<string>? excludedCatchIds = null)
+        IReadOnlySet<string>? excludedCatchIds = null,
+        IReadOnlySet<string>? mixedSeedIds = null)
     {
         _excludedCatchIds = excludedCatchIds ?? new HashSet<string>(StringComparer.Ordinal);
+        _mixedSeedIds = mixedSeedIds ?? new HashSet<string>(StringComparer.Ordinal);
 
         foreach (RawMachineRule rule in machineRules ?? Array.Empty<RawMachineRule>())
         {
@@ -139,6 +146,21 @@ public sealed class SourceReachability
     /// <see cref="IsUnreachable"/> runs.</summary>
     public IReadOnlyDictionary<string, string> Reasons => _reasons;
 
+    /// <summary>True when no route to the item is known at all: nothing sells it, grows it, makes it,
+    /// lays it or spawns it. Such an item is allowed (<see cref="IsUnreachable"/> is false), which is
+    /// not the same as having a route.</summary>
+    public bool KnowsNoSource(string qualifiedItemId)
+    {
+        if (string.IsNullOrEmpty(qualifiedItemId)) return true;
+        string id = Qualify(qualifiedItemId);
+        return !_reachableSpawnIds.Contains(id) && !_mixedSeedIds.Contains(id) && !_excludedCatchIds.Contains(id)
+            && !(_listingsByItem.TryGetValue(id, out List<RawShopListing>? listings) && listings.Any(l => !l.IsRecipe))
+            && !(_seedByHarvest.TryGetValue(id, out List<string>? seeds) && seeds.Count > 0)
+            && !(_recipesByOutput.TryGetValue(id, out List<RawRecipeEntry>? recipes) && recipes.Count > 0)
+            && !(_machineRulesByOutput.TryGetValue(id, out List<RawMachineRule>? rules) && rules.Count > 0)
+            && !(_animalsByProduce.TryGetValue(id, out List<RawAnimalSource>? animals) && animals.Count > 0);
+    }
+
     public bool IsUnreachable(string qualifiedItemId)
     {
         if (string.IsNullOrEmpty(qualifiedItemId)) return false;
@@ -174,6 +196,7 @@ public sealed class SourceReachability
         // Positive proof beats every condemning rule. An item that spawns somewhere reachable
         // is reachable, whatever else also happens to list it.
         if (_reachableSpawnIds.Contains(id)) return false;
+        if (_mixedSeedIds.Contains(id)) return false;
 
         bool anySourceKnown = false;
 

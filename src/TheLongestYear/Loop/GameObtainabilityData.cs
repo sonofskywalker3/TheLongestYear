@@ -388,6 +388,7 @@ namespace TheLongestYear.Loop
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
                 Ponds = ponds, TapItems = taps, TreeDrops = treeDrops, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
                 Buildings = buildings, SlayerQuests = slayerQuests, CookingChannel = cookingChannel,
+                MixedSeedPool = TheLongestYear.Integration.ItemExtensionsMixedSeeds.Read(_monitor),
             };
         }
 

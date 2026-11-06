@@ -44,6 +44,7 @@ public static class ItemAvailabilityBuilder
         return new ItemAvailabilityModel(answers.Derived, seasonOverrides, effortOverrides, answers.EffortDerived, weekOverrides, mode, step)
         {
             DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits,
+            MixedSeedCropBases = answers.MixedSeedCropBases ?? new Dictionary<string, double[]>(StringComparer.Ordinal),
             CatchRates = catchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
         };
     }
@@ -126,12 +127,16 @@ public static class ItemAvailabilityBuilder
             }
         }
 
+        // What the bags of Mixed Seeds a farmer can gather yield of each crop only another mod's pool
+        // gives: worked out here, in the cold build, and stored with the answers.
+        IReadOnlyDictionary<string, double[]> mixedSeedBases = MixedSeedSupply.Bases(pools.MixedSeeds);
         var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { CatchRates = pools.CatchRates };
+            { CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases };
         var noEffort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         if (effortData == null)
             return (model, new AvailabilityAnswers(derived, effortDerived ?? noEffort,
-                new Dictionary<string, double[]>(StringComparer.Ordinal), new Dictionary<string, int>(StringComparer.Ordinal)));
+                new Dictionary<string, double[]>(StringComparer.Ordinal), new Dictionary<string, int>(StringComparer.Ordinal))
+                { MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null });
 
         // The dish table needs the model's placements, so it is built from this first model and
         // handed to the one returned. Its effort cap reads a composer that never counts the
@@ -145,15 +150,16 @@ public static class ItemAvailabilityBuilder
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,
-            (id, s) => QuantityAskPass.BasisByDeadline(id, s, catchRates: pools.CatchRates),
+            (id, s) => QuantityAskPass.BasisByDeadline(id, s, catchRates: pools.CatchRates, mixedSeedBases: mixedSeedBases),
             kitchenFree.EffortOf);
         // hasUpgrade is read like hasKitchen: once, here. Upgrades are only bought before a reset,
         // and every reset rebuilds the model, so the set is the one the board is generated under.
         // Built here, not through FromAnswers, so the tests comparing the two compare two constructions.
         IReadOnlyDictionary<string, int> dishUnits = YearTwoCrops.DishUnits(effortData, hasUpgrade);
         var built = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates };
-        return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits));
+            { DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases };
+        return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits)
+            { MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null });
     }
 
     /// <summary>Pools carry qualified ids ("(O)128"); Data/Fish is keyed unqualified ("128").

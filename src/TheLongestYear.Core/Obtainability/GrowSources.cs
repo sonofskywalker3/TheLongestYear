@@ -53,7 +53,11 @@ public static class GrowSources
         return DayTable.Exact(plant => plant + growth <= Calendar.DaysPerYear ? plant + growth : null);
     }
 
-    public static IEnumerable<(string ItemId, ObtainSource Source)> Crops(IEnumerable<CropRow> rows, ObtainabilityModel snapshot)
+    /// <param name="pool">The Mixed Seeds pool another mod keeps (<see cref="ObtainabilityInputs.MixedSeedPool"/>).
+    /// Each of its seeds that a bag can become is a luck route for its crop, like vanilla's own; empty
+    /// or null adds nothing.</param>
+    public static IEnumerable<(string ItemId, ObtainSource Source)> Crops(
+        IEnumerable<CropRow> rows, ObtainabilityModel snapshot, IReadOnlyList<MixedSeedRow>? pool = null)
     {
         List<CropRow> all = rows.ToList();
         var bySeed = all.GroupBy(r => r.SeedId).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
@@ -90,7 +94,48 @@ public static class GrowSources
                     $"Mixed Seeds in the greenhouse ({season} pool)", luck: true))
                     yield return (crop.HarvestId, s);
             }
+
+        if (pool == null || pool.Count == 0) yield break;
+        IReadOnlyList<Season>? SeasonsOf(string seed) => bySeed.TryGetValue(seed, out CropRow? row) ? row.Seasons : null;
+        var listed = new HashSet<string>(Core.MixedSeedPool.Entries(pool).Select(r => r.SeedId), StringComparer.Ordinal);
+        var outdoorMixed = ObtainConditions.None with { Requires = new[] { "item:" + MixedSeedsId } };
+        var indoorMixed = ObtainConditions.None with { Requires = new[] { "item:" + MixedSeedsId, GreenhouseUnlock } };
+        // Outdoors: one route for each season the pool gives the seed in.
+        foreach (Season season in PoolSeasons)
+            foreach (var (seed, share) in Core.MixedSeedPool.Shares(season, indoors: false, pool, SeasonsOf).OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                if (!listed.Contains(seed) || !bySeed.TryGetValue(seed, out CropRow? crop)) continue;
+                DayTable plant = DayTable.Available(d => WeekMask.ForSeason(season).Contains(WeekMask.WeekOfDay(d)));
+                DayTable grown = PlantTable(crop.Seasons, crop.GrowthDays);
+                foreach (ObtainSource s in mixedSeeds.Emit(SourceKind.Crop, t => t.Then(plant).Then(grown), outdoorMixed,
+                    $"Mixed Seeds in {season}, the other mod's pool, {ShareText(share)} of bags", luck: true))
+                    yield return (crop.HarvestId, s);
+            }
+        // The greenhouse: the seed's own season is not asked there, so one route over every season the pool gives it in.
+        var indoorSeasons = new SortedDictionary<string, List<(Season Season, double Share)>>(StringComparer.Ordinal);
+        foreach (Season season in AllSeasons)
+            foreach (var (seed, share) in Core.MixedSeedPool.Shares(season, indoors: true, pool, SeasonsOf))
+            {
+                if (!listed.Contains(seed) || !bySeed.ContainsKey(seed)) continue;
+                if (!indoorSeasons.TryGetValue(seed, out var list)) indoorSeasons[seed] = list = new List<(Season, double)>();
+                list.Add((season, share));
+            }
+        foreach (var (seed, seasons) in indoorSeasons)
+        {
+            CropRow crop = bySeed[seed];
+            WeekMask weeks = seasons.Aggregate(WeekMask.None, (mask, s) => mask | WeekMask.ForSeason(s.Season));
+            DayTable plant = DayTable.Available(d => weeks.Contains(WeekMask.WeekOfDay(d)));
+            foreach (ObtainSource s in mixedSeeds.Emit(SourceKind.GreenhouseCrop, t => t.Then(plant).Then(GreenhouseTable(crop.GrowthDays)), indoorMixed,
+                $"Mixed Seeds in the greenhouse, the other mod's pool, {ShareText(seasons.Min(s => s.Share))} of bags", luck: true))
+                yield return (crop.HarvestId, s);
+        }
     }
+
+    private static readonly Season[] PoolSeasons = { Season.Spring, Season.Summer, Season.Fall };
+    private static readonly Season[] AllSeasons = { Season.Spring, Season.Summer, Season.Fall, Season.Winter };
+
+    private static string ShareText(double share)
+        => (share * 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "%";
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> FruitTrees(
         IEnumerable<FruitTreeRow> rows, ObtainabilityModel snapshot, IReadOnlyDictionary<string, ObjInfo> objects,

@@ -28,7 +28,8 @@ public sealed record AvailabilityInputs(
     IReadOnlyDictionary<string, int>? WeekOverrides,
     bool YearTwoCapped,
     IReadOnlyDictionary<string, CatchRate>? CatchRates = null,
-    IReadOnlyDictionary<string, PlaceWeek>? ShopPlacements = null)
+    IReadOnlyDictionary<string, PlaceWeek>? ShopPlacements = null,
+    MixedSeedInputs? MixedSeeds = null)
 {
     private const int HashChars = 16;
 
@@ -57,7 +58,11 @@ public sealed record AvailabilityInputs(
             effortData?.Ordered(), OrdinalOrder.Of(seasonOverrides), OrdinalOrder.Of(effortOverrides),
             OrdinalOrder.Of(weekOverrides), yearTwoCapped,
             OrdinalOrder.Of(pools.CatchRates),
-            pools.ShopWeeks?.Shops is { Count: > 0 } shops ? OrdinalOrder.Of(shops) : null);
+            pools.ShopWeeks?.Shops is { Count: > 0 } shops ? OrdinalOrder.Of(shops) : null,
+            // Null without a pool, so every stamp made before the pool was read is unchanged.
+            pools.MixedSeeds is { Pool.Count: > 0 } mixed
+                ? mixed with { Crops = mixed.Crops.OrderBy(c => c.SeedId, StringComparer.Ordinal).ToList() }
+                : null);
     }
 
     /// <summary>The first <see cref="HashChars"/> lower-case hex digits of the SHA-256 of this record's
@@ -83,6 +88,7 @@ public sealed record AvailabilityInputs(
         Artifacts = Artifacts ?? new List<PoolItem>(),
         Books = Books ?? new List<PoolItem>(),
         CatchRates = CatchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
+        MixedSeeds = MixedSeeds,
     };
 
     /// <summary>The upgrade test the game hands the builder, as far as it reads it: only

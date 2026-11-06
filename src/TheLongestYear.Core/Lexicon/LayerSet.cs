@@ -274,7 +274,12 @@ public sealed class LayerSet
         AnswerSet? overlay = null, composed = null;
         if (vanilla != null)
         {
-            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, marks.UpgradeDoorMods);
+            // A variant suffix is a door upgrade or the Mixed Seeds pool tag; either way the mods it
+            // touches must hold the variant in their own files.
+            var suffixMods = new Dictionary<string, IReadOnlySet<string>>(marks.UpgradeDoorMods, StringComparer.Ordinal);
+            var poolMods = new HashSet<string>(inputs.Where(i => i.FillsMixedSeedPool).Select(i => i.UniqueId), StringComparer.Ordinal);
+            if (poolMods.Count > 0) suffixMods[AnswerSet.MixedSeedPoolTag] = poolMods;
+            overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, suffixMods);
             composed = unmapped.Count == 0 && unmappedMods.Count == 0
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };

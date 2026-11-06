@@ -48,6 +48,10 @@ public sealed record ItemPools
     /// <summary>The earliest week a walkable shop sells each item (<see cref="Availability.ShopWeeks"/>).
     /// Null = not read: the rules that need it (fruit trees, crop seeds) place nothing from it.</summary>
     public Availability.ShopWeeks? ShopWeeks { get; init; }
+
+    /// <summary>Another mod's Mixed Seeds pool and the crops its seeds grow (<see cref="MixedSeedInputs"/>);
+    /// null when no mod keeps one.</summary>
+    public MixedSeedInputs? MixedSeeds { get; init; }
     public IReadOnlyList<PoolItem> Forage { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> MonsterDrops { get; init; } = new List<PoolItem>();
     public IReadOnlyList<PoolItem> Metals { get; init; } = new List<PoolItem>();

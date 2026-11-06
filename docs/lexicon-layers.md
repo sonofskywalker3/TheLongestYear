@@ -165,6 +165,9 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      that owns the upgrade (`tly_buyupgrade <id>`, sleep, restart, load, `tly_lexicon write <UniqueID>`); until a layer
      holds the variant those saves compute. `vanilla.json` and the layers with no such back door are read at the stem,
      so they need nothing new.
+   - **`FillsMixedSeedPool`** (`true`) says the mod puts seeds into another mod's Mixed Seeds pool (see "The Mixed
+     Seeds pool" below). Its answers are then not the same with and without the pool, so every answers file naming the
+     mod must hold the `+mixed_seed_pool` variants itself; a layer without the flag is read at the variant's stem.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.
@@ -223,6 +226,39 @@ catch (Jeff's ruling 2026-09-04: best ten-hour day times seven), and a catch a f
 under twice is luck, not a dependable route (ruling 2026-09-16). It covers anything that bites, a
 mod's fish or a seed in a fish row alike. The numbers come out within 10% of the sampled table
 (`tools/fish-sim`) they replaced, and pick the same rare catches.
+
+## The Mixed Seeds pool
+
+Item Extensions (`mistyspring.ItemExtensions`) keeps a pool of seeds a bag of Mixed Seeds can become, which other mods
+fill (the asset `Mods/mistyspring.ItemExtensions/MixedSeeds`, key `770`: a seed, a game state query, a weight). For
+each planting it lists every entry whose query holds there and whose crop grows in the season (the season is not
+asked indoors), adds the bag itself once as the vanilla roll's slot, and plants one of the list. This mod reads that
+pool as game data: each entry is a `mixedseed|...` row, and a row for the bag itself says how many slots the vanilla
+roll keeps. With no such mod, with its Mixed Seeds switch off, or with nothing in the pool, there are no rows and
+nothing changes.
+
+- **Shares.** `MixedSeedPool.Shares` gives each seed's chance per bag by season, with this mod's own planting rule on
+  top (the roll made when the bag is used stands when it is Artichoke Seeds or when a Cultivation upgrade or the
+  Year-Two Seeds boost changed it). `tly_mixedseedpool` prints the pool, the shares, the supply and each crop's
+  basis; `tly_mixedseeds [n]` plants n bags through the game and tallies the seeds, to check a share. An entry whose
+  query this mod cannot read takes its slots and gives no route.
+- **Routes.** Each pool seed is a luck route for its crop, outdoors in the seasons the pool gives it and in the
+  greenhouse. A pool seed is in reach whatever its shop lines say, so a crop whose seed is sold only from year 2 can
+  be asked for.
+- **How much is asked.** A crop only the pool gives has a quantity basis, worked out in the cold build and stored with
+  the availability answers (`MixedSeedCropBases`): the bags of Mixed Seeds that turn up in the crop's season, times
+  the seed's share, times the harvests a planting that day still gets, times the least a harvest gives. The ask is
+  the difficulty's band of that basis, like every other basis. The supply table is in `MixedSeedSupply`: weeds at
+  2.5% a bag each (counted on a Standard farm with `tly_weedsweep`, 2026-11-06) and Krobus' ten bags each Thursday
+  from the Sewer's week. Each bag is counted once, in the season it turns up.
+- **Variants.** A game whose pool holds rows reads the variant `<stem>+mixed_seed_pool` (`base+mixed_seed_pool`,
+  `pierre_year2_seeds+mixed_seed_pool`; a door upgrade joins in ordinal order). `vanilla.json` and layers that do not
+  fill the pool are read at the stem. A layer with `FillsMixedSeedPool` holds the variants itself: write each with
+  Item Extensions installed beside the mod (and nothing else that fills the pool), exactly as its other variants are
+  written, with `tly_lexicon write <UniqueID>`. `tly_lexicon write vanilla` refuses a game with a pool.
+- **Limits.** Ginger Island entries are not read (year 2). A `$vanilla_crops`, `$vanilla_flowers` or `$vanilla_seeds`
+  entry indoors is read as a third of each season's list, which is close but not exact. With Crops Anytime Anywhere
+  installed the pool carries one more row, so such a game is computed, not served.
 
 ## Known limits
 
