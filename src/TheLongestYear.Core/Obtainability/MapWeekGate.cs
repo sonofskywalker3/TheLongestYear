@@ -61,7 +61,11 @@ public static class MapWeekGate
     /// shop in <see cref="ShopOpeningWeeks"/>, counts.</summary>
     /// <param name="layerWeeks">Maps a supported mod's layer holds to a week
     /// (<see cref="YearTwoMarks.MapWeeks"/>); the later of it and this table's week counts. Null = none.</param>
-    public static int? OpeningDay(ObtainConditions conditions, IReadOnlyDictionary<string, int>? layerWeeks = null)
+    /// <param name="openedEarly">Maps of this table a supported mod opens sooner
+    /// (<see cref="YearTwoMarks.OpenedEarly"/>): the earlier of it and this table's week is the map's
+    /// week, before <paramref name="layerWeeks"/>. Deep Woods follows the Secret Woods. Null = none.</param>
+    public static int? OpeningDay(ObtainConditions conditions, IReadOnlyDictionary<string, int>? layerWeeks = null,
+        IReadOnlyDictionary<string, int>? openedEarly = null)
     {
         if (conditions is null) throw new ArgumentNullException(nameof(conditions));
         int? latest = null;
@@ -72,6 +76,9 @@ public static class MapWeekGate
             {
                 string map = r.Substring(LocationPrefix.Length);
                 bool known = OpeningWeeks.TryGetValue(map, out week);
+                if (known && openedEarly != null
+                    && openedEarly.TryGetValue(map == DeepWoodsMap ? SecretWoodsMap : map, out int early))
+                    week = Math.Min(week, early);
                 if (layerWeeks != null && layerWeeks.TryGetValue(map, out int layerWeek))
                     week = known ? Math.Max(week, layerWeek) : layerWeek;
                 else if (!known) continue;
@@ -88,10 +95,11 @@ public static class MapWeekGate
     }
 
     /// <summary>The route with its map's opening day built into both tables (unchanged when it needs none).</summary>
-    public static ObtainSource Apply(ObtainSource source, IReadOnlyDictionary<string, int>? layerWeeks = null)
+    public static ObtainSource Apply(ObtainSource source, IReadOnlyDictionary<string, int>? layerWeeks = null,
+        IReadOnlyDictionary<string, int>? openedEarly = null)
     {
         if (source is null) throw new ArgumentNullException(nameof(source));
-        if (OpeningDay(source.Conditions, layerWeeks) is not int day) return source;
+        if (OpeningDay(source.Conditions, layerWeeks, openedEarly) is not int day) return source;
         return source with
         {
             Lands = source.Lands.StartNoEarlierThan(day),

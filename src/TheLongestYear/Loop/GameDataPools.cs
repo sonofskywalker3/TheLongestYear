@@ -525,7 +525,7 @@ namespace TheLongestYear.Loop
                 links.AddRange(marks.MapLinks);
                 LocationWeeks weeks = LocationWeeks.Build(
                     links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers) || marks.Maps.ContainsKey(name),
-                    openingWeeks: marks.MapWeeks);
+                    openingWeeks: marks.MapWeeks, openedEarly: marks.OpenedEarly);
                 _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors; {marks.Maps.Count} year-2 map(s) flagged by layers left out).", LogLevel.Trace);
                 return weeks;
             }

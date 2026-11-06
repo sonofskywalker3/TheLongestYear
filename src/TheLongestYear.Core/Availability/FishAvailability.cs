@@ -34,13 +34,16 @@ public static class FishAvailability
     /// <param name="weeks">When set, each location's week comes from the walked map weeks
     /// (<see cref="LocationWeeks"/>) and a location it cannot date is ignored; null reads
     /// <see cref="LocationGating"/>'s names, as every pooled fish does.</param>
-    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row, WeekMode mode = WeekMode.Pacing, LocationWeeks? weeks = null)
+    /// <param name="opened">Gated maps a supported mod opens sooner (<see cref="LocationWeeks.OpenedEarly"/>),
+    /// for the read by name. Null = none.</param>
+    public static ItemAvailability Derive(PoolItem item, RawFishEntry? row, WeekMode mode = WeekMode.Pacing, LocationWeeks? weeks = null,
+        IReadOnlyDictionary<string, PlaceWeek>? opened = null)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
         int spawnWeek = item.Seasons.Count == 0 ? 1 : AvailabilityWeeks.FirstWeekOf(item.Seasons.Min());
         (int locationWeek, int locationHard) = weeks == null
-            ? (LocationGating.WeekForAny(item.Locations), LocationGating.HardWeekForAny(item.Locations, mode))
+            ? (LocationGating.WeekForAny(item.Locations, opened), LocationGating.HardWeekForAny(item.Locations, mode, opened))
             : EasiestWalked(item.Locations, weeks, mode);
         int week = Math.Max(spawnWeek, locationWeek);
         Season floor = AvailabilityWeeks.SeasonOf(week);

@@ -65,11 +65,14 @@ public static class ItemAvailabilityBuilder
 
         var derived = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
 
+        // A gated map a supported mod opens sooner (a back door into the Secret Woods) opens that week
+        // for the fish read by map name too.
+        IReadOnlyDictionary<string, PlaceWeek>? opened = pools.LocationWeeks?.OpenedEarly;
         foreach (PoolItem item in pools.Fish ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode, opened: opened);
 
         foreach (PoolItem item in pools.CrabPot ?? new List<PoolItem>())
-            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode);
+            derived[item.ItemId] = FishAvailability.Derive(item, RowFor(pools, item.ItemId), mode, opened: opened);
 
         // Fish the pools leave out only for ExcludeFromRandomSale (every SVE fish): placed from their
         // own datable spawn rows, never sampled. A pooled id keeps its pooled derivation.

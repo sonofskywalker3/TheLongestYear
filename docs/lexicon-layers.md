@@ -149,6 +149,15 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      for a map a year-1 player does not reach at all.
    - **`MapLinks`** name a way between two maps the walk cannot read from the maps (a `TouchAction Warp` tile, a warp
      made in code): `[{ "From": "<map>", "To": "<map>" }]`, one way each. The walk follows them like a door.
+   - **`MapBackDoors`** name a way the mod adds into a map TLY holds to a week by name (the Secret Woods behind its
+     log at week 4, the Sewer, the Witch's Swamp): `{"Map": "Woods", "Week": 1, "From": "Custom_Woods1", "UnlessMods": [...]}`.
+     With the mod installed the map opens at `Week` (1 to 16) when that is earlier than TLY's own week, everywhere the
+     gate is read: the map walk, each route's landing table and the availability weeks, so the board may ask for the
+     map's items that much sooner. `Week` is the first week a new farmer can walk the whole way, and it is your ruling:
+     walk it in a game first (`tly_walkto <x> <y>` walks the farmer with the game's own path search and takes warps by
+     stepping on them). `From` is the map the way leads in from, for the reader. `UnlessMods` lists mods that close the
+     way when installed (a patch with `HasMod` false); the back door is ignored while one of them is loaded. A layer
+     week in `MapWeeks` for the same map still holds it later.
    - **`YearTwoRulings`** date an item that only comes in year 2:
      `{ "<id>": { "Week": 17..32, "Effort": 0..12, "Basis": "..." } }`. A `Week` outside 17 to 32, an
      `Effort` outside 0 to 12 or a blank `Basis` makes the file fail to load with a JsonException.

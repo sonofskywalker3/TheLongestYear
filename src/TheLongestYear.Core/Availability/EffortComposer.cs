@@ -95,7 +95,7 @@ public sealed class EffortComposer
             MineralNodeAvailability.Derive(qualifiedId, _mode),
             GeodeAvailability.Derive(qualifiedId, _data.GeodeDrops, _mode),
             MonsterDropAvailability.Derive(qualifiedId, _data.MonsterDrops, _mode),
-            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode),
+            ArtifactAvailability.Derive(qualifiedId, _data.ArtifactSpots, _mode, _locationWeeks?.OpenedEarly),
             AnimalProductAvailability.Derive(qualifiedId, _data.Animals, _data.Buildings),
             CropForageAvailability.DeriveCrop(qualifiedId, _data.Crops, _mode, _shopWeeks),
             CropForageAvailability.DeriveForage(qualifiedId, _data.ForageSpawns, _mode, _locationWeeks),
@@ -170,7 +170,7 @@ public sealed class EffortComposer
         foreach (RawArtifactSpot spot in _data.ObjectArtifactSpots)
             if (spot.ItemId == qualifiedId && _locationWeeks.TryGet(spot.Location ?? "", out _))
                 spots.Add(spot);
-        ItemEffort? dug = ArtifactAvailability.Derive(qualifiedId, spots, _mode);
+        ItemEffort? dug = ArtifactAvailability.Derive(qualifiedId, spots, _mode, _locationWeeks.OpenedEarly);
         return dug == null ? null : dug with { Basis = $"{OwnDigSpotsNote}, {dug.Basis}" };
     }
 

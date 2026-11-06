@@ -182,7 +182,12 @@ public sealed class LayerSet
         IReadOnlyList<LayerInputs> inputs, IReadOnlyList<LayerAnswers> answers,
         Func<string, bool> isLoaded, Func<string, string?> installedVersionOf, Action<string> warn)
     {
-        var kept = inputs.Where(i => isLoaded(i.UniqueId)).ToList();
+        // A back door another installed mod closes is dropped here, the one place that knows what is loaded.
+        var kept = inputs.Where(i => isLoaded(i.UniqueId))
+            .Select(i => i.MapBackDoors.Any(d => d.UnlessMods != null && d.UnlessMods.Any(isLoaded))
+                ? i with { MapBackDoors = i.MapBackDoors.Where(d => d.UnlessMods == null || !d.UnlessMods.Any(isLoaded)).ToList() }
+                : i)
+            .ToList();
         var installed = new Dictionary<string, string?>(StringComparer.Ordinal);
         foreach (LayerInputs layer in kept) installed[layer.UniqueId] = installedVersionOf(layer.UniqueId);
 
@@ -243,6 +248,8 @@ public sealed class LayerSet
         {
             MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
             MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
+            OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).GroupBy(d => d.Map, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
         };
         var extra = new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal);
         foreach (LayerInputs layer in inputs)

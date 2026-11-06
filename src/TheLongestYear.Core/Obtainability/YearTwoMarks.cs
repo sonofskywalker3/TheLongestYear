@@ -17,12 +17,17 @@ public sealed record YearTwoMarks(IReadOnlyDictionary<string, YearTwoFlag> Maps,
         new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal), new Dictionary<string, YearTwoFlag>(StringComparer.Ordinal));
 
     /// <summary>No year-2 flag at all, so <see cref="Mark"/> changes nothing. Says nothing about
-    /// <see cref="MapWeeks"/> or <see cref="MapLinks"/>.</summary>
+    /// <see cref="MapWeeks"/>, <see cref="MapLinks"/> or <see cref="OpenedEarly"/>.</summary>
     public bool IsEmpty => Maps.Count == 0 && Shops.Count == 0;
 
     /// <summary>Maps a layer holds to an opening week of year 1 (<see cref="LayerInputs.MapWeeks"/>):
     /// read by the map walk and by <see cref="MapWeekGate"/>.</summary>
     public IReadOnlyDictionary<string, int> MapWeeks { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>Maps this mod gates by name that a supported mod opens sooner, with the week its back
+    /// door can first be walked (<see cref="LayerInputs.MapBackDoors"/>, less any another installed mod
+    /// closes): the map's own gate is the earlier of the two.</summary>
+    public IReadOnlyDictionary<string, int> OpenedEarly { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
     /// <summary>Ways between maps a layer adds to the walk (<see cref="LayerInputs.MapLinks"/>).</summary>
     public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();

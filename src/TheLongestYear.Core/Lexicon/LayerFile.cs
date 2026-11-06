@@ -56,7 +56,19 @@ public sealed record LayerInputs(
     /// <summary>Ways between maps the walk cannot read from the maps' warps and doors (a touch-action
     /// warp tile, a warp made in code), each one way, From the map it stands in To the map it leads to.</summary>
     public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
+
+    /// <summary>Ways the mod adds into a map this mod holds to a week by name (the Secret Woods behind
+    /// its log, the Sewer behind its key): with the mod installed the map opens at the back door's week
+    /// when that is earlier, in the map walk, the landing tables and the availability weeks alike.</summary>
+    public IReadOnlyList<MapBackDoor> MapBackDoors { get; init; } = Array.Empty<MapBackDoor>();
 }
+
+/// <summary>A way a mod adds into a gated map. <see cref="Map"/> is the gated map, <see cref="Week"/>
+/// (<see cref="MapWeekRange.First"/> to <see cref="MapWeekRange.Last"/>) the first week of year 1 a
+/// player can walk it, <see cref="From"/> the map it leads in from (for the reader; the week is the
+/// ruling). <see cref="UnlessMods"/> are mod ids that close it: the mod leaves the way out when one of
+/// them is installed, so the back door is ignored then.</summary>
+public sealed record MapBackDoor(string Map, int Week, string From, IReadOnlyList<string>? UnlessMods = null);
 
 /// <summary>The bounds of a <see cref="LayerInputs.MapWeeks"/> week: the weeks of year 1.</summary>
 public static class MapWeekRange
@@ -181,6 +193,16 @@ public static class LayerFile
                     throw new System.Text.Json.JsonException($"MapWeeks {map}: week {week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
         if (read.MapLinks != null && read.MapLinks.Any(l => l == null || string.IsNullOrWhiteSpace(l.From) || string.IsNullOrWhiteSpace(l.To)))
             throw new System.Text.Json.JsonException("MapLinks holds a null link or one with no From or To.");
+        if (read.MapBackDoors != null)
+            foreach (MapBackDoor door in read.MapBackDoors)
+            {
+                if (door == null || string.IsNullOrWhiteSpace(door.Map) || string.IsNullOrWhiteSpace(door.From))
+                    throw new System.Text.Json.JsonException("MapBackDoors holds a null entry or one with no Map or From.");
+                if (door.Week < MapWeekRange.First || door.Week > MapWeekRange.Last)
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: week {door.Week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
+                if (door.UnlessMods != null && door.UnlessMods.Any(string.IsNullOrWhiteSpace))
+                    throw new System.Text.Json.JsonException($"MapBackDoors {door.Map}: UnlessMods holds a null or empty mod id.");
+            }
         return read with
         {
             CheckedVersion = read.CheckedVersion ?? "",
@@ -189,6 +211,7 @@ public static class LayerFile
             YearTwoShops = ToOrdinal(read.YearTwoShops),
             MapWeeks = ToOrdinal(read.MapWeeks),
             MapLinks = read.MapLinks ?? Array.Empty<RawLocationLink>(),
+            MapBackDoors = read.MapBackDoors ?? Array.Empty<MapBackDoor>(),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
                 : read.ExtraSources.ToDictionary(
