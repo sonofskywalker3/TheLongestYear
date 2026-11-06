@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.6 - 2026-11-06
+
+### Added
+
+- **Six more Cornucopia crops can be asked for.** With Cornucopia More Crops and Item Extensions installed, Sugar Beet, Asparagus, Chickpea, Zucchini, Barley and Celery can now turn up on a board with mod items allowed. Their seeds only come out of Mixed Seeds in year 1, so the amount asked is sized from how many Mixed Seeds you can gather and how likely each seed is. Bags you save carry over to later seasons, and a board that asks for several of these crops shares the bags between them.
+
 ## 1.2.5 - 2026-11-06
 
 ### Added

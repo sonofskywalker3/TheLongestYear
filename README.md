@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.5
+## What's New in 1.2.6
+
+**New: six more Cornucopia crops can be asked for.** With Cornucopia More Crops and Item Extensions installed, Sugar Beet, Asparagus, Chickpea, Zucchini, Barley and Celery can now turn up on a board with mod items allowed. Their seeds only come out of Mixed Seeds in year 1, so the amount asked is sized from how many Mixed Seeds you can gather and how likely each seed is. Bags you save carry over to later seasons, and a board that asks for several of these crops shares the bags between them.
+
+## 1.2.5
 
 **New: Seven Deadly Sins is supported.** The Longest Year now knows the mod's crops, fish, machines and shops, and when each can first be reached. The mod's own way into the Secret Woods opens them in week 1. Thanks to SylviaStormsinger.
 
