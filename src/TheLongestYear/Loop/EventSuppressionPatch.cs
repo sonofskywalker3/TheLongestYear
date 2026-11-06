@@ -53,11 +53,20 @@ namespace TheLongestYear.Loop
             "191393",
         };
 
+        /// <summary>True while the rewind puts the farmer back in the farmhouse: no scene starts from
+        /// that entry (see WorldResetService step 14). Set and cleared around that one call.</summary>
+        internal static bool HoldAll;
+
         // ReSharper disable once InconsistentNaming — Harmony convention.
         // ReSharper disable once UnusedMember.Local — discovered by PatchAll.
         private static bool Prefix(string precondition, ref string __result)
         {
             if (!RunActivation.IsActive) return true; // dormant on non-TLY saves — defer to vanilla
+            if (HoldAll)
+            {
+                __result = "-1";
+                return false;
+            }
             if (string.IsNullOrEmpty(precondition)) return true;
 
             int slashIdx = precondition.IndexOf('/');

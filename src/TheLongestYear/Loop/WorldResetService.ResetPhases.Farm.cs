@@ -182,7 +182,14 @@ namespace TheLongestYear.Loop
             Game1.player.currentLocation = home;
             Game1.currentLocation = home;
             Game1.player.Position = new Vector2(9f, 9f) * 64f;
-            home.resetForPlayerEntry();
+            // No scene may start from this entry. The farmer's seen scenes and mail are already
+            // rewound, but Content Patcher has not looked at them yet, so a mod's scene that was due
+            // last loop is still in Data/Events and would play on the new Spring 1 (Stardew Valley
+            // Expanded's "explosion at the railroad" did, and marked Clint's order done for the loop).
+            bool heldBefore = EventSuppressionPatch.HoldAll;
+            EventSuppressionPatch.HoldAll = true;
+            try { home.resetForPlayerEntry(); }
+            finally { EventSuppressionPatch.HoldAll = heldBefore; }
 
             // 14a. Rebuild the FarmHouse's built-in furniture. After the loop's house downgrade the
             //      cabin came back without its starter set (2026-06-01: fireplace MISSING, and earlier
