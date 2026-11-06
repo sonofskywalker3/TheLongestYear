@@ -1,0 +1,1678 @@
+{
+  "UniqueId": "ricehit.SevenDeadlySinsCP",
+  "CheckedVersion": "3.14.2",
+  "Notes": "Forest forage (Blue Flash Butterfly, Branch, Pine Nut, Iceling Column): Dependable although the area's MinimumSpawnsPerDay is 0, because it rolls 0 to 5 a day all season (about 17 a week), which passes Jeff's Deep Woods test of a reasonable weekly supply; Stardew Valley Expanded's min-0 areas were 0 to 1 a day. | Cave forage (Nightshade Fruit, Ghost Flower, Geoberry, Ginseng): Chance at Custom_SDS.Cavebase (0 to 2 a day shared by four items), Dependable but year 2 in the ten caves. | Monster loot: every FTM monster drop is Chance, as vanilla's and Stardew Valley Expanded's are; the cave and Eastern Forest drops are year 2 with their maps. | Prize machines: written as Chance routes (a pull costs a coin that is itself a rare monster drop), year 2 because Old Coins drop only in the ten caves and Shining Apples only in the Eastern Forest. | Producer Framework Mod goods (jams, dried flowers, perfumes, ingots): 55 of the pack's 64 goods written as Machine routes generated from ProducerRules.json, each landing its input's earliest year-1 table plus the processing days (1500 minutes = 2 days, 10000 minutes = 7 days); Chance when the input is only had by luck. Left unknown because the input has no year-1 route: SDS_AstralfruitJam, SDS_Fluoriteingot, SDS_LanternfruitJam, SDS_Obsidianingot, SDS_WhiteMoonRoseDried, SDS_WhiteMoonRoseJam, SDS_WhiteMoonRosePerfume, SDS_citroniteingot, SDS_gynocarpJam. | YearTwoMaps Custom_SDS.Cave1 to Cave10 and Caveroom (and the two shops in Caveroom): the door at Custom_SDS.Cavebase 22,14 is walled off until the SDSCavebase.open bundle (99 each of Solar Essence, Void Essence, Slime and Bat Wing), and the monsters behind it have 500 to 1600 HP, above the Skull Cavern, so no year-1 player is counted as standing there. This is what takes the seasonless Midnight Carp row at Custom_SDS.Cave7 out of the pools. | MapWeeks (judged from the maps and events, the walk reads each as week 1): Custom_Woods2 week 3 (walled off until event 19215203, which needs Maple Syrup carried into Custom_Woods1); Custom_SecretForestLogcabin week 7 (Sariel 6 hearts); Custom_SDS.cliff week 3 (the 10,000g SDScliffroad.roadopen bundle); Custom_SDS.AngelRetreatHall week 5 (20 Solar Essence); Custom_SDS.sea week 5 (event 19215288, Hovsep 4 hearts and two rainy evenings); couture and jewelry week 12 (event 19215104: luoli 6 hearts, 100,000g earned and the Desert); the 2-heart homes week 3, Lucas's week 4, Teresa's week 10. | YearTwoMaps Eastern Forest (Custom_SDS.EasternForest1 to 3, _main, UnmannedHotel and its room, with the four Boo shops there): the forest is entered by TouchAction Warp tiles from Custom_SDS.AvaliaForest and is open from day 1, but each of its three maze maps holds 25 monsters a day of 300 to 800 HP, above the Skull Cavern (Jeff's Deep Woods ruling: depth matched by monsters). Week 9 would be the matching week, but a pooled fish does not take a map's week and a week ruling would move a Spring or Summer fish's gate into Fall, so the forest is ruled out of year 1 whole: its fish, loot and prize machine are not asked for (reported). | Secret Woods: Custom_Woods1 (open from the Forest's west edge on day 1) has a north exit into Woods, so with this mod the Secret Woods can be entered in week 1 without the Steel Axe; left at TLY's week 4, the later and safer reading (reported). | YearRulings NeverSell: the two wallet currencies (Old Coin, Shining Apple), the four ore node objects, Failed Cooking, the two party tokens, and the seven paper recipes nothing in the mod hands out. YearRulings YearOne: the nine paper recipes that come only as one-time letters (heart letters SDS.present.7 to 13 and two special order prizes), ruled like vanilla's mail gifts; they stay no route in gaps. | WeekRulings: the four Forest forage items at their season's first week (TLY's forage rule reads Data/Locations, not layer routes); the fish caught only at Custom_Woods2 (Globostoma Cinerea, Red Pomfret, Cat Octopus, Golden Carp, River Jelly) and Sturgeon (O)698, which the mod's seasonless row there makes an any-season fish, at week 3, when that map opens: a pooled fish does not take a map's week by itself. | Cooking stations (the mod's own minigame, 101 dishes on eight placed machines): no route is written; each dish also has a Data/CookingRecipes row with the same ingredients, which TLY reads, and the dishes still unrouted need an input that is itself unknown (reported). | Wolf Staff (W)SDS_WolfStaff: a one-time pickup at Custom_Woods1 4,22 each loop; a weapon, so nothing is written.",
+  "ExtraSources": {
+    "(O)SDS_AstralfruitSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase",
+            "item:(O)SDS_Oldcoin"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.MoorePrizeMachine at Custom_SDS.Cavebase, pull 13 or a random pull, one Old Coin a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_BambooSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 6 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_BlueJazzDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+9x28,=108x71,+9x2,=0x11",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)597, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)597"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_BlueJazzPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+14x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)597, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)597"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Blueflashbutterfly": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "blueflashbutterfly forage at Forest, Spring, 0 to 5 a day ([FTM] Seven Deadly Sins/content.json, SDS Forest)"
+      }
+    ],
+    "(O)SDS_BlueflashbutterflyDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Blueflashbutterfly, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Blueflashbutterfly"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_BlueflashbutterflyJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Blueflashbutterfly, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Blueflashbutterfly"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_BlueflashbutterflyPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+7x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Blueflashbutterfly, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Blueflashbutterfly"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Branch": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "branch forage at Forest, Summer, 0 to 5 a day ([FTM] Seven Deadly Sins/content.json, SDS Forest)"
+      }
+    ],
+    "(O)SDS_BrokenAncientSword": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "brokenancientsword monster drop at Custom_SDS.Cave1 to Cave10: Ghost loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_BrokenScroll": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "brokenscroll monster drop at Custom_SDS.Cave1 to Cave10: Ghost loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_ChineseherbaceouspeonyDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+10x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Chineseherbaceouspeony, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Chineseherbaceouspeony"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_ChineseherbaceouspeonyJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+10x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Chineseherbaceouspeony, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Chineseherbaceouspeony"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_ChineseherbaceouspeonyPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+15x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Chineseherbaceouspeony, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Chineseherbaceouspeony"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_CreamstrawberryJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "=39x29,+10x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Creamstrawberry, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Creamstrawberry"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_CrocusDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=87x85,+2x25,=0x2",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)418, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)418"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_CrocusPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=92x85,+7x20,=0x7",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)418, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)418"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_FairyRoseDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=71x57,+14x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)595, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)595"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_FairyRosePerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=76x57,+19x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)595, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)595"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Fluorite": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "Fluoritedeposits node at Custom_SDS.Cave1 to Cave10, any pickaxe ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Node2; [CP] assets/Items/Mineral.json, SDS_Fluoritedeposits)"
+      }
+    ],
+    "(O)SDS_FragransDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Fragrans, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Fragrans"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_FragransJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Fragrans, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Fragrans"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_FragransPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+35x77,=0x35",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Fragrans, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Fragrans"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Galitite": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "Galititedeposits node at Custom_SDS.Cave1 to Cave10, any pickaxe ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Node1, 0 to 1 a day per cave; [CP] assets/Items/Mineral.json, SDS_Galititedeposits)"
+      }
+    ],
+    "(O)SDS_Ghostflower": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase"
+          ]
+        },
+        "Detail": "ghostflower forage at Custom_SDS.Cavebase, all year, 0 to 2 a day of four kinds ([FTM] Seven Deadly Sins/content.json, Custom SDS Cavebase Forage)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "ghostflower forage at Custom_SDS.Cave1 to Cave10, all year ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Forage)"
+      }
+    ],
+    "(O)SDS_GhostflowerDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x110,=0x2",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Ghostflower, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Ghostflower"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_GhostflowerJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x110,=0x2",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Ghostflower, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Ghostflower"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_GhostflowerPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+7x105,=0x7",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Ghostflower, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Ghostflower"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_HiganbanaDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+16x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Higanbana, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Higanbana"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_HiganbanaJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+16x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Higanbana, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Higanbana"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_HiganbanaPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+21x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Higanbana, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Higanbana"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Icelingcolumn": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "icelingcolumn forage at Forest, Winter, 0 to 5 a day ([FTM] Seven Deadly Sins/content.json, SDS Forest)"
+      }
+    ],
+    "(O)SDS_JadeberrySeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 4 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_LanternfruitSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase",
+            "item:(O)SDS_Oldcoin"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.MoorePrizeMachine at Custom_SDS.Cavebase, pulls 1 and 7 or a random pull, one Old Coin a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_LoveFruitJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+29x83,=0x29",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_LoveFruit, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_LoveFruit"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_LoveFruitPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+34x78,=0x34",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_LoveFruit, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_LoveFruit"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_LuminousMushrooms": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "luminousmushrooms monster drop at Custom_SDS.EasternForest1 to 3: Ghost loot ([FTM] Seven Deadly Sins/content.json, Custom SDS EasternForest<n> monster1)"
+      }
+    ],
+    "(O)SDS_MangosteenJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Mangosteen, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Mangosteen"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_MeatBunRecipe": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 7 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_MermaidTearDropDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+15x97,=0x15",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_MermaidTearDrop, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_MermaidTearDrop"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_MermaidTearDropJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+15x97,=0x15",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_MermaidTearDrop, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_MermaidTearDrop"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_MermaidTearDropPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+20x92,=0x20",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_MermaidTearDrop, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_MermaidTearDrop"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_MoldyMushroomSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 9 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_Mushroom": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "mushroom monster drop at Custom_SDS.EasternForest1 to 3: Shadow Brute loot ([FTM] Seven Deadly Sins/content.json, Custom SDS EasternForest<n> monster1)"
+      }
+    ],
+    "(O)SDS_Nightshadefruit": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase"
+          ]
+        },
+        "Detail": "nightshadefruit forage at Custom_SDS.Cavebase, all year, 0 to 2 a day of four kinds ([FTM] Seven Deadly Sins/content.json, Custom SDS Cavebase Forage)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "nightshadefruit forage at Custom_SDS.Cave1 to Cave10, all year ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Forage)"
+      }
+    ],
+    "(O)SDS_NightshadefruitJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x110,=0x2",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Nightshadefruit, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Nightshadefruit"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_NightwillowherbDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Nightwillowherb, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Nightwillowherb"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_NightwillowherbJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Nightwillowherb, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Nightwillowherb"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_NightwillowherbPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+35x77,=0x35",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Nightwillowherb, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Nightwillowherb"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Obsidian": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "Obsidiandeposits node at Custom_SDS.Cave1 to Cave10, any pickaxe ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Node2; [CP] assets/Items/Mineral.json, SDS_Obsidiandeposits)"
+      }
+    ],
+    "(O)SDS_Oldcoin": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "oldcoin monster drop at Custom_SDS.Cave1 to Cave10: rare Ghost, Metal Head, Mummy, Skeleton loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_Pinenut": [
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Forest"
+          ]
+        },
+        "Detail": "pinenut forage at Forest, Fall, 0 to 5 a day ([FTM] Seven Deadly Sins/content.json, SDS Forest)"
+      }
+    ],
+    "(O)SDS_PinenutJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "=59x57,+2x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Pinenut, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Pinenut"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_PoppyDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=38x29,+9x27,=108x43,+9x2,=0x11",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)376, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)376"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_PoppyPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=43x29,+14x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)376, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)376"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_RawBeef": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "rawbeef monster drop at Custom_SDS.EasternForest1 to 3: Mummy loot ([FTM] Seven Deadly Sins/content.json, Custom SDS EasternForest<n> monster1)"
+      }
+    ],
+    "(O)SDS_RugosaroseDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=41x29,+12x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Rugosarose, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Rugosarose"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_RugosaroseJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "=41x29,+12x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Rugosarose, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Rugosarose"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_RugosarosePerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=46x29,+17x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Rugosarose, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Rugosarose"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_ShiningApples": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "shiningapples monster drop at Custom_SDS.EasternForest1 to 3: rare Ghost, Mummy, Shadow Brute loot ([FTM] Seven Deadly Sins/content.json, Custom SDS EasternForest<n> monster1)"
+      }
+    ],
+    "(O)SDS_SpecialtyHotSauceRecipe": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 11 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_StramoniumDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Stramonium, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Stramonium"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_StramoniumJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+30x82,=0x30",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Stramonium, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Stramonium"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_StramoniumPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+35x77,=0x35",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Stramonium, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Stramonium"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_StrangeBones": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "strangebones monster drop at Custom_SDS.Cave1 to Cave10: Skeleton loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_StrangeHelmet": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "strangehelmet monster drop at Custom_SDS.Cave1 to Cave10: Metal Head loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_StrangeHorns": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "strangehorns monster drop at Custom_SDS.Cave1 to Cave10: Mummy loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      }
+    ],
+    "(O)SDS_SummerSpangleDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=39x29,+10x27,=109x43,+10x2,=0x11",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)593, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)593"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_SummerSpanglePerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=44x29,+15x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)593, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)593"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_SunflowerDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=39x29,+10x55,=109x15,+10x2,=0x11",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)421, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)421"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_SunflowerPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=44x29,+15x55,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)421, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)421"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_TearsOfTheSoulRecipe": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 1 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_TreepeonyDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+12x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_Treepeony, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Treepeony"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_TreepeonyJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+12x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_Treepeony, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Treepeony"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_TreepeonyPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+17x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_Treepeony, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_Treepeony"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_TulipDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "+8x28,=107x71,+8x2,=0x11",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)591, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)591"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_TulipPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "+13x28,=112x71,=0x13",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)591, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)591"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_Unknowncondensate": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "unknowncondensate monster drop at Custom_SDS.Cave1 to Cave10: Ghost, Metal Head, Mummy, Skeleton loot ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> monster1)"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "unknowncondensate monster drop at Custom_SDS.EasternForest1 to 3: Ghost, Mummy, Shadow Brute loot ([FTM] Seven Deadly Sins/content.json, Custom SDS EasternForest<n> monster1)"
+      }
+    ],
+    "(O)SDS_WhiteMoonRoseSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.EasternForest1",
+            "location:Custom_SDS.UnmannedHotel_room",
+            "item:(O)SDS_ShiningApples"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.UnmannedPrizeMachine at Custom_SDS.UnmannedHotel_room, pull 13 or a random pull, one Shining Apple a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_citronite": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "citronitedeposits node at Custom_SDS.Cave1 to Cave10, any pickaxe ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Node2; [CP] assets/Items/Mineral.json, SDS_citronitedeposits)"
+      }
+    ],
+    "(O)SDS_geoberry": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase"
+          ]
+        },
+        "Detail": "geoberry forage at Custom_SDS.Cavebase, all year, 0 to 2 a day of four kinds ([FTM] Seven Deadly Sins/content.json, Custom SDS Cavebase Forage)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "geoberry forage at Custom_SDS.Cave1 to Cave10, all year ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Forage)"
+      }
+    ],
+    "(O)SDS_geoberryJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+2x110,=0x2",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_geoberry, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_geoberry"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_ginseng": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase"
+          ]
+        },
+        "Detail": "ginseng forage at Custom_SDS.Cavebase, all year, 0 to 2 a day of four kinds ([FTM] Seven Deadly Sins/content.json, Custom SDS Cavebase Forage)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cave1",
+            "gate:SDSCavebase.open bundle"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "ginseng forage at Custom_SDS.Cave1 to Cave10, all year ([FTM] Seven Deadly Sins/content.json, Custom SDS Cave<n> Forage)"
+      }
+    ],
+    "(O)SDS_gynocarpSeeds": [
+      {
+        "Kind": "Other",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SDS.Cavebase",
+            "item:(O)SDS_Oldcoin"
+          ],
+          "YearTwo": true
+        },
+        "Detail": "prize machine SDS.MoorePrizeMachine at Custom_SDS.Cavebase, pull 11 or a random pull, one Old Coin a pull ([CP] assets/DependencyData/BundleDisposition.json)"
+      }
+    ],
+    "(O)SDS_lavenderDried": [
+      {
+        "Kind": "Machine",
+        "Lands": "=38x29,+9x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Dryflowerplatform"
+          ]
+        },
+        "Detail": "(BC)SDS_Dryflowerplatform from (O)SDS_lavender, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_lavender"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_lavenderJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "=38x29,+9x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_lavender, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_lavender"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_lavenderPerfume": [
+      {
+        "Kind": "Machine",
+        "Lands": "=43x29,+14x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Distiller"
+          ]
+        },
+        "Detail": "(BC)SDS_Distiller from (O)SDS_lavender, 10000 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_lavender"
+          ]
+        ]
+      }
+    ],
+    "(O)SDS_lemonJam": [
+      {
+        "Kind": "Machine",
+        "Lands": "+12x56,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "machine:(BC)SDS_Saucepan"
+          ]
+        },
+        "Detail": "(BC)SDS_Saucepan from (O)SDS_lemon, 1500 minutes ([PFM] Seven Deadly Sins/ProducerRules.json)",
+        "Inputs": [
+          [
+            "(O)SDS_lemon"
+          ],
+          [
+            "(O)382"
+          ]
+        ]
+      }
+    ]
+  },
+  "YearRulings": {
+    "(O)SDS_CakeGameInvitesApron": "NeverSell",
+    "(O)SDS_ChocolatepulpRecipe": "NeverSell",
+    "(O)SDS_ColdRefreshingDrinkRecipe": "NeverSell",
+    "(O)SDS_DemonfishfeastRecipe": "YearOne",
+    "(O)SDS_FailedCooking": "NeverSell",
+    "(O)SDS_Fluoritedeposits": "NeverSell",
+    "(O)SDS_Galititedeposits": "NeverSell",
+    "(O)SDS_GoldshrimpballswithcheeseRecipe": "YearOne",
+    "(O)SDS_GrilledRedWineFishFilletsRecipe": "NeverSell",
+    "(O)SDS_MushroomseasnakesoupRecipe": "YearOne",
+    "(O)SDS_Obsidiandeposits": "NeverSell",
+    "(O)SDS_Oldcoin": "NeverSell",
+    "(O)SDS_PartyInvitation": "NeverSell",
+    "(O)SDS_RiceRecipe": "NeverSell",
+    "(O)SDS_RichThickBonePorridgeRecipe": "YearOne",
+    "(O)SDS_SeaLandNourishingPotRecipe": "YearOne",
+    "(O)SDS_SeafoodFriedRiceRecipe": "NeverSell",
+    "(O)SDS_ShiningApples": "NeverSell",
+    "(O)SDS_SpecialchurchlemonadeRecipe": "YearOne",
+    "(O)SDS_SpicyCrabClawsRecipe": "NeverSell",
+    "(O)SDS_SpicyFeastRecipe": "YearOne",
+    "(O)SDS_SteakRiceBowlRecipe": "YearOne",
+    "(O)SDS_TriangleRiceBallRecipe": "YearOne",
+    "(O)SDS_chocolateRecipe": "NeverSell",
+    "(O)SDS_citronitedeposits": "NeverSell"
+  },
+  "WeekRulings": {
+    "(O)698": 3,
+    "(O)SDS_Blueflashbutterfly": 1,
+    "(O)SDS_Branch": 5,
+    "(O)SDS_Catoctopus": 3,
+    "(O)SDS_Globostomacinerea": 3,
+    "(O)SDS_Goldencarp": 3,
+    "(O)SDS_Icelingcolumn": 13,
+    "(O)SDS_Pinenut": 9,
+    "(O)SDS_Redpomfret": 3,
+    "(O)SDS_RiverJelly": 3
+  },
+  "YearTwoMaps": {
+    "Custom_SDS.Cave1": "YearTwo",
+    "Custom_SDS.Cave10": "YearTwo",
+    "Custom_SDS.Cave2": "YearTwo",
+    "Custom_SDS.Cave3": "YearTwo",
+    "Custom_SDS.Cave4": "YearTwo",
+    "Custom_SDS.Cave5": "YearTwo",
+    "Custom_SDS.Cave6": "YearTwo",
+    "Custom_SDS.Cave7": "YearTwo",
+    "Custom_SDS.Cave8": "YearTwo",
+    "Custom_SDS.Cave9": "YearTwo",
+    "Custom_SDS.Caveroom": "YearTwo",
+    "Custom_SDS.EasternForest1": "YearTwo",
+    "Custom_SDS.EasternForest2": "YearTwo",
+    "Custom_SDS.EasternForest3": "YearTwo",
+    "Custom_SDS.EasternForest_main": "YearTwo",
+    "Custom_SDS.UnmannedHotel": "YearTwo",
+    "Custom_SDS.UnmannedHotel_room": "YearTwo"
+  },
+  "YearTwoShops": {
+    "SDChefBoo": "YearTwo",
+    "SDFodderhunter": "YearTwo",
+    "SDShopPartyBOO": "YearTwo",
+    "SDShopkeeperBOO": "YearTwo",
+    "SDTailorBOO": "YearTwo",
+    "SDTheodor": "YearTwo"
+  },
+  "MapWeeks": {
+    "Custom_Lucashouse": 4,
+    "Custom_SDS.AngelRetreatHall": 5,
+    "Custom_SDS.Edward.Home": 3,
+    "Custom_SDS.LuoLihouse": 3,
+    "Custom_SDS.RuiglaHome": 3,
+    "Custom_SDS.TeresaHome": 10,
+    "Custom_SDS.Xenia.Home": 3,
+    "Custom_SDS.cliff": 3,
+    "Custom_SDS.couture": 12,
+    "Custom_SDS.jewelry": 12,
+    "Custom_SDS.sea": 5,
+    "Custom_SecretForestLogcabin": 7,
+    "Custom_Woods2": 3
+  }
+}
