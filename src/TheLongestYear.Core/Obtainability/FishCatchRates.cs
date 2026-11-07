@@ -239,7 +239,9 @@ public static class FishCatchRates
             bool negated = raw.StartsWith('!');
             string[] t = (negated ? raw[1..] : raw).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (t.Length == 0) continue;
-            double pass = t[0] switch
+            // The game looks the query type up without regard to case (GameStateQuery.QueryTypeLookup),
+            // so a mod's "LOCATION_Season" row bites exactly as vanilla's upper-case one.
+            double pass = t[0].ToUpperInvariant() switch
             {
                 "LOCATION_SEASON" => Has(t.Skip(2), season) ? 1 : 0,
                 "SEASON" => Has(t.Skip(1), season) ? 1 : 0,
