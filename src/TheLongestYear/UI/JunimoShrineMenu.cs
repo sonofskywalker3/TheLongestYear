@@ -34,6 +34,8 @@ namespace TheLongestYear.UI
         private const int TabIdBase = 6100;          // one id per UpgradeCategory (11 tabs: 6100..6110)
         private const int RowIdBase = 7000;          // one id per visible row slot
         private const int ScrollUpId = 7900;
+        /// <summary>The game's neighbour id meaning "ask customSnapBehavior".</summary>
+        private const int CustomSnap = -7777;
         private const int ScrollDownId = 7901;
 
         // Cached at class load time so the gamepad-button handler doesn't have to recount on every press.
@@ -159,9 +161,12 @@ namespace TheLongestYear.UI
                     "row-" + i)
                 {
                     myID = RowIdBase + i,
-                    upNeighborID = i == 0 ? ScrollUpId : RowIdBase + i - 1,
-                    downNeighborID = i == _rowsPerPage - 1 ? ScrollDownId : RowIdBase + i + 1,
-                    leftNeighborID = TabIdBase
+                    upNeighborID = CustomSnap,
+                    downNeighborID = CustomSnap,
+                    leftNeighborID = TabIdBase,
+                    // Otherwise the game rewrites a row's up and down neighbours to wherever the snap came from.
+                    upNeighborImmutable = true,
+                    downNeighborImmutable = true,
                 };
                 _rowSlots.Add(slot);
             }
@@ -265,6 +270,27 @@ namespace TheLongestYear.UI
         {
             base.receiveScrollWheelAction(direction);
             Scroll(direction > 0 ? -1 : +1);
+        }
+
+        /// <summary>Controller up/down on a row: step through the visible rows and scroll the list at
+        /// its ends, the same as the planning shrine. Left goes to the tabs.</summary>
+        protected override void customSnapBehavior(int direction, int oldRegion, int oldID)
+        {
+            const int Up = 0, Down = 2;
+            int slot = oldID - RowIdBase;
+            if (slot < 0 || slot >= _rowsPerPage)
+                return;
+            int visible = VisibleRows(out int total, out int start).Count;
+            if (direction == Down)
+            {
+                if (slot + 1 < visible) currentlySnappedComponent = getComponentWithID(oldID + 1);
+                else if (start + _rowsPerPage < total) Scroll(+1);
+            }
+            else if (direction == Up)
+            {
+                if (slot > 0) currentlySnappedComponent = getComponentWithID(oldID - 1);
+                else if (start > 0) Scroll(-1);
+            }
         }
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)

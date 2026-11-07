@@ -240,6 +240,9 @@ namespace TheLongestYear
                 (cmd, a) => TheLongestYear.DebugCommands.CircleProbeCommand.Run(this.Monitor, a));
             yield return new DebugCommand("tly_fixcheck", FixCheckUsage, this.CmdFixCheck);
             yield return new DebugCommand("tly_fishspots", FishSpotsUsage, this.CmdFishSpots);
+            yield return new DebugCommand(TheLongestYear.DebugCommands.MenuNavCommand.Name,
+                "Debug: press the controller d-pad (or A) in the open menu, as a controller player would, and log where the snap lands. Never moves the real mouse. " + TheLongestYear.DebugCommands.MenuNavCommand.Usage,
+                (cmd, a) => TheLongestYear.DebugCommands.MenuNavCommand.Run(this.Monitor, a));
             yield return new DebugCommand(TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Name,
                 "Debug: check every way of backing out of the Cookbook and Craftbook (click, Escape, menu key, pad B). " + TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Usage,
                 (cmd, a) => TheLongestYear.DebugCommands.RecipeBookBackOutCommand.Run(this.Monitor,

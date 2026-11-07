@@ -35,6 +35,8 @@ namespace TheLongestYear.UI
     {
         private const int RowHeight = 56;
         private const int RowIdBase = 7000;
+        /// <summary>The game's neighbour id meaning "ask customSnapBehavior".</summary>
+        private const int CustomSnap = -7777;
         private const int ScrollUpId = 7900;
         private const int ScrollDownId = 7901;
 
@@ -250,7 +252,12 @@ namespace TheLongestYear.UI
             for (int i = 0; i < _rowsPerPage; i++)
                 _rowSlots.Add(new ClickableComponent(
                     new Rectangle(_listX, _listY + i * RowHeight, _listWidth - 56, RowHeight),
-                    "row-" + i) { myID = RowIdBase + i, upNeighborID = i == 0 ? TabIdBase : RowIdBase + i - 1 });
+                    "row-" + i) {
+                        myID = RowIdBase + i, upNeighborID = CustomSnap, downNeighborID = CustomSnap,
+                        // Otherwise the game rewrites a row's up and down neighbours to wherever the snap came from.
+                        upNeighborImmutable = true,
+                        downNeighborImmutable = true,
+                    });
 
             int arrowX = _listX + _listWidth - 48;
             _scrollUp = new ClickableTextureComponent("scroll-up",

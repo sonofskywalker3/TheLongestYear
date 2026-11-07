@@ -25,6 +25,33 @@ namespace TheLongestYear.UI
             snapCursorToCurrentSnappedComponent();
         }
 
+        /// <summary>Controller up/down on a row (Celjhyn, Nexus posts, 2026-11-07: down never left
+        /// the first row, because no row had a down neighbour). Steps through the visible rows,
+        /// scrolls the list at its ends, and goes back to the current tab from the top.</summary>
+        protected override void customSnapBehavior(int direction, int oldRegion, int oldID)
+        {
+            const int Up = 0, Down = 2;
+            int slot = oldID - RowIdBase;
+            if (slot < 0 || slot >= _rowsPerPage)
+                return;
+            int visible = Math.Min(_rowsPerPage, _rows.Count - _scrollIndex);
+            if (direction == Down)
+            {
+                if (slot + 1 < visible) currentlySnappedComponent = getComponentWithID(oldID + 1);
+                else Scroll(+1);
+            }
+            else if (direction == Up)
+            {
+                if (slot > 0) currentlySnappedComponent = getComponentWithID(oldID - 1);
+                else if (_scrollIndex > 0) Scroll(-1);
+                else
+                {
+                    int tabIndex = _tabOrder.IndexOf(_tab);
+                    currentlySnappedComponent = tabIndex >= 0 && tabIndex < _tabs.Count ? _tabs[tabIndex] : currentlySnappedComponent;
+                }
+            }
+        }
+
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
