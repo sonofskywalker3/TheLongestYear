@@ -30,6 +30,7 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             yield return new DebugCommand("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
             yield return new DebugCommand("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
+            yield return new DebugCommand("tly_modslot", "Equip an item in another mod's SpaceCore equipment slot through SpaceCore's own API, which runs the slot's validator, then report the slot (debug; for the rewind's slot clear). Usage: tly_modslot <slotId> [qualifiedItemId], or tly_modslot register to add a test slot of TLY's own", this.CmdModSlot);
             yield return new DebugCommand("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
             yield return new DebugCommand("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", this.CmdNewGame);
             yield return new DebugCommand("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);

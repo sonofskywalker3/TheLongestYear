@@ -38,6 +38,7 @@ namespace TheLongestYear
             {
                 ResendBetterStartGift = () => _config.ResendBetterStartGift,
                 ResetCustomSkills = new SpaceCoreSkillReset(this.Helper.ModRegistry, this.Monitor).Apply,
+                ResetModEquipment = new SpaceCoreEquipmentReset(this.Helper.ModRegistry, this.Monitor).Apply,
                 ResetOtherModProgress = ResetOtherModProgress,
             };
             // Saves from before 0.19.117 can carry a spouse name from an earlier loop with no

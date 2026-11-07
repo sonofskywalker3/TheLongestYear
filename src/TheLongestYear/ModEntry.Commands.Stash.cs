@@ -20,6 +20,28 @@ namespace TheLongestYear
 {
     public sealed partial class ModEntry
     {
+        private const string DebugEquipmentSlotId = "sonofskywalker3.TheLongestYear_TestSlot";
+
+        private void CmdModSlot(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+            if (args.Length < 1) { this.Monitor.Log("Usage: tly_modslot <slotId> [qualifiedItemId]", LogLevel.Warn); return; }
+            ISpaceCoreApi api = this.Helper.ModRegistry.GetApi<ISpaceCoreApi>(CustomSkillReset.SpaceCoreModId);
+            if (api == null) { this.Monitor.Log("tly_modslot: SpaceCore's API is not available.", LogLevel.Warn); return; }
+            if (args[0] == "register")
+            {
+                // A slot of our own, stored exactly as other mods' slots are, for testing the rewind's
+                // clear when no slot-adding mod can load. It lasts until the game closes.
+                api.RegisterEquipmentSlot(this.ModManifest, DebugEquipmentSlotId, _ => true, () => "TLY test slot", Game1.mouseCursors);
+                this.Monitor.Log($"tly_modslot: registered {DebugEquipmentSlotId}.", LogLevel.Info);
+                return;
+            }
+            if (args.Length > 1)
+                api.SetItemInEquipmentSlot(Game1.player, args[0], ItemRegistry.Create(args[1]));
+            Item now = api.GetItemInEquipmentSlot(Game1.player, args[0]);
+            this.Monitor.Log($"tly_modslot: {args[0]} holds {(now == null ? "nothing" : $"{now.QualifiedItemId} ({now.DisplayName})")}.", LogLevel.Info);
+        }
+
         private void CmdBuildings(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }

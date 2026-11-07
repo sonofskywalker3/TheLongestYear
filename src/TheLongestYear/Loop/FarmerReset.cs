@@ -30,6 +30,10 @@ namespace TheLongestYear.Loop
         /// when unwired: only the vanilla skills reset.</summary>
         public System.Action<Farmer> ResetCustomSkills { get; set; }
 
+        /// <summary>Empties other mods' equipment slots with the worn gear (SpaceCoreEquipmentReset);
+        /// skipped with the rest of the worn gear when Keep Worn Gear is owned. Null when unwired.</summary>
+        public System.Action<Farmer> ResetModEquipment { get; set; }
+
         /// <summary>Takes other mods' saved world progress back to a fresh game (DeepWoodsRewind,
         /// UnlockableBundlesRewind).
         /// Null when unwired.</summary>
@@ -114,6 +118,8 @@ namespace TheLongestYear.Loop
                 for (int i = 0; i < p.trinketItems.Count; i++)
                     p.trinketItems[i] = null;
                 p.trinketItems.Clear();
+                // Slots other mods add through SpaceCore (Sword and Sorcery's offhand weapon).
+                ResetModEquipment?.Invoke(p);
             }
 
             // Run-scoped per-farmer progress the reset never covered (same audit):
