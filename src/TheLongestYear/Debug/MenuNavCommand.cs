@@ -38,8 +38,8 @@ namespace TheLongestYear.DebugCommands
                 Game1.options.gamepadControls = true;
                 Game1.options.snappyMenus = true;
                 Game1.input = new NoWarpInput(realInput);
-                if (menu.currentlySnappedComponent == null)
-                    menu.snapToDefaultClickableComponent();
+                if (Snapped(menu).currentlySnappedComponent == null)
+                    Snapped(menu).snapToDefaultClickableComponent();
                 for (int i = 0; i < presses; i++)
                 {
                     menu.receiveGamePadButton(button);
@@ -70,8 +70,14 @@ namespace TheLongestYear.DebugCommands
             return button != 0;
         }
 
-        private static string Describe(IClickableMenu menu)
+        /// <summary>The menu that holds the snap: a hosting menu's page (the one book keeps it on the
+        /// open page), else the menu itself.</summary>
+        private static IClickableMenu Snapped(IClickableMenu menu)
+            => AccessTools.Field(menu.GetType(), "_page")?.GetValue(menu) as IClickableMenu ?? menu;
+
+        private static string Describe(IClickableMenu outer)
         {
+            IClickableMenu menu = Snapped(outer);
             ClickableComponent c = menu.currentlySnappedComponent;
             string snapped = c == null ? "nothing snapped" : $"'{c.name}' id {c.myID}";
             object scroll = AccessTools.Field(menu.GetType(), "_scrollIndex")?.GetValue(menu);
