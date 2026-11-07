@@ -18,7 +18,7 @@ namespace TheLongestYear.DebugCommands
     internal static class MenuNavCommand
     {
         public const string Name = "tly_menunav";
-        public const string Usage = "Usage: tly_menunav <up|down|left|right|a> [presses]";
+        public const string Usage = "Usage: tly_menunav <up|down|left|right|a|lb|rb> [presses]";
 
         public static void Run(IMonitor monitor, string[] args)
         {
@@ -65,6 +65,8 @@ namespace TheLongestYear.DebugCommands
                 "left" => Buttons.DPadLeft,
                 "right" => Buttons.DPadRight,
                 "a" => Buttons.A,
+                "lb" => Buttons.LeftShoulder,
+                "rb" => Buttons.RightShoulder,
                 _ => 0,
             };
             return button != 0;
@@ -80,7 +82,11 @@ namespace TheLongestYear.DebugCommands
             IClickableMenu menu = Snapped(outer);
             ClickableComponent c = menu.currentlySnappedComponent;
             string snapped = c == null ? "nothing snapped" : $"'{c.name}' id {c.myID}";
-            object scroll = AccessTools.Field(menu.GetType(), "_scrollIndex")?.GetValue(menu);
+            object scroll = AccessTools.Field(menu.GetType(), "_scrollIndex")?.GetValue(menu)
+                ?? AccessTools.Field(menu.GetType(), "_pickerScroll")?.GetValue(menu);
+            if (AccessTools.Field(menu.GetType(), "_sourceTabs")?.GetValue(menu) is System.Collections.IList tabs && tabs.Count > 1
+                && AccessTools.Field(menu.GetType(), "_sourceTab")?.GetValue(menu) is int tab)
+                snapped += $", source tab {tab + 1}/{tabs.Count} '{tabs[tab]}'";
             return scroll == null ? snapped : $"{snapped}, scroll {scroll}";
         }
 

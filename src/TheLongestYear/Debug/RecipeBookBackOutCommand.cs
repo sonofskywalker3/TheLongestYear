@@ -26,9 +26,10 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_booktest";
         public const string Usage =
-            "Usage: tly_booktest cook|craft|both | tly_booktest live picker | tly_booktest live close click|escape|menukey|padb";
+            "Usage: tly_booktest cook|craft|both | tly_booktest open cook|craft | tly_booktest live picker | tly_booktest live close click|escape|menukey|padb";
 
         private const string ModeLive = "live";
+        private const string ModeOpen = "open";
         private const string LivePicker = "picker";
         private const string LiveClose = "close";
         private const int MinLiveCloseArgs = 3;
@@ -44,6 +45,12 @@ namespace TheLongestYear.DebugCommands
             if (mode == ModeLive)
             {
                 RunLive(monitor, args);
+                return;
+            }
+
+            if (mode == ModeOpen)
+            {
+                OpenPicker(monitor, args.Length > 1 && args[1].ToLowerInvariant() == "craft" ? ("Craftbook", openCraftbook) : ("Cookbook", openCookbook));
                 return;
             }
 
@@ -72,6 +79,30 @@ namespace TheLongestYear.DebugCommands
                 }
             }
             monitor.Log($"tly_booktest: done, {pass} PASS, {fail} FAIL.", fail == 0 ? LogLevel.Info : LogLevel.Error);
+        }
+
+        /// <summary><c>tly_booktest open cook|craft</c>: open the book and its picker on the first empty
+        /// slot, and leave both open (to screenshot or drive with <c>tly_menunav</c>).</summary>
+        private static void OpenPicker(IMonitor monitor, (string name, Action open) book)
+        {
+            if (Game1.activeClickableMenu != null)
+            {
+                monitor.Log($"tly_booktest: close {Game1.activeClickableMenu.GetType().Name} first.", LogLevel.Warn);
+                return;
+            }
+            book.open();
+            if (Game1.activeClickableMenu is not IRecipeBookMenu menu)
+            {
+                monitor.Log($"tly_booktest: {book.name} did not open.", LogLevel.Error);
+                return;
+            }
+            if (menu.FirstEmptySlotBounds() is not { } row)
+            {
+                monitor.Log($"tly_booktest: {book.name} has no empty slot row (book full?).", LogLevel.Warn);
+                return;
+            }
+            Game1.activeClickableMenu.receiveLeftClick(row.Center.X, row.Center.Y, playSound: false);
+            monitor.Log($"tly_booktest: {book.name} picker {(menu.PickerOpen ? "open" : "did NOT open (nothing bankable?)")}.", LogLevel.Info);
         }
 
         /// <summary>Open the book, open the picker on an empty slot, send one input: the book must

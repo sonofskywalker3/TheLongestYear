@@ -188,6 +188,12 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Buttons b)
         {
+            // In the recipe picker with source tabs, LB and RB switch the picker's tabs, not the book's.
+            if ((b == Buttons.LeftShoulder || b == Buttons.RightShoulder) && _page is RecipeBookMenu { HasSourceTabs: true })
+            {
+                _page.receiveGamePadButton(b);
+                return;
+            }
             switch (b)
             {
                 case Buttons.LeftShoulder:

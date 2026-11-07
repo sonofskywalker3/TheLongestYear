@@ -217,11 +217,20 @@ namespace TheLongestYear
             try
             {
                 _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
+                PublishRecipeSources();
             }
             catch (Exception ex)
             {
                 this.Monitor.Log($"Lexicon: could not load the layers before the pools ({ex.GetType().Name}: {ex.Message}); no layer map or shop leaves the year-1 walk this load.", LogLevel.Warn);
             }
+        }
+
+        /// <summary>Hands the recipe book which supported mod adds each item, for its picker's source tabs.</summary>
+        private void PublishRecipeSources()
+        {
+            if (_lexicon?.Loaded == null) return;
+            TheLongestYear.UI.RecipeBookMenu.ItemOwners = _lexicon.Loaded.ItemOwners;
+            TheLongestYear.UI.RecipeBookMenu.ModNameOf = id => this.Helper.ModRegistry.Get(id)?.Manifest.Name ?? id;
         }
 
         /// <summary>The supported-mod layers' year-2 maps and shops for every pool build, or null
@@ -243,6 +252,7 @@ namespace TheLongestYear
             try
             {
                 _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
+                PublishRecipeSources();
                 var timer = System.Diagnostics.Stopwatch.StartNew();
                 // A shop line a layer names as a daily pick reads as every item it can pick, so the
                 // data, its row hashes and everything built from it are the same on any day.

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StardewModdingAPI;
+using TheLongestYear.Core;
 using TheLongestYear.Core.Lexicon;
 
 namespace TheLongestYear.Loop
@@ -8,7 +10,13 @@ namespace TheLongestYear.Loop
     /// <summary>The supported-mod layers found for this game: the composed set, and the active layer
     /// files it was composed from (what <c>tly_lexicon write &lt;UniqueID&gt;</c> measures against).</summary>
     internal sealed record LoadedLayers(
-        LayerSet Set, IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers, Func<string, string> InstalledVersionOf);
+        LayerSet Set, IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers, Func<string, string> InstalledVersionOf)
+    {
+        /// <summary>Which installed supported mod adds each item (<see cref="RecipeSources.ItemOwners"/>),
+        /// for the recipe book's source tabs. Read from every layer whose mod is loaded, even one checked
+        /// against another version: a mod update rarely changes which items are its own.</summary>
+        public IReadOnlyDictionary<string, string> ItemOwners { get; init; } = new Dictionary<string, string>();
+    }
 
     /// <summary>The SMAPI side of the supported-mod layers: reads every file under
     /// <c>assets/lexicon/layers/</c> (<see cref="LayerFile.ReadFolder"/>), keeps the layers whose mods
@@ -29,7 +37,13 @@ namespace TheLongestYear.Loop
             {
                 var (allInputs, allAnswers) = LayerFile.ReadFolder(LayerFile.Folder(modFolder), warn);
                 var (inputs, answers) = LayerSet.Active(allInputs, allAnswers, isLoaded, installedVersionOf, warn);
-                return new LoadedLayers(LayerSet.Compose(vanilla, inputs, answers, warn), inputs, answers, installedVersionOf);
+                return new LoadedLayers(LayerSet.Compose(vanilla, inputs, answers, warn), inputs, answers, installedVersionOf)
+                {
+                    ItemOwners = RecipeSources.ItemOwners(
+                        allAnswers.Where(a => a.Mods.Count == 1 && isLoaded(a.Mods[0]))
+                            .Select(a => (a.Mods[0], a.Deltas.Values.SelectMany(v => v.Obtain.Keys).Distinct())),
+                        VanillaItemIds.All),
+                };
             }
             catch (Exception e)   // any failure: no layers, logged, never a null model
             {

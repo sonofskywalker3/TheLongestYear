@@ -7,6 +7,8 @@
 //                                   bundle mod's template leaves a board position with nothing.
 //   VanillaLocationKeys.Generated.cs every Data/Locations key the unmodded game defines, so the
 //                                   shipped path lexicon can be checked to cover every vanilla map.
+//   VanillaRecipeKeys.Generated.cs  every cooking and crafting recipe key the unmodded game defines,
+//                                   so the recipe books can sort the base game's recipes from a mod's.
 //
 // Reads the game's own Content folder through a bare MonoGame ContentManager: no SMAPI runs, so
 // no mod's asset edit can reach what this reads. Re-run after every game update:
@@ -125,7 +127,33 @@ sb.AppendLine("    };");
 sb.AppendLine("}");
 Write(Path.Combine(outDir, "VanillaLocationKeys.Generated.cs"), sb);
 
-Console.WriteLine($"Stardew Valley {version}: {ids.Count} item ids ({string.Join(", ", counts)}); {board.Count} bundles; {locations.Count} locations.");
+// Cooking and crafting recipe keys, so the recipe books can tell the base game's recipes from a mod's.
+var cooking = content.Load<Dictionary<string, string>>("Data/CookingRecipes").Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
+var crafting = content.Load<Dictionary<string, string>>("Data/CraftingRecipes").Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
+sb.Clear();
+AppendHeader(sb, version, "every Data/CookingRecipes and Data/CraftingRecipes key the unmodded game defines.");
+sb.AppendLine($"// {cooking.Count} cooking and {crafting.Count} crafting recipes.");
+sb.AppendLine("using System;");
+sb.AppendLine("using System.Collections.Generic;");
+sb.AppendLine();
+sb.AppendLine("namespace TheLongestYear.Core;");
+sb.AppendLine();
+sb.AppendLine("/// <summary>Every recipe key the unmodded game defines, ordinal.</summary>");
+sb.AppendLine("public static class VanillaRecipeKeys");
+sb.AppendLine("{");
+foreach ((string name, List<string> keys) in new[] { ("Cooking", cooking), ("Crafting", crafting) })
+{
+    sb.AppendLine($"    public static readonly IReadOnlySet<string> {name} = new HashSet<string>(StringComparer.Ordinal)");
+    sb.AppendLine("    {");
+    foreach (string key in keys)
+        sb.AppendLine($"        {Literal(key)},");
+    sb.AppendLine("    };");
+    if (name == "Cooking") sb.AppendLine();
+}
+sb.AppendLine("}");
+Write(Path.Combine(outDir, "VanillaRecipeKeys.Generated.cs"), sb);
+
+Console.WriteLine($"Stardew Valley {version}: {ids.Count} item ids ({string.Join(", ", counts)}); {board.Count} bundles; {locations.Count} locations; {cooking.Count} cooking and {crafting.Count} crafting recipes.");
 
 static void AppendHeader(StringBuilder sb, string version, string what)
 {

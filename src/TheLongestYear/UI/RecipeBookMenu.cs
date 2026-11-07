@@ -25,7 +25,7 @@ namespace TheLongestYear.UI
     /// On dismiss, <c>MetaState.DismissedIndicators</c> gets the book's legacy dismissal key
     /// (<see cref="IntroQuestIds"/>).
     /// </summary>
-    internal abstract class RecipeBookMenu : IClickableMenu, IRecipeBookMenu, IBookPage
+    internal abstract partial class RecipeBookMenu : IClickableMenu, IRecipeBookMenu, IBookPage
     {
         // Panel size and header band shared with the Herd Book page (BookPageLayout).
         private const int PanelWidth  = BookPageLayout.PanelWidth;
@@ -64,7 +64,7 @@ namespace TheLongestYear.UI
         /// over-cap notice while the book holds more recipes than it has slots, else nothing.</summary>
         private string Notice => _subtitle
             ?? (RecipeBanking.IsOverCap(_slotCount, Banked.Count) ? Strings.Get("menu.books.over-cap") : null);
-        public int HeaderHeight => Notice == null ? BookPageLayout.HeaderPlain : BookPageLayout.HeaderWithSubtitle;
+        public int HeaderHeight => (Notice == null ? BookPageLayout.HeaderPlain : BookPageLayout.HeaderWithSubtitle) + SourceBand;
 
         /// <summary>Rows drawn: every slot plus any grandfathered overflow.</summary>
         private int RowCount => RecipeBanking.VisibleRows(_slotCount, Banked.Count);
@@ -150,6 +150,8 @@ namespace TheLongestYear.UI
                 });
             }
 
+            ApplySourceNeighbours();
+
             int arrowX = listX + listW + 4;
             _scrollUp = new ClickableTextureComponent("scroll-up",
                 new Rectangle(arrowX, listY, 44, 48), null, null,
@@ -189,6 +191,7 @@ namespace TheLongestYear.UI
 
             if (_pickerList != null)
             {
+                if (ClickSourceTab(x, y)) return;
                 // Picker sub-mode: row click selects a recipe.
                 for (int i = 0; i < _rowSlots.Count; i++)
                 {
@@ -232,6 +235,11 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
+            if (HasSourceTabs && (b == Microsoft.Xna.Framework.Input.Buttons.LeftShoulder || b == Microsoft.Xna.Framework.Input.Buttons.RightShoulder))
+            {
+                StepSource(b == Microsoft.Xna.Framework.Input.Buttons.LeftShoulder ? -1 : +1);
+                return;
+            }
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
@@ -286,6 +294,8 @@ namespace TheLongestYear.UI
             _pickerList   = null;
             _pickerScroll = 0;
             _pendingSlot  = -1;
+            _sourceTabs   = null;
+            RecomputeLayout();   // the tab row's band goes
             SnapToRow(BookRows.RowForSlot(slot, _scroll, _rowsPerPage));
         }
 
@@ -308,15 +318,17 @@ namespace TheLongestYear.UI
         private void OpenPicker(int slotIndex)
         {
             _pendingSlot = slotIndex;
-            _pickerList  = AvailableRecipesToBank();
+            _pickerList  = OpenSources(AvailableRecipesToBank());
             _pickerScroll = 0;
             if (_pickerList.Count == 0)
             {
                 Game1.addHUDMessage(new HUDMessage(Strings.Get("menu.books.no-new"), HUDMessage.newQuest_type));
                 _pickerList = null;
                 _pendingSlot = -1;
+                _sourceTabs = null;
                 return;
             }
+            RecomputeLayout();   // the tab row takes a band under the title
             SnapToRow(0);
         }
 
@@ -417,7 +429,10 @@ namespace TheLongestYear.UI
             }
 
             if (_pickerList != null)
+            {
+                DrawSourceTabs(b);
                 DrawPickerRows(b);
+            }
             else
                 DrawSlotRows(b);
 
@@ -480,8 +495,10 @@ namespace TheLongestYear.UI
         {
             try
             {
-                // CraftingRecipe.name is the localised display name.
-                return new CraftingRecipe(recipeId, isCooking).name;
+                // DisplayName is the localised name; name is only the recipe's key, which a mod's
+                // recipe writes as an id ("SDS_BearBread").
+                var recipe = new CraftingRecipe(recipeId, isCooking);
+                return string.IsNullOrWhiteSpace(recipe.DisplayName) ? recipe.name : recipe.DisplayName;
             }
             catch (Exception ex)
             {

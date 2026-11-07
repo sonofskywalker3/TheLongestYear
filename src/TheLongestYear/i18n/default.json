@@ -822,6 +822,10 @@
     "menu.cookbook.title": "Cookbook: {{used}} / {{total}} slots",
     "menu.craftbook.title": "Craftbook: {{used}} / {{total}} slots",
     "menu.books.empty-slot": "[empty, click to add]",
+    // Source tabs above the recipe picker when mods add recipes: the base game's, other (unsupported) mods', every recipe.
+    "menu.books.source.vanilla": "Stardew Valley",
+    "menu.books.source.other": "Other mods",
+    "menu.books.source.all": "All",
     "menu.cookbook.remove-confirm": "Remove \"{{recipe}}\" from the cookbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.craftbook.remove-confirm": "Remove \"{{recipe}}\" from the craftbook?\nThis recipe won't carry over next run unless re-banked.",
     "menu.herdbook.title": "Herd Book: {{used}} / {{total}} slots",
