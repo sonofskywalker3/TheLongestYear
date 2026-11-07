@@ -3,6 +3,14 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.12 - 2026-11-07
+
+### Fixed
+
+- **Sword and Sorcery's offhand weapon stayed equipped through the rewind.** Equipment slots that other mods add through SpaceCore, like Sword and Sorcery's offhand weapon and armor slots, kept their items into every new loop. They now empty with your boots and rings, and Keep Worn Gear keeps them. Thanks to Celjhyn.
+- **a controller could not move down the Junimo Shrine's rows.** On the shrine on your farm, pressing down never left the first row. Up and down now move through the rows, scroll the list at its ends, and go back up to the tabs. The JP shop at the rewind moves the same way. Thanks to Celjhyn.
+- **some mods' fish were left out when sizing fish asks.** A mod that writes its fishing rules in lower case, like Alchemistry, had its fish ignored, so the fish asked for could be larger than what you can really catch with that mod installed. Those fish now count.
+
 ## 1.2.7 - 2026-11-06
 
 ### Fixed

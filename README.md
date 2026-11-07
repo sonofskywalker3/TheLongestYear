@@ -23,7 +23,15 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.7
+## What's New in 1.2.12
+
+**Fixed: Sword and Sorcery's offhand weapon stayed equipped through the rewind.** Equipment slots that other mods add through SpaceCore, like Sword and Sorcery's offhand weapon and armor slots, kept their items into every new loop. They now empty with your boots and rings, and Keep Worn Gear keeps them. Thanks to Celjhyn.
+
+**Fixed: a controller could not move down the Junimo Shrine's rows.** On the shrine on your farm, pressing down never left the first row. Up and down now move through the rows, scroll the list at its ends, and go back up to the tabs. The JP shop at the rewind moves the same way. Thanks to Celjhyn.
+
+**Fixed: some mods' fish were left out when sizing fish asks.** A mod that writes its fishing rules in lower case, like Alchemistry, had its fish ignored, so the fish asked for could be larger than what you can really catch with that mod installed. Those fish now count.
+
+## 1.2.7
 
 **Fixed: the save after a rewind could freeze with Ultra Smooth.** On a large mod list the game hung on the first save after a rewind while Ultra Smooth's memory cleanup was on. The Longest Year now clears the way before that save. Thanks to Celjhyn.
 
