@@ -45,6 +45,11 @@ namespace TheLongestYear.UI
         {
             if (_tab != ShrineTab.Plan || !IsKeepRow(row) || !_pins.TryToggle(_state, row.Def.Id))
                 return false;
+            // An unpinned locked keep drops back into its category's Locked section. Open that
+            // section so the row stays on screen and the focus can follow it; a collapsed section
+            // would hide it and leave Y on whatever row slid into its slot.
+            if (row.Kind == RowKind.Locked && !PinnedKeeps.IsPinned(_state, row.Def.Id))
+                _expandedLocked.Add(row.Def.Category);
             BuildRows();
             FollowRow(row.Def.Id, moveSnap);
             return true;
