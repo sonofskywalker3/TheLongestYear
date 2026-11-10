@@ -22,9 +22,10 @@ namespace TheLongestYear.UI
 
         private LoopSummary Outgoing => _banishRows ? _store.OutgoingLoop : null;
 
-        /// <summary>A plain buyable keep row the recap suggested. A pinned chain is already on top.</summary>
+        /// <summary>A buyable keep row the recap suggested. A "your focus" row stands in for the keep's
+        /// plain row, so it counts too (keeping its own price and buy). A pinned chain is already on top.</summary>
         private bool IsSuggested(ShrineRow row)
-            => row.Def != null && !row.IsFocus && !row.IsBanish && row.Buyable && !IsPinned(row)
+            => row.Def != null && !row.IsBanish && row.Buyable && !IsPinned(row)
                && Outgoing?.SuggestionFor(row.Def.Id) != null;
 
         private IReadOnlyList<ShrineRow> SuggestedAfterPinned(IReadOnlyList<ShrineRow> rows)
@@ -34,19 +35,20 @@ namespace TheLongestYear.UI
             return KeepSuggestions.AfterPinned(rows, IsPinned, IsSuggested, r => outgoing.RankOf(r.Def?.Id));
         }
 
-        /// <summary>The green "!" in the row's top-right corner and the reason line on the right of
-        /// the cost line, shrunk to fit beside it.</summary>
+        /// <summary>The green "!" in the row's top-right corner (left of a focus row's "your focus" tag)
+        /// and the reason line on the right of the cost line, shrunk to fit beside it.</summary>
         private void DrawSuggestedMark(SpriteBatch b, ClickableComponent slot, ShrineRow row)
         {
             if (!IsSuggested(row)) return;
             KeepSuggestion suggestion = Outgoing.SuggestionFor(row.Def.Id);
 
             Vector2 badgeSize = Game1.dialogueFont.MeasureString(SuggestedBadge);
+            float tagWidth = row.IsFocus ? Game1.smallFont.MeasureString(Strings.Get("focus.row.your-focus")).X + BadgeInset : 0f;
             Utility.drawTextWithShadow(b, SuggestedBadge, Game1.dialogueFont,
-                new Vector2(slot.bounds.Right - BadgeInset - badgeSize.X, slot.bounds.Y + 8), LoopRecapMenu.SuggestedGreen);
+                new Vector2(slot.bounds.Right - BadgeInset - tagWidth - badgeSize.X, slot.bounds.Y + 8), LoopRecapMenu.SuggestedGreen);
 
             string reason = LoopRecapText.Reason(suggestion, Outgoing.HeldBoard);
-            long cost = _purchases.EffectiveCost(row.Def);
+            long cost = row.IsFocus ? row.Quote.Price : _purchases.EffectiveCost(row.Def);
             string costLine = Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
                 + (_store.State.JunimoPoints < cost ? Strings.Get("menu.shrine.insufficient") : "");
             float left = slot.bounds.X + BadgeInset + Game1.smallFont.MeasureString(costLine).X + CostToReasonGap;
