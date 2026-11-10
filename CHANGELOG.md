@@ -3,6 +3,20 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.21 - 2026-11-10
+
+### Added
+
+- **pin the upgrades you're saving for.** Press Y or right-click an upgrade in the Junimo Shrine to pin it. Pinned upgrades sit at the top of their tab, in the JP shop at the rewind and on the Plan tab of the shrine on your farm. A line above the list tells you how many of your pins you can afford and how much more JP the next one needs. Thanks to Nijah for the idea.
+- **a recap at the end of each loop.** Before the JP shop, one page shows the JP you earned and where it came from, how many bundles you finished, how many donations were still needed and what the darkness did. It also suggests up to three upgrades based on the asks you missed, or on the board you're keeping. Suggested upgrades are marked with a green ! in the shop.
+- **easier shopping in the Junimo Shrine.** Each tab shows how many of its upgrades you own. Hovering an upgrade with more tiers shows the next ones and what the rest cost. An Affordable only box (LT on a controller) hides what you can't buy yet. On the Plan tab, upgrades you can't afford are faded, like in the shop.
+
+### Fixed
+
+- **bundles asked for dishes you can't cook in year 1.** On Easy and Normal, bundles no longer ask for dishes like Pink Cake, whose recipe only airs as a Sneak Peek of next year's cooking show, unless you've kept that recipe in your Cookbook. Hard and Extreme still ask for them. On Easy, Home Cook's Feast could also ask for dishes with no way to get them at all. It can't any more. Thanks to Nijah.
+- **the same bundle reward could turn up again and again.** The Longest Year's own bundles now take an unused reward from their room's normal rewards, so a board no longer hands out two Kegs or two Preserves Jars. With Random bundle rewards on, each bundle draws from its own room's rewards first, and no reward repeats on a board until all of them have been handed out. Thanks to Nijah.
+- **a board could have several bundles about the same thing.** A board now has at most one cooking bundle, one artisan goods bundle and one minerals bundle whenever there are others to pick from. Seasonal crop and foraging bundles are not affected. A board you keep at the rewind is rebuilt with these rules, so a few of its asks may change. Thanks to Nijah.
+
 ## 1.2.15 - 2026-11-09
 
 ### Added
