@@ -94,5 +94,14 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, hint, Game1.smallFont, new Vector2(hintX, yPositionOnScreen + 32),
                 Game1.textColor * 0.7f);
         }
+
+        /// <summary>Controller Y pins; the game also sends it as the menu key, which must not close
+        /// the shrine (<see cref="KeepPinInput.IsFreshPadY"/>).</summary>
+        public override void receiveKeyPress(Microsoft.Xna.Framework.Input.Keys key)
+        {
+            if (KeepPinInput.IsFreshPadY() && Game1.options.doesInputListContain(Game1.options.menuButton, key))
+                return;
+            base.receiveKeyPress(key);
+        }
     }
 }

@@ -25,6 +25,12 @@ namespace TheLongestYear.UI
             => Game1.oldMouseState.RightButton == ButtonState.Released
                && !Game1.oldPadState.IsButtonDown(Buttons.X);
 
+        /// <summary>True on the frame a controller Y goes down. The game also hands that press to the
+        /// menu as its mapped key, the menu key (E), which would close the shrine right after the pin;
+        /// the shrine menus skip the key for this press. B and Start still close them.</summary>
+        public static bool IsFreshPadY()
+            => Game1.input.GetGamePadState().IsButtonDown(Buttons.Y) && !Game1.oldPadState.IsButtonDown(Buttons.Y);
+
         /// <summary>Pins or unpins <paramref name="keepId"/>'s chain. Returns false when nothing
         /// changed (not the host, or a second dispatch of the same press).</summary>
         public bool TryToggle(MetaState state, string keepId)

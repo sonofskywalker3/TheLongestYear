@@ -81,5 +81,14 @@ namespace TheLongestYear.UI
             int size = KeepPinBadge.SizeFor(KeepPinBadge.PlanScale);
             KeepPinBadge.Draw(b, new Vector2(nameX - StarGap - size, rowY + 10), KeepPinBadge.PlanScale);
         }
+
+        /// <summary>Controller Y pins; the game also sends it as the menu key, which must not close
+        /// the shrine (<see cref="KeepPinInput.IsFreshPadY"/>).</summary>
+        public override void receiveKeyPress(Microsoft.Xna.Framework.Input.Keys key)
+        {
+            if (KeepPinInput.IsFreshPadY() && Game1.options.doesInputListContain(Game1.options.menuButton, key))
+                return;
+            base.receiveKeyPress(key);
+        }
     }
 }
