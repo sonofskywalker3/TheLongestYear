@@ -171,4 +171,93 @@ public class RemixSelectorTests
         Assert.False(RemixSelector.IsAlwaysPicked("Winter Crops"));
         Assert.False(RemixSelector.IsAlwaysPicked(null));
     }
+    // Jeff, 2026-11-10: at most one bundle per theme on a board where alternatives exist.
+    private static HashSet<string> Themes(params string[] themes) => new(themes, System.StringComparer.Ordinal);
+
+    private static IEnumerable<string> Keys(IEnumerable<BundleSpec> picks) => picks.Select(p => $"{p.Name}@{p.Index}");
+
+    private static IReadOnlyList<IReadOnlyList<BundleSpec>> BoilerPools() => new[]
+    {
+        (IReadOnlyList<BundleSpec>)new[] { Named("Blacksmith's", 20), Named("Mineral", 20) },
+        new[] { Named("Geologist's", 21), Named("Rockhound's", 21), Named("Adventurer's", 21) },
+        new[] { Named("Adventurer's", 22), Named("Gil's Trophies", 22) },
+    };
+
+    [Fact]
+    public void A_theme_an_earlier_room_fielded_is_left_out_where_alternatives_exist()
+    {
+        for (int seed = 0; seed < 200; seed++)
+        {
+            var names = RemixSelector.PickForRoom(BoilerPools(), seed, "Boiler Room", Themes(BundleThemes.Minerals))
+                .Select(p => p.Name).ToList();
+            Assert.DoesNotContain("Mineral", names);
+            Assert.DoesNotContain("Geologist's", names);
+            Assert.DoesNotContain("Rockhound's", names);
+        }
+    }
+
+    [Fact]
+    public void A_room_fields_at_most_one_bundle_per_theme()
+    {
+        for (int seed = 0; seed < 200; seed++)
+        {
+            int minerals = RemixSelector.PickForRoom(BoilerPools(), seed, "Boiler Room")
+                .Count(p => BundleThemes.ThemeOf(p.Name) == BundleThemes.Minerals);
+            Assert.True(minerals <= 1, $"seed {seed} fielded {minerals} mineral bundles");
+        }
+    }
+
+    [Fact]
+    public void A_taken_theme_is_still_picked_when_it_is_the_only_candidate()
+    {
+        var pools = new[] { (IReadOnlyList<BundleSpec>)new[] { Named("Preserver's", 4) } };
+        var picks = RemixSelector.PickForRoom(pools, 7, "Pantry", Themes(BundleThemes.ArtisanGoods));
+        Assert.Equal(new[] { "Preserver's" }, picks.Select(p => p.Name));
+    }
+
+    [Fact]
+    public void Seasonal_crops_are_in_no_theme_and_still_always_picked()
+    {
+        Assert.Null(BundleThemes.ThemeOf("Spring Crops"));
+        Assert.Null(BundleThemes.ThemeOf("Fall Foraging"));
+        var every = Themes(BundleThemes.Cooking, BundleThemes.ArtisanGoods, BundleThemes.Minerals);
+        for (int seed = 0; seed < 100; seed++)
+        {
+            var names = RemixSelector.PickForRoom(CropsPools(), seed, "Pantry", every).Select(x => x.Name).ToList();
+            Assert.Equal(new[] { "Spring Crops", "Summer Crops", "Fall Crops" }, names.Take(3));
+        }
+    }
+
+    [Fact]
+    public void A_board_without_a_theme_clash_picks_exactly_as_before()
+    {
+        // The used themes touch nothing these pools offer twice: the same RNG draw lands on the
+        // same candidate, so the board is unchanged from before the theme rule.
+        var unrelated = Themes(BundleThemes.Minerals);
+        for (int seed = 0; seed < 200; seed++)
+        {
+            Assert.Equal(
+                Keys(RemixSelector.PickForRoom(CropsPools(), seed, "Pantry")),
+                Keys(RemixSelector.PickForRoom(CropsPools(), seed, "Pantry", unrelated)));
+            Assert.Equal(
+                Keys(RemixSelector.PickForRoom(OverlappingPools(), seed, "Pantry")),
+                Keys(RemixSelector.PickForRoom(OverlappingPools(), seed, "Pantry", unrelated)));
+        }
+    }
+
+    [Fact]
+    public void A_pick_the_count_dial_drops_frees_its_theme_for_later_rooms()
+    {
+        var board = Themes();
+        var bulletin = new[] { (IReadOnlyList<BundleSpec>)new[] { Named("Chef's", 31) }, new[] { Named("Dye", 34) } };
+        var kept = RemixSelector.PickForBoardRoom(bulletin, 3, "Bulletin Board", board,
+            picks => picks.Where(p => p.Name != "Chef's").ToList());
+
+        Assert.Equal(new[] { "Dye" }, kept.Select(p => p.Name));
+        Assert.Empty(board);
+
+        var pantry = new[] { (IReadOnlyList<BundleSpec>)new[] { Named("Home Cook's Feast", 5) } };
+        RemixSelector.PickForBoardRoom(pantry, 3, "Pantry", board, picks => picks);
+        Assert.Equal(new[] { BundleThemes.Cooking }, board);
+    }
 }

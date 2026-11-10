@@ -39,7 +39,9 @@ public sealed class ReservedBundleIndices
 /// (<see cref="RemixSelector.IsAlwaysPicked"/>) while anything else can go; order and indices of
 /// the kept picks are unchanged. More: each extra draws from every candidate the room offers (first
 /// occurrence of each name), leaving out names already in the room, and takes a reserved index.
-/// When no new name is left the room stops short and <c>shortfall</c> says by how many.</summary>
+/// When no new name is left the room stops short and <c>shortfall</c> says by how many. An extra
+/// also leaves out bundles whose theme (<see cref="BundleThemes"/>) the board or the room already
+/// fields, unless only such bundles remain (Jeff, 2026-11-10: at most one bundle per theme).</summary>
 public static class RoomBundleCountPlanner
 {
     public static IReadOnlyList<BundleSpec> Plan(
@@ -48,7 +50,8 @@ public static class RoomBundleCountPlanner
         int target,
         Random rng,
         Func<int> nextReservedIndex,
-        out int shortfall)
+        out int shortfall,
+        IReadOnlySet<string>? boardThemes = null)
     {
         if (picks == null) throw new ArgumentNullException(nameof(picks));
         if (rng == null) throw new ArgumentNullException(nameof(rng));
@@ -58,7 +61,7 @@ public static class RoomBundleCountPlanner
             return picks;
         if (target < picks.Count)
             return Drop(picks, picks.Count - target, rng);
-        return Add(picks, positions, target - picks.Count, rng, nextReservedIndex, out shortfall);
+        return Add(picks, positions, target - picks.Count, rng, nextReservedIndex, out shortfall, boardThemes);
     }
 
     private static IReadOnlyList<BundleSpec> Drop(IReadOnlyList<BundleSpec> picks, int dropCount, Random rng)
@@ -84,11 +87,15 @@ public static class RoomBundleCountPlanner
         int addCount,
         Random rng,
         Func<int> nextReservedIndex,
-        out int shortfall)
+        out int shortfall,
+        IReadOnlySet<string>? boardThemes)
     {
         if (nextReservedIndex == null) throw new ArgumentNullException(nameof(nextReservedIndex));
         var result = new List<BundleSpec>(picks);
         var names = new HashSet<string>(picks.Select(p => p.Name), StringComparer.Ordinal);
+        var usedThemes = new HashSet<string>(boardThemes ?? new HashSet<string>(), StringComparer.Ordinal);
+        foreach (BundleSpec pick in picks)
+            BundleThemes.MarkUsed(usedThemes, pick.Name);
         var pool = new List<BundleSpec>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (IReadOnlyList<BundleSpec> candidates in positions ?? Array.Empty<IReadOnlyList<BundleSpec>>())
@@ -105,8 +112,10 @@ public static class RoomBundleCountPlanner
                 shortfall = addCount - n;
                 break;
             }
-            BundleSpec chosen = available[rng.Next(available.Count)];
+            IReadOnlyList<BundleSpec> free = BundleThemes.WithoutTakenThemes(available, usedThemes);
+            BundleSpec chosen = free[rng.Next(free.Count)];
             names.Add(chosen.Name);
+            BundleThemes.MarkUsed(usedThemes, chosen.Name);
             result.Add(chosen with { Index = nextReservedIndex() });
         }
         return result;

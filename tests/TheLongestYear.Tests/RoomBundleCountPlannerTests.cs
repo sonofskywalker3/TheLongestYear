@@ -102,6 +102,25 @@ public class RoomBundleCountPlannerTests
     }
 
     [Fact]
+    public void More_skips_extras_whose_theme_the_board_or_room_already_fields()
+    {
+        // Jeff, 2026-11-10: at most one bundle per theme. Artisan sits in the room and Chef's on an
+        // earlier room, so Preserver's and Home Cook's Feast give way to the unthemed extra.
+        var positions = new[]
+        {
+            (IReadOnlyList<BundleSpec>)new[] { B("Artisan", 5) },
+            new[] { B("Preserver's", 6), B("Home Cook's Feast", 6), B("Garden", 6) },
+        };
+        var picks = new[] { positions[0][0] };
+        var board = new HashSet<string>(StringComparer.Ordinal) { BundleThemes.Cooking };
+        for (int seed = 0; seed < 50; seed++)
+        {
+            var planned = RoomBundleCountPlanner.Plan(picks, positions, 2, new Random(seed), Counter(), out _, board);
+            Assert.Equal(new[] { "Artisan", "Garden" }, planned.Select(b => b.Name));
+        }
+    }
+
+    [Fact]
     public void More_stops_short_when_the_pool_runs_out_of_names_and_says_how_many()
     {
         // 10 distinct names in the pool; Extreme asks for 9 so it fits. Ask for 12 to run out.
