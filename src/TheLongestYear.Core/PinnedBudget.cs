@@ -66,21 +66,27 @@ public static class PinnedBudget
         if (budget.Total == 0)
         {
             if (budget.Locked > 0)
-                lines.Add(Strings.Get("menu.shrine.budget.all-locked", new Dictionary<string, string> { ["locked"] = budget.Locked.ToString() }));
+                lines.Add(Strings.Get(Key("menu.shrine.budget.all-locked", budget.Locked), new Dictionary<string, string> { ["locked"] = budget.Locked.ToString() }));
             return lines;
         }
         lines.Add(budget.Affordable == budget.Total
-            ? Strings.Get("menu.shrine.budget.all", new Dictionary<string, string> { ["total"] = budget.Total.ToString() })
-            : Strings.Get("menu.shrine.budget.some", new Dictionary<string, string>
+            ? Strings.Get(Key("menu.shrine.budget.all", budget.Total), new Dictionary<string, string> { ["total"] = budget.Total.ToString() })
+            : Strings.Get(Key("menu.shrine.budget.some", budget.Total), new Dictionary<string, string>
             {
                 ["count"] = budget.Affordable.ToString(),
                 ["total"] = budget.Total.ToString(),
                 ["jp"] = budget.ShortfallJp.ToString(),
             }));
         if (budget.Locked > 0)
-            lines.Add(Strings.Get("menu.shrine.budget.locked", new Dictionary<string, string> { ["locked"] = budget.Locked.ToString() }));
+            lines.Add(Strings.Get(Key("menu.shrine.budget.locked", budget.Locked), new Dictionary<string, string> { ["locked"] = budget.Locked.ToString() }));
         return lines;
     }
+
+    /// <summary>The ".one" wording when the count is one: "your pinned upgrade", not "1 pinned upgrades".</summary>
+    private static string Key(string key, int count) => count == SingleCount ? key + SingularSuffix : key;
+
+    private const int SingleCount = 1;
+    private const string SingularSuffix = ".one";
 
     private static int CatalogIndex(UpgradeDefinition def)
     {

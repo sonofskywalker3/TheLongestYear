@@ -217,9 +217,12 @@ public class KeepShopFilterTests
 
     [Theory]
     [InlineData(1, 3, 0, 120, new[] { "You can afford 1 of your 3 pinned upgrades. You need 120 more JP for the next one." })]
-    [InlineData(0, 2, 1, 40, new[] { "You can afford 0 of your 2 pinned upgrades. You need 40 more JP for the next one.", "1 pinned upgrades are still locked." })]
+    [InlineData(0, 2, 1, 40, new[] { "You can afford 0 of your 2 pinned upgrades. You need 40 more JP for the next one.", "1 pinned upgrade is still locked." })]
     [InlineData(2, 2, 0, 0, new[] { "You can afford all 2 of your pinned upgrades." })]
     [InlineData(0, 0, 3, 0, new[] { "Your 3 pinned upgrades are still locked." })]
+    [InlineData(0, 1, 0, 75, new[] { "You can't afford your pinned upgrade yet. You need 75 more JP for it." })]
+    [InlineData(1, 1, 0, 0, new[] { "You can afford your pinned upgrade." })]
+    [InlineData(0, 0, 1, 0, new[] { "Your pinned upgrade is still locked." })]
     [InlineData(0, 0, 0, 0, new string[0])]
     public void Budget_line_wording_follows_the_counts(int affordable, int total, int locked, long shortfall, string[] expected)
         => Assert.Equal(expected, PinnedBudget.Lines(new PinnedBudgetResult(affordable, total, locked, shortfall)));
