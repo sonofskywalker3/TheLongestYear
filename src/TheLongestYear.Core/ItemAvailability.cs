@@ -116,6 +116,46 @@ public sealed class ItemAvailabilityModel
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> MixedSeedBoardBases { get; init; }
         = new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal);
 
+    /// <summary>The lexicon's stored answers for the Sneak Peek dishes this step leaves unplaced and a
+    /// banked recipe places (<see cref="SneakPeekDishes.Bankable"/>; Easy only, Jeff 2026-11-10). Read
+    /// by <see cref="WithBankedDishes"/>; empty on every other step and when the answers are not stored.</summary>
+    public IReadOnlyDictionary<string, BankableDish> BankableDishes { get; init; }
+        = new Dictionary<string, BankableDish>(StringComparer.Ordinal);
+
+    /// <summary>This model carrying <paramref name="bankable"/> as its <see cref="BankableDishes"/>.</summary>
+    public ItemAvailabilityModel WithBankableDishes(IReadOnlyDictionary<string, BankableDish> bankable)
+        => Copy(_effortDerived, DishBases, bankable ?? new Dictionary<string, BankableDish>(StringComparer.Ordinal));
+
+    /// <summary>The model one board reads: the <see cref="BankableDishes"/> whose recipes
+    /// <paramref name="bankedDishIds"/> (the board's stamp) holds are placed by their stored answers.
+    /// Returns this model itself when none applies, so every other board reads exactly what it did.</summary>
+    public ItemAvailabilityModel WithBankedDishes(IEnumerable<string>? bankedDishIds)
+    {
+        if (BankableDishes.Count == 0 || bankedDishIds == null) return this;
+        Dictionary<string, ItemEffort>? effort = null;
+        Dictionary<string, double[]>? bases = null;
+        foreach (string id in bankedDishIds)
+        {
+            if (id == null || !BankableDishes.TryGetValue(id, out BankableDish? dish)) continue;
+            effort ??= new Dictionary<string, ItemEffort>(_effortDerived, StringComparer.Ordinal);
+            effort[id] = dish.Answer;
+            if (dish.DishBasis == null) continue;
+            bases ??= new Dictionary<string, double[]>(DishBases, StringComparer.Ordinal);
+            bases[id] = dish.DishBasis;
+        }
+        return effort == null ? this : Copy(effort, bases ?? DishBases, BankableDishes);
+    }
+
+    private ItemAvailabilityModel Copy(
+        IReadOnlyDictionary<string, ItemEffort> effortDerived, IReadOnlyDictionary<string, double[]> dishBases,
+        IReadOnlyDictionary<string, BankableDish> bankable)
+        => new(_derived, _seasonOverrides, _effortOverrides, effortDerived, _weekOverrides, Mode, Step)
+        {
+            DishBases = dishBases, CatchRates = CatchRates, YearTwoCropDishUnits = YearTwoCropDishUnits,
+            MixedSeedCropBases = MixedSeedCropBases, MixedSeedBoardBases = MixedSeedBoardBases,
+            BankableDishes = bankable,
+        };
+
     public ItemAvailabilityModel(
         IReadOnlyDictionary<string, ItemAvailability> derived,
         IReadOnlyDictionary<string, Season>? seasonOverrides = null,

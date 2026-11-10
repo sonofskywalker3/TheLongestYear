@@ -223,8 +223,18 @@ namespace TheLongestYear.Loop
 
         /// <summary>Derived item model, forwarded to <see cref="BundleSlotFiller.Fill"/> for the
         /// stretch and hard-item swaps (spec 2026-08-28-obtainable-board-2-stretch). Must be set the
-        /// same way at every construction site: the board is re-generated and compared at save load.</summary>
-        public Core.ItemAvailabilityModel Availability { get; set; }
+        /// same way at every construction site: the board is re-generated and compared at save load.
+        /// Read back, it is this board's model: the one set, with the dishes whose recipes
+        /// <see cref="BankedDishes"/> holds placed by their stored answers on Easy
+        /// (<see cref="Core.ItemAvailabilityModel.WithBankedDishes"/>, Jeff 2026-11-10). On any other
+        /// step, or with nothing banked, it is the model set.</summary>
+        public Core.ItemAvailabilityModel Availability
+        {
+            get => _boardAvailability ??= _availability?.WithBankedDishes(_bankedDishes);
+            set { _availability = value; _boardAvailability = null; }
+        }
+        private Core.ItemAvailabilityModel _availability;
+        private Core.ItemAvailabilityModel _boardAvailability;
 
         /// <summary>The supported-mod layers' year-2 maps and shops, forwarded to
         /// <see cref="GameDataPools.Build"/> so the pools read the same year-1 walk as the load-time

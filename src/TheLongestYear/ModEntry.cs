@@ -788,6 +788,7 @@ namespace TheLongestYear
             long hashMs = timer.ElapsedMilliseconds;
             string storedInputs = _lexicon?.StoredInputs(key) ?? "none";
             TheLongestYear.Core.Lexicon.AvailabilityAnswers stored = inputs == null ? null : _lexicon?.AvailabilityFor(key, inputs);
+            TheLongestYear.Core.Lexicon.AvailabilityAnswers own = stored;
             if (stored != null)
                 _availability = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
                     stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
@@ -795,7 +796,22 @@ namespace TheLongestYear
             {
                 var (model, answers) = AvailabilityBuild(step, kitchen);
                 _availability = model;
+                own = answers;
                 if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });
+            }
+            // A banked year-2 recipe places its dish on Easy too (Jeff, 2026-11-10), at the week the
+            // lexicon's stored Normal answer gives it (same inputs, same kitchen). Only stored answers
+            // are read: when they are missing, nothing is computed and the dish stays off the board.
+            if (step == TheLongestYear.Core.DifficultyStep.Easy && inputs != null)
+            {
+                var normal = _lexicon?.AvailabilityFor(
+                    TheLongestYear.Core.Lexicon.AvailabilityAnswers.Key(TheLongestYear.Core.DifficultyStep.Normal, kitchen), inputs);
+                _availability = _availability.WithBankableDishes(TheLongestYear.Core.SneakPeekDishes.Bankable(own, normal));
+                this.Monitor.Log(
+                    normal == null
+                        ? "Availability model: no stored Normal answers for these inputs, so banked year-2 recipes do not place their dishes on this Easy board."
+                        : $"Availability model: {_availability.BankableDishes.Count} Sneak Peek dish(es) a banked recipe places on Easy.",
+                    LogLevel.Trace);
             }
             this.Monitor.Log(
                 $"Availability model {key}: {(stored != null ? "served from the lexicon" : "built")} in {timer.ElapsedMilliseconds} ms (inputs {inputs}, hashed in {hashMs} ms; stored {storedInputs}).",

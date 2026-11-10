@@ -24,7 +24,8 @@ namespace TheLongestYear.Loop
             var merged = new Dictionary<string, Core.Season>(LastDerivedSeasonPins, StringComparer.Ordinal);
             foreach (KeyValuePair<string, Core.Season> pin in basePins)
                 merged[pin.Key] = pin.Value;
-            return set.BuildRequirements(merged, bundleQuotas, availability);
+            // The board's own model, as Generate read it: a banked year-2 dish keeps its stored week.
+            return set.BuildRequirements(merged, bundleQuotas, availability?.WithBankedDishes(BankedDishes));
         }
 
         /// <summary>Writes the generated set into <c>Game1.netWorldState</c> and re-syncs the CC

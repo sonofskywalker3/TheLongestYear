@@ -173,10 +173,14 @@ namespace TheLongestYear
             // stamp (Jeff, 2026-11-10). The shared pools stay whole: weekly goals keep these dishes.
             bool vanillaBoard = BundleSourceNames.IsVanilla(_meta.State.BundleSource);
             bool banishedItems = !vanillaBoard && _meta.State.BoardBanishes.Any(b => b.Kind == TheLongestYear.Core.BanishKind.Item);
+            // The board's own model: on Easy a banked year-2 recipe places its dish (Jeff, 2026-11-10).
+            TheLongestYear.Core.ItemAvailabilityModel boardModel = vanillaBoard
+                ? _availability
+                : _availability?.WithBankedDishes(_meta.State.BoardBankedDishes);
             IReadOnlySet<string> sneakPeekDishes = vanillaBoard
                 ? new HashSet<string>()
                 : TheLongestYear.Core.SneakPeekDishes.ExcludedFor(
-                    _availability?.Step ?? TheLongestYear.Core.DifficultyStep.Normal, _availability, _meta.State.BoardBankedDishes);
+                    boardModel?.Step ?? TheLongestYear.Core.DifficultyStep.Normal, boardModel, _meta.State.BoardBankedDishes);
             TheLongestYear.Core.ItemPools repairPools =
                 vanillaBoard || (_meta.State.ModItemsOnBoard() && !banishedItems && sneakPeekDishes.Count == 0)
                 ? ctx.EnginePools
@@ -191,7 +195,7 @@ namespace TheLongestYear
                     LayerMarks(), LayerRandomShopPicks());
             int repaired = new TheLongestYear.Loop.BoardRepairService(
                 this.Monitor, ctx.EnginePoolReader.LastReachability, repairPools,
-                _config.PoolTuning, _availability,
+                _config.PoolTuning, boardModel,
                 // The board's own seed basis, not the run seed (a new game assigns that only after
                 // this runs), and the stored board of record takes every swap, so a reload restores
                 // the repaired board and the repair finds nothing left to do (0.19.9).

@@ -12,7 +12,12 @@ namespace TheLongestYear.Loop
         /// (<see cref="Core.MetaState.BoardBankedDishes"/>). A generation input like
         /// <see cref="Banishes"/>: every construction site passes the board's stamp, never the live
         /// Cookbook, so a reload re-derives the board the reset wrote. Null = none banked.</summary>
-        public IReadOnlyCollection<string> BankedDishes { get; set; }
+        public IReadOnlyCollection<string> BankedDishes
+        {
+            get => _bankedDishes;
+            set { _bankedDishes = value; _boardAvailability = null; }
+        }
+        private IReadOnlyCollection<string> _bankedDishes;
 
         private const string CookingRecipesAsset = "Data/CookingRecipes";
 
