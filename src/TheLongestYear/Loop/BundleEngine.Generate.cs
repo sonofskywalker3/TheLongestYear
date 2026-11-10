@@ -335,16 +335,9 @@ namespace TheLongestYear.Loop
 
             WarnExcludedDishAsks(allPicks, sneakPeekDishes);
 
-            if (!randomRewards)
-                return new GeneratedBundleSet(allPicks, flavors);
-
             // Last, so it moves no other stream: rewards never feed back into what a bundle asks.
-            IReadOnlyList<string> rewardPool = RewardPool(roomPools, VanillaFilter);
-            IReadOnlyList<BundleSpec> rewarded = Core.BundleRewardShuffle.Apply(allPicks, seed, rewardPool, IsRewardShuffleSkippedRoom);
-            _monitor?.Log(
-                $"Randomizer: bundle rewards shuffled ({rewarded.Count(b => !IsRewardShuffleSkippedRoom(b.Room))} bundles, pool {rewardPool.Count}).",
-                LogLevel.Info);
-            return new GeneratedBundleSet(rewarded, flavors);
+            var authoredIndices = new HashSet<int>(picked.Where(r => AuthoredBundleNames.Contains(r.Pick.Name)).Select(r => r.Pick.Index));
+            return new GeneratedBundleSet(AssignRewards(allPicks, authoredIndices, roomPools, seed, randomRewards), flavors);
         }
 
         /// <summary>No item asked twice across the board, held for every bundle at once. The fills
