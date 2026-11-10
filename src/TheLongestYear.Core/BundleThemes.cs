@@ -21,6 +21,9 @@ public static class BundleThemes
         {
             ["Chef's"] = Cooking,
             ["Home Cook's Feast"] = Cooking,
+            // Vanilla's remix Home Cook's (eggs, milk, flour) and Brewer's join their groups (Jeff, 2026-11-10).
+            ["Home Cook's"] = Cooking,
+            ["Brewer's"] = ArtisanGoods,
             ["Artisan"] = ArtisanGoods,
             ["Preserver's"] = ArtisanGoods,
             ["Geologist's"] = Minerals,
