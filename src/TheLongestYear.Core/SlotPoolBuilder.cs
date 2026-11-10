@@ -132,10 +132,6 @@ public static class SlotPoolBuilder
     private static string? RouteTagFor(string id, Func<string, string?>? routeTagOf)
     {
         if (PoolAdditions.YearTwoCropIds.Contains(id) && id != YearTwoCrops.Artichoke) return YearTwoSeedsRouteTag;
-        string? basis = routeTagOf?.Invoke(id);
-        return basis != null
-               && basis.Contains(Availability.CookedDishAvailability.SneakPeekBasisMarker, StringComparison.Ordinal)
-            ? SneakPeekRouteTag
-            : null;
+        return SneakPeekDishes.IsSneakPeekOnly(routeTagOf?.Invoke(id)) ? SneakPeekRouteTag : null;
     }
 }

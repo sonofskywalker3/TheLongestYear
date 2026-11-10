@@ -105,7 +105,7 @@ namespace TheLongestYear.Loop
                 return;
             }
 
-            IReadOnlyList<string> pool = BundleEngine.RewardPool(new VanillaBundlePool(_monitor).BuildRoomPools());
+            IReadOnlyDictionary<string, IReadOnlyList<string>> pool = BundleEngine.RewardRoomPools(new VanillaBundlePool(_monitor).BuildRoomPools());
             int seed = BundleEngineSeed.For(
                 unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
             IDictionary<string, string> shuffled = TheLongestYear.Core.BundleRewardShuffle.ApplyToData(
@@ -113,7 +113,7 @@ namespace TheLongestYear.Loop
             Game1.netWorldState.Value.SetBundleData(new Dictionary<string, string>(shuffled));
 
             int bundles = shuffled.Keys.Count(k => !BundleEngine.IsRewardShuffleSkippedRoom(k.Split('/')[0]));
-            _monitor.Log($"Randomizer: bundle rewards shuffled ({bundles} bundles, pool {pool.Count}).", LogLevel.Info);
+            _monitor.Log($"Randomizer: bundle rewards shuffled ({bundles} bundles, pool {pool.Values.SelectMany(p => p).Distinct(StringComparer.Ordinal).Count()}).", LogLevel.Info);
         }
 
         /// <summary>The all-Normal half of <see cref="ApplyVanillaBoardDifficulty"/>: writes only

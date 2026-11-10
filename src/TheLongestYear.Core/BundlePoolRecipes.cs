@@ -273,7 +273,7 @@ public static class BundlePoolRecipes
     /// hearts, and Kent is not in the valley in year 1. An unplaced id lands on the board as
     /// UNKNOWN and the gate then treats it as Winter, so a Cooking-sourced part filters them out
     /// here. With no model there is nothing to check and the list passes through unchanged.</summary>
-    private static IReadOnlyList<PoolItem> Placeable(IReadOnlyList<PoolItem> items, ItemAvailabilityModel? model)
+    internal static IReadOnlyList<PoolItem> Placeable(IReadOnlyList<PoolItem> items, ItemAvailabilityModel? model)
         => model == null ? items : items.Where(p => model.IsPlaced(p.ItemId)).ToList();
 
     /// <summary>The one part of a vanilla-only recipe: it offers nothing of its own, and

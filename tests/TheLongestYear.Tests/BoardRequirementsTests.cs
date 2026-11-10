@@ -37,6 +37,30 @@ public class BoardRequirementsTests
         Assert.DoesNotContain(fromStored, r => r.Name == "2,500g"); // Vault skipped, as before
     }
 
+    /// <summary>A Sneak Peek dish asked on a board (Hard, or a banked recipe) is due no earlier than
+    /// the season its recipe can first be learned: Pink Cake airs on the Summer 17 rerun, so a
+    /// per-item bundle beside a Spring dish still gives it Summer or later (Jeff, 2026-11-10).</summary>
+    [Fact]
+    public void A_sneak_peek_dish_is_never_due_before_the_season_its_recipe_can_be_learned()
+    {
+        const string pinkCake = "(O)221";
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(),
+            effortDerived: new Dictionary<string, ItemEffort>
+            {
+                [pinkCake] = new(3, "dish Pink Cake: recipe week 7, " + TheLongestYear.Core.Availability.CookedDishAvailability.SneakPeekBasisMarker, 7, Season.Summer),
+                ["(O)194"] = new(1, "dish Fried Egg", 6, Season.Spring),
+                ["(O)195"] = new(1, "dish Omelet", 6, Season.Spring),
+            },
+            step: DifficultyStep.Hard);
+        var board = new GeneratedBundleSet(new[] { Spec("Pantry", 0, "Home Cook's Feast", 3, "(O)194", "(O)195", pinkCake) });
+
+        BundleRequirement req = BoardRequirements.Build(board.ToBundleData(), new Dictionary<string, Season>(),
+            GameplayConfig.DefaultBundleQuotas, model).Single();
+
+        Assert.Equal(BundleKind.PerItem, req.Kind);
+        Assert.True(req.ItemSeasonPins![pinkCake] >= model.For(pinkCake).Gate, $"due {req.ItemSeasonPins[pinkCake]}");
+    }
+
     [Fact]
     public void Season_pins_round_trip_through_their_stored_int_form()
     {

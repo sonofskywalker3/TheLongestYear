@@ -61,6 +61,29 @@ public class AuthoredBundleComposerTests
         Assert.Equal(-1, a.PickCount);
     }
 
+    /// <summary>Home Cook's Feast takes placed dishes only, like every rolled cooking part: an
+    /// unplaced dish (a year-2 recipe on Easy, a Kent dish) would fall back to a Winter deadline.
+    /// Both the first composition and the no-repeat swap read the filtered source.</summary>
+    [Fact]
+    public void Cooking_source_offers_only_dishes_the_model_places()
+    {
+        var def = AuthoredBundleCatalog.All.Single(d => d.Name == "Home Cook's Feast");
+        string[] placed = { "(O)194", "(O)195", "(O)196", "(O)197", "(O)198", "(O)199", "(O)200" };
+        var pools = new ItemPools { Cooking = placed.Append("(O)221").Append("(O)214").Select(id => Item(id)).ToList() };
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(),
+            effortDerived: placed.ToDictionary(id => id, _ => new ItemEffort(2, "dish", 6, Season.Spring)),
+            step: DifficultyStep.Easy);
+
+        for (int seed = 0; seed < 50; seed++)
+        {
+            BundleSpec? spec = AuthoredBundleComposer.Compose(def, 44, pools, Tuning, true, new Random(seed), availability: model);
+            Assert.All(spec!.Slots, s => Assert.Contains(s.ItemId, placed));
+            IReadOnlyList<string> options = AuthoredBundleComposer.ReplacementOptions(
+                def, spec, 0, pools, true, null, new Random(seed), model);
+            Assert.All(options, id => Assert.Contains(id, placed));
+        }
+    }
+
     [Fact]
     public void SeasonSpread_SamplerSpansThreeSeasons()
     {

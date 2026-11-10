@@ -169,16 +169,24 @@ namespace TheLongestYear
             // keeps the shared pools, other mods' items included, as before.
             // A Custom board built under banishes swaps from pools without the banished items too,
             // so a repair can never put one back (BanishRules.ExcludedIds, the engine's own rule).
+            // Its Sneak Peek dishes stay out the same way, read off the board's own banked-recipe
+            // stamp (Jeff, 2026-11-10). The shared pools stay whole: weekly goals keep these dishes.
             bool vanillaBoard = BundleSourceNames.IsVanilla(_meta.State.BundleSource);
             bool banishedItems = !vanillaBoard && _meta.State.BoardBanishes.Any(b => b.Kind == TheLongestYear.Core.BanishKind.Item);
+            IReadOnlySet<string> sneakPeekDishes = vanillaBoard
+                ? new HashSet<string>()
+                : TheLongestYear.Core.SneakPeekDishes.ExcludedFor(
+                    _availability?.Step ?? TheLongestYear.Core.DifficultyStep.Normal, _availability, _meta.State.BoardBankedDishes);
             TheLongestYear.Core.ItemPools repairPools =
-                vanillaBoard || (_meta.State.ModItemsOnBoard() && !banishedItems)
+                vanillaBoard || (_meta.State.ModItemsOnBoard() && !banishedItems && sneakPeekDishes.Count == 0)
                 ? ctx.EnginePools
                 : new TheLongestYear.Loop.GameDataPools(this.Monitor).Build(_config.PoolTuning,
-                    TheLongestYear.Core.BanishRules.ExcludedIds(
-                        TheLongestYear.Core.YearTwoCrops.ExcludedFor(
-                            _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
-                        _meta.State.BoardBanishes),
+                    TheLongestYear.Core.SneakPeekDishes.Union(
+                        TheLongestYear.Core.BanishRules.ExcludedIds(
+                            TheLongestYear.Core.YearTwoCrops.ExcludedFor(
+                                _meta.State.HasUpgrade, _meta.State.BoardDifficulty(_config).Steps.ItemRarity),
+                            _meta.State.BoardBanishes),
+                        sneakPeekDishes),
                     _meta.State.ModItemsOnBoard() ? null : TheLongestYear.Loop.BundleEngine.VanillaOnlyIds,
                     LayerMarks(), LayerRandomShopPicks());
             int repaired = new TheLongestYear.Loop.BoardRepairService(

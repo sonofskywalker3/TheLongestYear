@@ -90,6 +90,12 @@ namespace TheLongestYear
             firstEngine.LayerRandomShopPicks = LayerRandomShopPicks();
             firstEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             firstEngine.Banishes = seedLoop == _meta.State.EffectiveBundleSeedLoop ? _meta.State.BoardBanishes : null;
+            // The live board reads its stamp; another loop's board would be new, so it would stamp
+            // the Cookbook as it stands now.
+            IReadOnlyCollection<string> bankedDishes = seedLoop == _meta.State.EffectiveBundleSeedLoop
+                ? _meta.State.BoardBankedDishes
+                : TheLongestYear.Loop.BundleEngine.BankedDishIdsFor(_meta.State.CookbookRecipes);
+            firstEngine.BankedDishes = bankedDishes;
             GeneratedBundleSet first = firstEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             this.Monitor.Log(
                 $"tly_genbundles: generated for loop {seedLoop} (seed {seed}, mode custom), diagnostics only, nothing written.",
@@ -102,6 +108,7 @@ namespace TheLongestYear
             secondEngine.LayerRandomShopPicks = LayerRandomShopPicks();
             secondEngine.AllowModItems = _meta.State.ModItemsOnBoard();
             secondEngine.Banishes = seedLoop == _meta.State.EffectiveBundleSeedLoop ? _meta.State.BoardBanishes : null;
+            secondEngine.BankedDishes = bankedDishes;
             GeneratedBundleSet second = secondEngine.Generate(seed, _meta.State.RandomBundleRewardsBoard);
             string difference = FirstBundleSetDifference(first, second);
             if (difference == null)

@@ -130,6 +130,10 @@ namespace TheLongestYear.Loop
                 // RunController's Fail-night choice already pinned (hold) or advanced to this loop
                 // (reshuffle) before we got here. Legacy saves resolve to CompletedResets.
                 int seed = BundleEngineSeed.For(unchecked((ulong)Game1.player.UniqueMultiplayerID), _meta.EffectiveBundleSeedLoop);
+                // Sneak Peek dishes (Jeff, 2026-11-10): a NEW board stamps the recipes banked in the
+                // Cookbook right now; a held board keeps the stamp it was built under, like its banishes.
+                if (!holdingBoard)
+                    _meta.BoardBankedDishes = BundleEngine.BankedDishIdsFor(_meta.CookbookRecipes);
 
                 (BundleEngine Engine, GeneratedBundleSet Set) Build(IReadOnlyList<BanishPick> banishes)
                 {
@@ -140,6 +144,7 @@ namespace TheLongestYear.Loop
                     built.LayerRandomShopPicks = LayerRandomShopPicks?.Invoke();
                     built.AllowModItems = _meta.BoardAllowsModItems.Value;
                     built.Banishes = banishes;
+                    built.BankedDishes = _meta.BoardBankedDishes;
                     var passTimer = System.Diagnostics.Stopwatch.StartNew();
                     GeneratedBundleSet set = built.Generate(seed, _meta.RandomBundleRewardsBoard);
                     // One line per generation pass: a reset with banishes runs up to three.

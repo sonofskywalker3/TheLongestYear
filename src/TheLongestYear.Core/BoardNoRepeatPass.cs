@@ -45,7 +45,7 @@ public static class BoardNoRepeatPass
                                  ^ unchecked((slot.Slot + 1) * SlotSaltPrime));
             if (entry.Authored != null)
                 return AuthoredBundleComposer.ReplacementOptions(
-                    entry.Authored, entry.Composed, slot.Slot, pools, nonObjectDonationsEnabled, authoredBanned, rng);
+                    entry.Authored, entry.Composed, slot.Slot, pools, nonObjectDonationsEnabled, authoredBanned, rng, availability);
             if (entry.Match == null || entry.Match.Domain == PoolDomain.None)
                 return null;
             return BundleSlotFiller.ReplacementOptions(

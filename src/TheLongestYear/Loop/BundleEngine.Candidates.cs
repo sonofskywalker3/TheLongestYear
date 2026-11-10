@@ -11,21 +11,20 @@ namespace TheLongestYear.Loop
 {
     internal sealed partial class BundleEngine
     {
-        /// <summary>Randomizer reward pool: every reward vanilla's standard and remixed bundles
-        /// can give, from every room except the Abandoned Joja Mart (the Vault's item rewards are
-        /// included). Shared by the Engine board and the Vanilla/Remixed reset pass so
-        /// both sources draw from the same list. The Engine passes <see cref="VanillaOnlyIds"/>,
+        /// <summary>Randomizer reward pools, one per room: every reward that room's standard and
+        /// remixed bundles can give, every room except the Abandoned Joja Mart (the Vault's item
+        /// rewards are included). Shared by the Engine board and the Vanilla/Remixed reset pass so
+        /// both sources draw from the same pools. The Engine passes <see cref="VanillaOnlyIds"/>,
         /// which leaves out any reward that gives another mod's item; the Vanilla/Remixed pass
         /// passes nothing and keeps every reward, as it always has.</summary>
-        public static IReadOnlyList<string> RewardPool(
+        public static IReadOnlyDictionary<string, IReadOnlyList<string>> RewardRoomPools(
             IReadOnlyDictionary<string, IReadOnlyList<IReadOnlyList<BundleSpec>>> roomPools,
             IReadOnlySet<string> vanillaOnlyIds = null)
-            => Core.BundleRewardShuffle.CleanPool(
-                roomPools
-                    .Where(room => !IsRewardShuffleSkippedRoom(room.Key))
-                    .SelectMany(room => room.Value)
+            => Core.BundleRewardShuffle.RoomPools(
+                roomPools.SelectMany(room => room.Value
                     .SelectMany(candidates => candidates)
-                    .Select(spec => spec.RewardField),
+                    .Select(spec => (room.Key, spec.RewardField))),
+                IsRewardShuffleSkippedRoom,
                 vanillaOnlyIds);
 
         /// <summary>The bundle templates (Data/Bundles + Data/RandomBundles) with every other
@@ -166,7 +165,7 @@ namespace TheLongestYear.Loop
                 if (cappedAllowance == 0) bannedIds.UnionWith(Core.CappedAsks.Ids);
                 BundleSpec composed = AuthoredBundleComposer.Compose(
                     def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
-                    step, banned: bannedIds.Count > 0 ? bannedIds : null);
+                    step, banned: bannedIds.Count > 0 ? bannedIds : null, availability: Availability);
                 if (composed == null)
                 {
                     _monitor?.Log(

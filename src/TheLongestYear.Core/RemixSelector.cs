@@ -28,21 +28,49 @@ public static class RemixSelector
     public static bool IsAlwaysPicked(string? bundleName)
         => bundleName != null && SeasonalCropsName.IsMatch(bundleName);
 
+    /// <summary>One room of a board: <see cref="PickForRoom"/> against the themes the board already
+    /// fields, then <paramref name="countDial"/> (the bundle-count dial: drops or extras), then the
+    /// themes of the picks that survive the dial join <paramref name="boardThemes"/>. A pick the
+    /// dial dropped never marks its theme, so a later room may still take that theme (Jeff,
+    /// 2026-11-10). Call once per room in a fixed room order.</summary>
+    public static IReadOnlyList<BundleSpec> PickForBoardRoom(
+        IReadOnlyList<IReadOnlyList<BundleSpec>> slotPools, int seed, string room,
+        HashSet<string> boardThemes,
+        Func<IReadOnlyList<BundleSpec>, IReadOnlyList<BundleSpec>> countDial)
+    {
+        if (boardThemes == null) throw new ArgumentNullException(nameof(boardThemes));
+        if (countDial == null) throw new ArgumentNullException(nameof(countDial));
+        IReadOnlyList<BundleSpec> kept = countDial(PickForRoom(slotPools, seed, room, boardThemes));
+        foreach (BundleSpec pick in kept)
+            BundleThemes.MarkUsed(boardThemes, pick.Name);
+        return kept;
+    }
+
+    /// <summary>One pick per position. <paramref name="boardThemes"/> holds the themes
+    /// (<see cref="BundleThemes"/>) the rooms walked before this one already field; a candidate
+    /// whose theme is taken, on the board or earlier in this room, is left out unless nothing else
+    /// remains at its position (Jeff, 2026-11-10: at most one bundle per theme on a board). The
+    /// set is read, not written: the caller marks the themes of the picks it finally keeps, so a
+    /// pick the bundle-count dial drops frees its theme for the next room.</summary>
     public static IReadOnlyList<BundleSpec> PickForRoom(
-        IReadOnlyList<IReadOnlyList<BundleSpec>> slotPools, int seed, string room)
+        IReadOnlyList<IReadOnlyList<BundleSpec>> slotPools, int seed, string room,
+        IReadOnlySet<string>? boardThemes = null)
     {
         var rng = new Random(seed ^ (StableRoomSalt(room) * RoomSaltPrime));
         var picks = new List<BundleSpec>(slotPools.Count);
         var pickedNames = new HashSet<string>(StringComparer.Ordinal);
+        var usedThemes = new HashSet<string>(boardThemes ?? new HashSet<string>(), StringComparer.Ordinal);
         for (int position = 0; position < slotPools.Count; position++)
         {
             var candidates = slotPools[position];
-            IReadOnlyList<BundleSpec> pool = WithoutAlreadyPickedNames(candidates, pickedNames);
+            IReadOnlyList<BundleSpec> pool = BundleThemes.WithoutTakenThemes(
+                WithoutAlreadyPickedNames(candidates, pickedNames), usedThemes);
             BundleSpec? mandatory = FirstAlwaysPicked(pool, pickedNames);
             // The rng is consumed either way so every other position's roll stays where it was.
             int roll = rng.Next(pool.Count);
             var chosen = mandatory ?? pool[roll];
             pickedNames.Add(chosen.Name);
+            BundleThemes.MarkUsed(usedThemes, chosen.Name);
             picks.Add(chosen);
         }
         return picks;
