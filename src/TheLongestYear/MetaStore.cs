@@ -37,7 +37,15 @@ namespace TheLongestYear
             MetaState meta = _data.ReadSaveData<MetaState>(MetaDataKey);
             LoadedExistingData = meta != null;
             State = meta ?? new MetaState();
-            Run = _data.ReadSaveData<RunState>(RunDataKey) ?? new RunState();
+            RunState run = _data.ReadSaveData<RunState>(RunDataKey);
+            if (run == null)
+            {
+                // A run starting now: its JP ledger covers the whole loop. A saved run without a
+                // ledger is from before it and starts one marked "since the update" on its first credit.
+                run = new RunState();
+                run.StartJpLedger();
+            }
+            Run = run;
         }
 
         /// <summary>Put the run marker into a brand-new save before the game writes it for the first

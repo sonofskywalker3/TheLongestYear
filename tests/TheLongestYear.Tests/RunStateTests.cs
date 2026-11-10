@@ -552,4 +552,43 @@ public class RunStateTests
         run.BeginNewRun(seed: 7);
         Assert.Equal(TheLongestYear.Core.Day28.Day28Branch.None, run.PendingDay28);
     }
+
+    // Loop recap JP ledger (spec 2026-11-10, amendment F).
+    [Fact]
+    public void BeginNewRun_starts_a_full_jp_ledger_and_clears_the_blight_night_count()
+    {
+        var run = new RunState { LoopBlightNights = 4 };
+        run.RecordJpEarned(JpSource.Rooms, 120);
+
+        run.BeginNewRun(seed: 5);
+
+        Assert.NotNull(run.JpEarned);
+        Assert.Equal(0, run.JpEarned!.Total());
+        Assert.False(run.JpEarned.SinceUpdate);
+        Assert.Equal(0, run.LoopBlightNights);
+    }
+
+    [Fact]
+    public void A_save_from_before_the_ledger_starts_one_marked_since_the_update()
+    {
+        var run = new RunState();   // JpEarned null, as an old save loads
+        run.RecordJpEarned(JpSource.Checkpoints, 75);
+        run.RecordJpEarned(JpSource.Bundles, 0);
+        run.RecordJpEarned(JpSource.Checkpoints, 25);
+
+        Assert.True(run.JpEarned!.SinceUpdate);
+        Assert.Equal(100, run.JpEarned.Checkpoints);
+        Assert.Equal(100, run.JpEarned.Total());
+    }
+
+    [Fact]
+    public void The_jp_ledger_survives_a_save_round_trip()
+    {
+        var run = new RunState();
+        run.StartJpLedger();
+        run.RecordJpEarned(JpSource.ShrineGoals, 40);
+        RunState back = JsonSerializer.Deserialize<RunState>(JsonSerializer.Serialize(run))!;
+        Assert.Equal(40, back.JpEarned!.ShrineGoals);
+        Assert.False(back.JpEarned.SinceUpdate);
+    }
 }

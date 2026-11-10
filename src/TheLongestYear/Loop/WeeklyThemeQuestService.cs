@@ -269,6 +269,7 @@ namespace TheLongestYear.Loop
             long perGoal = WeeklyGoalPayout.PerGoal(weeklyBonus, total);
             long paid = JpBoostHelper.Apply(_store.State, perGoal * newlyPaid);
             _store.State.JunimoPoints += paid;
+            Run.RecordJpEarned(JpSource.WeeklyThemes, paid);
             Game1.addHUDMessage(new HUDMessage(
                 Strings.Get("hud.goal-paid", new Dictionary<string, string>
                 {
