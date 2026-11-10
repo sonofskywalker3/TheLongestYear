@@ -11,7 +11,8 @@ public readonly record struct PinnedBudgetResult(int Affordable, int Total, int 
 
 /// <summary>
 /// The pinned budget line on both shrine menus (spec 2026-11-10 section 4, amendment H). Each pinned
-/// chain offers its next unowned tier from the catalog (not the visible rows). A tier that fails any
+/// chain offers its next unowned tier from the catalog (not the visible rows), along that chain's own
+/// ladder (<see cref="KeepLadder.Tiers"/>), so a pinned branch row waits on its own prerequisites. A tier that fails any
 /// gate but JP (prerequisite, meta requirement, run reach, animal room) counts as locked; a fully
 /// owned chain and an unknown id drop out. The unlocked tiers are bought on paper, cheapest first at
 /// <see cref="UpgradePricing.EffectiveCost(UpgradeDefinition, double, MetaState)"/>, against the
@@ -25,12 +26,15 @@ public static class PinnedBudget
         var candidates = new List<UpgradeDefinition>();
         int locked = 0;
         var seenRoots = new HashSet<string>(StringComparer.Ordinal);
+        var seenNext = new HashSet<string>(StringComparer.Ordinal);
         foreach (string pin in state.PinnedUpgrades)
         {
             if (UpgradeCatalog.TryGet(pin) == null || !seenRoots.Add(PinnedKeeps.ChainRoot(pin)))
                 continue;
             UpgradeDefinition? next = KeepLadder.NextUnowned(pin, state);
-            if (next == null)
+            // Two pinned branches can share their next tier (Start with Chicken and Start with Void
+            // Chicken both wait on an unowned Keep Coop): count that tier once.
+            if (next == null || !seenNext.Add(next.Id))
                 continue;
             if (KeepShopFilter.IsBuyable(next, state, reachMet)) candidates.Add(next);
             else locked++;

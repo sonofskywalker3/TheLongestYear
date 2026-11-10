@@ -170,6 +170,21 @@ public class KeepShopFilterTests
     }
 
     [Fact]
+    public void Pinning_a_branch_row_pins_only_its_own_branch()
+    {
+        var meta = new MetaState();
+
+        Assert.True(PinnedKeeps.Toggle(meta, "start_chicken"));        // hangs off Keep Coop
+        Assert.True(PinnedKeeps.Toggle(meta, "keep_deluxe_coop"));     // the coop's main line
+        Assert.True(PinnedKeeps.Toggle(meta, "horse_swift"));          // one of two Keep Horse branches
+
+        Assert.Equal(new[] { "start_chicken", "keep_coop", "horse_swift" }, meta.PinnedUpgrades);
+        Assert.False(PinnedKeeps.IsPinned(meta, "start_void_chicken"));
+        Assert.False(PinnedKeeps.IsPinned(meta, "horse_flute"));
+        Assert.False(PinnedKeeps.IsPinned(meta, "early_horse"));
+    }
+
+    [Fact]
     public void Pinned_rows_come_first_and_both_groups_keep_their_order()
     {
         var meta = new MetaState();
@@ -215,6 +230,24 @@ public class KeepShopFilterTests
         Assert.Equal(new PinnedBudgetResult(2, 2, 0, 0), PinnedBudget.Compute(meta, 1.0, Reach(reached)));
     }
 
+    [Fact]
+    public void Budget_follows_a_pinned_branch_past_an_owned_main_line()
+    {
+        var meta = new MetaState { JunimoPoints = 500 };
+        meta.OwnedUpgrades.AddRange(new[] { "keep_coop", "keep_big_coop", "keep_deluxe_coop" });
+        meta.AnimalSpeciesEverOwned.Add("Chicken");
+        meta.PinnedUpgrades.AddRange(new[] { "start_chicken", "start_void_chicken", "keep_coop" });
+
+        // Start Chicken (400) is affordable, Void Chicken is gated on the species, and the fully
+        // owned coop main line drops out (it no longer runs on into Start with Rabbit).
+        Assert.Equal(new PinnedBudgetResult(1, 1, 1, 0), PinnedBudget.Compute(meta, 1.0, Reach(new())));
+
+        // With the coop unowned, both chicken branches wait on the one Keep Coop: counted once.
+        meta.OwnedUpgrades.Clear();
+        var reached = new Dictionary<string, int> { ["building:Coop"] = 1 };
+        Assert.Equal(new PinnedBudgetResult(0, 1, 0, 100), PinnedBudget.Compute(meta, 1.0, Reach(reached)));
+    }
+
     [Theory]
     [InlineData(1, 3, 0, 120, new[] { "You can afford 1 of your 3 pinned upgrades. You need 120 more JP for the next one." })]
     [InlineData(0, 2, 1, 40, new[] { "You can afford 0 of your 2 pinned upgrades. You need 40 more JP for the next one.", "1 pinned upgrade is still locked." })]
@@ -245,6 +278,17 @@ public class KeepShopFilterTests
         Assert.Equal(KeepLadder.ShownTiers, KeepLadder.For(UpgradeCatalog.HerdBookPrefix + "1", meta, 1.0)!.Next.Count);
         Assert.Null(KeepLadder.For("keep_greenhouse", meta, 1.0));
     }
+
+    [Theory]
+    [InlineData("keep_coop", new[] { "keep_coop", "keep_big_coop", "keep_deluxe_coop" })]
+    [InlineData("keep_big_coop", new[] { "keep_coop", "keep_big_coop", "keep_deluxe_coop" })]
+    [InlineData("start_chicken", new[] { "keep_coop", "start_chicken" })]
+    [InlineData("start_rabbit", new[] { "keep_coop", "keep_big_coop", "keep_deluxe_coop", "start_rabbit" })]
+    [InlineData("start_goat", new[] { "keep_barn", "keep_big_barn", "start_goat" })]
+    [InlineData("horse_flute", new[] { "early_horse", "horse_flute" })]
+    [InlineData("early_horse", new[] { "early_horse" })]
+    public void Ladder_of_a_branched_chain_is_the_keeps_own_path(string id, string[] expected)
+        => Assert.Equal(expected, KeepLadder.Tiers(id).Select(d => d.Id));
 
     [Fact]
     public void Category_progress_counts_owned_definitions_over_all_of_them()
