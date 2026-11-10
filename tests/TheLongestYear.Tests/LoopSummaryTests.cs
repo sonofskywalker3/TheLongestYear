@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TheLongestYear.Core;
 using TheLongestYear.Core.Sabotage;
@@ -66,5 +67,21 @@ public class LoopSummaryTests
         run.RecordJpEarned(JpSource.Checkpoints, 50);
         LoopSummary summary = LoopSummary.Build(run, new BundleProgress[0], heldBoard: false, new KeepSuggestion[0]);
         Assert.Equal("Junimo Points earned: 50 (since the update)", LoopRecapText.JpLine(summary));
+    }
+
+    [Theory]
+    [InlineData(1000, 1f, true)]      // fits as is
+    [InlineData(800, 0.8f, true)]     // shrinks the text first
+    [InlineData(600, 0.9f, false)]    // then drops the sources line, back at a larger scale
+    [InlineData(100, 0.7f, false)]    // nothing fits: the floor, without the sources line
+    public void Recap_fits_by_shrinking_text_then_dropping_the_sources_line(int available, float scale, bool sources)
+    {
+        // 1000 px at full scale with the sources line, 650 without; height follows the scale.
+        int Body(float s, bool withSources) => (int)Math.Round((withSources ? 1000 : 650) * s);
+
+        (float fitScale, bool fitSources) = LoopRecapText.Fit(Body, available);
+
+        Assert.Equal(scale, fitScale, 3);
+        Assert.Equal(sources, fitSources);
     }
 }

@@ -37,10 +37,16 @@ namespace TheLongestYear.UI
             public int Indent;
             public bool Suggested;
             public int GapBefore;
+            public float Scale;
+            public int Height;
+            public int MarkWidth;
         }
 
+        /// <summary>Space kept between the panel and the screen's top and bottom edges.</summary>
+        private const int ScreenMargin = 32;
+
         private readonly LoopSummary _summary;
-        private readonly List<Line> _lines = new();
+        private List<Line> _lines = new();
         private ClickableComponent _continue;
         private bool _hoverContinue;
 
@@ -58,28 +64,22 @@ namespace TheLongestYear.UI
             Layout();
         }
 
+        /// <summary>Fits the page to the screen: the text shrinks to <see cref="LoopRecapText.MinScale"/>,
+        /// then the per-source JP line goes, and as a last resort lines are dropped from the bottom,
+        /// so the Continue button always sits below the last drawn line inside the panel.</summary>
         private void Layout()
         {
             width = Math.Min(BoxWidth, Game1.uiViewport.Width - 64);
             int textWidth = width - Pad * 2;
-            _lines.Clear();
-            Add(LoopRecapText.JpLine(_summary), Game1.dialogueFont, 0, textWidth, 0);
-            Add(LoopRecapText.SourcesLine(_summary), Game1.smallFont, Indent, textWidth, LineGap);
-            Add(LoopRecapText.BundlesLine(_summary), Game1.dialogueFont, 0, textWidth, SectionGap);
-            Add(LoopRecapText.DonationsLine(_summary), Game1.dialogueFont, 0, textWidth, LineGap);
-            if (LoopRecapText.DarknessLine(_summary) is string darkness)
-                Add(darkness, Game1.dialogueFont, 0, textWidth, SectionGap);
-            if (_summary.Suggestions.Count > 0)
-            {
-                Add(LoopRecapText.SuggestedHeader(), Game1.dialogueFont, 0, textWidth, SectionGap);
-                foreach (KeepSuggestion s in _summary.Suggestions)
-                    Add(LoopRecapText.SuggestionLine(s, _summary.HeldBoard), Game1.smallFont, Indent, textWidth, LineGap, suggested: true);
-            }
+            int chrome = Pad + TitleHeight + ButtonTopGap + ButtonHeight + Pad;
+            int available = Game1.uiViewport.Height - ScreenMargin - chrome;
 
-            int bodyHeight = 0;
-            foreach (Line line in _lines)
-                bodyHeight += line.GapBefore + (int)line.Font.MeasureString(line.Text).Y;
-            height = Math.Min(Pad + TitleHeight + bodyHeight + ButtonTopGap + ButtonHeight + Pad, Game1.uiViewport.Height - 32);
+            (float scale, bool sources) = LoopRecapText.Fit((sc, src) => BodyHeight(BuildLines(sc, src, textWidth)), available);
+            _lines = BuildLines(scale, sources, textWidth);
+            while (_lines.Count > 1 && BodyHeight(_lines) > available)
+                _lines.RemoveAt(_lines.Count - 1);
+
+            height = chrome + BodyHeight(_lines);
             xPositionOnScreen = (Game1.uiViewport.Width - width) / 2;
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
@@ -94,17 +94,49 @@ namespace TheLongestYear.UI
             allClickableComponents = new List<ClickableComponent> { _continue };
         }
 
-        private void Add(string text, SpriteFont font, int indent, int textWidth, int gapBefore, bool suggested = false)
+        private List<Line> BuildLines(float scale, bool sources, int textWidth)
         {
-            int markWidth = suggested ? (int)font.MeasureString(SuggestedMark + " ").X : 0;
-            _lines.Add(new Line
+            var lines = new List<Line>();
+            void Add(string text, SpriteFont font, int indent, int gapBefore, bool suggested = false)
             {
-                Text = Game1.parseText(text, font, textWidth - indent - markWidth),
-                Font = font,
-                Indent = indent,
-                Suggested = suggested,
-                GapBefore = gapBefore,
-            });
+                // Wrapped at the unscaled width that fills the line once drawn at this scale.
+                int markWidth = suggested ? (int)(font.MeasureString(SuggestedMark + " ").X * scale) : 0;
+                string wrapped = Game1.parseText(text, font, (int)((textWidth - indent - markWidth) / scale));
+                lines.Add(new Line
+                {
+                    Text = wrapped,
+                    Font = font,
+                    Indent = indent,
+                    Suggested = suggested,
+                    GapBefore = (int)(gapBefore * scale),
+                    Scale = scale,
+                    Height = (int)Math.Ceiling(font.MeasureString(wrapped).Y * scale),
+                    MarkWidth = markWidth,
+                });
+            }
+
+            Add(LoopRecapText.JpLine(_summary), Game1.dialogueFont, 0, 0);
+            if (sources)
+                Add(LoopRecapText.SourcesLine(_summary), Game1.smallFont, Indent, LineGap);
+            Add(LoopRecapText.BundlesLine(_summary), Game1.dialogueFont, 0, SectionGap);
+            Add(LoopRecapText.DonationsLine(_summary), Game1.dialogueFont, 0, LineGap);
+            if (LoopRecapText.DarknessLine(_summary) is string darkness)
+                Add(darkness, Game1.dialogueFont, 0, SectionGap);
+            if (_summary.Suggestions.Count > 0)
+            {
+                Add(LoopRecapText.SuggestedHeader(), Game1.dialogueFont, 0, SectionGap);
+                foreach (KeepSuggestion s in _summary.Suggestions)
+                    Add(LoopRecapText.SuggestionLine(s, _summary.HeldBoard), Game1.smallFont, Indent, LineGap, suggested: true);
+            }
+            return lines;
+        }
+
+        private static int BodyHeight(List<Line> lines)
+        {
+            int total = 0;
+            foreach (Line line in lines)
+                total += line.GapBefore + line.Height;
+            return total;
         }
 
         public override void snapToDefaultClickableComponent()
@@ -170,11 +202,11 @@ namespace TheLongestYear.UI
                 int x = xPositionOnScreen + Pad + line.Indent;
                 if (line.Suggested)
                 {
-                    Utility.drawTextWithShadow(b, SuggestedMark, line.Font, new Vector2(x, y), SuggestedGreen);
-                    x += (int)line.Font.MeasureString(SuggestedMark + " ").X;
+                    Utility.drawTextWithShadow(b, SuggestedMark, line.Font, new Vector2(x, y), SuggestedGreen, line.Scale);
+                    x += line.MarkWidth;
                 }
-                Utility.drawTextWithShadow(b, line.Text, line.Font, new Vector2(x, y), Game1.textColor);
-                y += (int)line.Font.MeasureString(line.Text).Y;
+                Utility.drawTextWithShadow(b, line.Text, line.Font, new Vector2(x, y), Game1.textColor, line.Scale);
+                y += line.Height;
             }
 
             bool lit = _hoverContinue || currentlySnappedComponent == _continue && Game1.options.gamepadControls;

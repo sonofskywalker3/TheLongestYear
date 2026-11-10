@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace TheLongestYear.Core;
@@ -7,6 +8,30 @@ namespace TheLongestYear.Core;
 public static class LoopRecapText
 {
     private const int One = 1;
+
+    /// <summary>Text scale the recap page shrinks to before it drops lines.</summary>
+    public const float MinScale = 0.7f;
+
+    /// <summary>How much the text shrinks per fitting step.</summary>
+    public const float ScaleStep = 0.05f;
+
+    /// <summary>How the recap page fits a short screen: the largest text scale from 1 down to
+    /// <see cref="MinScale"/> at which the body fits <paramref name="available"/> pixels, first with
+    /// the per-source JP line and then without it. When nothing fits it returns the floor without
+    /// the sources line (the page then trims lines from the bottom).</summary>
+    /// <param name="bodyHeight">The body's drawn height at a scale, with or without the sources line.</param>
+    public static (float Scale, bool ShowSources) Fit(Func<float, bool, int> bodyHeight, int available)
+    {
+        int steps = (int)Math.Round((1f - MinScale) / ScaleStep);
+        foreach (bool sources in new[] { true, false })
+            for (int step = 0; step <= steps; step++)
+            {
+                float scale = 1f - step * ScaleStep;
+                if (bodyHeight(scale, sources) <= available)
+                    return (scale, sources);
+            }
+        return (MinScale, false);
+    }
 
     public static string Title(LoopSummary s)
         => Strings.Get("recap.title", new Dictionary<string, string> { ["n"] = s.LoopNumber.ToString() });
