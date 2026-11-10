@@ -32,7 +32,7 @@ public static class UpgradeCatalog
     public static IReadOnlyList<UpgradeDefinition> ByCategory(UpgradeCategory category)
         => _all.Where(u => u.Category == category && IsOffered(u)).ToList();
 
-    private static bool IsOffered(UpgradeDefinition u)
+    internal static bool IsOffered(UpgradeDefinition u)
         => WalletKeepTable.RequiredModFor(u.Id) is not string mod || IsModLoaded(mod);
 
     public static UpgradeDefinition? TryGet(string id)

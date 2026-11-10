@@ -120,6 +120,14 @@ namespace TheLongestYear.UI
                 _monitor.Log("Showed the XP hand-over notice over the Junimo Shrine.", LogLevel.Info);
         }
 
+        /// <summary>The loop recap page shown at the rewind, before the shrine (spec 2026-11-10).</summary>
+        public void OpenLoopRecap(LoopSummary summary)
+        {
+            if (summary == null || !CanOpen()) return;
+            Game1.activeClickableMenu = new LoopRecapMenu(summary);
+            _monitor.Log($"Opened the loop {summary.LoopNumber} recap ({summary.Suggestions.Count} suggestion(s)).", LogLevel.Info);
+        }
+
         /// <summary>Open the one book (<see cref="OneBookMenu"/>) on <paramref name="tab"/>, or its
         /// first tab when that section is not owned. Does nothing when no section is owned.</summary>
         /// <param name="subtitleFor">Line under each tab's title (the rewind night), or null.</param>

@@ -54,6 +54,8 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
+            if (b == Microsoft.Xna.Framework.Input.Buttons.Y && TryPinSnappedRow())
+                return;
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
@@ -177,7 +179,7 @@ namespace TheLongestYear.UI
                 if (idx >= _rows.Count) break;
                 if (_rows[idx].Tooltip != null && _rowSlots[i].containsPoint(x, y))
                 {
-                    _hoverText = _rows[idx].Tooltip;
+                    _hoverText = _rows[idx].Tooltip + PinnedSuffix(_rows[idx]);
                     return;
                 }
             }

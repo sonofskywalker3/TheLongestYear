@@ -116,6 +116,7 @@ namespace TheLongestYear.Donations
                 _config.SelectionBonusMultiplier, listMultiplier);
             jp = JpBoostHelper.Apply(_store.State, jp);
             _store.State.JunimoPoints += jp;
+            Run.RecordJpEarned(JpSource.ShrineGoals, jp);
             _monitor.Log(
                 $"Shrine goal {goalIndex} donated: {goal.Stack}x {goal.ItemId} ({rarity}, list {goal.ListIndex}) -> +{jp} JP " +
                 $"(bonus x{_config.SelectionBonusMultiplier}, card x{listMultiplier}, now {_store.State.JunimoPoints}).",

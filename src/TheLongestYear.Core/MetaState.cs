@@ -27,6 +27,10 @@ public sealed class MetaState
     /// <summary>IDs of permanently purchased upgrades.</summary>
     public List<string> OwnedUpgrades { get; set; } = new();
 
+    /// <summary>Keep chains the host pinned to the top of the shrine tabs, by chain-root id
+    /// (<see cref="PinnedKeeps"/>). Empty on older saves.</summary>
+    public List<string> PinnedUpgrades { get; set; } = new();
+
     /// <summary>True once the one-time pre-first-reset save backup has been taken (banked forever).</summary>
     public bool BackupDone { get; set; }
 

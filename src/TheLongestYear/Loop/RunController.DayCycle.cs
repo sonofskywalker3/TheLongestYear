@@ -186,6 +186,7 @@ namespace TheLongestYear.Loop
                     // season's multiplier so progressing always out-earns re-farming spring.
                     long checkpointJp = JpBoostHelper.Apply(_store.State, Jp.CheckpointBonus(Run.WeekOfYear + 1));
                     _store.State.JunimoPoints += checkpointJp;
+                    Run.RecordJpEarned(JpSource.Checkpoints, checkpointJp);
                     _monitor.Log(
                         $"Season checkpoint passed -> +{checkpointJp} JP (now {_store.State.JunimoPoints}).",
                         LogLevel.Info);

@@ -77,6 +77,7 @@ namespace TheLongestYear.UI
                 int idx = _scrollIndex + i;
                 if (idx >= _rows.Count) break;
                 DrawRow(b, _rows[idx], _listY + i * RowHeight);
+                DrawPinStar(b, _rows[idx], _listY + i * RowHeight);
             }
 
             if (MaxScroll() > 0)
@@ -93,6 +94,10 @@ namespace TheLongestYear.UI
             Game1.mouseCursorTransparency = 1f;
             this.drawMouse(b);
         }
+
+        /// <summary>Fade of an unaffordable keep row's name and cost on the Plan tab, the same as
+        /// the rewind shop's unaffordable rows.</summary>
+        private const float UnaffordableAlpha = 0.55f;
 
         private void DrawRow(SpriteBatch b, Row row, int rowY)
         {
@@ -136,14 +141,16 @@ namespace TheLongestYear.UI
                 {
                     long costJp = UpgradePricing.EffectiveCost(row.Def, _priceFactor, _state);
                     bool affordable = _state.JunimoPoints >= costJp;
+                    // An unaffordable keep is faded like the rewind shop's rows (name and cost both).
+                    float alpha = affordable ? 1f : UnaffordableAlpha;
                     Utility.drawTextWithShadow(b, row.Def.DisplayName, Game1.smallFont,
-                        new Vector2(_listX + 24, rowY + 6), Game1.textColor);
+                        new Vector2(_listX + 24, rowY + 6), Game1.textColor * alpha, shadowIntensity: alpha);
                     string cost = Strings.Get("menu.shrine-preview.cost",
                         new Dictionary<string, string> { ["cost"] = costJp.ToString() });
                     Vector2 costSize = Game1.smallFont.MeasureString(cost);
                     Utility.drawTextWithShadow(b, cost, Game1.smallFont,
                         new Vector2(_listX + _listWidth - 64 - costSize.X, rowY + 6),
-                        affordable ? Game1.textColor : Color.Brown);
+                        (affordable ? Game1.textColor : Color.Brown) * alpha, shadowIntensity: alpha);
                     break;
                 }
                 case RowKind.LockedToggle:

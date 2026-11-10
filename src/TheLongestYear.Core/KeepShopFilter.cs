@@ -91,6 +91,28 @@ public static class KeepShopFilter
         return leaves;
     }
 
+    /// <summary>Owned tiers and all tiers in a category, counted over the catalog's definitions
+    /// (not the shown rows): the "3/12" on the shrine tabs and Plan tab headers.</summary>
+    public static (int Owned, int Total) CategoryProgress(UpgradeCategory category, MetaState state)
+    {
+        IReadOnlyList<UpgradeDefinition> all = UpgradeCatalog.ByCategory(category);
+        int owned = 0;
+        foreach (UpgradeDefinition def in all)
+            if (state.HasUpgrade(def.Id)) owned++;
+        return (owned, all.Count);
+    }
+
+    /// <summary>The "3/12" text for <see cref="CategoryProgress"/>.</summary>
+    public static string CategoryProgressText(UpgradeCategory category, MetaState state)
+    {
+        (int owned, int total) = CategoryProgress(category, state);
+        return Strings.Get("menu.shrine.tab-count", new Dictionary<string, string>
+        {
+            ["owned"] = owned.ToString(),
+            ["total"] = total.ToString(),
+        });
+    }
+
     /// <summary>The next tier in a chain: the catalog entry whose prerequisite is <paramref name="id"/>.
     /// Chains are linear within a category, so the first match is the unique successor (null if none).</summary>
     private static UpgradeDefinition? FindSuccessor(UpgradeCategory category, string id)

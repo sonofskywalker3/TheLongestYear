@@ -167,6 +167,8 @@ namespace TheLongestYear.Loop
             if (guaranteed) GuaranteedTamper.OnApplied(Run, strike.Landed);
             if (strike.Landed)
             {
+                // The loop recap's "struck N nights" (spec 2026-11-10, amendment G).
+                if (StrikeLedger.KindOf(strike.Event) == SabotageKind.Blight) Run.LoopBlightNights++;
                 if (guaranteed) Meta.FirstWinterTamperSeen = true;
                 return;
             }

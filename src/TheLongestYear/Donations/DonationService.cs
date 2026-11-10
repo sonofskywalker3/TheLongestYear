@@ -75,6 +75,7 @@ namespace TheLongestYear.Donations
             awarded = JpBoostHelper.Apply(_store.State, awarded);
 
             _store.State.JunimoPoints += awarded;
+            Run.RecordJpEarned(JpSource.Bundles, awarded);
             if (bundleIndex >= 0 && ingredientIndex >= 0)
                 Run.RecordDonation(bundleIndex, ingredientIndex, qualifiedItemId);
             else
@@ -134,6 +135,7 @@ namespace TheLongestYear.Donations
 
             long bonus = JpBoostHelper.Apply(_store.State, Jp.BundleBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
+            Run.RecordJpEarned(JpSource.Bundles, bonus);
             _monitor.Log(
                 $"Bundle {bundleIndex} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
@@ -152,6 +154,7 @@ namespace TheLongestYear.Donations
             int gold = Integration.VaultBundleMap.GoldForIndex(bundleIndex);
             long jp = JpBoostHelper.Apply(_store.State, Jp.VaultPayment(gold));
             _store.State.JunimoPoints += jp;
+            Run.RecordJpEarned(JpSource.Bundles, jp);
             _monitor.Log(
                 $"Vault bundle {bundleIndex} paid ({gold:N0}g) -> +{jp} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);
@@ -165,6 +168,7 @@ namespace TheLongestYear.Donations
 
             long bonus = JpBoostHelper.Apply(_store.State, Jp.RoomBonus(Run.WeekOfYear));
             _store.State.JunimoPoints += bonus;
+            Run.RecordJpEarned(JpSource.Rooms, bonus);
             _monitor.Log(
                 $"Room {area} complete -> +{bonus} JP (now {_store.State.JunimoPoints}).",
                 LogLevel.Info);

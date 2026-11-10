@@ -123,10 +123,12 @@ namespace TheLongestYear.UI
             yPositionOnScreen = (Game1.uiViewport.Height - height) / 2;
 
             int listX = xPositionOnScreen + PanelPadding + TabWidth + 16;
-            int listY = yPositionOnScreen + 80; // leave room for title bar
+            // Title bar, then the budget line and the "Affordable only" toggle above the rows.
+            int listY = yPositionOnScreen + 80 + HeaderBandHeight;
             int listWidth = width - (listX - xPositionOnScreen) - PanelPadding;
-            int listHeight = height - 80 - PanelPadding;
-            _rowsPerPage = Math.Max(1, listHeight / (RowHeight + RowSpacing));
+            int listHeight = height - 80 - HeaderBandHeight - PanelPadding;
+            // The last row needs no spacing below it.
+            _rowsPerPage = Math.Max(1, (listHeight + RowSpacing) / (RowHeight + RowSpacing));
 
             // Tabs (vertical strip on the left)
             _tabs.Clear();
@@ -178,6 +180,7 @@ namespace TheLongestYear.UI
                 Game1.mouseCursors, new Rectangle(421, 459, 11, 12), 4f)
             {
                 myID = ScrollUpId,
+                upNeighborID = AffordableToggleId,
                 downNeighborID = ScrollDownId,
                 leftNeighborID = RowIdBase
             };
@@ -190,6 +193,8 @@ namespace TheLongestYear.UI
                 leftNeighborID = RowIdBase + _rowsPerPage - 1
             };
 
+            _affordableToggle = BuildAffordableToggle(listX, listWidth, listY - HeaderBandHeight);
+
             this.initializeUpperRightCloseButton();
 
             // Base populateClickableComponentList uses GetType().GetFields() which defaults to PUBLIC only,
@@ -199,6 +204,7 @@ namespace TheLongestYear.UI
             allClickableComponents.AddRange(_rowSlots);
             allClickableComponents.Add(_scrollUp);
             allClickableComponents.Add(_scrollDown);
+            allClickableComponents.Add(_affordableToggle);
             if (upperRightCloseButton != null)
                 allClickableComponents.Add(upperRightCloseButton);
 
@@ -236,10 +242,11 @@ namespace TheLongestYear.UI
                         : rows[i].BlockReason != null
                         ? rows[i].BlockReason
                         : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
+                    footer += PinnedFooter(rows[i]);
                     _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
                     {
                         ["name"] = def.DisplayName,
-                        ["description"] = def.Description,
+                        ["description"] = def.Description + LadderBlock(rows[i]),
                         ["footer"] = footer,
                     });
                     return;
@@ -256,6 +263,7 @@ namespace TheLongestYear.UI
 
             if (_scrollUp.containsPoint(x, y)) { Scroll(-1); return; }
             if (_scrollDown.containsPoint(x, y)) { Scroll(+1); return; }
+            if (_affordableToggle.containsPoint(x, y)) { ToggleAffordableOnly(); return; }
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out _, out _);
             for (int i = 0; i < rows.Count; i++)
@@ -290,14 +298,23 @@ namespace TheLongestYear.UI
             {
                 if (slot > 0) currentlySnappedComponent = getComponentWithID(oldID - 1);
                 else if (start > 0) Scroll(-1);
+                else currentlySnappedComponent = _affordableToggle;   // the top row goes up to the toggle
             }
         }
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
+            if (b == Microsoft.Xna.Framework.Input.Buttons.Y && TryPinSnappedRow())
+                return;
+            if (b == Microsoft.Xna.Framework.Input.Buttons.LeftTrigger)
+            {
+                ToggleAffordableOnly();
+                return;
+            }
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
+                if (id == AffordableToggleId) { ToggleAffordableOnly(); return; }
                 if (id >= TabIdBase && id < TabIdBase + CategoryCount) { SetActiveCategory((UpgradeCategory)(id - TabIdBase)); return; }
                 if (id == ScrollUpId) { Scroll(-1); return; }
                 if (id == ScrollDownId) { Scroll(+1); return; }
@@ -394,7 +411,9 @@ namespace TheLongestYear.UI
             foreach (UpgradeDefinition def in
                 KeepShopFilter.OwnedLeavesInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: true));
-            return rows;
+            // Pinned chains lead the tab, above focus and banish rows; suggested keeps follow them.
+            // The affordable toggle filters before paging.
+            return ApplyAffordableFilter(SuggestedAfterPinned(PinnedFirst(rows)));
         }
 
         private void ClampScroll()
@@ -434,14 +453,20 @@ namespace TheLongestYear.UI
             // TabStrip scales a long label (e.g. "Obtainability") down to fit inside the frame.
             for (int i = 0; i < _tabs.Count; i++)
                 TabStrip.DrawTab(b, _tabs[i].bounds, ThemeDisplay.CategoryTabName((UpgradeCategory)i),
-                    (UpgradeCategory)i == _activeCategory);
+                    (UpgradeCategory)i == _activeCategory, TabCount((UpgradeCategory)i));
+            DrawHeaderBand(b);
 
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int startIndex);
             for (int i = 0; i < rows.Count; i++)
+            {
                 DrawRow(b, _rowSlots[i], rows[i]);
+                DrawPinStar(b, _rowSlots[i], rows[i]);
+                DrawSuggestedMark(b, _rowSlots[i], rows[i]);
+            }
+            DrawPinHint(b);
 
-            if (ThemeDisplay.ShowsEmptyNote(_activeCategory, rows.Count) && _rowSlots.Count > 0)
+            if (!_affordableOnly && ThemeDisplay.ShowsEmptyNote(_activeCategory, rows.Count) && _rowSlots.Count > 0)
             {
                 Rectangle area = _rowSlots[0].bounds;
                 string note = Game1.parseText(Strings.Get("menu.shrine.gifts.empty"), Game1.smallFont, area.Width - 32);
