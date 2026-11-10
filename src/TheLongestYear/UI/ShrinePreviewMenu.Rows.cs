@@ -21,6 +21,9 @@ namespace TheLongestYear.UI
         private static Row Header(string text) => new() { Kind = RowKind.Header, Text = text };
         private static Row Note(string text) => new() { Kind = RowKind.Note, Text = text };
 
+        /// <summary>Room left of the budget text's wrap: the note indent plus the scroll arrows.</summary>
+        private const int BudgetWrapMargin = 88;
+
         private void BuildRows()
         {
             _rows.Clear();
@@ -108,7 +111,7 @@ namespace TheLongestYear.UI
                     {
                         Kind = RowKind.Upgrade, Def = def, IsOwned = true,
                         Tooltip = Strings.Get("menu.shrine-preview.tooltip-owned",
-                            new Dictionary<string, string> { ["description"] = def.Description }),
+                            new Dictionary<string, string> { ["description"] = def.Description + Ladder(def) }),
                     });
             }
         }
@@ -198,7 +201,7 @@ namespace TheLongestYear.UI
                 if (buyable.Count == 0 && locked.Count == 0)
                     continue;
 
-                _rows.Add(Header(ThemeDisplay.CategoryName(cat)));
+                _rows.Add(Header(ThemeDisplay.CategoryName(cat) + " " + KeepShopFilter.CategoryProgressText(cat, _state)));
                 // Pinned keeps lead the section; a pinned locked keep comes out of the Locked list.
                 List<UpgradeDefinition> pinnedLocked = locked.Where(d => PinnedKeeps.IsPinned(_state, d.Id)).ToList();
                 locked.RemoveAll(pinnedLocked.Contains);
@@ -219,14 +222,29 @@ namespace TheLongestYear.UI
                 _rows.Add(Note(Strings.Get("menu.shrine-preview.nothing-new")));
             else if (KeepPinInput.CanPin)
                 _rows.Insert(0, Note(Strings.Get("menu.shrine.pin-hint")));
+            _rows.InsertRange(0, BudgetRows());
         }
 
-        private static Row BuyableRow(UpgradeDefinition def) => new()
+        /// <summary>The pinned budget line (spec 2026-11-10 section 4), the first rows of the Plan
+        /// list, one Note row per wrapped line. Built with the rows: the Plan tab spends no JP, and
+        /// a pin toggle or a buy on another tab rebuilds them.</summary>
+        private IEnumerable<Row> BudgetRows()
+        {
+            int wrapWidth = ListWidthForWindow() - BudgetWrapMargin;
+            foreach (string line in PinnedBudget.Lines(PinnedBudget.Compute(_state, _priceFactor, RunReachEvaluator.Meets)))
+                foreach (string part in Game1.parseText(line, Game1.smallFont, wrapWidth).Split('\n'))
+                    yield return Note(part);
+        }
+
+        /// <summary>The tier ladder after a tiered keep's description (spec amendment I).</summary>
+        private string Ladder(UpgradeDefinition def) => KeepLadder.TooltipBlock(def.Id, _state, _priceFactor);
+
+        private Row BuyableRow(UpgradeDefinition def) => new()
         {
             Kind = RowKind.Upgrade, Def = def,
             Tooltip = Strings.Get("menu.shrine-preview.tooltip-buyable", new Dictionary<string, string>
             {
-                ["description"] = def.Description,
+                ["description"] = def.Description + Ladder(def),
                 ["owned"] = OwnedLabel(def),
             }),
         };
@@ -237,7 +255,7 @@ namespace TheLongestYear.UI
             Requirement = def.RunReachRequirement != null && !RunReachEvaluator.Meets(def.RunReachRequirement)
                 ? ReachText.Describe(def.RunReachRequirement)
                 : AnimalCapacityRule.BlockReason(_state, def.Id) ?? "",
-            Tooltip = def.Description,
+            Tooltip = def.Description + Ladder(def),
         };
 
         private static string OwnedLabel(UpgradeDefinition def)
