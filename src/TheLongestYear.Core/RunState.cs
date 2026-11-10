@@ -634,6 +634,8 @@ public sealed partial class RunState
         EndingArmed = false;
         BlightWeek = -1;
         BlightNightsThisWeek = 0;
+        LoopBlightNights = 0;
+        StartJpLedger();
         LastReversionWeek = -1;
         (TamperDays ??= new()).Clear();
         (Tampers ??= new()).Clear();

@@ -19,6 +19,10 @@ namespace TheLongestYear
         public MetaState State { get; private set; } = new MetaState();
         public RunState Run { get; private set; } = new RunState();
 
+        /// <summary>The loop the rewind is ending, snapshotted once for the recap page and the
+        /// shop's suggested rows. Not saved: set by the rewind chain, cleared by the reset and on load.</summary>
+        public LoopSummary OutgoingLoop { get; set; }
+
         /// <summary>True when the last <see cref="Load"/> read real on-disk TLY data rather than
         /// coalescing to fresh defaults. Lets ModEntry back-fill the run marker on pre-existing TLY
         /// saves (created before <see cref="MetaState.IsLongestYearRun"/> existed) without falsely
@@ -37,7 +41,16 @@ namespace TheLongestYear
             MetaState meta = _data.ReadSaveData<MetaState>(MetaDataKey);
             LoadedExistingData = meta != null;
             State = meta ?? new MetaState();
-            Run = _data.ReadSaveData<RunState>(RunDataKey) ?? new RunState();
+            OutgoingLoop = null;
+            RunState run = _data.ReadSaveData<RunState>(RunDataKey);
+            if (run == null)
+            {
+                // A run starting now: its JP ledger covers the whole loop. A saved run without a
+                // ledger is from before it and starts one marked "since the update" on its first credit.
+                run = new RunState();
+                run.StartJpLedger();
+            }
+            Run = run;
         }
 
         /// <summary>Put the run marker into a brand-new save before the game writes it for the first

@@ -144,7 +144,7 @@ namespace TheLongestYear.Loop
             if (!BundleHold.IsOfferable(BundleSourceNames.ForSave(state.ChosenBundleSource, state.BundleSource, state.VanillaBundleType)))
             {
                 _monitor.Log("Hold choice skipped: BundleSource=Vanilla", LogLevel.Info);
-                TryOpenShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
+                ShowLoopRecap(held: false);
             }
             else
             {
@@ -355,6 +355,7 @@ namespace TheLongestYear.Loop
                 $"{_store.State.DancePartners.Count} dance partner(s), {_store.State.WinterStarRecipients.Count} secret friend(s) kept).",
                 LogLevel.Info);
             Run.BeginNewRun(NewSeed());
+            _store.OutgoingLoop = null;   // the recap and suggested rows belong to the loop just ended
             ActiveEffectsProvider.Clear();
             _wildcard?.OnReset();
             // Persist the post-reset meta (JP spent at the shrine, new OwnedUpgrades, the bumped
