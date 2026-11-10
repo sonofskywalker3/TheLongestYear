@@ -4,22 +4,29 @@ using System.Linq;
 
 namespace TheLongestYear.Core;
 
-/// <summary>One keep the shrine suggests for the next loop, and the asks behind it.</summary>
-public sealed record KeepSuggestion(string UpgradeId, AskKind Kind, int Count);
+/// <summary>One keep the shrine suggests for the next loop, and the asks behind it. A broad keep
+/// counts every ask of its kind; an item-specific keep counts only the asks for its own items, and
+/// <paramref name="Item"/> carries the game's display name when that is a single item (Garlic, Red
+/// Cabbage). Null otherwise.</summary>
+public sealed record KeepSuggestion(string UpgradeId, AskKind Kind, int Count, string? Item = null);
 
 /// <summary>"Suggested" keeps (spec 2026-11-10 shrine planning, feature 1 and amendments C, D): count
 /// the board's unfinished asks by <see cref="AskKind"/>, map each kind to keep chains through a
 /// fixed table, take each chain's next buyable tier, skip pinned and owned chains, rank by the
-/// count (ties by catalog order) and keep the top three. A lookup table, no guessing.</summary>
+/// count (ties by catalog order) and keep three, at most one per kind unless fewer than three
+/// kinds have a candidate (Jeff, 2026-11-10). Item-specific keeps count only their own items'
+/// asks. A lookup table, no guessing.</summary>
 public static class KeepSuggestions
 {
     public const int MaxSuggestions = 3;
 
-    /// <summary>A chain suggested only when the asks include particular items.</summary>
+    public const string FortuneRareFish = "fortune_rare_fish";
+
+    /// <summary>Which asks a chain counts: every ask of its kind, or only the asks for its items.</summary>
     public enum Trigger { Always, RareFish, Garlic, RedCabbage, YearTwoSeeds }
 
-    /// <summary>One table row: the kind it answers, the chain's tiers in buying order, and when
-    /// it may be suggested. A list of alternatives (the Start with rows) works the same way: the
+    /// <summary>One table row: the kind it answers, the chain's tiers in buying order, and which
+    /// asks it counts. A list of alternatives (the Start with rows) works the same way: the
     /// first unowned buyable entry is the one offered.</summary>
     public sealed record Chain(AskKind Kind, IReadOnlyList<string> Tiers, Trigger When = Trigger.Always);
 
@@ -30,10 +37,10 @@ public static class KeepSuggestions
     public static readonly IReadOnlyList<Chain> Table = new[]
     {
         new Chain(AskKind.Fish, Tiers("quick_bite_", 5)),
-        new Chain(AskKind.Fish, new[] { "fortune_rare_fish" }, Trigger.RareFish),
+        new Chain(AskKind.Fish, new[] { FortuneRareFish }, Trigger.RareFish),
         new Chain(AskKind.Fish, new[] { "keep_fishing_rod_0", "keep_fishing_rod_1", "keep_fishing_rod_2" }),
         new Chain(AskKind.Crops, Tiers("green_thumb_", 5)),
-        new Chain(AskKind.Crops, new[] { "pierre_year2_seeds" }, Trigger.YearTwoSeeds),
+        new Chain(AskKind.Crops, new[] { YearTwoCrops.PierreUpgrade }, Trigger.YearTwoSeeds),
         new Chain(AskKind.Crops, new[] { YearTwoCrops.GarlicUpgrade }, Trigger.Garlic),
         new Chain(AskKind.Crops, new[] { YearTwoCrops.RedCabbageUpgrade }, Trigger.RedCabbage),
         new Chain(AskKind.Forage, Tiers("foragers_eye_", 5)),
@@ -90,36 +97,52 @@ public static class KeepSuggestions
 
     /// <summary>Up to <see cref="MaxSuggestions"/> keeps for the next loop, best first.</summary>
     /// <param name="kindOf">The ask kind of an ingredient id (<see cref="AskKinds.Classify"/>).</param>
-    /// <param name="isRareFish">Whether an asked item is a rare fish (Fortune: Rare Fish's trigger).</param>
+    /// <param name="isRareFish">Whether an asked item is a rare fish (Fortune: Rare Fish's count).</param>
     /// <param name="reachMet">The shop's live reach check, so a suggestion is a row the shop shows.</param>
+    /// <param name="itemName">The game's display name of a qualified item id (Garlic, Red Cabbage).</param>
     public static IReadOnlyList<KeepSuggestion> For(
         IReadOnlyList<BundleProgress> board, bool heldBoard, MetaState meta,
-        Func<string, AskKind> kindOf, Func<string, bool> isRareFish, Func<string?, bool> reachMet)
+        Func<string, AskKind> kindOf, Func<string, bool> isRareFish, Func<string?, bool> reachMet,
+        Func<string, string> itemName)
     {
         if (board == null) throw new ArgumentNullException(nameof(board));
         if (meta == null) throw new ArgumentNullException(nameof(meta));
         IReadOnlyDictionary<AskKind, int> counts = CountByKind(board, heldBoard, kindOf);
-        var asked = new HashSet<string>(
-            CountedAsks(board, heldBoard).Select(a => BundleParsing.NormalizeItemId(a.ItemRef)), StringComparer.Ordinal);
+        List<string> asked = CountedAsks(board, heldBoard).Select(a => BundleParsing.NormalizeItemId(a.ItemRef)).ToList();
 
         var picks = new List<(KeepSuggestion Suggestion, int Order)>();
         foreach (Chain chain in Table)
         {
-            if (!counts.TryGetValue(chain.Kind, out int count) || count <= 0) continue;
-            if (!Triggered(chain.When, asked, kindOf, isRareFish)) continue;
+            int count = chain.When == Trigger.Always
+                ? counts.TryGetValue(chain.Kind, out int n) ? n : 0
+                : asked.Count(id => Counts(chain.When, id, kindOf, isRareFish));
+            if (count <= 0) continue;
             UpgradeDefinition? next = NextBuyable(chain, meta, reachMet);
             if (next == null || PinnedKeeps.IsPinned(meta, next.Id)) continue;
-            picks.Add((new KeepSuggestion(next.Id, chain.Kind, count), CatalogOrder[next.Id]));
+            string? item = SingleItem(chain.When) is string id ? itemName(id) : null;
+            picks.Add((new KeepSuggestion(next.Id, chain.Kind, count, item), CatalogOrder[next.Id]));
         }
 
         var roots = new HashSet<string>(StringComparer.Ordinal);
-        return picks
+        var ranked = picks
             .OrderByDescending(p => p.Suggestion.Count)
             .ThenBy(p => p.Order)
             .Where(p => roots.Add(PinnedKeeps.ChainRoot(p.Suggestion.UpgradeId)))
-            .Take(MaxSuggestions)
-            .Select(p => p.Suggestion)
             .ToList();
+        return Varied(ranked.Select(p => p.Suggestion).ToList());
+    }
+
+    /// <summary>From <paramref name="ranked"/> (best first): the best of each kind, then, while
+    /// places are left, the next best of kinds already used. Returned in ranked order.</summary>
+    private static IReadOnlyList<KeepSuggestion> Varied(IReadOnlyList<KeepSuggestion> ranked)
+    {
+        var kinds = new HashSet<AskKind>();
+        var chosen = new HashSet<int>();
+        for (int i = 0; i < ranked.Count && chosen.Count < MaxSuggestions; i++)
+            if (kinds.Add(ranked[i].Kind)) chosen.Add(i);
+        for (int i = 0; i < ranked.Count && chosen.Count < MaxSuggestions; i++)
+            chosen.Add(i);
+        return ranked.Where((_, i) => chosen.Contains(i)).ToList();
     }
 
     /// <summary>The first tier of the chain that is not owned and that the shop would sell now.</summary>
@@ -134,16 +157,24 @@ public static class KeepSuggestions
         return null;
     }
 
-    private static bool Triggered(Trigger when, IReadOnlySet<string> asked, Func<string, AskKind> kindOf, Func<string, bool> isRareFish)
+    /// <summary>Whether an asked item counts for an item-specific chain.</summary>
+    private static bool Counts(Trigger when, string id, Func<string, AskKind> kindOf, Func<string, bool> isRareFish)
         => when switch
         {
-            Trigger.Always => true,
-            Trigger.RareFish => asked.Any(id => kindOf(id) == AskKind.Fish && isRareFish(id)),
-            Trigger.Garlic => asked.Contains(YearTwoCrops.Garlic),
-            Trigger.RedCabbage => asked.Contains(YearTwoCrops.RedCabbage),
-            Trigger.YearTwoSeeds => asked.Overlaps(YearTwoSeedCrops),
+            Trigger.RareFish => kindOf(id) == AskKind.Fish && isRareFish(id),
+            Trigger.Garlic => id == YearTwoCrops.Garlic,
+            Trigger.RedCabbage => id == YearTwoCrops.RedCabbage,
+            Trigger.YearTwoSeeds => YearTwoSeedCrops.Contains(id),
             _ => false,
         };
+
+    /// <summary>The one item a chain names in its reason, or null.</summary>
+    private static string? SingleItem(Trigger when) => when switch
+    {
+        Trigger.Garlic => YearTwoCrops.Garlic,
+        Trigger.RedCabbage => YearTwoCrops.RedCabbage,
+        _ => null,
+    };
 
     /// <summary><paramref name="rows"/> (pinned rows already first) with the suggested ones moved
     /// right below the pinned rows, in suggestion order. Rows that are not suggested keep their order.</summary>

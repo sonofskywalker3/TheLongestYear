@@ -92,6 +92,9 @@ public static class LoopRecapText
     /// the coming board makes.</summary>
     public static string Reason(KeepSuggestion suggestion, bool heldBoard)
     {
+        string? item = ItemText(suggestion, heldBoard);
+        if (item != null)
+            return ItemReason(suggestion.Count, item, heldBoard);
         if (heldBoard)
             return Strings.Get("suggest.reason.held", new Dictionary<string, string>
             {
@@ -106,6 +109,36 @@ public static class LoopRecapText
                 ["kind"] = MissedKind(suggestion.Kind),
             });
     }
+
+    /// <summary>The reason of an item-specific keep: "You missed 3 Garlic asks last loop.",
+    /// "The board you're keeping asks for 2 year-two crops."</summary>
+    private static string ItemReason(int count, string item, bool heldBoard)
+    {
+        if (heldBoard)
+            return Strings.Get("suggest.reason.item-held", new Dictionary<string, string>
+            {
+                ["count"] = count.ToString(),
+                ["item"] = item,
+            });
+        return count == One
+            ? Strings.Get("suggest.reason.item-missed-one", new Dictionary<string, string> { ["item"] = item })
+            : Strings.Get("suggest.reason.item-missed", new Dictionary<string, string>
+            {
+                ["count"] = count.ToString(),
+                ["item"] = item,
+            });
+    }
+
+    /// <summary>The item an item-specific keep names, or null for a broad keep. A missed reason
+    /// reads "year-two crop asks", a held one "1 year-two crop" or "3 year-two crops"; Garlic and
+    /// Red Cabbage use the game's display name as is.</summary>
+    private static string? ItemText(KeepSuggestion suggestion, bool heldBoard) => suggestion.UpgradeId switch
+    {
+        YearTwoCrops.PierreUpgrade => Strings.Get(heldBoard && suggestion.Count != One
+            ? "suggest.item.year-two-crops" : "suggest.item.year-two-crop"),
+        KeepSuggestions.FortuneRareFish => Strings.Get("suggest.item.rare-fish"),
+        _ => suggestion.Item,
+    };
 
     /// <summary>The kind as it reads before "asks": "fish asks", "crop asks".</summary>
     private static string MissedKind(AskKind kind) => kind switch

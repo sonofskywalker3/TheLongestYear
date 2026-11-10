@@ -28,6 +28,10 @@ namespace TheLongestYear.Integration
         public static bool IsRareFish(string qualifiedId, RarityThresholds thresholds)
             => ItemRarityResolver.Resolve(qualifiedId, thresholds) >= Rarity.Rare;
 
+        /// <summary>The game's display name of an item, for the reasons that name it (Garlic, Red Cabbage).</summary>
+        public static string DisplayName(string qualifiedId)
+            => ItemRegistry.GetData(qualifiedId)?.DisplayName ?? qualifiedId;
+
         private static RawObjectEntry ObjectEntry(string bareId)
         {
             if (bareId == null || Game1.objectData == null || !Game1.objectData.TryGetValue(bareId, out ObjectData o) || o == null)

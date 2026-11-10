@@ -49,6 +49,18 @@ public class LoopSummaryTests
     }
 
     [Theory]
+    [InlineData(false, YearTwoCrops.GarlicUpgrade, 3, "Garlic", "You missed 3 Garlic asks last loop.")]
+    [InlineData(false, YearTwoCrops.GarlicUpgrade, 1, "Garlic", "You missed 1 Garlic ask last loop.")]
+    [InlineData(true, YearTwoCrops.RedCabbageUpgrade, 3, "Red Cabbage", "The board you're keeping asks for 3 Red Cabbage.")]
+    [InlineData(false, YearTwoCrops.PierreUpgrade, 2, null, "You missed 2 year-two crop asks last loop.")]
+    [InlineData(true, YearTwoCrops.PierreUpgrade, 1, null, "The board you're keeping asks for 1 year-two crop.")]
+    [InlineData(true, YearTwoCrops.PierreUpgrade, 4, null, "The board you're keeping asks for 4 year-two crops.")]
+    [InlineData(false, KeepSuggestions.FortuneRareFish, 2, null, "You missed 2 rare fish asks last loop.")]
+    [InlineData(true, KeepSuggestions.FortuneRareFish, 1, null, "The board you're keeping asks for 1 rare fish.")]
+    public void An_item_specific_reason_names_its_item(bool held, string upgradeId, int count, string? item, string expected)
+        => Assert.Equal(expected, LoopRecapText.Reason(new KeepSuggestion(upgradeId, AskKind.Crops, count, item), held));
+
+    [Theory]
     [InlineData(1, 1, "The darkness changed 1 ask and struck 1 night.")]
     [InlineData(3, 0, "The darkness changed 3 asks and struck 0 nights.")]
     [InlineData(0, 0, null)]

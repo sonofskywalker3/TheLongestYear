@@ -30,7 +30,8 @@ namespace TheLongestYear.Loop
                 RarityThresholds thresholds = _config.RarityThresholds;
                 IReadOnlyList<KeepSuggestion> suggestions = KeepSuggestions.For(
                     board, held, _store.State, OutgoingLoopReader.KindOf,
-                    id => OutgoingLoopReader.IsRareFish(id, thresholds), RunReachEvaluator.Meets);
+                    id => OutgoingLoopReader.IsRareFish(id, thresholds), RunReachEvaluator.Meets,
+                    OutgoingLoopReader.DisplayName);
                 LoopSummary summary = LoopSummary.Build(Run, board, held, suggestions);
                 _store.OutgoingLoop = summary;
                 _monitor.Log(

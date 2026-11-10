@@ -22,6 +22,7 @@ public class KeepSuggestionsTests
         [Sturgeon] = AskKind.Fish,
         [Parsnip] = AskKind.Crops,
         [YearTwoCrops.Garlic] = AskKind.Crops,
+        [YearTwoCrops.RedCabbage] = AskKind.Crops,
         [Salmonberry] = AskKind.Forage,
         [CopperBar] = AskKind.Minerals,
         [FriedEgg] = AskKind.CookedDishes,
@@ -44,7 +45,9 @@ public class KeepSuggestionsTests
             slots.Select(s => s.Filled).ToList(), required);
 
     private static IReadOnlyList<KeepSuggestion> Suggest(IReadOnlyList<BundleProgress> board, MetaState? meta = null, bool held = false)
-        => KeepSuggestions.For(board, held, meta ?? new MetaState(), KindOf, RareFish, _ => true);
+        => KeepSuggestions.For(board, held, meta ?? new MetaState(), KindOf, RareFish, _ => true, ItemName);
+
+    private static string ItemName(string id) => id == YearTwoCrops.RedCabbage ? "Red Cabbage" : "Garlic";
 
     [Fact]
     public void Counts_the_undonated_slots_of_unfinished_bundles_by_kind()
@@ -67,7 +70,7 @@ public class KeepSuggestionsTests
     }
 
     [Fact]
-    public void Ranks_by_count_and_breaks_ties_by_catalog_order()
+    public void Picks_one_keep_per_kind_ranked_by_count_and_ties_by_catalog_order()
     {
         var board = new[]
         {
@@ -75,10 +78,29 @@ public class KeepSuggestionsTests
             Bundle(1, (Salmonberry, false)),
             Bundle(2, (CopperBar, false)),
         };
-        // Fish (3): Quick Bite, then the Bamboo Pole; Minerals (1) ties Forage (1): Coal Vein's
-        // catalog row comes before Forager's Eye, but only three fit.
-        Assert.Equal(new[] { "quick_bite_1", "keep_fishing_rod_0", "coal_vein_1" },
+        // Fish (3) outranks the rest, but the Bamboo Pole is a second fish keep: three kinds have
+        // a candidate, so Coal Vein and Forager's Eye (tied, catalog order) take the other places.
+        Assert.Equal(new[] { "quick_bite_1", "coal_vein_1", "foragers_eye_1" },
             Suggest(board).Select(s => s.UpgradeId));
+    }
+
+    [Fact]
+    public void Item_specific_keeps_rank_by_their_own_items_and_fill_places_one_kind_leaves()
+    {
+        var board = new[]
+        {
+            Bundle(0, (Parsnip, false), (Parsnip, false), (Parsnip, false)),
+            Bundle(1, (YearTwoCrops.Garlic, false), (YearTwoCrops.RedCabbage, false), (YearTwoCrops.RedCabbage, false)),
+        };
+        // Only crops are asked: Green Thumb counts all 6, Pierre's seeds 3, Red Cabbage 2 and
+        // Garlic 1, so the next best crop keeps fill the two places no other kind takes.
+        Assert.Equal(new[]
+            {
+                new KeepSuggestion("green_thumb_1", AskKind.Crops, 6),
+                new KeepSuggestion(YearTwoCrops.PierreUpgrade, AskKind.Crops, 3),
+                new KeepSuggestion(YearTwoCrops.RedCabbageUpgrade, AskKind.Crops, 2, "Red Cabbage"),
+            },
+            Suggest(board));
     }
 
     [Fact]
