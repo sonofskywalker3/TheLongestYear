@@ -122,6 +122,7 @@ namespace TheLongestYear
                     engine.LayerRandomShopPicks = LayerRandomShopPicks();
                     engine.AllowModItems = allowModItems;
                     engine.Banishes = state.BoardBanishes;
+                    engine.BankedDishes = state.BoardBankedDishes;
                     GeneratedBundleSet set = engine.Generate(seed, state.RandomBundleRewardsBoard);
                     IReadOnlyDictionary<string, string> generatedData = set.ToBundleData();
                     if (!EngineManifestCheck.Matches(generatedData, liveData))
@@ -176,6 +177,9 @@ namespace TheLongestYear
                 engine.AllowModItems = state.BoardAllowsModItems.Value;
                 // Randomizer: the fresh-run board is a NEW board, so it stamps the option here.
                 state.RandomBundleRewardsBoard = _config.Randomizer?.RandomBundleRewards ?? false;
+                // ...and the Cookbook's banked recipes, which decide the Sneak Peek dishes it may ask.
+                state.BoardBankedDishes = TheLongestYear.Loop.BundleEngine.BankedDishIdsFor(state.CookbookRecipes);
+                engine.BankedDishes = state.BoardBankedDishes;
                 GeneratedBundleSet set = engine.Generate(BundleEngineSeed.For(seedBasis, 0), state.RandomBundleRewardsBoard);
                 engine.WriteToWorld(set, this.Monitor);
                 state.BundlesGeneratedForReset = 0;

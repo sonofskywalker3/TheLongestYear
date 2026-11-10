@@ -166,7 +166,7 @@ namespace TheLongestYear.Loop
                 if (cappedAllowance == 0) bannedIds.UnionWith(Core.CappedAsks.Ids);
                 BundleSpec composed = AuthoredBundleComposer.Compose(
                     def, absoluteIndex: 0, itemPools, _tuning, _nonObjectDonationsEnabled, authoredRng,
-                    step, banned: bannedIds.Count > 0 ? bannedIds : null);
+                    step, banned: bannedIds.Count > 0 ? bannedIds : null, availability: Availability);
                 if (composed == null)
                 {
                     _monitor?.Log(

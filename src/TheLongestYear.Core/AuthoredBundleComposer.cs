@@ -31,13 +31,14 @@ public static class AuthoredBundleComposer
         bool nonObjectDonationsEnabled,
         Random rng,
         DifficultyStep step = DifficultyStep.Normal,
-        IReadOnlySet<string>? banned = null)
+        IReadOnlySet<string>? banned = null,
+        ItemAvailabilityModel? availability = null)
     {
         bool isTrophies = def.Name == GilTrophiesBundleName;
 
         IReadOnlyList<PoolItem> candidates = isTrophies
             ? TrophyCandidates(nonObjectDonationsEnabled)
-            : SourceCandidates(def, pools);
+            : SourceCandidates(def, pools, availability);
         if (banned != null && banned.Count > 0)
             candidates = candidates.Where(p => !banned.Contains(p.ItemId)).ToList();
 
@@ -84,13 +85,14 @@ public static class AuthoredBundleComposer
     /// so a swap can never thin out its spread.</summary>
     public static IReadOnlyList<string> ReplacementOptions(
         AuthoredBundleDef def, BundleSpec composed, int slotIndex, ItemPools pools,
-        bool nonObjectDonationsEnabled, IReadOnlySet<string>? banned, Random rng)
+        bool nonObjectDonationsEnabled, IReadOnlySet<string>? banned, Random rng,
+        ItemAvailabilityModel? availability = null)
     {
         if (def == null || composed == null || pools == null || rng == null) return Array.Empty<string>();
         if (slotIndex < 0 || slotIndex >= composed.Slots.Count) return Array.Empty<string>();
         IReadOnlyList<PoolItem> candidates = def.Name == GilTrophiesBundleName
             ? TrophyCandidates(nonObjectDonationsEnabled)
-            : SourceCandidates(def, pools);
+            : SourceCandidates(def, pools, availability);
         var asked = new HashSet<string>(composed.Slots.Select(s => BundleParsing.NormalizeItemId(s.ItemId ?? "")), StringComparer.Ordinal);
         string current = BundleParsing.NormalizeItemId(composed.Slots[slotIndex].ItemId ?? "");
         PoolItem? was = candidates.FirstOrDefault(p => p.ItemId == current);
@@ -148,7 +150,9 @@ public static class AuthoredBundleComposer
             .ToList();
     }
 
-    private static IReadOnlyList<PoolItem> SourceCandidates(AuthoredBundleDef def, ItemPools pools)
+    /// <param name="availability">The board's availability model, or null for none (the pools pass
+    /// through unfiltered).</param>
+    private static IReadOnlyList<PoolItem> SourceCandidates(AuthoredBundleDef def, ItemPools pools, ItemAvailabilityModel? availability)
     {
         switch (def.Source)
         {
@@ -170,7 +174,11 @@ public static class AuthoredBundleComposer
                 // geodes also drop (Dwarf Gadget, Rusty Spoon...), which the first roll served up.
                 return pools.GeodeMinerals.Where(p => p.Category == ItemKindClassifier.MineralCategory).ToList();
             case AuthoredSlotSource.Cooking:
-                return pools.Cooking;
+                // Home Cook's Feast takes the same placed-only filter every rolled cooking part
+                // uses (Jeff, 2026-11-10, Nijah's report). Without it an Easy board, whose model
+                // leaves the year-2 dishes unplaced, asked for Pink Cake or Crispy Bass, and the
+                // unplaced dish then fell back to a Winter deadline.
+                return BundlePoolRecipes.Placeable(pools.Cooking, availability);
             case AuthoredSlotSource.TapperGoods:
                 return pools.TapperGoods;
             case AuthoredSlotSource.ArtisanGoods:

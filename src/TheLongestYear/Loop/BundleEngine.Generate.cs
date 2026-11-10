@@ -26,7 +26,9 @@ namespace TheLongestYear.Loop
             LastKeptVanillaCount = 0;
             // Banishes (shrine purchase): banished items leave the item pools, banished bundles
             // leave their positions' candidates. With no banish both are the inputs as before.
-            IReadOnlySet<string> excludedIds = Core.BanishRules.ExcludedIds(_extraExcludedIds, Banishes);
+            IReadOnlySet<string> sneakPeekDishes = SneakPeekExclusions();
+            IReadOnlySet<string> excludedIds = Core.SneakPeekDishes.Union(
+                Core.BanishRules.ExcludedIds(_extraExcludedIds, Banishes), sneakPeekDishes);
             IReadOnlySet<string> banishedBundles = Core.BanishRules.BundleNames(Banishes);
             ItemPools itemPools = new GameDataPools(_monitor).Build(_tuning, excludedIds, VanillaFilter, LayerMarks, LayerRandomShopPicks);
             timing?.Mark("GameDataPools.Build");
@@ -330,6 +332,8 @@ namespace TheLongestYear.Loop
                         $"BundleEngine: board asks for {id} x{onBoard}, over its allowance of {cappedAllowance} (seed {seed}).",
                         LogLevel.Error);
             }
+
+            WarnExcludedDishAsks(allPicks, sneakPeekDishes);
 
             if (!randomRewards)
                 return new GeneratedBundleSet(allPicks, flavors);

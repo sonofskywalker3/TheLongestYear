@@ -120,6 +120,14 @@ public sealed class MetaState
     /// Replaced at every reset that builds a new board, which is how a banish expires after its loop.</summary>
     public List<BanishPick> BoardBanishes { get; set; } = new();
 
+    /// <summary>The dishes whose cooking recipes were banked in the Cookbook when the CURRENT board
+    /// was built (dish ids, mapped from <see cref="CookbookRecipes"/>). A generation input like
+    /// <see cref="BoardBanishes"/>: a Sneak-Peek-only dish may be asked on an Easy or Normal board
+    /// only when it is here (<see cref="SneakPeekDishes"/>). Stamped only where a new board is
+    /// built, so a held board and every reproduction of it read the same set. Empty on saves from
+    /// before 1.2.16.</summary>
+    public List<string> BoardBankedDishes { get; set; } = new();
+
     /// <summary>Banishes ever honoured. Sets the step on <see cref="BanishLadder"/>.</summary>
     public int BanishesHonoured { get; set; }
 
