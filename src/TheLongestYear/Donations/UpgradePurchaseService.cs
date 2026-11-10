@@ -24,7 +24,7 @@ namespace TheLongestYear.Donations
 
         /// <summary>The run's stamped shrine-price factor. Read per call, not cached: a reset
         /// re-stamps the profile mid-session.</summary>
-        private double PriceFactor => _store.State.EffectiveDifficulty(_config).ShrinePriceFactor;
+        public double PriceFactor => _store.State.EffectiveDifficulty(_config).ShrinePriceFactor;
 
         /// <summary>What this upgrade actually costs at the current difficulty. The menus use the
         /// same helper, so the shown price and the charged price are the same number.</summary>

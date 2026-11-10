@@ -6,8 +6,11 @@ using Xunit;
 
 namespace TheLongestYear.Tests;
 
+[Collection("i18n")]
 public class KeepShopFilterTests
 {
+    public KeepShopFilterTests(I18nFixture fixture) => I18nFixture.InstallGlobalProvider();
+
     // Build a reachMet predicate from a dict of metric:key -> reached value.
     private static Func<string?, bool> Reach(Dictionary<string, int> reached) => req =>
     {
@@ -177,5 +180,75 @@ public class KeepShopFilterTests
         List<string?> sorted = PinnedKeeps.PinnedFirst(rows, id => id, meta);
 
         Assert.Equal(new[] { "keep_silo", "keep_hoe_2", null, "keep_watering_can_2", "keep_axe_1" }, sorted);
+    }
+
+    // --- PinnedBudget: what the banked JP buys of the pinned chains ---------------------------
+
+    [Fact]
+    public void Budget_buys_next_tiers_cheapest_first_and_counts_gated_chains_as_locked()
+    {
+        var meta = new MetaState { JunimoPoints = 400 };
+        meta.OwnedUpgrades.AddRange(new[] { "keep_hoe_1", "keep_pickaxe_1", "keep_pickaxe_2", "keep_pickaxe_3", "keep_pickaxe_4" });
+        meta.PinnedUpgrades.AddRange(new[] { "keep_hoe_1", "keep_axe_1", "keep_watering_can_1", "keep_pickaxe_1", "no_such_keep" });
+        var reached = new Dictionary<string, int> { ["tool:hoe"] = 2, ["tool:axe"] = 1 };   // the can was never upgraded
+
+        PinnedBudgetResult budget = PinnedBudget.Compute(meta, 1.0, Reach(reached));
+
+        // Axe I (150) is bought on paper, Hoe II (300) is 50 short; the can is locked; the pickaxe
+        // chain is fully owned and the unknown pin is ignored.
+        Assert.Equal(new PinnedBudgetResult(Affordable: 1, Total: 2, Locked: 1, ShortfallJp: 50), budget);
+        Assert.Equal(400, meta.JunimoPoints);
+        Assert.Equal(5, meta.OwnedUpgrades.Count);
+    }
+
+    [Fact]
+    public void Budget_reprices_gifts_of_the_junimos_after_each_paper_buy()
+    {
+        var meta = new MetaState { JunimoPoints = 2500 };
+        meta.PinnedUpgrades.AddRange(new[] { "keep_greenhouse", "keep_quarry_bridge" });
+        var reached = new Dictionary<string, int> { ["room:Pantry"] = 1, ["room:CraftsRoom"] = 1 };
+
+        // The first Gift costs 1000, which lifts the second to 2000: 500 short, not affordable.
+        Assert.Equal(new PinnedBudgetResult(1, 2, 0, 500), PinnedBudget.Compute(meta, 1.0, Reach(reached)));
+
+        meta.JunimoPoints = 3000;
+        Assert.Equal(new PinnedBudgetResult(2, 2, 0, 0), PinnedBudget.Compute(meta, 1.0, Reach(reached)));
+    }
+
+    [Theory]
+    [InlineData(1, 3, 0, 120, new[] { "You can afford 1 of your 3 pinned upgrades. You need 120 more JP for the next one." })]
+    [InlineData(0, 2, 1, 40, new[] { "You can afford 0 of your 2 pinned upgrades. You need 40 more JP for the next one.", "1 pinned upgrades are still locked." })]
+    [InlineData(2, 2, 0, 0, new[] { "You can afford all 2 of your pinned upgrades." })]
+    [InlineData(0, 0, 3, 0, new[] { "Your 3 pinned upgrades are still locked." })]
+    [InlineData(0, 0, 0, 0, new string[0])]
+    public void Budget_line_wording_follows_the_counts(int affordable, int total, int locked, long shortfall, string[] expected)
+        => Assert.Equal(expected, PinnedBudget.Lines(new PinnedBudgetResult(affordable, total, locked, shortfall)));
+
+    // --- KeepLadder and tab counts ------------------------------------------------------------
+
+    [Fact]
+    public void Ladder_lists_the_next_unowned_tiers_at_todays_prices_and_skips_single_keeps()
+    {
+        var meta = new MetaState();
+        meta.OwnedUpgrades.Add("keep_hoe_1");
+
+        KeepLadderView ladder = KeepLadder.For("keep_hoe_2", meta, 2.0)!;
+
+        Assert.Equal(1, ladder.Owned);
+        Assert.Equal(4, ladder.Total);
+        Assert.Equal(new[] { ("keep_hoe_2", 600L), ("keep_hoe_3", 1050L), ("keep_hoe_4", 1750L) },
+            ladder.Next.Select(t => (t.Def.Id, t.Cost)));
+        Assert.Equal(3400, ladder.LeftToBuy);
+        Assert.Equal(KeepLadder.ShownTiers, KeepLadder.For(UpgradeCatalog.HerdBookPrefix + "1", meta, 1.0)!.Next.Count);
+        Assert.Null(KeepLadder.For("keep_greenhouse", meta, 1.0));
+    }
+
+    [Fact]
+    public void Category_progress_counts_owned_definitions_over_all_of_them()
+    {
+        var meta = new MetaState();
+        meta.OwnedUpgrades.AddRange(new[] { "keep_greenhouse", "keep_minecarts", "keep_hoe_1" });
+
+        Assert.Equal((2, 5), KeepShopFilter.CategoryProgress(UpgradeCategory.Gifts, meta));
     }
 }
