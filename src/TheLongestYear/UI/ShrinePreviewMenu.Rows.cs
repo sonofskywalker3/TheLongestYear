@@ -199,16 +199,12 @@ namespace TheLongestYear.UI
                     continue;
 
                 _rows.Add(Header(ThemeDisplay.CategoryName(cat)));
-                foreach (UpgradeDefinition def in buyable)
-                    _rows.Add(new Row
-                    {
-                        Kind = RowKind.Upgrade, Def = def,
-                        Tooltip = Strings.Get("menu.shrine-preview.tooltip-buyable", new Dictionary<string, string>
-                        {
-                            ["description"] = def.Description,
-                            ["owned"] = OwnedLabel(def),
-                        }),
-                    });
+                // Pinned keeps lead the section; a pinned locked keep comes out of the Locked list.
+                List<UpgradeDefinition> pinnedLocked = locked.Where(d => PinnedKeeps.IsPinned(_state, d.Id)).ToList();
+                locked.RemoveAll(pinnedLocked.Contains);
+                var top = PinnedKeeps.PinnedFirst(buyable.Select(BuyableRow).Concat(pinnedLocked.Select(LockedRow)),
+                    r => r.Def.Id, _state);
+                _rows.AddRange(top);
                 if (locked.Count == 0) continue;
                 _rows.Add(new Row
                 {
@@ -217,18 +213,32 @@ namespace TheLongestYear.UI
                 });
                 if (!_expandedLocked.Contains(cat)) continue;
                 foreach (UpgradeDefinition def in locked)
-                    _rows.Add(new Row
-                    {
-                        Kind = RowKind.Locked, Def = def,
-                        Requirement = def.RunReachRequirement != null && !RunReachEvaluator.Meets(def.RunReachRequirement)
-                            ? ReachText.Describe(def.RunReachRequirement)
-                            : AnimalCapacityRule.BlockReason(_state, def.Id) ?? "",
-                        Tooltip = def.Description,
-                    });
+                    _rows.Add(LockedRow(def));
             }
             if (_rows.Count == 0)
                 _rows.Add(Note(Strings.Get("menu.shrine-preview.nothing-new")));
+            else if (KeepPinInput.CanPin)
+                _rows.Insert(0, Note(Strings.Get("menu.shrine.pin-hint")));
         }
+
+        private static Row BuyableRow(UpgradeDefinition def) => new()
+        {
+            Kind = RowKind.Upgrade, Def = def,
+            Tooltip = Strings.Get("menu.shrine-preview.tooltip-buyable", new Dictionary<string, string>
+            {
+                ["description"] = def.Description,
+                ["owned"] = OwnedLabel(def),
+            }),
+        };
+
+        private Row LockedRow(UpgradeDefinition def) => new()
+        {
+            Kind = RowKind.Locked, Def = def,
+            Requirement = def.RunReachRequirement != null && !RunReachEvaluator.Meets(def.RunReachRequirement)
+                ? ReachText.Describe(def.RunReachRequirement)
+                : AnimalCapacityRule.BlockReason(_state, def.Id) ?? "",
+            Tooltip = def.Description,
+        };
 
         private static string OwnedLabel(UpgradeDefinition def)
         {

@@ -77,6 +77,7 @@ namespace TheLongestYear.UI
                 int idx = _scrollIndex + i;
                 if (idx >= _rows.Count) break;
                 DrawRow(b, _rows[idx], _listY + i * RowHeight);
+                DrawPinStar(b, _rows[idx], _listY + i * RowHeight);
             }
 
             if (MaxScroll() > 0)

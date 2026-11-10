@@ -591,6 +591,8 @@
     "menu.shrine.insufficient": "  (insufficient)",
     "menu.shrine.gifts.empty": "Finish a Community Center room this loop and its gift shows up here to keep.",
     "menu.shrine.hover": "{{name}}\n{{description}}\n{{footer}}",
+    "menu.shrine.pin-hint": "Y / Right-click: pin to top",
+    "menu.shrine.pinned": "Pinned",
     // -- banish (shrine, Foresight tab) -------------------------------------------
     "banish.row.name": "Banish",
     "banish.row.desc": "Keep one bundle or item off next loop's board. If the board can't be filled without it, your JP comes back.",

@@ -236,6 +236,7 @@ namespace TheLongestYear.UI
                         : rows[i].BlockReason != null
                         ? rows[i].BlockReason
                         : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
+                    footer += PinnedFooter(rows[i]);
                     _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
                     {
                         ["name"] = def.DisplayName,
@@ -295,6 +296,8 @@ namespace TheLongestYear.UI
 
         public override void receiveGamePadButton(Microsoft.Xna.Framework.Input.Buttons b)
         {
+            if (b == Microsoft.Xna.Framework.Input.Buttons.Y && TryPinSnappedRow())
+                return;
             if (b == Microsoft.Xna.Framework.Input.Buttons.A && currentlySnappedComponent != null)
             {
                 int id = currentlySnappedComponent.myID;
@@ -394,7 +397,7 @@ namespace TheLongestYear.UI
             foreach (UpgradeDefinition def in
                 KeepShopFilter.OwnedLeavesInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: true));
-            return rows;
+            return PinnedFirst(rows);   // pinned chains lead the tab, above focus and banish rows
         }
 
         private void ClampScroll()
@@ -439,7 +442,11 @@ namespace TheLongestYear.UI
 
             IReadOnlyList<ShrineRow> rows = VisibleRows(out int total, out int startIndex);
             for (int i = 0; i < rows.Count; i++)
+            {
                 DrawRow(b, _rowSlots[i], rows[i]);
+                DrawPinStar(b, _rowSlots[i], rows[i]);
+            }
+            DrawPinHint(b);
 
             if (ThemeDisplay.ShowsEmptyNote(_activeCategory, rows.Count) && _rowSlots.Count > 0)
             {

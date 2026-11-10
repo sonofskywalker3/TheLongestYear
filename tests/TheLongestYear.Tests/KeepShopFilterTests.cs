@@ -148,4 +148,34 @@ public class KeepShopFilterTests
         Assert.Contains("keep_book_speed2", Buyable());
         Assert.DoesNotContain("keep_book_speed", Buyable());    // owned rows are not buyable
     }
+
+    // --- PinnedKeeps: pins belong to a chain and sort its row to the top of a tab -----------
+
+    [Fact]
+    public void Pinning_any_tier_pins_the_whole_chain_by_its_root()
+    {
+        var meta = new MetaState();
+
+        Assert.True(PinnedKeeps.Toggle(meta, "keep_watering_can_3"));
+
+        Assert.Equal(new[] { "keep_watering_can_1" }, meta.PinnedUpgrades);
+        Assert.True(PinnedKeeps.IsPinned(meta, "keep_watering_can_2"));
+        Assert.False(PinnedKeeps.IsPinned(meta, "keep_hoe_1"));
+
+        Assert.False(PinnedKeeps.Toggle(meta, "keep_watering_can_2"));   // same chain: unpins
+        Assert.Empty(meta.PinnedUpgrades);
+    }
+
+    [Fact]
+    public void Pinned_rows_come_first_and_both_groups_keep_their_order()
+    {
+        var meta = new MetaState();
+        meta.PinnedUpgrades.Add("keep_hoe_1");
+        meta.PinnedUpgrades.Add("keep_silo");
+        string?[] rows = { null, "keep_watering_can_2", "keep_silo", "keep_axe_1", "keep_hoe_2" };
+
+        List<string?> sorted = PinnedKeeps.PinnedFirst(rows, id => id, meta);
+
+        Assert.Equal(new[] { "keep_silo", "keep_hoe_2", null, "keep_watering_can_2", "keep_axe_1" }, sorted);
+    }
 }
