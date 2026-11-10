@@ -178,13 +178,15 @@ namespace TheLongestYear.Loop
             AfterHoldChoice(held: keep);
         }
 
-        /// <summary>The board's fate is decided: open the upgrade menu, then reset. Deferred a tick
+        /// <summary>The board's fate is decided: open the loop recap, the upgrade menu, then reset. Deferred a tick
         /// because this runs inside the hold question's answer callback (see
         /// <see cref="DeferShrineThenContinue"/>). Season pity used to offer a second question
         /// here; it was removed (Jeff, 2026-09-24: players adjust the difficulty themselves).</summary>
         private void AfterHoldChoice(bool held)
         {
-            DeferShrineThenContinue(ContinueAfterResetSpend, focusRows: true);
+            // The loop recap first (RunController.Recap.cs), then the shrine. Deferred like the shrine was.
+            SnapshotOutgoingLoop(held);
+            DeferContinue(OpenLoopRecapThenShrine);
         }
 
         /// <summary>Queue the shrine open for the next tick instead of opening it now.

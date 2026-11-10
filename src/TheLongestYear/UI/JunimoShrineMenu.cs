@@ -397,7 +397,7 @@ namespace TheLongestYear.UI
             foreach (UpgradeDefinition def in
                 KeepShopFilter.OwnedLeavesInCategory(_activeCategory, _store.State, RunReachEvaluator.Meets))
                 if (!focusIds.Contains(def.Id)) rows.Add(new ShrineRow(def, owned: true));
-            return PinnedFirst(rows);   // pinned chains lead the tab, above focus and banish rows
+            return SuggestedAfterPinned(PinnedFirst(rows));   // pinned chains lead the tab, above focus and banish rows; suggested keeps follow
         }
 
         private void ClampScroll()
@@ -445,6 +445,7 @@ namespace TheLongestYear.UI
             {
                 DrawRow(b, _rowSlots[i], rows[i]);
                 DrawPinStar(b, _rowSlots[i], rows[i]);
+                DrawSuggestedMark(b, _rowSlots[i], rows[i]);
             }
             DrawPinHint(b);
 
