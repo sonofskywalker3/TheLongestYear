@@ -387,6 +387,13 @@ namespace TheLongestYear.Loop
                 if (!p.craftingRecipes.ContainsKey(r))
                     p.craftingRecipes[r] = 0;
 
+            // Level-gated recipes the kept skill levels unlock (e.g. Scarecrow at Farming 1).
+            // Re-granting the level directly skips the recipe grant vanilla runs while climbing, so
+            // without this a kept skill's recipes only reappear after the next sleep, when vanilla's
+            // AddMissedMailAndRecipes catches up (JazzDaxx bug 2026-11-09). This reads the live kept
+            // levels set above and grants exactly what that catch-up would, minus its mail.
+            GrantLevelGatedRecipes(p);
+
             // Fish caught and dishes cooked (Jeff, 2026-10-20: everything that counts toward
             // Perfection resets every loop; PerfectionRewind). fishCaught feeds the fish collection
             // tab, the Perfection fish share and the legendaries' CatchLimit check (GameLocation.cs:13831),

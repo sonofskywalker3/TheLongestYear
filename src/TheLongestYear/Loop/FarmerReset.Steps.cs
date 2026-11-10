@@ -36,6 +36,67 @@ namespace TheLongestYear.Loop
             }
         }
 
+        private const int CraftingUnlockField = 4;
+        private const int CookingUnlockField = 3;
+
+        /// <summary>Re-grant the level-gated crafting/cooking recipes the farmer's current (kept)
+        /// skill levels unlock, so keeping a skill makes its recipes available from day 1 instead
+        /// of only after the next sleep (JazzDaxx bug 2026-11-09: kept Farming 1 but Scarecrow
+        /// appeared a day late). The day-after grant is vanilla's own
+        /// <c>Farmer.AddMissedMailAndRecipes</c>; this mirrors its recipe half. It parses each
+        /// recipe's level requirement the way <c>CraftingRecipe.TryParseLevelRequirement</c> does
+        /// (a "s Skill N" or bare "Skill N" token pair in unlock field 4/3) and grants when the
+        /// farmer already meets the minimum, reading the live levels <see cref="SetSkillLevel"/>
+        /// restored just above. Parsing, not a substring match, is what the current game uses, so
+        /// a kept Farming 1 gets exactly the Farming-1 recipes and none from a higher level. The
+        /// condition is parsed inline rather than calling <c>TryParseLevelRequirement</c> because
+        /// the older reference DLL lacks that method (the Android runtime has it). The mail
+        /// AddMissedMailAndRecipes would queue (robinKitchenLetter, the Farming-10 Marnie
+        /// auto-grabber gift) is skipped on purpose: the reset is silent and must not re-gift an
+        /// auto-grabber every loop. Idempotent (TryAdd keeps existing counts), runs after
+        /// LearnDefaultRecipes + banked/kept grants. Luck needs no special guard: it is reset to 0,
+        /// so its requirement is never met unless a kept level raised it.</summary>
+        private static void GrantLevelGatedRecipes(Farmer p)
+        {
+            foreach (var v in CraftingRecipe.cookingRecipes)
+                if (MeetsSkillLevelUnlock(p, v.Value, CookingUnlockField))
+                    p.cookingRecipes.TryAdd(v.Key, 0);
+
+            foreach (var v in CraftingRecipe.craftingRecipes)
+                if (MeetsSkillLevelUnlock(p, v.Value, CraftingUnlockField))
+                    p.craftingRecipes.TryAdd(v.Key, 0);
+        }
+
+        /// <summary>True when a recipe's unlock condition is a skill-level gate the farmer already
+        /// meets. Mirrors <c>CraftingRecipe.TryParseLevelRequirement</c> (the "s Skill N" and bare
+        /// "Skill N" forms) plus the level check in <c>Farmer.AddMissedMailAndRecipes</c>, parsed
+        /// inline so it compiles against the older game DLL. Non-skill unlocks ("default", "null",
+        /// "l 100", "f Caroline 7") fall out because <c>getSkillNumberFromName</c> returns -1 for
+        /// their leading token.</summary>
+        private static bool MeetsSkillLevelUnlock(Farmer p, string rawData, int unlockField)
+        {
+            string conditions = ArgUtility.Get(rawData?.Split('/'), unlockField);
+            if (string.IsNullOrWhiteSpace(conditions))
+                return false;
+
+            string[] parts = conditions.Split(' ');
+            // "s <skillId> <level>" (modern/custom skills) or a bare "<skillname> <level>" (legacy).
+            int nameIndex = parts.Length > 0 && parts[0].ToLowerInvariant() == "s" ? 1 : 0;
+
+            string skillName = ArgUtility.Get(parts, nameIndex);
+            if (string.IsNullOrEmpty(skillName))
+                return false;
+
+            int skillNumber = Farmer.getSkillNumberFromName(skillName);
+            if (skillNumber < 0)
+                return false;
+
+            if (!int.TryParse(ArgUtility.Get(parts, nameIndex + 1), out int minLevel))
+                return false;
+
+            return p.GetUnmodifiedSkillLevel(skillNumber) >= minLevel;
+        }
+
         /// <summary>Guarantee the player holds the 5 starting tools (Axe, Hoe, Watering Can,
         /// Pickaxe, Scythe). Adds any that are missing into the first empty slot, idempotent by
         /// qualified item id so it never duplicates a tool that survived. Uses the game's own
