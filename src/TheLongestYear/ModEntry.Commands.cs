@@ -34,6 +34,7 @@ namespace TheLongestYear
             yield return new DebugCommand("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);
             yield return new DebugCommand("tly_newgame", "Create a new TLY farm from the title screen without the character screen (debug/automation). Usage: tly_newgame <standard|riverland|forest|hilltop|wilderness|fourcorners|beach|meadowlands> [skipintro|arrival] [custom|standard|remixed] [name]", this.CmdNewGame);
             yield return new DebugCommand("tly_addjp", "Add Junimo Points in memory; persists on the next save. Usage: tly_addjp <amount>", this.AddJp);
+            yield return new DebugCommand("tly_knowsrecipe", "Debug read-only: report whether the farmer knows a recipe (crafting and cooking) plus the five skill levels. Usage: tly_knowsrecipe <recipe name>", this.CmdKnowsRecipe);
             yield return new DebugCommand("tly_addmoney", "Add gold to the loaded farmer (debug). Usage: tly_addmoney <amount>", this.AddMoney);
             yield return new DebugCommand("tly_additem", "Grant an item to the farmer (debug). Usage: tly_additem <qualifiedId> [count] | query <item query>", this.CmdAddItem);
             yield return new DebugCommand("tly_removehorse", "Remove the stable + horse, clear the carryover snapshot, and drop the Keep Horse upgrade so it's re-buyable (debug — clean slate for a Keep-Horse carryover test).", this.CmdRemoveHorse);

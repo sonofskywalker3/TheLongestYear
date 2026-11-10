@@ -42,6 +42,23 @@ namespace TheLongestYear
                 LogLevel.Info);
         }
 
+        private void CmdKnowsRecipe(string command, string[] args)
+        {
+            if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
+
+            Farmer p = Game1.player;
+            this.Monitor.Log(
+                $"Skill levels: Farming {p.FarmingLevel}, Fishing {p.FishingLevel}, Foraging {p.ForagingLevel}, " +
+                $"Mining {p.MiningLevel}, Combat {p.CombatLevel}.", LogLevel.Info);
+
+            if (args.Length == 0) { this.Monitor.Log("Usage: tly_knowsrecipe <recipe name>", LogLevel.Warn); return; }
+
+            string name = string.Join(" ", args);
+            this.Monitor.Log(
+                $"tly_knowsrecipe '{name}': crafting={p.craftingRecipes.ContainsKey(name)}, " +
+                $"cooking={p.cookingRecipes.ContainsKey(name)}.", LogLevel.Info);
+        }
+
         private void AddJp(string command, string[] args)
         {
             if (!Context.IsWorldReady)
