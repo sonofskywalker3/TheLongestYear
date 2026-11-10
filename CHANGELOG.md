@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.15 - 2026-11-09
+
+### Added
+
+- **the Keeping Book's recipe picker sorts recipes by where they come from.** With mods that add recipes, a row of tabs above the picker shows one source at a time: the base game's recipes first, then each supported mod's, then other mods' and all of them, each sorted A to Z. LB and RB, left and right on the tab row, or a click switch tabs. Recipes now show their proper names instead of a mod's internal id.
+
+### Fixed
+
+- **a kept skill level's recipes showed up a day late.** Keeping a skill level through a rewind brought the level back, but the recipes that level unlocks, like the Scarecrow at Farming 1, only appeared after your first sleep. They are now there from the first morning. Thanks to JazzDaxx.
+
 ## 1.2.12 - 2026-11-07
 
 ### Fixed
