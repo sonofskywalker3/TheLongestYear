@@ -13,7 +13,9 @@ namespace TheLongestYear.Core.Lexicon;
 /// <para>An id is <c>asset|key</c> for a top-level entry (<c>Data/Locations|Forest</c>) and
 /// <c>asset|key|path</c> for a row inside one, the path being the list's member name and the row's
 /// own <c>Id</c> (<c>Data/Locations|Forest|Fish/(O)136</c>), repeated for a list inside a row
-/// (<c>Data/Machines|(BC)12|OutputRules/Default/OutputItem/Wine</c>).</para></summary>
+/// (<c>Data/Machines|(BC)12|OutputRules/Default/OutputItem/Wine</c>). A row with no <c>Id</c> is
+/// named by a digest of its own plain values (<c>~9f3a...</c>), so a row a mod inserts or changes
+/// never takes a known row's name, whatever its place in the list.</para></summary>
 public sealed class KnownIds
 {
     public const char Separator = '|';
@@ -88,7 +90,7 @@ public static class AssetIds
             var result = (IList)Activator.CreateInstance(data.GetType())!;
             foreach (object? element in list)
             {
-                string entryId = KnownIds.EntryId(asset, RowKey(element, result.Count));
+                string entryId = KnownIds.EntryId(asset, RowKey(element));
                 if (!known.Has(entryId)) { dropped?.Invoke(entryId); continue; }
                 result.Add(FilterRows(element, entryId, "", known, dropped));
             }
@@ -108,8 +110,7 @@ public static class AssetIds
         }
         if (data is IList list && RowIdOf(ElementType(data.GetType())) != null)
         {
-            int index = 0;
-            foreach (object? element in list) yield return (RowKey(element, index++), element);
+            foreach (object? element in list) yield return (RowKey(element), element);
             yield break;
         }
         yield return (NoKey, data);
@@ -124,10 +125,9 @@ public static class AssetIds
             if (value == null) continue;
             if (member.IsRowList)
             {
-                int index = 0;
                 foreach (object? row in (IEnumerable)value)
                 {
-                    string path = prefix + member.Name + KnownIds.PathSeparator + RowKey(row, index++);
+                    string path = prefix + member.Name + KnownIds.PathSeparator + RowKey(row);
                     yield return path;
                     foreach (string inner in RowPaths(row, path + KnownIds.PathSeparator)) yield return inner;
                 }
@@ -155,10 +155,9 @@ public static class AssetIds
             if (member.IsRowList)
             {
                 var rows = (IList)Activator.CreateInstance(value.GetType())!;
-                int index = 0;
                 foreach (object? row in (IEnumerable)value)
                 {
-                    string path = prefix + member.Name + KnownIds.PathSeparator + RowKey(row, index++);
+                    string path = prefix + member.Name + KnownIds.PathSeparator + RowKey(row);
                     string rowId = KnownIds.RowId(entryId, path);
                     if (!known.Has(rowId)) { dropped?.Invoke(rowId); changed = true; continue; }
                     object? filtered = FilterRows(row, entryId, path + KnownIds.PathSeparator, known, dropped);
@@ -188,13 +187,41 @@ public static class AssetIds
         return copy ?? entry;
     }
 
-    /// <summary>A row's id: its <c>Id</c>, or its place in the list when it has none (a row a mod
-    /// adds without one sits after the known rows, so it gets a place no known row has).</summary>
-    public static string RowKey(object? row, int index)
+    private const string DigestPrefix = "~";
+    private const ulong FnvOffset = 14695981039346656037UL;
+    private const ulong FnvPrime = 1099511628211UL;
+
+    /// <summary>A row's id: its <c>Id</c>, or with none a digest of its plain values (strings,
+    /// numbers, flags and enums, by member name), which does not depend on its place in the list.</summary>
+    public static string RowKey(object? row)
     {
-        string? id = row == null ? null : RowIdOf(row.GetType())?.Invoke(row);
-        return string.IsNullOrEmpty(id) ? "#" + index : id;
+        if (row == null) return DigestPrefix + "null";
+        string? id = RowIdOf(row.GetType())?.Invoke(row);
+        if (!string.IsNullOrEmpty(id)) return id;
+        ulong hash = FnvOffset;
+        foreach (Func<object, string> plain in PlainOf(row.GetType()))
+            foreach (char c in plain(row))
+                hash = (hash ^ c) * FnvPrime;
+        return DigestPrefix + hash.ToString("x16");
     }
+
+    private static readonly ConcurrentDictionary<Type, IReadOnlyList<Func<object, string>>> Plains = new();
+
+    private static IReadOnlyList<Func<object, string>> PlainOf(Type type) => Plains.GetOrAdd(type, t =>
+    {
+        const BindingFlags Public = BindingFlags.Instance | BindingFlags.Public;
+        static bool IsPlain(Type m) => m == typeof(string) || m.IsPrimitive || m.IsEnum || m == typeof(decimal)
+            || (Nullable.GetUnderlyingType(m) is Type inner && (inner.IsPrimitive || inner.IsEnum));
+        static string Text(string name, object? value)
+            => name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) + ";";
+        var readers = new List<(string Name, Func<object, string> Read)>();
+        foreach (FieldInfo field in t.GetFields(Public))
+            if (IsPlain(field.FieldType)) readers.Add((field.Name, o => Text(field.Name, field.GetValue(o))));
+        foreach (PropertyInfo property in t.GetProperties(Public))
+            if (property.CanRead && property.GetIndexParameters().Length == 0 && IsPlain(property.PropertyType))
+                readers.Add((property.Name, o => Text(property.Name, property.GetValue(o))));
+        return readers.OrderBy(r => r.Name, StringComparer.Ordinal).Select(r => r.Read).ToList();
+    });
 
     private static Shape ShapeOf(Type type) => Shapes.GetOrAdd(type, Shape.Of);
 

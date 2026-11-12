@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TheLongestYear.Core.Availability;
 
 namespace TheLongestYear.Core.Lexicon;
 
@@ -8,95 +9,101 @@ namespace TheLongestYear.Core.Lexicon;
 /// earliest answer vanilla or an installed layer ships for it (spec 2026-11-12-ignore-unsupported-mods,
 /// rule 4). A build only runs when the data differs from what shipped (a mod with no layer edited a
 /// known entry, or supported mods are installed in a combination nothing was written for), and such
-/// data may only make the board more cautious. A later answer, or a missing one, is kept as built.
-/// A vanilla item no shipped answer places is taken out again, so it stays unplaced as on an
-/// unmodded game.</summary>
+/// data may only make the board more cautious.
+/// <para>Answers are compared as the model reads them, in every week mode, so it does not matter
+/// which of the two tables holds an item or which of its weeks are left unset. A built answer that
+/// is earlier in any mode is replaced whole by the earliest shipped answer for that item. A later
+/// answer is kept as built. A vanilla item no shipped answer holds is taken out again, so it stays
+/// unplaced as on an unmodded game; an item of a supported mod that none holds is kept as built.</para></summary>
 public static class AvailabilityFloor
 {
-    public const string HeldNote = " (held to the shipped week)";
+    private static readonly WeekMode[] Modes = Enum.GetValues<WeekMode>();
 
     /// <param name="vetted">The shipped answers for the same step and kitchen: vanilla's, and each
     /// installed layer's. With none, <paramref name="built"/> is returned as it is.</param>
-    /// <param name="held">The ids whose answer was moved later or taken out.</param>
+    /// <param name="step">The difficulty step the answers are for.</param>
+    /// <param name="held">The ids whose answer was replaced or taken out.</param>
     public static AvailabilityAnswers Apply(
-        AvailabilityAnswers built, IReadOnlyList<AvailabilityAnswers> vetted, out IReadOnlyList<string> held)
+        AvailabilityAnswers built, IReadOnlyList<AvailabilityAnswers> vetted, DifficultyStep step, out IReadOnlyList<string> held)
     {
         if (built == null) throw new ArgumentNullException(nameof(built));
         var changed = new List<string>();
         held = changed;
         if (vetted == null || vetted.Count == 0) return built;
 
-        var derived = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
-        foreach (var (id, mine) in built.Derived)
-        {
-            List<ItemAvailability> shipped = vetted.Select(v => v.Derived.TryGetValue(id, out ItemAvailability? a) ? a : null)
-                .Where(a => a != null).Select(a => a!).ToList();
-            if (shipped.Count == 0)
-            {
-                if (Unvetted(id, vetted)) { changed.Add(id); continue; }
-                derived[id] = mine;
-                continue;
-            }
-            int pacing = shipped.Min(a => a.PacingWeek);
-            int hard = shipped.Min(a => a.HardWeekOrPacing);
-            Season season = shipped.Min(a => a.EarliestSeason);
-            Season gate = shipped.Min(a => a.GateSeason ?? a.EarliestSeason);
-            bool late = mine.PacingWeek >= pacing && mine.HardWeekOrPacing >= hard && mine.EarliestSeason >= season
-                && (mine.GateSeason ?? mine.EarliestSeason) >= gate;
-            if (late) { derived[id] = mine; continue; }
-            changed.Add(id);
-            Season heldSeason = mine.EarliestSeason < season ? season : mine.EarliestSeason;
-            Season mineGate = mine.GateSeason ?? mine.EarliestSeason;
-            derived[id] = mine with
-            {
-                EarliestSeason = heldSeason,
-                EarliestWeek = Math.Max(mine.PacingWeek, pacing),
-                HardWeek = Math.Max(mine.HardWeekOrPacing, hard),
-                GateSeason = mineGate < gate ? gate : mine.GateSeason,
-                Basis = mine.Basis + HeldNote,
-            };
-        }
+        Reader mine = new(built, step);
+        List<Reader> shipped = vetted.Select(v => new Reader(v, step)).ToList();
+        var derived = new Dictionary<string, ItemAvailability>(built.Derived, StringComparer.Ordinal);
+        var effort = new Dictionary<string, ItemEffort>(built.EffortDerived, StringComparer.Ordinal);
 
-        var effort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
-        foreach (var (id, mine) in built.EffortDerived)
+        foreach (string id in built.Derived.Keys.Concat(built.EffortDerived.Keys).Distinct(StringComparer.Ordinal).ToList())
         {
-            List<ItemEffort> shipped = vetted.Select(v => v.EffortDerived.TryGetValue(id, out ItemEffort? e) ? e : null)
-                .Where(e => e != null).Select(e => e!).ToList();
-            if (shipped.Count == 0)
+            List<Reader> holders = shipped.Where(s => s.Holds(id)).ToList();
+            if (holders.Count == 0)
             {
-                if (Unvetted(id, vetted)) { changed.Add(id); continue; }
-                effort[id] = mine;
+                if (!VanillaItemIds.All.Contains(id)) continue;
+                derived.Remove(id);
+                effort.Remove(id);
+                changed.Add(id);
                 continue;
             }
-            // A null week is "not placed" (the model floors it at Winter), the latest there is.
-            int? week = Earliest(shipped.Select(e => e.EarliestWeek));
-            int? hard = Earliest(shipped.Select(e => e.HardWeek));
-            Season? gate = shipped.Any(e => e.GateSeason == null) && shipped.All(e => e.EarliestWeek == null)
-                ? null : shipped.Where(e => e.GateSeason != null).Select(e => e.GateSeason).DefaultIfEmpty(null).Min();
-            bool weekEarly = mine.EarliestWeek != null && (week == null || mine.EarliestWeek < week);
-            bool hardEarly = mine.HardWeek != null && hard != null && mine.HardWeek < hard;
-            bool gateEarly = mine.GateSeason != null && gate != null && mine.GateSeason < gate;
-            if (!weekEarly && !hardEarly && !gateEarly) { effort[id] = mine; continue; }
+            Reader earliest = holders.OrderBy(h => h.Weeks(id), WeeksOrder.Instance).First();
+            if (!Earlier(mine.Weeks(id), holders.Select(h => h.Weeks(id)).ToList())) continue;
+            derived.Remove(id);
+            effort.Remove(id);
+            if (earliest.Answers.Derived.TryGetValue(id, out ItemAvailability? a)) derived[id] = a;
+            if (earliest.Answers.EffortDerived.TryGetValue(id, out ItemEffort? e)) effort[id] = e;
             changed.Add(id);
-            effort[id] = mine with
-            {
-                EarliestWeek = weekEarly ? week : mine.EarliestWeek,
-                HardWeek = hardEarly ? hard : mine.HardWeek,
-                GateSeason = gateEarly ? gate : mine.GateSeason,
-                Basis = mine.Basis + HeldNote,
-            };
         }
         return changed.Count == 0 ? built : built with { Derived = derived, EffortDerived = effort };
     }
 
-    /// <summary>A vanilla item that no shipped answer places at all, of either kind.</summary>
-    private static bool Unvetted(string id, IReadOnlyList<AvailabilityAnswers> vetted)
-        => VanillaItemIds.All.Contains(id)
-           && !vetted.Any(v => v.Derived.ContainsKey(id) || v.EffortDerived.ContainsKey(id));
-
-    private static int? Earliest(IEnumerable<int?> weeks)
+    /// <summary>True when the built answer is earlier than every shipped one in some reading: a
+    /// mode's gate week, goal week or gate season, or the season floor.</summary>
+    private static bool Earlier(int[] mine, IReadOnlyList<int[]> shipped)
     {
-        var placed = weeks.Where(w => w != null).Select(w => w!.Value).ToList();
-        return placed.Count == 0 ? null : placed.Min();
+        for (int i = 0; i < mine.Length; i++)
+            if (mine[i] < shipped.Min(s => s[i]))
+                return true;
+        return false;
+    }
+
+    /// <summary>One answer set as the model reads it, in every week mode.</summary>
+    private sealed class Reader
+    {
+        private readonly ItemAvailabilityModel[] _models;
+
+        public Reader(AvailabilityAnswers answers, DifficultyStep step)
+        {
+            Answers = answers;
+            _models = Modes.Select(m => ItemAvailabilityBuilder.FromAnswers(answers, null, null, m, step)).ToArray();
+        }
+
+        public AvailabilityAnswers Answers { get; }
+
+        public bool Holds(string id) => Answers.Derived.ContainsKey(id) || Answers.EffortDerived.ContainsKey(id);
+
+        /// <summary>Per mode: the gate week, the goal week and the gate season; then the season floor.</summary>
+        public int[] Weeks(string id)
+        {
+            var weeks = new List<int>(Modes.Length * 3 + 1);
+            foreach (ItemAvailabilityModel model in _models)
+            {
+                ItemAvailability a = model.For(id);
+                weeks.Add(a.Week);
+                weeks.Add(a.GoalWeek);
+                weeks.Add((int)a.Gate);
+            }
+            weeks.Add((int)_models[0].For(id).EarliestSeason);
+            return weeks.ToArray();
+        }
+    }
+
+    /// <summary>Orders readings by their sum: the answer that is earliest overall comes first.</summary>
+    private sealed class WeeksOrder : IComparer<int[]>
+    {
+        public static readonly WeeksOrder Instance = new();
+
+        public int Compare(int[]? x, int[]? y) => (x?.Sum() ?? 0).CompareTo(y?.Sum() ?? 0);
     }
 }

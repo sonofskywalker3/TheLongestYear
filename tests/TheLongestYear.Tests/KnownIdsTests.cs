@@ -89,10 +89,22 @@ public class KnownIdsTests
     }
 
     [Fact]
-    public void ARowWithNoIdIsKnownByItsPlaceAndAStringAssetByItsKey()
+    public void ARowWithNoIdIsKnownByWhatItSaysWhereverItSits()
     {
-        var list = new List<Row> { new() { Id = "A" }, new() { Id = "" } };
-        Assert.Equal(new[] { "Data/FishPondData|A", "Data/FishPondData|#1" }, AssetIds.Ids("Data/FishPondData", list));
+        var shipped = new List<Row> { new() { Id = "", ItemId = "(O)1" } };
+        var known = new KnownIds(AssetIds.Ids("Data/FishPondData", shipped));
+        // A mod puts a named row and an unnamed one in front of the known unnamed row.
+        var live = new List<Row> { new() { Id = "Mod" }, new() { Id = "", ItemId = "(O)Mod" }, new() { Id = "", ItemId = "(O)1" } };
+        Assert.Equal(new[] { "(O)1" }, AssetIds.Filter("Data/FishPondData", live, known).Select(r => r.ItemId));
+
+        var place = new Place { Fish = { new Row { Id = "", ItemId = "(O)Mod" }, new Row { Id = "", ItemId = "(O)1" } } };
+        var knownPlace = new KnownIds(AssetIds.Ids("A", new Dictionary<string, Place> { ["P"] = new Place { Fish = { new Row { Id = "", ItemId = "(O)1" } } } }));
+        Assert.Equal(new[] { "(O)1" }, AssetIds.Filter("A", new Dictionary<string, Place> { ["P"] = place }, knownPlace)["P"].Fish.Select(r => r.ItemId));
+    }
+
+    [Fact]
+    public void AStringAssetIsKnownByItsKey()
+    {
 
         var fish = new Dictionary<string, string> { ["128"] = "Pufferfish/80", ["Mod_Fish"] = "x" };
         Dictionary<string, string> kept = AssetIds.Filter("Data/Fish", fish, new KnownIds(new[] { "Data/Fish|128" }));

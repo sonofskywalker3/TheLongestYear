@@ -189,7 +189,7 @@ public sealed class AvailabilityAnswersTests
             },
             new() { [BatWing] = new ItemEffort(3, "drop", EarliestWeek: 1), [Milk] = new ItemEffort(2, "animal", EarliestWeek: 12) });
 
-        AvailabilityAnswers held = AvailabilityFloor.Apply(built, new[] { vanilla, layer }, out IReadOnlyList<string> ids);
+        AvailabilityAnswers held = AvailabilityFloor.Apply(built, new[] { vanilla, layer }, DifficultyStep.Normal, out IReadOnlyList<string> ids);
 
         Assert.Equal((Season.Summer, 5, 5), (held.Derived[Fish].EarliestSeason, held.Derived[Fish].EarliestWeek, held.Derived[Fish].HardWeek));
         Assert.False(held.Derived.ContainsKey(Metal));
@@ -204,8 +204,33 @@ public sealed class AvailabilityAnswersTests
     {
         var vanilla = Answers(new() { [Fish] = new ItemAvailability(Season.Summer, 4, "fish", EarliestWeek: 5) });
         var later = Answers(new() { [Fish] = new ItemAvailability(Season.Fall, 4, "fish", EarliestWeek: 9) });
-        Assert.Same(later, AvailabilityFloor.Apply(later, new[] { vanilla }, out IReadOnlyList<string> ids));
+        Assert.Same(later, AvailabilityFloor.Apply(later, new[] { vanilla }, DifficultyStep.Normal, out IReadOnlyList<string> ids));
         Assert.Empty(ids);
-        Assert.Same(later, AvailabilityFloor.Apply(later, Array.Empty<AvailabilityAnswers>(), out _));
+        Assert.Same(later, AvailabilityFloor.Apply(later, Array.Empty<AvailabilityAnswers>(), DifficultyStep.Normal, out _));
+    }
+
+    /// <summary>The model's reading of one item in every week mode: gate week, goal week, gate season.</summary>
+    private static (int, int, Season)[] Read(AvailabilityAnswers answers, string id)
+        => Enum.GetValues<WeekMode>()
+            .Select(m => ItemAvailabilityBuilder.FromAnswers(answers, null, null, m, DifficultyStep.Normal).For(id))
+            .Select(a => (a.Week, a.GoalWeek, a.Gate)).ToArray();
+
+    [Fact]
+    public void AnUnplacedShippedAnswerHoldsEveryModeAndEitherTable()
+    {
+        // Shipped: an effort-only answer with no week at all (the model floors it at Winter), and a fish at week 9.
+        var vanilla = Answers(new() { [Fish] = new ItemAvailability(Season.Fall, 4, "fish", EarliestWeek: 9, HardWeek: 9) },
+            new() { [BatWing] = new ItemEffort(3, "drop") });
+        // Built: the first gains week 1 in every field; the fish loses its fish answer and comes back as an effort route at week 1.
+        var built = Answers(null, new()
+        {
+            [BatWing] = new ItemEffort(3, "drop", EarliestWeek: 1, GateSeason: Season.Spring, HardWeek: 1),
+            [Fish] = new ItemEffort(4, "bought", EarliestWeek: 1, GateSeason: Season.Spring, HardWeek: 1),
+        });
+
+        AvailabilityAnswers held = AvailabilityFloor.Apply(built, new[] { vanilla }, DifficultyStep.Normal, out _);
+
+        Assert.Equal(Read(vanilla, BatWing), Read(held, BatWing));
+        Assert.Equal(Read(vanilla, Fish), Read(held, Fish));
     }
 }

@@ -804,7 +804,7 @@ namespace TheLongestYear
                 // item lands earlier than vanilla or an installed layer ships it.
                 if (_lexicon?.HoldsToShipped == true)
                 {
-                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), out IReadOnlyList<string> held);
+                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), step, out IReadOnlyList<string> held);
                     if (held.Count > 0)
                     {
                         model = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(

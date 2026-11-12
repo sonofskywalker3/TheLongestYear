@@ -85,9 +85,8 @@ namespace TheLongestYear.Loop
         {
             if (_known == null || Unfiltered || rawRows == null) yield break;
             string entryId = KnownIds.EntryId(asset, key);
-            int index = 0;
             foreach (T row in rawRows)
-                if (!_known.Has(KnownIds.RowId(entryId, list + KnownIds.PathSeparator + AssetIds.RowKey(row, index++))))
+                if (!_known.Has(KnownIds.RowId(entryId, list + KnownIds.PathSeparator + AssetIds.RowKey(row))))
                     yield return row;
         }
 

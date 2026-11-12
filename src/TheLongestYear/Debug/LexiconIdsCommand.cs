@@ -13,7 +13,8 @@ namespace TheLongestYear.DebugCommands
     /// id (run it on an unmodded game); a mod target writes the ids that are not vanilla's and not
     /// another installed layer's (run it with only those mods and their frameworks installed). A file
     /// that exists is added to, never shrunk, so each save variant can add its own rows: delete the
-    /// file to start it over. The ids are read at game start, so restart before mapping the mod.</summary>
+    /// file to start it over. The ids are read at game start, so restart before mapping the mod.
+    /// Write a single mod's file before any combination that names it.</summary>
     internal static class LexiconIdsCommand
     {
         public const string Verb = "ids";
@@ -28,9 +29,10 @@ namespace TheLongestYear.DebugCommands
             }
             bool vanilla = string.Equals(target, VanillaTarget, StringComparison.OrdinalIgnoreCase);
             string folder = LayerFile.Folder(modDirectory);
+            string[] targetMods = vanilla ? Array.Empty<string>() : target.Split(LayerFile.Joiner, StringSplitOptions.RemoveEmptyEntries);
             string path = vanilla
                 ? ShippedLexicon.VanillaIdsPath(modDirectory)
-                : Path.Combine(folder, LayerFile.IdsFileName(target.Split(LayerFile.Joiner, StringSplitOptions.RemoveEmptyEntries)));
+                : Path.Combine(folder, LayerFile.IdsFileName(targetMods));
 
             var below = new HashSet<string>(StringComparer.Ordinal);
             if (!vanilla)
@@ -44,9 +46,13 @@ namespace TheLongestYear.DebugCommands
                 below.UnionWith(vanillaIds);
                 if (Directory.Exists(folder))
                     foreach (string other in Directory.GetFiles(folder, "*" + LayerFile.IdsSuffix))
-                        if (!string.Equals(Path.GetFullPath(other), Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)
-                            && LayerFile.ModsInFileName(Path.GetFileName(other)).All(isLoaded))
+                    {
+                        IReadOnlyList<string> otherMods = LayerFile.ModsInFileName(Path.GetFileName(other));
+                        // Below the target: every other installed layer, except a combination that
+                        // holds all of the target's mods (that one sits above it and may repeat its ids).
+                        if (otherMods.All(isLoaded) && !targetMods.All(m => otherMods.Contains(m, StringComparer.Ordinal)))
                             below.UnionWith(LayerFile.ReadIds(File.ReadAllText(other)));
+                    }
             }
 
             var ids = new HashSet<string>(KnownData.LiveIds().Where(id => !below.Contains(id)), StringComparer.Ordinal);
