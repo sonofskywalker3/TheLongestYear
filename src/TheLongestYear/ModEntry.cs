@@ -154,6 +154,8 @@ namespace TheLongestYear
 
         public override void Entry(IModHelper helper)
         {
+            TheLongestYear.Loop.LoadProgress.Warn = message => this.Monitor.Log(message, LogLevel.Warn);
+            TheLongestYear.Loop.LoadProgress.Trace = message => this.Monitor.Log(message, LogLevel.Trace);
             // .Default(key) makes a missing translation echo the raw key exactly, matching the
             // test provider's behavior (see I18nFixture) — SMAPI's own fallback is otherwise
             // "(no translation:{key})", which breaks ThemeModifiers.DisplayNameFor's raw-id
@@ -796,6 +798,7 @@ namespace TheLongestYear
                     stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
             else
             {
+                if (_lexicon?.HoldsToShipped == true) TheLongestYear.Loop.LoadProgress.Weeks();
                 var (model, answers) = AvailabilityBuild(step, kitchen);
                 // Data that differs from what shipped may only make the board more cautious: no
                 // item lands earlier than vanilla or an installed layer ships it.

@@ -58,6 +58,15 @@ namespace TheLongestYear.Loop
             }
         }
 
+        /// <summary>Whether the folder holds an answers file all of whose mods are installed.</summary>
+        public static bool HasInstalledLayers(string modFolder, IModRegistry registry)
+        {
+            string folder = LayerFile.Folder(modFolder);
+            return System.IO.Directory.Exists(folder)
+                && System.IO.Directory.GetFiles(folder, "*" + LayerFile.AnswersSuffix)
+                    .Any(path => LayerFile.ModsInFileName(System.IO.Path.GetFileName(path)).All(registry.IsLoaded));
+        }
+
         private static LoadedLayers None(AnswerSet vanilla, Func<string, string> installedVersionOf)
             => new(LayerSet.Compose(vanilla, Array.Empty<LayerInputs>(), Array.Empty<LayerAnswers>(), _ => { }),
                 Array.Empty<LayerInputs>(), Array.Empty<LayerAnswers>(), installedVersionOf);

@@ -305,9 +305,12 @@ namespace TheLongestYear
             IReadOnlyDictionary<string, IReadOnlyList<TheLongestYear.Core.Obtainability.ObtainSource>> extraDirect,
             TheLongestYear.Core.Obtainability.YearTwoMarks marks)
         {
-            var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect, marks);
+            // This only runs when nothing stored answers for this data: say so on screen, pass by pass.
+            var build = _obtainabilityCache.Get(inputs, out bool reused, extraDirect, marks,
+                TheLongestYear.Loop.LoadProgress.Routes);
             var sortTimer = System.Diagnostics.Stopwatch.StartNew();
-            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _, extraDirect, marks);
+            var yearSort = _yearSortCache.Get(TheLongestYear.Core.YearTwoItems.WithoutCartRandomStock(inputs), out _, extraDirect, marks,
+                TheLongestYear.Loop.LoadProgress.YearTwo);
             _yearSortMs = sortTimer.ElapsedMilliseconds;
             _lastLexiconBuild = build;
             _lastLexiconBuildReused = reused;

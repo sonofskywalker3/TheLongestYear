@@ -40,7 +40,7 @@ public static class ObtainabilityBuilder
     public static ObtainabilityBuild Build(
         ObtainabilityInputs inputs, bool mineTravel = true,
         IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null,
-        YearTwoMarks? marks = null)
+        YearTwoMarks? marks = null, Action<int>? onPass = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         var f = inputs.Festivals;
@@ -87,6 +87,7 @@ public static class ObtainabilityBuilder
         ObtainabilityModel current = Assemble(direct, marks, out List<string> lastUnresolved);
         for (int pass = 1; pass <= MaxPasses; pass++)
         {
+            onPass?.Invoke(pass);   // the build's only sign of life: a pass is a few hundred ms
             var all = new List<(string ItemId, ObtainSource Source)>(direct);
             all.AddRange(SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, o, f, current, catchRates)
                 .Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));

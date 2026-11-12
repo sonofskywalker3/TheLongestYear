@@ -53,6 +53,8 @@ namespace TheLongestYear.Loop
             // Before anything reads game data: the readers skip what is not vanilla's or an installed layer's.
             KnownData.Known = ReadKnownIds(modFolder, registry, warn);
             Vanilla = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
+            // The support files are megabytes each: with any to read, say so on screen first.
+            if (LayerLoader.HasInstalledLayers(modFolder, registry)) LoadProgress.Reading();
             Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
             LayerSet layers = Loaded.Set;
             YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;
@@ -235,6 +237,7 @@ namespace TheLongestYear.Loop
 
         private void WriteCurrent()
         {
+            if (_current?.Origin == AnswerOrigin.Computed) LoadProgress.Saving();
             _pendingKey = null;
             AnswerSet set = _resolver.CurrentSet with
             {
