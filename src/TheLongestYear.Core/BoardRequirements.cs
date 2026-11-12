@@ -23,11 +23,52 @@ public static class BoardRequirements
         return slash < 0 ? key : key.Substring(0, slash);
     }
 
+    /// <summary>For one bundle, the season before which each flavored ingredient cannot be had:
+    /// the season the model (or, without one, the pin table) gives the fruit or fish the slot
+    /// names. Null when the bundle names none. A dictionary lookup per flavored slot, so it costs
+    /// nothing at load. Two slots of one good take the later season.</summary>
+    /// <param name="flavors">Slot to named input, keyed <see cref="FlavoredSlotPass.KeyFor"/>.</param>
+    public static IReadOnlyDictionary<string, Season>? NotBefore(
+        ParsedBundle parsed, IReadOnlyDictionary<string, string>? flavors,
+        ItemAvailabilityModel? availability, IReadOnlyDictionary<string, Season> itemSeasonPins)
+    {
+        if (flavors == null || flavors.Count == 0) return null;
+        Dictionary<string, Season>? result = null;
+        for (int i = 0; i < parsed.Ingredients.Count; i++)
+        {
+            if (FlavoredSlotPass.FlavorAt(flavors, parsed.Index, i) is not string named) continue;
+            string input = BundleParsing.NormalizeItemId(named);
+            Season? season = availability != null && availability.IsPlaced(input)
+                ? availability.For(input).Gate
+                : itemSeasonPins.TryGetValue(input, out Season pinned) ? pinned : (Season?)null;
+            if (season is not Season earliest) continue;
+            string id = BundleParsing.NormalizeItemId(parsed.Ingredients[i].ItemRef);
+            result ??= new Dictionary<string, Season>(StringComparer.Ordinal);
+            if (!result.TryGetValue(id, out Season have) || earliest > have)
+                result[id] = earliest;
+        }
+        return result;
+    }
+
+    /// <summary>The pin table with each <paramref name="notBefore"/> season applied where it is
+    /// later than the id's own pin (or the id has none).</summary>
+    private static IReadOnlyDictionary<string, Season> WithLaterPins(
+        IReadOnlyDictionary<string, Season> pins, IReadOnlyDictionary<string, Season> notBefore)
+    {
+        var merged = new Dictionary<string, Season>(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, Season> pin in pins) merged[pin.Key] = pin.Value;
+        foreach (KeyValuePair<string, Season> late in notBefore)
+            if (!merged.TryGetValue(late.Key, out Season have) || late.Value > have)
+                merged[late.Key] = late.Value;
+        return merged;
+    }
+
     public static IReadOnlyList<BundleRequirement> Build(
         IReadOnlyDictionary<string, string> board,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int[]> bundleQuotas,
-        ItemAvailabilityModel? availability = null)
+        ItemAvailabilityModel? availability = null,
+        IReadOnlyDictionary<string, string>? flavors = null)
     {
         var result = new List<BundleRequirement>();
         // Input order is kept: the generator's list order is what the stored dictionary preserves
@@ -38,8 +79,12 @@ public static class BoardRequirements
                 continue; // Vault / non-themed rooms, exactly as the legacy path
 
             var parsed = BundleParsing.Parse(entry.Key, entry.Value);
+            // A flavored slot (Dried Cranberries) is reachable from the season of the fruit or
+            // fish it names, which can be later than the good's own season.
+            IReadOnlyDictionary<string, Season>? notBefore = NotBefore(parsed, flavors, availability, itemSeasonPins);
+            IReadOnlyDictionary<string, Season> pins = notBefore == null ? itemSeasonPins : WithLaterPins(itemSeasonPins, notBefore);
             BundleRequirement? req = BundleClassifier.Classify(
-                parsed, theme, itemSeasonPins, bundleQuotas, availability);
+                parsed, theme, itemSeasonPins, bundleQuotas, availability, notBefore);
             if (req == null)
                 continue; // category-only bundles (none generated, defensive)
 
@@ -49,7 +94,7 @@ public static class BoardRequirements
             {
                 int[] clamped = GeneratedBundleSet.ClampRampForObtainability(
                     req.CumulativeRequiredBySeason.ToArray(), req.Ingredients,
-                    req.NumberOfSlots, itemSeasonPins, req.StretchLines);
+                    req.NumberOfSlots, pins, req.StretchLines);
                 req = BundleRequirement.CreatePercentage(
                     req.Name, req.Theme, req.Ingredients, req.NumberOfSlots, clamped,
                     req.IngredientStacks, req.IngredientQualities, stretchLines: req.StretchLines,

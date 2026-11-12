@@ -96,7 +96,8 @@ namespace TheLongestYear
                         foreach (KeyValuePair<string, TheLongestYear.Core.Season> pin in itemSeasonPins)
                             pins[pin.Key] = pin.Value;   // base pins win over derived, as BundleEngine.BuildRequirements does
                         var stored = TheLongestYear.Core.BoardRequirements.Build(
-                            state.WrittenBoard, pins, bundleQuotas, _availability?.WithBankedDishes(state.BoardBankedDishes));
+                            state.WrittenBoard, pins, bundleQuotas, _availability?.WithBankedDishes(state.BoardBankedDishes),
+                            state.WrittenBoardFlavors);
                         this.Monitor.Log(
                             $"Requirements source: stored engine board (loop {state.CompletedResets}, seed loop {state.EffectiveBundleSeedLoop}, {stored.Count} bundles).",
                             LogLevel.Info);

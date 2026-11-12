@@ -76,4 +76,52 @@ public class BoardRequirementsTests
         Assert.Equal("Fish Tank", BoardRequirements.RoomOf("Fish Tank/9"));
         Assert.Equal("Vault", BoardRequirements.RoomOf("Vault"));
     }
+
+    /// <summary>A pick-some bundle's season quota counts a flavored slot from the season the fruit
+    /// it names can be had, not the season the good can be made. Dried Fruit is a Summer good, but
+    /// a slot that names Cranberries cannot be filled before Fall, and with two Fall items beside
+    /// it the Summer gate used to demand one slot nobody could fill.</summary>
+    [Theory]
+    [InlineData(false, new[] { 0, 1, 2, 2 })]
+    [InlineData(true, new[] { 0, 0, 2, 2 })]
+    public void A_flavored_slot_is_reachable_from_the_season_of_the_input_it_names(bool named, int[] quota)
+    {
+        const string cranberries = "(O)282";
+        (string Id, Season Gate)[] items =
+        {
+            ("(O)DriedFruit", Season.Summer), (cranberries, Season.Fall), ("(O)410", Season.Fall), ("(O)408", Season.Fall),
+        };
+        var model = new ItemAvailabilityModel(items.ToDictionary(i => i.Id,
+            i => new ItemAvailability(i.Gate, 1, "test", EffortSource.Derived, AvailabilityWeeks.FirstWeekOf(i.Gate), i.Gate),
+            System.StringComparer.Ordinal));
+        var board = new GeneratedBundleSet(new[] { Spec("Pantry", 5, "Sweet Things", 2, "DriedFruit", "(O)410", "(O)408") });
+        var flavors = named
+            ? new Dictionary<string, string> { [FlavoredSlotPass.KeyFor(5, 0)] = cranberries }
+            : null;
+
+        BundleRequirement req = BoardRequirements.Build(board.ToBundleData(), new Dictionary<string, Season>(),
+            GameplayConfig.DefaultBundleQuotas, model, flavors).Single();
+
+        Assert.Equal(quota, req.CumulativeRequiredBySeason);
+    }
+
+    /// <summary>In a bundle that needs every slot, a flavored slot is never due before the season
+    /// the input it names can be had, even when the good itself is due sooner.</summary>
+    [Fact]
+    public void A_flavored_slot_is_never_due_before_the_input_it_names()
+    {
+        const string cranberries = "(O)282";
+        (string Id, Season Gate)[] items = { ("(O)DriedFruit", Season.Summer), (cranberries, Season.Fall), ("(O)24", Season.Spring) };
+        var model = new ItemAvailabilityModel(items.ToDictionary(i => i.Id,
+            i => new ItemAvailability(i.Gate, 1, "test", EffortSource.Derived, AvailabilityWeeks.FirstWeekOf(i.Gate), i.Gate),
+            System.StringComparer.Ordinal));
+        var board = new GeneratedBundleSet(new[] { Spec("Pantry", 5, "Sweet Things", 2, "DriedFruit", "(O)24") });
+        var flavors = new Dictionary<string, string> { [FlavoredSlotPass.KeyFor(5, 0)] = cranberries };
+
+        BundleRequirement req = BoardRequirements.Build(board.ToBundleData(), new Dictionary<string, Season>(),
+            GameplayConfig.DefaultBundleQuotas, model, flavors).Single();
+
+        Assert.Equal(BundleKind.PerItem, req.Kind);
+        Assert.True(req.ItemSeasonPins!["(O)DriedFruit"] >= Season.Fall, $"due {req.ItemSeasonPins["(O)DriedFruit"]}");
+    }
 }

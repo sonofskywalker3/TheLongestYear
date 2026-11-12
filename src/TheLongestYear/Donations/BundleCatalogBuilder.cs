@@ -42,6 +42,11 @@ namespace TheLongestYear.Donations
         /// the builder would otherwise keep classifying against the pre-reset instance.</summary>
         public ItemAvailabilityModel Availability { get; set; }
 
+        /// <summary>The fruit or fish each flavored slot of the live board names (the stored map the
+        /// slot patch applies), so a flavored slot is not counted reachable before its input.
+        /// Null or a null map: no flavors.</summary>
+        public System.Func<IReadOnlyDictionary<string, string>> Flavors { get; set; }
+
         public BundleCatalogBuilder(
             RarityThresholds thresholds,
             SeasonResolver seasons,
@@ -149,7 +154,8 @@ namespace TheLongestYear.Donations
                 try
                 {
                     req = BundleClassifier.Classify(
-                        bundle, theme, _itemSeasonPins, _bundleQuotas, this.Availability);
+                        bundle, theme, _itemSeasonPins, _bundleQuotas, this.Availability,
+                        BoardRequirements.NotBefore(bundle, this.Flavors?.Invoke(), this.Availability, _itemSeasonPins));
                 }
                 catch (System.Exception ex)
                 {

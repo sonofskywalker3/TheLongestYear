@@ -82,7 +82,8 @@ public static class BundleClassifier
         ParsedBundle parsed, Theme theme,
         IReadOnlyDictionary<string, Season> itemSeasonPins,
         IReadOnlyDictionary<string, int[]> bundleQuotas,
-        ItemAvailabilityModel? availability = null)
+        ItemAvailabilityModel? availability = null,
+        IReadOnlyDictionary<string, Season>? notBefore = null)
     {
         if (parsed == null) throw new ArgumentNullException(nameof(parsed));
         if (itemSeasonPins == null) throw new ArgumentNullException(nameof(itemSeasonPins));
@@ -170,7 +171,7 @@ public static class BundleClassifier
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch),
+                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch, notBefore),
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities,
                 stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
@@ -200,6 +201,13 @@ public static class BundleClassifier
                     if (itemSeasonPins.TryGetValue(id, out Season s))
                         pins[id] = s;
             }
+            // A flavored slot is never due before the fruit or fish it names can be had. The
+            // generator already picks the input to fit the deadline; this covers a stored board
+            // read back after the model moved (a mod added, a setting changed).
+            if (notBefore != null)
+                foreach (KeyValuePair<string, Season> floor in notBefore)
+                    if (pins.TryGetValue(floor.Key, out Season due) && due < floor.Value)
+                        pins[floor.Key] = floor.Value;
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
                 ingredientStacks, ingredientQualities, stretch, bundleIndex: parsed.Index, slots: slots);
         }
@@ -273,9 +281,12 @@ public static class BundleClassifier
     /// <summary>Spec 2026-08-28-even-year: the ramp follows the items. An even quarter split of X,
     /// never above what the bundle's ingredients can supply by each season's gate, monotone, and
     /// X in Winter so the bundle must be completed to win. Unknown items gate at Winter.</summary>
+    /// <param name="notBefore">Ingredient ids that cannot be had before a season whatever their own
+    /// gate says: a flavored slot waits for the fruit or fish it names (<see cref="BoardRequirements.NotBefore"/>).</param>
     public static int[] RampFromItems(
         int numberOfSlots, IReadOnlyList<string> ingredients, ItemAvailabilityModel model,
-        IReadOnlyDictionary<string, Season>? stretchLines = null)
+        IReadOnlyDictionary<string, Season>? stretchLines = null,
+        IReadOnlyDictionary<string, Season>? notBefore = null)
     {
         if (numberOfSlots < 1) throw new ArgumentOutOfRangeException(nameof(numberOfSlots));
         if (ingredients == null) throw new ArgumentNullException(nameof(ingredients));
@@ -286,7 +297,8 @@ public static class BundleClassifier
             var season = (Season)s;
             int even = (int)Math.Round(numberOfSlots * (s + 1) / (double)Calendar.MonthsPerYear, MidpointRounding.AwayFromZero);
             int reachable = ingredients.Count(id =>
-                model.For(id).Gate <= season
+                (model.For(id).Gate <= season
+                    && (notBefore == null || !notBefore.TryGetValue(id, out Season earliest) || earliest <= season))
                 || (stretchLines != null && stretchLines.TryGetValue(id, out Season st) && st <= season));
             ramp[s] = Math.Clamp(Math.Min(even, reachable), 0, numberOfSlots);
         }

@@ -217,7 +217,10 @@ namespace TheLongestYear
         {
             _boardBuilder = new BundleCatalogBuilder(
                 _config.RarityThresholds, _seasonResolver, this.Monitor,
-                ctx.ThemeOverrides, ctx.ItemSeasonPins, ctx.BundleQuotas, _availability);
+                ctx.ThemeOverrides, ctx.ItemSeasonPins, ctx.BundleQuotas, _availability)
+            {
+                Flavors = () => _meta.State.WrittenBoardFlavors,
+            };
             // Obtainability clamp for the read-and-classify path: curated pins + the engine's
             // derived (earliest-obtainable) pins, so a Remixed/modded board can't demand an
             // unobtainable minimum. Due-date (PerItem) pins stay the curated set.
