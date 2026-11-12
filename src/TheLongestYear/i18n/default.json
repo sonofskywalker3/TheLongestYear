@@ -687,6 +687,8 @@
     "menu.shrine-preview.cost": "{{cost}} JP",
 
     // -- shrine boosts (bought on the planning board, spent this loop) ---------------
+    "shrine.active.earned": "Junimo Points earned this loop: {{jp}}",
+    "shrine.active.earned-since-update": "Junimo Points earned since the update: {{jp}}",
     "shrine.tab.active": "Active",
     "shrine.tab.boosts": "Boosts",
     "shrine.tab.focus": "Focus",
@@ -816,8 +818,6 @@
     "focus.row.your-focus": "Your focus",
     "menu.hub.double-week": "Double week: take both",
     "menu.hub.banking-tip": "Banking items for a matching theme week pays 1.5x JP.",
-    "menu.hub.jp-earned": "JP this loop: {{jp}}   Bundles: {{a}}   Rooms: {{b}}   Weekly themes: {{c}}   Shrine goals: {{d}}   Checkpoints: {{e}}",
-    "menu.hub.jp-earned-since-update": "JP since the update: {{jp}}   Bundles: {{a}}   Rooms: {{b}}   Weekly themes: {{c}}   Shrine goals: {{d}}   Checkpoints: {{e}}",
     "menu.hub.season-mult": "Junimo gratitude grows with the seasons - donations now earn x{{mult}} JP.",
     "menu.hub.reroll": "Re-roll Themes",
     "menu.hub.reroll-cost": "Re-roll ({{cost}} JP)",

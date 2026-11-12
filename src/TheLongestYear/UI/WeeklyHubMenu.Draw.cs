@@ -51,16 +51,6 @@ namespace TheLongestYear.UI
                 new Vector2(panelCenterX - multSize.X / 2f, drawY),
                 Game1.textColor);
 
-            // This loop's JP so far by source, the recap's numbers without waiting for the rewind
-            // (asked for by tanky24u). Shrunk to the panel when a translation runs long.
-            drawY += JpEarnedLineHeight;
-            string earned = LoopRecapText.HubLine(_run.JpEarnedSnapshot());
-            float earnedWidth = Game1.smallFont.MeasureString(earned).X;
-            float earnedScale = Math.Min(1f, (width - PanelPadding * 2) / earnedWidth);
-            Utility.drawTextWithShadow(b, earned, Game1.smallFont,
-                new Vector2(panelCenterX - earnedWidth * earnedScale / 2f, drawY),
-                Game1.textColor, earnedScale);
-
             DrawCard(b, _leftCard, _offer.Count > 0 ? (Theme?)_offer[0] : null, _leftBonus, _leftBonusBounds, LeftSlot);
             DrawCard(b, _rightCard, _offer.Count > 1 ? (Theme?)_offer[1] : null, _rightBonus, _rightBonusBounds, RightSlot);
 

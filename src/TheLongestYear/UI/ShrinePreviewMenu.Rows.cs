@@ -60,6 +60,15 @@ namespace TheLongestYear.UI
 
         private void BuildActiveRows()
         {
+            // This loop's JP so far and where it came from (asked for by tanky24u): the recap's
+            // numbers without waiting for the rewind.
+            if (_run != null)
+            {
+                JpLedger earned = _run.JpEarnedSnapshot();
+                _rows.Add(Header(LoopRecapText.EarnedSoFar(earned)));
+                _rows.Add(Note(LoopRecapText.SourcesLine(earned)));
+            }
+
             _rows.Add(Header(Strings.Get("shrine.active.running")));
             int today = Today;
             List<ActiveBoost> running = _run == null

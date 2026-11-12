@@ -41,29 +41,24 @@ public static class LoopRecapText
             ? Strings.Get("recap.jp-since-update", new Dictionary<string, string> { ["jp"] = s.Earned.Total().ToString() })
             : Strings.Get("recap.jp", new Dictionary<string, string> { ["jp"] = s.Earned.Total().ToString() });
 
-    public static string SourcesLine(LoopSummary s)
+    public static string SourcesLine(LoopSummary s) => SourcesLine(s.Earned);
+
+    /// <summary>The Junimo Shrine's Active tab heading: this loop's JP so far. The recap sums
+    /// the same ledger at the rewind.</summary>
+    public static string EarnedSoFar(JpLedger earned)
+        => Strings.Get(earned.SinceUpdate ? "shrine.active.earned-since-update" : "shrine.active.earned",
+            new Dictionary<string, string> { ["jp"] = earned.Total().ToString() });
+
+    /// <summary>Where a ledger's JP came from, on one line.</summary>
+    public static string SourcesLine(JpLedger earned)
         => Strings.Get("recap.jp-sources", new Dictionary<string, string>
         {
-            ["a"] = s.Earned.Bundles.ToString(),
-            ["b"] = s.Earned.Rooms.ToString(),
-            ["c"] = s.Earned.WeeklyThemes.ToString(),
-            ["d"] = s.Earned.ShrineGoals.ToString(),
-            ["e"] = s.Earned.Checkpoints.ToString(),
+            ["a"] = earned.Bundles.ToString(),
+            ["b"] = earned.Rooms.ToString(),
+            ["c"] = earned.WeeklyThemes.ToString(),
+            ["d"] = earned.ShrineGoals.ToString(),
+            ["e"] = earned.Checkpoints.ToString(),
         });
-
-    /// <summary>The planning hub's one line: this loop's JP so far and where it came from, the
-    /// same five sources the recap sums at the rewind.</summary>
-    public static string HubLine(JpLedger earned)
-        => Strings.Get(earned.SinceUpdate ? "menu.hub.jp-earned-since-update" : "menu.hub.jp-earned",
-            new Dictionary<string, string>
-            {
-                ["jp"] = earned.Total().ToString(),
-                ["a"] = earned.Bundles.ToString(),
-                ["b"] = earned.Rooms.ToString(),
-                ["c"] = earned.WeeklyThemes.ToString(),
-                ["d"] = earned.ShrineGoals.ToString(),
-                ["e"] = earned.Checkpoints.ToString(),
-            });
 
     public static string BundlesLine(LoopSummary s)
         => Strings.Get("recap.bundles", new Dictionary<string, string>

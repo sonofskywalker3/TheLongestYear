@@ -54,8 +54,6 @@ namespace TheLongestYear.UI
         // (0.12.0 clarity pass). titleBlock must reserve this same amount so the cards
         // don't start until this second line has fully cleared — see RecomputeBoundsAndLayout.
         private const int SeasonMultLineHeight = 36;
-        /// <summary>The "JP this loop" line under the season multiplier line.</summary>
-        private const int JpEarnedLineHeight = 32;
 
         // ---------- Bonus item icons ----------
         // Smaller than the v1 icon grid — bonus row needs to fit up to 7 icons in CardWidth-pad.
