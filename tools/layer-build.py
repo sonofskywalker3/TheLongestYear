@@ -75,6 +75,7 @@ RESULT = r"The Longest Year\] "          # a command's own output, not the bridg
 HUB_OPEN_PATTERN = r"Opened planning hub"
 MAX_FOCUS_PICKS = 6
 MAX_ROUNDS = 3
+MAX_ID_CHANGES = 40
 HAS_MOD_PATTERNS = (
     re.compile(r'"HasMod(?:\s*\|contains=([\w.\-]+))?"\s*:\s*"?([^",}\n]*)', re.IGNORECASE),
     re.compile(r"HasMod\s*\|contains=([\w.\-]+)", re.IGNORECASE),
@@ -392,6 +393,26 @@ def report_updates(report: Report) -> None:
             report.ask(question)
 
 
+def read_ids(path: Path) -> set[str] | None:
+    return set(json5.loads(path.read_text(encoding="utf-8-sig"))) if path.exists() else None
+
+
+def report_id_changes(before: set[str] | None, after: set[str] | None, report: Report) -> None:
+    """What the installed version adds and drops against the ids the repository held: the exact
+    list of data entries a mod update changed. Only meaningful with --fresh-ids (the file only grows otherwise)."""
+    if before is None or after is None:
+        return
+    added, removed = sorted(after - before), sorted(before - after)
+    if not added and not removed:
+        report.add("The mod's data entries are the same as the ids file in the repository held.")
+        return
+    lines = [f"  - gone: `{i}`" for i in removed[:MAX_ID_CHANGES]] + [f"  - new: `{i}`" for i in added[:MAX_ID_CHANGES]]
+    more = max(0, len(removed) - MAX_ID_CHANGES) + max(0, len(added) - MAX_ID_CHANGES)
+    report.ask(f"The mod's data entries changed against the ids file in the repository: {len(removed)} gone, {len(added)} new. "
+               "Check that each hand-written route and ruling in the inputs file still matches.\n"
+               + "\n".join(lines) + (f"\n  - ... and {more} more" if more else ""))
+
+
 def save_log(out: Path, name: str) -> None:
     if LOG_FILE.exists():
         shutil.copy2(LOG_FILE, out / f"SMAPI-{name}.txt")
@@ -499,6 +520,7 @@ def build(unique_id: str, skip_pierre: bool, keep_saves: bool, fresh_ids: bool, 
     elif (REPO_LAYERS / f"{unique_id}.ids.json").exists():
         shutil.copy2(REPO_LAYERS / f"{unique_id}.ids.json", DEPLOYED_LAYERS / f"{unique_id}.ids.json")
 
+    ids_before = read_ids(REPO_LAYERS / f"{unique_id}.ids.json")
     written: list[str] = []
     for layer_pass in passes_for(unique_id):
         if only is not None and (layer_pass.name or "plain") != only:
@@ -508,6 +530,7 @@ def build(unique_id: str, skip_pierre: bool, keep_saves: bool, fresh_ids: bool, 
         if has_inputs and variant not in written:
             report.ask(f"The answers file holds the variant `{variant}`, which this run did not write again "
                        "(docs/lexicon-layers.md says how each variant is written).")
+    report_id_changes(ids_before, read_ids(REPO_LAYERS / f"{unique_id}.ids.json"), report)
     scan_combinations(unique_id, mods, report)
     return report
 
