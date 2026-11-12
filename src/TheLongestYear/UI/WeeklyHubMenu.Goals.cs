@@ -45,7 +45,17 @@ namespace TheLongestYear.UI
                 // Each icon shows ITS slot's true requirement (stack badge + quality star) —
                 // 2026-07-09 slot redesign; replaces the global per-id MAX maps here.
                 Item item = null;
-                try { item = ItemRegistry.Create(slot.ItemId, slot.Stack, slot.Quality, allowNull: true); }
+                try
+                {
+                    // The exact item, so a flavored slot shows and names its fruit or fish.
+                    item = TheLongestYear.Loop.SabotageService.CreateExact(
+                        slot.ItemId, _runController.BoardFlavorOf(slot.BundleIndex, slot.IngredientIndex));
+                    if (item != null)
+                    {
+                        item.Stack = slot.Stack;
+                        item.Quality = slot.Quality;
+                    }
+                }
                 catch (Exception ex)
                 {
                     TheLongestYear.Loop.PatchLog.TraceOnce("hub-item:" + slot.ItemId,

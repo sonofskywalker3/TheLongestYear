@@ -266,4 +266,27 @@ public class SlotPoolBuilderTests
         Assert.Contains(pool, s => s.ItemId == "(O)24");
         Assert.Equal(offered, pool.Any(s => s.ItemId == "(O)Carrot"));
     }
+
+    /// <summary>A flavored slot is a goal only once the fruit it names can be had. Dried Fruit is
+    /// makeable from week 6, but a slot that names Cranberries asked for them in Summer week 3
+    /// (Nexus bug 1171500, tanky24u, 2026-11-11).</summary>
+    [Theory]
+    [InlineData(7, false)]
+    [InlineData(10, true)]
+    public void A_flavored_line_waits_for_the_input_it_names(int week, bool offered)
+    {
+        const string cranberries = "(O)282";
+        var data = BundleData((0, "Artisan", "DriedFruit 5 0 24 1 0", 2));
+        var reqs = Reqs(BundleRequirement.CreatePerItem("Artisan", Theme.Farming,
+            new Dictionary<string, Season> { ["(O)DriedFruit"] = Season.Fall, ["(O)24"] = Season.Fall }));
+        Season season = AvailabilityWeeks.SeasonOf(week);
+
+        var pool = SlotPoolBuilder.OpenSlotsForTheme(
+            data, _ => null, reqs, Theme.Farming, season,
+            id => id != cranberries || week >= 10, weekOfYear: week,
+            flavorOf: (bundle, slot) => bundle == 0 && slot == 0 ? cranberries : null);
+
+        Assert.Contains(pool, s => s.ItemId == "(O)24");
+        Assert.Equal(offered, pool.Any(s => s.ItemId == "(O)DriedFruit"));
+    }
 }

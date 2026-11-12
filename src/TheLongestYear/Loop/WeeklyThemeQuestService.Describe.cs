@@ -9,15 +9,19 @@ namespace TheLongestYear.Loop
     /// <summary>The weekly quest's goal lines as text.</summary>
     internal sealed partial class WeeklyThemeQuestService
     {
-        /// <summary>"DisplayName x5 (gold) - Bundle Name": names the exact slot requirement. An egg
+        /// <summary>"DisplayName x5 (gold) - Bundle Name": names the exact slot requirement, the
+        /// fruit or fish of a flavored slot included. An egg
         /// slot needs no color tag: either color fills it (InterchangeableItems). Quality tags via
         /// <see cref="QualityTags"/>.</summary>
         private string DescribeSlot(BonusSlot slot)
         {
             string name = slot.ItemId;
+            // A flavored slot reads as the board does: "Dried Cranberries", not the bare "Dried"
+            // (Nexus bug 1171500). One that names no input takes any, and says so.
+            string flavor = FlavoredSlotPass.FlavorAt(_store.State.WrittenBoardFlavors, slot.BundleIndex, slot.IngredientIndex);
             try
             {
-                Item item = ItemRegistry.Create(slot.ItemId, 1, 0, allowNull: true);
+                Item item = SabotageService.CreateExact(slot.ItemId, flavor);
                 if (item != null) name = item.DisplayName;
             }
             catch (Exception ex)
@@ -25,6 +29,8 @@ namespace TheLongestYear.Loop
                 // ItemRegistry may throw for malformed ids; fall back to the raw id.
                 _monitor.Log($"Weekly quest: goal item '{slot.ItemId}' has no item data ({ex.GetType().Name}); showing the raw id.", LogLevel.Trace);
             }
+            if (flavor == null && FlavorlessBundleSlots.LabelKeyFor(slot.ItemId) is string anyKey)
+                name = Strings.Get(anyKey);
 
             string qty = slot.Stack > 1
                 ? Strings.Get("quest.weekly.qty", new Dictionary<string, string> { ["count"] = slot.Stack.ToString() })

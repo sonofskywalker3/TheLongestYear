@@ -18,6 +18,7 @@ namespace TheLongestYear.Core;
 ///     remaining lines can no longer be donated and are excluded.
 ///   - Category refs and completed slots are excluded. Null slot state ⇒ all lines open.
 ///   - A line asking for silver or better is held until <see cref="QualityGoalFirstWeek"/>.
+///   - A flavored line (Dried Cranberries) waits until the input it names is obtainable too.
 ///   - A stretch line (BundleRequirement.StretchLines) is forced in play and Due once
 ///     weekOfYear reaches AvailabilityWeeks.LastWeekOf(its stretch season), regardless of the
 ///     obtainability predicate; its emitted slot carries Stretch = true.
@@ -42,7 +43,8 @@ public static class SlotPoolBuilder
         Func<string, bool> isObtainableInSeason,
         int weekOfYear,
         Func<string, ItemKind>? kindOf = null,
-        Func<string, string?>? routeTagOf = null)
+        Func<string, string?>? routeTagOf = null,
+        Func<int, int, string?>? flavorOf = null)
     {
         if (bundleData == null) throw new ArgumentNullException(nameof(bundleData));
         if (slotStateForBundle == null) throw new ArgumentNullException(nameof(slotStateForBundle));
@@ -105,6 +107,10 @@ public static class SlotPoolBuilder
                 if (perLine && !ThemeDomains.Matches(theme, kindOf!(id))) continue;
                 if (state != null && i < state.Length && state[i]) continue;   // already donated
                 if (ing.Quality > 0 && weekOfYear < QualityGoalFirstWeek) continue;
+                // A flavored slot names one fruit or fish, and that input has its own week.
+                if (flavorOf?.Invoke(bundle.Index, i) is string flavor
+                    && !isObtainableInSeason(BundleParsing.NormalizeItemId(flavor)))
+                    continue;
 
                 pool.Add(new BonusSlot
                 {

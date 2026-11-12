@@ -26,7 +26,7 @@ namespace TheLongestYear.Loop
             {
                 pools[theme] = SlotPoolBuilder.OpenSlotsForTheme(
                     bundleData, SlotStateForBundle, _requirements,
-                    theme, season, id => IsObtainableInWeek(id, week), week, ItemKindOf, RouteBasisOf);
+                    theme, season, id => IsObtainableInWeek(id, week), week, ItemKindOf, RouteBasisOf, BoardFlavorOf);
                 samples[theme] = SampleSlotsForTheme(theme, season, week);
             }
 

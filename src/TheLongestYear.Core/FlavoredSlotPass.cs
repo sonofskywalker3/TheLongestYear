@@ -106,4 +106,8 @@ public static class FlavoredSlotPass
     /// it, then the slot's position. Read back by the mod when it sets the flavor on the live
     /// bundle, so the two must agree on this spelling.</summary>
     public static string KeyFor(int bundleIndex, int slotIndex) => $"{bundleIndex}:{slotIndex}";
+
+    /// <summary>The input a stored board's slot names, or null when it names none.</summary>
+    public static string? FlavorAt(IReadOnlyDictionary<string, string>? flavors, int bundleIndex, int slotIndex)
+        => flavors != null && flavors.TryGetValue(KeyFor(bundleIndex, slotIndex), out string? input) ? input : null;
 }
