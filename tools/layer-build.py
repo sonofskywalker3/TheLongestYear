@@ -81,6 +81,7 @@ HAS_MOD_PATTERNS = (
     re.compile(r"\{\{HasMod\s*:\s*([\w.\-]+)\}\}", re.IGNORECASE),
 )
 SCANNED_SUFFIXES = frozenset({".json"})
+UPDATE_PATTERN = re.compile(r"ALERT SMAPI\]\s+(.+?) (\S+): https?://\S+ \(you have ([^)]+)\)")
 
 log = logging.getLogger("layer-build")
 
@@ -378,6 +379,19 @@ def stored_variants(unique_id: str) -> list[str]:
     return sorted((json5.loads(path.read_text(encoding="utf-8")).get("Deltas") or {}).keys())
 
 
+def report_updates(report: Report) -> None:
+    """SMAPI lists the installed mods that have a newer version; each is a question, once."""
+    always_on = {name.lower() for name in ALWAYS_ON}
+    for line in log_lines():
+        match = UPDATE_PATTERN.search(line)
+        if not match or match.group(1).replace(" ", "").lower() in always_on:
+            continue
+        question = (f"SMAPI says a newer version is out: {match.group(1)} {match.group(2)} (installed {match.group(3)}). "
+                    "The layer answers for the installed version only; update the mod and run this again.")
+        if question not in report.questions:
+            report.ask(question)
+
+
 def save_log(out: Path, name: str) -> None:
     if LOG_FILE.exists():
         shutil.copy2(LOG_FILE, out / f"SMAPI-{name}.txt")
@@ -401,6 +415,7 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
             raise LayerBuildError("The new farm's save folder was not found.")
         save = made[-1]
         save_log(out, f"{tag}-1-ids")
+        report_updates(report)
         close_game()
         # The farm as it was made, before any night: every round starts from it.
         fresh_farm = out / "farm"
