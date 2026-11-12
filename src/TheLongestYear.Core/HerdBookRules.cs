@@ -53,6 +53,11 @@ public static class HerdBookRules
     public static bool BuildingKept(HerdSlotKind kind, Func<string, bool>? hasUpgrade)
         => hasUpgrade == null || hasUpgrade(HerdSlotRules.RequiredKeepId(kind));
 
+    /// <summary>How many of the save's slots can take an animal: owned, with the building kept.
+    /// The Herd Book stays out of sight while this is zero and the book is empty.</summary>
+    public static int UsableSlots(MetaState meta)
+        => SlotsFor(meta).Count(kind => BuildingKept(kind, meta.HasUpgrade));
+
     /// <summary>Open the book on a rewind night only when an owned slot is empty, its building is
     /// kept and some animal on the farm fits it. Otherwise the night is not interrupted.</summary>
     public static bool ShouldOfferAtReset(IReadOnlyList<HerdSlotKind> slots, IReadOnlyList<HerdEntry> book,

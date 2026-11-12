@@ -47,8 +47,19 @@ public class OneBookTests
         => Assert.Equal(owned, OneBook.Owns(slots, held));
 
     [Fact]
-    public void A_fresh_save_owns_all_three_tabs_through_the_free_slots()
-        => Assert.Equal(new[] { Cookbook, Craftbook, HerdBook }, OneBook.TabsFor(new MetaState()));
+    public void A_fresh_save_owns_the_recipe_tabs_through_the_free_slots()
+        => Assert.Equal(new[] { Cookbook, Craftbook }, OneBook.TabsFor(new MetaState()));
+
+    /// <summary>The Herd Book tab shows once a slot can take an animal (its building keep is
+    /// owned), or while the book still holds an animal from before that rule.</summary>
+    [Fact]
+    public void Herd_book_tab_waits_for_a_usable_slot()
+    {
+        Assert.Contains(HerdBook, OneBook.TabsFor(new MetaState { OwnedUpgrades = { "keep_coop" } }));
+        var waiting = new MetaState();
+        waiting.HerdBook.Add(new HerdEntry(0, 1, "White Chicken", "Clucky", null, 400, 200, 10, 12, false, true));
+        Assert.Contains(HerdBook, OneBook.TabsFor(waiting));
+    }
 
     [Fact]
     public void Resolve_opens_the_wanted_tab_or_falls_back_to_the_first()

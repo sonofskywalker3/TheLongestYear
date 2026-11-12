@@ -78,7 +78,9 @@ namespace TheLongestYear.Core.Interactables
         {
             int cookSlots = UpgradeCatalog.CookbookSlotCount(meta.HighestKeptTier("cookbook_", UpgradeCatalog.BookMaxTier));
             int craftSlots = UpgradeCatalog.CraftbookSlotCount(meta.HighestKeptTier("craftbook_", UpgradeCatalog.BookMaxTier));
-            int herdSlots = HerdBookRules.SlotsFor(meta).Count;
+            // The Herd Book's free slot is no use until its building is kept, so only usable
+            // slots count (Jeff, 2026-11-12).
+            int herdSlots = HerdBookRules.UsableSlots(meta);
             return Tabs(
                 Owns(cookSlots, meta.CookbookRecipes.Count),
                 Owns(craftSlots, meta.CraftbookRecipes.Count),
