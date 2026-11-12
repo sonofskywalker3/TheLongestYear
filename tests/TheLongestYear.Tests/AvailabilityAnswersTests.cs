@@ -209,6 +209,18 @@ public sealed class AvailabilityAnswersTests
         Assert.Same(later, AvailabilityFloor.Apply(later, Array.Empty<AvailabilityAnswers>(), DifficultyStep.Normal, out _));
     }
 
+    [Fact]
+    public void AnItemAnOverridePlacesKeepsItsBuiltAnswer()
+    {
+        // Vanilla ships no answer for the metal (a week ruling places it); the build derives week 9.
+        var vanilla = Answers(new() { [Fish] = new ItemAvailability(Season.Spring, 4, "fish", EarliestWeek: 1) });
+        var built = Answers(new() { [Metal] = new ItemAvailability(Season.Fall, 2, "metal", EarliestWeek: 9) });
+        AvailabilityAnswers held = AvailabilityFloor.Apply(built, new[] { vanilla }, DifficultyStep.Normal, out IReadOnlyList<string> ids,
+            new HashSet<string> { Metal });
+        Assert.Equal(9, held.Derived[Metal].EarliestWeek);
+        Assert.Empty(ids);
+    }
+
     /// <summary>The model's reading of one item in every week mode: gate week, goal week, gate season.</summary>
     private static (int, int, Season)[] Read(AvailabilityAnswers answers, string id)
         => Enum.GetValues<WeekMode>()

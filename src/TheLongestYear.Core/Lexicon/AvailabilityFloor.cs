@@ -23,8 +23,12 @@ public static class AvailabilityFloor
     /// installed layer's. With none, <paramref name="built"/> is returned as it is.</param>
     /// <param name="step">The difficulty step the answers are for.</param>
     /// <param name="held">The ids whose answer was replaced or taken out.</param>
+    /// <param name="overridden">Ids a season pin or a week ruling places. The stored answers do not
+    /// hold those placements, so such an item can be absent from every shipped answer and still be
+    /// placed on an unmodded game: its built answer is kept (an override can only move it later).</param>
     public static AvailabilityAnswers Apply(
-        AvailabilityAnswers built, IReadOnlyList<AvailabilityAnswers> vetted, DifficultyStep step, out IReadOnlyList<string> held)
+        AvailabilityAnswers built, IReadOnlyList<AvailabilityAnswers> vetted, DifficultyStep step, out IReadOnlyList<string> held,
+        IReadOnlySet<string>? overridden = null)
     {
         if (built == null) throw new ArgumentNullException(nameof(built));
         var changed = new List<string>();
@@ -41,7 +45,7 @@ public static class AvailabilityFloor
             List<Reader> holders = shipped.Where(s => s.Holds(id)).ToList();
             if (holders.Count == 0)
             {
-                if (!VanillaItemIds.All.Contains(id)) continue;
+                if (!VanillaItemIds.All.Contains(id) || overridden?.Contains(id) == true) continue;
                 derived.Remove(id);
                 effort.Remove(id);
                 changed.Add(id);

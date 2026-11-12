@@ -216,13 +216,48 @@ namespace TheLongestYear
         {
             try
             {
-                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
+                _lexicon = TakeLexicon();
                 PublishRecipeSources();
             }
             catch (Exception ex)
             {
                 this.Monitor.Log($"Lexicon: could not load the layers before the pools ({ex.GetType().Name}: {ex.Message}); no layer map or shop leaves the year-1 walk this load.", LogLevel.Warn);
             }
+        }
+
+        /// <summary>Starts reading the shipped answers and the installed mods' support files on a
+        /// worker, at the title screen: they are megabytes of JSON (about 0.75 s per supported mod),
+        /// and read at the first save load they held that load's black screen. Nothing is drawn or
+        /// read from the game there; the result is taken on the game thread by <see cref="TakeLexicon"/>.</summary>
+        private void WarmLexicon()
+        {
+            if (_lexicon != null || _lexiconWarmup != null) return;
+            string folder = this.Helper.DirectoryPath;
+            IModRegistry registry = this.Helper.ModRegistry;
+            _lexiconWarmup = System.Threading.Tasks.Task.Run(
+                () => new TheLongestYear.Loop.LexiconService(this.Monitor, folder, registry, BuildLexiconVariant, onGameThread: false));
+        }
+
+        /// <summary>The session's lexicon: the one the title-screen warm-up read (waited for, with the
+        /// progress card up, when a save is loaded before it finished), or one constructed now.</summary>
+        private TheLongestYear.Loop.LexiconService TakeLexicon()
+        {
+            if (_lexicon != null) return _lexicon;
+            System.Threading.Tasks.Task<TheLongestYear.Loop.LexiconService> warm = _lexiconWarmup;
+            _lexiconWarmup = null;
+            if (warm != null)
+            {
+                try
+                {
+                    if (!warm.IsCompleted) TheLongestYear.Loop.LoadProgress.Reading();
+                    return warm.GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    this.Monitor.Log($"Lexicon: the title-screen read failed ({ex.GetType().Name}: {ex.Message}); reading again now.", LogLevel.Trace);
+                }
+            }
+            return new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
         }
 
         /// <summary>Hands the recipe book which supported mod adds each item, for its picker's source tabs.</summary>
@@ -251,7 +286,7 @@ namespace TheLongestYear
             _lexicon?.Forget();
             try
             {
-                _lexicon ??= new TheLongestYear.Loop.LexiconService(this.Monitor, this.Helper.DirectoryPath, this.Helper.ModRegistry, BuildLexiconVariant);
+                _lexicon = TakeLexicon();
                 PublishRecipeSources();
                 var timer = System.Diagnostics.Stopwatch.StartNew();
                 // A shop line a layer names as a daily pick reads as every item it can pick, so the

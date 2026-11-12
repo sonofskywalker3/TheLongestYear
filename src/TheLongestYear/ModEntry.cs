@@ -80,6 +80,8 @@ namespace TheLongestYear
         private TheLongestYear.Core.Obtainability.ObtainabilityInputs _lastObtainabilityInputs;
         /// <summary>The path lexicon (shipped answers, disk cache, build), made at the first save load.</summary>
         private TheLongestYear.Loop.LexiconService _lexicon;
+        /// <summary>The lexicon being read on a worker since the title screen; null once taken.</summary>
+        private System.Threading.Tasks.Task<TheLongestYear.Loop.LexiconService> _lexiconWarmup;
         /// <summary>The obtainability build the lexicon ran during the last load, and whether the
         /// session memo reused it; null when the answers came from the shipped file or the cache.</summary>
         private TheLongestYear.Core.Obtainability.ObtainabilityBuild _lastLexiconBuild;
@@ -588,6 +590,7 @@ namespace TheLongestYear
 
         private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
+            if (_config.Enabled) WarmLexicon();
             // Cart Whisperer extends to every day when the standalone Cart Catalog mod is installed.
             TheLongestYear.Loop.CartCatalogIntegration.ModLoaded =
                 this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
@@ -804,7 +807,8 @@ namespace TheLongestYear
                 // item lands earlier than vanilla or an installed layer ships it.
                 if (_lexicon?.HoldsToShipped == true)
                 {
-                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), step, out IReadOnlyList<string> held);
+                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), step, out IReadOnlyList<string> held,
+                        new HashSet<string>((_itemSeasonPins?.Keys ?? Enumerable.Empty<string>()).Concat(AvailabilityWeekOverrides()?.Keys ?? Enumerable.Empty<string>()), StringComparer.Ordinal));
                     if (held.Count > 0)
                     {
                         model = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(

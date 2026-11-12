@@ -41,9 +41,12 @@ namespace TheLongestYear.Loop
 
         /// <param name="build">The answers for live data nothing has (the cold build, for now), given the
         /// layers' extra direct sources to add and their year-2 maps and shops to flag.</param>
+        /// <param name="onGameThread">False when constructed on a worker at the title screen: the
+        /// constructor only reads files and composes them, and then draws no progress card.</param>
         public LexiconService(
             IMonitor monitor, string modFolder, IModRegistry registry,
-            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, YearTwoMarks, AnswerVariant> build)
+            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, YearTwoMarks, AnswerVariant> build,
+            bool onGameThread = true)
         {
             if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
@@ -54,7 +57,8 @@ namespace TheLongestYear.Loop
             KnownData.Known = ReadKnownIds(modFolder, registry, warn);
             Vanilla = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
             // The support files are megabytes each: with any to read, say so on screen first.
-            if (LayerLoader.HasInstalledLayers(modFolder, registry)) LoadProgress.Reading();
+            // Off the game thread (the title-screen warm-up) nothing may draw, and nothing needs to.
+            if (onGameThread && LayerLoader.HasInstalledLayers(modFolder, registry)) LoadProgress.Reading();
             Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
             LayerSet layers = Loaded.Set;
             YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;

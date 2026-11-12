@@ -192,7 +192,8 @@ public static class AssetIds
     private const ulong FnvPrime = 1099511628211UL;
 
     /// <summary>A row's id: its <c>Id</c>, or with none a digest of its plain values (strings,
-    /// numbers, flags and enums, by member name), which does not depend on its place in the list.</summary>
+    /// numbers, flags and enums, and lists of them such as required tags, by member name), which does
+    /// not depend on its place in the list.</summary>
     public static string RowKey(object? row)
     {
         if (row == null) return DigestPrefix + "null";
@@ -212,13 +213,19 @@ public static class AssetIds
         const BindingFlags Public = BindingFlags.Instance | BindingFlags.Public;
         static bool IsPlain(Type m) => m == typeof(string) || m.IsPrimitive || m.IsEnum || m == typeof(decimal)
             || (Nullable.GetUnderlyingType(m) is Type inner && (inner.IsPrimitive || inner.IsEnum));
+        static bool IsPlainList(Type m) => m != typeof(string) && typeof(IEnumerable).IsAssignableFrom(m)
+            && (m.IsArray ? m.GetElementType() : m.IsGenericType ? m.GetGenericArguments()[^1] : null) is Type element && IsPlain(element);
+        static string One(object? value) => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? "";
         static string Text(string name, object? value)
-            => name + "=" + Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) + ";";
+            => name + "=" + (value is IEnumerable list and not string
+                ? "[" + string.Join(",", list.Cast<object?>().Select(One)) + "]"
+                : One(value)) + ";";
         var readers = new List<(string Name, Func<object, string> Read)>();
         foreach (FieldInfo field in t.GetFields(Public))
-            if (IsPlain(field.FieldType)) readers.Add((field.Name, o => Text(field.Name, field.GetValue(o))));
+            if (IsPlain(field.FieldType) || IsPlainList(field.FieldType)) readers.Add((field.Name, o => Text(field.Name, field.GetValue(o))));
         foreach (PropertyInfo property in t.GetProperties(Public))
-            if (property.CanRead && property.GetIndexParameters().Length == 0 && IsPlain(property.PropertyType))
+            if (property.CanRead && property.GetIndexParameters().Length == 0
+                && (IsPlain(property.PropertyType) || IsPlainList(property.PropertyType)))
                 readers.Add((property.Name, o => Text(property.Name, property.GetValue(o))));
         return readers.OrderBy(r => r.Name, StringComparer.Ordinal).Select(r => r.Read).ToList();
     });

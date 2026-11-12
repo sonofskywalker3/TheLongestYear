@@ -76,12 +76,12 @@ HUB_OPEN_PATTERN = r"Opened planning hub"
 MAX_FOCUS_PICKS = 6
 MAX_ROUNDS = 3
 MAX_ID_CHANGES = 40
-HAS_MOD_PATTERNS = (
-    re.compile(r'"HasMod(?:\s*\|contains=([\w.\-]+))?"\s*:\s*"?([^",}\n]*)', re.IGNORECASE),
-    re.compile(r"HasMod\s*\|contains=([\w.\-]+)", re.IGNORECASE),
-    re.compile(r"\{\{HasMod\s*:\s*([\w.\-]+)\}\}", re.IGNORECASE),
-)
 SCANNED_SUFFIXES = frozenset({".json"})
+PREVIOUS_LOG_SUFFIX = ".layer-build-previous"
+MOD_ID_PATTERN = re.compile(r"[A-Za-z][\w\-]*(?:\.[\w\-]+)+")
+NOT_MOD_ID_SUFFIXES = (".json", ".png", ".tmx", ".tbin", ".xnb", ".ogg", ".wav", ".txt")
+WRITE_DONE_PATTERN = (r"tly_lexicon write [^:]+: (wrote variant|no obtainability inputs|no save loaded|"
+                      r"\S+ has no active layer|the existing .* could not be read|no '[^']+' variant)")
 UPDATE_PATTERN = re.compile(r"ALERT SMAPI\]\s+(.+?) (\S+): https?://\S+ \(you have ([^)]+)\)")
 
 log = logging.getLogger("layer-build")
@@ -162,21 +162,28 @@ def resolve(unique_ids: list[str], mods: list[ModFolder], report: Report) -> set
     return needed
 
 
-def set_enabled(enabled: set[str]) -> dict[str, str]:
-    """Enables exactly these folders plus ALWAYS_ON. Returns the names as they were, to restore."""
-    before = {top: path.name for top, path in top_folders().items()}
+def set_enabled(enabled: set[str], renamed: dict[str, str]) -> None:
+    """Enables exactly these folders plus ALWAYS_ON. Each folder's old name goes into `renamed`
+    BEFORE it is renamed, so a failure part way leaves a full record of what to put back."""
     for top, path in top_folders().items():
         want = top if (top in enabled or top in ALWAYS_ON) else DISABLED_PREFIX + top
         if path.name != want:
+            renamed.setdefault(top, path.name)
             path.rename(path.with_name(want))
-    return before
 
 
-def restore_folders(before: dict[str, str]) -> None:
-    for top, path in top_folders().items():
-        was = before.get(top)
-        if was and path.name != was:
+def restore_folders(renamed: dict[str, str]) -> None:
+    """Puts every renamed folder back. One that cannot be renamed (a locked file) is logged with
+    the name it should have, and the rest are still restored."""
+    folders = top_folders()
+    for top, was in renamed.items():
+        path = folders.get(top)
+        if path is None or path.name == was:
+            continue
+        try:
             path.rename(path.with_name(was))
+        except OSError as error:
+            log.error("Could not rename %s back to %s (%s). Rename it by hand.", path, was, error)
 
 
 def game_running() -> bool:
@@ -189,7 +196,11 @@ def powershell(command: str) -> None:
 
 
 def launch() -> None:
+    """Starts the game and waits for the bridge. The previous run's log is moved aside first, so
+    the ready line can only come from this process."""
     BRIDGE_FILE.unlink(missing_ok=True)
+    if LOG_FILE.exists():
+        LOG_FILE.replace(LOG_FILE.with_name(LOG_FILE.name + PREVIOUS_LOG_SUFFIX))
     powershell(f"Start-Process -FilePath '{SMAPI_EXE}' -WindowStyle Minimized")
     time.sleep(SETTLE_SECONDS)
     wait_log(READY_PATTERN, 0, LAUNCH_TIMEOUT)
@@ -248,8 +259,9 @@ def copy_back(name: str, report: Report) -> bool:
     return True
 
 
-def write_variant(unique_id: str, has_inputs: bool, label: str, report: Report) -> None:
-    """With a farm loaded and the mod's ids in force: gaps, and the answers when there is an inputs file."""
+def write_variant(unique_id: str, has_inputs: bool, label: str, report: Report) -> bool:
+    """With a farm loaded and the mod's ids in force: gaps, and the answers when there is an inputs
+    file. True when the answers for this variant were written."""
     gaps_name = f"lexicon-gaps-{label}.md"
     report.add(run(f"tly_lexicon gaps {gaps_name}", RESULT + r"tly_lexicon gaps").split("] ", 1)[-1])
     gaps = TLY_MOD_DIR / gaps_name
@@ -257,11 +269,14 @@ def write_variant(unique_id: str, has_inputs: bool, label: str, report: Report) 
         shutil.copy2(gaps, OUT_ROOT / unique_id / gaps_name)
         gaps.unlink()
     if not has_inputs:
-        return
-    line = run(f"tly_lexicon write {unique_id}", RESULT + r"tly_lexicon write", LOAD_TIMEOUT)
+        return False
+    # The command can warn before it builds; only its last line (written, or why not) ends the wait.
+    line = run(f"tly_lexicon write {unique_id}", RESULT + WRITE_DONE_PATTERN, LOAD_TIMEOUT)
     report.add(f"[{label}] " + line.split("] ", 1)[-1])
-    if "WARN" in line or "refus" in line.lower():
-        report.ask(f"`tly_lexicon write {unique_id}` did not write the {label} variant: {line.split('] ', 1)[-1]}")
+    if f"wrote variant '{label}'" in line:
+        return True
+    report.ask(f"`tly_lexicon write {unique_id}` did not write the {label} variant: {line.split('] ', 1)[-1]}")
+    return False
 
 
 def own_upgrade(save: str, upgrade: str, report: Report) -> bool:
@@ -333,18 +348,22 @@ def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> 
         for path in sorted(root.rglob("*")):
             if path.suffix.lower() not in SCANNED_SUFFIXES or not path.is_file():
                 continue
-            text = path.read_text(encoding="utf-8-sig", errors="replace")
-            for number, line in enumerate(text.splitlines(), start=1):
-                for pattern in HAS_MOD_PATTERNS:
-                    for match in pattern.finditer(line):
-                        named = [g for g in match.groups() if g]
-                        for other in re.split(r"[,\s]+", " ".join(named)):
-                            other = other.strip().strip('"')
-                            if "." not in other or other.lower() in own_ids or other.lower() in {"true", "false"}:
-                                continue
-                            place = f"{path.relative_to(root)}:{number}: {line.strip()[:160]}"
-                            if place not in found.setdefault(other, []):
-                                found[other].append(place)
+            lines = path.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+            for number, line in enumerate(lines, start=1):
+                at = line.lower().find("hasmod")
+                if at < 0:
+                    continue
+                # Every mod id written after "HasMod" on the line, in any of Content Patcher's
+                # forms; a key whose value sits on the next line is read with that line.
+                tail = line[at:]
+                if tail.rstrip().endswith(":") and number < len(lines):
+                    tail += " " + lines[number]
+                for other in MOD_ID_PATTERN.findall(tail):
+                    if other.lower() in own_ids or other.lower().endswith(NOT_MOD_ID_SUFFIXES):
+                        continue
+                    place = f"{path.relative_to(root)}:{number}: {line.strip()[:160]}"
+                    if place not in found.setdefault(other, []):
+                        found[other].append(place)
     if not found:
         report.add("No content in the mod's files depends on another mod being installed.")
         return
@@ -424,17 +443,22 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
     out = OUT_ROOT / unique_id
     tag = layer_pass.name or "plain"
     needed = resolve([unique_id, *layer_pass.extra_mods], mods, report)
-    report.add(f"Pass {tag}: enabling {', '.join(sorted(needed))}.")
+    # Everything in an enabled folder loads, and whatever it adds is written into this layer's ids.
+    loaded = sorted(m.unique_id for m in mods if m.top in needed and m.top not in ALWAYS_ON)
+    report.add(f"Pass {tag}: enabling {', '.join(sorted(needed))} (mods: {', '.join(loaded)}).")
     saves_before = {p.name for p in SAVES_DIR.iterdir() if p.is_dir()}
-    folders_before = set_enabled(needed)
+    renamed: dict[str, str] = {}
+    save: str | None = None
     try:
+        set_enabled(needed, renamed)
         launch()
         run("tly_newgame standard skipintro layerbuild", RUN_READY_PATTERN, LOAD_TIMEOUT)
         report.add(run(f"tly_lexicon ids {unique_id}", r"tly_lexicon ids:").split("] ", 1)[-1])
         made = new_saves(saves_before)
-        if not made:
-            raise LayerBuildError("The new farm's save folder was not found.")
-        save = made[-1]
+        if len(made) != 1:
+            # Not exactly the one farm this run made: something else touched the saves, so none is ours to use.
+            raise LayerBuildError(f"Expected one new farm in the saves folder and found {len(made)} ({', '.join(made) or 'none'}).")
+        save = made[0]
         save_log(out, f"{tag}-1-ids")
         report_updates(report)
         close_game()
@@ -452,13 +476,18 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
             launch()
             run(f"tly_loadsave {save}", RUN_READY_PATTERN, LOAD_TIMEOUT)
             ready = layer_pass.upgrade is None or own_upgrade(save, layer_pass.upgrade, report)
+            wrote_all = ready
             if ready:
-                write_variant(unique_id, has_inputs, layer_pass.variant(pierre=False), report)
-                written.append(layer_pass.variant(pierre=False))
+                wrote = write_variant(unique_id, has_inputs, layer_pass.variant(pierre=False), report)
+                wrote_all = wrote
+                if wrote:
+                    written.append(layer_pass.variant(pierre=False))
                 if not skip_pierre and own_upgrade(save, PIERRE_UPGRADE, report):
                     report.add(run(f"tly_lexicon ids {unique_id}", r"tly_lexicon ids:").split("] ", 1)[-1])
-                    write_variant(unique_id, has_inputs, layer_pass.variant(pierre=True), report)
-                    written.append(layer_pass.variant(pierre=True))
+                    wrote = write_variant(unique_id, has_inputs, layer_pass.variant(pierre=True), report)
+                    wrote_all = wrote_all and wrote
+                    if wrote:
+                        written.append(layer_pass.variant(pierre=True))
             errors = sum(1 for line in log_lines() if " ERROR " in line)
             save_log(out, f"{tag}-2-write-round{round_number}")
             if errors:
@@ -467,7 +496,8 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
             close_game()
 
             copy_back(f"{unique_id}.ids.json", report)
-            if not (ready and has_inputs and copy_back(f"{unique_id}.answers.json", report)):
+            # A variant that was not written leaves the answers file as it was: it is not copied back.
+            if not (wrote_all and has_inputs and copy_back(f"{unique_id}.answers.json", report)):
                 break
             launch()
             run(f"tly_loadsave {save}", RUN_READY_PATTERN, LOAD_TIMEOUT)
@@ -483,11 +513,13 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
                 report.add(f"Pass {tag}, round {round_number}: a fresh build still differs; writing again.")
         shutil.rmtree(fresh_farm, ignore_errors=True)
     finally:
-        close_game()
-        restore_folders(folders_before)
-        if not keep_saves:
-            for name in new_saves(saves_before):
-                shutil.rmtree(SAVES_DIR / name, ignore_errors=True)
+        try:
+            close_game()
+        finally:
+            restore_folders(renamed)
+            # Only the farm this pass made and named, never "whatever is new".
+            if save is not None and not keep_saves:
+                shutil.rmtree(SAVES_DIR / save, ignore_errors=True)
 
 
 def build(unique_id: str, skip_pierre: bool, keep_saves: bool, fresh_ids: bool, only: str | None) -> Report:

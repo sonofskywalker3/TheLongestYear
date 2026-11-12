@@ -102,6 +102,26 @@ public class KnownIdsTests
         Assert.Equal(new[] { "(O)1" }, AssetIds.Filter("A", new Dictionary<string, Place> { ["P"] = place }, knownPlace)["P"].Fish.Select(r => r.ItemId));
     }
 
+    public sealed class Pond
+    {
+        public string Id { get; set; } = "";
+        public List<string> RequiredTags = new();
+        public List<Row> Rewards = new();
+    }
+
+    [Fact]
+    public void UnnamedRowsThatDifferOnlyInAListOfTagsAreDifferentRows()
+    {
+        var shipped = new List<Pond> { new() { RequiredTags = { "fish_carp" }, Rewards = { new Row { Id = "Roe" } } } };
+        var known = new KnownIds(AssetIds.Ids("Data/FishPondData", shipped));
+        var live = new List<Pond>
+        {
+            new() { RequiredTags = { "fish_mod" }, Rewards = { new Row { Id = "Roe" } } },
+            new() { RequiredTags = { "fish_carp" }, Rewards = { new Row { Id = "Roe" } } },
+        };
+        Assert.Equal(new[] { "fish_carp" }, AssetIds.Filter("Data/FishPondData", live, known).Select(p => p.RequiredTags[0]));
+    }
+
     [Fact]
     public void AStringAssetIsKnownByItsKey()
     {
