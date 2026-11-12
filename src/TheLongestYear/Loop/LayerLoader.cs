@@ -16,6 +16,11 @@ namespace TheLongestYear.Loop
         /// for the recipe book's source tabs. Read from every layer whose mod is loaded, even one checked
         /// against another version: a mod update rarely changes which items are its own.</summary>
         public IReadOnlyDictionary<string, string> ItemOwners { get; init; } = new Dictionary<string, string>();
+
+        /// <summary>Every answers file whose mods are all installed, whatever version it was checked
+        /// against: what the floor on built answers reads (<see cref="AvailabilityFloor"/>). A layer
+        /// checked against another version of its mod still vouches for the weeks it shipped.</summary>
+        public IReadOnlyList<LayerAnswers> InstalledAnswers { get; init; } = Array.Empty<LayerAnswers>();
     }
 
     /// <summary>The SMAPI side of the supported-mod layers: reads every file under
@@ -39,6 +44,7 @@ namespace TheLongestYear.Loop
                 var (inputs, answers) = LayerSet.Active(allInputs, allAnswers, isLoaded, installedVersionOf, warn);
                 return new LoadedLayers(LayerSet.Compose(vanilla, inputs, answers, warn), inputs, answers, installedVersionOf)
                 {
+                    InstalledAnswers = allAnswers.Where(a => a.Mods.Count > 0 && a.Mods.All(isLoaded)).ToList(),
                     ItemOwners = RecipeSources.ItemOwners(
                         allAnswers.Where(a => a.Mods.Count == 1 && isLoaded(a.Mods[0]))
                             .Select(a => (a.Mods[0], a.Deltas.Values.SelectMany(v => v.Obtain.Keys).Distinct())),

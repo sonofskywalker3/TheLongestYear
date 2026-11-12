@@ -186,6 +186,27 @@ namespace TheLongestYear.Loop
                 ? answers
                 : null;
 
+        /// <summary>Whether the current answers were built or cached from data that differs from what
+        /// shipped, so the weeks built from them are held to the shipped ones (<see cref="AvailabilityFloor"/>).</summary>
+        public bool HoldsToShipped => _current != null && _current.Origin != AnswerOrigin.Shipped;
+
+        /// <summary>The shipped availability answers for <paramref name="key"/> on this save's variant:
+        /// vanilla's, and each installed layer's.</summary>
+        public IReadOnlyList<AvailabilityAnswers> VettedAvailability(string key)
+        {
+            var vetted = new List<AvailabilityAnswers>();
+            if (Vanilla?.Resolve(Vanilla.StoredNameFor(_variantName)) is AnswerVariant vanilla
+                && vanilla.Availability.TryGetValue(key, out AvailabilityAnswers own))
+                vetted.Add(own);
+            foreach (LayerAnswers layer in Loaded.InstalledAnswers)
+            {
+                string stored = layer.Deltas.ContainsKey(_variantName) ? _variantName : AnswerSet.StemOf(_variantName);
+                if (layer.Deltas.TryGetValue(stored, out AnswerVariant delta) && delta.Availability.TryGetValue(key, out AvailabilityAnswers theirs))
+                    vetted.Add(theirs);
+            }
+            return vetted;
+        }
+
         /// <summary>The inputs hash the current variant's answers for <paramref name="key"/> were made
         /// from, or null when it has none; for the load log.</summary>
         public string StoredInputs(string key)

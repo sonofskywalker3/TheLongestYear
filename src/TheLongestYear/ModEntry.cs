@@ -776,6 +776,8 @@ namespace TheLongestYear
         /// once at SaveLoaded) and the board builder's catalog Availability. Both hold the model by
         /// reference, so a reset that rebuilds it would otherwise leave them answering from the
         /// pre-reset model for the rest of the session.</summary>
+        private const int MaxHeldInLog = 20;
+
         private TheLongestYear.Core.ItemAvailabilityModel BuildAvailabilityModelFor(TheLongestYear.Core.DifficultyStep step)
         {
             // Served from the path lexicon when it holds answers for this step and kitchen state made
@@ -795,6 +797,18 @@ namespace TheLongestYear
             else
             {
                 var (model, answers) = AvailabilityBuild(step, kitchen);
+                // Data that differs from what shipped may only make the board more cautious: no
+                // item lands earlier than vanilla or an installed layer ships it.
+                if (_lexicon?.HoldsToShipped == true)
+                {
+                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), out IReadOnlyList<string> held);
+                    if (held.Count > 0)
+                    {
+                        model = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
+                            answers, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
+                        this.Monitor.Log($"Availability model {key}: {held.Count} item(s) held to their shipped week: {string.Join(", ", held.Take(MaxHeldInLog))}{(held.Count > MaxHeldInLog ? ", ..." : "")}.", LogLevel.Trace);
+                    }
+                }
                 _availability = model;
                 own = answers;
                 if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });
