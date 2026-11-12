@@ -81,7 +81,9 @@ public class AnimalCapacityRuleTests
         MetaState meta = Owning(HerdTiers(7).Concat(new[] { "keep_coop", "keep_barn" }).ToArray());
         Assert.Equal(4, AnimalCapacityRule.HerdDemand(meta, AnimalHousing.CoopFamily));
         Assert.True(AnimalCapacityRule.WouldOverflow(meta, "herdbook_8"));
+        // A Rabbit lives in a Deluxe Coop, which also has the room.
         meta.OwnedUpgrades.Add("keep_big_coop");
+        meta.OwnedUpgrades.Add("keep_deluxe_coop");
         Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_8"));
     }
 
@@ -97,7 +99,7 @@ public class AnimalCapacityRuleTests
     public void Full_ladder_always_fits_deluxe_buildings_even_with_every_start_row()
     {
         MetaState meta = Owning(RunBaselineBuilder.StartingAnimalIds
-            .Concat(new[] { "keep_deluxe_coop", "keep_deluxe_barn" }).ToArray());
+            .Concat(new[] { "keep_coop", "keep_big_coop", "keep_deluxe_coop", "keep_barn", "keep_big_barn", "keep_deluxe_barn" }).ToArray());
         for (int tier = 1; tier <= UpgradeCatalog.HerdBookMaxTier; tier++)
         {
             Assert.False(AnimalCapacityRule.WouldOverflow(meta, $"herdbook_{tier}"));
@@ -172,6 +174,23 @@ public class AnimalCapacityRuleTests
         Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_2"));
     }
 
+    /// <summary>A slot needs its own building keep, not just room in the family: a Duck lives in
+    /// a Big Coop, so Keep Coop alone does not sell the Duck slot.</summary>
+    [Fact]
+    public void Herd_tier_needs_the_keep_for_its_own_building()
+    {
+        MetaState meta = Owning("keep_coop", "keep_barn", "herdbook_1", "herdbook_2", "herdbook_3");
+        Assert.Equal("keep_big_coop", AnimalCapacityRule.MissingKeepFor(meta, "herdbook_4"));   // Duck
+        Assert.True(AnimalCapacityRule.WouldOverflow(meta, "herdbook_4"));
+        Assert.Equal(
+            Strings.Get("shrine.needs-keep", new Dictionary<string, string> { ["keep"] = UpgradeCatalog.TryGet("keep_big_coop")!.DisplayName }),
+            AnimalCapacityRule.BlockReason(meta, "herdbook_4"));
+
+        meta.OwnedUpgrades.Add("keep_big_coop");
+        Assert.Null(AnimalCapacityRule.MissingKeepFor(meta, "herdbook_4"));
+        Assert.False(AnimalCapacityRule.WouldOverflow(meta, "herdbook_4"));
+    }
+
     [Fact]
     public void Ostrich_counts_against_the_barn_not_the_coop()
     {
@@ -209,7 +228,7 @@ public class AnimalCapacityRuleTests
     {
         MetaState meta = Owning("keep_coop", "herdbook_1");
         Assert.Null(AnimalCapacityRule.BlockReason(meta, "start_chicken"));
-        Assert.Equal(Strings.Get("shrine.no-room.barn"), AnimalCapacityRule.BlockReason(meta, "herdbook_2"));
+        Assert.Equal(Strings.Get("shrine.no-room.barn"), AnimalCapacityRule.BlockReason(meta, "start_cow"));
         Assert.Equal(Strings.Get("shrine.no-room.coop"), AnimalCapacityRule.BlockReason(Owning(), "start_chicken"));
         Assert.DoesNotContain("shrine.", AnimalCapacityRule.BlockReason(Owning(), "start_chicken"));
     }

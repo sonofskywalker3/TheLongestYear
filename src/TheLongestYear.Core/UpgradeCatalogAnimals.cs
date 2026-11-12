@@ -15,8 +15,9 @@ public static class AnimalUpgradeRows
     {
         foreach (UpgradeDefinition def in Powers()) yield return def;
         foreach (UpgradeDefinition def in MovedKeeps()) yield return def;
-        // Herd Book (spec 2026-09-25): a chain like the Cookbook's, no building gate. A slot whose
-        // building keep is not owned yet just waits (the menu says so).
+        // Herd Book (spec 2026-09-25): a chain like the Cookbook's. The building gate is not on the
+        // row: AnimalCapacityRule refuses a slot whose building keep is not owned or is full, and
+        // the shop shows the row greyed with the reason.
         for (int tier = 1; tier <= UpgradeCatalog.HerdBookMaxTier; tier++)
             yield return new UpgradeDefinition($"{UpgradeCatalog.HerdBookPrefix}{tier}", UpgradeCategory.Animals,
                 herdBookCosts[tier - 1], tier == 1 ? null : $"{UpgradeCatalog.HerdBookPrefix}{tier - 1}");

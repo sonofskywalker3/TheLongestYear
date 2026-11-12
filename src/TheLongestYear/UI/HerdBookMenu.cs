@@ -235,6 +235,16 @@ namespace TheLongestYear.UI
 
         private void OpenPicker(int slotIndex)
         {
+            // No animal goes in a slot whose building is not kept: it could never come back.
+            HerdSlotKind kind = _slots[slotIndex];
+            if (!HerdBookRules.BuildingKept(kind, _meta.HasUpgrade))
+            {
+                Game1.addHUDMessage(new HUDMessage(
+                    Strings.Get("menu.herdbook.slot-needs-keep", new Dictionary<string, string> { ["keep"] = KeepName(kind) }),
+                    HUDMessage.error_type));
+                Game1.playSound("cancel");
+                return;
+            }
             _pendingSlot = slotIndex;
             _pickerList = HerdBookService.Candidates(_slots[slotIndex], _meta);
             _pickerScroll = 0;
@@ -370,12 +380,12 @@ namespace TheLongestYear.UI
                 HerdSlotKind kind = _slots[slotIndex];
                 HerdEntry entry = HerdBookRules.EntryAt(_meta.HerdBook, slotIndex);
                 string kindName = HerdSlotRules.DisplayName(kind);
-                string note = null;
-                if (!_meta.HasUpgrade(HerdSlotRules.RequiredKeepId(kind)))
-                {
-                    string keep = UpgradeCatalog.TryGet(HerdSlotRules.RequiredKeepId(kind))?.DisplayName ?? HerdSlotRules.RequiredHousing(kind);
-                    note = Strings.Get("menu.herdbook.needs-keep", new Dictionary<string, string> { ["keep"] = keep });
-                }
+                // A slot whose building is not kept takes no animal. One filled before that rule
+                // still says what it is waiting for.
+                bool kept = HerdBookRules.BuildingKept(kind, _meta.HasUpgrade);
+                string note = kept || entry == null
+                    ? null
+                    : Strings.Get("menu.herdbook.needs-keep", new Dictionary<string, string> { ["keep"] = KeepName(kind) });
 
                 AnimalRow animalRow = entry == null ? null : SlotRow(entry);
                 if (animalRow?.Entry != null)
@@ -386,7 +396,9 @@ namespace TheLongestYear.UI
                 }
 
                 string label = entry == null
-                    ? Strings.Get("menu.herdbook.empty-slot", new Dictionary<string, string> { ["kind"] = kindName })
+                    ? kept
+                        ? Strings.Get("menu.herdbook.empty-slot", new Dictionary<string, string> { ["kind"] = kindName })
+                        : Strings.Get("menu.herdbook.locked-slot", new Dictionary<string, string> { ["kind"] = kindName, ["keep"] = KeepName(kind) })
                     : Strings.Get("menu.herdbook.filled-slot", new Dictionary<string, string>
                         {
                             ["kind"] = kindName,
@@ -396,6 +408,10 @@ namespace TheLongestYear.UI
                 DrawRow(b, row, label, entry == null ? Color.White * EmptyRowAlpha : Color.White, note);
             }
         }
+
+        /// <summary>The player-facing name of the keep that brings back this kind's building.</summary>
+        private static string KeepName(HerdSlotKind kind)
+            => UpgradeCatalog.TryGet(HerdSlotRules.RequiredKeepId(kind))?.DisplayName ?? HerdSlotRules.RequiredHousing(kind);
 
         /// <summary>The filled slot's row, built once per entry: from the live animal when it is on
         /// the farm, else from the stored entry.</summary>

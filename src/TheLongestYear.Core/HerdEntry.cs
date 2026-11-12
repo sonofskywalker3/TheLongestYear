@@ -28,4 +28,6 @@ public enum HerdRegisterResult
     SlotNotOwned,
     WrongKind,
     AlreadyRegistered,
+    /// <summary>The keep for the slot's building is not owned, so the animal could never come back.</summary>
+    NeedsBuildingKeep,
 }

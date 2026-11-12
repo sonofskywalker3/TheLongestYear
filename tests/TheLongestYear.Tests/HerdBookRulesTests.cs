@@ -107,6 +107,27 @@ public class HerdBookRulesTests
         Assert.Equal(new long[] { 3, 2 }, HerdBookRules.Candidates(Chicken, live, book).Select(a => a.Id));
     }
 
+    /// <summary>A slot takes an animal only once the keep for its building is owned: one put in
+    /// without Keep Coop could never come back, and was lost when the player took it out again
+    /// (Nexus bug 1171079).</summary>
+    [Theory]
+    [InlineData(false, HerdRegisterResult.NeedsBuildingKeep)]
+    [InlineData(true, HerdRegisterResult.Registered)]
+    public void Register_needs_the_slots_building_keep(bool ownsKeepCoop, HerdRegisterResult expected)
+    {
+        var book = new List<HerdEntry>();
+        Assert.Equal(expected, HerdBookRules.Register(book, FourSlots, Entry(0, 1), id => ownsKeepCoop && id == "keep_coop"));
+        Assert.Equal(ownsKeepCoop ? 1 : 0, book.Count);
+    }
+
+    [Fact]
+    public void ShouldOffer_not_for_a_slot_whose_building_keep_is_not_owned()
+    {
+        HerdAnimal[] live = { Animal(5, "White Cow", "Moo") };
+        Assert.False(HerdBookRules.ShouldOfferAtReset(FourSlots, new List<HerdEntry>(), live, id => id == "keep_coop"));
+        Assert.True(HerdBookRules.ShouldOfferAtReset(FourSlots, new List<HerdEntry>(), live, id => id == "keep_barn"));
+    }
+
     [Fact]
     public void ShouldOffer_when_an_empty_slot_has_a_fitting_animal()
         => Assert.True(HerdBookRules.ShouldOfferAtReset(FourSlots, new List<HerdEntry>(), new[] { Animal(5, "White Cow", "Moo") }));

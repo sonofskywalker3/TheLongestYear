@@ -46,23 +46,34 @@ public static class HerdBookRules
             .ToList();
     }
 
-    /// <summary>Open the book on a rewind night only when an owned slot is empty and some animal
-    /// on the farm fits it. Otherwise the night is not interrupted.</summary>
-    public static bool ShouldOfferAtReset(IReadOnlyList<HerdSlotKind> slots, IReadOnlyList<HerdEntry> book, IReadOnlyList<HerdAnimal> live)
+    /// <summary>True when the keep that brings back this kind's building is owned. A slot takes
+    /// an animal only then: one put in without it waited in the book for good, and was lost when
+    /// the player took it out (Nexus bug 1171079). A null lookup means no gate (callers with no
+    /// save to ask).</summary>
+    public static bool BuildingKept(HerdSlotKind kind, Func<string, bool>? hasUpgrade)
+        => hasUpgrade == null || hasUpgrade(HerdSlotRules.RequiredKeepId(kind));
+
+    /// <summary>Open the book on a rewind night only when an owned slot is empty, its building is
+    /// kept and some animal on the farm fits it. Otherwise the night is not interrupted.</summary>
+    public static bool ShouldOfferAtReset(IReadOnlyList<HerdSlotKind> slots, IReadOnlyList<HerdEntry> book,
+        IReadOnlyList<HerdAnimal> live, Func<string, bool>? hasUpgrade = null)
     {
         for (int i = 0; i < slots.Count; i++)
-            if (EntryAt(book, i) == null && Candidates(slots[i], live, book).Count > 0)
+            if (EntryAt(book, i) == null && BuildingKept(slots[i], hasUpgrade) && Candidates(slots[i], live, book).Count > 0)
                 return true;
         return false;
     }
 
     /// <summary>Put <paramref name="entry"/> in its slot. Refuses a slot the save does not own, a
-    /// type the slot does not take, and an animal already in another slot. Replaces whatever the
-    /// slot held; the book stays sorted by slot.</summary>
-    public static HerdRegisterResult Register(List<HerdEntry> book, IReadOnlyList<HerdSlotKind> slots, HerdEntry entry)
+    /// slot whose building keep is not owned, a type the slot does not take, and an animal already
+    /// in another slot. Replaces whatever the slot held; the book stays sorted by slot.</summary>
+    public static HerdRegisterResult Register(List<HerdEntry> book, IReadOnlyList<HerdSlotKind> slots, HerdEntry entry,
+        Func<string, bool>? hasUpgrade = null)
     {
         if (entry.SlotIndex < 0 || entry.SlotIndex >= slots.Count)
             return HerdRegisterResult.SlotNotOwned;
+        if (!BuildingKept(slots[entry.SlotIndex], hasUpgrade))
+            return HerdRegisterResult.NeedsBuildingKeep;
         if (!HerdSlotRules.Accepts(slots[entry.SlotIndex], entry.Type))
             return HerdRegisterResult.WrongKind;
         if (book.Any(e => e.AnimalId == entry.AnimalId && e.SlotIndex != entry.SlotIndex))

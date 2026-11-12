@@ -92,22 +92,43 @@ public static class AnimalCapacityRule
         return null;
     }
 
+    /// <summary>The building keep a Herd Book tier's animal needs and the save does not own, or
+    /// null. A Duck slot needs Keep Big Coop: with only Keep Coop there is room in the family, but
+    /// the duck could never come back (Jeff, 2026-11-12: sell a slot only after its keep).</summary>
+    public static string? MissingKeepFor(MetaState meta, string upgradeId)
+    {
+        if (!upgradeId.StartsWith(UpgradeCatalog.HerdBookPrefix, System.StringComparison.Ordinal)
+            || !int.TryParse(upgradeId.Substring(UpgradeCatalog.HerdBookPrefix.Length), out int tier)
+            || tier < 1 || tier > UpgradeCatalog.HerdBookMaxTier)
+            return null;
+        string keepId = HerdSlotRules.RequiredKeepId(HerdSlotRules.KindAt(tier));
+        return meta.HasUpgrade(keepId) ? null : keepId;
+    }
+
     /// <summary>True when buying <paramref name="upgradeId"/> would put more animals in its family
-    /// than the kept buildings hold. False for rows that add no animal.</summary>
+    /// than the kept buildings hold, or its animal's own building is not kept. False for rows that
+    /// add no animal.</summary>
     public static bool WouldOverflow(MetaState meta, string upgradeId)
     {
         string? family = FamilyOf(upgradeId);
         if (family == null)
             return false;
+        if (MissingKeepFor(meta, upgradeId) != null)
+            return true;
         return DemandFor(meta, upgradeId) + 1 > Capacity(meta, family);
     }
 
-    /// <summary>The short player-facing reason a row is refused ("Needs a bigger coop"), or null
-    /// when the room is there.</summary>
+    /// <summary>The short player-facing reason a row is refused ("Needs Keep Big Coop", "Needs more
+    /// coop room"), or null when the row can be bought.</summary>
     public static string? BlockReason(MetaState meta, string upgradeId)
     {
         if (!WouldOverflow(meta, upgradeId))
             return null;
+        if (MissingKeepFor(meta, upgradeId) is string keepId)
+            return Strings.Get("shrine.needs-keep", new Dictionary<string, string>
+            {
+                ["keep"] = UpgradeCatalog.TryGet(keepId)?.DisplayName ?? keepId,
+            });
         return FamilyOf(upgradeId) == AnimalHousing.CoopFamily
             ? Strings.Get("shrine.no-room.coop")
             : Strings.Get("shrine.no-room.barn");

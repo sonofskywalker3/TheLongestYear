@@ -19,7 +19,7 @@ namespace TheLongestYear.Loop
             IReadOnlyList<HerdSlotKind> slots = HerdBookRules.SlotsFor(meta);
             List<HerdAnimal> live = HerdBookService.LiveHerdAnimals();
             int registered = HerdBookRules.Used(meta.HerdBook, slots.Count);
-            if (!HerdBookRules.ShouldOfferAtReset(slots, meta.HerdBook, live))
+            if (!HerdBookRules.ShouldOfferAtReset(slots, meta.HerdBook, live, meta.HasUpgrade))
             {
                 _monitor.Log($"Herd Book not offered before the reset: slots={slots.Count}, registered={registered}, animals={live.Count}.", LogLevel.Trace);
                 onContinue();

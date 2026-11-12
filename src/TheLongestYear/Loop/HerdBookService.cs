@@ -53,7 +53,7 @@ namespace TheLongestYear.Loop
         public static HerdRegisterResult Register(MetaState meta, int slotIndex, FarmAnimal animal, IMonitor monitor)
         {
             HerdEntry entry = Snapshot(animal, slotIndex);
-            HerdRegisterResult result = HerdBookRules.Register(meta.HerdBook, HerdBookRules.SlotsFor(meta), entry);
+            HerdRegisterResult result = HerdBookRules.Register(meta.HerdBook, HerdBookRules.SlotsFor(meta), entry, meta.HasUpgrade);
             monitor.Log(
                 $"HerdBook: register '{entry.Name}' ({entry.Type}, id {entry.AnimalId}) in slot {slotIndex}: {result} " +
                 $"(friendship {entry.Friendship}, age {entry.Age}).",
