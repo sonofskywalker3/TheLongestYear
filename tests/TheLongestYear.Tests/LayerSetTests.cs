@@ -413,6 +413,29 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void AFileNamingAModThatIsNotInstalledIsNotRead()
+    {
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tly-layers-" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(folder);
+        try
+        {
+            // Unparseable on purpose: a file that is read would warn.
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModA.inputs.json"), "not json");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModA.answers.json"), "not json");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModA+ModB.answers.json"), "not json");
+            var warnings = new List<string>();
+            var (inputs, answers) = LayerFile.ReadFolder(folder, warnings.Add, id => id == "ModB");
+            Assert.Empty(inputs);
+            Assert.Empty(answers);
+            Assert.Empty(warnings);
+        }
+        finally
+        {
+            System.IO.Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
     public void RewriteAfterARemovedRowHoldsExactlyTheLiveRows()
     {
         var vanillaRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1 };
