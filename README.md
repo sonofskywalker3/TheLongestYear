@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.25
+## What's New in 1.2.27
+
+**Changed: the Herd Book only takes animals it can bring back.** A slot takes an animal only once you own the keep for its building, like Keep Coop for a chicken or Keep Big Coop for a duck. The Herd Book tab stays out of the Keeping Book until you have a slot you can use, and the JP shop sells a slot only after that keep and names the one it needs. An animal already waiting in your book stays there. Thanks to tanky24u.
+
+## 1.2.25
 
 **Fixed: a weekly goal could ask for a dried fruit you can't make yet.** A Dried Fruit or Smoked Fish goal now waits until the fruit or fish it names can be had, so Dried Cranberries are no longer a Summer goal. The weekly quest and the theme cards also name the fruit or fish now, where they used to say only "Dried" or "Smoked". Thanks to tanky24u.
 

@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.27 - 2026-11-12
+
+### Changed
+
+- **the Herd Book only takes animals it can bring back.** A slot takes an animal only once you own the keep for its building, like Keep Coop for a chicken or Keep Big Coop for a duck. The Herd Book tab stays out of the Keeping Book until you have a slot you can use, and the JP shop sells a slot only after that keep and names the one it needs. An animal already waiting in your book stays there. Thanks to tanky24u.
+
 ## 1.2.25 - 2026-11-12
 
 ### Added
