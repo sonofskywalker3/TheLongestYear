@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.25 - 2026-11-12
+
+### Added
+
+- **the Junimo Shrine shows the Junimo Points you've earned this loop.** The Active tab of the shrine on your farm lists this loop's JP so far and where it came from: bundles, rooms, weekly themes, shrine goals and checkpoints. Thanks to tanky24u for the idea.
+
+### Fixed
+
+- **a weekly goal could ask for a dried fruit you can't make yet.** A Dried Fruit or Smoked Fish goal now waits until the fruit or fish it names can be had, so Dried Cranberries are no longer a Summer goal. The weekly quest and the theme cards also name the fruit or fish now, where they used to say only "Dried" or "Smoked". Thanks to tanky24u.
+- **taking a waiting animal out of the Herd Book lost it without a warning.** An animal that is waiting in the Herd Book for its building is not on your farm. Taking it out removes it for good, and the Herd Book now says so before you confirm. Thanks to tanky24u.
+
 ## 1.2.21 - 2026-11-10
 
 ### Added

@@ -23,7 +23,15 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.21
+## What's New in 1.2.25
+
+**Fixed: a weekly goal could ask for a dried fruit you can't make yet.** A Dried Fruit or Smoked Fish goal now waits until the fruit or fish it names can be had, so Dried Cranberries are no longer a Summer goal. The weekly quest and the theme cards also name the fruit or fish now, where they used to say only "Dried" or "Smoked". Thanks to tanky24u.
+
+**Fixed: taking a waiting animal out of the Herd Book lost it without a warning.** An animal that is waiting in the Herd Book for its building is not on your farm. Taking it out removes it for good, and the Herd Book now says so before you confirm. Thanks to tanky24u.
+
+**New: the Junimo Shrine shows the Junimo Points you've earned this loop.** The Active tab of the shrine on your farm lists this loop's JP so far and where it came from: bundles, rooms, weekly themes, shrine goals and checkpoints. Thanks to tanky24u for the idea.
+
+## 1.2.21
 
 **Fixed: bundles asked for dishes you can't cook in year 1.** On Easy and Normal, bundles no longer ask for dishes like Pink Cake, whose recipe only airs as a Sneak Peek of next year's cooking show, unless you've kept that recipe in your Cookbook. Hard and Extreme still ask for them. On Easy, Home Cook's Feast could also ask for dishes with no way to get them at all. It can't any more. Thanks to Nijah.
 
@@ -410,7 +418,7 @@ As of 0.11.60, every player-visible string in the mod lives in a JSON file (`i18
 This mod is shaped by the players who report bugs and suggest ideas. Every one of these made it better. Thank you!
 
 - **SylviaStormsinger**: has done more than anyone to make The Longest Year work alongside other mods. Those reports and logs led to Seven Deadly Sins support, the SpaceCore skill reset, the Exp Boost and Mastery Boost fix, and the Farm Type Manager save fix.
-- **tanky24u**: suggested the Herd Book and Restart the year, and reported ten bugs and balance problems.
+- **tanky24u**: suggested the Herd Book, Restart the year and the Junimo Points earned on the shrine, and reported twelve bugs and balance problems.
 - **FayGabi**: rings in the Dye bundle, Friendship 101 in the Book bundle, Chests Anywhere in the stash, once-per-loop items, and a new farm quit before its first night.
 - **ChaoticMindset**: Willy's letter, quest scenes and Gunther's Rusty Key coming back every loop, and the Joja Mart bundle.
 - **Emmalution**: played the whole loop on YouTube; her stream found the villager first-meeting lines and the weekly goals that ticked for free.
