@@ -285,8 +285,12 @@ namespace TheLongestYear.UI
         private void PromptRemove(int slotIndex)
         {
             HerdEntry entry = HerdBookRules.EntryAt(_meta.HerdBook, slotIndex);
+            // An animal waiting for its building lives only in the book: taking it out loses it,
+            // and the player has to be told so (Nexus bug 1171079, a kept chicken lost this way).
+            bool onFarm = HerdBookService.LiveAnimals().Any(a => a.myID.Value == entry.AnimalId);
             Game1.activeClickableMenu = new ConfirmationDialog(
-                Strings.Get("menu.herdbook.remove-confirm", new Dictionary<string, string> { ["name"] = entry.Name }),
+                Strings.Get(onFarm ? "menu.herdbook.remove-confirm" : "menu.herdbook.remove-waiting-confirm",
+                    new Dictionary<string, string> { ["name"] = entry.Name }),
                 _ =>
                 {
                     HerdBookService.Remove(_meta, slotIndex, _monitor);

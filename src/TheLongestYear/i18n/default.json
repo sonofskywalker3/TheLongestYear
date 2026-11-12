@@ -901,6 +901,7 @@
     "menu.herdbook.needs-keep": "Needs {{keep}} to come back",
     "menu.herdbook.no-animals": "None of your animals fit this slot.",
     "menu.herdbook.remove-confirm": "Take {{name}} out of the Herd Book?\n{{name}} won't come back next loop unless you put it back in.",
+    "menu.herdbook.remove-waiting-confirm": "{{name}} is not on your farm.\nTake it out of the Herd Book and {{name}} is gone for good.",
     "menu.herdbook.bank-before-reset": "The loop is about to reset. Put the animals you want to keep in the book, then close it.",
     "hud.herdbook.no-building": "{{name}} stays in the Herd Book until you buy {{keep}}.",
     "hud.herdbook.no-room": "There was no room for {{name}}, so it stays in the Herd Book.",
