@@ -72,7 +72,8 @@ namespace TheLongestYear.Donations
         private static Dictionary<string, IReadOnlySet<CoreSeason>> BuildCropSeasonMap()
         {
             var map = new Dictionary<string, IReadOnlySet<CoreSeason>>();
-            foreach (KeyValuePair<string, CropData> kvp in Game1.cropData)
+            // Through the known-data view, like the pool readers: a crop from a mod with no layer gives no season.
+            foreach (KeyValuePair<string, CropData> kvp in TheLongestYear.Loop.KnownData.Load<Dictionary<string, CropData>>("Data/Crops"))
             {
                 CropData crop = kvp.Value;
                 if (crop?.HarvestItemId == null || crop.Seasons == null || crop.Seasons.Count == 0)

@@ -140,6 +140,8 @@ namespace TheLongestYear
                 + $"{_availability.RejectedSeasonOverrides.Count} curated season pin(s) rejected for "
                 + "demanding an item earlier than it can exist.",
                 LogLevel.Trace);
+            if (TheLongestYear.Loop.KnownData.Dropped.Count > 0)
+                this.Monitor.Log(TheLongestYear.Loop.KnownData.DroppedLine(), LogLevel.Info);
             if (_availability.RejectedSeasonOverrides.Count > 0)
                 this.Monitor.Log(
                     "Rejected season pins (derived floor kept instead): "

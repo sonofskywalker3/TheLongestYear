@@ -41,7 +41,7 @@ namespace TheLongestYear.DebugCommands
     {
         public const string Name = "tly_lexicon";
         public const string Description =
-            "Path lexicon tooling. Usage: tly_lexicon status (origin, layers, cache files) | tly_lexicon diff [file] (cold build vs the current answers; writes lexicon-diff.md) | tly_lexicon gaps [file] (items with no route, unreached maps, unresolved sources; writes lexicon-gaps.md) | tly_lexicon dumpinputs [fileName] [availabilityFileName] (writes the obtainability and availability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed)";
+            "Path lexicon tooling. Usage: tly_lexicon status (origin, layers, cache files) | tly_lexicon diff [file] (cold build vs the current answers; writes lexicon-diff.md) | tly_lexicon gaps [file] (items with no route, unreached maps, unresolved sources; writes lexicon-gaps.md) | tly_lexicon dumpinputs [fileName] [availabilityFileName] (writes the obtainability and availability inputs the last load read as JSON in the mod folder) | tly_lexicon write vanilla (builds this save's variant into assets/lexicon/vanilla.json; unmodded game only) | tly_lexicon write <UniqueID>[+<UniqueID>] (writes that supported-mod layer's answers delta into assets/lexicon/layers/; only those mods installed) | tly_lexicon ids vanilla|<UniqueID>[+<UniqueID>] (writes the known ids of the live game data; restart afterwards)";
 
         private const int KeyPrefixLength = 8;
         private const string StatusVerb = "status";
@@ -54,7 +54,7 @@ namespace TheLongestYear.DebugCommands
         private const string VanillaTarget = "vanilla";
         private const string DefaultInputsFileName = "obtainability-inputs.json";
         private const string DefaultAvailabilityInputsFileName = "availability-inputs.json";
-        private const string Usage = "Usage: tly_lexicon status | tly_lexicon diff [file] | tly_lexicon gaps [file] | tly_lexicon dumpinputs [fileName] [availabilityFileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>]";
+        private const string Usage = "Usage: tly_lexicon status | tly_lexicon diff [file] | tly_lexicon gaps [file] | tly_lexicon dumpinputs [fileName] [availabilityFileName] | tly_lexicon write vanilla | tly_lexicon write <UniqueID>[+<UniqueID>] | tly_lexicon ids vanilla|<UniqueID>[+<UniqueID>]";
         private static readonly string[] VanillaLayers = { RowHashes.Vanilla };
 
         public static void Run(
@@ -63,6 +63,12 @@ namespace TheLongestYear.DebugCommands
             if (args.Length >= 1 && IsVerb(args[0], StatusVerb)) { Status(monitor, saveContext); return; }
             if (args.Length >= 1 && IsVerb(args[0], DiffVerb)) { Diff(monitor, inputs, modDirectory, args, saveContext); return; }
             if (args.Length >= 1 && IsVerb(args[0], GapsVerb)) { Gaps(monitor, inputs, modDirectory, args, saveContext); return; }
+            if (args.Length >= 2 && IsVerb(args[0], LexiconIdsCommand.Verb))
+            {
+                Func<string, string> versionOf = saveContext()?.Layers?.InstalledVersionOf;
+                LexiconIdsCommand.Run(monitor, modDirectory, string.Join("", args[1..]), id => versionOf?.Invoke(id) != null);
+                return;
+            }
             if (args.Length >= 2 && string.Equals(args[0], WriteVerb, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(args[1], VanillaTarget, StringComparison.OrdinalIgnoreCase))
             {

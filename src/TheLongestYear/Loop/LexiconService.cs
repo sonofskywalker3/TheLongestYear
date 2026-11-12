@@ -50,6 +50,8 @@ namespace TheLongestYear.Loop
             Action<string> warn = m => _monitor.Log(m, LogLevel.Warn);
             Action<string> trace = m => _monitor.Log(m, LogLevel.Trace);
             _cache = new LexiconDiskCache(System.IO.Path.Combine(modFolder, CacheFolder), MaxCacheFiles, warn, trace);
+            // Before anything reads game data: the readers skip what is not vanilla's or an installed layer's.
+            KnownData.Known = ReadKnownIds(modFolder, registry, warn);
             Vanilla = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
             Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
             LayerSet layers = Loaded.Set;
@@ -63,6 +65,23 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
                 live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, SaveMarks(layers.Marks)));
+        }
+
+        /// <summary>The known ids for this game, or null (nothing is filtered) when the vanilla ids
+        /// file is missing or unreadable.</summary>
+        private static KnownIds ReadKnownIds(string modFolder, IModRegistry registry, Action<string> warn)
+        {
+            try
+            {
+                IReadOnlyList<string> vanillaIds = ShippedLexicon.LoadVanillaIds(modFolder);
+                if (vanillaIds == null) warn("Lexicon: no vanilla ids file; content from mods with no layer is not filtered out.");
+                return LayerFile.ReadKnownIds(vanillaIds, LayerFile.Folder(modFolder), registry.IsLoaded, warn);
+            }
+            catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            {
+                warn($"Lexicon: the vanilla ids file could not be read ({e.GetType().Name}: {e.Message}); content from mods with no layer is not filtered out.");
+                return null;
+            }
         }
 
         /// <summary>Whether the loaded save owns an upgrade (false with no save).</summary>
@@ -103,7 +122,8 @@ namespace TheLongestYear.Loop
             if (shipped != null && shipped.ModVersion != modVersion)
                 return $" — shipped answers are for TLY {shipped.ModVersion}, running {modVersion}";
             if (r.DirtyOwners.Count > 0)
-                return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})";
+                return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)}): "
+                    + string.Join("; ", r.DirtyRows) + (r.DirtyCount > r.DirtyRows.Count ? "; ..." : "");
             if (shipped == null) return " — no shipped answers";
             if (shipped.GameVersion != gameVersion)
                 return $" — 0 data rows differ; shipped game version {shipped.GameVersion} ≠ live {gameVersion}";

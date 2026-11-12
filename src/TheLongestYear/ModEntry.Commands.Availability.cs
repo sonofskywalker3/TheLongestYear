@@ -317,7 +317,7 @@ namespace TheLongestYear
 
         /// <summary>Every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>
         private static List<string> DataLocationKeys()
-            => Game1.content.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations").Keys.ToList();
+            => TheLongestYear.Loop.KnownData.Load<Dictionary<string, StardewValley.GameData.Locations.LocationData>>("Data/Locations").Keys.ToList();
 
         /// <summary>The loaded save's facts <c>tly_lexicon write vanilla</c> composes in, or null with no save.
         /// The maps are every Data/Locations key, the same list <see cref="Loop.GameDataPools"/> reads.</summary>

@@ -436,6 +436,26 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void KnownIdsAreVanillasPlusTheInstalledLayers()
+    {
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tly-layers-" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(folder);
+        try
+        {
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModA.ids.json"), LayerFile.WriteIds(new[] { "Data/Objects|A_Item" }));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModB.ids.json"), LayerFile.WriteIds(new[] { "Data/Objects|B_Item" }));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "ModA+ModB.ids.json"), LayerFile.WriteIds(new[] { "Data/Objects|AB_Item" }));
+            KnownIds? known = LayerFile.ReadKnownIds(new[] { "Data/Objects|24" }, folder, id => id == "ModA", _ => { });
+            Assert.Equal(new[] { "Data/Objects|24", "Data/Objects|A_Item" }, known!.Sorted());
+            Assert.Null(LayerFile.ReadKnownIds(null, folder, _ => true, _ => { }));
+        }
+        finally
+        {
+            System.IO.Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
     public void RewriteAfterARemovedRowHoldsExactlyTheLiveRows()
     {
         var vanillaRows = new Dictionary<string, ulong>(StringComparer.Ordinal) { ["obj|(O)1"] = 1 };
