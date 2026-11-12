@@ -190,7 +190,7 @@ public static class AssetIds
 
     /// <summary>A row's id: its <c>Id</c>, or its place in the list when it has none (a row a mod
     /// adds without one sits after the known rows, so it gets a place no known row has).</summary>
-    private static string RowKey(object? row, int index)
+    public static string RowKey(object? row, int index)
     {
         string? id = row == null ? null : RowIdOf(row.GetType())?.Invoke(row);
         return string.IsNullOrEmpty(id) ? "#" + index : id;

@@ -1,3 +1,4 @@
+using System.Linq;
 using TheLongestYear.Core.Obtainability;
 using Xunit;
 
@@ -37,5 +38,52 @@ public class FishConditionCaseTests
     public void UnknownQueriesStillCountAsNeverPassing()
     {
         Assert.Equal(0, FishCatchRates.ConditionChance("PLAYER_HAS_MAIL Current someFlag", Spring, rain: true));
+    }
+
+    private const string Carp = "(O)142";
+    private const string ModFish = "(O)Mod_Fish";
+
+    private static LocationSpawn Row(string item, bool? competitor = null, int precedence = 0)
+        => new("Town", item, null, null, 1, 0, false, 0, Precedence: precedence, CompetitorOnly: competitor);
+
+    private static FishRow Bites(string item) => new(item, false, "both", 0, "600 2600", 0, 0.5, 0);
+
+    private static ObtainabilityInputs Water(params LocationSpawn[] rows) => new()
+    {
+        LocationFish = rows,
+        FishRows = new System.Collections.Generic.Dictionary<string, FishRow> { [Carp] = Bites(Carp) },
+        CompetitorFishRows = new System.Collections.Generic.Dictionary<string, FishRow> { [ModFish] = Bites(ModFish) },
+    };
+
+    [Fact]
+    public void ACompetitorRowTakesCastsAndIsCreditedNothing()
+    {
+        double alone = FishCatchRates.Build(Water(Row(Carp)))[Carp].BestDay;
+        var shared = FishCatchRates.Build(Water(Row(Carp), Row(ModFish, competitor: true)));
+        Assert.True(shared[Carp].BestDay < alone, "the mod's fish did not take any of the casts");
+        Assert.False(shared.ContainsKey(ModFish));
+
+        // The mod rowing the known fish itself gives that fish nothing more.
+        var twice = FishCatchRates.Build(Water(Row(Carp), Row(Carp, competitor: true)));
+        Assert.True(twice[Carp].BestDay < alone);
+    }
+
+    [Fact]
+    public void AFishCrowdedOutEntirelyStaysInTheResultAsRare()
+    {
+        // The mod's row is tried first and always passes (no Data/Fish row: it bites every cast).
+        var inputs = Water(Row(Carp), Row("(O)Mod_Other", competitor: true, precedence: -10));
+        var rates = FishCatchRates.Build(inputs);
+        Assert.Equal(0, rates[Carp].BestDay);
+        Assert.True(FishCatchRates.IsRare(rates, Carp));
+    }
+
+    [Fact]
+    public void ACompetitorRowGivesNoSource()
+    {
+        var inputs = Water(Row(Carp), Row(ModFish, competitor: true));
+        var sources = SpawnSources.LocationFish(inputs.LocationFish, inputs.FishRows, inputs.Objects, inputs.Festivals,
+            new ObtainabilityModel(new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IReadOnlyList<ObtainSource>>())).Select(s => s.ItemId).ToList();
+        Assert.Equal(new[] { Carp }, sources);
     }
 }

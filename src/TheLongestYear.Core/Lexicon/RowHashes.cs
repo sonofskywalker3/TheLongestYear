@@ -55,6 +55,8 @@ public static class RowHashes
         foreach (var r in inputs.Forage) PutN($"forage|{r.Location}|{r.ItemId}|{S(r.Season)}|{r.Condition}", r);
         foreach (var r in inputs.LocationFish) PutN($"fish|{r.Location}|{r.ItemId}|{S(r.Season)}|{r.Condition}", r);
         foreach (var (id, r) in inputs.FishRows) Put("fishrow|" + id, r);
+        if (inputs.CompetitorFishRows != null)
+            foreach (var (id, r) in inputs.CompetitorFishRows) Put("competitorfish|" + id, r);
         foreach (var r in inputs.ArtifactSpots) PutN($"spot|{r.Location}|{r.ItemId}", r);
         foreach (var r in inputs.Garbage) PutN($"garbage|{r.CanId}|{r.ItemId}", r);
         foreach (var r in inputs.Shops) PutN($"shop|{r.ShopId}|{r.ItemId}|{r.Condition}", r);

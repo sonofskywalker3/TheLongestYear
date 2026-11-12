@@ -79,6 +79,21 @@ namespace TheLongestYear.Loop
                 + "Their items are not asked for and their sources are not counted.";
         }
 
+        /// <summary>The rows of one list of a known entry that <see cref="Load{T}"/> left out: what a
+        /// mod with no layer added there. Empty when nothing is filtered.</summary>
+        public static IEnumerable<T> UnknownRows<T>(string asset, string key, string list, IEnumerable<T> rawRows)
+        {
+            if (_known == null || Unfiltered || rawRows == null) yield break;
+            string entryId = KnownIds.EntryId(asset, key);
+            int index = 0;
+            foreach (T row in rawRows)
+                if (!_known.Has(KnownIds.RowId(entryId, list + KnownIds.PathSeparator + AssetIds.RowKey(row, index++))))
+                    yield return row;
+        }
+
+        /// <summary>The game's own asset, unfiltered, for reading what <see cref="UnknownRows{T}"/> compares.</summary>
+        public static T Raw<T>(string asset) where T : class => Game1.content.Load<T>(asset);
+
         /// <summary>The loaded maps the readers walk: the known ones.</summary>
         public static IEnumerable<GameLocation> Locations()
             => Game1.locations.Where(l => l?.Name != null && KnowsLocation(l.Name));

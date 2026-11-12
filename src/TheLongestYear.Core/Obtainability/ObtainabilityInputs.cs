@@ -29,12 +29,14 @@ public sealed record ObjInfo(
 /// The fish-only members feed <see cref="FishCatchRates"/>: <see cref="Precedence"/> (lower is tried
 /// first, ties shuffled), <see cref="FishAreaId"/> (null = any area), the cast distance range
 /// (<see cref="MaxDistanceFromShore"/> -1 = none) and <see cref="NeedsPosition"/> (a bobber or player
-/// tile rectangle: only one spot of the map, which the catch model leaves out as sim.py did).</summary>
+/// tile rectangle: only one spot of the map, which the catch model leaves out as sim.py did).
+/// <see cref="CompetitorOnly"/> (true or absent) marks a row a mod with no layer added to known water:
+/// it can take a cast in the catch model and gives no source and no catch credit.</summary>
 public sealed record LocationSpawn(
     string Location, string ItemId, Season? Season, string? Condition, double Chance, int CatchLimit,
     bool RequireMagicBait, int MinFishingLevel, bool IsRandom = false, bool CanBeInherited = true,
     int Precedence = 0, string? FishAreaId = null, int MinDistanceFromShore = 0, int MaxDistanceFromShore = -1,
-    bool NeedsPosition = false);
+    bool NeedsPosition = false, bool? CompetitorOnly = null);
 
 /// <summary>One Data/Fish row, reduced: field 1 difficulty or "trap", field 5 time spans
 /// ("600 1200 1800 2000"), field 7 weather ("sunny", "rainy", "both"), field 12 minimum level, and for
@@ -149,6 +151,9 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<LocationSpawn> Forage { get; init; } = Array.Empty<LocationSpawn>();
     public IReadOnlyList<LocationSpawn> LocationFish { get; init; } = Array.Empty<LocationSpawn>();
     public IReadOnlyDictionary<string, FishRow> FishRows { get; init; } = new Dictionary<string, FishRow>();
+    /// <summary>The Data/Fish rows of fish only a mod with no layer adds, for the bite chance of a
+    /// <see cref="LocationSpawn.CompetitorOnly"/> row; they give nothing else. Null when there are none.</summary>
+    public IReadOnlyDictionary<string, FishRow>? CompetitorFishRows { get; init; }
     public IReadOnlyList<ArtifactSpotRow> ArtifactSpots { get; init; } = Array.Empty<ArtifactSpotRow>();
     public IReadOnlyList<GarbageRow> Garbage { get; init; } = Array.Empty<GarbageRow>();
     public IReadOnlyList<ShopRow> Shops { get; init; } = Array.Empty<ShopRow>();
