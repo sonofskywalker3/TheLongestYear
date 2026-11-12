@@ -125,7 +125,11 @@ namespace TheLongestYear.Loop
             var ids = new List<string>();
             foreach (var (asset, load) in SeenAssets.OrderBy(a => a.Key, StringComparer.Ordinal))
                 ids.AddRange(AssetIds.Ids(asset, load()));
-            ids.AddRange(Game1.locations.Where(l => l?.Name != null).Select(l => KnownIds.EntryId(LocationsAsset, l.Name)));
+            // A numbered copy of a map (Cellar2 to Cellar8, made on a farm's first night) is that map
+            // to KnowsLocation, so it is not listed: it would land in whichever file was written that day.
+            var names = new HashSet<string>(Game1.locations.Where(l => l?.Name != null).Select(l => l.Name), StringComparer.Ordinal);
+            ids.AddRange(names.Where(n => n.TrimEnd(Digits) is var stem && (stem.Length == n.Length || stem.Length == 0 || !names.Contains(stem)))
+                .Select(n => KnownIds.EntryId(LocationsAsset, n)));
             return ids;
         }
     }
