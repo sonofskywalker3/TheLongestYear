@@ -124,11 +124,12 @@ public class RowHashesTests
         ["Recipes"] = "recipe|", ["Animals"] = "animal|", ["Ponds"] = "pond|", ["TapItems"] = "tap|", ["TreeDrops"] = "treedrop|",
         ["GeodeDrops"] = "geode|", ["GeodesUsingDefaultTable"] = "geodedefault|", ["SlayerQuests"] = "slayer|",
         ["Buildings"] = "building|", ["CookingChannel"] = "tv|", ["MixedSeedPool"] = "mixedseed|",
+        ["CompetitorFishRows"] = "competitorfish|",
     };
 
     /// <summary>Properties the unmodded game leaves empty, so the vanilla fixture has no row of theirs:
-    /// another mod's Mixed Seeds pool. Each is checked with a row of its own instead.</summary>
-    private static readonly IReadOnlySet<string> EmptyInVanilla = new HashSet<string> { "MixedSeedPool" };
+    /// another mod's Mixed Seeds pool, and the fish of a mod with no layer. Each is checked with a row of its own instead.</summary>
+    private static readonly IReadOnlySet<string> EmptyInVanilla = new HashSet<string> { "MixedSeedPool", "CompetitorFishRows" };
 
     [Fact]
     public void EveryInputsPropertyHasRows()
@@ -146,6 +147,9 @@ public class RowHashesTests
         var poolKeys = RowHashes.Of(new ObtainabilityInputs { MixedSeedPool = pool }, false).Keys
             .Where(k => k.StartsWith(PrefixByProperty["MixedSeedPool"], System.StringComparison.Ordinal)).OrderBy(k => k, System.StringComparer.Ordinal);
         Assert.Equal(new[] { "mixedseed|(O)x|SEASON spring|0", "mixedseed|(O)x|SEASON spring|1" }, poolKeys);
+
+        var competitors = new Dictionary<string, FishRow> { ["(O)x"] = new FishRow("(O)x", false, "both", 0, "600 2600") };
+        Assert.Contains("competitorfish|(O)x", RowHashes.Of(new ObtainabilityInputs { CompetitorFishRows = competitors }, false).Keys);
     }
 
     [Fact]
