@@ -94,6 +94,18 @@ namespace TheLongestYear.Loop
         /// <summary>The game's own asset, unfiltered, for reading what <see cref="UnknownRows{T}"/> compares.</summary>
         public static T Raw<T>(string asset) where T : class => Game1.content.Load<T>(asset);
 
+        private const string ObjectsAsset = "Data/Objects";
+        private const string ObjectQualifier = "(O)";
+
+        /// <summary>Whether an item is vanilla's or an installed supported mod's. Only objects are
+        /// judged (the readers load no other item table); anything else, and a category, is known.</summary>
+        public static bool KnowsItem(string qualifiedId)
+        {
+            if (_known == null || Unfiltered || string.IsNullOrEmpty(qualifiedId)) return true;
+            if (!qualifiedId.StartsWith(ObjectQualifier, StringComparison.Ordinal)) return true;
+            return _known.HasEntry(ObjectsAsset, qualifiedId[ObjectQualifier.Length..]);
+        }
+
         /// <summary>The loaded maps the readers walk: the known ones.</summary>
         public static IEnumerable<GameLocation> Locations()
             => Game1.locations.Where(l => l?.Name != null && KnowsLocation(l.Name));

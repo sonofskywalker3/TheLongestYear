@@ -207,7 +207,8 @@ namespace TheLongestYear
                 // An engine-rolled board may hold a non-crop ask in a crop bundle (Fiber in Quality
                 // Crops, from before the crop pool kept only produce). A Normal or Remixed board's
                 // crop bundles are the game's own and are left as they are.
-                replaceNonCropAsks: !vanillaBoard).RepairIfNeeded();
+                replaceNonCropAsks: !vanillaBoard,
+                isUnsupported: id => !TheLongestYear.Loop.KnownData.KnowsItem(id)).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",

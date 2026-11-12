@@ -87,12 +87,18 @@ namespace TheLongestYear.Loop
         /// Crops bundle that is not in the crop pool (<see cref="BoardRepairRules.MustReplaceInCropBundle"/>).
         /// On for boards the engine rolled; off for a Normal or Remixed board, whose crop bundles
         /// come from the game's own data.</param>
+        private const string UnsupportedReason = "from a mod The Longest Year has no support for";
+        private readonly Func<string, bool> _isUnsupported;
+
         public BoardRepairService(
             IMonitor monitor, SourceReachability reachability, ItemPools pools,
             BundleGenerationTuning tuning, ItemAvailabilityModel availability, int seed,
             bool oncePerLoopAsksOne = true, Dictionary<string, string> storedBoard = null,
-            bool replaceNonCropAsks = false)
+            bool replaceNonCropAsks = false, Func<string, bool> isUnsupported = null)
         {
+            // An ask for an item of a mod with no layer (a bundle mod's board can name one): nothing
+            // is known about how to get it, so it is replaced like an unreachable one.
+            _isUnsupported = isUnsupported;
             _cropPoolIds = replaceNonCropAsks && pools?.Crops != null
                 ? new HashSet<string>(pools.Crops.Select(p => p.ItemId), StringComparer.Ordinal)
                 : null;
@@ -394,7 +400,11 @@ namespace TheLongestYear.Loop
 
         /// <summary>A reachability verdict or a built-in ban (<see cref="BoardRepairRules"/>).</summary>
         private bool MustReplace(string itemId)
-            => BoardRepairRules.MustReplace(itemId, _reachability == null ? null : _reachability.IsUnreachable);
+            => BoardRepairRules.MustReplace(itemId, _reachability == null ? null : _reachability.IsUnreachable)
+               || IsUnsupported(itemId);
+
+        private bool IsUnsupported(string itemId)
+            => _isUnsupported != null && !string.IsNullOrEmpty(itemId) && _isUnsupported(BundleParsing.NormalizeItemId(itemId));
 
         /// <summary><see cref="MustReplace(string)"/>, or an ask in a named crop bundle that is not
         /// a crop (<see cref="BoardRepairRules.MustReplaceInCropBundle"/>), when that rule is on.</summary>
@@ -408,6 +418,7 @@ namespace TheLongestYear.Loop
         {
             string banned = BoardRepairRules.BannedReason(itemId);
             if (banned != null) return banned;
+            if (IsUnsupported(itemId)) return UnsupportedReason;
             if (!MustReplace(itemId) && IsNonCropAsk(itemId, match)) return BoardRepairRules.NotACropReason;
             return _reachability != null && _reachability.Reasons.TryGetValue(itemId, out string why) && !string.IsNullOrEmpty(why)
                 ? why
