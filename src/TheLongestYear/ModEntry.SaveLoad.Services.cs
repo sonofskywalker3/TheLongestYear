@@ -123,6 +123,8 @@ namespace TheLongestYear
             if (_lexicon?.Variant?.CatchRates is { } catchRates)
                 ctx.EnginePools = _enginePools = _enginePools with { CatchRates = catchRates };
             stageTimer.Restart();
+            // A brand new save has no stamp yet, and the model below is built from the stamp.
+            StampFreshRunDifficulty();
             _availability = BuildAvailabilityModelFor(_meta.State.BoardDifficulty(_config).Steps.ItemRarity);
             long availabilityMs = stageTimer.ElapsedMilliseconds;
             // A computed lexicon entry is written once, now that this load's availability answers are on it.

@@ -48,6 +48,24 @@ namespace TheLongestYear
         /// The CcItem catalog (<paramref name="builder"/>.Build(), called by the caller) always
         /// reads live BundleData regardless of which case fires here -- it reflects whatever
         /// bundles are actually live, engine-written or not.</summary>
+        /// <summary>Stamps the difficulty of a brand new save before anything reads it. The fresh-run
+        /// branch of <see cref="ResolveRequirements"/> used to be the first to stamp, which was
+        /// after the availability model had been built from <c>BoardDifficulty</c>: with no stamp
+        /// that answers Normal, so loop 1 of a Hard or Extreme farm ran on Normal's weeks (season
+        /// deadlines at the pacing week, Sneak Peek dishes kept off) until the first rewind rebuilt
+        /// the model. Does nothing on any other save: a stamped save keeps its stamp, and an
+        /// unstamped save that is not a fresh run was generated all-Normal.</summary>
+        private void StampFreshRunDifficulty()
+        {
+            MetaState state = _meta.State;
+            if (state.Difficulty != null) return;
+            RequirementsSource source = EngineModeDecider.Decide(
+                state.BundlesGeneratedForReset, state.CompletedResets, AnyBundleSlotComplete(),
+                BundleSourceNames.IsVanilla(state.BundleSource));
+            if (source == RequirementsSource.GenerateFreshRun)
+                state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+        }
+
         private IReadOnlyList<BundleRequirement> ResolveRequirements(
             BundleCatalogBuilder builder,
             System.Collections.Generic.IReadOnlyDictionary<string, TheLongestYear.Core.Season> itemSeasonPins,
@@ -162,10 +180,10 @@ namespace TheLongestYear
             }
             else if (source == RequirementsSource.GenerateFreshRun)
             {
-                // The first run has never been through a reset, so nothing has stamped a profile
-                // yet. Stamp it here, before generating, so this board and the rest of loop 1 run
-                // under the same values a later reset would re-stamp.
-                state.Difficulty = TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
+                // The first run has never been through a reset. StampFreshRunDifficulty stamped its
+                // profile before the availability model was built, so this board and the rest of
+                // loop 1 run under the same values a later reset would re-stamp.
+                state.Difficulty ??= TheLongestYear.Core.DifficultyResolver.Resolve(_config.Difficulty, _config);
                 BundleGenerationTuning freshTuning =
                     TheLongestYear.Core.DifficultyTuning.Scale(_config.PoolTuning, state.Difficulty);
                 var engine = new TheLongestYear.Loop.BundleEngine(this.Monitor, freshTuning, _config.EnableNonObjectDonations, _config.RarityThresholds, TheLongestYear.Core.YearTwoCrops.ExcludedFor(_meta.State.HasUpgrade, state.Difficulty.Steps.ItemRarity), state.Difficulty, _meta.State.HasUpgrade);
