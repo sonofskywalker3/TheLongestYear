@@ -17,9 +17,10 @@ A layer is how a supported mod brings its own shipped answers. A mod's items can
 game data alone when a framework spawns them in code TLY cannot read (a Custom Bush fruit, a
 SpaceCore spawn group), so a layer holds hand-written routes and rulings
 (`<UniqueID>.inputs.json`) and the answers that result, stored as a difference from vanilla's
-(`<UniqueID>.answers.json`). Two mods together can change each other's answers (one adds a seed
-to the other's shop), so each pair of supported mods installed together needs its own file
-(`<A>+<B>.answers.json`), even if it is empty. All of these live in `assets/lexicon/layers/`.
+(`<UniqueID>.answers.json`). Supported mods installed together need no file of their own: their
+answers are built once from the known data and cached. A combination file (`<A>+<B>.answers.json`)
+skips that build and is how content that only loads when both are installed gets supported (see
+"Combinations" below). All of these live in `assets/lexicon/layers/`.
 A mod with an inputs file but no applied answers file (none written yet, or dropped for a version mismatch)
 is "not mapped yet": nothing is served as shipped, so the answers are computed with its hand-written routes.
 
@@ -106,6 +107,11 @@ On the development machine: 42 ms Shipped against 6,584 ms on 1.0.27; 643 ms Com
 Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms from the cache.
 
 ## Adding a supported mod
+
+`uv run tools/layer-build.py <UniqueID>` runs steps 1 to 6 below (and every variant of step 5) with
+no hand steps, and reports what it could not place and the mod's combination content;
+`uv run tools/vanilla-build.py` does the same for `vanilla.json` and `vanilla.ids.json`. The steps
+are what the scripts do, and the reference for the inputs file you write between runs.
 
 1. **A clean game.** Install only vanilla, the mod and its frameworks. Disable Cart Catalog and any
    other mod that adds items or shops. Turn on the debug bridge (`EnableDebugCommandBridge` in
