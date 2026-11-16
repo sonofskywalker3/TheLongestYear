@@ -23,7 +23,25 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.27
+## What's New in 1.2.37
+
+**Fixed: keeping the bus skipped the Vault.** With Keep Bus Unlocked, the Vault goal showed as met every season with nothing paid. The gift keeps the bus running and nothing more, so the Vault bundles are paid like any other. If you own it, the Vault goal will show as owed again after you update. Thanks to JazzDaxx.
+
+**Fixed: the Traveling Cart could sell Ms. Angler.** The cart's rare late-game slot could offer the five Extended Family legendary fish. It never offers them now. Thanks to tanky24u.
+
+**Fixed: Rare Crops gave no real choice, and its crops weren't rare.** It showed two crops and needed one, so it came due with the easier crop and the other never mattered. It now shows six and needs four, and it only asks for crops grown from seeds Pierre doesn't shelve in year 1: Strawberry, Coffee Bean, Sweet Gem Berry, Ancient Fruit, Starfruit, Beet, Rhubarb, Unmilled Rice, Garlic, Red Cabbage, Artichoke, Carrot, Summer Squash, Broccoli and Powdermelon. Thanks to JazzDaxx.
+
+**Fixed: a bundle could be due before its dried fruit or smoked fish could be made.** A season checkpoint now counts a dried or smoked slot from the season of the fruit or fish it names.
+
+**Changed: winning the year needs every Vault bundle paid.** Winter's checkpoint asks for every Vault bundle on your board, which is five or six on Hard and Extreme where it used to ask for four. A board finished early doesn't end the year until the Vault is paid too.
+
+**Changed: bundles that needed two items now need three.** Adventurer's, Fish Farmer's, Forager's, Master Fisher's, Winter Star and Gil's Trophies show four items and need three. Easy needs two, where it used to drop to one.
+
+**Changed: smaller asks for crops whose seeds you can't buy.** Carrot, Summer Squash, Broccoli and Powdermelon top out at 12 on Normal. Unmilled Rice is sized from the Rice Shoots a year can find, since Pierre doesn't sell them until year 2.
+
+The bundle changes apply to boards rolled after you update. A board you keep at the rewind is rebuilt with these rules, so a few of its asks may change.
+
+## 1.2.27
 
 **Changed: the Herd Book only takes animals it can bring back.** A slot takes an animal only once you own the keep for its building, like Keep Coop for a chicken or Keep Big Coop for a duck. The Herd Book tab stays out of the Keeping Book until you have a slot you can use, and the JP shop sells a slot only after that keep and names the one it needs. An animal already waiting in your book stays there. Thanks to tanky24u.
 
