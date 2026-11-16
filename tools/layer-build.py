@@ -78,6 +78,7 @@ MAX_ROUNDS = 3
 MAX_ID_CHANGES = 40
 SCANNED_SUFFIXES = frozenset({".json"})
 PREVIOUS_LOG_SUFFIX = ".layer-build-previous"
+TOKEN_OPEN, TOKEN_CLOSE = "{{", "}}"
 MOD_ID_PATTERN = re.compile(r"[A-Za-z][\w\-]*(?:\.[\w\-]+)+")
 NOT_MOD_ID_SUFFIXES = (".json", ".png", ".tmx", ".tbin", ".xnb", ".ogg", ".wav", ".txt")
 WRITE_DONE_PATTERN = (r"tly_lexicon write [^:]+: (wrote variant|no obtainability inputs|no save loaded|"
@@ -356,6 +357,10 @@ def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> 
                 # Every mod id written after "HasMod" on the line, in any of Content Patcher's
                 # forms; a key whose value sits on the next line is read with that line.
                 tail = line[at:]
+                # A {{HasMod ...}} token ends at its braces; what follows on the line (an action
+                # such as spacechase0.SpaceCore_TriggerSpawnGroup) names no mod.
+                if line[:at].rstrip().endswith(TOKEN_OPEN) and TOKEN_CLOSE in tail:
+                    tail = tail[:tail.index(TOKEN_CLOSE)]
                 if tail.rstrip().endswith(":") and number < len(lines):
                     tail += " " + lines[number]
                 for other in MOD_ID_PATTERN.findall(tail):
