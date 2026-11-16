@@ -68,4 +68,23 @@ public class EventGatingPolicyTests
         Assert.Contains("FURNACE", Tables().ReplayableEventIds);
         Assert.DoesNotContain("EARLY", Tables().ReplayableEventIds);
     }
+
+    // An event the day change dropped (East Scarp's inn after passing out): the morning clears what it left.
+    [Theory]
+    [InlineData(true, true, true, false)]    // flag still up, HUD hidden: lower the flag, show the HUD
+    [InlineData(false, true, false, false)]  // the game already lowered the flag: the HUD is still hidden
+    [InlineData(true, false, true, true)]    // HUD already back
+    public void A_dropped_overnight_event_is_cleared_in_the_morning(bool flagUp, bool expectHud, bool expectFlag, bool hudShown)
+    {
+        DroppedEventRepair repair = DroppedEventRule.Decide(startedAsDayEnded: true, eventNow: false, busy: false, eventFlagUp: flagUp, hudShown: hudShown);
+        Assert.Equal(expectFlag, repair.LowerEventFlag);
+        Assert.Equal(expectHud, repair.ShowHud);
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]  // no event ran as the day ended: an event flag this morning is someone else's
+    [InlineData(true, true, false)]    // an event is running this morning
+    [InlineData(true, false, true)]    // a farm event or a map change is in progress
+    public void A_morning_with_no_dropped_event_is_left_alone(bool startedAsDayEnded, bool eventNow, bool busy)
+        => Assert.False(DroppedEventRule.Decide(startedAsDayEnded, eventNow, busy, eventFlagUp: true, hudShown: false).Any);
 }
