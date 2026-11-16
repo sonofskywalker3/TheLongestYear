@@ -42,9 +42,6 @@ public static class BundlePoolRecipes
     /// <summary>The Missing asks for the extreme band only: effort at or above this.</summary>
     public const int MissingMinimumEffort = 9;
 
-    /// <summary>Rare Crops asks for crops that take real work: effort at or above this.</summary>
-    public const int RareCropMinimumEffort = 3;
-
     /// <summary>The weight a synthesized candidate carries: the lowest there is, so a bundle's own
     /// vanilla id never outdraws a real pool item.
     ///
@@ -337,23 +334,24 @@ public static class BundlePoolRecipes
         return Union(pools.CrabPot, traps);
     }
 
-    /// <summary>Rare Crops: crops that take real work (effort 3 or more) plus every fruit a tree
-    /// grows. With no availability model there is no effort to read, so the crop half is empty and
-    /// the bundle's own items carry it.</summary>
+    /// <summary>Rare Crops (Jeff, 2026-11-16): only crops that must be grown from rare seeds. A crop
+    /// qualifies when its seed does not come off Pierre's day-1 shelf: it has a row in
+    /// <see cref="AvailabilityWeeks.SeedSourceWeeks"/> (a festival, the cart, the Oasis, seed spots,
+    /// Ancient Seeds), or the model dates its seed to a shop that opens later (a mod's crop). The
+    /// three year-two crops are Pierre's seeds and stay out, and so does anything that is also
+    /// forage (Cactus Fruit). No fruit-tree fruit: Pierre sells the saplings.</summary>
     private static IReadOnlyList<PoolItem> RareCropSource(ItemPools pools, ItemAvailabilityModel? model)
     {
-        IReadOnlyList<PoolItem> rare = model == null
-            ? Array.Empty<PoolItem>()
-            : pools.Crops.Where(p => model.For(p.ItemId).Effort >= RareCropMinimumEffort).ToList();
-        var byId = new Dictionary<string, PoolItem>(StringComparer.Ordinal);
-        foreach (PoolItem item in AllVetted(pools))
-            if (!byId.ContainsKey(item.ItemId))
-                byId[item.ItemId] = item;
-        var fruit = new List<PoolItem>();
-        foreach (string id in pools.FruitTreeFruitIds)
-            if (byId.TryGetValue(id, out PoolItem? known))
-                fruit.Add(known);
-        return Union(rare, fruit);
+        var forage = new HashSet<string>(pools.Forage.Select(p => p.ItemId), StringComparer.Ordinal);
+        return pools.Crops.Where(p => !forage.Contains(p.ItemId) && GrowsFromRareSeed(p.ItemId, model)).ToList();
+    }
+
+    private static bool GrowsFromRareSeed(string id, ItemAvailabilityModel? model)
+    {
+        if (YearTwoCrops.CropIds.Contains(id)) return false;
+        if (AvailabilityWeeks.SeedSourceWeeks.ContainsKey(id)) return true;
+        string? basis = model?.For(id).Basis;
+        return basis != null && basis.Contains(Availability.CropForageAvailability.SeedSoldLaterBasis, StringComparison.Ordinal);
     }
 
     private static IReadOnlyList<PoolItem> MedicineSource(ItemPools pools, ItemAvailabilityModel? model)

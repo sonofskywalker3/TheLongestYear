@@ -20,6 +20,10 @@ public static class CropForageAvailability
     private const int RemoteLocationStep = 1;
     private const int SaplingEffort = 2;
     private const string UnplacedSeedBasis = "crop, seed sold only outside year 1";
+
+    /// <summary>The basis text of a crop whose seed a shop first sells after week 1 (so not Pierre's
+    /// day-1 shelf). Rare Crops reads it to find a mod's rare seeds (BundlePoolRecipes).</summary>
+    public const string SeedSoldLaterBasis = ", seed sold from week ";
     private static readonly string[] RemoteMarkers = { "Woods", "Desert", "Island" };
 
     /// <param name="shopWeeks">When set, a crop whose seed has no <see cref="AvailabilityWeeks.SeedSourceWeeks"/>
@@ -75,7 +79,7 @@ public static class CropForageAvailability
                     hardWeek = seedHard > 1 && OasisHarvestWeek(crop, seedHard) is int hardFromShop
                         ? Math.Max(grown, Math.Min(hardFromShop, week.Value))
                         : grown;
-                    sold = $", seed sold from week {seedShop.Week}";
+                    sold = $"{SeedSoldLaterBasis}{seedShop.Week}";
                 }
                 else if (AvailabilityWeeks.SeedSourceWeeks.TryGetValue(qualifiedId, out (int Week, int Hard) seed))
                 {

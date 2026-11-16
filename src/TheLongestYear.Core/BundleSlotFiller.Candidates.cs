@@ -11,7 +11,7 @@ public static partial class BundleSlotFiller
     /// tightest bundles first so a small pool is not the one left holding the repeat fallback.
     ///
     /// Pass the same <paramref name="availability"/> the fill will get: a recipe part can read the
-    /// model (The Missing's extreme band, Rare Crops' effort floor), so counting without it counts
+    /// model (The Missing's extreme band, Rare Crops' later-shop seeds), so counting without it counts
     /// a different pool than the one that rolls, and mis-orders the fill passes.</summary>
     public static int CandidateCount(
         BundleSpec spec, DomainMatch match, ItemPools pools, ItemAvailabilityModel? availability = null,

@@ -204,11 +204,15 @@ public class BundlePoolRecipesTests
     }
 
     [Fact]
-    public void Rare_Crops_takes_the_harder_crops_and_the_fruit_tree_fruit()
+    public void Rare_Crops_takes_only_crops_grown_from_seeds_Pierre_does_not_shelve()
     {
         ItemPools pools = new()
         {
-            Crops = new[] { Item("(O)24"), Item("(O)276") },
+            Crops = new[]
+            {
+                Item("(O)276"), Item("(O)400"), Item("(O)90"), Item("(O)248"), Item("(O)ModCrop"),
+            },
+            Forage = new[] { Item("(O)90") },
             ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
             {
                 [ItemKind.Other] = new[] { Item("(O)613") },
@@ -217,14 +221,14 @@ public class BundlePoolRecipesTests
         };
         var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>
         {
-            ["(O)24"] = new(Season.Spring, 1, "test", EarliestWeek: 1, HardWeek: 1),
-            ["(O)276"] = new(Season.Spring, 5, "test", EarliestWeek: 1, HardWeek: 1),
+            ["(O)276"] = new(Season.Fall, 5, "crop, 13 days (+2), week 10, effort 5", EarliestWeek: 10, HardWeek: 10),
+            ["(O)ModCrop"] = new(Season.Summer, 2, "crop, 7 days (+1)" + TheLongestYear.Core.Availability.CropForageAvailability.SeedSoldLaterBasis + "6, week 7, effort 2", EarliestWeek: 7, HardWeek: 7),
         });
         List<string> ids = BundlePoolRecipes.For("Rare Crops", Array.Empty<string>(), pools, model)
             .Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
-        Assert.Contains("(O)276", ids);    // effort 5
-        Assert.DoesNotContain("(O)24", ids);   // effort 1
-        Assert.Contains("(O)613", ids);    // fruit-tree fruit
+        // Strawberry (Egg Festival seeds) and a mod crop whose seed shop opens in week 6.
+        Assert.Equal(new[] { "(O)400", "(O)ModCrop" }, ids);
+        // Out: Pumpkin (Pierre), Cactus Fruit (forage), Garlic (Pierre, year 2), Apple (Pierre's sapling).
     }
 
     [Fact]
