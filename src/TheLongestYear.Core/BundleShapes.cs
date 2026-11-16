@@ -14,7 +14,12 @@ namespace TheLongestYear.Core;
 ///
 /// Rare Crops (Jeff, 2026-11-16): vanilla's Remixed Rare Crops shows two and needs one. A bundle
 /// that needs one item is due as soon as its easiest item is, which leaves the other no real
-/// choice (JazzDaxx: 3 Apple or 25 Cactus Fruit, due before Fall). Same six and four.</summary>
+/// choice (JazzDaxx: 3 Apple or 25 Cactus Fruit, due before Fall). Same six and four.
+///
+/// The bundles that needed two (Jeff, 2026-11-16): Easy's dial took them down to one, and no
+/// bundle should need a single item. They need three of four now, so the dial reads 2/3/4/4.
+/// Gil's Trophies is authored and carries the same count in AuthoredBundles. Helper's stays two
+/// of two: it re-rolls from its own two vanilla items and has no third to show.</summary>
 public static class BundleShapes
 {
     private static readonly IReadOnlyDictionary<string, (int Shown, int Needs)> Shapes =
@@ -22,6 +27,11 @@ public static class BundleShapes
         {
             ["Sticky"] = (6, 4),
             ["Rare Crops"] = (6, 4),
+            ["Adventurer's"] = (4, 3),
+            ["Fish Farmer's"] = (4, 3),
+            ["Forager's"] = (4, 3),
+            ["Master Fisher's"] = (4, 3),
+            ["Winter Star"] = (4, 3),
         };
 
     public static (int Shown, int Needs)? For(string? bundleName)

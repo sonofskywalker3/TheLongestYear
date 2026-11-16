@@ -80,7 +80,7 @@ public sealed class BundleGenerationTuning
     public int TrophyShownCount { get; set; } = 4;
 
     /// <summary>Number of trophy slots that must be donated to complete Gil's Trophies.</summary>
-    public int TrophyRequiredCount { get; set; } = 2;
+    public int TrophyRequiredCount { get; set; } = 3;
 
     /// <summary>Quality-ask chances per re-rolled slot (crops/forage/fish domains only).</summary>
     public double SilverQualityChance { get; set; } = 0.10;

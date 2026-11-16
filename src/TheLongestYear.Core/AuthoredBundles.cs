@@ -169,7 +169,7 @@ public static class AuthoredBundleCatalog
             Color: 4,
             Source: AuthoredSlotSource.FixedList,
             SlotCount: 4,
-            NumberOfSlots: 2,
+            NumberOfSlots: 3,
             FixedItemIds: _gilTrophies),
 
         new AuthoredBundleDef(

@@ -17,6 +17,11 @@ namespace TheLongestYear.Core;
 public static class AuthoredBundleComposer
 {
     private const string GilTrophiesBundleName = "Gil's Trophies";
+
+    /// <summary>The fewest trophies Gil's Trophies needs before the Required Slots dial (Jeff,
+    /// 2026-11-16: Easy takes one off, and no bundle should need a single item). A floor, because
+    /// every config.json written before 1.2.34 carries TrophyRequiredCount 2.</summary>
+    public const int MinimumTrophiesRequired = 3;
     private const int TrophyStack = 1;
     private const int TrophyQuality = 0;
     private const int MaxSeasonSpreadAttempts = 8;
@@ -44,7 +49,7 @@ public static class AuthoredBundleComposer
 
         int shown = isTrophies ? tuning.TrophyShownCount : def.SlotCount;
         int required = isTrophies
-            ? Math.Min(tuning.TrophyRequiredCount, shown)
+            ? Math.Min(Math.Max(tuning.TrophyRequiredCount, MinimumTrophiesRequired), shown)
             : def.NumberOfSlots;
 
         if (candidates.Count < shown)

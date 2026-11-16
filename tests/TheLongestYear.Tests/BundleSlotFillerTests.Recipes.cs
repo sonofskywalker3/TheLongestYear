@@ -102,7 +102,7 @@ public partial class BundleSlotFillerTests
     {
         var pools = new ItemPools
         {
-            Forage = new[] { Item("(O)f1", weight: 1000), Item("(O)f2", weight: 1000), Item("(O)f3", weight: 1000) },
+            Forage = new[] { Item("(O)f1", weight: 1000), Item("(O)f2", weight: 1000), Item("(O)f3", weight: 1000), Item("(O)f4", weight: 1000) },
         };
         var tuning = new BundleGenerationTuning
         {

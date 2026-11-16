@@ -25,6 +25,11 @@ public class AuthoredBundleComposerTests
         Assert.Equal(Tuning.TrophyShownCount, spec!.Slots.Count);
         Assert.Equal(Tuning.TrophyRequiredCount, spec.NumberOfSlots);
         Assert.All(spec.Slots, s => Assert.Contains(s.ItemId, AuthoredBundleCatalog.GilTrophies));
+
+        // A config written when the bundle needed two still gets the floor.
+        var old = AuthoredBundleComposer.Compose(TrophyDef, 40, new ItemPools(),
+            new BundleGenerationTuning { TrophyRequiredCount = 2 }, nonObjectDonationsEnabled: true, new Random(3));
+        Assert.Equal(AuthoredBundleComposer.MinimumTrophiesRequired, old!.NumberOfSlots);
     }
 
     [Fact]
