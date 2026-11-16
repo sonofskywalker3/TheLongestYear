@@ -162,7 +162,6 @@ public class QuantityBasisTablesTests
     {
         Assert.False(QuantityAskPass.Covers(AncientDrum));
         Assert.False(QuantityAskPass.Covers(BookOfStars));
-        Assert.False(QuantityAskPass.Covers("(O)105"));   // Chewing Stick: an artifact, whatever the Duggy row says
         Assert.False(QuantityAskPass.Covers("(O)194"));   // Fried Egg, no model: no dish table
         Assert.Equal(1, Roll(AncientDrum, DifficultyStep.Extreme));
         // Once the model carries a generated dish row, the dish is banded.
@@ -173,14 +172,15 @@ public class QuantityBasisTablesTests
     }
 
     [Fact]
-    public void Every_table_row_is_a_qualified_id_the_multiplier_will_skip()
+    public void Every_table_row_is_a_qualified_id_the_multiplier_will_skip_unless_it_is_an_artifact()
     {
         foreach (var table in new[] { QuantityBasisTables.CrabPot, QuantityBasisTables.Crops, QuantityBasisTables.MonsterDrops, QuantityBasisTables.Stations, QuantityBasisTables.Minerals, QuantityBasisTables.Mines, QuantityBasisTables.Resources })
             foreach (var row in table)
             {
                 Assert.StartsWith("(O)", row.Key);
                 Assert.True(row.Value >= 1 && row.Value <= 99, row.Key);
-                Assert.True(QuantityAskPass.Covers(row.Key), row.Key);
+                // An artifact keeps its fixed ask whatever its monster drop row says.
+                Assert.True(QuantityAskPass.Covers(row.Key) != QuantityAskPass.ArtifactsAskedAsOneOffs.Contains(row.Key), row.Key);
             }
     }
 }
