@@ -448,6 +448,30 @@ public class ObtainabilityMadeTests
         Assert.False(mayo[0].Conditions.OwnedOnly);
     }
 
+    [Theory]
+    [InlineData(3000, null, 3000)]
+    [InlineData(3000, "", 3000)]
+    [InlineData(3000, "TRUE", 3000)]
+    [InlineData(3000, "PLAYER_HAS_MAIL Host MarnieSellsVoidGoats", AnimalSale.NotSold)]
+    [InlineData(8000, "BUILDINGS_CONSTRUCTED all Example.Mod_PremiumBarn 1", 8000)]   // its own building: no lock
+    [InlineData(8000, "BUILDINGS_CONSTRUCTED all Example.Mod_PremiumBarn 1, PLAYER_HAS_SEEN_EVENT Any 8402751", AnimalSale.NotSold)]
+    [InlineData(-1, "PLAYER_HAS_MAIL Host MarnieSellsVoidGoats", -1)]
+    public void An_animal_behind_an_unlock_condition_is_read_as_not_sold(int price, string? unlock, int expected)
+        => Assert.Equal(expected, AnimalSale.Price(price, unlock));
+
+    [Fact]
+    public void Produce_of_an_animal_behind_an_unlock_condition_is_owned_only()
+    {
+        // East Scarp's Void Nanny: 3000g at Marnie's, but only once a late friendship scene sends a
+        // mail flag (Utility.getPurchaseAnimalStock checks UnlockCondition beside the price).
+        var nanny = new AnimalRow("LemurKat.EastScarp_VoidNanny", "Deluxe Barn",
+            AnimalSale.Price(3000, "PLAYER_HAS_MAIL Host MarnieSellsVoidGoats"),
+            new[] { new AnimalProduce("(O)EastScarp_Void_Goat_Milk", null, 0) }, new AnimalProduce[0], DaysToProduce: 2, DaysToMature: 5);
+        ObtainSource milk = LivestockSources.Animals(new[] { nanny }, NoFestivals, NoBuildings).Single().Source;
+        Assert.True(milk.Conditions.OwnedOnly);
+        Assert.Contains(milk.Conditions.Requires, r => r.EndsWith("(not sold)"));
+    }
+
     [Fact]
     public void An_alternate_purchase_is_sold()
     {

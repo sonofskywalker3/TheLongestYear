@@ -59,11 +59,13 @@ public sealed class ObtainabilityCache
     /// <summary>The layer's map weeks and links, empty when it has neither.</summary>
     private static string MapDatingFingerprint(YearTwoMarks marks)
     {
-        if (marks.MapWeeks.Count == 0 && marks.MapLinks.Count == 0 && marks.OpenedEarly.Count == 0) return "";
+        if (marks.MapWeeks.Count == 0 && marks.MapLinks.Count == 0 && marks.OpenedEarly.Count == 0 && marks.ShopPlacements.Count == 0) return "";
         string weeks = string.Join(";", marks.MapWeeks.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
         string links = string.Join(";", marks.MapLinks.Select(l => $"{l.From}>{l.To}").OrderBy(s => s, StringComparer.Ordinal));
         string early = string.Join(";", marks.OpenedEarly.OrderBy(p => p.Key, StringComparer.Ordinal).Select(p => $"{p.Key}={p.Value}"));
-        return "|mapweeks:" + weeks + "|maplinks:" + links + (early.Length == 0 ? "" : "|openedearly:" + early);
+        string places = string.Join(";", marks.ShopPlacements.Select(s => $"{s.ShopId}@{s.LocationName}").OrderBy(s => s, StringComparer.Ordinal));
+        return "|mapweeks:" + weeks + "|maplinks:" + links + (early.Length == 0 ? "" : "|openedearly:" + early)
+            + (places.Length == 0 ? "" : "|shopplaces:" + places);
     }
 
     private static string Fingerprint(ObtainabilityInputs inputs)

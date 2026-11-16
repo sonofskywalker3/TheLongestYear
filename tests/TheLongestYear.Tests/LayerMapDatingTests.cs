@@ -61,6 +61,62 @@ public class LayerMapDatingTests
     }
 
     [Fact]
+    public void A_warp_only_villagers_take_is_not_a_way_in()
+    {
+        // East Scarp: the Village's NPCWarp entries lead villagers into a waiting room and on to the
+        // suburb the player reaches by bus. GameLocation.updateWarps reads Warp and NPCWarp into one
+        // list; isCollidingWithWarp skips an npcOnly warp for the farmer.
+        var links = new List<RawLocationLink>(Doors)
+        {
+            new("Mountain", "EastScarp_Village"),
+            new("EastScarp_Village", "EastScarp_WaitingRoom", NpcOnly: true),
+            new("EastScarp_WaitingRoom", "EastScarp_ZuzuBurb", NpcOnly: true),
+        };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false);
+        Assert.True(walk.TryGet("EastScarp_Village", out _));
+        Assert.False(walk.TryGet("EastScarp_WaitingRoom", out _));
+        Assert.False(walk.TryGet("EastScarp_ZuzuBurb", out _));
+    }
+
+    [Fact]
+    public void The_bus_reaches_the_Desert_though_the_Bus_Stop_warp_is_for_villagers()
+    {
+        // Vanilla: BusStop's warp to the Desert is an NPCWarp; the player rides the bus, a way made in code.
+        var links = new RawLocationLink[]
+        {
+            new("Farm", "BusStop"), new("BusStop", "Desert", NpcOnly: true), new("Desert", "SandyHouse"), new("Desert", "SkullCave"),
+        };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false);
+        Assert.True(walk.TryGet("SandyHouse", out PlaceWeek sandy));
+        Assert.Equal(LocationGating.WeekFor("Desert"), sandy.Week);
+        Assert.True(walk.TryGet("SkullCave", out _));
+    }
+
+    [Fact]
+    public void A_player_way_beside_a_villager_way_still_counts()
+    {
+        var links = new List<RawLocationLink>(Doors)
+        {
+            new("Mountain", Forest, NpcOnly: true),
+            new("Mountain", Forest),
+        };
+        Assert.True(LocationWeeks.Build(links, _ => false).TryGet(Forest, out PlaceWeek week));
+        Assert.Equal(1, week.Week);
+    }
+
+    [Fact]
+    public void A_door_that_spells_its_map_in_another_case_reaches_that_map()
+    {
+        // Game1.getLocationFromName looks maps up without regard to case (Game1.cs 2087), so a door
+        // to "EastScarp_JojaBreakroom" opens the map named "EastScarp_JojaBreakRoom".
+        var links = new List<RawLocationLink>(Doors) { new("Mountain", "custom_sds.easternforest_MAIN") };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false, mapNames: new[] { "Farm", "Mountain", Forest });
+        Assert.True(walk.TryGet(Forest, out PlaceWeek week));
+        Assert.Equal(1, week.Week);
+        Assert.DoesNotContain("custom_sds.easternforest_MAIN", walk.Reached.Keys);
+    }
+
+    [Fact]
     public void A_map_with_no_door_is_reached_through_a_layer_link()
     {
         Assert.False(LocationWeeks.Build(Doors, _ => false).TryGet(Forest, out _));
@@ -94,6 +150,44 @@ public class LayerMapDatingTests
     }
 
     private const string Head = "{\"UniqueId\": \"ModA\", \"CheckedVersion\": \"1.0.0\", ";
+
+    [Fact]
+    public void A_layer_pins_the_row_of_a_fish_the_mod_rewrites_by_season()
+    {
+        // East Scarp: a nudibranch is a rod fish in its season and a crab pot row in the others.
+        const string Rod = "Ornate Nudibranch/80/floater/1/3/1000 1800/spring/both/683 .2 689 .4/4/.1/.25/0";
+        const string Trap = "Ornate Nudibranch/trap/.05/688 .45 689 .35 690 .35/estidepools/2/20/false";
+        LayerInputs read = LayerFile.ReadInputs(Head + "\"FishData\": {\"ModA_Nudibranch\": \"" + Rod + "\"}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(Rod, set.FishData["ModA_Nudibranch"]);
+
+        var summer = new Dictionary<string, string> { ["ModA_Nudibranch"] = Trap, ["128"] = "Pufferfish/80" };
+        Dictionary<string, string> pinned = PinnedFishData.Apply(summer, set.FishData);
+        Assert.Equal(Rod, pinned["ModA_Nudibranch"]);
+        Assert.Equal("Pufferfish/80", pinned["128"]);
+        Assert.Equal(Trap, summer["ModA_Nudibranch"]);                                   // the game's own data is untouched
+        Assert.DoesNotContain("ModA_Missing", PinnedFishData.Apply(summer, new Dictionary<string, string> { ["ModA_Missing"] = Rod }).Keys);
+
+        // The tags the game derives from the live row differ by season; a pinned fish drops them.
+        var springTags = new[] { "category_fish", "fish_difficulty_hard", "fish_favor_weather_both", "fish_motion_floater", "fish_nudibranch" };
+        var summerTags = new[] { "category_fish", "fish_trap_location_estidepools", "fish_nudibranch" };
+        Assert.Equal(PinnedFishData.Tags("ModA_Nudibranch", springTags, set.FishData), PinnedFishData.Tags("ModA_Nudibranch", summerTags, set.FishData));
+        Assert.Equal(springTags, PinnedFishData.Tags("128", springTags, set.FishData));
+
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"FishData\": {\"ModA_Nudibranch\": \" \"}}"));
+    }
+
+    [Fact]
+    public void A_layer_names_where_a_shop_opens()
+    {
+        // East Scarp swaps one counter tile between two shops by weekday; the layer names the place of both.
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"ShopPlacements\": [{\"ShopId\": \"ModA_Stall\", \"LocationName\": \"Custom_Village\"}]}");
+        Assert.Equal(new RawShopPlacement("ModA_Stall", "Custom_Village"), Assert.Single(read.ShopPlacements));
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(new RawShopPlacement("ModA_Stall", "Custom_Village"), Assert.Single(set.Marks.ShopPlacements));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"ShopPlacements\": [{\"ShopId\": \"ModA_Stall\"}]}"));
+    }
 
     [Fact]
     public void An_inputs_file_carries_map_weeks_and_links_into_the_marks()

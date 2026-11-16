@@ -50,11 +50,34 @@ namespace TheLongestYear.Loop
         {
             T raw = Game1.content.Load<T>(asset);
             SeenAssets[asset] = () => Game1.content.Load<T>(asset);
-            if (_known == null || Unfiltered || raw == null) return raw;
-            if (Filtered.TryGetValue(raw, out object had)) return (T)had;
-            T kept = AssetIds.Filter(asset, raw, _known, id => DroppedIds.Add(id));
-            Filtered.Add(raw, kept);
+            if (raw == null) return raw;
+            bool filter = _known != null && !Unfiltered;
+            bool pin = asset == FishAsset && _fishData.Count > 0 && raw is Dictionary<string, string>;
+            if (!filter && !pin) return raw;
+            // A filtered copy and an unfiltered one of the same asset are different readings.
+            ConditionalWeakTable<object, object> copies = filter ? Filtered : PinnedOnly;
+            if (copies.TryGetValue(raw, out object had)) return (T)had;
+            T kept = filter ? AssetIds.Filter(asset, raw, _known, id => DroppedIds.Add(id)) : raw;
+            if (pin) kept = (T)(object)PinnedFishData.Apply((Dictionary<string, string>)(object)kept, _fishData);
+            copies.Add(raw, kept);
             return kept;
+        }
+
+        private const string FishAsset = "Data/Fish";
+        private static readonly ConditionalWeakTable<object, object> PinnedOnly = new();
+        private static IReadOnlyDictionary<string, string> _fishData = new Dictionary<string, string>();
+
+        /// <summary>Data/Fish rows the installed layers pin (<see cref="PinnedFishData"/>): read in
+        /// place of the game's row for that fish, filtered or not. Setting it forgets every copy.</summary>
+        public static IReadOnlyDictionary<string, string> FishData
+        {
+            get => _fishData;
+            set
+            {
+                _fishData = value ?? new Dictionary<string, string>();
+                Filtered.Clear();
+                PinnedOnly.Clear();
+            }
         }
 
         private const int MaxOwnersInLine = 12;

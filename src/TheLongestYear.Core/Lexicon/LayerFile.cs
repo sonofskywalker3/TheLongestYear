@@ -57,6 +57,18 @@ public sealed record LayerInputs(
     /// warp tile, a warp made in code), each one way, From the map it stands in To the map it leads to.</summary>
     public IReadOnlyList<RawLocationLink> MapLinks { get; init; } = Array.Empty<RawLocationLink>();
 
+    /// <summary>Where a shop opens when the map as loaded does not always say so: a counter whose
+    /// "OpenShop" tile the mod swaps by weekday (East Scarp's village stall is Aideen's on some days
+    /// and Jessie's on others), or one opened in code. The tile scan reads only today's map, so
+    /// without this the shop's place, and the weeks of what it sells, would change with the day the
+    /// answers were built or read.</summary>
+    public IReadOnlyList<RawShopPlacement> ShopPlacements { get; init; } = Array.Empty<RawShopPlacement>();
+
+    /// <summary>The Data/Fish row to read for a fish the mod rewrites during the year, by Data/Fish key
+    /// (<see cref="PinnedFishData"/>).</summary>
+    public IReadOnlyDictionary<string, string> FishData { get; init; }
+        = new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Ways the mod adds into a map this mod holds to a week by name (the Secret Woods behind
     /// its log, the Sewer behind its key): with the mod installed the map opens at the back door's week
     /// when that is earlier, in the map walk, the landing tables and the availability weeks alike.</summary>
@@ -257,6 +269,10 @@ public static class LayerFile
                     throw new System.Text.Json.JsonException($"MapWeeks {map}: week {week} is outside {MapWeekRange.First} to {MapWeekRange.Last}.");
         if (read.MapLinks != null && read.MapLinks.Any(l => l == null || string.IsNullOrWhiteSpace(l.From) || string.IsNullOrWhiteSpace(l.To)))
             throw new System.Text.Json.JsonException("MapLinks holds a null link or one with no From or To.");
+        if (read.ShopPlacements != null && read.ShopPlacements.Any(s => s == null || string.IsNullOrWhiteSpace(s.ShopId) || string.IsNullOrWhiteSpace(s.LocationName)))
+            throw new System.Text.Json.JsonException("ShopPlacements holds a null entry or one with no ShopId or LocationName.");
+        if (read.FishData != null && read.FishData.Any(f => string.IsNullOrWhiteSpace(f.Key) || string.IsNullOrWhiteSpace(f.Value)))
+            throw new System.Text.Json.JsonException("FishData holds a blank fish key or a blank row.");
         if (read.MapBackDoors != null)
             foreach (MapBackDoor door in read.MapBackDoors)
             {
@@ -277,6 +293,10 @@ public static class LayerFile
             YearTwoShops = ToOrdinal(read.YearTwoShops),
             MapWeeks = ToOrdinal(read.MapWeeks),
             MapLinks = read.MapLinks ?? Array.Empty<RawLocationLink>(),
+            ShopPlacements = read.ShopPlacements ?? Array.Empty<RawShopPlacement>(),
+            FishData = read.FishData == null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(read.FishData, StringComparer.Ordinal),
             MapBackDoors = read.MapBackDoors ?? Array.Empty<MapBackDoor>(),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)

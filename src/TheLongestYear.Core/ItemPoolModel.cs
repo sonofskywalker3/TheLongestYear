@@ -204,8 +204,12 @@ public sealed record RawGeodeDropEntry(string ItemId);
 
 /// <summary>One warp edge between two locations, as the world actually connects them.
 /// Direction is recorded but the reachability walk treats edges as two-way: vanilla interiors
-/// frequently declare the door on one side only.</summary>
-public sealed record RawLocationLink(string From, string To);
+/// frequently declare the door on one side only. <paramref name="NpcOnly"/>: a warp only villagers
+/// take (the map's NPCWarp property; GameLocation.updateWarps reads it into the same list as Warp,
+/// and isCollidingWithWarp skips it for the farmer). The dated walk (LocationWeeks) leaves those
+/// out; the connectivity walk (ReachabilityGraph) keeps them, since it only condemns a map that
+/// nothing at all connects to the world.</summary>
+public sealed record RawLocationLink(string From, string To, bool NpcOnly = false);
 
 /// <summary>One Data/Shops stock line. <paramref name="IsRecipe"/> is the shop entry's own
 /// IsRecipe flag: such a line teaches a recipe rather than selling the item, so it is a source of

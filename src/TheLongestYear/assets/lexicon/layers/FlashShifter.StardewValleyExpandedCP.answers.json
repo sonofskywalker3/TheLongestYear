@@ -670,7 +670,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -727,7 +727,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -1405,7 +1405,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -1462,7 +1462,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2151,7 +2151,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -2208,7 +2208,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2897,7 +2897,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -2954,7 +2954,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -3643,7 +3643,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -3700,7 +3700,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -4389,7 +4389,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -4446,7 +4446,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5134,7 +5134,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -5191,7 +5191,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5879,7 +5879,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -5936,7 +5936,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "f2c327e6fdc7a9fc",
+          "Inputs": "97b696bb39c27509",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -6336,11 +6336,6 @@
           "Week": 1
         },
         "Custom_BlueMoonVineyard": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "Custom_DayEnd_WarpRoom": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -10609,7 +10604,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:Custom_Highlands"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at Custom_Highlands", "Inputs": [], "Kind": "Fish", "Lands": 0, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
+          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": true, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn", "animal:FlashShifter.StardewValleyExpandedCP_Bear (not sold)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:IceCreamStand"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop IceCreamStand", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
@@ -11713,6 +11708,7 @@
         "Custom_Countryside_ClaireHouse",
         "Custom_CrimsonBadlands",
         "Custom_CrimsonBadlandsMap",
+        "Custom_DayEnd_WarpRoom",
         "Custom_DesertRailway",
         "Custom_DiamondCavern",
         "Custom_DinoIsland_North",
@@ -15763,7 +15759,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:Custom_Highlands"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at Custom_Highlands", "Inputs": [], "Kind": "Fish", "Lands": 0, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
+          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": true, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn", "animal:FlashShifter.StardewValleyExpandedCP_Bear (not sold)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:IceCreamStand"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop IceCreamStand", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
@@ -17937,7 +17933,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -17994,7 +17990,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Easy|no_kitchen": {
@@ -18664,7 +18660,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -18721,7 +18717,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|kitchen": {
@@ -19402,7 +19398,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -19459,7 +19455,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|no_kitchen": {
@@ -20140,7 +20136,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -20197,7 +20193,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Hard|kitchen": {
@@ -20878,7 +20874,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -20935,7 +20931,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Hard|no_kitchen": {
@@ -21616,7 +21612,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -21673,7 +21669,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Normal|kitchen": {
@@ -22353,7 +22349,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 0, recipe week 5, week 13, effort 6", "EarliestWeek": 13, "Effort": 6, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -22410,7 +22406,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         },
         "Normal|no_kitchen": {
@@ -23090,7 +23086,7 @@
             "(O)FlashShifter.StardewValleyExpandedCP_Haste_Elixir": {"Basis": "crafted Haste Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
             "(O)FlashShifter.StardewValleyExpandedCP_Hedge_Fence_Tilesheet": {"Basis": "crafted Hedge Fence: hardest ingredient (O)771 (2) + unlock 'Farming 6' (2), week 6, effort 4", "EarliestWeek": 6, "Effort": 4, "GateSeason": "Summer"},
             "(O)FlashShifter.StardewValleyExpandedCP_Hero_Elixir": {"Basis": "crafted Hero Elixir: ingredient (O)FlashShifter.StardewValleyExpandedCP_Void_Soul unrecognised, extreme, week unknown, effort 12", "Effort": 12},
-            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), price 14000g (+2), week 2, effort 3", "EarliestWeek": 2, "Effort": 3, "GateSeason": "Spring"},
+            "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": {"Basis": "animal product, FlashShifter.StardewValleyExpandedCP_Bear in FlashShifter.StardewValleyExpandedCP_PremiumBarn (housing 1), not for sale (+3), week 2, effort 4", "EarliestWeek": 2, "Effort": 4, "GateSeason": "Spring"},
             "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": {"Basis": "dish Ice Cream Sundae: hardest ingredient (O)638 (5) + unlock 'null' (1) + kitchen 1, recipe week 5, week 13, effort 7", "EarliestWeek": 13, "Effort": 7, "GateSeason": "Winter"},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Berry": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
             "(O)FlashShifter.StardewValleyExpandedCP_Joja_Veggie": {"Basis": "crop, seed sold only outside year 1", "Effort": 4},
@@ -23147,7 +23143,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "ca54312e0337fd03",
+          "Inputs": "186802bdbed1f371",
           "YearTwoCropDishUnits": {}
         }
       },
@@ -23539,11 +23535,6 @@
           "Week": 1
         },
         "Custom_BlueMoonVineyard": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "Custom_DayEnd_WarpRoom": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -27814,7 +27805,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:Custom_Highlands"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at Custom_Highlands", "Inputs": [], "Kind": "Fish", "Lands": 0, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
+          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": true, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn", "animal:FlashShifter.StardewValleyExpandedCP_Bear (not sold)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:IceCreamStand"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop IceCreamStand", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
@@ -28921,6 +28912,7 @@
         "Custom_Countryside_ClaireHouse",
         "Custom_CrimsonBadlands",
         "Custom_CrimsonBadlandsMap",
+        "Custom_DayEnd_WarpRoom",
         "Custom_DesertRailway",
         "Custom_DiamondCavern",
         "Custom_DinoIsland_North",
@@ -32974,7 +32966,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:Custom_Highlands"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at Custom_Highlands", "Inputs": [], "Kind": "Fish", "Lands": 0, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Honey_Jar": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
+          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": true, "RainOnly": false, "Requires": ["building:FlashShifter.StardewValleyExpandedCP_PremiumBarn", "animal:FlashShifter.StardewValleyExpandedCP_Bear (not sold)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "FlashShifter.StardewValleyExpandedCP_Bear produce", "Inputs": [], "Kind": "Animal", "Lands": 0, "Reliability": "Dependable", "Setup": [{"Days": 4, "Name": "building:FlashShifter.StardewValleyExpandedCP_PremiumBarn"}, {"Days": 1, "Name": "animal:FlashShifter.StardewValleyExpandedCP_Bear"}]}
         ],
         "(O)FlashShifter.StardewValleyExpandedCP_Ice_Cream_Sundae": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:IceCreamStand"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop IceCreamStand", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
@@ -34561,7 +34553,7 @@
   },
   "VariantRowHashes": {
     "base": {
-      "animal|FlashShifter.StardewValleyExpandedCP_Bear": 6923096723322026181,
+      "animal|FlashShifter.StardewValleyExpandedCP_Bear": 4121025436916701972,
       "animal|FlashShifter.StardewValleyExpandedCP_Camel": 14228113397174984222,
       "animal|FlashShifter.StardewValleyExpandedCP_Goose": 7874849307891063753,
       "building|FlashShifter.StardewValleyExpandedCP_PremiumBarn": 12638131125462603235,
@@ -36044,7 +36036,7 @@
       "tree|(O)FlashShifter.StardewValleyExpandedCP_Tree_Coin": 15409334512232267688
     },
     "pierre_year2_seeds": {
-      "animal|FlashShifter.StardewValleyExpandedCP_Bear": 6923096723322026181,
+      "animal|FlashShifter.StardewValleyExpandedCP_Bear": 4121025436916701972,
       "animal|FlashShifter.StardewValleyExpandedCP_Camel": 14228113397174984222,
       "animal|FlashShifter.StardewValleyExpandedCP_Goose": 7874849307891063753,
       "building|FlashShifter.StardewValleyExpandedCP_PremiumBarn": 12638131125462603235,

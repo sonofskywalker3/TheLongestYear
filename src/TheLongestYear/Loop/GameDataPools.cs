@@ -287,6 +287,10 @@ namespace TheLongestYear.Loop
                     }
                 }
 
+                // Places a supported mod's layer names for a shop whose counter tile is not on the
+                // map every day (a stall the mod swaps by weekday).
+                shopPlacements.AddRange(marks.ShopPlacements);
+
                 listingsForWeeks = shopListings;
                 placementsForWeeks = shopPlacements;
 
@@ -388,7 +392,7 @@ namespace TheLongestYear.Loop
                 var boughtAsAlternate = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var kv in animalData)
                 {
-                    if (kv.Value == null || kv.Value.PurchasePrice < 0) continue;
+                    if (kv.Value == null || TheLongestYear.Core.Obtainability.AnimalSale.Price(kv.Value.PurchasePrice, kv.Value.UnlockCondition) < 0) continue;
                     foreach (var alternate in kv.Value.AlternatePurchaseTypes ?? new List<StardewValley.GameData.FarmAnimals.AlternatePurchaseAnimals>())
                         foreach (string name in alternate?.AnimalIds ?? new List<string>())
                             if (!string.IsNullOrEmpty(name)) boughtAsAlternate.Add(name);
@@ -404,7 +408,7 @@ namespace TheLongestYear.Loop
                         .Select(p => p.ItemId)
                         .ToList();
                     animals.Add(new RawAnimalSource(
-                        kv.Key, a.PurchasePrice >= 0 || boughtAsAlternate.Contains(kv.Key),
+                        kv.Key, TheLongestYear.Core.Obtainability.AnimalSale.Price(a.PurchasePrice, a.UnlockCondition) >= 0 || boughtAsAlternate.Contains(kv.Key),
                         a.EggItemIds ?? new List<string>(), produce));
                 }
 
@@ -563,7 +567,7 @@ namespace TheLongestYear.Loop
                     if (location?.Name == null) continue;
                     foreach (StardewValley.Warp warp in location.warps)
                         if (!string.IsNullOrEmpty(warp?.TargetName))
-                            links.Add(new RawLocationLink(location.Name, warp.TargetName));
+                            links.Add(new RawLocationLink(location.Name, warp.TargetName, warp.npcOnly.Value));
                     foreach (var door in location.doors.Pairs)
                         if (!string.IsNullOrEmpty(door.Value))
                             links.Add(new RawLocationLink(location.Name, door.Value));
@@ -572,7 +576,8 @@ namespace TheLongestYear.Loop
                 links.AddRange(marks.MapLinks);
                 LocationWeeks weeks = LocationWeeks.Build(
                     links, name => ItemPoolBuilder.IsExcludedLocation(name, tuning.ExcludedLocationMarkers) || marks.Maps.ContainsKey(name),
-                    openingWeeks: marks.MapWeeks, openedEarly: marks.OpenedEarly);
+                    openingWeeks: marks.MapWeeks, openedEarly: marks.OpenedEarly,
+                    mapNames: KnownData.Locations().Select(l => l.Name));
                 _monitor?.Log($"Location weeks: {weeks.Reached.Count} maps reached by doors from the farm ({links.Count} warps and doors; {marks.Maps.Count} year-2 map(s) flagged by layers left out).", LogLevel.Trace);
                 return weeks;
             }

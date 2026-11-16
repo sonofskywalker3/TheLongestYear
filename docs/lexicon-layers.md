@@ -201,6 +201,22 @@ are what the scripts do, and the reference for the inputs file you write between
      for a map a year-1 player does not reach at all.
    - **`MapLinks`** name a way between two maps the walk cannot read from the maps (a `TouchAction Warp` tile, a warp
      made in code): `[{ "From": "<map>", "To": "<map>" }]`, one way each. The walk follows them like a door.
+     The walk reads a map's `Warp` property and its door tiles only. A warp only villagers take (the `NPCWarp`
+     property) is not followed, and neither is a touch-action tile, so a map entered only that way needs a link.
+     A door that spells its map in another case still leads there, as it does in the game.
+   - **`ShopPlacements`** name where a shop opens when the map as loaded does not always say so: a counter whose
+     `OpenShop` tile the mod swaps by weekday, or one opened in code. `[{ "ShopId": "<shop>", "LocationName": "<map>" }]`.
+     The tile scan reads only today's map, so without this the shop's place, and the weeks of what it sells, change
+     with the weekday the answers are written or read (East Scarp's village stall is Aideen's shop on three days and
+     Jessie's on two). Name every shop that shares such a tile.
+   - **`FishData`** pins the `Data/Fish` row of a fish the mod rewrites during the year:
+     `{ "<Data/Fish key>": "<the row to read>" }`. East Scarp's nudibranchs are a rod fish in their own season and a
+     crab pot row in the other three, swapped each season, so answers written in Spring would not match the game in
+     Summer. A pinned fish is read as the layer's row whatever the game holds that day, and the context tags the game
+     derives from the live row (`fish_motion_...`, `fish_difficulty_...`, `fish_favor_weather_...`,
+     `fish_trap_location_...`) are left out of its object. Write what the pin drops (the crab pot catch) as an
+     `ExtraSources` route. To find such rows, write the inputs dump in two seasons
+     (`tly_lexicon dumpinputs`) and compare them.
    - **`MapBackDoors`** name a way the mod adds into a map TLY holds to a week by name (the Secret Woods behind its
      log at week 4, the Sewer, the Witch's Swamp): `{"Map": "Woods", "Week": 1, "From": "Custom_Woods1", "UnlessMods": [...]}`.
      With the mod installed the map opens at `Week` (1 to 16) when that is earlier than TLY's own week, everywhere the

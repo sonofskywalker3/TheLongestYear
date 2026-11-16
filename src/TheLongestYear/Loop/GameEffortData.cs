@@ -205,7 +205,7 @@ namespace TheLongestYear.Loop
                     if (a == null) continue;
                     animals.Add(new RawFarmAnimal(
                         kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
-                        a.PurchasePrice, a.DaysToProduce,
+                        TheLongestYear.Core.Obtainability.AnimalSale.Price(a.PurchasePrice, a.UnlockCondition), a.DaysToProduce,
                         ProduceIds(a.ProduceItemIds), ProduceIds(a.DeluxeProduceItemIds)));
                 }
 

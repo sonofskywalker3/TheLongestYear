@@ -101,6 +101,10 @@ public sealed class LayerSet
     public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
         => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
 
+    /// <summary>Every layer's <see cref="LayerInputs.FishData"/>: the Data/Fish rows the readers take in
+    /// place of the game's (<see cref="PinnedFishData"/>). A later layer's row for the same fish wins.</summary>
+    public IReadOnlyDictionary<string, string> FishData { get; private init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Every layer's <see cref="LayerInputs.RandomShopItems"/>, in inputs order.</summary>
     public IReadOnlyList<RandomShopItem> RandomShopItems { get; private init; } = Array.Empty<RandomShopItem>();
 
@@ -248,6 +252,7 @@ public sealed class LayerSet
         {
             MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
             MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
+            ShopPlacements = inputs.SelectMany(i => i.ShopPlacements).Distinct().ToList(),
             OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade == null)
                 .GroupBy(d => d.Map, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
@@ -289,6 +294,8 @@ public sealed class LayerSet
             YearTwoRulings = Rulings(inputs, i => i.YearTwoRulings, warn, "year-2"),
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
+            FishData = inputs.SelectMany(i => i.FishData).GroupBy(f => f.Key, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal),
         };
     }
 
