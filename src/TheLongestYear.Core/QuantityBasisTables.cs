@@ -170,7 +170,7 @@ public static class QuantityBasisTables
         ["(O)190"] = 99,   // Cauliflower: shop seed
         ["(O)192"] = 99,   // Potato: shop seed
         ["(O)248"] = 99,   // Garlic: shop seed
-        ["(O)271"] = 99,   // Unmilled Rice: shop seed
+        ["(O)271"] = 15,   // Unmilled Rice: Pierre shelves Rice Shoots from year 2 only, so the Grub supply of shoots (below) is the limit
         ["(O)250"] = 99,   // Kale: shop seed
         ["(O)252"] = 99,   // Rhubarb: shop seed
         ["(O)400"] = 99,   // Strawberry: shop seed
@@ -203,10 +203,10 @@ public static class QuantityBasisTables
         ["(O)421"] = 99,   // Sunflower: shop seed
         ["(O)595"] = 99,   // Fairy Rose: shop seed
         ["(O)417"] = 16,   // Sweet Gem Berry: Rare Seed is cart-only, Spring and Summer, one per visit, 2 a week with an upgraded cart
-        ["(O)Carrot"] = 30,   // Carrot: Raccoon / tilling seeds, not buyable
-        ["(O)SummerSquash"] = 30,   // Summer Squash: Raccoon / tilling seeds
-        ["(O)Broccoli"] = 30,   // Broccoli: Raccoon / tilling seeds
-        ["(O)Powdermelon"] = 30,   // Powdermelon: Raccoon / tilling seeds
+        ["(O)Carrot"] = 24,   // Carrot: seed spot seeds, not buyable. Jeff, 2026-11-16: two or three a week for the season is the most Normal asks (12)
+        ["(O)SummerSquash"] = 24,   // Summer Squash: seed spot seeds, as Carrot
+        ["(O)Broccoli"] = 24,   // Broccoli: seed spot seeds, as Carrot
+        ["(O)Powdermelon"] = 24,   // Powdermelon: seed spot seeds, as Carrot
     };
 
     /// <summary>Monster drops, Jeff 2026-09-04: 60 kills a day for 7 days of the best monster a loop can reach
