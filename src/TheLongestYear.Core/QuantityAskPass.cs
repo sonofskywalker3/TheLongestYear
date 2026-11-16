@@ -21,6 +21,19 @@ public static class QuantityAskPass
 {
     private const int QualityGold = 2;
 
+    /// <summary>The artifacts that have a row in the monster drop tables. An artifact is a one-off
+    /// find wherever it is asked for, so these keep the fixed ask every other artifact gets (Jeff,
+    /// 2026-11-16: an Extreme Artifact bundle asked for 6 or 7 Chewing Sticks off the Duggy row).</summary>
+    public static readonly IReadOnlySet<string> ArtifactsAskedAsOneOffs = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "(O)96",    // Dwarf Scroll I
+        "(O)97",    // Dwarf Scroll II
+        "(O)98",    // Dwarf Scroll III
+        "(O)105",   // Chewing Stick
+        "(O)114",   // Ancient Seed
+        "(O)579",   // Prehistoric Scapula
+    };
+
     public static BundleSpec Apply(BundleSpec spec, DifficultyProfile profile, Func<string, Season?> deadlineFor, Random rng,
         ItemAvailabilityModel? model = null, Func<string, bool>? hasUpgrade = null)
         => Apply(spec, profile, deadlineFor, rng, out _, model, hasUpgrade);
@@ -73,6 +86,7 @@ public static class QuantityAskPass
     {
         if (itemId == null) return false;
         string id = BundleParsing.NormalizeItemId(itemId);
+        if (ArtifactsAskedAsOneOffs.Contains(id)) return false;
         return FishAskBasis.Covers(model?.CatchRates, id) || ForageAskBasis.Covers(id)
                || QuantityBasisTables.CrabPot.ContainsKey(id) || QuantityBasisTables.Crops.ContainsKey(id)
                || QuantityBasisTables.MonsterDrops.ContainsKey(id) || QuantityBasisTables.Stations.ContainsKey(id)

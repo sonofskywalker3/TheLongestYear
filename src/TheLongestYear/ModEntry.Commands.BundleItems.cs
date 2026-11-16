@@ -72,6 +72,24 @@ namespace TheLongestYear
                 RequireAllSlots = difficulty.RequireAllSlots,
                 GoldChance = tuning.GoldQualityChance,
                 SilverChance = tuning.SilverQualityChance,
+                Steps = difficulty.Steps,
+                difficulty.QualityFactor,
+                difficulty.RarityBias,
+                difficulty.RequiredSlotsDelta,
+                YearTwoCropAskCap = difficulty.EffectiveYearTwoCropAskCap(),
+                WeeklyGoalDiscount = difficulty.EffectiveWeeklyGoalStackDiscount(),
+                difficulty.JpEarnedFactor,
+                difficulty.ShrinePriceFactor,
+                difficulty.StartingGold,
+                difficulty.StartingCartSlots,
+                difficulty.HoldPriceFactor,
+                BundlesPerRoom = (Game1.netWorldState?.Value?.BundleData?.Keys ?? Enumerable.Empty<string>())
+                    .GroupBy(k => k.Split('/')[0]).ToDictionary(g => g.Key, g => g.Count()),
+                VaultPrices = TheLongestYear.Integration.VaultBundleMap.PriceLadder().Select(p => p.ToString()).ToList(),
+                VaultGate = new[] { CoreSeason.Spring, CoreSeason.Summer, CoreSeason.Fall, CoreSeason.Winter }
+                    .Select(s => VaultRules.RequiredPaid(s, TheLongestYear.Integration.VaultBundleMap.Count())).ToList(),
+                LegendaryPerBundle = LegendaryFishRules.MaxPerBundle(difficulty.Steps.ItemRarity),
+                CappedItemsPerBoard = CappedAsks.BoardAllowance(difficulty.Steps.StackSize),
                 Bundles = rows,
             });
             this.Monitor.Log($"tly_bundleitems: {rows.Count} bundles written to {fileName} (model step {_availability?.Step}).", LogLevel.Info);

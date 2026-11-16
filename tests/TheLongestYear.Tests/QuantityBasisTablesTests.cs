@@ -162,6 +162,7 @@ public class QuantityBasisTablesTests
     {
         Assert.False(QuantityAskPass.Covers(AncientDrum));
         Assert.False(QuantityAskPass.Covers(BookOfStars));
+        Assert.False(QuantityAskPass.Covers("(O)105"));   // Chewing Stick: an artifact, whatever the Duggy row says
         Assert.False(QuantityAskPass.Covers("(O)194"));   // Fried Egg, no model: no dish table
         Assert.Equal(1, Roll(AncientDrum, DifficultyStep.Extreme));
         // Once the model carries a generated dish row, the dish is banded.
