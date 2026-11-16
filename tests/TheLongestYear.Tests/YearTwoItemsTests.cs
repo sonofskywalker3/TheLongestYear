@@ -77,6 +77,7 @@ public class YearTwoCartPoolTests
         Assert.False(YearTwoCartPool.Offers(C("(O)24", YearTwoReason.YearOne)));
         Assert.False(YearTwoCartPool.Offers(C("(O)460", YearTwoReason.NoRoute)));   // Mermaid's Pendant, ruled year 1
         Assert.False(YearTwoCartPool.Offers(C("(O)73", YearTwoReason.NoRoute)));    // Golden Walnut, never sold
+        Assert.False(YearTwoCartPool.Offers(C("(O)899", YearTwoReason.IslandOnly)));   // Ms. Angler, never sold
         Assert.True(YearTwoCartPool.Offers(C("(O)909", YearTwoReason.NoRoute)));    // Radioactive Ore, ruled year 2
     }
 

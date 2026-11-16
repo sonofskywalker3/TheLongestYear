@@ -95,6 +95,12 @@ public static class VanillaYearRulings
             ["(W)6"] = YearRuling.YearOne,   // Iron Edge
             ["(W)60"] = YearRuling.YearOne,   // Ossified Blade
             ["(W)65"] = YearRuling.YearOne,   // Meowmere
+            // Never sold: the Extended Family legendaries, one catch each during Qi's order.
+            ["(O)898"] = YearRuling.NeverSell,   // Son of Crimsonfish
+            ["(O)899"] = YearRuling.NeverSell,   // Ms. Angler
+            ["(O)900"] = YearRuling.NeverSell,   // Legend II
+            ["(O)901"] = YearRuling.NeverSell,   // Radioactive Carp
+            ["(O)902"] = YearRuling.NeverSell,   // Glacierfish Jr.
             // Never sold: currencies, notes, crates, placeholders and decor nothing hands out.
             ["(B)515"] = YearRuling.NeverSell,   // Cowboy Boots
             ["(BC)0"] = YearRuling.NeverSell,   // House Plant
