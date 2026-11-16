@@ -150,9 +150,10 @@ public class VaultBundleCountTests
     [InlineData(Season.Fall, 3, 3)]
     [InlineData(Season.Winter, 3, 3)]
     [InlineData(Season.Winter, 4, 4)]
-    [InlineData(Season.Winter, 6, 4)]
+    [InlineData(Season.Fall, 6, 3)]
+    [InlineData(Season.Winter, 6, 6)]
     [InlineData(Season.Winter, 0, 4)]
-    public void The_gate_never_asks_for_more_than_the_board_has(Season season, int vaultCount, int expected)
+    public void The_gate_asks_the_season_count_and_the_whole_board_in_winter(Season season, int vaultCount, int expected)
         => Assert.Equal(expected, VaultRules.RequiredPaid(season, vaultCount));
 
     [Fact]

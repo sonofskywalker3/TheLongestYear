@@ -53,11 +53,20 @@ public static class VaultRules
     public const int StandardVaultCount = 4;
 
     /// <summary>Vault bundles this season's checkpoint asks for on a board with
-    /// <paramref name="vaultCount"/> of them: the season ordinal, but never more than the board has
-    /// (an Easy board has three, so Winter asks for three). A count of 0 or less means unknown and
-    /// asks for the ordinal.</summary>
+    /// <paramref name="vaultCount"/> of them: the season ordinal, but never more than the board has,
+    /// and every one of them in Winter (three on an Easy board, five or six on Hard and Extreme),
+    /// because the year is not won with a Vault bundle unpaid. A count of 0 or less means unknown
+    /// and asks for the ordinal.</summary>
     public static int RequiredPaid(Season season, int vaultCount)
-        => vaultCount > 0 ? System.Math.Min(SeasonOrdinal(season), vaultCount) : SeasonOrdinal(season);
+    {
+        if (vaultCount <= 0) return SeasonOrdinal(season);
+        return season == Season.Winter ? vaultCount : System.Math.Min(SeasonOrdinal(season), vaultCount);
+    }
+
+    /// <summary>True when every Vault bundle on the board is paid this run: what a win needs on any
+    /// night, the same count Winter's checkpoint asks for.</summary>
+    public static bool IsEveryVaultBundlePaid(RunState run, int vaultCount = StandardVaultCount)
+        => IsVaultGateSatisfied(Season.Winter, run, vaultCount);
 
     /// <summary>The reach metric of keep_bus_unlocked: a bare yes/no flag ("bus"), met by
     /// <see cref="IsBusRepaired"/>.</summary>

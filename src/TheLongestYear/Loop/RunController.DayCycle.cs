@@ -218,7 +218,9 @@ namespace TheLongestYear.Loop
 
             // Year One Ending (spec 2026-09-06 section 1): the night the board completes is the win
             // night, whatever the date. RunAction.Win (Winter 28) lands here too.
-            bool boardDone = BundleGate.IsFullyDone(Run.DonatedLedger(), _requirements);
+            // The Vault is not in _requirements, so its bundles are checked beside the board.
+            bool boardDone = BundleGate.IsFullyDone(Run.DonatedLedger(), _requirements)
+                && VaultRules.IsEveryVaultBundlePaid(Run, TheLongestYear.Integration.VaultBundleMap.Count());
             if (action != RunAction.FailReset
                 && TheLongestYear.Core.Ending.WinNightRule.ShouldArm(boardDone, _store.State.VictoryAcknowledged, Run.EndingArmed))
             {
