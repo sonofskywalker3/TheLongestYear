@@ -145,6 +145,19 @@ public static class AuthoredBundleComposer
         return spare;
     }
 
+    /// <summary>Every item an authored bundle can ask for, for the bundle guide (tly_bundleitems).</summary>
+    public static IReadOnlyList<PoolItem> PossibleItems(
+        AuthoredBundleDef def, ItemPools pools, bool nonObjectDonationsEnabled, ItemAvailabilityModel? availability = null)
+        => def.Name == GilTrophiesBundleName
+            ? TrophyCandidates(nonObjectDonationsEnabled)
+            : SourceCandidates(def, pools, availability);
+
+    /// <summary>Shown and needed counts of an authored bundle before the Required Slots dial.</summary>
+    public static (int Shown, int Needs) ShapeOf(AuthoredBundleDef def, BundleGenerationTuning tuning)
+        => def.Name == GilTrophiesBundleName
+            ? (tuning.TrophyShownCount, Math.Min(Math.Max(tuning.TrophyRequiredCount, MinimumTrophiesRequired), tuning.TrophyShownCount))
+            : (def.SlotCount, def.NumberOfSlots);
+
     private static List<PoolItem> TrophyCandidates(bool nonObjectDonationsEnabled)
     {
         IReadOnlyList<string> ids = nonObjectDonationsEnabled

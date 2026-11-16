@@ -23,6 +23,15 @@ public static partial class BundleSlotFiller
         return WeightedSampler.Capacity(Candidates(spec, match, pools, availability, knownRecipe), capped, cap);
     }
 
+    /// <summary>Every item <see cref="Fill"/> could pick for this bundle before any avoid set, for
+    /// the bundle guide (tly_bundleitems). Empty for a domain it does not re-roll.</summary>
+    public static IReadOnlyList<PoolItem> PossibleItems(
+        BundleSpec spec, DomainMatch match, ItemPools pools, ItemAvailabilityModel? availability = null,
+        PoolRecipe? knownRecipe = null)
+        => match.Domain == PoolDomain.None
+            ? Array.Empty<PoolItem>()
+            : Candidates(spec, match, pools, availability, knownRecipe);
+
     /// <summary>Night Fishing and Specialty Fish: at most one Night Market fish per bundle (see
     /// FishBundleCandidates.CapsNightMarketFish).</summary>
     private static (Func<PoolItem, bool>? Capped, int Cap) CapFor(BundleSpec spec, DomainMatch match, ItemPools pools)
