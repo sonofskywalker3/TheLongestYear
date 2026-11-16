@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.37
+## What's New in 1.2.38
+
+**Fixed: a new farm on Hard or Extreme rolled its first board with Normal's timing.** The first board of a new Hard or Extreme farm was built with Normal's idea of when each item can be had: later deadlines, no Sneak Peek dishes, and Normal's limit on legendary fish. A new farm's first board is now rolled at the difficulty you picked, so a first loop on Hard or Extreme is harder than it was. Boards already rolled are not changed.
+
+## 1.2.37
 
 **Fixed: keeping the bus skipped the Vault.** With Keep Bus Unlocked, the Vault goal showed as met every season with nothing paid. The gift keeps the bus running and nothing more, so the Vault bundles are paid like any other. If you own it, the Vault goal will show as owed again after you update. Thanks to JazzDaxx.
 

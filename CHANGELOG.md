@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.38 - 2026-11-16
+
+### Fixed
+
+- **a new farm on Hard or Extreme rolled its first board with Normal's timing.** The first board of a new Hard or Extreme farm was built with Normal's idea of when each item can be had: later deadlines, no Sneak Peek dishes, and Normal's limit on legendary fish. A new farm's first board is now rolled at the difficulty you picked, so a first loop on Hard or Extreme is harder than it was. Boards already rolled are not changed.
+
 ## 1.2.37 - 2026-11-16
 
 ### Changed
