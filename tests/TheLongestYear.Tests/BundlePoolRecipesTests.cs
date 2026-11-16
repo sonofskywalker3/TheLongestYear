@@ -210,7 +210,7 @@ public class BundlePoolRecipesTests
         {
             Crops = new[]
             {
-                Item("(O)276"), Item("(O)400"), Item("(O)90"), Item("(O)248"), Item("(O)ModCrop"),
+                Item("(O)276"), Item("(O)400"), Item("(O)90"), Item("(O)248"), Item("(O)271"), Item("(O)ModCrop"),
             },
             Forage = new[] { Item("(O)90") },
             ByKind = new Dictionary<ItemKind, IReadOnlyList<PoolItem>>
@@ -226,9 +226,9 @@ public class BundlePoolRecipesTests
         });
         List<string> ids = BundlePoolRecipes.For("Rare Crops", Array.Empty<string>(), pools, model)
             .Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
-        // Strawberry (Egg Festival seeds), Garlic (a year-two seed) and a mod crop whose seed shop
-        // opens in week 6.
-        Assert.Equal(new[] { "(O)248", "(O)400", "(O)ModCrop" }, ids);
+        // Garlic (a year-two seed), Unmilled Rice (Rice Shoots, year 2 at Pierre's), Strawberry (Egg
+        // Festival seeds) and a mod crop whose seed shop opens in week 6.
+        Assert.Equal(new[] { "(O)248", "(O)271", "(O)400", "(O)ModCrop" }, ids);
         // Out: Pumpkin (Pierre's shelf), Cactus Fruit (forage), Apple (Pierre's sapling).
     }
 

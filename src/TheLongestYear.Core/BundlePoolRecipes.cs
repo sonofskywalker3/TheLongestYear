@@ -347,8 +347,15 @@ public static class BundlePoolRecipes
         return pools.Crops.Where(p => !forage.Contains(p.ItemId) && GrowsFromRareSeed(p.ItemId, model)).ToList();
     }
 
+    /// <summary>Rare-seed crops with no <see cref="AvailabilityWeeks.SeedSourceWeeks"/> row. Unmilled
+    /// Rice: Pierre shelves Rice Shoots from year 2 only, and in year 1 they come from artifact
+    /// spots, Grubs and the cart.</summary>
+    private static readonly IReadOnlySet<string> OtherRareSeedCrops =
+        new HashSet<string>(StringComparer.Ordinal) { "(O)271" };
+
     private static bool GrowsFromRareSeed(string id, ItemAvailabilityModel? model)
     {
+        if (OtherRareSeedCrops.Contains(id)) return true;
         if (AvailabilityWeeks.SeedSourceWeeks.ContainsKey(id)) return true;
         string? basis = model?.For(id).Basis;
         return basis != null && basis.Contains(Availability.CropForageAvailability.SeedSoldLaterBasis, StringComparison.Ordinal);
