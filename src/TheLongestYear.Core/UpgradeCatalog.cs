@@ -311,7 +311,7 @@ public static class UpgradeCatalog
         // (GiftLadder): every Gift owned raises the price of the rest, 1,000 JP up to 5,000. The
         // reset restores only the room's completion mail (WorldResetService.RestoreKeptGifts), so
         // the bundles stay on the board, still pay, and vanilla never re-sends the letter that
-        // plays the repair scene. The bus row keeps its id and its vault gate short-circuit; its reach
+        // plays the repair scene. The bus row keeps its id and waives no Vault payment; its reach
         // is every Vault bundle on the board paid or the Vault room repaired (VaultRules.IsBusRepaired).
         // Reach is the ROOM's bundles all complete on the live board (room:), not the completion
         // mail: a room finished on the Fail day has its letter still in mailForTomorrow, which the
