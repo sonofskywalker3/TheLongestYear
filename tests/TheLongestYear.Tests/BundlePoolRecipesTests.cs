@@ -226,9 +226,10 @@ public class BundlePoolRecipesTests
         });
         List<string> ids = BundlePoolRecipes.For("Rare Crops", Array.Empty<string>(), pools, model)
             .Parts[0].Source(pools, model).Select(p => p.ItemId).ToList();
-        // Strawberry (Egg Festival seeds) and a mod crop whose seed shop opens in week 6.
-        Assert.Equal(new[] { "(O)400", "(O)ModCrop" }, ids);
-        // Out: Pumpkin (Pierre), Cactus Fruit (forage), Garlic (Pierre, year 2), Apple (Pierre's sapling).
+        // Strawberry (Egg Festival seeds), Garlic (a year-two seed) and a mod crop whose seed shop
+        // opens in week 6.
+        Assert.Equal(new[] { "(O)248", "(O)400", "(O)ModCrop" }, ids);
+        // Out: Pumpkin (Pierre's shelf), Cactus Fruit (forage), Apple (Pierre's sapling).
     }
 
     [Fact]

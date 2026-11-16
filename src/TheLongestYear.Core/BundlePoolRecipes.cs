@@ -337,9 +337,10 @@ public static class BundlePoolRecipes
     /// <summary>Rare Crops (Jeff, 2026-11-16): only crops that must be grown from rare seeds. A crop
     /// qualifies when its seed does not come off Pierre's day-1 shelf: it has a row in
     /// <see cref="AvailabilityWeeks.SeedSourceWeeks"/> (a festival, the cart, the Oasis, seed spots,
-    /// Ancient Seeds), or the model dates its seed to a shop that opens later (a mod's crop). The
-    /// three year-two crops are Pierre's seeds and stay out, and so does anything that is also
-    /// forage (Cactus Fruit). No fruit-tree fruit: Pierre sells the saplings.</summary>
+    /// Ancient Seeds, the three year-two crops), or the model dates its seed to a shop that opens
+    /// later (a mod's crop). The year-two crops count (Jeff, 2026-11-16): their seeds are rare
+    /// until an upgrade unlocks them. Anything that is also forage stays out (Cactus Fruit). No
+    /// fruit-tree fruit: Pierre sells the saplings.</summary>
     private static IReadOnlyList<PoolItem> RareCropSource(ItemPools pools, ItemAvailabilityModel? model)
     {
         var forage = new HashSet<string>(pools.Forage.Select(p => p.ItemId), StringComparer.Ordinal);
@@ -348,7 +349,6 @@ public static class BundlePoolRecipes
 
     private static bool GrowsFromRareSeed(string id, ItemAvailabilityModel? model)
     {
-        if (YearTwoCrops.CropIds.Contains(id)) return false;
         if (AvailabilityWeeks.SeedSourceWeeks.ContainsKey(id)) return true;
         string? basis = model?.For(id).Basis;
         return basis != null && basis.Contains(Availability.CropForageAvailability.SeedSoldLaterBasis, StringComparison.Ordinal);
