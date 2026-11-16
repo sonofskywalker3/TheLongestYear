@@ -21,7 +21,7 @@ public sealed class ObtainabilityCache
     public ObtainabilityBuild Get(
         ObtainabilityInputs inputs, out bool reused,
         IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>? extraDirect = null,
-        YearTwoMarks? marks = null)
+        YearTwoMarks? marks = null, Action<int>? onPass = null)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
         string key = Fingerprint(inputs) + (extraDirect is { Count: > 0 } ? ExtraFingerprint(extraDirect) : "")
@@ -33,7 +33,7 @@ public sealed class ObtainabilityCache
             return _build;
         }
 
-        _build = ObtainabilityBuilder.Build(inputs, extraDirect: extraDirect, marks: marks);
+        _build = ObtainabilityBuilder.Build(inputs, extraDirect: extraDirect, marks: marks, onPass: onPass);
         _key = key;
         reused = false;
         return _build;

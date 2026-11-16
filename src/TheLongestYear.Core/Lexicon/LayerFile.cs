@@ -156,6 +156,8 @@ public static class LayerFile
     public const string FolderRelativePath = "assets/lexicon/layers";
     public const string InputsSuffix = ".inputs.json";
     public const string AnswersSuffix = ".answers.json";
+    /// <summary>A layer's known ids (<see cref="KnownIds"/>): a JSON array of the ids its mods add over vanilla's.</summary>
+    public const string IdsSuffix = ".ids.json";
     /// <summary>Joins the mod ids of an interaction layer, in its name and in the composed set's layers.</summary>
     public const string Joiner = "+";
     private const string DeltasKey = "Deltas";
@@ -167,6 +169,54 @@ public static class LayerFile
         => string.Join(Joiner, mods.OrderBy(m => m, StringComparer.Ordinal));
 
     public static string InputsFileName(string uniqueId) => uniqueId + InputsSuffix;
+
+    public static string IdsFileName(IEnumerable<string> mods) => Name(mods) + IdsSuffix;
+
+    /// <summary>An ids file's text: the ids in ordinal order, one per line of a JSON array.</summary>
+    public static string WriteIds(IEnumerable<string> ids)
+        => System.Text.Json.JsonSerializer.Serialize(
+            ids.Distinct(StringComparer.Ordinal).OrderBy(i => i, StringComparer.Ordinal).ToList(),
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+
+    public static IReadOnlyList<string> ReadIds(string json)
+        => System.Text.Json.JsonSerializer.Deserialize<List<string>>(json)
+           ?? throw new System.Text.Json.JsonException("The ids file holds no list.");
+
+    /// <summary>The known ids for this game: vanilla's with every ids file in <paramref name="folder"/>
+    /// whose mods are all installed. Null (no filtering, as before ids existed) when
+    /// <paramref name="vanillaIds"/> is null; a layer ids file that cannot be read is reported and left
+    /// out, so that mod's content is ignored rather than everything read unfiltered.</summary>
+    public static KnownIds? ReadKnownIds(
+        IReadOnlyList<string>? vanillaIds, string folder, Func<string, bool> isLoaded, Action<string> warn)
+    {
+        if (vanillaIds == null) return null;
+        var all = new List<string>(vanillaIds);
+        if (Directory.Exists(folder))
+            foreach (string path in Directory.GetFiles(folder, "*" + IdsSuffix).OrderBy(p => p, StringComparer.Ordinal))
+            {
+                string name = Path.GetFileName(path);
+                if (!ModsInFileName(name).All(isLoaded)) continue;
+                try
+                {
+                    all.AddRange(ReadIds(File.ReadAllText(path)));
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+                {
+                    warn($"Lexicon ids file {name} could not be read ({e.GetType().Name}: {e.Message}); that content is ignored.");
+                }
+            }
+        return new KnownIds(all);
+    }
+
+    /// <summary>The mod ids a layer file's name holds (the reverse of <see cref="InputsFileName"/>
+    /// and <see cref="AnswersFileName"/>).</summary>
+    public static IReadOnlyList<string> ModsInFileName(string fileName)
+    {
+        string suffix = fileName.EndsWith(InputsSuffix, StringComparison.Ordinal) ? InputsSuffix
+            : fileName.EndsWith(IdsSuffix, StringComparison.Ordinal) ? IdsSuffix : AnswersSuffix;
+        string stem = fileName.EndsWith(suffix, StringComparison.Ordinal) ? fileName[..^suffix.Length] : fileName;
+        return stem.Split(Joiner, StringSplitOptions.RemoveEmptyEntries);
+    }
 
     public static string AnswersFileName(IEnumerable<string> mods) => Name(mods) + AnswersSuffix;
 
@@ -336,7 +386,11 @@ public static class LayerFile
     /// order of single-mod deltas). A missing folder has none. A file that cannot be read or parsed is
     /// reported to <paramref name="warn"/> and skipped, so one bad layer does not cost the others; a
     /// folder that cannot be listed is reported and has none.</summary>
-    public static (IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers) ReadFolder(string folder, Action<string> warn)
+    /// <param name="isLoaded">When given, a file is read only if every mod its name holds is installed
+    /// (<c>A.inputs.json</c>, <c>A+B.answers.json</c>): the others could never apply, and the answers
+    /// files are megabytes each.</param>
+    public static (IReadOnlyList<LayerInputs> Inputs, IReadOnlyList<LayerAnswers> Answers) ReadFolder(
+        string folder, Action<string> warn, Func<string, bool>? isLoaded = null)
     {
         var inputs = new List<LayerInputs>();
         var answers = new List<LayerAnswers>();
@@ -357,6 +411,7 @@ public static class LayerFile
             bool isInputs = name.EndsWith(InputsSuffix, StringComparison.Ordinal);
             bool isAnswers = name.EndsWith(AnswersSuffix, StringComparison.Ordinal);
             if (!isInputs && !isAnswers) continue;
+            if (isLoaded != null && !ModsInFileName(name).All(isLoaded)) continue;
             try
             {
                 string json = File.ReadAllText(path);

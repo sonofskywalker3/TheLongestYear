@@ -41,16 +41,24 @@ namespace TheLongestYear.Loop
 
         /// <param name="build">The answers for live data nothing has (the cold build, for now), given the
         /// layers' extra direct sources to add and their year-2 maps and shops to flag.</param>
+        /// <param name="onGameThread">False when constructed on a worker at the title screen: the
+        /// constructor only reads files and composes them, and then draws no progress card.</param>
         public LexiconService(
             IMonitor monitor, string modFolder, IModRegistry registry,
-            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, YearTwoMarks, AnswerVariant> build)
+            Func<ObtainabilityInputs, IReadOnlyDictionary<string, IReadOnlyList<ObtainSource>>, YearTwoMarks, AnswerVariant> build,
+            bool onGameThread = true)
         {
             if (build == null) throw new ArgumentNullException(nameof(build));
             _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             Action<string> warn = m => _monitor.Log(m, LogLevel.Warn);
             Action<string> trace = m => _monitor.Log(m, LogLevel.Trace);
             _cache = new LexiconDiskCache(System.IO.Path.Combine(modFolder, CacheFolder), MaxCacheFiles, warn, trace);
+            // Before anything reads game data: the readers skip what is not vanilla's or an installed layer's.
+            KnownData.Known = ReadKnownIds(modFolder, registry, warn);
             Vanilla = LexiconDiskCache.LoadShipped(() => ShippedLexicon.LoadVanilla(modFolder), warn, trace);
+            // The support files are megabytes each: with any to read, say so on screen first.
+            // Off the game thread (the title-screen warm-up) nothing may draw, and nothing needs to.
+            if (onGameThread && LayerLoader.HasInstalledLayers(modFolder, registry)) LoadProgress.Reading();
             Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
             LayerSet layers = Loaded.Set;
             YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;
@@ -63,6 +71,23 @@ namespace TheLongestYear.Loop
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
                 live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, SaveMarks(layers.Marks)));
+        }
+
+        /// <summary>The known ids for this game, or null (nothing is filtered) when the vanilla ids
+        /// file is missing or unreadable.</summary>
+        private static KnownIds ReadKnownIds(string modFolder, IModRegistry registry, Action<string> warn)
+        {
+            try
+            {
+                IReadOnlyList<string> vanillaIds = ShippedLexicon.LoadVanillaIds(modFolder);
+                if (vanillaIds == null) warn("Lexicon: no vanilla ids file; content from mods with no layer is not filtered out.");
+                return LayerFile.ReadKnownIds(vanillaIds, LayerFile.Folder(modFolder), registry.IsLoaded, warn);
+            }
+            catch (Exception e) when (e is System.IO.IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            {
+                warn($"Lexicon: the vanilla ids file could not be read ({e.GetType().Name}: {e.Message}); content from mods with no layer is not filtered out.");
+                return null;
+            }
         }
 
         /// <summary>Whether the loaded save owns an upgrade (false with no save).</summary>
@@ -103,7 +128,8 @@ namespace TheLongestYear.Loop
             if (shipped != null && shipped.ModVersion != modVersion)
                 return $" — shipped answers are for TLY {shipped.ModVersion}, running {modVersion}";
             if (r.DirtyOwners.Count > 0)
-                return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)})";
+                return $" — {r.DirtyCount} data rows differ from the shipped answers ({string.Join(", ", r.DirtyOwners)}): "
+                    + string.Join("; ", r.DirtyRows) + (r.DirtyCount > r.DirtyRows.Count ? "; ..." : "");
             if (shipped == null) return " — no shipped answers";
             if (shipped.GameVersion != gameVersion)
                 return $" — 0 data rows differ; shipped game version {shipped.GameVersion} ≠ live {gameVersion}";
@@ -166,6 +192,27 @@ namespace TheLongestYear.Loop
                 ? answers
                 : null;
 
+        /// <summary>Whether the current answers were built or cached from data that differs from what
+        /// shipped, so the weeks built from them are held to the shipped ones (<see cref="AvailabilityFloor"/>).</summary>
+        public bool HoldsToShipped => _current != null && _current.Origin != AnswerOrigin.Shipped;
+
+        /// <summary>The shipped availability answers for <paramref name="key"/> on this save's variant:
+        /// vanilla's, and each installed layer's.</summary>
+        public IReadOnlyList<AvailabilityAnswers> VettedAvailability(string key)
+        {
+            var vetted = new List<AvailabilityAnswers>();
+            if (Vanilla?.Resolve(Vanilla.StoredNameFor(_variantName)) is AnswerVariant vanilla
+                && vanilla.Availability.TryGetValue(key, out AvailabilityAnswers own))
+                vetted.Add(own);
+            foreach (LayerAnswers layer in Loaded.InstalledAnswers)
+            {
+                string stored = layer.Deltas.ContainsKey(_variantName) ? _variantName : AnswerSet.StemOf(_variantName);
+                if (layer.Deltas.TryGetValue(stored, out AnswerVariant delta) && delta.Availability.TryGetValue(key, out AvailabilityAnswers theirs))
+                    vetted.Add(theirs);
+            }
+            return vetted;
+        }
+
         /// <summary>The inputs hash the current variant's answers for <paramref name="key"/> were made
         /// from, or null when it has none; for the load log.</summary>
         public string StoredInputs(string key)
@@ -194,6 +241,7 @@ namespace TheLongestYear.Loop
 
         private void WriteCurrent()
         {
+            if (_current?.Origin == AnswerOrigin.Computed) LoadProgress.Saving();
             _pendingKey = null;
             AnswerSet set = _resolver.CurrentSet with
             {

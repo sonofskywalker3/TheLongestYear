@@ -16,7 +16,14 @@ public enum AnswerOrigin { Shipped, Cache, Computed }
 /// the shipped answers and how many data rows differ from them (added, removed or changed; 0 with no
 /// shipped set).</summary>
 public sealed record Resolved(
-    AnswerVariant Variant, AnswerOrigin Origin, string Key, long Ms, IReadOnlyList<string> DirtyOwners, int DirtyCount);
+    AnswerVariant Variant, AnswerOrigin Origin, string Key, long Ms, IReadOnlyList<string> DirtyOwners, int DirtyCount)
+{
+    /// <summary>How many differing row keys <see cref="DirtyRows"/> holds at most.</summary>
+    public const int MaxDirtyRows = 6;
+
+    /// <summary>The first few differing row keys (added, removed or changed), for the log.</summary>
+    public IReadOnlyList<string> DirtyRows { get; init; } = Array.Empty<string>();
+}
 
 /// <summary>Finds the answers for the live data, in order:
 /// <list type="number">
@@ -106,7 +113,8 @@ public sealed class LexiconResolver
         IReadOnlyList<string> differing = DifferingRows(_shipped?.RowHashesFor(variantName), rows);
         return new Resolved(built, AnswerOrigin.Computed, key, timer.ElapsedMilliseconds,
             differing.Select(RowHashes.Owner).Distinct(StringComparer.Ordinal).OrderBy(o => o, StringComparer.Ordinal).ToList(),
-            differing.Count);
+            differing.Count)
+        { DirtyRows = differing.Take(Resolved.MaxDirtyRows).ToList() };
     }
 
     private static bool SameRows(IReadOnlyDictionary<string, ulong> a, IReadOnlyDictionary<string, ulong> b)

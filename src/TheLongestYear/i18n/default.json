@@ -9,6 +9,13 @@
 
     // -- hud --------------------------------------------------------------------
     "hud.festival-over": "The festival is over.",
+    "load.learning.title": "The Longest Year is learning your mods.",
+    "load.learning.once": "This happens once for this set of mods.",
+    "load.learning.reading": "Reading mod support",
+    "load.learning.routes": "Working out where items come from (pass {{pass}})",
+    "load.learning.year-two": "Sorting what waits for year two (pass {{pass}})",
+    "load.learning.weeks": "Working out when items can be had",
+    "load.learning.saving": "Saving",
     "dialog.festival.already-done": "You have already taken part in this today. Leave the festival?",
     "hud.theme-complete": "Weekly theme complete! Drawback lifted.",
     "hud.goal-paid": "Goal done! +{{jp}} JP ({{done}}/{{total}})",

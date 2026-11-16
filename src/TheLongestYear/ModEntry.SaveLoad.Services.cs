@@ -142,6 +142,8 @@ namespace TheLongestYear
                 + $"{_availability.RejectedSeasonOverrides.Count} curated season pin(s) rejected for "
                 + "demanding an item earlier than it can exist.",
                 LogLevel.Trace);
+            if (TheLongestYear.Loop.KnownData.Dropped.Count > 0)
+                this.Monitor.Log(TheLongestYear.Loop.KnownData.DroppedLine(), LogLevel.Info);
             if (_availability.RejectedSeasonOverrides.Count > 0)
                 this.Monitor.Log(
                     "Rejected season pins (derived floor kept instead): "
@@ -207,7 +209,8 @@ namespace TheLongestYear
                 // An engine-rolled board may hold a non-crop ask in a crop bundle (Fiber in Quality
                 // Crops, from before the crop pool kept only produce). A Normal or Remixed board's
                 // crop bundles are the game's own and are left as they are.
-                replaceNonCropAsks: !vanillaBoard).RepairIfNeeded();
+                replaceNonCropAsks: !vanillaBoard,
+                isUnsupported: id => !TheLongestYear.Loop.KnownData.KnowsItem(id)).RepairIfNeeded();
             if (repaired > 0)
                 this.Monitor.Log(
                     $"Board repair: {repaired} unreachable ask(s) replaced. Your donated items were left alone.",

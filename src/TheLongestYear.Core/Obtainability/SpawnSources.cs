@@ -74,6 +74,8 @@ public static class SpawnSources
                             Condition = BothConditions(row.Condition, inherited.Condition),
                             MinFishingLevel = Math.Max(row.MinFishingLevel, inherited.MinFishingLevel),
                             RequireMagicBait = row.RequireMagicBait || inherited.RequireMagicBait,
+                            // An unknown wrapper cannot turn the rows it borrows into sources.
+                            CompetitorOnly = row.CompetitorOnly == true || inherited.CompetitorOnly == true ? true : null,
                         };
                     }
                 else
@@ -142,6 +144,7 @@ public static class SpawnSources
 
         foreach (LocationSpawn row in rows)
         {
+            if (row.CompetitorOnly == true) continue;   // competes in the catch model, gives no source
             if (Spawn(row, festivals, SourceKind.Fish, $"Fish at {row.Location}") is not ObtainSource baseTemplate)
                 continue;
             // Resolve first, then look each concrete fish up: a query listing fish must not lose their data.

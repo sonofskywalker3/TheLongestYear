@@ -67,6 +67,28 @@ namespace TheLongestYear.Loop
         private static double DoubleField(string[] fields, int index)
             => double.TryParse(GameObtainabilityParsing.Field(fields, index), NumberStyles.Float, CultureInfo.InvariantCulture, out double d) ? d : 0;
 
+        private const string LocationsAsset = "Data/Locations";
+        private const string FishAsset = "Data/Fish";
+
+        private static LocationSpawn FishSpawn(string location, SpawnFishData f, string item, bool random)
+            => new(location, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance,
+                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random,   // CatchLimit defaults to -1
+                f.CanBeInherited,
+                f.Precedence, string.IsNullOrWhiteSpace(f.FishAreaId) ? null : f.FishAreaId,
+                f.MinDistanceFromShore, f.MaxDistanceFromShore, f.BobberPosition != null || f.PlayerPosition != null);
+
+        private static FishRow ReadFishRow(string key, string value)
+        {
+            string[] fields = (value ?? "").Split('/');
+            string id = BundleParsing.NormalizeItemId(key);
+            bool trap = GameObtainabilityParsing.Field(fields, FishDifficultyField) == TrapMarker;
+            int level = trap ? 0 : (int.TryParse(GameObtainabilityParsing.Field(fields, FishMinLevelField), out int l) ? l : 0);
+            return new FishRow(id, trap, trap ? "" : GameObtainabilityParsing.Field(fields, FishWeatherField), level,
+                trap ? "" : GameObtainabilityParsing.Field(fields, FishTimeField),
+                trap ? 0 : IntField(fields, FishMaxDepthField), trap ? 0 : DoubleField(fields, FishBaseChanceField),
+                trap ? 0 : DoubleField(fields, FishDepthMultiplierField));
+        }
+
         public ObtainabilityInputs Build()
         {
             _failed.Clear();   // Build may be called again on a later save load; last run's failures are not this run's
@@ -95,7 +117,7 @@ namespace TheLongestYear.Loop
 
             Section("Objects", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ObjectData>>("Data/Objects"))
                 {
                     ObjectData o = kv.Value;
                     if (o == null) continue;
@@ -111,7 +133,7 @@ namespace TheLongestYear.Loop
 
             Section("PassiveFestivals", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, PassiveFestivalData>>("Data/PassiveFestivals"))
+                foreach (var kv in KnownData.Load<Dictionary<string, PassiveFestivalData>>("Data/PassiveFestivals"))
                     if (kv.Value != null)
                         festivals[kv.Key] = new FestivalDates(kv.Key, (CoreSeason)(int)kv.Value.Season, kv.Value.StartDay, kv.Value.EndDay);
             });
@@ -119,7 +141,7 @@ namespace TheLongestYear.Loop
             Section("Festivals/FestivalDates", () =>
             {
                 // Keys are "<season><day>" ("spring13"); the value is a display name and is not used.
-                foreach (string key in Game1.content.Load<Dictionary<string, string>>("Data/Festivals/FestivalDates").Keys)
+                foreach (string key in KnownData.Load<Dictionary<string, string>>("Data/Festivals/FestivalDates").Keys)
                 {
                     string seasonName = new string(key.TakeWhile(char.IsLetter).ToArray());
                     if (Enum.TryParse(seasonName, ignoreCase: true, out CoreSeason season)
@@ -128,9 +150,12 @@ namespace TheLongestYear.Loop
                 }
             });
 
+            var competitorItems = new HashSet<string>(StringComparer.Ordinal);
+            var competitorFishRows = new Dictionary<string, FishRow>(StringComparer.Ordinal);
             Section("Locations", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                Dictionary<string, LocationData> rawLocations = KnownData.Raw<Dictionary<string, LocationData>>(LocationsAsset);
+                foreach (var kv in KnownData.Load<Dictionary<string, LocationData>>(LocationsAsset))
                 {
                     if (MinigameLocations.Contains(kv.Key)) continue;
                     LocationData loc = kv.Value;
@@ -140,11 +165,15 @@ namespace TheLongestYear.Loop
                             forage.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0, random));
                     foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
                         foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
-                            fish.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance,
-                                Math.Max(0, f.CatchLimit), f.RequireMagicBait, f.MinFishingLevel, random,
-                                f.CanBeInherited,   // CatchLimit defaults to -1
-                                f.Precedence, string.IsNullOrWhiteSpace(f.FishAreaId) ? null : f.FishAreaId,
-                                f.MinDistanceFromShore, f.MaxDistanceFromShore, f.BobberPosition != null || f.PlayerPosition != null));
+                            fish.Add(FishSpawn(kv.Key, f, item, random));
+                    // Fish a mod with no layer adds to this water: they take casts, and give nothing.
+                    if (rawLocations != null && rawLocations.TryGetValue(kv.Key, out LocationData rawLoc))
+                        foreach (SpawnFishData f in KnownData.UnknownRows(LocationsAsset, kv.Key, nameof(LocationData.Fish), rawLoc?.Fish))
+                            foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                            {
+                                fish.Add(FishSpawn(kv.Key, f, item, random) with { CompetitorOnly = true });
+                                competitorItems.Add(BundleParsing.NormalizeItemId(item));
+                            }
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
                         foreach ((string item, _) in GameObtainabilityParsing.Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
@@ -153,22 +182,21 @@ namespace TheLongestYear.Loop
 
             Section("Fish", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Fish"))
-                {
-                    string[] fields = (kv.Value ?? "").Split('/');
-                    string id = BundleParsing.NormalizeItemId(kv.Key);
-                    bool trap = GameObtainabilityParsing.Field(fields, FishDifficultyField) == TrapMarker;
-                    int level = trap ? 0 : (int.TryParse(GameObtainabilityParsing.Field(fields, FishMinLevelField), out int l) ? l : 0);
-                    fishRows[id] = new FishRow(id, trap, trap ? "" : GameObtainabilityParsing.Field(fields, FishWeatherField), level,
-                        trap ? "" : GameObtainabilityParsing.Field(fields, FishTimeField),
-                        trap ? 0 : IntField(fields, FishMaxDepthField), trap ? 0 : DoubleField(fields, FishBaseChanceField),
-                        trap ? 0 : DoubleField(fields, FishDepthMultiplierField));
-                }
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>(FishAsset))
+                    fishRows[BundleParsing.NormalizeItemId(kv.Key)] = ReadFishRow(kv.Key, kv.Value);
+                // The bite chance of each fish only a competitor row offers.
+                if (competitorItems.Count > 0)
+                    foreach (var kv in KnownData.Raw<Dictionary<string, string>>(FishAsset))
+                    {
+                        string id = BundleParsing.NormalizeItemId(kv.Key);
+                        if (competitorItems.Contains(id) && !fishRows.ContainsKey(id))
+                            competitorFishRows[id] = ReadFishRow(kv.Key, kv.Value);
+                    }
             });
 
             Section("Monsters", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Monsters"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/Monsters"))
                 {
                     string[] pairs = GameObtainabilityParsing.Field((kv.Value ?? "").Split('/'), MonsterDropField).Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     for (int i = 0; i + 1 < pairs.Length; i += 2)
@@ -179,7 +207,7 @@ namespace TheLongestYear.Loop
 
             Section("Crops", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, CropData>>("Data/Crops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, CropData>>("Data/Crops"))
                 {
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
@@ -190,7 +218,7 @@ namespace TheLongestYear.Loop
 
             Section("FruitTrees", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
+                foreach (var kv in KnownData.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
                 {
                     if (kv.Value == null) continue;
                     var fruit = new List<FruitRow>();
@@ -203,7 +231,7 @@ namespace TheLongestYear.Loop
 
             Section("Shops", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ShopData>>("Data/Shops"))
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
                         foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(item?.ItemId, item?.RandomItemId))
                         {
@@ -225,7 +253,7 @@ namespace TheLongestYear.Loop
 
             Section("Machines", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, MachineData>>("Data/Machines"))
+                foreach (var kv in KnownData.Load<Dictionary<string, MachineData>>("Data/Machines"))
                     foreach (MachineOutputRule rule in kv.Value?.OutputRules ?? new List<MachineOutputRule>())
                     {
                         var outputs = new List<MachineOutput>();
@@ -255,7 +283,7 @@ namespace TheLongestYear.Loop
 
             Section("CookingRecipes", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CookingRecipes"))
                     if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r) recipes.Add(r);
             });
 
@@ -264,7 +292,7 @@ namespace TheLongestYear.Loop
                 // Keyed by episode number as a string; the value's first field is the recipe name, the
                 // same key as Data/CookingRecipes (TV.getWeeklyRecipe 545, DataLoader.Tv_CookingChannel).
                 // A recipe listed twice keeps its earliest episode.
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
                 {
                     if (!int.TryParse(kv.Key, NumberStyles.Integer, CultureInfo.InvariantCulture, out int episode)) continue;
                     string recipe = (kv.Value ?? "").Split('/')[0].Trim();
@@ -276,13 +304,13 @@ namespace TheLongestYear.Loop
 
             Section("CraftingRecipes", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
                     if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: false) is RecipeRow r) recipes.Add(r);
             });
 
             Section("FarmAnimals", () =>
             {
-                var animalData = Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
+                var animalData = KnownData.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals");
                 // An id sold through another animal's AlternatePurchaseTypes (Brown Chicken through
                 // White Chicken, Brown Cow through White Cow: PurchaseAnimalsMenu.cs 477-484). Only a
                 // sold base animal's alternates count: the menu only ever reads this field off an
@@ -314,7 +342,7 @@ namespace TheLongestYear.Loop
 
             Section("FishPondData", () =>
             {
-                foreach (FishPondData pond in Game1.content.Load<List<FishPondData>>("Data/FishPondData") ?? new List<FishPondData>())
+                foreach (FishPondData pond in KnownData.Load<List<FishPondData>>("Data/FishPondData") ?? new List<FishPondData>())
                 {
                     if (pond == null) continue;
                     var products = new List<PondProduct>();
@@ -328,7 +356,7 @@ namespace TheLongestYear.Loop
 
             Section("WildTrees", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
+                foreach (var kv in KnownData.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
                 {
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
                         foreach ((string item, bool random) in GameObtainabilityParsing.Entries(tap?.ItemId, tap?.RandomItemId))
@@ -342,7 +370,7 @@ namespace TheLongestYear.Loop
 
             Section("GarbageCans", () =>
             {
-                GarbageCanData data = Game1.content.Load<GarbageCanData>("Data/GarbageCans");
+                GarbageCanData data = KnownData.Load<GarbageCanData>("Data/GarbageCans");
                 void AddAll(string can, List<GarbageCanItemData> items)
                 {
                     foreach (GarbageCanItemData g in items ?? new List<GarbageCanItemData>())
@@ -357,7 +385,7 @@ namespace TheLongestYear.Loop
 
             Section("Buildings", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, BuildingData>>("Data/Buildings"))
+                foreach (var kv in KnownData.Load<Dictionary<string, BuildingData>>("Data/Buildings"))
                 {
                     BuildingData b = kv.Value;
                     if (b == null) continue;
@@ -369,7 +397,7 @@ namespace TheLongestYear.Loop
 
             Section("MonsterSlayerQuests", () =>
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, MonsterSlayerQuestData>>("Data/MonsterSlayerQuests"))
+                foreach (var kv in KnownData.Load<Dictionary<string, MonsterSlayerQuestData>>("Data/MonsterSlayerQuests"))
                 {
                     MonsterSlayerQuestData q = kv.Value;
                     if (q == null) continue;
@@ -384,6 +412,7 @@ namespace TheLongestYear.Loop
             return new ObtainabilityInputs
             {
                 Objects = objects, Festivals = festivals, Forage = forage, LocationFish = expandedFish, FishRows = fishRows,
+                CompetitorFishRows = competitorFishRows.Count > 0 ? competitorFishRows : null,
                 ArtifactSpots = artifactSpots, Garbage = garbage, Shops = shops, MonsterDrops = monsterDrops,
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
                 Ponds = ponds, TapItems = taps, TreeDrops = treeDrops, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,

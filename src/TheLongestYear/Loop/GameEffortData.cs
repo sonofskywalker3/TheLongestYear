@@ -67,7 +67,7 @@ namespace TheLongestYear.Loop
 
             try
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ObjectData>>("Data/Objects"))
                 {
                     ObjectData o = kv.Value;
                     if (o == null) continue;
@@ -85,7 +85,7 @@ namespace TheLongestYear.Loop
                             geodeDrops.Add(new RawGeodeDrop(geodeId, id, drop.Chance));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Monsters"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/Monsters"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= MonsterDropListFieldIndex) continue;
@@ -99,7 +99,7 @@ namespace TheLongestYear.Loop
                     }
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                foreach (var kv in KnownData.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
@@ -123,7 +123,7 @@ namespace TheLongestYear.Loop
                             kv.Key, loc.MinDailyForageSpawn, loc.MaxDailyForageSpawn, loc.MaxSpawnedForageAtOnce));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, MachineData>>("Data/Machines"))
+                foreach (var kv in KnownData.Load<Dictionary<string, MachineData>>("Data/Machines"))
                 {
                     foreach (MachineOutputRule rule in kv.Value?.OutputRules ?? new List<MachineOutputRule>())
                     {
@@ -143,7 +143,7 @@ namespace TheLongestYear.Loop
                     }
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= CraftingUnlockField) continue;
@@ -169,7 +169,7 @@ namespace TheLongestYear.Loop
                 // dishes and crafted objects are dated by the shop as well as the price, since a
                 // festival stall or an unreached shop teaches nothing in year 1.
                 int skippedConditionRecipeRows = 0;
-                foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ShopData>>("Data/Shops"))
                 {
                     foreach (ShopItemData item in kv.Value?.Items ?? new List<ShopItemData>())
                     {
@@ -187,7 +187,7 @@ namespace TheLongestYear.Loop
                         $"Recipe shop rows skipped for having a Condition (not reliably stocked): {skippedConditionRecipeRows}.",
                         LogLevel.Trace);
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CookingRecipes"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= CookingUnlockField) continue;
@@ -199,7 +199,7 @@ namespace TheLongestYear.Loop
                     cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim(), counts));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals"))
+                foreach (var kv in KnownData.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals"))
                 {
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
@@ -209,10 +209,10 @@ namespace TheLongestYear.Loop
                         ProduceIds(a.ProduceItemIds), ProduceIds(a.DeluxeProduceItemIds)));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, BuildingData>>("Data/Buildings"))
+                foreach (var kv in KnownData.Load<Dictionary<string, BuildingData>>("Data/Buildings"))
                     buildings.Add(new RawBuilding(kv.Key, kv.Value?.BuildingToUpgrade));
 
-                foreach (FishPondData pond in Game1.content.Load<List<FishPondData>>("Data/FishPondData") ?? new List<FishPondData>())
+                foreach (FishPondData pond in KnownData.Load<List<FishPondData>>("Data/FishPondData") ?? new List<FishPondData>())
                 {
                     if (pond == null) continue;
                     var products = new List<RawFishPondProduct>();
@@ -222,7 +222,7 @@ namespace TheLongestYear.Loop
                     ponds.Add(new RawFishPondRule((IReadOnlyList<string>)(pond.RequiredTags ?? new List<string>()), products));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, CropData>>("Data/Crops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, CropData>>("Data/Crops"))
                 {
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
@@ -235,7 +235,7 @@ namespace TheLongestYear.Loop
                         BundleParsing.NormalizeItemId(kv.Key)));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
+                foreach (var kv in KnownData.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
                 {
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
                     {
@@ -247,7 +247,7 @@ namespace TheLongestYear.Loop
                 }
                 wildTreeSpots.AddRange(EffortData.SortedSpots(ReadWildTreeSpots()));
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
+                foreach (var kv in KnownData.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
                 {
                     if (kv.Value == null) continue;
                     var fruit = (kv.Value.Fruit ?? new List<StardewValley.GameData.FruitTrees.FruitTreeFruitData>())
@@ -258,7 +258,7 @@ namespace TheLongestYear.Loop
                     fruitTrees.Add(new RawFruitTree(kv.Key, fruit, treeSeasons));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/TV/CookingChannel"))
                 {
                     if (!int.TryParse(kv.Key, out int episode)) continue;
                     string name = (kv.Value ?? "").Split('/', StringSplitOptions.None).FirstOrDefault() ?? "";
@@ -331,7 +331,7 @@ namespace TheLongestYear.Loop
         /// save to the next, and the list is part of the path lexicon's availability inputs hash.</summary>
         private static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
         {
-            foreach (GameLocation location in Game1.locations)
+            foreach (GameLocation location in KnownData.Locations())
             {
                 if (location?.Name == null) continue;
                 var types = new SortedSet<string>(StringComparer.Ordinal);

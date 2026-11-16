@@ -23,6 +23,42 @@ to the other's shop), so each pair of supported mods installed together needs it
 A mod with an inputs file but no applied answers file (none written yet, or dropped for a version mismatch)
 is "not mapped yet": nothing is served as shipped, so the answers are computed with its hand-written routes.
 
+## What a mod with no layer adds is not read
+
+TLY only reads game data that vanilla or an installed supported mod owns. Each of them has a list
+of ids (`assets/lexicon/vanilla.ids.json`, `layers/<UniqueID>.ids.json`): one id per data entry
+(`Data/Locations|Forest`) and per row inside one (`Data/Locations|Forest|Fish/(O)136`). The three
+readers (pools, effort, obtainability) load every asset through `KnownData`, which leaves out
+whatever is not on a list. So an item, a shop line, a fishing row or a map from a mod with no
+layer is never a source and is never asked for.
+
+- **Fish are the exception, as competition only.** A fishing row such a mod adds to known water
+  stays in the inputs marked `CompetitorOnly`. The catch model lets it take a cast and credits it
+  nothing, so the known fish there get rarer and are asked for in smaller numbers.
+- **An edited known entry is built once.** When a mod changes an entry that is on a list (Sunberry
+  Village adds a tag to the Fish Smoker's trigger), the data no longer matches the shipped answers.
+  They are then built from the filtered data, once, and cached. No item may land earlier than the
+  earliest week vanilla or an installed layer ships for it (`AvailabilityFloor`), and a vanilla item
+  no shipped answer places stays unplaced.
+- **A board ask for an unknown item is swapped.** A bundle mod's Normal or Remixed board can name
+  such an item. The board repair replaces the slot and logs it.
+- **Known limits.** An in-place edit of a known entry is believed by that one build apart from the
+  earliest-week floor: an added season, a larger quantity or a dependable route in place of a lucky
+  one are not held back. A string-packed entry (a monster's drop list, a recipe) is known or not as
+  a whole. A change a mod makes in code, with no data row, is not seen either way.
+
+Log lines:
+
+- `Lexicon: ignored 316 data entries from mods The Longest Year has no support for (skellady, ...).`
+  The names are the first part of each id, a guess at the owner.
+- `Lexicon: no vanilla ids file; content from mods with no layer is not filtered out.` The ids file
+  is missing from the install; everything is read as before ids existed.
+- `Lexicon: Computed (...) — 1 data rows differ from the shipped answers (vanilla): machine|(BC)FishSmoker|0.`
+  The first few differing rows are named.
+- Trace `Availability model <key>: N item(s) held to their shipped week: ...`
+- Trace `Load card: routes 3.` One line per frame of the card drawn while answers are built
+  (`LoadProgress`): the build runs inside the save load, where the game draws nothing.
+
 ## Where an answer comes from
 
 The resolver takes the first of these that applies:
@@ -40,6 +76,8 @@ The `YearTwo` table (see `YearTwoRulings` below) is served beside the year-1 mod
 `ItemAvailabilityModel.For()`, so the year-1 board cannot ask for a year-2 item. `tly_itemmodel <id>`
 and `tly_obtain <id>` print a `year 2:` line, and `tly_lexicon status` prints `year-2 entries served: N`.
 The config's `AvailabilityWeekOverrides` (1 to 16) do not touch it.
+
+Supported-mod files are read only when every mod their name holds is installed.
 
 Read the SMAPI log:
 
@@ -72,12 +110,20 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 1. **A clean game.** Install only vanilla, the mod and its frameworks. Disable Cart Catalog and any
    other mod that adds items or shops. Turn on the debug bridge (`EnableDebugCommandBridge` in
    `config.json`; see `HEADLESS_DRIVING.md`).
-2. **See what is missing.** Start a new farm (`tly_newgame standard skipintro`) and run
+2. **Write the mod's ids.** With the mod installed, start a farm (`tly_newgame standard skipintro`),
+   run `tly_lexicon ids <UniqueID>` and restart the game. Until then everything the mod adds is
+   ignored, and the steps below would show nothing. The file lists every id in the game that is not
+   vanilla's or another installed layer's, so the mod's frameworks are covered by it too. It is
+   written into the DEPLOYED mod folder like the answers; copy it into
+   `src/TheLongestYear/assets/lexicon/layers/`. A file that exists is added to, never shrunk: run it
+   again on each save variant, and delete the file to start it over. After a TLY change that adds or
+   removes a data row of its own, run `tly_lexicon ids vanilla` on an unmodded game the same way.
+3. **See what is missing.** Start a new farm (`tly_newgame standard skipintro`) and run
    `tly_lexicon gaps`. It writes `lexicon-gaps.md` in the mod folder: items with no route, unreached
    maps and unresolved sources, grouped by owner. Read the owner section for your mod. The owner
    name is a heuristic (a prefix of the item id), so an item can land under the wrong owner or under
    "unattributed"; check anything odd by hand.
-3. **Write the inputs file.** Create `assets/lexicon/layers/<UniqueID>.inputs.json`, using the
+4. **Write the inputs file.** Create `assets/lexicon/layers/<UniqueID>.inputs.json`, using the
    mod's manifest `UniqueID`:
 
    ```json
@@ -183,7 +229,7 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
      the layer WARN above. The answers files record their own checked versions
      (`CheckedVersions`, `"A@1.2.0"` or `"A@1.2.0+B@3.0.0"`), written by `tly_lexicon write`; those
      decide whether the answers are used.
-4. **Write the answers.** Layers are read once per session, at the first save load, so a newly written layer file takes effect only after a game restart. Load the farm with the inputs file in place (restart the game so it is
+5. **Write the answers.** Layers are read once per session, at the first save load, so a newly written layer file takes effect only after a game restart. Load the farm with the inputs file in place (restart the game so it is
    read), then run `tly_lexicon write <UniqueID>`. This cold-builds with the layer's extra sources
    and writes `<UniqueID>.answers.json`: the part that differs from vanilla, for this save's variant
    (`base`, or `pierre_year2_seeds` when the save owns that upgrade). It writes into the DEPLOYED
@@ -193,16 +239,16 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    `debug sleep` so it saves, then reload), run `tly_lexicon write <UniqueID>` again; the file keeps
    both. A layer that maps only `base` leaves Pierre-owning saves computing live, because a variant
    a layer does not name is dropped from the shipped set.
-5. **Check it.** Restart the game (layers are read once per session), then load the farm. `tly_lexicon status` must say `origin: shipped`, and
+6. **Check it.** Restart the game (layers are read once per session), then load the farm. `tly_lexicon status` must say `origin: shipped`, and
    `tly_lexicon diff` must report 0 differences (it cold-builds and compares to what was served; on a
    computed load it is trivially empty, so check on a shipped one).
-6. **Every release.** `vanilla.json` records the TLY version that wrote it and is served only to
+7. **Every release.** `vanilla.json` records the TLY version that wrote it and is served only to
    that version, so every release regenerates it: bump `Version` in `manifest.json` first, then run
    `tly_lexicon write vanilla` on a base farm and again on a Pierre-upgrade farm, then build the
    release. Skip it and the file is ignored in game (every load computes).
    `ShippedModVersionIsTheManifestVersion` fails until the file's `ModVersion` matches the manifest.
    A supported mod's layer is regenerated the same way whenever that mod updates.
-7. **Keep it current.** After any change to a TLY rule that feeds the build, regenerate `vanilla.json`
+8. **Keep it current.** After any change to a TLY rule that feeds the build, regenerate `vanilla.json`
    (the tests in `VanillaLexiconCoverageTests` that rebuild it offline from the inputs fixtures fail
    until you do: the obtainability and year-sort routes of both variants and every availability
    answer) and every layer's `.answers.json`. After a change to what the game reads, dump the
@@ -211,10 +257,12 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
    fresh farm, `vanilla_obtainability_inputs_pierre.json` from one that owns Pierre's year 2 line)
    and copy them to `tests/TheLongestYear.Tests/Fixtures/`. After a mod update, review the layer's WARN, re-run `gaps`, adjust the inputs
    file and its `CheckedVersion`, and write the answers again.
-8. **Interactions.** With both mods installed (and only those), run `tly_lexicon write <A>+<B>` (in
-   either order; ids are sorted). An empty delta still counts as mapped: write it so the pair is
-   known to change nothing. Without the pair's file, the pair is not served as shipped; its answers
-   are computed live and the start-up line lists it under "pairs not mapped yet".
+9. **Combinations (optional).** Supported mods installed together need no file of their own:
+   their answers are built once from the known data and cached, and content that only loads when
+   several of them are installed is on no ids list, so it is ignored. A combination file skips that
+   one build and is the way to support such content: with those mods installed (and only those), run
+   `tly_lexicon ids <A>+<B>` and restart, then `tly_lexicon write <A>+<B>` (ids are sorted, any order).
+   The start-up line still lists a pair with no file under "pairs not mapped yet".
 
 ## Fish catch rates
 

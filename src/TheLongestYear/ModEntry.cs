@@ -80,6 +80,8 @@ namespace TheLongestYear
         private TheLongestYear.Core.Obtainability.ObtainabilityInputs _lastObtainabilityInputs;
         /// <summary>The path lexicon (shipped answers, disk cache, build), made at the first save load.</summary>
         private TheLongestYear.Loop.LexiconService _lexicon;
+        /// <summary>The lexicon being read on a worker since the title screen; null once taken.</summary>
+        private System.Threading.Tasks.Task<TheLongestYear.Loop.LexiconService> _lexiconWarmup;
         /// <summary>The obtainability build the lexicon ran during the last load, and whether the
         /// session memo reused it; null when the answers came from the shipped file or the cache.</summary>
         private TheLongestYear.Core.Obtainability.ObtainabilityBuild _lastLexiconBuild;
@@ -154,6 +156,8 @@ namespace TheLongestYear
 
         public override void Entry(IModHelper helper)
         {
+            TheLongestYear.Loop.LoadProgress.Warn = message => this.Monitor.Log(message, LogLevel.Warn);
+            TheLongestYear.Loop.LoadProgress.Trace = message => this.Monitor.Log(message, LogLevel.Trace);
             // .Default(key) makes a missing translation echo the raw key exactly, matching the
             // test provider's behavior (see I18nFixture) — SMAPI's own fallback is otherwise
             // "(no translation:{key})", which breaks ThemeModifiers.DisplayNameFor's raw-id
@@ -586,6 +590,7 @@ namespace TheLongestYear
 
         private void OnGameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
+            if (_config.Enabled) WarmLexicon();
             // Cart Whisperer extends to every day when the standalone Cart Catalog mod is installed.
             TheLongestYear.Loop.CartCatalogIntegration.ModLoaded =
                 this.Helper.ModRegistry.IsLoaded(TheLongestYear.Loop.CartCatalogIntegration.ModId);
@@ -776,6 +781,8 @@ namespace TheLongestYear
         /// once at SaveLoaded) and the board builder's catalog Availability. Both hold the model by
         /// reference, so a reset that rebuilds it would otherwise leave them answering from the
         /// pre-reset model for the rest of the session.</summary>
+        private const int MaxHeldInLog = 20;
+
         private TheLongestYear.Core.ItemAvailabilityModel BuildAvailabilityModelFor(TheLongestYear.Core.DifficultyStep step)
         {
             // Served from the path lexicon when it holds answers for this step and kitchen state made
@@ -794,7 +801,21 @@ namespace TheLongestYear
                     stored, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
             else
             {
+                if (_lexicon?.HoldsToShipped == true) TheLongestYear.Loop.LoadProgress.Weeks();
                 var (model, answers) = AvailabilityBuild(step, kitchen);
+                // Data that differs from what shipped may only make the board more cautious: no
+                // item lands earlier than vanilla or an installed layer ships it.
+                if (_lexicon?.HoldsToShipped == true)
+                {
+                    answers = TheLongestYear.Core.Lexicon.AvailabilityFloor.Apply(answers, _lexicon.VettedAvailability(key), step, out IReadOnlyList<string> held,
+                        new HashSet<string>((_itemSeasonPins?.Keys ?? Enumerable.Empty<string>()).Concat(AvailabilityWeekOverrides()?.Keys ?? Enumerable.Empty<string>()), StringComparer.Ordinal));
+                    if (held.Count > 0)
+                    {
+                        model = TheLongestYear.Core.Availability.ItemAvailabilityBuilder.FromAnswers(
+                            answers, _itemSeasonPins, AvailabilityWeekOverrides(), mode, step, catchRates: _enginePools?.CatchRates);
+                        this.Monitor.Log($"Availability model {key}: {held.Count} item(s) held to their shipped week: {string.Join(", ", held.Take(MaxHeldInLog))}{(held.Count > MaxHeldInLog ? ", ..." : "")}.", LogLevel.Trace);
+                    }
+                }
                 _availability = model;
                 own = answers;
                 if (inputs != null) _lexicon?.StoreAvailability(key, answers with { Inputs = inputs });

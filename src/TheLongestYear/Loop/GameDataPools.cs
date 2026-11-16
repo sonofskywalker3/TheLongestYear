@@ -71,7 +71,7 @@ namespace TheLongestYear.Loop
 
             try
             {
-                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ObjectData>>("Data/Objects"))
                 {
                     ObjectData o = kv.Value;
                     if (o == null) continue;
@@ -90,7 +90,7 @@ namespace TheLongestYear.Loop
                     }
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
+                foreach (var kv in KnownData.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
                 {
                     var fruitIds = (kv.Value?.Fruit ?? new List<FruitTreeFruitData>())
                         .Where(f => f != null && !string.IsNullOrEmpty(f.ItemId))
@@ -99,14 +99,14 @@ namespace TheLongestYear.Loop
                     fruitTrees.Add(new RawFruitTreeEntry(kv.Key, fruitIds));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, CropData>>("Data/Crops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, CropData>>("Data/Crops"))
                 {
                     CropData c = kv.Value;
                     if (c?.HarvestItemId == null) continue;
                     crops.Add(new RawCropEntry(c.HarvestItemId, MapSeasons(c.Seasons), c.HarvestMaxQuality, kv.Key));
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                foreach (var kv in KnownData.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
                     if (ItemPoolBuilder.IsExcludedLocation(kv.Key, tuning.ExcludedLocationMarkers))
                     {
@@ -134,7 +134,7 @@ namespace TheLongestYear.Loop
                     }
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Fish"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/Fish"))
                 {
                     RawFishEntry entry = RawFishEntry.Parse(kv.Key, kv.Value);
                     fishRows.Add(entry);
@@ -145,13 +145,13 @@ namespace TheLongestYear.Loop
                 // Passive festivals (Night Market, SquidFest, Trout Derby...): a spawn row on a
                 // festival-only map or behind IS_PASSIVE_FESTIVAL_OPEN is only reachable in that
                 // festival's season. See ItemPoolBuilder.SeasonsFromSpawn.
-                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.PassiveFestivalData>>("Data/PassiveFestivals"))
+                foreach (var kv in KnownData.Load<Dictionary<string, StardewValley.GameData.PassiveFestivalData>>("Data/PassiveFestivals"))
                 {
                     if (kv.Value == null) continue;
                     festivalSeasons[kv.Key] = MapSeasonValue(kv.Value.Season);
                 }
 
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/Monsters"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/Monsters"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= MonsterDropListFieldIndex) continue;
@@ -190,7 +190,7 @@ namespace TheLongestYear.Loop
                 // prompted this whole feature: its shop has an Owners list and no tile action
                 // anywhere).
                 var shopOwners = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-                foreach (var kv in Game1.content.Load<Dictionary<string, ShopData>>("Data/Shops"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ShopData>>("Data/Shops"))
                 {
                     if (kv.Value == null) continue;
                     foreach (var entry in kv.Value.Items ?? new List<ShopItemData>())
@@ -216,7 +216,7 @@ namespace TheLongestYear.Loop
                 }
 
                 var recipes = new List<RawRecipeEntry>();
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CookingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CookingRecipes"))
                 {
                     // ingredients / unused / yield / unlockConditions / displayName
                     string[] fields = (kv.Value ?? "").Split('/');
@@ -242,7 +242,7 @@ namespace TheLongestYear.Loop
                 // numeric id as reachable.
                 const int CraftingBigCraftableFieldIndex = 3;
                 var craftingOutputs = new List<string>();
-                foreach (var kv in Game1.content.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
+                foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CraftingRecipes"))
                 {
                     string[] fields = (kv.Value ?? "").Split('/');
                     if (fields.Length <= CraftingBigCraftableFieldIndex) continue;
@@ -255,7 +255,7 @@ namespace TheLongestYear.Loop
                 var links = new List<RawLocationLink>();
                 var allLocations = new List<string>();
                 var shopPlacements = new List<RawShopPlacement>();
-                foreach (GameLocation location in Game1.locations)
+                foreach (GameLocation location in KnownData.Locations())
                 {
                     if (location?.Name == null) continue;
                     allLocations.Add(location.Name);
@@ -342,7 +342,7 @@ namespace TheLongestYear.Loop
                 // below would otherwise condemn it (Dinosaurs are not sold and hatch only from it).
                 // A spot on an excluded or unwalkable map proves nothing: the island rows dig up
                 // Golden Coconuts and the island fossils, none of them year-1 finds.
-                foreach (var kv in Game1.content.Load<Dictionary<string, LocationData>>("Data/Locations"))
+                foreach (var kv in KnownData.Load<Dictionary<string, LocationData>>("Data/Locations"))
                 {
                     if (spawnRule.IsClosedPlace(kv.Key, tuning.ExcludedLocationMarkers)) continue;
                     foreach (ArtifactSpotDropData spot in (kv.Value?.ArtifactSpots ?? new List<ArtifactSpotDropData>())
@@ -353,7 +353,7 @@ namespace TheLongestYear.Loop
                             foreach (string id in QueryIds(raw, spot?.PerItemCondition)) MarkSpawn(id);
                     }
                 }
-                foreach (var kv in Game1.content.Load<Dictionary<string, ObjectData>>("Data/Objects"))
+                foreach (var kv in KnownData.Load<Dictionary<string, ObjectData>>("Data/Objects"))
                     if (kv.Value?.ArtifactSpotChances != null && kv.Value.ArtifactSpotChances.Count > 0
                         && spawnRule.AnyOpenPlace(kv.Value.ArtifactSpotChances.Keys, tuning.ExcludedLocationMarkers))
                         MarkSpawn(kv.Key);
@@ -362,7 +362,7 @@ namespace TheLongestYear.Loop
                 // and Golden Mayo's Ostrich Mayo is made only from an Ostrich Egg, which a loop never
                 // reaches, and with no route read at all it stayed allowed).
                 var machineRules = new List<RawMachineRule>();
-                foreach (var kv in Game1.content.Load<Dictionary<string, StardewValley.GameData.Machines.MachineData>>("Data/Machines"))
+                foreach (var kv in KnownData.Load<Dictionary<string, StardewValley.GameData.Machines.MachineData>>("Data/Machines"))
                 {
                     foreach (var rule in kv.Value?.OutputRules ?? new List<StardewValley.GameData.Machines.MachineOutputRule>())
                     {
@@ -384,7 +384,7 @@ namespace TheLongestYear.Loop
                     }
                 }
 
-                var animalData = Game1.content.Load<Dictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData>>("Data/FarmAnimals");
+                var animalData = KnownData.Load<Dictionary<string, StardewValley.GameData.FarmAnimals.FarmAnimalData>>("Data/FarmAnimals");
                 var boughtAsAlternate = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var kv in animalData)
                 {
@@ -496,7 +496,7 @@ namespace TheLongestYear.Loop
         private static List<MixedSeedCrop> ReadMixedSeedCrops(
             IReadOnlyList<TheLongestYear.Core.Obtainability.MixedSeedRow> pool, IReadOnlySet<string> farmSeeds, SourceReachability withoutPool)
         {
-            var cropData = Game1.content.Load<Dictionary<string, CropData>>("Data/Crops");
+            var cropData = KnownData.Load<Dictionary<string, CropData>>("Data/Crops");
             var result = new List<MixedSeedCrop>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (TheLongestYear.Core.Obtainability.MixedSeedRow row in MixedSeedPool.Entries(pool))
@@ -558,7 +558,7 @@ namespace TheLongestYear.Loop
             try
             {
                 var links = new List<RawLocationLink>();
-                foreach (GameLocation location in Game1.locations)
+                foreach (GameLocation location in KnownData.Locations())
                 {
                     if (location?.Name == null) continue;
                     foreach (StardewValley.Warp warp in location.warps)

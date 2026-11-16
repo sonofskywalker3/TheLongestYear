@@ -47,10 +47,29 @@ public static class FishCatchRates
         { "(O)163", "(O)159", "(O)160", "(O)775", "(O)682" };
 
     /// <summary>Every item the model lands at least once, by qualified id.</summary>
+    /// <remarks>A <see cref="LocationSpawn.CompetitorOnly"/> row takes casts and is credited nothing.
+    /// A fish such rows crowd out entirely stays in the result with no catches, so it reads as rare
+    /// (<see cref="IsRare"/>) rather than as a fish nothing is known about.</remarks>
     public static IReadOnlyDictionary<string, CatchRate> Build(ObtainabilityInputs inputs)
     {
         if (inputs == null) throw new ArgumentNullException(nameof(inputs));
-        IReadOnlyList<LocationSpawn> rows = SpawnSources.ExpandLocationFish(inputs.LocationFish);
+        Dictionary<string, CatchRate> result = Rates(inputs, inputs.LocationFish);
+        if (!inputs.LocationFish.Any(r => r.CompetitorOnly == true)) return result;
+        foreach (string id in Rates(inputs, inputs.LocationFish.Where(r => r.CompetitorOnly != true).ToList()).Keys)
+            if (!result.ContainsKey(id)) result[id] = new CatchRate(new double[SeasonNames.Length], 0);
+        return result;
+    }
+
+    private static Dictionary<string, CatchRate> Rates(ObtainabilityInputs inputs, IReadOnlyList<LocationSpawn> fish)
+    {
+        IReadOnlyList<LocationSpawn> rows = SpawnSources.ExpandLocationFish(fish);
+        IReadOnlyDictionary<string, FishRow> fishRows = inputs.FishRows;
+        if (inputs.CompetitorFishRows is { Count: > 0 } extra)
+        {
+            var all = new Dictionary<string, FishRow>(inputs.FishRows, StringComparer.Ordinal);
+            foreach (var (id, row) in extra) all.TryAdd(id, row);
+            fishRows = all;
+        }
         List<CastRow> inherited = Group(rows.Where(r => r.Location == DefaultLocation && r.CanBeInherited), inputs.Objects);
         // perHour[(id, season, rain)][hour index] = best per-cast chance over places
         var perHour = new Dictionary<(string Id, int Season, bool Rain), double[]>();
@@ -66,7 +85,7 @@ public static class FishCatchRates
                 for (int season = 0; season < SeasonNames.Length; season++)
                     foreach (bool rain in new[] { false, true })
                         for (int h = 0; h < hours; h++)
-                            foreach (var (id, p) in Cast(pool, area, season, rain, DayStart + h * HourUnits, inputs.FishRows))
+                            foreach (var (id, p) in Cast(pool, area, season, rain, DayStart + h * HourUnits, fishRows))
                             {
                                 if (!perHour.TryGetValue((id, season, rain), out double[]? day))
                                     perHour[(id, season, rain)] = day = new double[hours];
@@ -164,7 +183,7 @@ public static class FishCatchRates
         foreach (var tie in pool.GroupBy(r => r.Row.Precedence).OrderBy(g => g.Key))
         {
             // Per row: the chance it passes, and how that splits over its outcomes.
-            var passing = new List<(double Pass, List<(string? Id, double Chance)> Split)>();
+            var passing = new List<(double Pass, List<(string? Id, double Chance)> Split, bool Competitor)>();
             foreach (CastRow row in tie)
             {
                 double gate = RowGate(row.Row, area, season, rain);
@@ -176,14 +195,14 @@ public static class FishCatchRates
                     if (fish > 0) split.Add((id, gate * share * fish));
                 }
                 double pass = split.Sum(s => s.Chance);
-                if (pass > 0) passing.Add((Math.Min(1, pass), split));
+                if (pass > 0) passing.Add((Math.Min(1, pass), split, row.Row.CompetitorOnly == true));
             }
             if (passing.Count == 0) continue;
             for (int i = 0; i < passing.Count; i++)
             {
                 double first = FirstOfTie(passing.Select(p => p.Pass).ToList(), i);
                 foreach (var (id, chance) in passing[i].Split)
-                    if (id != null)
+                    if (id != null && !passing[i].Competitor)
                         landed[id] = landed.GetValueOrDefault(id) + reach * first * (chance / passing[i].Pass);
             }
             reach *= passing.Aggregate(1.0, (miss, p) => miss * (1 - p.Pass));
