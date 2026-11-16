@@ -283,13 +283,29 @@ public partial class BundleSlotFillerTests
         {
             Crops = Enumerable.Range(0, 12).Select(i => Item($"(O){400 + i}")).ToList(),
         };
-        var spec = new BundleSpec("Pantry", 0, "Rare Crops", "Rare Crops", "O 495 30", 0, 2,
+        var spec = new BundleSpec("Pantry", 0, "Exotic Crops", "Exotic Crops", "O 495 30", 0, 2,
             Enumerable.Range(0, 8).Select(i => new BundleSlotSpec((500 + i).ToString(), 1, 0)).ToList(),
             PickCount: 4);
         var filled = BundleSlotFiller.Fill(spec,
             new DomainMatch(PoolDomain.SeasonalCrops, null), pools, Tuning, new Random(6));
         Assert.Equal(4, filled.Slots.Count);
         Assert.Equal(2, filled.NumberOfSlots);
+    }
+
+    [Fact]
+    public void Rare_crops_shows_six_and_needs_four()
+    {
+        var pools = new ItemPools
+        {
+            Crops = Enumerable.Range(0, 12).Select(i => Item($"(O){400 + i}")).ToList(),
+        };
+        // Vanilla's Remixed shape: two shown, one needed.
+        var spec = new BundleSpec("Pantry", 0, "Rare Crops", "Rare Crops", "O 495 30", 0, 1,
+            new[] { new BundleSlotSpec("454", 1, 0), new BundleSlotSpec("417", 1, 0) });
+        var filled = BundleSlotFiller.Fill(spec,
+            new DomainMatch(PoolDomain.SeasonalCrops, null), pools, Tuning, new Random(6));
+        Assert.Equal(6, filled.Slots.Count);
+        Assert.Equal(4, filled.NumberOfSlots);
     }
 
     [Fact]
