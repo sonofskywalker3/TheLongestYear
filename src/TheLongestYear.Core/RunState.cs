@@ -243,7 +243,7 @@ public sealed partial class RunState
     /// <summary>
     /// Vault bundle indices paid this run (vanilla 1.6.15: 23=2500g, 24=5000g, 25=10000g, 26=25000g).
     /// Each season's gate requires the bundle of matching tier to be paid by day 28; missing it
-    /// fails the run. The keep_bus_unlocked Buildings upgrade auto-satisfies all four.
+    /// fails the run. Owning keep_bus_unlocked pays none of them.
     /// </summary>
     public List<int> VaultBundlesPaid { get; set; } = new();
 

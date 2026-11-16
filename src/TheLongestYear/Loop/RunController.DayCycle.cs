@@ -173,7 +173,7 @@ namespace TheLongestYear.Loop
                 _monitor.Log("Voluntary restart night: the day-end gate is skipped; the rewind runs in the morning.", LogLevel.Info);
                 return;
             }
-            bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, _store.State, TheLongestYear.Integration.VaultBundleMap.Count());
+            bool vaultGateSatisfied = VaultRules.IsVaultGateSatisfied(Run.Season, Run, TheLongestYear.Integration.VaultBundleMap.Count());
             RunAction action = _runManager.EvaluateDayEnd(Run, _requirements, vaultGateSatisfied);
             switch (action)
             {

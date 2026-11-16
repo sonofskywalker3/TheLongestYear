@@ -210,7 +210,7 @@ namespace TheLongestYear.UI
             // a thin pinned banner, inconsistent with the bundle rows). An unmet vault sits at the
             // top as an active obligation; once met it sinks to the bottom with completed bundles.
             int vaultCount = TheLongestYear.Integration.VaultBundleMap.Count();
-            bool vaultMet = VaultRules.IsVaultGateSatisfied(_season, _run, _meta, vaultCount);
+            bool vaultMet = VaultRules.IsVaultGateSatisfied(_season, _run, vaultCount);
             BundleEntry vaultEntry = BundleEntry.Vault(
                 VaultRules.PaidCount(_run), VaultRules.RequiredPaid(_season, vaultCount), vaultMet);
             if (vaultMet)
@@ -406,7 +406,7 @@ namespace TheLongestYear.UI
 
             /// <summary>The synthetic vault (bus-repair) goal row. <paramref name="paid"/> vault
             /// bundles paid this run vs. <paramref name="need"/> required by this season; when
-            /// <paramref name="met"/> (count satisfied OR keep_bus_unlocked) it counts as complete.</summary>
+            /// <paramref name="met"/> (count satisfied) it counts as complete.</summary>
             public static BundleEntry Vault(int paid, int need, bool met)
                 => new BundleEntry(paid, need, met ? 0 : Math.Max(0, need - paid));
         }

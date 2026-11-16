@@ -160,8 +160,8 @@ public class VaultBundleCountTests
     {
         var run = new RunState { Season = Season.Winter };
         run.VaultBundlesPaid.AddRange(new[] { 23, 24, 25 });
-        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Winter, run, new MetaState(), vaultCount: 3));
-        Assert.False(VaultRules.IsVaultGateSatisfied(Season.Winter, run, new MetaState()));
+        Assert.True(VaultRules.IsVaultGateSatisfied(Season.Winter, run, vaultCount: 3));
+        Assert.False(VaultRules.IsVaultGateSatisfied(Season.Winter, run));
     }
 
     // Keep Bus Unlocked (Jeff, 2026-10-09): every Vault bundle on the board paid, or the Vault

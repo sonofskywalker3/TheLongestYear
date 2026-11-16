@@ -20,7 +20,7 @@ public enum RunAction
 /// The day-end decision maker. Spec round 7 (2026-05-26): gate is per-bundle now, not pooled
 /// per (season, theme) contract. At day 28, every <see cref="BundleRequirement"/>'s
 /// <see cref="BundleRequirement.IsSatisfiedAtSeasonEnd"/> must pass for the current season AND
-/// the vault gate (paid bundle or keep_bus_unlocked upgrade) must be satisfied. End-of-Winter
+/// the vault gate (enough Vault bundles paid this run) must be satisfied. End-of-Winter
 /// additionally demands every bundle be fully complete (at least X slots filled).
 /// </summary>
 public sealed class RunManager
@@ -34,8 +34,8 @@ public sealed class RunManager
     /// </summary>
     /// <param name="run">Live run state — only Season, DayOfMonth and DonatedSlots are read.</param>
     /// <param name="bundles">Classified bundle requirements (from <c>BundleCatalogBuilder.BuildRequirements</c>).</param>
-    /// <param name="vaultGateSatisfied">True if this season's vault bundle is paid, or
-    /// the player owns the keep_bus_unlocked meta upgrade — see <see cref="VaultRules"/>.</param>
+    /// <param name="vaultGateSatisfied">True if this season's count of vault bundles is paid,
+    /// see <see cref="VaultRules"/>.</param>
     public RunAction EvaluateDayEnd(
         RunState run,
         IReadOnlyList<BundleRequirement> bundles,

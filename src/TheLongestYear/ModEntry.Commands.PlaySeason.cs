@@ -225,7 +225,7 @@ namespace TheLongestYear
             }
 
             donated = run.DonatedLedger();
-            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State, TheLongestYear.Integration.VaultBundleMap.Count());
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, TheLongestYear.Integration.VaultBundleMap.Count());
             bool gateOk = BundleGate.IsSatisfied(season, donated, requirements, vaultOk);
             this.Monitor.Log(
                 quarterMode

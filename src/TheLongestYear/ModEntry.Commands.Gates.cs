@@ -40,7 +40,7 @@ namespace TheLongestYear
                 string names = string.Join(", ", ids.Distinct().Select(id => $"{DisplayName(id)} ({id})"));
                 this.Monitor.Log($"  {req.Name} ({req.Kind}, {ledger.FilledCount(req.BundleIndex)}/{req.NumberOfSlots} filled): needs {count} before {nextSeason}: {names}", LogLevel.Info);
             }
-            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, _meta.State, TheLongestYear.Integration.VaultBundleMap.Count());
+            bool vaultOk = VaultRules.IsVaultGateSatisfied(season, run, TheLongestYear.Integration.VaultBundleMap.Count());
             this.Monitor.Log($"  vault: paid {VaultRules.PaidCount(run)} of {VaultRules.RequiredPaid(season, TheLongestYear.Integration.VaultBundleMap.Count())} needed{(vaultOk ? " (satisfied)" : "")}", vaultOk ? LogLevel.Info : LogLevel.Warn);
             this.Monitor.Log($"tly_gateneeds: {season} day {run.DayOfMonth}: {open} bundle(s) still owed before {nextSeason}, {ledger.Count} slot(s) filled on the board.", LogLevel.Info);
         }
@@ -284,7 +284,7 @@ namespace TheLongestYear
 
             this.Monitor.Log(
                 $"  Vault gate: pay at least {VaultGateLadder()} " +
-                $"(this board's Vault, cheapest first: {string.Join(", ", TheLongestYear.Integration.VaultBundleMap.PriceLadder())}). Owning '{VaultRules.KeepBusUnlockedId}' satisfies it outright.",
+                $"(this board's Vault, cheapest first: {string.Join(", ", TheLongestYear.Integration.VaultBundleMap.PriceLadder())}).",
                 LogLevel.Info);
 
             this.Monitor.Log(
