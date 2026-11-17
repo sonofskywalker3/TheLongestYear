@@ -38,6 +38,22 @@ public static class BundleClassifier
         @"^(?<season>Spring|Summer|Fall|Winter)\s+(?<kind>Foraging|Crops)$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    /// <summary>Bundles named for one season's festival: nothing in them is due before that
+    /// season, whatever their items. A board the game built keeps the Winter Star bundle's own
+    /// items, and the model dates Stuffing in Fall (a 7-heart recipe), which made the Fall gate
+    /// ask for a Winter Star item (pitytheviolins, 2026-11-17).</summary>
+    private static readonly IReadOnlyDictionary<string, Season> NotDueBefore =
+        new Dictionary<string, Season>(StringComparer.OrdinalIgnoreCase) { ["Winter Star"] = Season.Winter };
+
+    /// <summary>The ramp with nothing due before the bundle's named season (<see cref="NotDueBefore"/>).</summary>
+    private static int[] HeldToNamedSeason(string name, int[] ramp)
+    {
+        if (!NotDueBefore.TryGetValue(name, out Season first)) return ramp;
+        var held = (int[])ramp.Clone();
+        for (int s = 0; s < (int)first && s < held.Length; s++) held[s] = 0;
+        return held;
+    }
+
     /// <summary>Moves a curated quota ramp so its endpoint matches how many slots the bundle now
     /// requires, then clamps every entry into [0, X] and restores monotonicity.
     ///
@@ -153,7 +169,7 @@ public static class BundleClassifier
             // modifier at Easy lowers X by one (spec 2026-08-26), and SVE-edited save data can
             // reshape a bundle. Either way an unsatisfiable quota bricks the run, so clamp rather
             // than trust the table.
-            int[] clampedQuota = ShiftRampToSlotCount(quota, parsed.NumberOfSlots);
+            int[] clampedQuota = HeldToNamedSeason(name, ShiftRampToSlotCount(quota, parsed.NumberOfSlots));
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
@@ -171,7 +187,8 @@ public static class BundleClassifier
             return BundleRequirement.CreatePercentage(
                 name, theme, ingredients,
                 numberOfSlots: parsed.NumberOfSlots,
-                cumulativeRequiredBySeason: RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch, notBefore),
+                cumulativeRequiredBySeason: HeldToNamedSeason(name,
+                    RampFromItems(parsed.NumberOfSlots, ingredients, availability, stretch, notBefore)),
                 ingredientStacks: ingredientStacks,
                 ingredientQualities: ingredientQualities,
                 stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);
@@ -208,6 +225,10 @@ public static class BundleClassifier
                 foreach (KeyValuePair<string, Season> floor in notBefore)
                     if (pins.TryGetValue(floor.Key, out Season due) && due < floor.Value)
                         pins[floor.Key] = floor.Value;
+            if (NotDueBefore.TryGetValue(name, out Season namedSeason))
+                foreach (string id in pins.Keys.ToList())
+                    if (pins[id] < namedSeason)
+                        pins[id] = namedSeason;
             return BundleRequirement.CreatePerItem(name, theme, ingredients, pins,
                 ingredientStacks, ingredientQualities, stretch, bundleIndex: parsed.Index, slots: slots);
         }
@@ -219,7 +240,7 @@ public static class BundleClassifier
         return BundleRequirement.CreatePercentage(
             name, theme, ingredients,
             numberOfSlots: parsed.NumberOfSlots,
-            cumulativeRequiredBySeason: DerivedDefaultQuota(parsed.NumberOfSlots),
+            cumulativeRequiredBySeason: HeldToNamedSeason(name, DerivedDefaultQuota(parsed.NumberOfSlots)),
             ingredientStacks: ingredientStacks,
             ingredientQualities: ingredientQualities,
             stretchLines: stretch, bundleIndex: parsed.Index, slots: slots);

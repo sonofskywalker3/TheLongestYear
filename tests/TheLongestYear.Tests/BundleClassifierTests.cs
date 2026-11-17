@@ -451,6 +451,30 @@ public class BundleClassifierAvailabilityTests
             "an all-of-them bundle must apply pressure before the Winter win check");
     }
 
+    /// <summary>A board the game built keeps the Winter Star bundle's own items, and one of them
+    /// (Stuffing) is dated in Fall. The bundle is named for a Winter festival, so nothing in it is
+    /// due before Winter, whether it takes any N of its items or all of them.</summary>
+    [Theory]
+    [InlineData(2)]
+    [InlineData(4)]
+    public void The_Winter_Star_Bundle_Is_Not_Due_Before_Winter(int slotsNeeded)
+    {
+        string[] ids = { "(O)283", "(O)604", "(O)239", "(O)Powdermelon" };
+        var model = Model(
+            ("(O)283", Season.Winter, 1), ("(O)604", Season.Winter, 4),
+            ("(O)239", Season.Fall, 5), ("(O)Powdermelon", Season.Winter, 2));
+        var parsed = new ParsedBundle(
+            "Bulletin", 0, "Winter Star",
+            ids.Select(id => new BundleIngredient(id, 1, 0)).ToList(), slotsNeeded);
+
+        BundleRequirement req = BundleClassifier.Classify(
+            parsed, Theme.Foraging, new Dictionary<string, Season>(), new Dictionary<string, int[]>(),
+            availability: model)!;
+
+        Assert.True(req.IsSatisfiedAtSeasonEnd(Season.Fall, TestLedger.Empty()));
+        Assert.False(req.IsSatisfiedAtSeasonEnd(Season.Winter, TestLedger.Empty()));
+    }
+
     [Fact]
     public void A_Model_Does_Not_Change_A_Seasonal_Bundle()
     {
