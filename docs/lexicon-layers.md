@@ -227,6 +227,23 @@ Two more tools go with them:
      `fish_trap_location_...`) are left out of its object. Write what the pin drops (the crab pot catch) as an
      `ExtraSources` route. To find such rows, write the inputs dump in two seasons
      (`tly_lexicon dumpinputs`) and compare them.
+   - **`DataFields`** pins single fields of data entries the mod changes once the player has seen an event:
+     `{ "<asset>": { "<entry key>": { "<field>": <value> } } }`, for example
+     `{ "Data/Crops": { "486": { "RegrowDays": -1 } } }` (East Scarp makes Starfruit regrow after a late scene). Write
+     the value a new farm has. The readers then see the same entry on a save before and after the event, so both are
+     served the shipped answers. An event that adds a door or a shop counter is handled in the map fields instead:
+     link the map (`MapLinks`) and hold it to its week (`MapWeeks`), or flag it (`YearTwoMaps`), and name the shop's
+     place (`ShopPlacements`), so the walk reads the same either way.
+   - **`FestivalShops`** name a shop that opens only at a festival: `{ "<shop id>": "<festival id>" }`, the festival
+     being a Data/Festivals key (`winter8`) or a Data/PassiveFestivals id. TLY knows vanilla's stalls by their
+     `Festival_...` names; a mod's stall with another name reads as open all year until it is named here. Its lines
+     become festival routes on the festival's days and the shop gives no week of its own.
+   - **`NotYearOne`** lists items a player cannot have in year 1 although TLY dates them there, because the only
+     source waits on progress the rules do not judge (a shop line behind a late friendship scene):
+     `["(O)<id>", ...]`. Each is out of reach for the board, with everything made only from it; the Traveling Cart's
+     year 2 slot may sell it; a `YearTwoRulings` entry may date it. `tly_itemmodel <id>` prints
+     `off the year-1 board: a supported mod's layer rules it is not had in year 1`. Use it in place of a late
+     `WeekRulings` week, which would still let the last weeks ask for the item.
    - **`MapBackDoors`** name a way the mod adds into a map TLY holds to a week by name (the Secret Woods behind its
      log at week 4, the Sewer, the Witch's Swamp): `{"Map": "Woods", "Week": 1, "From": "Custom_Woods1", "UnlessMods": [...]}`.
      With the mod installed the map opens at `Week` (1 to 16) when that is earlier than TLY's own week, everywhere the
@@ -295,6 +312,11 @@ Two more tools go with them:
    one build and is the way to support such content: with those mods installed (and only those), run
    `tly_lexicon ids <A>+<B>` and restart, then `tly_lexicon write <A>+<B>` (ids are sorted, any order).
    The start-up line still lists a pair with no file under "pairs not mapped yet".
+   Content of the pair that the game data does not describe (one mod's spawn groups on the other's maps, a doorway
+   between their maps) is written by hand in `<A>+<B>.inputs.json`, with `"UniqueId": "<A>+<B>"` (ids sorted) and the
+   same fields as a mod's own inputs file. It is read only when every mod it names is installed, is laid on after the
+   single mods' inputs so its rulings win, and adds no mod of its own. Write it before the pair's ids and answers.
+   `tly_lexicon status` prints `combination <A>+<B>: hand-written inputs applied`.
 
 ## Fish catch rates
 

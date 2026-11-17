@@ -51,8 +51,10 @@ public sealed class SourceReachability
         IReadOnlyList<RawMachineRule>? machineRules = null,
         IReadOnlyList<RawAnimalSource>? animals = null,
         IReadOnlySet<string>? excludedCatchIds = null,
-        IReadOnlySet<string>? mixedSeedIds = null)
+        IReadOnlySet<string>? mixedSeedIds = null,
+        IReadOnlySet<string>? ruledOutIds = null)
     {
+        _ruledOutIds = ruledOutIds ?? new HashSet<string>(StringComparer.Ordinal);
         _excludedCatchIds = excludedCatchIds ?? new HashSet<string>(StringComparer.Ordinal);
         _mixedSeedIds = mixedSeedIds ?? new HashSet<string>(StringComparer.Ordinal);
 
@@ -189,9 +191,22 @@ public sealed class SourceReachability
         }
     }
 
+    /// <summary>Why an item a layer rules out of year 1 is out of reach (the log and tly_itemmodel).</summary>
+    public const string RuledOutReason = "a supported mod's layer rules it is not had in year 1";
+
+    private readonly IReadOnlySet<string> _ruledOutIds;
+
     private bool Decide(string id, out string reason)
     {
         reason = "";
+
+        // A layer's ruling beats what the data seems to show: the routes are there, behind progress
+        // the rules do not judge.
+        if (_ruledOutIds.Contains(id))
+        {
+            reason = RuledOutReason;
+            return true;
+        }
 
         // Positive proof beats every condemning rule. An item that spawns somewhere reachable
         // is reachable, whatever else also happens to list it.

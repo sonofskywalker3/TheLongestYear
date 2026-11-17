@@ -65,6 +65,13 @@ public sealed record YearTwoMarks(IReadOnlyDictionary<string, YearTwoFlag> Maps,
     /// the ones read from the maps and the shop owners.</summary>
     public IReadOnlyList<RawShopPlacement> ShopPlacements { get; init; } = Array.Empty<RawShopPlacement>();
 
+    /// <summary>Items a layer rules out of year 1 (<see cref="LayerInputs.NotYearOne"/>): out of reach
+    /// for the board's reachability read, whatever routes the data shows.</summary>
+    public IReadOnlySet<string> NotYearOne { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>A layer's festival-only shops, shop id to festival id (<see cref="LayerInputs.FestivalShops"/>).</summary>
+    public IReadOnlyDictionary<string, string> FestivalShops { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>A source whose Requires holds <c>location:&lt;map&gt;</c> (Maps) or <c>shop:&lt;id&gt;</c>
     /// (Shops) gets YearTwo or GingerIsland set (ordinal, whole-string match of the part after the
     /// prefix); any other source returns as is.</summary>

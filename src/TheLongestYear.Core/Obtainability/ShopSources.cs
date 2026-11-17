@@ -59,12 +59,12 @@ public static class ShopSources
 
     public static IEnumerable<(string ItemId, ObtainSource Source)> Stock(
         IEnumerable<ShopRow> rows, IReadOnlyDictionary<string, ObjInfo> objects,
-        IReadOnlyDictionary<string, FestivalDates> festivals)
+        IReadOnlyDictionary<string, FestivalDates> festivals, IReadOnlyDictionary<string, string>? festivalShops = null)
     {
         foreach (ShopRow row in rows)
         {
             if (row.IsRecipe || row.TradeItemId != null) continue;
-            if (Template(row, festivals) is not ObtainSource template) continue;
+            if (Template(row, festivals, festivalShops) is not ObtainSource template) continue;
             // A row the game listed from a query reads as the query's own rows do.
             if (row.Query != null) template = template with { Detail = $"{template.Detail} ({QueryNote(row.Query)})" };
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
@@ -76,11 +76,11 @@ public static class ShopSources
     /// isolation, only had in weeks the trade item can be had.</summary>
     public static IEnumerable<(string ItemId, ObtainSource Source)> Barter(
         IEnumerable<ShopRow> rows, IReadOnlyDictionary<string, ObjInfo> objects,
-        IReadOnlyDictionary<string, FestivalDates> festivals, ObtainabilityModel snapshot)
+        IReadOnlyDictionary<string, FestivalDates> festivals, ObtainabilityModel snapshot, IReadOnlyDictionary<string, string>? festivalShops = null)
     {
         foreach (ShopRow row in rows.Where(r => !r.IsRecipe && r.TradeItemId != null))
         {
-            if (Template(row, festivals) is not ObtainSource template) continue;
+            if (Template(row, festivals, festivalShops) is not ObtainSource template) continue;
             string trade = BundleParsing.NormalizeItemId(row.TradeItemId!);
             Derived.Input paid = Derived.Of(snapshot, trade);
             ObtainConditions conditions = template.Conditions with { Requires = template.Conditions.Requires.Append("trade:" + trade).ToList() };
@@ -101,12 +101,12 @@ public static class ShopSources
     }
 
     public static IReadOnlyDictionary<string, WeekMask> RecipeWeeks(
-        IEnumerable<ShopRow> rows, IReadOnlyDictionary<string, FestivalDates> festivals)
+        IEnumerable<ShopRow> rows, IReadOnlyDictionary<string, FestivalDates> festivals, IReadOnlyDictionary<string, string>? festivalShops = null)
     {
         var result = new Dictionary<string, WeekMask>(StringComparer.Ordinal);
         foreach (ShopRow row in rows.Where(r => r.IsRecipe))
         {
-            if (RawTemplate(row, festivals) is not (WeekMask weeks, ObtainSource template)) continue;
+            if (RawTemplate(row, festivals, festivalShops) is not (WeekMask weeks, ObtainSource template)) continue;
             ObtainConditions c = template.Conditions;
             if (c.YearTwo || c.GingerIsland || c.Unresolved) continue;
             string id = BundleParsing.NormalizeItemId(row.ItemId);
@@ -139,16 +139,16 @@ public static class ShopSources
     }
 
     /// <summary>The source every item of a row shares, or null when the row can never be stocked in year 1.</summary>
-    private static ObtainSource? Template(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals)
-        => RawTemplate(row, festivals) is (_, ObtainSource template) ? template : null;
+    private static ObtainSource? Template(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals, IReadOnlyDictionary<string, string>? festivalShops = null)
+        => RawTemplate(row, festivals, festivalShops) is (_, ObtainSource template) ? template : null;
 
     /// <summary>Same as <see cref="Template"/>, but also returns the raw week mask: <see cref="RecipeWeeks"/>
     /// still speaks in weeks (readers use it as a season mask), so it needs the mask before it is wrapped
     /// into a same-day table.</summary>
-    private static (WeekMask Weeks, ObtainSource Template)? RawTemplate(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals)
+    private static (WeekMask Weeks, ObtainSource Template)? RawTemplate(ShopRow row, IReadOnlyDictionary<string, FestivalDates> festivals, IReadOnlyDictionary<string, string>? festivalShops = null)
     {
         ConditionReading reading = ConditionSeasons.Read(row.Condition, festivals);
-        (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced, FestivalDates? festival) = Placement(row.ShopId, festivals);
+        (SourceKind kind, WeekMask placeWeeks, bool fewDays, bool unplaced, FestivalDates? festival) = Placement(row.ShopId, festivals, festivalShops);
         WeekMask weeks = reading.Weeks & placeWeeks;
         if (weeks.IsEmpty) return null;
         // A true intersection when a festival gates the shop: a day only counts when both the row's
@@ -175,9 +175,15 @@ public static class ShopSources
     }
 
     private static (SourceKind Kind, WeekMask Weeks, bool FewDays, bool Unplaced, FestivalDates? Festival) Placement(
-        string shopId, IReadOnlyDictionary<string, FestivalDates> festivals)
+        string shopId, IReadOnlyDictionary<string, FestivalDates> festivals, IReadOnlyDictionary<string, string>? festivalShops = null)
     {
         if (shopId == CartShopId) return (SourceKind.Cart, WeekMask.All, false, false, null);
+        // A mod's stall a supported layer names: open on that festival's days only. A festival the
+        // game does not hold leaves the stall with no day in year 1 the rules can name.
+        if (festivalShops != null && festivalShops.TryGetValue(shopId, out string? named))
+            return festivals.TryGetValue(named, out FestivalDates? stallDay)
+                ? (KindOf(named), stallDay.Weeks, true, false, stallDay)
+                : (SourceKind.Festival, WeekMask.All, true, true, null);
         if (shopId.StartsWith(FestivalShopPrefix, StringComparison.Ordinal))
         {
             string name = shopId.Substring(FestivalShopPrefix.Length).Split('_')[0];

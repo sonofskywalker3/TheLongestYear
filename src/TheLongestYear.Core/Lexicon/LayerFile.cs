@@ -22,6 +22,17 @@ public sealed record LayerInputs(
     [System.Text.Json.Serialization.JsonIgnore]
     public string TextHash { get; init; } = "";
 
+    /// <summary>The mods this file is for: one, or for a combination file
+    /// (<c>A+B.inputs.json</c>, <see cref="UniqueId"/> <c>"A+B"</c>) every mod it names. A combination's
+    /// routes and rulings are for content that exists only when all of them are installed (one mod's
+    /// spawn groups on another's maps, a doorway between two mods' maps), and apply only then.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<string> Mods
+        => (UniqueId ?? "").Split(LayerFile.Joiner, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsCombination => Mods.Count > 1;
+
     /// <summary>Fishing rows the game data does not hold (a fish a mod hands out in code), written as
     /// Data/Locations fish rows are read (<see cref="LocationSpawn"/>). They join the build's fish rows,
     /// so they give routes and catch rates (<see cref="FishCatchRates"/>) as a data row would.</summary>
@@ -63,6 +74,26 @@ public sealed record LayerInputs(
     /// without this the shop's place, and the weeks of what it sells, would change with the day the
     /// answers were built or read.</summary>
     public IReadOnlyList<RawShopPlacement> ShopPlacements { get; init; } = Array.Empty<RawShopPlacement>();
+
+    /// <summary>Items a player cannot have in year 1 although the rules date them there: the only
+    /// source waits on progress the rules do not judge (a shop line behind a late friendship scene, a
+    /// crop that needs a Garden Pot). Each is kept off the year-1 board with everything made only from
+    /// it, the Traveling Cart's year 2 slot may sell it, and a <see cref="YearTwoRulings"/> entry may
+    /// date it.</summary>
+    public IReadOnlyList<string> NotYearOne { get; init; } = Array.Empty<string>();
+
+    /// <summary>Shops that open only at a festival, by the festival's id: a Data/Festivals key
+    /// ("winter8") or a Data/PassiveFestivals id. The rules know vanilla's stalls by name; a mod's stall
+    /// named here is read the same way (its lines are festival routes on the festival's days, and the
+    /// shop gives no week of its own).</summary>
+    public IReadOnlyDictionary<string, string> FestivalShops { get; init; }
+        = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Fields of data entries to read as written here whatever the game holds, by asset, entry
+    /// key and field name (<see cref="PinnedDataFields"/>): for an entry the mod changes once the player
+    /// has seen an event, the value a new farm has.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>> DataFields { get; init; }
+        = new Dictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>>(StringComparer.Ordinal);
 
     /// <summary>The Data/Fish row to read for a fish the mod rewrites during the year, by Data/Fish key
     /// (<see cref="PinnedFishData"/>).</summary>
@@ -271,6 +302,13 @@ public static class LayerFile
             throw new System.Text.Json.JsonException("MapLinks holds a null link or one with no From or To.");
         if (read.ShopPlacements != null && read.ShopPlacements.Any(s => s == null || string.IsNullOrWhiteSpace(s.ShopId) || string.IsNullOrWhiteSpace(s.LocationName)))
             throw new System.Text.Json.JsonException("ShopPlacements holds a null entry or one with no ShopId or LocationName.");
+        if (read.DataFields != null && read.DataFields.Any(a => string.IsNullOrWhiteSpace(a.Key) || a.Value == null
+                || a.Value.Any(e => string.IsNullOrWhiteSpace(e.Key) || e.Value == null || e.Value.Count == 0 || e.Value.Keys.Any(string.IsNullOrWhiteSpace))))
+            throw new System.Text.Json.JsonException("DataFields holds a blank asset, entry or field name, or an entry with no field.");
+        if (read.NotYearOne != null && read.NotYearOne.Any(string.IsNullOrWhiteSpace))
+            throw new System.Text.Json.JsonException("NotYearOne holds a null or blank item id.");
+        if (read.FestivalShops != null && read.FestivalShops.Any(f => string.IsNullOrWhiteSpace(f.Key) || string.IsNullOrWhiteSpace(f.Value)))
+            throw new System.Text.Json.JsonException("FestivalShops holds a blank shop id or a blank festival id.");
         if (read.FishData != null && read.FishData.Any(f => string.IsNullOrWhiteSpace(f.Key) || string.IsNullOrWhiteSpace(f.Value)))
             throw new System.Text.Json.JsonException("FishData holds a blank fish key or a blank row.");
         if (read.MapBackDoors != null)
@@ -294,6 +332,11 @@ public static class LayerFile
             MapWeeks = ToOrdinal(read.MapWeeks),
             MapLinks = read.MapLinks ?? Array.Empty<RawLocationLink>(),
             ShopPlacements = read.ShopPlacements ?? Array.Empty<RawShopPlacement>(),
+            NotYearOne = read.NotYearOne ?? Array.Empty<string>(),
+            DataFields = read.DataFields ?? new Dictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>>(StringComparer.Ordinal),
+            FestivalShops = read.FestivalShops == null
+                ? new Dictionary<string, string>(StringComparer.Ordinal)
+                : new Dictionary<string, string>(read.FestivalShops, StringComparer.Ordinal),
             FishData = read.FishData == null
                 ? new Dictionary<string, string>(StringComparer.Ordinal)
                 : new Dictionary<string, string>(read.FishData, StringComparer.Ordinal),

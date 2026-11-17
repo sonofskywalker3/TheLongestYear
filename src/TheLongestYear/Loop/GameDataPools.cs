@@ -424,14 +424,14 @@ namespace TheLongestYear.Loop
                     seed => seedSeasons.TryGetValue(seed, out IReadOnlyList<TheLongestYear.Core.Season> grows) ? grows : null);
                 reachability = new SourceReachability(
                     unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                    machineRules, animals, closedCatch, mixedSeedIds);
+                    machineRules, animals, closedCatch, mixedSeedIds, marks.NotYearOne);
                 if (mixedSeedPool.Count > 0)
                 {
                     // Which of the pool's seeds nothing else gives a year-1 farm: the same question
                     // asked without the pool.
                     var withoutPool = new SourceReachability(
                         unreachablePlaces, shopListings, shopPlacements, crops, recipes, reachableSpawnIds,
-                        machineRules, animals, closedCatch);
+                        machineRules, animals, closedCatch, ruledOutIds: marks.NotYearOne);
                     mixedSeeds = new MixedSeedInputs(mixedSeedPool, ReadMixedSeedCrops(mixedSeedPool, mixedSeedIds, withoutPool));
                 }
                 // Only now, with the whole read done: a failure above leaves every row in, as before.
@@ -598,7 +598,8 @@ namespace TheLongestYear.Loop
             try
             {
                 ShopWeeks weeks = ShopWeeks.Build(RandomShopPicks.Expand(listings, randomShopPicks), placements, locationWeeks,
-                    new HashSet<string>(marks.Shops.Keys, StringComparer.Ordinal));
+                    new HashSet<string>(marks.Shops.Keys, StringComparer.Ordinal),
+                    new HashSet<string>(marks.FestivalShops.Keys, StringComparer.Ordinal));
                 _monitor?.Log($"Shop weeks: {weeks.Weeks.Count} items sold by a walkable shop.", LogLevel.Trace);
                 return weeks;
             }

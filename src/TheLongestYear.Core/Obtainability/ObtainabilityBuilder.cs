@@ -51,7 +51,7 @@ public static class ObtainabilityBuilder
         direct.AddRange(SpawnSources.ArtifactSpots(inputs.ArtifactSpots, o, f));
         direct.AddRange(SpawnSources.GarbageCans(inputs.Garbage, o, f));
         direct.AddRange(SpawnSources.FishingTrash());
-        direct.AddRange(ShopSources.Stock(inputs.Shops, o, f));
+        direct.AddRange(ShopSources.Stock(inputs.Shops, o, f, marks?.FestivalShops));
         direct.AddRange(ShopSources.FestivalRewards(f));
         direct.AddRange(MineSources.Nodes());
         direct.AddRange(MineSources.MonsterDrops(inputs.MonsterDrops, o));
@@ -81,7 +81,7 @@ public static class ObtainabilityBuilder
         if (mineTravel)
             for (int i = 0; i < direct.Count; i++)
                 direct[i] = (direct[i].ItemId, MineDepth.WithTravel(direct[i].Source));
-        IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f);
+        IReadOnlyDictionary<string, WeekMask> recipeWeeks = ShopSources.RecipeWeeks(inputs.Shops, f, marks?.FestivalShops);
         IReadOnlyDictionary<string, CatchRate> catchRates = FishCatchRates.Build(inputs);
 
         ObtainabilityModel current = Assemble(direct, marks, out List<string> lastUnresolved);
@@ -94,7 +94,7 @@ public static class ObtainabilityBuilder
             all.AddRange(GrowSources.Crops(inputs.Crops, current, inputs.MixedSeedPool));
             all.AddRange(GrowSources.TeaBush(current));
             all.AddRange(GrowSources.FruitTrees(inputs.FruitTrees, current, o, f));
-            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));
+            all.AddRange(ShopSources.Barter(inputs.Shops, o, f, current, marks?.FestivalShops).Select(s => (s.ItemId, MapWeekGate.Apply(s.Source, layerMapWeeks, openedEarly))));
             all.AddRange(MadeSources.Machines(inputs.Machines, o, current, f, inputs.Crops));
             all.AddRange(MadeSources.Recipes(inputs.Recipes, o, recipeWeeks, current, inputs.CookingChannel));
             all.AddRange(LivestockSources.Ponds(inputs.Ponds, o, current, f, inputs.Buildings));

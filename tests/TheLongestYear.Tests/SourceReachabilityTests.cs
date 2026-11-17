@@ -29,6 +29,24 @@ public class SourceReachabilityTests
         Array.Empty<RawCropEntry>(), Array.Empty<RawRecipeEntry>(), NoSpawns);
 
     [Fact]
+    public void An_item_a_layer_rules_out_of_year_one_is_out_of_reach_with_what_is_made_only_from_it()
+    {
+        // East Scarp: Aideen sells the seed in a reachable shop, but only after a late friendship scene.
+        var listings = new[] { new RawShopListing("(O)Example_FlowerSeed", TownShop) };
+        var crops = new[] { new RawCropEntry("Example_Flower", new[] { Season.Spring }, SeedItemId: "Example_FlowerSeed") };
+        var recipes = new[] { new RawRecipeEntry("(O)Example_Bouquet", new[] { "(O)Example_Flower" }, "default") };
+        var open = new SourceReachability(Unreachable, listings, Placements, crops, recipes, NoSpawns);
+        Assert.False(open.IsUnreachable("(O)Example_Flower"));
+
+        var ruled = new SourceReachability(Unreachable, listings, Placements, crops, recipes, NoSpawns,
+            ruledOutIds: new HashSet<string> { "(O)Example_Flower" });
+        Assert.True(ruled.IsUnreachable("(O)Example_Flower"));
+        Assert.Equal(SourceReachability.RuledOutReason, ruled.Reasons["(O)Example_Flower"]);
+        Assert.True(ruled.IsUnreachable("(O)Example_Bouquet"));
+        Assert.False(ruled.IsUnreachable("(O)Example_FlowerSeed"));              // the seed itself is not ruled
+    }
+
+    [Fact]
     public void Item_sold_only_in_an_unreachable_shop_is_unreachable()
     {
         var rule = Build(new RawShopListing("(O)FishmongerSeed", IslandShop));

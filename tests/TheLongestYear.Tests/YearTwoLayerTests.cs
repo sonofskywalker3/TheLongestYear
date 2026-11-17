@@ -286,6 +286,16 @@ public sealed class YearTwoLayerTests
     }
 
     [Fact]
+    public void Build_dates_an_id_a_layer_rules_out_of_year_one_whatever_week_the_rules_derived()
+    {
+        var warns = new List<string>();
+        var avail = Avails(derived: new() { [Id] = new ItemAvailability(Season.Spring, 3, "b", EffortSource.Derived, 6) });
+        var table = YearTwoAnswers.Build(Rule(20), avail, warns.Add, new HashSet<string> { Id });
+        Assert.Equal(20, Assert.Single(table).Value.EarliestWeek);
+        Assert.Empty(warns);
+    }
+
+    [Fact]
     public void Build_refuses_id_with_placed_week_in_EffortDerived()
     {
         var warns = new List<string>();

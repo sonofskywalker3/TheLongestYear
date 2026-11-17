@@ -48,6 +48,27 @@ public class ObtainabilityShopTests
     }
 
     [Fact]
+    public void A_stall_a_layer_names_opens_only_on_its_festival()
+    {
+        // East Scarp's coffee cart at the Festival of Ice: not named "Festival_...", so by name it read as open all year.
+        var row = new ShopRow("Lemurkat.EastScarp_IceFest_CoffeeShop", "(O)Moss", null, false);
+        ObtainSource everyday = Stock(row).Single().Source;
+        Assert.Equal(SourceKind.Shop, everyday.Kind);
+        Assert.Equal(1, everyday.Lands.Lands(1));
+
+        var named = new Dictionary<string, string> { ["Lemurkat.EastScarp_IceFest_CoffeeShop"] = "winter8" };
+        ObtainSource stall = ShopSources.Stock(new[] { row }, Objects, Festivals, named).Single().Source;
+        Assert.Equal(SourceKind.Festival, stall.Kind);
+        Assert.True(stall.Conditions.FewDays);
+        Assert.Equal(92, stall.Lands.Lands(1));                                   // Winter 8
+        Assert.Null(stall.Lands.Lands(93));
+
+        // A festival the game does not hold: the stall has no day the rules can name.
+        var unknown = new Dictionary<string, string> { ["Lemurkat.EastScarp_IceFest_CoffeeShop"] = "Example_NoSuchFestival" };
+        Assert.True(ShopSources.Stock(new[] { row }, Objects, Festivals, unknown).Single().Source.Conditions.Unresolved);
+    }
+
+    [Fact]
     public void Festival_shops_open_on_their_festival_days_from_data()
     {
         var luau = Stock(new ShopRow("Festival_Luau_Pierre", "(O)Moss", null, false)).Single().Source;

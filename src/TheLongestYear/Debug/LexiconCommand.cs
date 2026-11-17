@@ -152,6 +152,11 @@ namespace TheLongestYear.DebugCommands
                 monitor.Log("tly_lexicon status: layers: none applied (vanilla only).", LogLevel.Info);
             foreach (var layer in layers)
             {
+                if (layer.IsCombination)
+                {
+                    monitor.Log($"tly_lexicon status: combination {layer.UniqueId}: hand-written inputs applied.", LogLevel.Info);
+                    continue;
+                }
                 string installed = service.Loaded.InstalledVersionOf(layer.UniqueId) ?? "unknown";
                 bool same = string.Equals(layer.CheckedVersion, installed, StringComparison.Ordinal);
                 monitor.Log($"tly_lexicon status: layer {layer.UniqueId}: checked {layer.CheckedVersion}, installed {installed}, applied" +
@@ -194,7 +199,7 @@ namespace TheLongestYear.DebugCommands
                 cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                     with { Availability = context.Availability() };
                 if (context.Layers != null)
-                    cold = cold with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, cold.Availability, m => monitor.Log($"tly_lexicon diff: {m}", LogLevel.Warn)) };
+                    cold = cold with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, cold.Availability, m => monitor.Log($"tly_lexicon diff: {m}", LogLevel.Warn), context.Layers.Set.Marks.NotYearOne) };
                 lines = LexiconDiff.Compare(service.Variant, cold);
             }
             catch (Exception e)
@@ -314,7 +319,7 @@ namespace TheLongestYear.DebugCommands
             ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers.Set.Marks));
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
                 with { Availability = context.Availability() };
-            live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn)) };
+            live = live with { YearTwo = YearTwoAnswers.Build(context.Layers.Set.YearTwoRulings, live.Availability, m => monitor.Log($"{verb}: {m}", LogLevel.Warn), context.Layers.Set.Marks.NotYearOne) };
             IReadOnlyList<string> doors = context.Layers.Set.Marks.DoorUpgrades(TheLongestYear.Loop.LexiconService.OwnsUpgrade);
             string name = AnswerSet.VariantName(context.PierreYear2Owned, doors, AnswerSet.DataTags(inputs));
 

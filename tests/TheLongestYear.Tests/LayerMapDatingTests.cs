@@ -178,6 +178,87 @@ public class LayerMapDatingTests
     }
 
     [Fact]
+    public void A_layer_rules_items_out_of_year_one_and_names_festival_stalls()
+    {
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"NotYearOne\": [\"(O)ModA_Flower\"], \"FestivalShops\": {\"ModA_Stall\": \"winter8\"}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Contains("(O)ModA_Flower", set.Marks.NotYearOne);
+        Assert.Equal("winter8", set.Marks.FestivalShops["ModA_Stall"]);
+        // The cart's year 2 slot may sell it, with no year ruling written.
+        Assert.Equal(YearRuling.YearTwo, set.YearRuling("(O)ModA_Flower"));
+        Assert.Null(set.YearRuling("(O)ModA_Other"));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"NotYearOne\": [\" \"]}"));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"FestivalShops\": {\"ModA_Stall\": \"\"}}"));
+    }
+
+    private sealed class FakeCrop
+    {
+        public int RegrowDays = -1;
+        public string HarvestItemId = "268";
+        public int Price { get; set; } = 100;
+    }
+
+    [Fact]
+    public void A_layer_pins_a_field_the_mod_changes_after_an_event()
+    {
+        // East Scarp: Starfruit regrows every 7 days once event 57871109 is seen. The layer pins the new farm's value.
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"DataFields\": {\"Data/Crops\": {\"486\": {\"RegrowDays\": -1, \"Price\": 100, \"NoSuchField\": 1}, \"Missing\": {\"RegrowDays\": 3}}}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        var pins = set.DataFields["Data/Crops"];
+
+        var afterEvent = new FakeCrop { RegrowDays = 7, Price = 175 };
+        var other = new FakeCrop { RegrowDays = 4 };
+        var live = new Dictionary<string, FakeCrop> { ["486"] = afterEvent, ["24"] = other };
+        var pinned = (Dictionary<string, FakeCrop>)PinnedDataFields.Apply(live, pins);
+        Assert.Equal(-1, pinned["486"].RegrowDays);
+        Assert.Equal(100, pinned["486"].Price);
+        Assert.Equal("268", pinned["486"].HarvestItemId);
+        Assert.Same(other, pinned["24"]);
+        Assert.Equal(2, pinned.Count);
+        Assert.Equal(7, afterEvent.RegrowDays);                                   // the game's own entry is untouched
+        Assert.NotSame(live, pinned);
+
+        // Before the event the pinned reading equals the live one field for field, so both saves hash alike.
+        var beforeEvent = new Dictionary<string, FakeCrop> { ["486"] = new FakeCrop(), ["24"] = other };
+        var same = (Dictionary<string, FakeCrop>)PinnedDataFields.Apply(beforeEvent, pins);
+        Assert.Equal(pinned["486"].RegrowDays, same["486"].RegrowDays);
+        Assert.Equal(pinned["486"].Price, same["486"].Price);
+
+        // Nothing to pin: the game's dictionary itself.
+        Assert.Same(live, PinnedDataFields.Apply(live, set.DataFields.GetValueOrDefault("Data/Objects")));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"DataFields\": {\"Data/Crops\": {\"486\": {}}}}"));
+    }
+
+    [Fact]
+    public void A_combination_inputs_file_applies_only_with_every_mod_it_names_and_adds_no_mod()
+    {
+        // Cornucopia's spawn groups on East Scarp's maps exist only with both installed.
+        LayerInputs a = LayerFile.ReadInputs("{\"UniqueId\": \"ModA\", \"CheckedVersion\": \"1.0.0\", \"WeekRulings\": {\"(O)X\": 3}}");
+        LayerInputs b = LayerFile.ReadInputs("{\"UniqueId\": \"ModB\", \"CheckedVersion\": \"2.0.0\"}");
+        LayerInputs both = LayerFile.ReadInputs("{\"UniqueId\": \"ModA+ModB\", \"CheckedVersion\": \"\", " +
+            "\"WeekRulings\": {\"(O)X\": 5}, \"MapLinks\": [{\"From\": \"Forest\", \"To\": \"" + Forest + "\"}]}");
+        Assert.True(both.IsCombination);
+        Assert.Equal(new[] { "ModA", "ModB" }, both.Mods);
+        var warns = new List<string>();
+
+        // Listed first, as its file name sorts first: it is still laid on last.
+        var (onlyA, _) = LayerSet.Active(new[] { both, a, b }, Array.Empty<LayerAnswers>(), id => id == "ModA", _ => "1.0.0", warns.Add);
+        Assert.Equal(new[] { "ModA" }, onlyA.Select(i => i.UniqueId));
+
+        var (all, _) = LayerSet.Active(new[] { both, a, b }, Array.Empty<LayerAnswers>(), _ => true, id => id == "ModA" ? "1.0.0" : "2.0.0", warns.Add);
+        Assert.Equal(new[] { "ModA", "ModB", "ModA+ModB" }, all.Select(i => i.UniqueId));
+        Assert.Empty(warns);                                                       // no version WARN for the combination
+
+        LayerSet set = LayerSet.Compose(null, all, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(new[] { "ModA", "ModB" }, set.Ids);
+        Assert.Equal(new[] { "ModA+ModB" }, set.UnmappedPairs);                  // the pair, once: the combination is no third mod
+        Assert.Equal(5, set.WeekRulings["(O)X"]);
+        Assert.Single(set.Marks.MapLinks);
+    }
+
+    [Fact]
     public void A_layer_names_where_a_shop_opens()
     {
         // East Scarp swaps one counter tile between two shops by weekday; the layer names the place of both.
