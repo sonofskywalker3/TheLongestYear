@@ -3,6 +3,23 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.43 - 2026-11-17
+
+### Added
+
+- **East Scarp is supported.** The Longest Year now knows East Scarp's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its festival stalls count only on their festival days. It also knows how East Scarp sits beside Stardew Valley Expanded and Cornucopia More Crops. Thanks to Celjhyn.
+- **Cleaner Sewer is supported.** A save with LemurKat's Cleaner Sewer loads as fast as one without it, on its own or beside East Scarp or Stardew Valley Expanded.
+
+### Changed
+
+- **mods without support are left out.** Items, shop lines, fishing spots and maps from a mod The Longest Year has no support for are no longer read, so a board won't ask for them and they don't count as a way to get anything. A board from another bundle mod that names such an item has that slot swapped. The first load with a new set of mods works things out once, with a progress card on screen, and remembers it.
+
+### Fixed
+
+- **no weekly screen after passing out on a modded map.** Passing out and waking where a mod plays a scene (East Scarp's inn) could leave the morning with no weekly screen and no HUD until you saved and reloaded. Thanks to Celjhyn.
+- **the Winter Star bundle was due in Fall.** On a Remixed board the Fall checkpoint asked for one Winter Star item, and Stuffing was the only one that could be had by then. Nothing in the Winter Star bundle is due before Winter now. Thanks to pitytheviolins.
+- **Artifact bundles asking for a pile of Chewing Sticks.** Chewing Stick, the Dwarf Scrolls, Ancient Seed and Prehistoric Scapula are now asked for in a fixed amount. An Extreme board could ask for six or seven Chewing Sticks.
+
 ## 1.2.38 - 2026-11-16
 
 ### Fixed

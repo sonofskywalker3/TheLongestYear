@@ -23,7 +23,21 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.38
+## What's New in 1.2.43
+
+**New: East Scarp is supported.** The Longest Year now knows East Scarp's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its festival stalls count only on their festival days. It also knows how East Scarp sits beside Stardew Valley Expanded and Cornucopia More Crops. Thanks to Celjhyn.
+
+**New: Cleaner Sewer is supported.** A save with LemurKat's Cleaner Sewer loads as fast as one without it, on its own or beside East Scarp or Stardew Valley Expanded.
+
+**Changed: mods without support are left out.** Items, shop lines, fishing spots and maps from a mod The Longest Year has no support for are no longer read, so a board won't ask for them and they don't count as a way to get anything. A board from another bundle mod that names such an item has that slot swapped. The first load with a new set of mods works things out once, with a progress card on screen, and remembers it.
+
+**Fixed: no weekly screen after passing out on a modded map.** Passing out and waking where a mod plays a scene (East Scarp's inn) could leave the morning with no weekly screen and no HUD until you saved and reloaded. Thanks to Celjhyn.
+
+**Fixed: the Winter Star bundle was due in Fall.** On a Remixed board the Fall checkpoint asked for one Winter Star item, and Stuffing was the only one that could be had by then. Nothing in the Winter Star bundle is due before Winter now. Thanks to pitytheviolins.
+
+**Fixed: Artifact bundles asking for a pile of Chewing Sticks.** Chewing Stick, the Dwarf Scrolls, Ancient Seed and Prehistoric Scapula are now asked for in a fixed amount. An Extreme board could ask for six or seven Chewing Sticks.
+
+## 1.2.38
 
 **Fixed: a new farm on Hard or Extreme rolled its first board with Normal's timing.** The first board of a new Hard or Extreme farm was built with Normal's idea of when each item can be had: later deadlines, no Sneak Peek dishes, and Normal's limit on legendary fish. A new farm's first board is now rolled at the difficulty you picked, so a first loop on Hard or Extreme is harder than it was. Boards already rolled are not changed.
 
