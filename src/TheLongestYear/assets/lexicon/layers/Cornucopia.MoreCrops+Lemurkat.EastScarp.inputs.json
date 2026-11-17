@@ -1,0 +1,158 @@
+{
+  "UniqueId": "Cornucopia.MoreCrops+Lemurkat.EastScarp",
+  "CheckedVersion": "",
+  "Notes": "Content that exists only with Cornucopia More Crops 1.6.3 and East Scarp 3.0.9 both installed: Cornucopia's daily trigger actions spawn its Peppercorn (Spring and Summer), Raspberry (Summer), Juniper Berries and Ube Seeds (Winter) groups on East Scarp maps when {{HasMod |contains=LemurKat.EastScarp}} holds ([CP] Cornucopia More Crops/data/forage.json, the _ES triggers at lines 341, 396 and 453 and the two East Scarp lines of the Ube Seeds trigger at 530). | Each is a daily RANDOM roll per map (10% to 25%), so every route is Chance, as the Cornucopia layer writes the same groups on vanilla maps; none gives a week. | The Meadow Farm lines also need the map to have been visited ({{HasVisitedLocation}}); the route says so in its detail. | East Scarp's own files never name Cornucopia.",
+  "ExtraSources": {
+    "(O)Cornucopia_Peppercorn": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_DeepMountains"
+          ]
+        },
+        "Detail": "peppercorn forage at EastScarp_DeepMountains, Spring/Summer, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Peppercorn_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Village"
+          ]
+        },
+        "Detail": "peppercorn forage at EastScarp_Village, Spring/Summer, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Peppercorn_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "+0x56,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_MeadowFarm"
+          ]
+        },
+        "Detail": "peppercorn forage at EastScarp_MeadowFarm, Spring/Summer, 10% once the Meadow Farm has been visited a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Peppercorn_ES)"
+      }
+    ],
+    "(O)Cornucopia_Raspberry": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_DeepMountains"
+          ]
+        },
+        "Detail": "raspberry forage at EastScarp_DeepMountains, Summer, 25% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Raspberry_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Village"
+          ]
+        },
+        "Detail": "raspberry forage at EastScarp_Village, Summer, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Raspberry_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Orchard"
+          ]
+        },
+        "Detail": "raspberry forage at EastScarp_Orchard, Summer, 25% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Raspberry_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_MeadowFarm"
+          ]
+        },
+        "Detail": "raspberry forage at EastScarp_MeadowFarm, Summer, 15% once the Meadow Farm has been visited a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_Raspberry_ES)"
+      }
+    ],
+    "(O)Cornucopia_JuniperBerries": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_DeepMountains"
+          ]
+        },
+        "Detail": "juniper berry forage at EastScarp_DeepMountains, Winter, 25% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_JuniperBerries_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Village"
+          ]
+        },
+        "Detail": "juniper berry forage at EastScarp_Village, Winter, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_JuniperBerries_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Orchard"
+          ]
+        },
+        "Detail": "juniper berry forage at EastScarp_Orchard, Winter, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_JuniperBerries_ES)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_MeadowFarm"
+          ]
+        },
+        "Detail": "juniper berry forage at EastScarp_MeadowFarm, Winter, 15% once the Meadow Farm has been visited a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_JuniperBerries_ES)"
+      }
+    ],
+    "(O)Cornucopia_UbeSeeds": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Village"
+          ]
+        },
+        "Detail": "ube seed forage at EastScarp_Village, Winter, 20% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:EastScarp_Orchard"
+          ]
+        },
+        "Detail": "ube seed forage at EastScarp_Orchard, Winter, 25% a day (Cornucopia data/forage.json, Cornucopia.MoreCrops_UbeSeeds)"
+      }
+    ]
+  }
+}
