@@ -112,6 +112,8 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 no hand steps, and reports what it could not place and the mod's combination content;
 `uv run tools/vanilla-build.py` does the same for `vanilla.json` and `vanilla.ids.json`. The steps
 are what the scripts do, and the reference for the inputs file you write between runs.
+`uv run tools/layer-build.py <UniqueID A> <UniqueID B>` builds the combination of two supported mods
+(step 9): both enabled together, every variant either mod has, the check, and the moved answers.
 
 Two more tools go with them:
 
@@ -121,7 +123,20 @@ Two more tools go with them:
   shows what the change did to answers already shipped. Each line is meant or a regression.
 - `uv run tools/layer-session.py` holds a game open with a chosen mod set for the hand checks
   (`tly_obtain`, `tly_itemmodel`, walks, and `reload <save> <day> [season]` to prove a layer is
-  still served as shipped on another weekday or season).
+  still served as shipped on another weekday or season). `new` and `ready` play out a scene a mod
+  starts on a new farm; `scene` does the same after a walk into a map with an arrival scene.
+- Walking a way in: `tly_walkto <x> <y>` walks the farmer with the game's own path search, and a
+  warp or touch-action tile is taken by walking onto it. Give the tile of the warp itself, or the
+  tile beside it and the direction (`tly_walkto 44 85 up`): the last step is then made with the path
+  search too, and only a way off the map's edge is taken by holding the direction. Do not move the
+  farmer with `debug warp` while a scene plays: the game is left with its event flag up and no event
+  (run `scene` after every walk into a new map first; it says so and gives up when that has happened).
+- A door or a sign is used with `tly_pad A` while facing it. A menu another mod draws (a lift's floor
+  list) is pressed with `tly_menuclick left <x> <y>`; `tly_menuclick` alone lists the open menu's
+  buttons and their centres. A question is answered with `tly_answer <n>`, which prints the choice taken.
+- A map change gated on a seen event usually shows the morning after the event, not at once: sleep
+  before judging that a way did not open. `layer-session.py delete <save>` deletes a farm at once
+  unless it is the loaded one, which the next `close` deletes.
 
 1. **A clean game.** Install only vanilla, the mod and its frameworks. Disable Cart Catalog and any
    other mod that adds items or shops. Turn on the debug bridge (`EnableDebugCommandBridge` in
@@ -309,8 +324,12 @@ Two more tools go with them:
 9. **Combinations (optional).** Supported mods installed together need no file of their own:
    their answers are built once from the known data and cached, and content that only loads when
    several of them are installed is on no ids list, so it is ignored. A combination file skips that
-   one build and is the way to support such content: with those mods installed (and only those), run
-   `tly_lexicon ids <A>+<B>` and restart, then `tly_lexicon write <A>+<B>` (ids are sorted, any order).
+   one build and is the way to support such content. `uv run tools/layer-build.py <A> <B>` writes it:
+   with those mods installed (and only those) it runs `tly_lexicon ids <A>+<B>`, restarts, then
+   `tly_lexicon write <A>+<B>` on a base farm and on one that owns Pierre's year 2 line (the name's ids are
+   sorted ordinally, whatever order they are given in), adds the Mixed Seeds pool pass or a door-upgrade pass
+   when either mod's layer has one, checks the result after a restart and lists the answers that moved.
+   Each mod needs its own layer first. Run it again after either mod's layer changes.
    The start-up line still lists a pair with no file under "pairs not mapped yet".
    Content of the pair that the game data does not describe (one mod's spawn groups on the other's maps, a doorway
    between their maps) is written by hand in `<A>+<B>.inputs.json`, with `"UniqueId": "<A>+<B>"` (ids sorted) and the
