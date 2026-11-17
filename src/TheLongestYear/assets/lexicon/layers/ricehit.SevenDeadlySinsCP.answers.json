@@ -765,7 +765,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -1540,7 +1540,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2326,7 +2326,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -3112,7 +3112,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -3898,7 +3898,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -4684,7 +4684,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5469,7 +5469,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -6254,7 +6254,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "76268d5c6e8dc214",
+          "Inputs": "7eaa18fd870389de",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -6407,6 +6407,21 @@
         }
       },
       "MapWeeks": {
+        "Custom_Lucashouse": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
+        "Custom_SDS.AngelRetreatHall": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
+        },
+        "Custom_SDS.Angelhouse_Uriel": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
+        },
         "Custom_SDS.Apartment_lobby": {
           "Extreme": 1,
           "Hard": 1,
@@ -6472,6 +6487,11 @@
           "Hard": 1,
           "Week": 1
         },
+        "Custom_SDS.Elevator1.2": {
+          "Extreme": 1,
+          "Hard": 1,
+          "Week": 1
+        },
         "Custom_SDS.Elevator2": {
           "Extreme": 1,
           "Hard": 1,
@@ -6486,6 +6506,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "Custom_SDS.HHome": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
         },
         "Custom_SDS.Hotel_corridor": {
           "Extreme": 1,
@@ -6566,6 +6591,11 @@
           "Extreme": 12,
           "Hard": 12,
           "Week": 12
+        },
+        "Custom_SDS.sea": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
         },
         "Custom_SDS.supermarket": {
           "Extreme": 1,
@@ -10549,10 +10579,7 @@
         "=99x99,+0x2,=0x11"
       ],
       "UnreachedMaps": [
-        "Custom_Lucashouse",
-        "Custom_SDS.AngelRetreatHall",
         "Custom_SDS.AngelWaitingRoom",
-        "Custom_SDS.Angelhouse_Uriel",
         "Custom_SDS.Apartment_lobbyL_event",
         "Custom_SDS.Bank",
         "Custom_SDS.Cablecar",
@@ -10577,9 +10604,7 @@
         "Custom_SDS.EasternForest3",
         "Custom_SDS.EasternForest_main",
         "Custom_SDS.Elevator1.1",
-        "Custom_SDS.Elevator1.2",
         "Custom_SDS.Farm_City",
-        "Custom_SDS.HHome",
         "Custom_SDS.HHome2",
         "Custom_SDS.Hovsep1.1",
         "Custom_SDS.Hovsep10.1",
@@ -10651,7 +10676,6 @@
         "Custom_SDS.cliff_Sky",
         "Custom_SDS.ricehit",
         "Custom_SDS.school",
-        "Custom_SDS.sea",
         "Custom_SDS.statement1",
         "Custom_SDS.statement2",
         "Custom_SDS.statement3",
@@ -14410,7 +14434,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Easy|no_kitchen": {
@@ -15175,7 +15199,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|kitchen": {
@@ -15951,7 +15975,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|no_kitchen": {
@@ -16727,7 +16751,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Hard|kitchen": {
@@ -17503,7 +17527,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Hard|no_kitchen": {
@@ -18279,7 +18303,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Normal|kitchen": {
@@ -19054,7 +19078,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         },
         "Normal|no_kitchen": {
@@ -19829,7 +19853,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "352f19ad1ea0d9b9",
+          "Inputs": "9f39217eeaef8b02",
           "YearTwoCropDishUnits": {}
         }
       },
@@ -19972,6 +19996,21 @@
         }
       },
       "MapWeeks": {
+        "Custom_Lucashouse": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
+        "Custom_SDS.AngelRetreatHall": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
+        },
+        "Custom_SDS.Angelhouse_Uriel": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
+        },
         "Custom_SDS.Apartment_lobby": {
           "Extreme": 1,
           "Hard": 1,
@@ -20037,6 +20076,11 @@
           "Hard": 1,
           "Week": 1
         },
+        "Custom_SDS.Elevator1.2": {
+          "Extreme": 1,
+          "Hard": 1,
+          "Week": 1
+        },
         "Custom_SDS.Elevator2": {
           "Extreme": 1,
           "Hard": 1,
@@ -20051,6 +20095,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "Custom_SDS.HHome": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
         },
         "Custom_SDS.Hotel_corridor": {
           "Extreme": 1,
@@ -20131,6 +20180,11 @@
           "Extreme": 12,
           "Hard": 12,
           "Week": 12
+        },
+        "Custom_SDS.sea": {
+          "Extreme": 5,
+          "Hard": 5,
+          "Week": 5
         },
         "Custom_SDS.supermarket": {
           "Extreme": 1,
@@ -24114,10 +24168,7 @@
         "=99x99,+0x2,=0x11"
       ],
       "UnreachedMaps": [
-        "Custom_Lucashouse",
-        "Custom_SDS.AngelRetreatHall",
         "Custom_SDS.AngelWaitingRoom",
-        "Custom_SDS.Angelhouse_Uriel",
         "Custom_SDS.Apartment_lobbyL_event",
         "Custom_SDS.Bank",
         "Custom_SDS.Cablecar",
@@ -24142,9 +24193,7 @@
         "Custom_SDS.EasternForest3",
         "Custom_SDS.EasternForest_main",
         "Custom_SDS.Elevator1.1",
-        "Custom_SDS.Elevator1.2",
         "Custom_SDS.Farm_City",
-        "Custom_SDS.HHome",
         "Custom_SDS.HHome2",
         "Custom_SDS.Hovsep1.1",
         "Custom_SDS.Hovsep10.1",
@@ -24216,7 +24265,6 @@
         "Custom_SDS.cliff_Sky",
         "Custom_SDS.ricehit",
         "Custom_SDS.school",
-        "Custom_SDS.sea",
         "Custom_SDS.statement1",
         "Custom_SDS.statement2",
         "Custom_SDS.statement3",
