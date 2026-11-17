@@ -324,6 +324,30 @@ public sealed class LayerSetTests
         Assert.Empty(warnings);
     }
 
+    /// <summary>Three supported mods with every pair mapped were served as shipped, and the pair
+    /// files laid over each other did not add up to a fresh build (East Scarp, Stardew Valley
+    /// Expanded and Cleaner Sewer: 1,015 differences). A set of three or more is exact only with
+    /// an answers file that names all of them; without one it is built once.</summary>
+    [Fact]
+    public void ThreeModsAreServedAsShippedOnlyWithAnAnswersFileNamingAllThree()
+    {
+        const string Third = "ModC";
+        LayerInputs[] inputs = { In(A), In(B), In(Third) };
+        var none = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal);
+        LayerAnswers[] pairs =
+        {
+            Ans("A", A), Ans("B", B), Ans("C", Third),
+            Ans(none, null, A, B), Ans(none, null, A, Third), Ans(none, null, B, Third),
+        };
+
+        LayerSet set = LayerSet.Compose(VanillaSet(), inputs, pairs, _ => { });
+        Assert.Empty(set.UnmappedPairs);
+        Assert.Empty(set.Composed!.Variants);
+
+        LayerSet whole = LayerSet.Compose(VanillaSet(), inputs, pairs.Append(Ans(none, null, A, B, Third)).ToArray(), _ => { });
+        Assert.NotEmpty(whole.Composed!.Variants);
+    }
+
     [Fact]
     public void GeneratorWritesTheDeltaOverTheLayersBelow()
     {

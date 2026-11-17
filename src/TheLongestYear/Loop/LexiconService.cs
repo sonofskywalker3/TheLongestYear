@@ -158,7 +158,13 @@ namespace TheLongestYear.Loop
 
         /// <summary>Empty with no resolved answers (before a resolve, after <see cref="Forget"/>).</summary>
         private IReadOnlyDictionary<string, ItemAvailability> YearTwoTable
-            => YearTwoAnswers.TableFor(_variant, _variant == null ? null : Loaded.Set.Composed, _variantName);
+            => YearTwoAnswers.TableFor(_variant, _variant == null ? null : ShippedYearTwo, _variantName);
+
+        /// <summary>The shipped answers a computed load reads its year-2 rulings from. A set the
+        /// shipped files do not cover exactly holds no composed variants; its layers' own answers
+        /// (the overlay) still carry their year-2 entries.</summary>
+        private AnswerSet ShippedYearTwo
+            => Loaded.Set.Composed is { Variants.Count: > 0 } composed ? composed : Loaded.Set.Overlay;
 
         /// <summary>The availability keys computed (not served from the answers) since the last resolve.</summary>
         public IReadOnlyCollection<string> ComputedAvailabilityKeys => _computedKeys;

@@ -95,6 +95,7 @@ FARM_TYPE_MANAGER = "FarmTypeManager"
 FTM_SAVE_SUFFIXES = (".json", "_SaveData.save")
 MOVES_SCRIPT = Path(__file__).resolve().parent / "lexicon-moves.py"
 MAX_PATCHES_SHOWN = 14
+MAX_TEST_FARM_AGE_SECONDS = 12 * 3600
 WRITE_DONE_PATTERN = (r"tly_lexicon write [^:]+: (wrote variant|no obtainability inputs|no save loaded|"
                       r"\S+ has no active layer|the existing .* could not be read|no '[^']+' variant)")
 UPDATE_PATTERN = re.compile(r"ALERT SMAPI\]\s+(.+?) (\S+): https?://\S+ \(you have ([^)]+)\)")
@@ -354,8 +355,13 @@ def passes_for(unique_id: str) -> list[Pass]:
 
 
 def delete_farm(save: str) -> None:
-    """Removes a farm this run made, and the per-save files Farm Type Manager wrote for it."""
-    shutil.rmtree(SAVES_DIR / save, ignore_errors=True)
+    """Removes a farm this run made, and the per-save files Farm Type Manager wrote for it.
+    Refuses a folder older than a test farm can be: a wrong name here once deleted real saves."""
+    folder = SAVES_DIR / save
+    if folder.exists() and time.time() - folder.stat().st_ctime > MAX_TEST_FARM_AGE_SECONDS:
+        raise LayerBuildError(f"{save} was made more than {MAX_TEST_FARM_AGE_SECONDS // 3600} hours ago, "
+                              "so it is not a farm this run made. Not deleted.")
+    shutil.rmtree(folder, ignore_errors=True)
     ftm = top_folders().get(FARM_TYPE_MANAGER)
     for suffix in FTM_SAVE_SUFFIXES if ftm else ():
         (ftm / "data" / (save + suffix)).unlink(missing_ok=True)

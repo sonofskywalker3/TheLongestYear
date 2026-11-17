@@ -322,7 +322,11 @@ public sealed class LayerSet
             var poolMods = new HashSet<string>(inputs.Where(i => i.FillsMixedSeedPool).SelectMany(i => i.Mods), StringComparer.Ordinal);
             if (poolMods.Count > 0) suffixMods[AnswerSet.MixedSeedPoolTag] = poolMods;
             overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, suffixMods);
-            composed = unmapped.Count == 0 && unmappedMods.Count == 0
+            // Pair files laid over each other do not add up to a fresh build of three mods, so a
+            // set of three or more is exact only with an answers file that names all of them.
+            bool wholeSetMapped = ids.Count <= 2
+                || applied.Any(a => a.Mods.Distinct(StringComparer.Ordinal).Count() == ids.Count);
+            composed = unmapped.Count == 0 && unmappedMods.Count == 0 && wholeSetMapped
                 ? overlay
                 : overlay with { Variants = new Dictionary<string, AnswerVariant>(StringComparer.Ordinal) };
         }
