@@ -389,7 +389,7 @@ def scan_supported_mods(unique_id: str, own_tops: set[str], mods: list[ModFolder
             report.ask(
                 f"The supported mod **{layer_mod.unique_id}** has content that depends on this one: "
                 f"{len(other.data_patches)} patch(es) to data the lexicon reads, {len(other.loose_lines)} line(s) elsewhere, "
-                f"{other.other_patches} patch(es) to other things. Sort it as a combination (process step 6).\n{shown}")
+                f"{other.other_patches} patch(es) to other things. Sort it as a combination (docs/lexicon-layers.md, "Combinations").\n{shown}")
 
 
 def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> None:
@@ -415,7 +415,7 @@ def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> 
         report.ask(
             f"Combination content with **{other.unique_id}** ({kind}): {len(other.data_patches)} patch(es) to data the "
             f"lexicon reads, {other.other_patches} to other things. Sort each: no effect on an answer, removes or "
-            "closes something (a rule for when that mod is installed), or adds something (ignored unless Jeff wants "
+            "closes something (a rule for when that mod is installed), or adds something (ignored unless you want "
             f"it supported).\n{shown}" + (f"\n      - ... and {more} more" if more > 0 else ""))
     loose = [m for m in others if m.loose_lines and not m.data_patches]
     if loose:
