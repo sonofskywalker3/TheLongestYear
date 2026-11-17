@@ -389,7 +389,7 @@ def scan_supported_mods(unique_id: str, own_tops: set[str], mods: list[ModFolder
             report.ask(
                 f"The supported mod **{layer_mod.unique_id}** has content that depends on this one: "
                 f"{len(other.data_patches)} patch(es) to data the lexicon reads, {len(other.loose_lines)} line(s) elsewhere, "
-                f"{other.other_patches} patch(es) to other things. Sort it as a combination (docs/lexicon-layers.md, "Combinations").\n{shown}")
+                f"{other.other_patches} patch(es) to other things. Sort it as a combination (docs/lexicon-layers.md, 'Combinations').\n{shown}")
 
 
 def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> None:
