@@ -1,0 +1,5 @@
+{
+  "UniqueId": "LemurKat.CleanerSewer.CP",
+  "CheckedVersion": "1.2.3",
+  "Notes": "CP Nicer Sewer 1.2.3 (Nexus 5751) changes how the Sewer looks and nothing the lexicon reads: it loads its own Maps/Sewer (assets/Sewer.tmx) with the vanilla ways out (the Forest grate, the Mutant Bug Lair, the ladder to Town), the same magical seal and dog statue, swaps one image and one sign's text, and patches a corner of the map when Downtown Zuzu is installed and one ladder tile when Stardew Valley Expanded is. | It adds no item, shop, fish or map, moves neither Krobus nor the Rusty Key, and adds no way into the Sewer, so every answer is vanilla's and the Sewer keeps its week. | This file exists so the mod is on the supported list and its answers are served as shipped."
+}
