@@ -15,6 +15,8 @@ namespace TheLongestYear
         private const int PathSearchLimit = 30000;
         /// <summary>Ticks to wait after the path ends for a warp at its end to take the farmer.</summary>
         private const int WarpSettleTicks = 90;
+        /// <summary>One tile in each direction tly_walkto takes: up, right, down, left.</summary>
+        private static readonly Point[] PushSteps = { new(0, -1), new(1, 0), new(0, 1), new(-1, 0) };
 
         private EventHandler<UpdateTickedEventArgs> _walkWatch;
 
@@ -60,6 +62,7 @@ namespace TheLongestYear
 
             if (_walkWatch != null) this.Helper.Events.GameLoop.UpdateTicked -= _walkWatch;
             int ticks = 0, idle = 0;
+            bool steppedOn = false;
             _walkWatch = (_, _) =>
             {
                 ticks++;
@@ -77,6 +80,25 @@ namespace TheLongestYear
                 if (!moved && Game1.player.controller == null)
                 {
                     idle++;
+                    // The tile beside the end, in the direction asked for, is usually the warp itself
+                    // (a touch-action tile). Walk onto it with the path search first: holding a
+                    // direction does not always move a farmer nobody is steering.
+                    if (push >= 0 && !steppedOn)
+                    {
+                        steppedOn = true;
+                        Point at0 = Game1.player.TilePoint;
+                        Point next = at0 + PushSteps[push];
+                        Stack<Point> step = Game1.currentLocation.isTileOnMap(next.X, next.Y)
+                            ? PathFindController.findPath(at0, next, PathFindController.isAtEndPoint, Game1.currentLocation, Game1.player, PathSearchLimit)
+                            : null;
+                        if (step != null && step.Count > 0)
+                        {
+                            Game1.player.controller = new PathFindController(step, Game1.currentLocation, Game1.player, next);
+                            target = next;
+                            idle = 0;
+                            return;
+                        }
+                    }
                     if (push >= 0 && idle <= WarpSettleTicks)
                     {
                         Game1.player.setMoving((byte)(1 << push));
