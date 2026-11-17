@@ -19,10 +19,14 @@ What it does, in order (docs/lexicon-layers.md, "Adding a supported mod"):
      Steps 1 to 6 are one pass. A layer whose back door needs an upgrade (Keep Minecarts) gets a
      pass on a farm that owns it, and a layer that fills the Mixed Seeds pool gets one with Item
      Extensions installed, so every variant the answers file holds is written.
-  7. Scans the mod's own files for content that depends on OTHER mods being installed.
-  8. Puts the Mods folder back, deletes the farms it made, and writes
-     test-output/layer-build/<UniqueID>/report.md: what was written, what could not be placed, and
-     the questions a person has to answer.
+  7. Lists the answers that moved against the committed answers file (tools/lexicon-moves.py).
+  8. Scans the mod's own files for content that depends on OTHER mods being installed, sorted by
+     whether it touches data the lexicon reads (tools/layer_combinations.py).
+  9. Puts the Mods folder back, deletes the farms it made (and Farm Type Manager's files for
+     them), and writes test-output/layer-build/<UniqueID>/report.md: what was written, what could
+     not be placed, and the questions a person has to answer.
+
+To hold a game open for `tly_obtain`, `tly_itemmodel` or a walk, use tools/layer-session.py.
 
 It drives the game through the debug bridge only (docs/HEADLESS_DRIVING.md): no mouse, no keyboard,
 the window starts minimized. It refuses to start while the game is running.
@@ -41,6 +45,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import json5
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import layer_combinations  # noqa: E402  (a sibling file; the path line above finds it however this file is loaded)
 
 GAME_DIR = Path(os.environ.get("TLY_GAME_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley"))
 MODS_DIR = GAME_DIR / "Mods"
@@ -76,11 +83,11 @@ HUB_OPEN_PATTERN = r"Opened planning hub"
 MAX_FOCUS_PICKS = 6
 MAX_ROUNDS = 3
 MAX_ID_CHANGES = 40
-SCANNED_SUFFIXES = frozenset({".json"})
 PREVIOUS_LOG_SUFFIX = ".layer-build-previous"
-TOKEN_OPEN, TOKEN_CLOSE = "{{", "}}"
-MOD_ID_PATTERN = re.compile(r"[A-Za-z][\w\-]*(?:\.[\w\-]+)+")
-NOT_MOD_ID_SUFFIXES = (".json", ".png", ".tmx", ".tbin", ".xnb", ".ogg", ".wav", ".txt")
+FARM_TYPE_MANAGER = "FarmTypeManager"
+FTM_SAVE_SUFFIXES = (".json", "_SaveData.save")
+MOVES_SCRIPT = Path(__file__).resolve().parent / "lexicon-moves.py"
+MAX_PATCHES_SHOWN = 14
 WRITE_DONE_PATTERN = (r"tly_lexicon write [^:]+: (wrote variant|no obtainability inputs|no save loaded|"
                       r"\S+ has no active layer|the existing .* could not be read|no '[^']+' variant)")
 UPDATE_PATTERN = re.compile(r"ALERT SMAPI\]\s+(.+?) (\S+): https?://\S+ \(you have ([^)]+)\)")
@@ -339,49 +346,82 @@ def passes_for(unique_id: str) -> list[Pass]:
     return passes
 
 
-def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> None:
-    """Lists everything in the mod's own files that is conditional on another mod being installed."""
-    own_tops = {m.top for m in mods if m.unique_id.lower() == unique_id.lower()}
-    own_ids = {m.unique_id.lower() for m in mods if m.top in own_tops}
-    found: dict[str, list[str]] = {}
-    for top in own_tops:
-        root = top_folders()[top]
-        for path in sorted(root.rglob("*")):
-            if path.suffix.lower() not in SCANNED_SUFFIXES or not path.is_file():
+def delete_farm(save: str) -> None:
+    """Removes a farm this run made, and the per-save files Farm Type Manager wrote for it."""
+    shutil.rmtree(SAVES_DIR / save, ignore_errors=True)
+    ftm = top_folders().get(FARM_TYPE_MANAGER)
+    for suffix in FTM_SAVE_SUFFIXES if ftm else ():
+        (ftm / "data" / (save + suffix)).unlink(missing_ok=True)
+
+
+def report_moves(unique_id: str, report: Report) -> None:
+    """The answers that differ from the committed answers file: what this run's rules or inputs changed."""
+    result = subprocess.run([sys.executable, str(MOVES_SCRIPT), unique_id], capture_output=True, text=True,
+                            encoding="utf-8", errors="replace", check=False)
+    lines = [line for line in (result.stdout + result.stderr).splitlines() if line.strip()]
+    if result.returncode != 0 or not lines:
+        report.ask(f"`lexicon-moves.py {unique_id}` did not run ({' '.join(lines)[:300]}). Run it by hand.")
+        return
+    report.add("Against the committed answers file: " + lines[0])
+    for line in lines[1:-1]:
+        report.add(line)
+    if any(line.lstrip().startswith("- ") for line in lines[1:]):
+        report.ask("Answers moved against the committed file (listed above; the full list is in test-output/lexicon-moves.md). "
+                   "Each is either meant, and named in the commit, or a regression to fix. After a rule change run "
+                   "`uv run tools/lexicon-moves.py` over vanilla and every layer once they are all regenerated.")
+
+
+def scan_supported_mods(unique_id: str, own_tops: set[str], mods: list[ModFolder], report: Report) -> None:
+    """The other way round: what each installed mod that already has a layer does only when THIS
+    mod is installed. Both are supported, so a player may run them together."""
+    target_ids = {m.unique_id.lower() for m in mods if m.top in own_tops}
+    supported = {p.name.split(".inputs.json")[0].lower() for p in REPO_LAYERS.glob("*.inputs.json")}
+    folders = top_folders()
+    for layer_mod in (m for m in mods if m.unique_id.lower() in supported and m.top not in own_tops):
+        layer_ids = {m.unique_id.lower() for m in mods if m.top == layer_mod.top}
+        if not layer_combinations.mentions(folders[layer_mod.top], target_ids):
+            continue
+        for other in layer_combinations.scan([folders[layer_mod.top]], layer_ids):
+            if other.unique_id.lower() not in target_ids:
                 continue
-            lines = path.read_text(encoding="utf-8-sig", errors="replace").splitlines()
-            for number, line in enumerate(lines, start=1):
-                at = line.lower().find("hasmod")
-                if at < 0:
-                    continue
-                # Every mod id written after "HasMod" on the line, in any of Content Patcher's
-                # forms; a key whose value sits on the next line is read with that line.
-                tail = line[at:]
-                # A {{HasMod ...}} token ends at its braces; what follows on the line (an action
-                # such as spacechase0.SpaceCore_TriggerSpawnGroup) names no mod.
-                if line[:at].rstrip().endswith(TOKEN_OPEN) and TOKEN_CLOSE in tail:
-                    tail = tail[:tail.index(TOKEN_CLOSE)]
-                if tail.rstrip().endswith(":") and number < len(lines):
-                    tail += " " + lines[number]
-                for other in MOD_ID_PATTERN.findall(tail):
-                    if other.lower() in own_ids or other.lower().endswith(NOT_MOD_ID_SUFFIXES):
-                        continue
-                    place = f"{path.relative_to(root)}:{number}: {line.strip()[:160]}"
-                    if place not in found.setdefault(other, []):
-                        found[other].append(place)
-    if not found:
+            places = other.data_patches + other.loose_lines
+            shown = "\n".join(f"      - {p}" for p in places[:MAX_PATCHES_SHOWN])
+            report.ask(
+                f"The supported mod **{layer_mod.unique_id}** has content that depends on this one: "
+                f"{len(other.data_patches)} patch(es) to data the lexicon reads, {len(other.loose_lines)} line(s) elsewhere, "
+                f"{other.other_patches} patch(es) to other things. Sort it as a combination (process step 6).\n{shown}")
+
+
+def scan_combinations(unique_id: str, mods: list[ModFolder], report: Report) -> None:
+    """Lists what the mod's own files do only beside another mod, sorted by whether it can matter."""
+    own_tops = {m.top for m in mods if m.unique_id.lower() == unique_id.lower()}
+    # Content conditional on a mod this one requires is always on: not a combination.
+    required_tops = resolve([unique_id], mods, Report(unique_id))
+    own_ids = {m.unique_id.lower() for m in mods if m.top in own_tops | required_tops}
+    others = layer_combinations.scan([top_folders()[top] for top in sorted(own_tops)], own_ids)
+    scan_supported_mods(unique_id, own_tops, mods, report)
+    if not others:
         report.add("No content in the mod's files depends on another mod being installed.")
         return
     supported = {p.name.split(".inputs.json")[0].lower() for p in REPO_LAYERS.glob("*.inputs.json")}
-    for other, places in sorted(found.items(), key=lambda kv: kv[0].lower()):
-        kind = "a supported mod" if other.lower() in supported else "a mod with no layer"
-        sample = "\n".join(f"      - `{p}`" for p in places[:6])
-        more = f"\n      - ... and {len(places) - 6} more" if len(places) > 6 else ""
+    quiet = [m for m in others if not m.data_patches and not m.loose_lines]
+    if quiet:
+        report.add(f"{len(quiet)} other mod(s) are named only by patches to things the lexicon does not read "
+                   "(dialogue, schedules, events, portraits): " + ", ".join(m.unique_id for m in quiet) + ".")
+    for other in (m for m in others if m.data_patches):
+        kind = "a supported mod" if other.unique_id.lower() in supported else "a mod with no layer"
+        shown = "\n".join(f"      - {p}" for p in other.data_patches[:MAX_PATCHES_SHOWN])
+        more = len(other.data_patches) - MAX_PATCHES_SHOWN
         report.ask(
-            f"Combination content with **{other}** ({kind}): {len(places)} conditional line(s). "
-            "What it ADDS is ignored unless you want it supported (a combination file). "
-            "What it REMOVES or closes must go into the layer as a rule that applies when that mod is installed. "
-            f"Support it, ignore it, or does it remove something?\n{sample}{more}")
+            f"Combination content with **{other.unique_id}** ({kind}): {len(other.data_patches)} patch(es) to data the "
+            f"lexicon reads, {other.other_patches} to other things. Sort each: no effect on an answer, removes or "
+            "closes something (a rule for when that mod is installed), or adds something (ignored unless Jeff wants "
+            f"it supported).\n{shown}" + (f"\n      - ... and {more} more" if more > 0 else ""))
+    loose = [m for m in others if m.loose_lines and not m.data_patches]
+    if loose:
+        shown = "\n".join(f"      - **{m.unique_id}** ({len(m.loose_lines)} line(s)): `{m.loose_lines[0]}`" for m in loose)
+        report.ask(f"{len(loose)} other mod(s) are named outside a patch's own condition, so they could not be sorted. "
+                   f"Read each line:\n{shown}")
 
 
 def check_layer(unique_id: str, report: Report) -> bool:
@@ -524,7 +564,7 @@ def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs
             restore_folders(renamed)
             # Only the farm this pass made and named, never "whatever is new".
             if save is not None and not keep_saves:
-                shutil.rmtree(SAVES_DIR / save, ignore_errors=True)
+                delete_farm(save)
 
 
 def build(unique_id: str, skip_pierre: bool, keep_saves: bool, fresh_ids: bool, only: str | None) -> Report:
@@ -568,6 +608,8 @@ def build(unique_id: str, skip_pierre: bool, keep_saves: bool, fresh_ids: bool, 
             report.ask(f"The answers file holds the variant `{variant}`, which this run did not write again "
                        "(docs/lexicon-layers.md says how each variant is written).")
     report_id_changes(ids_before, read_ids(REPO_LAYERS / f"{unique_id}.ids.json"), report)
+    if written:
+        report_moves(unique_id, report)
     scan_combinations(unique_id, mods, report)
     return report
 
