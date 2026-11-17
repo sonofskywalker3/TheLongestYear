@@ -107,7 +107,7 @@ def build(fresh_ids: bool, keep_saves: bool) -> tuple[lb.Report, bool]:
         finally:
             lb.restore_folders(renamed)
             if save is not None and not keep_saves:
-                shutil.rmtree(lb.SAVES_DIR / save, ignore_errors=True)
+                lb.delete_farm(save)
     lb.report_id_changes(ids_before, lb.read_ids(REPO_LEXICON / "vanilla.ids.json"), report)
     return report, clean
 

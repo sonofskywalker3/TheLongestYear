@@ -113,6 +113,16 @@ no hand steps, and reports what it could not place and the mod's combination con
 `uv run tools/vanilla-build.py` does the same for `vanilla.json` and `vanilla.ids.json`. The steps
 are what the scripts do, and the reference for the inputs file you write between runs.
 
+Two more tools go with them:
+
+- `uv run tools/lexicon-moves.py` lists every stored answer that differs from the committed files.
+  Run it after a rule change, once vanilla and every layer are regenerated. `tly_lexicon diff`
+  ending at 0 differences only proves a file agrees with a fresh build under the same rules; this
+  shows what the change did to answers already shipped. Each line is meant or a regression.
+- `uv run tools/layer-session.py` holds a game open with a chosen mod set for the hand checks
+  (`tly_obtain`, `tly_itemmodel`, walks, and `reload <save> <day> [season]` to prove a layer is
+  still served as shipped on another weekday or season).
+
 1. **A clean game.** Install only vanilla, the mod and its frameworks. Disable Cart Catalog and any
    other mod that adds items or shops. Turn on the debug bridge (`EnableDebugCommandBridge` in
    `config.json`; see `HEADLESS_DRIVING.md`).
