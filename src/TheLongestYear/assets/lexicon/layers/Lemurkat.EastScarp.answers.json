@@ -692,7 +692,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -1392,7 +1392,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2103,7 +2103,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2814,7 +2814,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -3525,7 +3525,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -4236,7 +4236,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -4946,7 +4946,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5656,7 +5656,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "32de7403de7ffbd0",
+          "Inputs": "42fc37ff36652deb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5873,6 +5873,11 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_CommunityGreenhouse": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
+        },
         "EastScarp_Crossing": {
           "Extreme": 1,
           "Hard": 1,
@@ -5898,6 +5903,16 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_EthansHideaway": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
+        },
+        "EastScarp_EyvinderCave": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
         "EastScarp_FairyPool": {
           "Extreme": 1,
           "Hard": 1,
@@ -5912,6 +5927,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_JacobBarn": {
+          "Extreme": 2,
+          "Hard": 2,
+          "Week": 2
         },
         "EastScarp_JacobOffice": {
           "Extreme": 1,
@@ -5938,10 +5958,30 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_KatarynaBackyard": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_KatarynaHouse": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
         "EastScarp_KeanuHouse": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_KenStellaHouse": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_LanternRoom": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
         },
         "EastScarp_Lighthouse": {
           "Extreme": 1,
@@ -5949,6 +5989,11 @@
           "Week": 1
         },
         "EastScarp_LoresCove": {
+          "Extreme": 1,
+          "Hard": 1,
+          "Week": 1
+        },
+        "EastScarp_LumaHut": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -5998,6 +6043,16 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_ThriftShop": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_ToriSlimeBasement": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
         "EastScarp_VetHouse": {
           "Extreme": 1,
           "Hard": 1,
@@ -6012,6 +6067,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_ZuzuBurb": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
         }
       },
       "Obtain": {
@@ -6945,7 +7005,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_FeastOfTheWinterStar_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_FeastOfTheWinterStar_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 168, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_StardewValleyFair_StarTokens"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "shop Festival_StardewValleyFair_StarTokens", "Inputs": [], "Kind": "Festival", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 296, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:TroutDerby"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "TroutDerby reward", "Inputs": [], "Kind": "Festival", "Lands": 247, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertTrade", "trade:(O)72"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertTrade (barter)", "Inputs": [["(O)72"]], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
@@ -7133,7 +7193,7 @@
         "(O)303": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Pam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Pam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 234, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 69, "Reliability": "Chance", "Setup": []}
@@ -7409,7 +7469,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Saloon"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Saloon", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 296, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_George", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_George (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Harvey", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Harvey (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
@@ -8006,7 +8066,7 @@
         ],
         "(O)608": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 166, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 157, "Reliability": "Chance", "Setup": []}
         ],
@@ -8014,20 +8074,20 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 251, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 10, "Reliability": "Chance", "Setup": []}
         ],
         "(O)612": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 171, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 159, "Reliability": "Chance", "Setup": []}
         ],
         "(O)614": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Caroline", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Caroline (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)815", "Inputs": [["(O)815"]], "Kind": "Machine", "Lands": 185, "Reliability": "Dependable", "Setup": []}
         ],
@@ -8285,7 +8345,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Sam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Sam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 116, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
@@ -8323,7 +8383,7 @@
         ],
         "(O)746": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_SpiritsEve_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_SpiritsEve_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 284, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 148, "Reliability": "Chance", "Setup": []}
         ],
@@ -8562,14 +8622,14 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["item:(O)749", "shop:Blacksmith"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "opened from (O)749", "Inputs": [["(O)749"]], "Kind": "Geode", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)903": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)904": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 236, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)94": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)DriedFruit": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)Dehydrator"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)Dehydrator from category_fruits (flavored DriedFruit)", "Inputs": [["(O)88", "(O)90", "(O)252", "(O)254", "(O)258", "(O)260", "(O)268", "(O)282", "(O)296", "(O)396", "(O)398", "(O)400", "(O)406", "(O)410", "(O)414", "(O)454", "(O)613", "(O)634", "(O)635", "(O)636", "(O)637", "(O)638", "(O)91", "(O)832", "(O)834", "(O)889", "(O)Powdermelon", "(O)EastScarp_BiteBackMelon", "(O)EastScarp_FrostBerry", "(O)Lemurkat.EastScarp_ChocoFruit", "(O)Lemurkat.EastScarp_FairyCap", "(O)Lemurkat.EastScarp_ZinfazuFruit", "(O)Lemurkat.EastScarp_YohoFruit", "(O)Lemurkat.EastScarp_DeepCaveFruit", "(O)Lemurkat.EastScarp_ButtonFruit"]], "Kind": "Machine", "Lands": 43, "Reliability": "Dependable", "Setup": []}
@@ -8628,7 +8688,7 @@
         ],
         "(O)EastScarp_Chamomile_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Cheesy_Jelly_Toast": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:EastScarp_Cheesy_Jelly_Toast", "unlock:f Eloise 7"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe EastScarp_Cheesy_Jelly_Toast", "Inputs": [["(O)216"], ["(O)344"], ["(O)424"]], "Kind": "Cooking", "Lands": 76, "Reliability": "Dependable", "Setup": []},
@@ -8662,7 +8722,7 @@
         ],
         "(O)EastScarp_Ginger_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Golden_Trout": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_DeepMountains"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at EastScarp_DeepMountains, time 600-1200", "Inputs": [], "Kind": "Fish", "Lands": 13, "Reliability": "Dependable", "Setup": []}
@@ -8693,7 +8753,7 @@
         ],
         "(O)EastScarp_Peppermint_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_PheasantEgg_female": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_MtEvermore"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Forage at EastScarp_MtEvermore", "Inputs": [], "Kind": "Forage", "Lands": 6, "Reliability": "Dependable", "Setup": []},
@@ -8878,7 +8938,7 @@
         "(O)Lemurkat.EastScarp_Golden_Apple": [],
         "(O)Lemurkat.EastScarp_Golden_Apple_Tree": [],
         "(O)Lemurkat.EastScarp_HotChoco": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Lemurkat.EastScarp_HotChoco", "unlock:f MichaelHart 5"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Lemurkat.EastScarp_HotChoco", "Inputs": [["(O)Lemurkat.EastScarp_ChocoFruit"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 261, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)Lemurkat.EastScarp_Paneeki": [
@@ -9024,17 +9084,7 @@
           "Hard": 1,
           "Week": 1
         },
-        "(O)253": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
         "(O)283": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)350": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -9104,32 +9154,7 @@
           "Hard": 1,
           "Week": 1
         },
-        "(O)608": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)611": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
         "(O)715": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)746": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)903": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)94": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -9220,11 +9245,6 @@
           "Week": 1
         },
         "(O)Lemurkat.EastScarp_FirePepperSeeds": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)Lemurkat.EastScarp_HotChoco": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -9561,17 +9581,8 @@
         "EastScarp_AbyssCoop",
         "EastScarp_ArkOrchard",
         "EastScarp_CatWarpRoom",
-        "EastScarp_CommunityGreenhouse",
-        "EastScarp_EthansHideaway",
-        "EastScarp_EyvinderCave",
         "EastScarp_GoldenApplePeak",
-        "EastScarp_JacobBarn",
         "EastScarp_JojaMetroMart",
-        "EastScarp_KatarynaBackyard",
-        "EastScarp_KatarynaHouse",
-        "EastScarp_KenStellaHouse",
-        "EastScarp_LanternRoom",
-        "EastScarp_LumaHut",
         "EastScarp_MeadowShed",
         "EastScarp_MeadowShed_Ruins",
         "EastScarp_PirateShip",
@@ -9581,13 +9592,10 @@
         "EastScarp_SmugglerDen",
         "EastScarp_TNPCWaitingWarpRoom",
         "EastScarp_TheaterBreakroom",
-        "EastScarp_ThriftShop",
-        "EastScarp_ToriSlimeBasement",
         "EastScarp_UnderwaterLexi",
         "EastScarp_ValkyrieWarpRoom",
         "EastScarp_VetAwayWarpRoom",
-        "EastScarp_VillageInn_SpiritEve",
-        "EastScarp_ZuzuBurb"
+        "EastScarp_VillageInn_SpiritEve"
       ],
       "Unresolved": ["FLAVORED_ITEM juice (O)276 | shop Lemurkat.EastScarp_InnShop.spiritEve2: unknown flavor type juice"],
       "YearSort": {
@@ -10555,7 +10563,7 @@
         "(O)253": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_FeastOfTheWinterStar_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_FeastOfTheWinterStar_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 168, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_StardewValleyFair_StarTokens"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "shop Festival_StardewValleyFair_StarTokens", "Inputs": [], "Kind": "Festival", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 296, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:TroutDerby"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "TroutDerby reward", "Inputs": [], "Kind": "Festival", "Lands": 247, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertTrade", "trade:(O)72"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertTrade (barter)", "Inputs": [["(O)72"]], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
@@ -10723,7 +10731,7 @@
         ],
         "(O)303": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Pam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Pam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 234, "Reliability": "Dependable", "Setup": []}
         ],
@@ -10994,7 +11002,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Saloon"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Saloon", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 296, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_George", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_George (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Harvey", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Harvey (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
@@ -11548,7 +11556,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Artichoke Dip", "unlock:Queen of Sauce episode 12 (Sunday of week 12)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Artichoke Dip taught by the Queen of Sauce", "Inputs": [["(O)274"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"]], "Kind": "Cooking", "Lands": 155, "Reliability": "Chance", "Setup": []}
         ],
         "(O)608": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 166, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 158, "Reliability": "Chance", "Setup": []}
         ],
@@ -11559,16 +11567,16 @@
         "(O)611": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 251, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)612": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 171, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)614": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Caroline", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Caroline (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)815", "Inputs": [["(O)815"]], "Kind": "Machine", "Lands": 185, "Reliability": "Dependable", "Setup": []}
         ],
@@ -11824,7 +11832,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": [], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "garbage can Lemurkat.EastScarp_ESInn", "Inputs": [], "Kind": "GarbageCan", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Sam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Sam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 174, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 116, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 43, "Reliability": "Chance", "Setup": []}
@@ -11866,7 +11874,7 @@
         ],
         "(O)746": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_SpiritsEve_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_SpiritsEve_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 284, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)766": [
@@ -12102,7 +12110,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Fairy Dust", "unlock:none (taught some other way)"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "recipe Fairy Dust", "Inputs": [["(O)72"], ["(O)595"]], "Kind": "Crafting", "Lands": 27, "Reliability": "Chance", "Setup": []}
         ],
         "(O)903": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)904": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 236, "Reliability": "Chance", "Setup": []},
@@ -12120,7 +12128,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Squid Ink Ravioli"], "Skill": "Combat", "SkillLevel": 9, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Squid Ink Ravioli", "Inputs": [["(O)814"], ["(O)246"], ["(O)256"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)94": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 285, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)DriedFruit": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)Dehydrator"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)Dehydrator from category_fruits (flavored DriedFruit)", "Inputs": [["(O)88", "(O)90", "(O)252", "(O)254", "(O)258", "(O)260", "(O)268", "(O)282", "(O)296", "(O)396", "(O)398", "(O)400", "(O)406", "(O)410", "(O)414", "(O)454", "(O)613", "(O)634", "(O)635", "(O)636", "(O)637", "(O)638", "(O)91", "(O)832", "(O)834", "(O)889", "(O)Powdermelon", "(O)EastScarp_BiteBackMelon", "(O)EastScarp_FrostBerry", "(O)Lemurkat.EastScarp_ChocoFruit", "(O)Lemurkat.EastScarp_FairyCap", "(O)Lemurkat.EastScarp_ZinfazuFruit", "(O)Lemurkat.EastScarp_YohoFruit", "(O)Lemurkat.EastScarp_DeepCaveFruit", "(O)Lemurkat.EastScarp_ButtonFruit"]], "Kind": "Machine", "Lands": 43, "Reliability": "Dependable", "Setup": []}
@@ -12178,7 +12186,7 @@
         ],
         "(O)EastScarp_Chamomile_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Cheesy_Jelly_Toast": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:EastScarp_Cheesy_Jelly_Toast", "unlock:f Eloise 7"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe EastScarp_Cheesy_Jelly_Toast", "Inputs": [["(O)216"], ["(O)344"], ["(O)424"]], "Kind": "Cooking", "Lands": 76, "Reliability": "Dependable", "Setup": []}
@@ -12211,7 +12219,7 @@
         ],
         "(O)EastScarp_Ginger_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Golden_Trout": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_DeepMountains"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at EastScarp_DeepMountains, time 600-1200", "Inputs": [], "Kind": "Fish", "Lands": 13, "Reliability": "Dependable", "Setup": []}
@@ -12242,7 +12250,7 @@
         ],
         "(O)EastScarp_Peppermint_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_PheasantEgg_female": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_MtEvermore"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Forage at EastScarp_MtEvermore", "Inputs": [], "Kind": "Forage", "Lands": 6, "Reliability": "Dependable", "Setup": []},
@@ -12422,7 +12430,7 @@
         "(O)Lemurkat.EastScarp_Golden_Apple": [],
         "(O)Lemurkat.EastScarp_Golden_Apple_Tree": [],
         "(O)Lemurkat.EastScarp_HotChoco": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 294, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Lemurkat.EastScarp_HotChoco", "unlock:f MichaelHart 5"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Lemurkat.EastScarp_HotChoco", "Inputs": [["(O)Lemurkat.EastScarp_ChocoFruit"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 261, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)Lemurkat.EastScarp_Paneeki": [
@@ -13248,7 +13256,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Easy|no_kitchen": {
@@ -13940,7 +13948,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|kitchen": {
@@ -14643,7 +14651,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|no_kitchen": {
@@ -15346,7 +15354,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Hard|kitchen": {
@@ -16049,7 +16057,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Hard|no_kitchen": {
@@ -16752,7 +16760,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Normal|kitchen": {
@@ -17454,7 +17462,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         },
         "Normal|no_kitchen": {
@@ -18156,7 +18164,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "cbf957bf9b6c6882",
+          "Inputs": "a3b2e73356fbb609",
           "YearTwoCropDishUnits": {}
         }
       },
@@ -18365,6 +18373,11 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_CommunityGreenhouse": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
+        },
         "EastScarp_Crossing": {
           "Extreme": 1,
           "Hard": 1,
@@ -18390,6 +18403,16 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_EthansHideaway": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
+        },
+        "EastScarp_EyvinderCave": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
         "EastScarp_FairyPool": {
           "Extreme": 1,
           "Hard": 1,
@@ -18404,6 +18427,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_JacobBarn": {
+          "Extreme": 2,
+          "Hard": 2,
+          "Week": 2
         },
         "EastScarp_JacobOffice": {
           "Extreme": 1,
@@ -18430,10 +18458,30 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_KatarynaBackyard": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_KatarynaHouse": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
         "EastScarp_KeanuHouse": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_KenStellaHouse": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_LanternRoom": {
+          "Extreme": 10,
+          "Hard": 10,
+          "Week": 10
         },
         "EastScarp_Lighthouse": {
           "Extreme": 1,
@@ -18441,6 +18489,11 @@
           "Week": 1
         },
         "EastScarp_LoresCove": {
+          "Extreme": 1,
+          "Hard": 1,
+          "Week": 1
+        },
+        "EastScarp_LumaHut": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -18490,6 +18543,16 @@
           "Hard": 1,
           "Week": 1
         },
+        "EastScarp_ThriftShop": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
+        },
+        "EastScarp_ToriSlimeBasement": {
+          "Extreme": 4,
+          "Hard": 4,
+          "Week": 4
+        },
         "EastScarp_VetHouse": {
           "Extreme": 1,
           "Hard": 1,
@@ -18504,6 +18567,11 @@
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
+        },
+        "EastScarp_ZuzuBurb": {
+          "Extreme": 3,
+          "Hard": 6,
+          "Week": 9
         }
       },
       "Obtain": {
@@ -19438,7 +19506,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_FeastOfTheWinterStar_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_FeastOfTheWinterStar_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 175, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_StardewValleyFair_StarTokens"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "shop Festival_StardewValleyFair_StarTokens", "Inputs": [], "Kind": "Festival", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 300, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:TroutDerby"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "TroutDerby reward", "Inputs": [], "Kind": "Festival", "Lands": 253, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertTrade", "trade:(O)72"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertTrade (barter)", "Inputs": [["(O)72"]], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
@@ -19626,7 +19694,7 @@
         "(O)303": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Pam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Pam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 240, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 69, "Reliability": "Chance", "Setup": []}
@@ -19902,7 +19970,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Saloon"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Saloon", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 300, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_George", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_George (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Harvey", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Harvey (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
@@ -20501,7 +20569,7 @@
         ],
         "(O)608": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 173, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 164, "Reliability": "Chance", "Setup": []}
         ],
@@ -20509,20 +20577,20 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 257, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 10, "Reliability": "Chance", "Setup": []}
         ],
         "(O)612": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 177, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 166, "Reliability": "Chance", "Setup": []}
         ],
         "(O)614": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Caroline", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Caroline (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)815", "Inputs": [["(O)815"]], "Kind": "Machine", "Lands": 191, "Reliability": "Dependable", "Setup": []}
         ],
@@ -20782,7 +20850,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Traveler"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Traveler (random items)", "Inputs": [], "Kind": "Cart", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Sam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Sam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 118, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
@@ -20820,7 +20888,7 @@
         ],
         "(O)746": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_SpiritsEve_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_SpiritsEve_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 289, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 153, "Reliability": "Chance", "Setup": []}
         ],
@@ -21060,14 +21128,14 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["item:(O)749", "shop:Blacksmith"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "opened from (O)749", "Inputs": [["(O)749"]], "Kind": "Geode", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)903": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)904": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 242, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)94": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)DriedFruit": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)Dehydrator"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)Dehydrator from category_fruits (flavored DriedFruit)", "Inputs": [["(O)88", "(O)90", "(O)252", "(O)254", "(O)258", "(O)260", "(O)268", "(O)282", "(O)296", "(O)396", "(O)398", "(O)400", "(O)406", "(O)410", "(O)414", "(O)454", "(O)613", "(O)634", "(O)635", "(O)636", "(O)637", "(O)638", "(O)91", "(O)832", "(O)834", "(O)889", "(O)Powdermelon", "(O)EastScarp_BiteBackMelon", "(O)EastScarp_FrostBerry", "(O)Lemurkat.EastScarp_ChocoFruit", "(O)Lemurkat.EastScarp_FairyCap", "(O)Lemurkat.EastScarp_ZinfazuFruit", "(O)Lemurkat.EastScarp_YohoFruit", "(O)Lemurkat.EastScarp_DeepCaveFruit", "(O)Lemurkat.EastScarp_ButtonFruit"]], "Kind": "Machine", "Lands": 43, "Reliability": "Dependable", "Setup": []}
@@ -21126,7 +21194,7 @@
         ],
         "(O)EastScarp_Chamomile_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Cheesy_Jelly_Toast": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:EastScarp_Cheesy_Jelly_Toast", "unlock:f Eloise 7"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe EastScarp_Cheesy_Jelly_Toast", "Inputs": [["(O)216"], ["(O)344"], ["(O)424"]], "Kind": "Cooking", "Lands": 76, "Reliability": "Dependable", "Setup": []},
@@ -21160,7 +21228,7 @@
         ],
         "(O)EastScarp_Ginger_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Golden_Trout": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_DeepMountains"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at EastScarp_DeepMountains, time 600-1200", "Inputs": [], "Kind": "Fish", "Lands": 13, "Reliability": "Dependable", "Setup": []}
@@ -21191,7 +21259,7 @@
         ],
         "(O)EastScarp_Peppermint_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_PheasantEgg_female": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_MtEvermore"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Forage at EastScarp_MtEvermore", "Inputs": [], "Kind": "Forage", "Lands": 6, "Reliability": "Dependable", "Setup": []},
@@ -21376,7 +21444,7 @@
         "(O)Lemurkat.EastScarp_Golden_Apple": [],
         "(O)Lemurkat.EastScarp_Golden_Apple_Tree": [],
         "(O)Lemurkat.EastScarp_HotChoco": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Lemurkat.EastScarp_HotChoco", "unlock:f MichaelHart 5"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Lemurkat.EastScarp_HotChoco", "Inputs": [["(O)Lemurkat.EastScarp_ChocoFruit"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 267, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)Lemurkat.EastScarp_Paneeki": [
@@ -21522,17 +21590,7 @@
           "Hard": 1,
           "Week": 1
         },
-        "(O)253": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
         "(O)283": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)350": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -21602,32 +21660,7 @@
           "Hard": 1,
           "Week": 1
         },
-        "(O)608": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)611": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
         "(O)715": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)746": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)903": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)94": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -21718,11 +21751,6 @@
           "Week": 1
         },
         "(O)Lemurkat.EastScarp_FirePepperSeeds": {
-          "Extreme": 1,
-          "Hard": 1,
-          "Week": 1
-        },
-        "(O)Lemurkat.EastScarp_HotChoco": {
           "Extreme": 1,
           "Hard": 1,
           "Week": 1
@@ -22063,17 +22091,8 @@
         "EastScarp_AbyssCoop",
         "EastScarp_ArkOrchard",
         "EastScarp_CatWarpRoom",
-        "EastScarp_CommunityGreenhouse",
-        "EastScarp_EthansHideaway",
-        "EastScarp_EyvinderCave",
         "EastScarp_GoldenApplePeak",
-        "EastScarp_JacobBarn",
         "EastScarp_JojaMetroMart",
-        "EastScarp_KatarynaBackyard",
-        "EastScarp_KatarynaHouse",
-        "EastScarp_KenStellaHouse",
-        "EastScarp_LanternRoom",
-        "EastScarp_LumaHut",
         "EastScarp_MeadowShed",
         "EastScarp_MeadowShed_Ruins",
         "EastScarp_PirateShip",
@@ -22083,13 +22102,10 @@
         "EastScarp_SmugglerDen",
         "EastScarp_TNPCWaitingWarpRoom",
         "EastScarp_TheaterBreakroom",
-        "EastScarp_ThriftShop",
-        "EastScarp_ToriSlimeBasement",
         "EastScarp_UnderwaterLexi",
         "EastScarp_ValkyrieWarpRoom",
         "EastScarp_VetAwayWarpRoom",
-        "EastScarp_VillageInn_SpiritEve",
-        "EastScarp_ZuzuBurb"
+        "EastScarp_VillageInn_SpiritEve"
       ],
       "Unresolved": ["FLAVORED_ITEM juice (O)276 | shop Lemurkat.EastScarp_InnShop.spiritEve2: unknown flavor type juice"],
       "YearSort": {
@@ -23062,7 +23078,7 @@
         "(O)253": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_FeastOfTheWinterStar_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_FeastOfTheWinterStar_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 175, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_StardewValleyFair_StarTokens"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "shop Festival_StardewValleyFair_StarTokens", "Inputs": [], "Kind": "Festival", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 300, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:TroutDerby"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "TroutDerby reward", "Inputs": [], "Kind": "Festival", "Lands": 253, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertTrade", "trade:(O)72"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertTrade (barter)", "Inputs": [["(O)72"]], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
@@ -23230,7 +23246,7 @@
         ],
         "(O)303": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Pam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Pam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)304", "Inputs": [["(O)304"]], "Kind": "Machine", "Lands": 240, "Reliability": "Dependable", "Setup": []}
         ],
@@ -23501,7 +23517,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Saloon"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Saloon", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["festival:SquidFest"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "SquidFest reward", "Inputs": [], "Kind": "Festival", "Lands": 300, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_George", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_George (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Harvey", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Harvey (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
@@ -24057,7 +24073,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Artichoke Dip", "unlock:Queen of Sauce episode 12 (Sunday of week 12)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Artichoke Dip taught by the Queen of Sauce", "Inputs": [["(O)274"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"]], "Kind": "Cooking", "Lands": 160, "Reliability": "Chance", "Setup": []}
         ],
         "(O)608": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 173, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Pumpkin Pie", "unlock:Queen of Sauce episode 15 (Sunday of week 15)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Pumpkin Pie taught by the Queen of Sauce", "Inputs": [["(O)276"], ["(O)246"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 165, "Reliability": "Chance", "Setup": []}
         ],
@@ -24068,16 +24084,16 @@
         "(O)611": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Blackberry Cobbler", "unlock:Queen of Sauce episode 26 (Sunday of week 26)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Blackberry Cobbler taught by the Queen of Sauce", "Inputs": [["(O)410"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 257, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)612": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:ResortBar"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop ResortBar", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Cranberry Candy", "unlock:Queen of Sauce episode 16 (Sunday of week 16)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Cranberry Candy taught by the Queen of Sauce", "Inputs": [["(O)282"], ["(O)613"], ["(O)245"]], "Kind": "Cooking", "Lands": 177, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)614": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Caroline", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Caroline (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)12"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)12 from (O)815", "Inputs": [["(O)815"]], "Kind": "Machine", "Lands": 191, "Reliability": "Dependable", "Setup": []}
         ],
@@ -24335,7 +24351,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": [], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "garbage can Lemurkat.EastScarp_ESInn", "Inputs": [], "Kind": "GarbageCan", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Chance", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:DesertFestival_Sam", "trade:(O)CalicoEgg"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop DesertFestival_Sam (barter)", "Inputs": [["(O)CalicoEgg"]], "Kind": "Festival", "Lands": 180, "Reliability": "Chance", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 118, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Maple Bar", "unlock:Queen of Sauce episode 22 (Sunday of week 22)"], "SkillLevel": 0, "Unresolved": false, "YearTwo": true}, "Detail": "recipe Maple Bar taught by the Queen of Sauce", "Inputs": [["(O)724"], ["(O)245"], ["(O)246"]], "Kind": "Cooking", "Lands": 43, "Reliability": "Chance", "Setup": []}
@@ -24377,7 +24393,7 @@
         ],
         "(O)746": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Festival_SpiritsEve_Pierre"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Festival_SpiritsEve_Pierre", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Jack-O-Lantern", "unlock:shop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Jack-O-Lantern", "Inputs": [["(O)276"], ["(O)93"]], "Kind": "Crafting", "Lands": 289, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)766": [
@@ -24614,7 +24630,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Fairy Dust", "unlock:none (taught some other way)"], "SkillLevel": 0, "Unresolved": true, "YearTwo": false}, "Detail": "recipe Fairy Dust", "Inputs": [["(O)72"], ["(O)595"]], "Kind": "Crafting", "Lands": 27, "Reliability": "Chance", "Setup": []}
         ],
         "(O)903": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve2"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve2", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)904": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Banana Pudding", "unlock:l 100"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Banana Pudding", "Inputs": [["(O)91"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 242, "Reliability": "Chance", "Setup": []},
@@ -24632,7 +24648,7 @@
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": true, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Squid Ink Ravioli"], "Skill": "Combat", "SkillLevel": 9, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Squid Ink Ravioli", "Inputs": [["(O)814"], ["(O)246"], ["(O)256"]], "Kind": "Cooking", "Lands": 0, "Reliability": "Chance", "Setup": []}
         ],
         "(O)94": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_InnShop.spiritEve"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_InnShop.spiritEve", "Inputs": [], "Kind": "Festival", "Lands": 290, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)DriedFruit": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["machine:(BC)Dehydrator"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "(BC)Dehydrator from category_fruits (flavored DriedFruit)", "Inputs": [["(O)88", "(O)90", "(O)252", "(O)254", "(O)258", "(O)260", "(O)268", "(O)282", "(O)296", "(O)396", "(O)398", "(O)400", "(O)406", "(O)410", "(O)414", "(O)454", "(O)613", "(O)634", "(O)635", "(O)636", "(O)637", "(O)638", "(O)91", "(O)832", "(O)834", "(O)889", "(O)Powdermelon", "(O)EastScarp_BiteBackMelon", "(O)EastScarp_FrostBerry", "(O)Lemurkat.EastScarp_ChocoFruit", "(O)Lemurkat.EastScarp_FairyCap", "(O)Lemurkat.EastScarp_ZinfazuFruit", "(O)Lemurkat.EastScarp_YohoFruit", "(O)Lemurkat.EastScarp_DeepCaveFruit", "(O)Lemurkat.EastScarp_ButtonFruit"]], "Kind": "Machine", "Lands": 43, "Reliability": "Dependable", "Setup": []}
@@ -24690,7 +24706,7 @@
         ],
         "(O)EastScarp_Chamomile_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Cheesy_Jelly_Toast": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:EastScarp_Cheesy_Jelly_Toast", "unlock:f Eloise 7"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe EastScarp_Cheesy_Jelly_Toast", "Inputs": [["(O)216"], ["(O)344"], ["(O)424"]], "Kind": "Cooking", "Lands": 76, "Reliability": "Dependable", "Setup": []}
@@ -24723,7 +24739,7 @@
         ],
         "(O)EastScarp_Ginger_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_Golden_Trout": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_DeepMountains"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Fish at EastScarp_DeepMountains, time 600-1200", "Inputs": [], "Kind": "Fish", "Lands": 13, "Reliability": "Dependable", "Setup": []}
@@ -24754,7 +24770,7 @@
         ],
         "(O)EastScarp_Peppermint_Tea": [
           {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_JessieSeedShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_JessieSeedShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []}
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)EastScarp_PheasantEgg_female": [
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["location:EastScarp_MtEvermore"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "Forage at EastScarp_MtEvermore", "Inputs": [], "Kind": "Forage", "Lands": 6, "Reliability": "Dependable", "Setup": []},
@@ -24934,7 +24950,7 @@
         "(O)Lemurkat.EastScarp_Golden_Apple": [],
         "(O)Lemurkat.EastScarp_Golden_Apple_Tree": [],
         "(O)Lemurkat.EastScarp_HotChoco": [
-          {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Shop", "Lands": 0, "Reliability": "Dependable", "Setup": []},
+          {"Conditions": {"CatchLimit": 0, "FewDays": true, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["shop:Lemurkat.EastScarp_IceFest_CoffeeShop"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "shop Lemurkat.EastScarp_IceFest_CoffeeShop", "Inputs": [], "Kind": "Festival", "Lands": 298, "Reliability": "Dependable", "Setup": []},
           {"Conditions": {"CatchLimit": 0, "FewDays": false, "GingerIsland": false, "OwnedOnly": false, "RainOnly": false, "Requires": ["recipe:Lemurkat.EastScarp_HotChoco", "unlock:f MichaelHart 5"], "SkillLevel": 0, "Unresolved": false, "YearTwo": false}, "Detail": "recipe Lemurkat.EastScarp_HotChoco", "Inputs": [["(O)Lemurkat.EastScarp_ChocoFruit"], ["(O)184", "(O)186", "(O)436", "(O)438", "(O)EastScarp_Void_Goat_Milk", "(O)EastScarp_L_Void_Goat_Milk"], ["(O)245"]], "Kind": "Cooking", "Lands": 267, "Reliability": "Dependable", "Setup": []}
         ],
         "(O)Lemurkat.EastScarp_Paneeki": [

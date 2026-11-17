@@ -1,7 +1,7 @@
 {
   "UniqueId": "Lemurkat.EastScarp",
   "CheckedVersion": "3.0.9",
-  "Notes": "East Scarp (Remastered) 3.0.9, the five packs of the set (Lemurkat.EastScarp, Lemurkat.EastScarpNPCs, Lemurkat.EastScarpe.FTM, atravita.EastScarp, ES.BarberShop) at default config. | Version: every manifest says 3.0.9 while the Nexus file is labelled 3.0.10; 3.0.9 is what the game reports as installed. | MapLinks: each is a TouchAction Warp tile the walk cannot read, walked on Spring 1 of a new farm with tly_walkto: EastScarp_Village (1,72) to (77,114) and down into EastScarp_SeaCave; to (44,85) and up into EastScarp_DeepDark; to (74,1) and up into EastScarp_MeadowFarm, then (14,0) up into EastScarp_DeepMountains, (65,0) up into EastScarp_MtEvermore and on to the Fire Tower door at (52,20); EastScarp_DeepMountains (60,58) to (7,60) and down into EastScarp_DeepMountainCrossroads; Mountain (31,20) to (89,39) and down into EastScarp_Village; EastScarp_FairyPool (5,39) to (16,48) and down into EastScarp_Orchard at (14,5), the far bank. Also walked, on ways the walk already reads: EastScarp_FairyPool (1,39) to the Secret Cave mouth at (23,17), into EastScarp_SecretCave; EastScarp_Village (1,72) to the stall counter at (23,51); EastScarp_DeepMountainCrossroads (11,37) to (40,1) below its touch tiles to the Deep Mountains. | Mountain to EastScarp_DeepMountainCrossroads: walked too (Mountain (31,24) to (91,1)), but left out of MapLinks because the mod removes that strip when Stardew Valley Expanded is installed and a link cannot say so; the Crossroads is reached from the Deep Mountains either way. | EastScarp_Orchard: the bridge by the Village entrance is missing until Rosa's RebuildBridge order (Orchard_NoBridge.tmx), so the west bank is all the Village warp reaches; the Orchard House door (33,13), the Shack door (19,64) and the beach were walked from the Fairy Pool side on day 1, so the map is week 1 as a whole and no bridge ruling is needed. | ShopPlacements: the stall tile at EastScarp_Village (23,50) is Aideen's shop on Monday, Tuesday and Thursday, Jessie's on Wednesday and Friday and a closed sign at the weekend (Shops.json changes 1, 4, 5); both shops are named here so their place does not change with the weekday. | (O)EastScarp_Blue_Jay_Feather: Dependable, as vanilla reads its own forage rows: the area spawns 1 to 3 items every day and the feather is one of five picks. Week 1: the Village is open on Spring 1 and the route lands that day; no rule of TLY's places a hand-written forage route, so the week is ruled. | (O)EastScarp_Pelican_Feather, (O)EastScarp_SeaGlass, (O)EastScarp_Wood_Duck_Feather: Chance, their areas have MinimumSpawnsPerDay below 1; the Wood Duck Feather area also waits for event 57870002 (Eloise at 2 hearts), which sets the mail flag Ellie_Mandarin. | (O)EastScarp_CherryPit: Chance, row 5, a 50% drop of the Orchard slimes Farm Type Manager spawns. | (O)EastScarp_Pheasant_Feather: week 9, the Fall forage at Mount Evermore; the animal route TLY derives (week 2) needs a pheasant hatched from an egg, and the eggs carry no egg_item tag for an incubator and the bird's house is a Barn. | (O)Lemurkat.EastScarp_Cherry_Orchard_Wine: week 9, its artifact row holds only in Fall and Winter. | (O)Lemurkat.EastScarp_DeepCaveFruit, (O)Lemurkat.EastScarp_CaveFlower: week 16, provisional: PlantableLocationRules deny outdoors and the Greenhouse, so they grow only in a Garden Pot indoors, which waits on the Pantry like a greenhouse crop. | (O)EastScarp_Azure_Chrysanthemum, (O)EastScarp_Serruria, (O)EastScarp_Bird_Of_Paradise: week 16, provisional and waiting on Jeff: Aideen sells their seeds only after host event 57877008 (Eyvinder at 9 hearts, George at 6) or event 57879901 (after Aideen's special order), so they are not year-1 crops in practice, and no field can say 'not in year 1' for an item TLY derives a week for. | Void goat goods ((O)EastScarp_Void_Goat_Milk, (O)EastScarp_L_Void_Goat_Milk, (O)EastScarp_Black_Wool and what is made from them): no ruling; Marnie sells the goats only with the mail flag MarnieSellsVoidGoats (the same event 57877008), an animal behind an unlock condition is read as not sold, and the goods are kept off the board as out of reach. (O)EastScarp_Void_Goat_Cheese_Aged keeps 'no route': the Cask rule uses an output method and its input is out of reach in year 1. | YearTwoMaps EastScarp_SmugglerDen: entered only by trapdoors that appear after events 57874010 and 57874012 (Rosa's ghost hunt chain, friendship and several scenes), judged not year 1; it holds the only (O)EastScarp_Red_Herring row. | YearTwoShops: Lemurkat.EastScarp_Fundraising opens after event 57871699 (Jessie and Ethan at 8 hearts), Lemurkat.EastScarp_JojaMetroMart after event 191393 (the Community Center done). | YearRulings NeverSell: quest items ((O)EastScarp_Vintage_Ruby_Ring, (O)EastScarp_Tristan_Oversized_Woolly_Hat), placeholders with no source anywhere in the mod (the three Void cakes, (O)Lemurkat.EastScarp_Golden_Apple and its sapling, the two saplings no shop sells) and (O)Lemurkat.EastScarp_Prismatic_Slime_Egg, which needs Extra Machine Config. | (O)EastScarp_Rosas_Spanakopita: YearOne, a single mailed dish (Rosa_SendsSpanakopita) whose recipe nothing teaches; it stays without a real route. | Left unknown on purpose: EastScarp_ZuzuBurb and its interiors (the bus network needs the Vault; vanilla items and furniture only), EastScarp_GoldenApplePeak (no way in found), EastScarp_JacobBarn and EastScarp_Playhouse (no door found on the Village map), EastScarp_JacobOffice (its door names the pre-Remastered map id, which the game does not resolve), the villager waiting rooms and the event maps. | EastScarp_JessieBasement is behind a 7-heart door and is read as week 1; nothing TLY reads is in it. | FishData: the four nudibranchs' Data/Fish rows are rewritten every season (Fishing.json changes 0 to 3: a rod fish in its own season, a crab pot row for water type estidepools in the other three), so each is pinned to its rod row; its Data/Locations rows already hold it to its season. The crab pot catch is written as a Chance route at the Village, where the ESTidepools fish area is the only one whose CrabPotFishTypes names estidepools (5% a pot). | Known and not fixed in this layer: the Festival of Ice coffee stall (Lemurkat.EastScarp_IceFest_CoffeeShop) and the two Spirit's Eve inn shops are read as everyday shops in the obtain tables, since TLY knows festival stalls by vanilla's names (the board's weeks do not use those routes); (O)486 Starfruit regrows after event 57871109 and (O)458 Bouquet changes price after event 57871006, typed rows a layer cannot pin, so a save past either event computes its answers once.",
+  "Notes": "East Scarp (Remastered) 3.0.9, the five packs of the set (Lemurkat.EastScarp, Lemurkat.EastScarpNPCs, Lemurkat.EastScarpe.FTM, atravita.EastScarp, ES.BarberShop) at default config. | Version: every manifest says 3.0.9 while the Nexus file is labelled 3.0.10; 3.0.9 is what the game reports as installed. | MapLinks: each is a TouchAction Warp tile the walk cannot read, walked on Spring 1 of a new farm with tly_walkto: EastScarp_Village (1,72) to (77,114) and down into EastScarp_SeaCave; to (44,85) and up into EastScarp_DeepDark; to (74,1) and up into EastScarp_MeadowFarm, then (14,0) up into EastScarp_DeepMountains, (65,0) up into EastScarp_MtEvermore and on to the Fire Tower door at (52,20); EastScarp_DeepMountains (60,58) to (7,60) and down into EastScarp_DeepMountainCrossroads; Mountain (31,20) to (89,39) and down into EastScarp_Village; EastScarp_FairyPool (5,39) to (16,48) and down into EastScarp_Orchard at (14,5), the far bank. Also walked, on ways the walk already reads: EastScarp_FairyPool (1,39) to the Secret Cave mouth at (23,17), into EastScarp_SecretCave; EastScarp_Village (1,72) to the stall counter at (23,51); EastScarp_DeepMountainCrossroads (11,37) to (40,1) below its touch tiles to the Deep Mountains. | Mountain to EastScarp_DeepMountainCrossroads: walked too (Mountain (31,24) to (91,1)), but left out of MapLinks because the mod removes that strip when Stardew Valley Expanded is installed and a link cannot say so; the Crossroads is reached from the Deep Mountains either way. | EastScarp_Orchard: the bridge by the Village entrance is missing until Rosa's RebuildBridge order (Orchard_NoBridge.tmx), so the west bank is all the Village warp reaches; the Orchard House door (33,13), the Shack door (19,64) and the beach were walked from the Fairy Pool side on day 1, so the map is week 1 as a whole and no bridge ruling is needed. | ShopPlacements: the stall tile at EastScarp_Village (23,50) is Aideen's shop on Monday, Tuesday and Thursday, Jessie's on Wednesday and Friday and a closed sign at the weekend (Shops.json changes 1, 4, 5); both shops are named here so their place does not change with the weekday. | (O)EastScarp_Blue_Jay_Feather: Dependable, as vanilla reads its own forage rows: the area spawns 1 to 3 items every day and the feather is one of five picks. Week 1: the Village is open on Spring 1 and the route lands that day; no rule of TLY's places a hand-written forage route, so the week is ruled. | (O)EastScarp_Pelican_Feather, (O)EastScarp_SeaGlass, (O)EastScarp_Wood_Duck_Feather: Chance, their areas have MinimumSpawnsPerDay below 1; the Wood Duck Feather area also waits for event 57870002 (Eloise at 2 hearts), which sets the mail flag Ellie_Mandarin. | (O)EastScarp_CherryPit: Chance, row 5, a 50% drop of the Orchard slimes Farm Type Manager spawns. | (O)EastScarp_Pheasant_Feather: week 9, the Fall forage at Mount Evermore; the animal route TLY derives (week 2) needs a pheasant hatched from an egg, and the eggs carry no egg_item tag for an incubator and the bird's house is a Barn. | (O)Lemurkat.EastScarp_Cherry_Orchard_Wine: week 9, its artifact row holds only in Fall and Winter. | (O)Lemurkat.EastScarp_DeepCaveFruit, (O)Lemurkat.EastScarp_CaveFlower: no ruling. PlantableLocationRules deny outdoors and the Greenhouse, so they grow only in a Garden Pot indoors. TLY already dates garden-pot crops from the seed and the growth time, with the pot's recipe had through the Garden Pot keep (its own Rhubarb and Starfruit rows in AvailabilityWeeks.SeedSourceWeeks say so), and the weeks it derives here are exactly that: Jessie sells Deep Cave Fruit seeds from week 1 and 15 days of growth land in week 3; Cave Flower, 11 days, is read in its Fall and Winter seasons, week 10, though a pot indoors ignores the season. | NotYearOne (O)EastScarp_Azure_Chrysanthemum, (O)EastScarp_Serruria, (O)EastScarp_Bird_Of_Paradise: Aideen sells their seeds only after host event 57877008 (Eyvinder at 9 hearts, George at 6, and three earlier scenes) or event 57879901 (after Aideen's special order, which opens in Fall when Bird of Paradise no longer grows outdoors), so the crops are not had in year 1 though the shop line reads as open. | Void goat goods ((O)EastScarp_Void_Goat_Milk, (O)EastScarp_L_Void_Goat_Milk, (O)EastScarp_Black_Wool and what is made from them): no ruling and no keep (Jeff, 2026-11-17). Marnie sells the goats only with the mail flag MarnieSellsVoidGoats (the same event 57877008), an animal behind an unlock condition is read as not sold, and the goods are kept off the board as out of reach. (O)EastScarp_Void_Goat_Cheese_Aged keeps 'no route': the Cask rule uses an output method and its input is out of reach in year 1. | YearTwoMaps EastScarp_SmugglerDen: entered only by trapdoors that appear after events 57874010 and 57874012 (Rosa's ghost hunt chain, friendship and several scenes), year 2 (Jeff, 2026-11-17); it holds the only (O)EastScarp_Red_Herring row. EastScarp_MeadowShed_Ruins and EastScarp_MeadowShed are year 2 as well: their door appears after event 57877005 (Eyvinder at 7 hearts, a villager first met after day 22) and the order that follows it; nothing TLY reads is in them. EastScarp_JojaMetroMart: its door appears after event 191393, the Community Center done. | YearTwoShops: Lemurkat.EastScarp_Fundraising opens after event 57871699 (Jessie and Ethan at 8 hearts), year 2 (Jeff, 2026-11-17); Lemurkat.EastScarp_JojaMetroMart after event 191393 (the Community Center done). The Fundraising counter tile appears on the inn map with that event, so the shop is also named in ShopPlacements: its place is then the same before and after. | YearRulings NeverSell: quest items ((O)EastScarp_Vintage_Ruby_Ring, (O)EastScarp_Tristan_Oversized_Woolly_Hat), placeholders with no source anywhere in the mod (the three Void cakes, (O)Lemurkat.EastScarp_Golden_Apple and its sapling, the two saplings no shop sells) and (O)Lemurkat.EastScarp_Prismatic_Slime_Egg, which needs Extra Machine Config. | (O)EastScarp_Rosas_Spanakopita: YearOne, a single mailed dish (Rosa_SendsSpanakopita) whose recipe nothing teaches; it stays without a real route. | Zuzu Suburb: Data/Minecarts network ESBusNetwork (East Scarp NPCs/content.json) carries the farmer from the Bus Stop, and unlocks on the mail flag ccVault, the repaired bus that also opens the Desert. It is linked from the Desert so it takes the Desert's week on every difficulty (9, Hard 6, Extreme 3); dated from the data, the ride itself was not taken. Its Thrift Shop sells clothes and furniture only. | Maps a scene or an order opens are linked and held to a week, so the walk reads the same before and after the door appears (none could be walked without the scene; weeks are TLY's own friendship and special-order weeks): EastScarp_JacobBarn week 2 (event 57870004, Jacob and Eloise at 2 hearts), EastScarp_ToriSlimeBasement week 4 (event 57878004, Tori at 4 hearts), EastScarp_EyvinderCave week 4 (events 57877000 and 57877001, after day 22), EastScarp_LumaHut week 1 (event 57871100 needs only the Wizard's event 112), EastScarp_LanternRoom, EastScarp_EthansHideaway and EastScarp_CommunityGreenhouse week 10 (each after a special order, and the board opens on Fall 2). | Left unknown on purpose: EastScarp_GoldenApplePeak (no way in found), EastScarp_Playhouse (no door found on the Village map), EastScarp_JacobOffice (its door names the pre-Remastered map id, which the game does not resolve), the villager waiting rooms and the event maps. | FishData: the four nudibranchs' Data/Fish rows are rewritten every season (Fishing.json changes 0 to 3: a rod fish in its own season, a crab pot row for water type estidepools in the other three), so each is pinned to its rod row; its Data/Locations rows already hold it to its season. The crab pot catch is written as a Chance route at the Village, where the ESTidepools fish area is the only one whose CrabPotFishTypes names estidepools (5% a pot). | EastScarp_JessieBasement is behind a 7-heart door and is read as week 1; nothing TLY reads is in it. | FestivalShops: the Festival of Ice coffee cart (Lemurkat.EastScarp_IceFest_CoffeeShop, on the winter8 festival map) and the two Spirit's Eve inn shops (on the map the passive festival EastScarpe_SpiritsEve swaps in on Fall 27) open only on those days. | DataFields: (O)486 Starfruit regrows after event 57871109 (Crops.json) and (O)458 Bouquet costs 175 after event 57871006 (Aideen.json); both are pinned to a new farm's values so a save past either event reads the same data. | Not handled: after the Community Center is done the mod removes JojaMart's back door, so EastScarp_JojaBreakRoom leaves the walk on such a save.",
   "ExtraSources": {
     "(O)EastScarp_Blue_Jay_Feather": [
       {
@@ -142,15 +142,18 @@
   "WeekRulings": {
     "(O)EastScarp_Blue_Jay_Feather": 1,
     "(O)EastScarp_Pheasant_Feather": 9,
-    "(O)Lemurkat.EastScarp_Cherry_Orchard_Wine": 9,
-    "(O)Lemurkat.EastScarp_DeepCaveFruit": 16,
-    "(O)Lemurkat.EastScarp_CaveFlower": 16,
-    "(O)EastScarp_Azure_Chrysanthemum": 16,
-    "(O)EastScarp_Serruria": 16,
-    "(O)EastScarp_Bird_Of_Paradise": 16
+    "(O)Lemurkat.EastScarp_Cherry_Orchard_Wine": 9
   },
+  "NotYearOne": [
+    "(O)EastScarp_Azure_Chrysanthemum",
+    "(O)EastScarp_Serruria",
+    "(O)EastScarp_Bird_Of_Paradise"
+  ],
   "YearTwoMaps": {
-    "EastScarp_SmugglerDen": "YearTwo"
+    "EastScarp_SmugglerDen": "YearTwo",
+    "EastScarp_JojaMetroMart": "YearTwo",
+    "EastScarp_MeadowShed_Ruins": "YearTwo",
+    "EastScarp_MeadowShed": "YearTwo"
   },
   "YearTwoShops": {
     "Lemurkat.EastScarp_Fundraising": "YearTwo",
@@ -180,8 +183,48 @@
     {
       "From": "EastScarp_FairyPool",
       "To": "EastScarp_Orchard"
+    },
+    {
+      "From": "Desert",
+      "To": "EastScarp_ZuzuBurb"
+    },
+    {
+      "From": "EastScarp_Village",
+      "To": "EastScarp_JacobBarn"
+    },
+    {
+      "From": "EastScarp_Village",
+      "To": "EastScarp_ToriSlimeBasement"
+    },
+    {
+      "From": "EastScarp_DeepMountains",
+      "To": "EastScarp_EyvinderCave"
+    },
+    {
+      "From": "EastScarp_OrchardHouse",
+      "To": "EastScarp_LumaHut"
+    },
+    {
+      "From": "EastScarp_Lighthouse",
+      "To": "EastScarp_LanternRoom"
+    },
+    {
+      "From": "EastScarp_VillageInn",
+      "To": "EastScarp_EthansHideaway"
+    },
+    {
+      "From": "EastScarp_Crossing",
+      "To": "EastScarp_CommunityGreenhouse"
     }
   ],
+  "MapWeeks": {
+    "EastScarp_JacobBarn": 2,
+    "EastScarp_ToriSlimeBasement": 4,
+    "EastScarp_EyvinderCave": 4,
+    "EastScarp_LanternRoom": 10,
+    "EastScarp_EthansHideaway": 10,
+    "EastScarp_CommunityGreenhouse": 10
+  },
   "ShopPlacements": [
     {
       "ShopId": "Lemurkat.EastScarp_JessieSeedShop",
@@ -190,12 +233,33 @@
     {
       "ShopId": "Lemurkat.EastScarp_AideenFlowerShop",
       "LocationName": "EastScarp_Village"
+    },
+    {
+      "ShopId": "Lemurkat.EastScarp_Fundraising",
+      "LocationName": "EastScarp_VillageInn"
     }
   ],
+  "FestivalShops": {
+    "Lemurkat.EastScarp_IceFest_CoffeeShop": "winter8",
+    "Lemurkat.EastScarp_InnShop.spiritEve": "EastScarpe_SpiritsEve",
+    "Lemurkat.EastScarp_InnShop.spiritEve2": "EastScarpe_SpiritsEve"
+  },
   "FishData": {
     "EastScarp_Ornate_Nudibranch": "Ornate Nudibranch/80/floater/1/3/1000 1800/spring/both/683 .2 689 .4/4/.1/.25/0",
     "EastScarp_Sea_Bunny_Nudibranch": "Sea Bunny Nudibranch/80/sinker/1/3/1000 1800/summer/both/683 .2 689 .4/4/.1/.25/0",
     "EastScarp_Sunset_Nudibranch": "Sunset Nudibranch/85/mixed/1/3/1000 1800/fall/both/683 .2 689 .4/4/.1/.25/0",
     "EastScarp_Cerulean_Nudibranch": "Cerulean Nudibranch/70/dart/1/3/1000 1800/winter/both/683 .2 689 .4/4/.1/.25/0"
+  },
+  "DataFields": {
+    "Data/Crops": {
+      "486": {
+        "RegrowDays": -1
+      }
+    },
+    "Data/Objects": {
+      "458": {
+        "Price": 100
+      }
+    }
   }
 }
