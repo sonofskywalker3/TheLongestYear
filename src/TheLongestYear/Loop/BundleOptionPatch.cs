@@ -57,8 +57,15 @@ namespace TheLongestYear.Loop
 
         internal static void ResetChoice() => _lastChoice = Choice.TlyCustom;
 
-        /// <summary>What picking a dropdown entry does, for tly_newgame's bundle-choice token.</summary>
-        internal static void SetChoice(Choice choice) => _lastChoice = choice;
+        /// <summary>What picking a dropdown entry does, for tly_newgame's bundle-choice token:
+        /// records the choice AND sets <c>Game1.bundleType</c>, which is what the new game's
+        /// first board is built from (Game1.loadForNewGame). Recording alone stamped a Remixed
+        /// save over a Normal board.</summary>
+        internal static void SetChoice(Choice choice)
+        {
+            _lastChoice = choice;
+            Game1.bundleType = choice == Choice.VanillaRemixed ? Game1.BundleType.Remixed : Game1.BundleType.Default;
+        }
 
         /// <summary>Maps a console token ("custom" / "standard" / "remixed", plus the dropdown's
         /// own vanilla wording) onto a <see cref="Choice"/>, so a diagnostic command can generate
