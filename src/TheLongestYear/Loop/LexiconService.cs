@@ -61,6 +61,9 @@ namespace TheLongestYear.Loop
             if (onGameThread && LayerLoader.HasInstalledLayers(modFolder, registry)) LoadProgress.Reading();
             Loaded = LayerLoader.Load(modFolder, Vanilla, registry, warn);
             LayerSet layers = Loaded.Set;
+            // Rows a layer pins are read in place of the game's from here on.
+            KnownData.FishData = layers.FishData;
+            KnownData.DataFields = layers.DataFields;
             YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;
             if (layers.Ids.Count > 0)
                 _monitor.Log(

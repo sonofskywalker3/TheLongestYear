@@ -101,6 +101,36 @@ public sealed class LayerSet
     public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
         => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
 
+    /// <summary>Every layer's <see cref="LayerInputs.FishData"/>: the Data/Fish rows the readers take in
+    /// place of the game's (<see cref="PinnedFishData"/>). A later layer's row for the same fish wins.</summary>
+    public IReadOnlyDictionary<string, string> FishData { get; private init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>Every layer's <see cref="LayerInputs.DataFields"/>, by asset then entry key
+    /// (<see cref="PinnedDataFields"/>). A later layer's value for the same field wins.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>> DataFields { get; private init; }
+        = new Dictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>>(StringComparer.Ordinal);
+
+    private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>> MergeDataFields(
+        IEnumerable<LayerInputs> inputs)
+    {
+        var merged = new Dictionary<string, Dictionary<string, Dictionary<string, System.Text.Json.JsonElement>>>(StringComparer.Ordinal);
+        foreach (LayerInputs layer in inputs)
+            foreach (var (asset, entries) in layer.DataFields)
+            {
+                if (!merged.TryGetValue(asset, out var byEntry)) merged[asset] = byEntry = new(StringComparer.Ordinal);
+                foreach (var (entry, fields) in entries)
+                {
+                    if (!byEntry.TryGetValue(entry, out var byField)) byEntry[entry] = byField = new(StringComparer.Ordinal);
+                    foreach (var (field, value) in fields) byField[field] = value;
+                }
+            }
+        return merged.ToDictionary(
+            a => a.Key,
+            a => (IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>>)a.Value.ToDictionary(
+                e => e.Key, e => (IReadOnlyDictionary<string, System.Text.Json.JsonElement>)e.Value, StringComparer.Ordinal),
+            StringComparer.Ordinal);
+    }
+
     /// <summary>Every layer's <see cref="LayerInputs.RandomShopItems"/>, in inputs order.</summary>
     public IReadOnlyList<RandomShopItem> RandomShopItems { get; private init; } = Array.Empty<RandomShopItem>();
 
@@ -127,7 +157,11 @@ public sealed class LayerSet
     }
 
     /// <summary>The layers' year ruling for a qualified id, or null when no layer rules it.</summary>
-    public YearRuling? YearRuling(string id) => _yearRulings.TryGetValue(id, out YearRuling r) ? r : null;
+    /// <remarks>An item a layer rules out of year 1 (<see cref="YearTwoMarks.NotYearOne"/>) is a year-2
+    /// item for the cart unless a year ruling says otherwise.</remarks>
+    public YearRuling? YearRuling(string id)
+        => _yearRulings.TryGetValue(id, out YearRuling r) ? r
+            : Marks.NotYearOne.Contains(id) ? Core.YearRuling.YearTwo : null;
 
     /// <summary>The message a layer checked against another mod version gets.</summary>
     public static string VersionMessage(string id, string checkedVersion, string? installed)
@@ -183,13 +217,15 @@ public sealed class LayerSet
         Func<string, bool> isLoaded, Func<string, string?> installedVersionOf, Action<string> warn)
     {
         // A back door another installed mod closes is dropped here, the one place that knows what is loaded.
-        var kept = inputs.Where(i => isLoaded(i.UniqueId))
+        // A combination's inputs need every mod they name, and go last so their rulings win over a single mod's.
+        var kept = inputs.Where(i => i.Mods.Count > 0 && i.Mods.All(isLoaded))
             .Select(i => i.MapBackDoors.Any(d => d.UnlessMods != null && d.UnlessMods.Any(isLoaded))
                 ? i with { MapBackDoors = i.MapBackDoors.Where(d => d.UnlessMods == null || !d.UnlessMods.Any(isLoaded)).ToList() }
                 : i)
+            .OrderBy(i => i.IsCombination ? 1 : 0)
             .ToList();
         var installed = new Dictionary<string, string?>(StringComparer.Ordinal);
-        foreach (LayerInputs layer in kept) installed[layer.UniqueId] = installedVersionOf(layer.UniqueId);
+        foreach (LayerInputs layer in kept.Where(i => !i.IsCombination)) installed[layer.UniqueId] = installedVersionOf(layer.UniqueId);
 
         // Per mod, the first answers entry checked against a version that is not the installed one.
         var answersMismatched = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -205,7 +241,7 @@ public sealed class LayerSet
         // over the single ones, so it cannot stand without them).
         var applied = candidates.Where(a => !a.Mods.Any(answersMismatched.ContainsKey)).ToList();
 
-        foreach (LayerInputs layer in kept)
+        foreach (LayerInputs layer in kept.Where(i => !i.IsCombination))
         {
             string? version = installed[layer.UniqueId];
             if (answersMismatched.TryGetValue(layer.UniqueId, out string? answersVersion))
@@ -223,7 +259,8 @@ public sealed class LayerSet
         if (answers == null) throw new ArgumentNullException(nameof(answers));
         if (warn == null) throw new ArgumentNullException(nameof(warn));
 
-        List<string> ids = inputs.Select(i => i.UniqueId).Distinct(StringComparer.Ordinal).ToList();
+        // A combination's inputs add routes and rulings, never a mod of their own.
+        List<string> ids = inputs.Where(i => !i.IsCombination).Select(i => i.UniqueId).Distinct(StringComparer.Ordinal).ToList();
         var active = new HashSet<string>(ids, StringComparer.Ordinal);
         List<LayerAnswers> applied = answers.Where(a => a.Mods.Count > 0 && a.Mods.All(active.Contains))
             .Select((a, i) => (a, i)).OrderBy(p => p.a.Mods.Distinct(StringComparer.Ordinal).Count()).ThenBy(p => p.i)
@@ -248,11 +285,16 @@ public sealed class LayerSet
         {
             MapWeeks = Rulings(inputs, i => i.MapWeeks, warn, "map week"),
             MapLinks = inputs.SelectMany(i => i.MapLinks).Distinct().ToList(),
+            ShopPlacements = inputs.SelectMany(i => i.ShopPlacements).Distinct().ToList(),
+            NotYearOne = new HashSet<string>(inputs.SelectMany(i => i.NotYearOne), StringComparer.Ordinal),
+            FestivalShops = inputs.SelectMany(i => i.FestivalShops).GroupBy(f => f.Key, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal),
             OpenedEarly = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade == null)
                 .GroupBy(d => d.Map, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Min(d => d.Week), StringComparer.Ordinal),
             UpgradeDoors = inputs.SelectMany(i => i.MapBackDoors).Where(d => d.WhenUpgrade != null).ToList(),
-            UpgradeDoorMods = inputs.SelectMany(i => i.MapBackDoors.Where(d => d.WhenUpgrade != null).Select(d => (d.WhenUpgrade!, i.UniqueId)))
+            // A combination's door touches every mod it names: any answers file naming one of them must hold the variant.
+            UpgradeDoorMods = inputs.SelectMany(i => i.MapBackDoors.Where(d => d.WhenUpgrade != null).SelectMany(d => i.Mods.Select(mod => (d.WhenUpgrade!, UniqueId: mod))))
                 .GroupBy(p => p.Item1, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => (IReadOnlySet<string>)new HashSet<string>(g.Select(p => p.UniqueId), StringComparer.Ordinal), StringComparer.Ordinal),
         };
@@ -277,7 +319,7 @@ public sealed class LayerSet
             // A variant suffix is a door upgrade or the Mixed Seeds pool tag; either way the mods it
             // touches must hold the variant in their own files.
             var suffixMods = new Dictionary<string, IReadOnlySet<string>>(marks.UpgradeDoorMods, StringComparer.Ordinal);
-            var poolMods = new HashSet<string>(inputs.Where(i => i.FillsMixedSeedPool).Select(i => i.UniqueId), StringComparer.Ordinal);
+            var poolMods = new HashSet<string>(inputs.Where(i => i.FillsMixedSeedPool).SelectMany(i => i.Mods), StringComparer.Ordinal);
             if (poolMods.Count > 0) suffixMods[AnswerSet.MixedSeedPoolTag] = poolMods;
             overlay = applied.Count == 0 ? vanilla with { Layers = layers } : Lay(vanilla, applied, layers, suffixMods);
             composed = unmapped.Count == 0 && unmappedMods.Count == 0
@@ -289,6 +331,9 @@ public sealed class LayerSet
             YearTwoRulings = Rulings(inputs, i => i.YearTwoRulings, warn, "year-2"),
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
+            DataFields = MergeDataFields(inputs),
+            FishData = inputs.SelectMany(i => i.FishData).GroupBy(f => f.Key, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal),
         };
     }
 

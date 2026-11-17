@@ -1,0 +1,15 @@
+{
+  "UniqueId": "LemurKat.CleanerSewer.CP+Lemurkat.EastScarp",
+  "CheckedVersion": "",
+  "Notes": "Content that exists only with CP Nicer Sewer 1.2.3 and East Scarp 3.0.9 both installed: East Scarp Core's content.json opens a doorway between the Underscarp (EastScarp_DeepDark, tile 25,3, TouchAction Warp Sewer 32 40) and the Sewer (tile 32,39, Action Warp 25 4 EastScarp_DeepDark) when {{HasMod}} names LemurKat.CleanerSewer.CP and Krobus is at 4 hearts or more; the Sewer side is shut on Spirit's Eve. | Krobus can only be befriended inside the Sewer, so the doorway cannot open before the Sewer has: it is linked both ways and takes the week the friendship table gives 4 hearts with Krobus, week 7, the Sewer's own week (UnlockWeeks.ForFriendship). It is no earlier way into the Sewer, and the Underscarp is already reached in week 1 through East Scarp. | Read from the files; a new farm has no hearts with Krobus, so the doorway was not walked. Nicer Sewer's own files never name East Scarp.",
+  "MapLinks": [
+    {
+      "From": "EastScarp_DeepDark",
+      "To": "Sewer"
+    },
+    {
+      "From": "Sewer",
+      "To": "EastScarp_DeepDark"
+    }
+  ]
+}

@@ -95,6 +95,10 @@ namespace TheLongestYear
             this.Monitor.Log(
                 $"{itemId}: earliest {single.EarliestSeason}, effort {single.Effort} ({single.Source}), tier {TierLabel(itemId, single)} [{single.Basis}]",
                 LogLevel.Info);
+            // The model above is the rules' week; the board also drops what the reachability read condemns.
+            if (_engineReachability != null && _engineReachability.IsUnreachable(itemId)
+                && _engineReachability.Reasons.TryGetValue(itemId, out string offBoard))
+                this.Monitor.Log($"{itemId}: off the year-1 board: {offBoard}", LogLevel.Info);
             LogYearTwoLine(itemId);
         }
 

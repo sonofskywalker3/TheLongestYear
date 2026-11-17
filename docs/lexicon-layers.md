@@ -112,6 +112,8 @@ Stardew Valley Expanded installed (that mod set has no layer yet); 202 to 217 ms
 no hand steps, and reports what it could not place and the mod's combination content;
 `uv run tools/vanilla-build.py` does the same for `vanilla.json` and `vanilla.ids.json`. The steps
 are what the scripts do, and the reference for the inputs file you write between runs.
+`uv run tools/layer-build.py <UniqueID A> <UniqueID B>` builds the combination of two supported mods
+(step 9): both enabled together, every variant either mod has, the check, and the moved answers.
 
 Two more tools go with them:
 
@@ -121,7 +123,20 @@ Two more tools go with them:
   shows what the change did to answers already shipped. Each line is meant or a regression.
 - `uv run tools/layer-session.py` holds a game open with a chosen mod set for the hand checks
   (`tly_obtain`, `tly_itemmodel`, walks, and `reload <save> <day> [season]` to prove a layer is
-  still served as shipped on another weekday or season).
+  still served as shipped on another weekday or season). `new` and `ready` play out a scene a mod
+  starts on a new farm; `scene` does the same after a walk into a map with an arrival scene.
+- Walking a way in: `tly_walkto <x> <y>` walks the farmer with the game's own path search, and a
+  warp or touch-action tile is taken by walking onto it. Give the tile of the warp itself, or the
+  tile beside it and the direction (`tly_walkto 44 85 up`): the last step is then made with the path
+  search too, and only a way off the map's edge is taken by holding the direction. Do not move the
+  farmer with `debug warp` while a scene plays: the game is left with its event flag up and no event
+  (run `scene` after every walk into a new map first; it says so and gives up when that has happened).
+- A door or a sign is used with `tly_pad A` while facing it. A menu another mod draws (a lift's floor
+  list) is pressed with `tly_menuclick left <x> <y>`; `tly_menuclick` alone lists the open menu's
+  buttons and their centres. A question is answered with `tly_answer <n>`, which prints the choice taken.
+- A map change gated on a seen event usually shows the morning after the event, not at once: sleep
+  before judging that a way did not open. `layer-session.py delete <save>` deletes a farm at once
+  unless it is the loaded one, which the next `close` deletes.
 
 1. **A clean game.** Install only vanilla, the mod and its frameworks. Disable Cart Catalog and any
    other mod that adds items or shops. Turn on the debug bridge (`EnableDebugCommandBridge` in
@@ -211,6 +226,39 @@ Two more tools go with them:
      for a map a year-1 player does not reach at all.
    - **`MapLinks`** name a way between two maps the walk cannot read from the maps (a `TouchAction Warp` tile, a warp
      made in code): `[{ "From": "<map>", "To": "<map>" }]`, one way each. The walk follows them like a door.
+     The walk reads a map's `Warp` property and its door tiles only. A warp only villagers take (the `NPCWarp`
+     property) is not followed, and neither is a touch-action tile, so a map entered only that way needs a link.
+     A door that spells its map in another case still leads there, as it does in the game.
+   - **`ShopPlacements`** name where a shop opens when the map as loaded does not always say so: a counter whose
+     `OpenShop` tile the mod swaps by weekday, or one opened in code. `[{ "ShopId": "<shop>", "LocationName": "<map>" }]`.
+     The tile scan reads only today's map, so without this the shop's place, and the weeks of what it sells, change
+     with the weekday the answers are written or read (East Scarp's village stall is Aideen's shop on three days and
+     Jessie's on two). Name every shop that shares such a tile.
+   - **`FishData`** pins the `Data/Fish` row of a fish the mod rewrites during the year:
+     `{ "<Data/Fish key>": "<the row to read>" }`. East Scarp's nudibranchs are a rod fish in their own season and a
+     crab pot row in the other three, swapped each season, so answers written in Spring would not match the game in
+     Summer. A pinned fish is read as the layer's row whatever the game holds that day, and the context tags the game
+     derives from the live row (`fish_motion_...`, `fish_difficulty_...`, `fish_favor_weather_...`,
+     `fish_trap_location_...`) are left out of its object. Write what the pin drops (the crab pot catch) as an
+     `ExtraSources` route. To find such rows, write the inputs dump in two seasons
+     (`tly_lexicon dumpinputs`) and compare them.
+   - **`DataFields`** pins single fields of data entries the mod changes once the player has seen an event:
+     `{ "<asset>": { "<entry key>": { "<field>": <value> } } }`, for example
+     `{ "Data/Crops": { "486": { "RegrowDays": -1 } } }` (East Scarp makes Starfruit regrow after a late scene). Write
+     the value a new farm has. The readers then see the same entry on a save before and after the event, so both are
+     served the shipped answers. An event that adds a door or a shop counter is handled in the map fields instead:
+     link the map (`MapLinks`) and hold it to its week (`MapWeeks`), or flag it (`YearTwoMaps`), and name the shop's
+     place (`ShopPlacements`), so the walk reads the same either way.
+   - **`FestivalShops`** name a shop that opens only at a festival: `{ "<shop id>": "<festival id>" }`, the festival
+     being a Data/Festivals key (`winter8`) or a Data/PassiveFestivals id. TLY knows vanilla's stalls by their
+     `Festival_...` names; a mod's stall with another name reads as open all year until it is named here. Its lines
+     become festival routes on the festival's days and the shop gives no week of its own.
+   - **`NotYearOne`** lists items a player cannot have in year 1 although TLY dates them there, because the only
+     source waits on progress the rules do not judge (a shop line behind a late friendship scene):
+     `["(O)<id>", ...]`. Each is out of reach for the board, with everything made only from it; the Traveling Cart's
+     year 2 slot may sell it; a `YearTwoRulings` entry may date it. `tly_itemmodel <id>` prints
+     `off the year-1 board: a supported mod's layer rules it is not had in year 1`. Use it in place of a late
+     `WeekRulings` week, which would still let the last weeks ask for the item.
    - **`MapBackDoors`** name a way the mod adds into a map TLY holds to a week by name (the Secret Woods behind its
      log at week 4, the Sewer, the Witch's Swamp): `{"Map": "Woods", "Week": 1, "From": "Custom_Woods1", "UnlessMods": [...]}`.
      With the mod installed the map opens at `Week` (1 to 16) when that is earlier than TLY's own week, everywhere the
@@ -276,9 +324,18 @@ Two more tools go with them:
 9. **Combinations (optional).** Supported mods installed together need no file of their own:
    their answers are built once from the known data and cached, and content that only loads when
    several of them are installed is on no ids list, so it is ignored. A combination file skips that
-   one build and is the way to support such content: with those mods installed (and only those), run
-   `tly_lexicon ids <A>+<B>` and restart, then `tly_lexicon write <A>+<B>` (ids are sorted, any order).
+   one build and is the way to support such content. `uv run tools/layer-build.py <A> <B>` writes it:
+   with those mods installed (and only those) it runs `tly_lexicon ids <A>+<B>`, restarts, then
+   `tly_lexicon write <A>+<B>` on a base farm and on one that owns Pierre's year 2 line (the name's ids are
+   sorted ordinally, whatever order they are given in), adds the Mixed Seeds pool pass or a door-upgrade pass
+   when either mod's layer has one, checks the result after a restart and lists the answers that moved.
+   Each mod needs its own layer first. Run it again after either mod's layer changes.
    The start-up line still lists a pair with no file under "pairs not mapped yet".
+   Content of the pair that the game data does not describe (one mod's spawn groups on the other's maps, a doorway
+   between their maps) is written by hand in `<A>+<B>.inputs.json`, with `"UniqueId": "<A>+<B>"` (ids sorted) and the
+   same fields as a mod's own inputs file. It is read only when every mod it names is installed, is laid on after the
+   single mods' inputs so its rulings win, and adds no mod of its own. Write it before the pair's ids and answers.
+   `tly_lexicon status` prints `combination <A>+<B>: hand-written inputs applied`.
 
 ## Fish catch rates
 

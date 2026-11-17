@@ -43,6 +43,7 @@ public class ObtainabilityBlindGuardTests
         "TheLongestYear.Core/Obtainability/GrowSources.cs",
         "TheLongestYear.Core/Obtainability/MadeSources.cs",
         "TheLongestYear.Core/Obtainability/LivestockSources.cs",
+        "TheLongestYear.Core/Obtainability/AnimalSale.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityBuilder.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityText.cs",
         "TheLongestYear.Core/Obtainability/ObtainabilityReadException.cs",

@@ -386,6 +386,11 @@ namespace TheLongestYear
             helper.Events.GameLoop.Saved += TheLongestYear.Loop.UnsaveableObjectGuard.OnSaved;
             helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.UnsaveableObjectGuard.OnReturnedToTitle;
             helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.UnsaveableObjectGuard.OnUpdateTicked;
+            // An event the night dropped leaves its flag up and the HUD hidden; cleared before the day-start flow.
+            TheLongestYear.Loop.DroppedEventMorning.Init(this.Monitor);
+            helper.Events.GameLoop.UpdateTicked += TheLongestYear.Loop.DroppedEventMorning.OnUpdateTicked;
+            helper.Events.GameLoop.ReturnedToTitle += TheLongestYear.Loop.DroppedEventMorning.OnReturnedToTitle;
+            helper.Events.GameLoop.DayStarted += TheLongestYear.Loop.DroppedEventMorning.OnDayStarted;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
             helper.Events.GameLoop.DayEnding += this.OnDayEnding;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
@@ -574,6 +579,21 @@ namespace TheLongestYear
             }
         }
 
+        private string _watchedEventFlag;
+
+        /// <summary>Developer trace (debug bridge only): one line each time the game's event flag,
+        /// the event it belongs to or the map changes. An event flag left up with no event behind it
+        /// blocks every morning screen, and the log otherwise never says which event raised it.</summary>
+        private void WatchEventFlag()
+        {
+            if (!Context.IsWorldReady) return;
+            string now = $"eventUp={Game1.eventUp} event={Game1.currentLocation?.currentEvent?.id ?? "none"} " +
+                         $"map={Game1.currentLocation?.Name ?? "none"} eventOver={Game1.eventOver}";
+            if (now == _watchedEventFlag) return;
+            _watchedEventFlag = now;
+            this.Monitor.Log($"Event watch: {now} time={Game1.timeOfDay} day={Game1.dayOfMonth} newDay={Game1.newDay}.", LogLevel.Trace);
+        }
+
         private void CmdHud(string command, string[] args)
         {
             string menu = Game1.activeClickableMenu?.GetType().Name ?? "none";
@@ -581,6 +601,19 @@ namespace TheLongestYear
                 $"displayHUD={Game1.displayHUD} eventUp={Game1.eventUp} freezeControls={Game1.freezeControls} " +
                 $"fadeToBlack={Game1.fadeToBlack} fadeAlpha={Game1.fadeToBlackAlpha:0.00} " +
                 $"menu={menu} time={Game1.timeOfDay} day={Game1.dayOfMonth}",
+                LogLevel.Info);
+            // Where an event is held: eventUp with no event on the current map means another map,
+            // or nothing, owns it.
+            var holders = new System.Collections.Generic.List<string>();
+            foreach (GameLocation location in Game1.locations)
+                if (location?.currentEvent != null)
+                    holders.Add($"{location.Name}:{location.currentEvent.id}");
+            this.Monitor.Log(
+                $"hud: location={Game1.currentLocation?.Name ?? "none"} playerLocation={Game1.player?.currentLocation?.Name ?? "none"} " +
+                $"events=[{string.Join(", ", holders)}] newDay={Game1.newDay} endOfNight={Game1.showingEndOfNightStuff} " +
+                $"farmEvent={Game1.farmEvent?.GetType().Name ?? "none"} locationRequest={Game1.locationRequest?.Name ?? "none"} " +
+                $"canMove={Game1.player?.CanMove} passedOut={Game1.player?.passedOut} globalFade={Game1.globalFade} " +
+                $"viewportFreeze={Game1.viewportFreeze} pauseTime={Game1.pauseTime:0}",
                 LogLevel.Info);
         }
 
@@ -729,6 +762,8 @@ namespace TheLongestYear
             // the filesystem or run queued tly_ commands (some destructive) the player never typed.
             if (!_config.EnableDebugCommandBridge)
                 return;
+
+            WatchEventFlag();
 
             if (!e.IsMultipleOf(DebugPollTicks))
                 return;

@@ -122,7 +122,7 @@ namespace TheLongestYear.Loop
                     ObjectData o = kv.Value;
                     if (o == null) continue;
                     string id = BundleParsing.NormalizeItemId(kv.Key);
-                    var tags = ItemContextTagManager.GetBaseContextTags(id)?.ToList() ?? new List<string>();
+                    var tags = TheLongestYear.Core.Lexicon.PinnedFishData.Tags(kv.Key, ItemContextTagManager.GetBaseContextTags(id), KnownData.FishData);
                     objects[id] = new ObjInfo(id, o.Name ?? "", o.Category, o.Price, tags, o.ExcludeFromRandomSale);
                     if (o.GeodeDropsDefaultItems) defaultGeodes.Add(id);
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
@@ -320,7 +320,7 @@ namespace TheLongestYear.Loop
                 var soldAsAlternate = new HashSet<string>(StringComparer.Ordinal);
                 foreach (FarmAnimalData other in animalData.Values)
                 {
-                    if (other == null || other.PurchasePrice <= 0) continue;
+                    if (other == null || TheLongestYear.Core.Obtainability.AnimalSale.Price(other.PurchasePrice, other.UnlockCondition) <= 0) continue;
                     foreach (AlternatePurchaseAnimals alt in other.AlternatePurchaseTypes ?? new List<AlternatePurchaseAnimals>())
                         foreach (string id in alt.AnimalIds ?? new List<string>())
                             soldAsAlternate.Add(id);
@@ -330,12 +330,13 @@ namespace TheLongestYear.Loop
                 {
                     FarmAnimalData a = kv.Value;
                     if (a == null) continue;
-                    bool sold = a.PurchasePrice > 0 || soldAsAlternate.Contains(kv.Key);
+                    int price = TheLongestYear.Core.Obtainability.AnimalSale.Price(a.PurchasePrice, a.UnlockCondition);
+                    bool sold = price > 0 || soldAsAlternate.Contains(kv.Key);
                     int incubationDays = a.EggItemIds is { Count: > 0 } && !sold
                         ? (int)Math.Ceiling((a.IncubationTime > 0 ? a.IncubationTime : DefaultIncubationMinutes) / MinutesPerDay)
                         : 0;
                     animals.Add(new AnimalRow(kv.Key, string.IsNullOrEmpty(a.RequiredBuilding) ? (a.House ?? "") : a.RequiredBuilding,
-                        a.PurchasePrice, GameObtainabilityParsing.Produce(a.ProduceItemIds), GameObtainabilityParsing.Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
+                        price, GameObtainabilityParsing.Produce(a.ProduceItemIds), GameObtainabilityParsing.Produce(a.DeluxeProduceItemIds), a.DeluxeProduceMinimumFriendship,
                         a.DaysToProduce, a.DaysToMature, incubationDays, soldAsAlternate.Contains(kv.Key)));
                 }
             });

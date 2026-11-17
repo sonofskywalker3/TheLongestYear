@@ -75,7 +75,8 @@ public sealed class ShopWeeks
         IReadOnlyList<RawShopListing> listings,
         IReadOnlyList<RawShopPlacement> placements,
         LocationWeeks locationWeeks,
-        IReadOnlySet<string>? flaggedShops = null)
+        IReadOnlySet<string>? flaggedShops = null,
+        IReadOnlySet<string>? festivalShops = null)
     {
         if (listings == null) throw new ArgumentNullException(nameof(listings));
         if (placements == null) throw new ArgumentNullException(nameof(placements));
@@ -105,8 +106,10 @@ public sealed class ShopWeeks
                 unplaced.Add(id);
                 continue;
             }
-            bool placed = shopWeek.TryGetValue(shopId, out PlaceWeek? week);
-            if (!placed && !OpensInYearOneUndated(shopId))
+            // A stall a layer names as festival-only gives no week, wherever its owner stands.
+            bool festivalOnly = festivalShops != null && festivalShops.Contains(shopId);
+            bool placed = shopWeek.TryGetValue(shopId, out PlaceWeek? week) && !festivalOnly;
+            if (!placed && !festivalOnly && !OpensInYearOneUndated(shopId))
             {
                 unplaced.Add(id);
                 continue;
@@ -124,7 +127,8 @@ public sealed class ShopWeeks
         unplaced.ExceptWith(soldUndated);
         var shops = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);
         foreach (KeyValuePair<string, PlaceWeek> shop in shopWeek)
-            if (flaggedShops == null || !flaggedShops.Contains(shop.Key)) shops[shop.Key] = shop.Value;
+            if ((flaggedShops == null || !flaggedShops.Contains(shop.Key)) && (festivalShops == null || !festivalShops.Contains(shop.Key)))
+                shops[shop.Key] = shop.Value;
         return new ShopWeeks(weeks, unplaced, shops);
     }
 

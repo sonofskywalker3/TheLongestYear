@@ -22,6 +22,21 @@ public class RandomShopPicksTests
             LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town") }, _ => false));
 
     [Fact]
+    public void A_Festival_Stall_A_Layer_Names_Gives_No_Shop_Week()
+    {
+        // The stall's owner lives on a week-1 map, so by placement its stock read as sold from week 1.
+        var listings = new[] { new RawShopListing("(O)Example_HotChoco", "TownShop") };
+        Assert.True(Weeks(listings).Weeks.ContainsKey("(O)Example_HotChoco"));
+
+        ShopWeeks named = ShopWeeks.Build(listings, new[] { new RawShopPlacement("TownShop", "Town") },
+            LocationWeeks.Build(new[] { new RawLocationLink("Farm", "Town") }, _ => false),
+            festivalShops: new HashSet<string> { "TownShop" });
+        Assert.False(named.Weeks.ContainsKey("(O)Example_HotChoco"));
+        Assert.DoesNotContain("(O)Example_HotChoco", named.UnplacedItems);       // still a year-1 source, undated
+        Assert.False(named.TryGetShop("TownShop", out _));
+    }
+
+    [Fact]
     public void A_Rolled_Listing_Becomes_The_Whole_Pick_Marked_Random()
     {
         var listed = RandomShopPicks.Expand(

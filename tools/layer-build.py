@@ -5,6 +5,12 @@
 """Build or refresh a supported mod's lexicon layer with no hand steps.
 
 Usage:  uv run tools/layer-build.py <UniqueID> [--skip-pierre] [--keep-saves] [--fresh-ids] [--only <pass>]
+        uv run tools/layer-build.py <UniqueID A> <UniqueID B> [the same options]
+
+With two ids it builds the COMBINATION of two supported mods (tools/layer_pair.py): both enabled
+together, `<A>+<B>.ids.json` and `<A>+<B>.answers.json` written for every variant either mod has
+(the Mixed Seeds pool pass when either fills that pool), checked after a restart, and compared with
+the committed file. Each mod needs its own layer first; `<A>+<B>.inputs.json` is read when it exists.
 
 What it does, in order (docs/lexicon-layers.md, "Adding a supported mod"):
   1. Finds the mod and every mod it requires in the Mods folder (a leading dot marks a disabled
@@ -47,7 +53,8 @@ from pathlib import Path
 import json5
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import layer_combinations  # noqa: E402  (a sibling file; the path line above finds it however this file is loaded)
+import layer_combinations  # noqa: E402
+import layer_pair  # noqa: E402  (a sibling file; the path line above finds it however this file is loaded)
 
 GAME_DIR = Path(os.environ.get("TLY_GAME_DIR", r"C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley"))
 MODS_DIR = GAME_DIR / "Mods"
@@ -483,11 +490,12 @@ def save_log(out: Path, name: str) -> None:
 
 
 def run_pass(unique_id: str, layer_pass: Pass, mods: list[ModFolder], has_inputs: bool, skip_pierre: bool,
-             keep_saves: bool, report: Report, written: list[str]) -> None:
-    """One farm: its mods enabled, the ids, then the two variants written and checked until they agree."""
+             keep_saves: bool, report: Report, written: list[str], mod_ids: list[str] | None = None) -> None:
+    """One farm: its mods enabled, the ids, then the two variants written and checked until they agree.
+    `unique_id` names the layer; `mod_ids` are the mods to enable when that is not one mod (a combination)."""
     out = OUT_ROOT / unique_id
     tag = layer_pass.name or "plain"
-    needed = resolve([unique_id, *layer_pass.extra_mods], mods, report)
+    needed = resolve([*(mod_ids or [unique_id]), *layer_pass.extra_mods], mods, report)
     # Everything in an enabled folder loads, and whatever it adds is written into this layer's ids.
     loaded = sorted(m.unique_id for m in mods if m.top in needed and m.top not in ALWAYS_ON)
     report.add(f"Pass {tag}: enabling {', '.join(sorted(needed))} (mods: {', '.join(loaded)}).")
@@ -626,7 +634,7 @@ def write_report(report: Report) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("unique_id", help="the mod's manifest UniqueID")
+    parser.add_argument("unique_id", nargs="+", help="the mod's manifest UniqueID; two ids build their combination")
     parser.add_argument("--skip-pierre", action="store_true", help="write the base variant only")
     parser.add_argument("--keep-saves", action="store_true", help="leave the farm this run made")
     parser.add_argument("--fresh-ids", action="store_true", help="start the ids file over instead of adding to it")
@@ -634,7 +642,11 @@ def main() -> int:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
     try:
-        report = build(args.unique_id, args.skip_pierre, args.keep_saves, args.fresh_ids, args.only)
+        if len(args.unique_id) == 1:
+            report = build(args.unique_id[0], args.skip_pierre, args.keep_saves, args.fresh_ids, args.only)
+        else:
+            report = layer_pair.build_pair(sys.modules[__name__], args.unique_id, args.skip_pierre, args.keep_saves,
+                                           args.fresh_ids, args.only)
     except LayerBuildError as error:
         log.error("%s", error)
         return 1

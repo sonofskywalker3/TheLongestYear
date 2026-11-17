@@ -15,12 +15,15 @@ public static class YearTwoAnswers
     /// <see cref="AvailabilityAnswers.Derived"/>, or an <see cref="AvailabilityAnswers.EffortDerived"/> entry with a week.</summary>
     public static IReadOnlyDictionary<string, ItemAvailability> Build(
         IReadOnlyDictionary<string, YearTwoRuling> rulings,
-        IReadOnlyDictionary<string, AvailabilityAnswers> availability, Action<string> warn)
+        IReadOnlyDictionary<string, AvailabilityAnswers> availability, Action<string> warn,
+        IReadOnlySet<string>? notYearOne = null)
     {
         var table = new Dictionary<string, ItemAvailability>(StringComparer.Ordinal);
         foreach (var (id, ruling) in rulings)
         {
-            if (YearOneWeek(id, availability) is var (week, key))
+            // An item a layer rules out of year 1 keeps the week the rules derived; that week is the
+            // thing the ruling overrides, so it does not block a year-2 date.
+            if (notYearOne?.Contains(id) != true && YearOneWeek(id, availability) is var (week, key))
             {
                 warn($"year 2 ruling for {id} refused: it already has a year-1 week ({week}, {key})");
                 continue;

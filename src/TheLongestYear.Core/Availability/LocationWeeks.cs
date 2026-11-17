@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TheLongestYear.Core.Availability;
 
@@ -44,6 +45,12 @@ public sealed class LocationWeeks
 {
     private const string FarmDataKeyPrefix = "Farm_";
 
+    /// <summary>Ways the game makes in code, which no map shows a player: the bus (BusStop.cs
+    /// answers the ticket question by driving to the Desert). The Bus Stop's warp to the Desert is
+    /// for villagers only (NPCWarp), so without this the Desert, Sandy's shop and the Skull Cavern
+    /// would be reached by nobody. The Desert's own gate (<see cref="LocationGating"/>) dates the ride.</summary>
+    private static readonly RawLocationLink[] CodeWays = { new("BusStop", "Desert") };
+
     private readonly IReadOnlyDictionary<string, PlaceWeek> _reached;
 
     private LocationWeeks(IReadOnlyDictionary<string, PlaceWeek> reached)
@@ -83,23 +90,35 @@ public sealed class LocationWeeks
     /// <param name="openedEarly">Gated maps a supported mod's layer opens sooner through a way of its
     /// own (a back door into the Secret Woods): the map's own gate is the earlier of that week and its
     /// own, in every column, before <paramref name="openingWeeks"/> is laid on. Null = none.</param>
+    /// <param name="mapNames">The loaded maps' own names. The game finds a warp's target without
+    /// regard to case (Game1._locationLookup, Game1.cs 2087), so a link that spells a map
+    /// differently leads to that map. Null = names are taken as written.</param>
     public static LocationWeeks Build(
         IReadOnlyList<RawLocationLink> directedLinks,
         Func<string, bool> isForbidden,
         string start = ReachabilityGraph.FarmLocation,
         IReadOnlyDictionary<string, int>? openingWeeks = null,
-        IReadOnlyDictionary<string, int>? openedEarly = null)
+        IReadOnlyDictionary<string, int>? openedEarly = null,
+        IEnumerable<string>? mapNames = null)
     {
         if (directedLinks == null) throw new ArgumentNullException(nameof(directedLinks));
         if (isForbidden == null) throw new ArgumentNullException(nameof(isForbidden));
 
+        var spelling = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in mapNames ?? Array.Empty<string>())
+            if (!string.IsNullOrEmpty(name)) spelling.TryAdd(name, name);
+        string Named(string map) => spelling.TryGetValue(map, out string? own) ? own : map;
+
         var next = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (RawLocationLink link in directedLinks)
+        foreach (RawLocationLink link in directedLinks.Concat(CodeWays))
         {
             if (link == null || string.IsNullOrEmpty(link.From) || string.IsNullOrEmpty(link.To)) continue;
-            if (!next.TryGetValue(link.From, out List<string>? list))
-                next[link.From] = list = new List<string>();
-            if (!list.Contains(link.To)) list.Add(link.To);
+            // A warp only villagers take is not a way a player walks.
+            if (link.NpcOnly) continue;
+            string from = Named(link.From), to = Named(link.To);
+            if (!next.TryGetValue(from, out List<string>? list))
+                next[from] = list = new List<string>();
+            if (!list.Contains(to)) list.Add(to);
         }
 
         var best = new Dictionary<string, PlaceWeek>(StringComparer.Ordinal);

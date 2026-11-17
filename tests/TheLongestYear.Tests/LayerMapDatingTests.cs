@@ -61,6 +61,62 @@ public class LayerMapDatingTests
     }
 
     [Fact]
+    public void A_warp_only_villagers_take_is_not_a_way_in()
+    {
+        // East Scarp: the Village's NPCWarp entries lead villagers into a waiting room and on to the
+        // suburb the player reaches by bus. GameLocation.updateWarps reads Warp and NPCWarp into one
+        // list; isCollidingWithWarp skips an npcOnly warp for the farmer.
+        var links = new List<RawLocationLink>(Doors)
+        {
+            new("Mountain", "EastScarp_Village"),
+            new("EastScarp_Village", "EastScarp_WaitingRoom", NpcOnly: true),
+            new("EastScarp_WaitingRoom", "EastScarp_ZuzuBurb", NpcOnly: true),
+        };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false);
+        Assert.True(walk.TryGet("EastScarp_Village", out _));
+        Assert.False(walk.TryGet("EastScarp_WaitingRoom", out _));
+        Assert.False(walk.TryGet("EastScarp_ZuzuBurb", out _));
+    }
+
+    [Fact]
+    public void The_bus_reaches_the_Desert_though_the_Bus_Stop_warp_is_for_villagers()
+    {
+        // Vanilla: BusStop's warp to the Desert is an NPCWarp; the player rides the bus, a way made in code.
+        var links = new RawLocationLink[]
+        {
+            new("Farm", "BusStop"), new("BusStop", "Desert", NpcOnly: true), new("Desert", "SandyHouse"), new("Desert", "SkullCave"),
+        };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false);
+        Assert.True(walk.TryGet("SandyHouse", out PlaceWeek sandy));
+        Assert.Equal(LocationGating.WeekFor("Desert"), sandy.Week);
+        Assert.True(walk.TryGet("SkullCave", out _));
+    }
+
+    [Fact]
+    public void A_player_way_beside_a_villager_way_still_counts()
+    {
+        var links = new List<RawLocationLink>(Doors)
+        {
+            new("Mountain", Forest, NpcOnly: true),
+            new("Mountain", Forest),
+        };
+        Assert.True(LocationWeeks.Build(links, _ => false).TryGet(Forest, out PlaceWeek week));
+        Assert.Equal(1, week.Week);
+    }
+
+    [Fact]
+    public void A_door_that_spells_its_map_in_another_case_reaches_that_map()
+    {
+        // Game1.getLocationFromName looks maps up without regard to case (Game1.cs 2087), so a door
+        // to "EastScarp_JojaBreakroom" opens the map named "EastScarp_JojaBreakRoom".
+        var links = new List<RawLocationLink>(Doors) { new("Mountain", "custom_sds.easternforest_MAIN") };
+        LocationWeeks walk = LocationWeeks.Build(links, _ => false, mapNames: new[] { "Farm", "Mountain", Forest });
+        Assert.True(walk.TryGet(Forest, out PlaceWeek week));
+        Assert.Equal(1, week.Week);
+        Assert.DoesNotContain("custom_sds.easternforest_MAIN", walk.Reached.Keys);
+    }
+
+    [Fact]
     public void A_map_with_no_door_is_reached_through_a_layer_link()
     {
         Assert.False(LocationWeeks.Build(Doors, _ => false).TryGet(Forest, out _));
@@ -94,6 +150,125 @@ public class LayerMapDatingTests
     }
 
     private const string Head = "{\"UniqueId\": \"ModA\", \"CheckedVersion\": \"1.0.0\", ";
+
+    [Fact]
+    public void A_layer_pins_the_row_of_a_fish_the_mod_rewrites_by_season()
+    {
+        // East Scarp: a nudibranch is a rod fish in its season and a crab pot row in the others.
+        const string Rod = "Ornate Nudibranch/80/floater/1/3/1000 1800/spring/both/683 .2 689 .4/4/.1/.25/0";
+        const string Trap = "Ornate Nudibranch/trap/.05/688 .45 689 .35 690 .35/estidepools/2/20/false";
+        LayerInputs read = LayerFile.ReadInputs(Head + "\"FishData\": {\"ModA_Nudibranch\": \"" + Rod + "\"}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(Rod, set.FishData["ModA_Nudibranch"]);
+
+        var summer = new Dictionary<string, string> { ["ModA_Nudibranch"] = Trap, ["128"] = "Pufferfish/80" };
+        Dictionary<string, string> pinned = PinnedFishData.Apply(summer, set.FishData);
+        Assert.Equal(Rod, pinned["ModA_Nudibranch"]);
+        Assert.Equal("Pufferfish/80", pinned["128"]);
+        Assert.Equal(Trap, summer["ModA_Nudibranch"]);                                   // the game's own data is untouched
+        Assert.DoesNotContain("ModA_Missing", PinnedFishData.Apply(summer, new Dictionary<string, string> { ["ModA_Missing"] = Rod }).Keys);
+
+        // The tags the game derives from the live row differ by season; a pinned fish drops them.
+        var springTags = new[] { "category_fish", "fish_difficulty_hard", "fish_favor_weather_both", "fish_motion_floater", "fish_nudibranch" };
+        var summerTags = new[] { "category_fish", "fish_trap_location_estidepools", "fish_nudibranch" };
+        Assert.Equal(PinnedFishData.Tags("ModA_Nudibranch", springTags, set.FishData), PinnedFishData.Tags("ModA_Nudibranch", summerTags, set.FishData));
+        Assert.Equal(springTags, PinnedFishData.Tags("128", springTags, set.FishData));
+
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"FishData\": {\"ModA_Nudibranch\": \" \"}}"));
+    }
+
+    [Fact]
+    public void A_layer_rules_items_out_of_year_one_and_names_festival_stalls()
+    {
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"NotYearOne\": [\"(O)ModA_Flower\"], \"FestivalShops\": {\"ModA_Stall\": \"winter8\"}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Contains("(O)ModA_Flower", set.Marks.NotYearOne);
+        Assert.Equal("winter8", set.Marks.FestivalShops["ModA_Stall"]);
+        // The cart's year 2 slot may sell it, with no year ruling written.
+        Assert.Equal(YearRuling.YearTwo, set.YearRuling("(O)ModA_Flower"));
+        Assert.Null(set.YearRuling("(O)ModA_Other"));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"NotYearOne\": [\" \"]}"));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"FestivalShops\": {\"ModA_Stall\": \"\"}}"));
+    }
+
+    private sealed class FakeCrop
+    {
+        public int RegrowDays = -1;
+        public string HarvestItemId = "268";
+        public int Price { get; set; } = 100;
+    }
+
+    [Fact]
+    public void A_layer_pins_a_field_the_mod_changes_after_an_event()
+    {
+        // East Scarp: Starfruit regrows every 7 days once event 57871109 is seen. The layer pins the new farm's value.
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"DataFields\": {\"Data/Crops\": {\"486\": {\"RegrowDays\": -1, \"Price\": 100, \"NoSuchField\": 1}, \"Missing\": {\"RegrowDays\": 3}}}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        var pins = set.DataFields["Data/Crops"];
+
+        var afterEvent = new FakeCrop { RegrowDays = 7, Price = 175 };
+        var other = new FakeCrop { RegrowDays = 4 };
+        var live = new Dictionary<string, FakeCrop> { ["486"] = afterEvent, ["24"] = other };
+        var pinned = (Dictionary<string, FakeCrop>)PinnedDataFields.Apply(live, pins);
+        Assert.Equal(-1, pinned["486"].RegrowDays);
+        Assert.Equal(100, pinned["486"].Price);
+        Assert.Equal("268", pinned["486"].HarvestItemId);
+        Assert.Same(other, pinned["24"]);
+        Assert.Equal(2, pinned.Count);
+        Assert.Equal(7, afterEvent.RegrowDays);                                   // the game's own entry is untouched
+        Assert.NotSame(live, pinned);
+
+        // Before the event the pinned reading equals the live one field for field, so both saves hash alike.
+        var beforeEvent = new Dictionary<string, FakeCrop> { ["486"] = new FakeCrop(), ["24"] = other };
+        var same = (Dictionary<string, FakeCrop>)PinnedDataFields.Apply(beforeEvent, pins);
+        Assert.Equal(pinned["486"].RegrowDays, same["486"].RegrowDays);
+        Assert.Equal(pinned["486"].Price, same["486"].Price);
+
+        // Nothing to pin: the game's dictionary itself.
+        Assert.Same(live, PinnedDataFields.Apply(live, set.DataFields.GetValueOrDefault("Data/Objects")));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"DataFields\": {\"Data/Crops\": {\"486\": {}}}}"));
+    }
+
+    [Fact]
+    public void A_combination_inputs_file_applies_only_with_every_mod_it_names_and_adds_no_mod()
+    {
+        // Cornucopia's spawn groups on East Scarp's maps exist only with both installed.
+        LayerInputs a = LayerFile.ReadInputs("{\"UniqueId\": \"ModA\", \"CheckedVersion\": \"1.0.0\", \"WeekRulings\": {\"(O)X\": 3}}");
+        LayerInputs b = LayerFile.ReadInputs("{\"UniqueId\": \"ModB\", \"CheckedVersion\": \"2.0.0\"}");
+        LayerInputs both = LayerFile.ReadInputs("{\"UniqueId\": \"ModA+ModB\", \"CheckedVersion\": \"\", " +
+            "\"WeekRulings\": {\"(O)X\": 5}, \"MapLinks\": [{\"From\": \"Forest\", \"To\": \"" + Forest + "\"}]}");
+        Assert.True(both.IsCombination);
+        Assert.Equal(new[] { "ModA", "ModB" }, both.Mods);
+        var warns = new List<string>();
+
+        // Listed first, as its file name sorts first: it is still laid on last.
+        var (onlyA, _) = LayerSet.Active(new[] { both, a, b }, Array.Empty<LayerAnswers>(), id => id == "ModA", _ => "1.0.0", warns.Add);
+        Assert.Equal(new[] { "ModA" }, onlyA.Select(i => i.UniqueId));
+
+        var (all, _) = LayerSet.Active(new[] { both, a, b }, Array.Empty<LayerAnswers>(), _ => true, id => id == "ModA" ? "1.0.0" : "2.0.0", warns.Add);
+        Assert.Equal(new[] { "ModA", "ModB", "ModA+ModB" }, all.Select(i => i.UniqueId));
+        Assert.Empty(warns);                                                       // no version WARN for the combination
+
+        LayerSet set = LayerSet.Compose(null, all, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(new[] { "ModA", "ModB" }, set.Ids);
+        Assert.Equal(new[] { "ModA+ModB" }, set.UnmappedPairs);                  // the pair, once: the combination is no third mod
+        Assert.Equal(5, set.WeekRulings["(O)X"]);
+        Assert.Single(set.Marks.MapLinks);
+    }
+
+    [Fact]
+    public void A_layer_names_where_a_shop_opens()
+    {
+        // East Scarp swaps one counter tile between two shops by weekday; the layer names the place of both.
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"ShopPlacements\": [{\"ShopId\": \"ModA_Stall\", \"LocationName\": \"Custom_Village\"}]}");
+        Assert.Equal(new RawShopPlacement("ModA_Stall", "Custom_Village"), Assert.Single(read.ShopPlacements));
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal(new RawShopPlacement("ModA_Stall", "Custom_Village"), Assert.Single(set.Marks.ShopPlacements));
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(Head + "\"ShopPlacements\": [{\"ShopId\": \"ModA_Stall\"}]}"));
+    }
 
     [Fact]
     public void An_inputs_file_carries_map_weeks_and_links_into_the_marks()
