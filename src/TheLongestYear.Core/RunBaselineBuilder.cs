@@ -177,6 +177,9 @@ public static class RunBaselineBuilder
             keptMail.AddRange(SveUnlocks.ShedKeptMail);
             keptEvents.AddRange(SveUnlocks.ShedKeptEvents);
         }
+        // Keep Coastal Guild (Sword and Sorcery): the building order's reward mail.
+        if (meta.HasUpgrade(SnsUnlocks.KeepCoastalGuildId))
+            keptMail.Add(SnsUnlocks.GuildMail);
 
         return new RunBaseline
         {

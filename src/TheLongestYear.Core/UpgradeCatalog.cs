@@ -296,6 +296,12 @@ public static class UpgradeCatalog
         new UpgradeDefinition(SdsUnlocks.KeepOldMineId, UpgradeCategory.Buildings, SdsUnlocks.KeepOldMineCost,
             metaRequirement: null, runReachRequirement: SdsUnlocks.BundleReachMetric + ":" + SdsUnlocks.OldMineBundle),
 
+        // Keep Coastal Guild (Jeff, 2026-11-18): Sword and Sorcery's guild in East Scarp stands from
+        // day 1. Offered only with the mod installed (WalletKeepTable.RequiredModFor).
+        // Reach: the guild was built this loop (the building order's reward mail).
+        new UpgradeDefinition(SnsUnlocks.KeepCoastalGuildId, UpgradeCategory.Buildings, SnsUnlocks.KeepCoastalGuildCost,
+            metaRequirement: null, runReachRequirement: WalletKeepTable.MailMetric + ":" + SnsUnlocks.GuildMail),
+
         // (Keep Pet moved to the Animals tab, UpgradeCatalogAnimals, 2026-10-09.)
 
         // Keep Farm Decor (spec 2026-10-01, Jeff): paths, fences, lights, signs, decorations (no furniture)
