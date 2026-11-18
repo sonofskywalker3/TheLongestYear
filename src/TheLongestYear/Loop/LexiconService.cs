@@ -64,6 +64,8 @@ namespace TheLongestYear.Loop
             // Rows a layer pins are read in place of the game's from here on.
             KnownData.FishData = layers.FishData;
             KnownData.DataFields = layers.DataFields;
+            KnownData.RecipeUnlocks = layers.RecipeUnlocks;
+            KnownData.CookingStations = layers.CookingStations;
             YearTwoCartPool.LayerRuling = layers.Ids.Count > 0 ? layers.YearRuling : null;
             if (layers.Ids.Count > 0)
                 _monitor.Log(

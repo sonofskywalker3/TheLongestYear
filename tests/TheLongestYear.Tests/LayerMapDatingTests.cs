@@ -178,6 +178,51 @@ public class LayerMapDatingTests
     }
 
     [Fact]
+    public void A_layer_names_the_unlock_a_letter_gives_a_recipe()
+    {
+        // Alchemistry: the Mana Extractor's crafting unlock is "null" (a letter after Fishing 2) and
+        // Polaritea's cooking unlock is "mail" (a letter at Clint's 2 hearts).
+        LayerInputs read = LayerFile.ReadInputs(Head + "\"RecipeUnlocks\": {"
+            + "\"Data/CraftingRecipes\": {\"ModA_Extractor\": \"s Fishing 2\"}, "
+            + "\"Data/CookingRecipes\": {\"ModA_Tea\": \"f Clint 2\", \"ModA_Missing\": \"default\"}}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+
+        var crafting = new Dictionary<string, string>
+        {
+            ["ModA_Extractor"] = "80 5 334 5/Home/ModA_Extractor/true/null/Mana Extractor",
+            ["Chest"] = "388 50/Home/130/true/default/",
+        };
+        Dictionary<string, string> pinned = PinnedRecipeUnlocks.Apply(PinnedRecipeUnlocks.CraftingAsset, crafting, set.RecipeUnlocks[PinnedRecipeUnlocks.CraftingAsset]);
+        Assert.Equal("80 5 334 5/Home/ModA_Extractor/true/s Fishing 2/Mana Extractor", pinned["ModA_Extractor"]);
+        Assert.Equal(crafting["Chest"], pinned["Chest"]);
+        Assert.EndsWith("/true/null/Mana Extractor", crafting["ModA_Extractor"]);             // the game's own data is untouched
+
+        var cooking = new Dictionary<string, string> { ["ModA_Tea"] = "378 5/25 5/ModA_Tea/mail" };
+        var tea = PinnedRecipeUnlocks.Apply(PinnedRecipeUnlocks.CookingAsset, cooking, set.RecipeUnlocks[PinnedRecipeUnlocks.CookingAsset]);
+        Assert.Equal("378 5/25 5/ModA_Tea/f Clint 2", tea["ModA_Tea"]);
+        Assert.DoesNotContain("ModA_Missing", tea.Keys);
+        // Each asset's own field: the crafting unlock pinned on a cooking row would land on the name.
+        Assert.Same(cooking, PinnedRecipeUnlocks.Apply(PinnedRecipeUnlocks.CookingAsset, cooking, set.RecipeUnlocks[PinnedRecipeUnlocks.CraftingAsset]));
+
+        Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head + "\"RecipeUnlocks\": {\"Data/Objects\": {\"a\": \"default\"}}}"));
+        Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head + "\"RecipeUnlocks\": {\"Data/CookingRecipes\": {\"a\": \"x/y\"}}}"));
+    }
+
+    [Fact]
+    public void A_layer_names_the_station_that_alone_makes_a_dish()
+    {
+        LayerInputs read = LayerFile.ReadInputs(Head +
+            "\"ExclusiveCookingStations\": {\"(BC)ModA_Cauldron\": [\"ModA_Lye\", \"ModA_Tea\"]}}");
+        LayerSet set = LayerSet.Compose(null, new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        Assert.Equal("(BC)ModA_Cauldron", set.CookingStations["ModA_Lye"]);
+        Assert.Equal("(BC)ModA_Cauldron", set.CookingStations["ModA_Tea"]);
+        Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head +
+            "\"ExclusiveCookingStations\": {\"(BC)A\": [\"ModA_Lye\"], \"(BC)B\": [\"ModA_Lye\"]}}"));
+        Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head + "\"ExclusiveCookingStations\": {\"(BC)A\": []}}"));
+        Assert.Throws<JsonException>(() => LayerFile.ReadInputs(Head + "\"ExclusiveCookingStations\": {\"ModA_Cauldron\": [\"ModA_Lye\"]}}"));
+    }
+
+    [Fact]
     public void A_layer_rules_items_out_of_year_one_and_names_festival_stalls()
     {
         LayerInputs read = LayerFile.ReadInputs(Head +

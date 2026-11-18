@@ -75,7 +75,27 @@ public static class CookedDishAvailability
             if (e == null) return ExtremeEffort;
             hardest = Math.Max(hardest, e.Value);
         }
-        return hardest + UnlockEffort(recipe.UnlockCondition);
+        return hardest + UnlockEffort(recipe.UnlockCondition) + StationEffort(recipe, data);
+    }
+
+    /// <summary>What making a dish at its station costs on top of the dish: the station's own unlock,
+    /// read as a machine's (<see cref="ArtisanAvailability.MachineUnlockEffort"/>), or 0 for a kitchen
+    /// dish. Fixed by the data, so it is part of the dish's effort whatever keep_kitchen says.</summary>
+    private static int StationEffort(RawCookingRecipe recipe, EffortData data)
+        => recipe.Station == null ? 0 : ArtisanAvailability.MachineUnlockEffort(StationUnlock(recipe.Station, data));
+
+    private static string? StationUnlock(string station, EffortData data)
+        => data.MachineUnlocks.TryGetValue(station, out string? unlock) ? unlock : null;
+
+    /// <summary>The week a dish's own place to cook is had: the kitchen week, or for a dish only a
+    /// station makes (a layer's ExclusiveCookingStations) the station's week, read as a machine's
+    /// (<see cref="ArtisanAvailability.MachineWeek"/>); null when a first-year player cannot get the
+    /// station (<see cref="ArtisanAvailability.MachineObtainable"/>), which leaves the dish unplaced.</summary>
+    private static int? CookingPlaceWeek(RawCookingRecipe recipe, EffortData data, ShopWeeks? shopWeeks)
+    {
+        if (recipe.Station == null) return AvailabilityWeeks.KitchenWeek;
+        if (!ArtisanAvailability.MachineObtainable(recipe.Station, data, shopWeeks)) return null;
+        return ArtisanAvailability.MachineWeek(recipe.Station, StationUnlock(recipe.Station, data), data, shopWeeks);
     }
 
     /// <param name="step">Required, no default: the difficulty step decides whether the year-2
@@ -106,7 +126,7 @@ public static class CookedDishAvailability
             // ROLLED pool can draw, or the same seed would compose a different board before and
             // after the upgrade and fail the byte-for-byte check. It is safe today only because
             // cooked dishes sit in no rolled domain; adding a Dishes pool would break it.
-            int? latestWeek = AvailabilityWeeks.KitchenWeek;
+            int? latestWeek = CookingPlaceWeek(recipe, data, shopWeeks);
             foreach (string ingredient in recipe.IngredientIds)
             {
                 int? e = IngredientEffort(ingredient, data, effortOf);
@@ -121,12 +141,14 @@ public static class CookedDishAvailability
             if (recipeWeek == null) latestWeek = null;
             else if (latestWeek != null) latestWeek = Math.Max(latestWeek.Value, recipeWeek.Value);
             string? yearTwoNote = recipeResult.Note;
+            int place = recipe.Station != null ? StationEffort(recipe, data) : hasKitchen ? 0 : KitchenCost;
+            string placeNote = recipe.Station != null ? $"station {recipe.Station} {place}" : $"kitchen {place}";
             ItemEffort candidate = missing != null
                 ? new ItemEffort(ExtremeEffort, $"dish {recipe.Name}: ingredient {missing} unrecognised, extreme")
                 : new ItemEffort(
-                    hardest + UnlockEffort(recipe.UnlockCondition) + (hasKitchen ? 0 : KitchenCost),
+                    hardest + UnlockEffort(recipe.UnlockCondition) + place,
                     $"dish {recipe.Name}: hardest ingredient {hardestId} ({hardest}) + unlock '{recipe.UnlockCondition}' "
-                    + $"({UnlockEffort(recipe.UnlockCondition)}) + kitchen {(hasKitchen ? 0 : KitchenCost)}"
+                    + $"({UnlockEffort(recipe.UnlockCondition)}) + {placeNote}"
                     + (recipeWeek == null ? ", recipe not in year 1" : $", recipe week {recipeWeek}")
                     + (yearTwoNote == null ? "" : $", {yearTwoNote}"),
                     latestWeek, latestWeek == null ? null : AvailabilityWeeks.SeasonOf(latestWeek.Value));

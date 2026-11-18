@@ -99,10 +99,12 @@ public sealed record MachineRow(
 
 /// <summary>A cooking or crafting recipe. Ingredients are qualified ids or negative category numbers.
 /// <see cref="Unlock"/> is the raw unlock field ("default", "none", "Farming 3", "s Farming 3", "f Robin 7", "l 4").
-/// <see cref="AlternateOutputIds"/> are the other outputs of a recipe that picks one at random (CraftingRecipe.cs 57, 127-131).</summary>
+/// <see cref="AlternateOutputIds"/> are the other outputs of a recipe that picks one at random (CraftingRecipe.cs 57, 127-131).
+/// <see cref="Station"/> is the qualified id of the only station that makes a dish (a layer's
+/// ExclusiveCookingStations), or null for the kitchen.</summary>
 public sealed record RecipeRow(
     string Name, IReadOnlyList<string> Ingredients, string OutputId, string Unlock, bool IsCooking,
-    IReadOnlyList<string>? AlternateOutputIds = null);
+    IReadOnlyList<string>? AlternateOutputIds = null, string? Station = null);
 
 public sealed record AnimalProduce(string ItemId, string? Condition, int MinimumFriendship);
 

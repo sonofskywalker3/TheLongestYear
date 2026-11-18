@@ -131,6 +131,16 @@ public sealed class LayerSet
             StringComparer.Ordinal);
     }
 
+    /// <summary>Every layer's <see cref="LayerInputs.RecipeUnlocks"/>, by asset then recipe key
+    /// (<see cref="PinnedRecipeUnlocks"/>). A later layer's unlock for the same recipe wins.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> RecipeUnlocks { get; private init; }
+        = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal);
+
+    /// <summary>Every layer's <see cref="LayerInputs.ExclusiveCookingStations"/>, turned round: the
+    /// station's qualified id by cooking recipe key. A later layer's station for the same recipe wins.</summary>
+    public IReadOnlyDictionary<string, string> CookingStations { get; private init; }
+        = new Dictionary<string, string>(StringComparer.Ordinal);
+
     /// <summary>Every layer's <see cref="LayerInputs.RandomShopItems"/>, in inputs order.</summary>
     public IReadOnlyList<RandomShopItem> RandomShopItems { get; private init; } = Array.Empty<RandomShopItem>();
 
@@ -336,6 +346,16 @@ public sealed class LayerSet
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
             DataFields = MergeDataFields(inputs),
+            RecipeUnlocks = inputs.SelectMany(i => i.RecipeUnlocks)
+                .GroupBy(a => a.Key, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key,
+                    g => (IReadOnlyDictionary<string, string>)g.SelectMany(a => a.Value).GroupBy(r => r.Key, StringComparer.Ordinal)
+                        .ToDictionary(r => r.Key, r => r.Last().Value, StringComparer.Ordinal),
+                    StringComparer.Ordinal),
+            CookingStations = inputs.SelectMany(i => i.ExclusiveCookingStations)
+                .SelectMany(s => s.Value.Select(recipe => (Recipe: recipe, Station: s.Key)))
+                .GroupBy(p => p.Recipe, StringComparer.Ordinal)
+                .ToDictionary(g => g.Key, g => g.Last().Station, StringComparer.Ordinal),
             FishData = inputs.SelectMany(i => i.FishData).GroupBy(f => f.Key, StringComparer.Ordinal)
                 .ToDictionary(g => g.Key, g => g.Last().Value, StringComparer.Ordinal),
         };

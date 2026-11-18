@@ -40,6 +40,10 @@ public sealed record RawCookingRecipe(
     string Name, IReadOnlyList<string> IngredientIds, string OutputItemId, string UnlockCondition,
     IReadOnlyList<int>? IngredientCounts = null)
 {
+    /// <summary>The qualified id of the only station that makes this dish (a layer's
+    /// ExclusiveCookingStations), or null for the kitchen. Left out of the JSON when null.</summary>
+    public string? Station { get; init; }
+
     /// <summary>How many of ingredient i the recipe takes; 1 when the data gave no count.</summary>
     public int CountOf(int i) => IngredientCounts != null && i < IngredientCounts.Count ? Math.Max(1, IngredientCounts[i]) : 1;
 }

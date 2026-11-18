@@ -1,0 +1,292 @@
+{
+  "UniqueId": "Morghoula.AlchemistryCP",
+  "CheckedVersion": "2.0.2",
+  "Notes": "Alchemistry 2.0.2, the five packs of the set (Morghoula.AlchemistryCP, Morghoula.AlchemistryBBM and the three Farm Type Manager packs inside [FTM] Alchemistry) at default config (GameplayProgression Friendship, ForageSpawnRate default, BombType Mana Bombs, Transmute Transmuter Coil Exclusive, Trinkets Runes). | Custom_MagesRest is read at week 1 from its map warps at Forest (3 to 5, 3), and walked live: the Wizard's letter came Spring 2 (the trigger needs event 112, which TLY marks seen on day 1), the tower scene 22743101 played, Sevinae's letter came Spring 3, and once it was read the covered Forest tiles opened the same day (the patch updates on location change); tly_walkto 4 3 up from Forest (4, 8) took the warp into Mage's Rest on Spring 3. No MapWeeks line. | The rewind does not keep that way open: 22743100 is re-seeded but 22743101, 22743102 and 22743104 are replayable (they add quests or a recipe), so the letters come again and Mage's Rest opens on Spring 3 of every loop (live: the Wizard's letter sat in the mailbox on Spring 2 after tly_reset). | Custom_MagesRestEvents is a copy of Mage's Rest that only the scenes enter (no warp leads in); it stays unreached and holds nothing a player takes. | Custom_SevinaeHouse, behind Sevinae's 2-heart door, holds no shop, forage or fish row. | ExtraSources, Farm Type Manager forage at Mage's Rest ([FTM] Alchemistry - Vanilla, area Mage's Rest - Forage): 3 to 5 spawns a day on Grass tiles, shared by two to four items a season, with no random gate, so each is Dependable (live, Spring 12: two Stag's Antlers and a Wizard's Eye lay there). It moves Lost Souls to week 1 (the data's only other row is the Secret Woods) and gives Red Smilers its only year-1 source (Summer; its Data/Locations row is on the Witch's Swamp). | ExtraSources (O)Morghoula.AlchemistryCP_TrappedSoul: the Farm Type Manager ghosts at Mage's Rest (17:00 to 25:50, Combat 2, at most two at once) drop it at 0.9, written as row 5 (Chance); the mines' ghosts already place it at week 2. | ExtraSources, the five Bush Bloom Mod fruits ([BBM] Alchemistry, NCarigon.BushBloomMod/Schedules): Bush Bloom Mod 1.3.1's own source (github.com/ncarigon/StardewValleyMods, BushBloomMod/ContentEntry.cs, Schedule.cs, BushExtensions.cs) says Chance is a per-bush, per-day roll on each wild bush (not town bushes, not the island), a bloomed bush stays bloomed for the rest of the window until shaken, Locations empty means any map, and BushSizes defaults to medium bushes only. With dozens of wild medium bushes in the Forest alone each fruit is Dependable on the days of its window. | WitchsWatcher and SoulFruit name Woods, Forest and Morghoula.AlchemistryCP_Custom_MagesRest; the last matches no map (Mage's Rest is Custom_MagesRest), so only the Forest and the Secret Woods bloom, and both are written. | Bush Bloom Mod also turns vanilla's Salmonberry and Blackberry windows into its own 0.2 per-bush rolls (BushBloomMod/content.json); with that many bushes they stay Dependable, so vanilla's routes are left as they are. | The Distant Lands Farm Type Manager pack has no mod condition and spawns Swamp Lighter, Red Smilers, Forest Wisp, Hellfire Bolete and Bird Skull on the Witch's Swamp; TLY reads no Farm Type Manager area and the swamp stays unreached in year 1, so it gives nothing and nothing is written. | RecipeUnlocks: the machine recipes are 'null' and the four letter dishes 'mail' in the data, taught by letters (data/Events/Mail_Base.json, Mail_Friendship.json). Mana Extractor 's Fishing 2' (letter: 22743101 seen, DAYS_PLAYED 10, Fishing 2; week 2 either way; walked live: the letter came Spring 10, scene 22743104 taught the recipe); Apothecary Cauldron 's Farming 2' (DAYS_PLAYED 15 and Farming 2: the skill reads week 2, the day is week 3); Essence Restabilizer 'f Wizard 4' (also needs the guild scene 100162 and 22743104, both earlier); Transmuter Coil 's Mining 8' (also Wizard 6 hearts, week 6, earlier than Mining 8's week 7); Glycerin 'f Harvey 4' (after the Town scene 22743107, itself after the Cauldron scene); Polaritea 'f Clint 2' (after 22743106 and 100162); Blessing From Beyond 'f Wizard 7'; Beguiling Bubbles 'f Elliott 7'. The Rune Carver stays 'null': its letter needs Combat mastery (PLAYER_STAT mastery_4), year 2 at the soonest, and it makes only trinkets, which are not objects. | ExclusiveCookingStations: all twelve cooking recipes are exclusive to the Apothecary Cauldron (Mods/leclair.bettercrafting/CraftingStations, AreRecipesExclusive, data/Items/Machines/ApothecaryCauldron.json), so they are dated from the cauldron, not the kitchen. | WeekRulings (O)Morghoula.AlchemistryCP_Lye 3: the cauldron's letter needs DAYS_PLAYED 15 (week 3) besides Farming 2 (week 2), and Lye's own ingredients (Wood, Bone Dust) are earlier, so the day decides. | Extra Machine Config's extra inputs (OutputItem.CustomData selph.ExtraMachineConfig.RequirementId.N) are not read by TLY: every tincture also takes a Glycerin and an Empty Flask (both at the Hospital from week 1), each ectoplasm a Mana Orb (week 2, before the Restabilizer's week 4) and Moss or Slime, the Arcane Eye five more items that come no later than the Transmuter Coil's own gems, and the runes are trinkets; no week moves, so it is noted here only. | YearRulings (O)selph.ExtraMachineConfig.Holder NeverSell: Extra Machine Config's placeholder object, never handed out. | The Rune Carver's four runes ((TR)IridiumSpur, (TR)IceRod, (TR)BasiliskPaw, (TR)FairyBox) are trinkets, which TLY leaves unknown as vanilla's own; the Island rows (Vampire Anemone, Beached Oyster, Dragon Root, Bird Skull) are Ginger Island and the same items have year-1 rows elsewhere. | Fish: the mod's fish rows spell their condition LOCATION_Season, which the catch model reads since 1.2.8 (ConditionChance upper-cases the token); with this layer the five fish have catch rates and the vanilla fish of the same waters are asked for in smaller numbers (Smallmouth Bass's Spring week 65.2 to 42.1, Sunfish 38.3 to 32.7), which is Celjhyn's 2026-11-07 report. | Fish ponds: the Newt, Lamprey, Vampire Anemone and Moonlight Jellyfish ponds ask for the fish's own listed tag (item_newt), not the tag made from its name; TLY's availability rules now read a listed tag as the game does, so Newt's Tail and Moonlight Jelly are placed. | Glycerin and the Empty Flask also sell at the Hospital from week 1, but TLY's availability weeks read a shop line only for vanilla's staples, so Glycerin is dated by its cauldron recipe and the Flask by the Furnace (a question for Jeff, not a layer line). | WeekRulings for the five bush fruits and Red Smilers: TLY places a hand-written route in the obtain tables only, so each is held to its route's first week (Moon Berry 1, Witch's Watcher 2, Weeping Widow 6, Soul Fruit 10, Poison Pine 13, Red Smilers 5); a ruled week does not reach what is made from the item, so its goods are ruled too: Dried Moon Berry, Moon Berry Powder and Tincture week 2 (Dehydrator, Mortar and Pestle and Tincture Bin are week 2, as the Hemlock chain derives), Dried Red Smilers, its Powder and Tincture week 5, and Glycerin week 4 (Harvey's 4-heart letter, after Lye's week 3). Lost Souls keeps its week 4 from the Secret Woods row although Mage's Rest has it in week 1: a ruling can only make an item later.",
+  "ExtraSources": {
+    "(O)Morghoula.AlchemistryCP_CapOLantern": [
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "CapOLantern forage at Custom_MagesRest grass, Fall, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, FallItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_DawnsingerToadstool": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "DawnsingerToadstool forage at Custom_MagesRest grass, Winter, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, WinterItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_FairieWings": [
+      {
+        "Kind": "Forage",
+        "Lands": "=85x85,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "FairieWings forage at Custom_MagesRest grass, Winter, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, WinterItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_FalseMorel": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "FalseMorel forage at Custom_MagesRest grass, Summer, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SummerItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_ForestWisp": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=85x29,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "ForestWisp forage at Custom_MagesRest grass, Summer and Winter, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SummerItemIndex/WinterItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_InkCap": [
+      {
+        "Kind": "Forage",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "InkCap forage at Custom_MagesRest grass, Fall, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, FallItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_LostSouls": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "LostSouls forage at Custom_MagesRest grass, Spring, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SpringItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_MoonBerry": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x6,=15x9,+0x5,=29x9,+0x5,=43x9,+0x5,=57x9,+0x5,=71x9,+0x5,=92x16,+0x6,=103x5,+0x4,=0x5",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild"
+          ]
+        },
+        "Detail": "moon berry on wild medium bushes, Spring, Summer and Fall 1 to 6 and 15 to 20, Winter 8 to 14 and 19 to 23, 0.09 a bush a day ([BBM] Alchemistry/content.json, MoonBerry_week*)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_PoisonPine": [
+      {
+        "Kind": "Forage",
+        "Lands": "=87x87,+0x4,=99x8,+0x3,=108x6,+0x4",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild"
+          ]
+        },
+        "Detail": "poison pine on wild medium bushes, Winter 3 to 7, 15 to 18 and 24 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, PoisonPine_early, _mid, _late)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_RedSmilers": [
+      {
+        "Kind": "Forage",
+        "Lands": "=29x29,+0x27,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "RedSmilers forage at Custom_MagesRest grass, Summer, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SummerItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_SoulFruit": [
+      {
+        "Kind": "Forage",
+        "Lands": "=68x68,+0x4,=80x8,+0x4,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild",
+            "location:Forest"
+          ]
+        },
+        "Detail": "soul fruit on wild medium bushes at Forest, Fall 12 to 16 and 24 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, SoulFruit_early, _late)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=68x68,+0x4,=80x8,+0x4,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild",
+            "location:Woods"
+          ]
+        },
+        "Detail": "soul fruit on wild medium bushes at Woods, Fall 12 to 16 and 24 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, SoulFruit_early, _late)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_StagsAntler": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=85x57,+0x27",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "StagsAntler forage at Custom_MagesRest grass, Spring and Winter, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SpringItemIndex/WinterItemIndex)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_TrappedSoul": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ],
+          "Skill": "Combat",
+          "SkillLevel": 2
+        },
+        "Detail": "ghost drop at Custom_MagesRest, 17:00 to 25:50, Combat 2, 0.9 ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Monster Spawn; data/Items/Loot/MonsterLoot.json, Ghost)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_WeepingWidow": [
+      {
+        "Kind": "Forage",
+        "Lands": "=36x36,+0x6,=50x8,+0x6,=0x56",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild"
+          ]
+        },
+        "Detail": "weeping widow on wild medium bushes, Summer 8 to 14 and 22 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, WeepingWidow_early, _late)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_WitchsWatcher": [
+      {
+        "Kind": "Forage",
+        "Lands": "=8x8,+0x6,=22x8,+0x6,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild",
+            "location:Forest"
+          ]
+        },
+        "Detail": "witch's watcher on wild medium bushes at Forest, Spring 8 to 14 and 22 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, WitchsWatcher_early, _late)"
+      },
+      {
+        "Kind": "Forage",
+        "Lands": "=8x8,+0x6,=22x8,+0x6,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "bushes:wild",
+            "location:Woods"
+          ]
+        },
+        "Detail": "witch's watcher on wild medium bushes at Woods, Spring 8 to 14 and 22 to 28, 0.15 a bush a day ([BBM] Alchemistry/content.json, WitchsWatcher_early, _late)"
+      }
+    ],
+    "(O)Morghoula.AlchemistryCP_WizardsEye": [
+      {
+        "Kind": "Forage",
+        "Lands": "+0x28,=0x84",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_MagesRest"
+          ]
+        },
+        "Detail": "WizardsEye forage at Custom_MagesRest grass, Spring, 3 to 5 spawns a day ([FTM] Alchemistry - Vanilla/content.json, area Mage's Rest - Forage, SpringItemIndex)"
+      }
+    ]
+  },
+  "YearRulings": {
+    "(O)selph.ExtraMachineConfig.Holder": "NeverSell"
+  },
+  "WeekRulings": {
+    "(O)Morghoula.AlchemistryCP_Lye": 3,
+    "(O)Morghoula.AlchemistryCP_MoonBerry": 1,
+    "(O)Morghoula.AlchemistryCP_WitchsWatcher": 2,
+    "(O)Morghoula.AlchemistryCP_WeepingWidow": 6,
+    "(O)Morghoula.AlchemistryCP_SoulFruit": 10,
+    "(O)Morghoula.AlchemistryCP_PoisonPine": 13,
+    "(O)Morghoula.AlchemistryCP_RedSmilers": 5,
+    "(O)Morghoula.AlchemistryCP_DriedMoonBerry": 2,
+    "(O)Morghoula.AlchemistryCP_MoonBerryPowder": 2,
+    "(O)Morghoula.AlchemistryCP_MoonBerryTincture": 2,
+    "(O)Morghoula.AlchemistryCP_DriedRedSmilers": 5,
+    "(O)Morghoula.AlchemistryCP_RedSmilersPowder": 5,
+    "(O)Morghoula.AlchemistryCP_RedSmilersTincture": 5,
+    "(O)Morghoula.AlchemistryCP_Glycerin": 4
+  },
+  "RecipeUnlocks": {
+    "Data/CraftingRecipes": {
+      "Morghoula.AlchemistryCP_ManaExtractor_Recipe": "s Fishing 2",
+      "Morghoula.AlchemistryCP_ApothecaryCauldron_Recipe": "s Farming 2",
+      "Morghoula.AlchemistryCP_EssenceRestabilizer_Recipe": "f Wizard 4",
+      "Morghoula.AlchemistryCP_TransmuterCoil_Recipe": "s Mining 8"
+    },
+    "Data/CookingRecipes": {
+      "Morghoula.AlchemistryCP_Glycerin_Recipe": "f Harvey 4",
+      "Morghoula.AlchemistryCP_Polaritea": "f Clint 2",
+      "Morghoula.AlchemistryCP_BlessingFromBeyond": "f Wizard 7",
+      "Morghoula.AlchemistryCP_BeguilingBubbles": "f Elliott 7"
+    }
+  },
+  "ExclusiveCookingStations": {
+    "(BC)Morghoula.AlchemistryCP_ApothecaryCauldron": [
+      "Morghoula.AlchemistryCP_Lye_Recipe",
+      "Morghoula.AlchemistryCP_Glycerin_Recipe",
+      "Morghoula.AlchemistryCP_BarkskinElixir",
+      "Morghoula.AlchemistryCP_IronbarkElixir",
+      "Morghoula.AlchemistryCP_LesserWylderBrew",
+      "Morghoula.AlchemistryCP_GreaterWylderBrew",
+      "Morghoula.AlchemistryCP_TearofDreamer",
+      "Morghoula.AlchemistryCP_Polaritea",
+      "Morghoula.AlchemistryCP_Fatalitea",
+      "Morghoula.AlchemistryCP_Immunitea",
+      "Morghoula.AlchemistryCP_BlessingFromBeyond",
+      "Morghoula.AlchemistryCP_BeguilingBubbles"
+    ]
+  }
+}

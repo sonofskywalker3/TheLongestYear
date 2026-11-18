@@ -34,6 +34,20 @@ public class ContextTagMatcherTests
         Assert.False(ContextTagMatcher.Matches("92", Obj(-16, "Sap"), "sap_item"));
     }
 
+    /// <summary>The game puts an object's own ContextTags in the same set as the tags it makes from
+    /// the name, id and category (ItemContextTagManager 26-101), compared without case, so a listed
+    /// item_, id_o_ or category_ tag matches even when the made one differs (Alchemistry's Newt is
+    /// named Morghoula.AlchemistryCP_Newt and lists item_newt, which its fish pond asks for).</summary>
+    [Theory]
+    [InlineData("Morghoula.AlchemistryCP_Newt", -4, "item_newt", "item_newt", true)]
+    [InlineData("Morghoula.AlchemistryCP_Newt", -4, "Item_Newt", "item_newt", true)]
+    [InlineData("Morghoula.AlchemistryCP_Newt", -4, "item_newt", "id_o_newt", false)]
+    [InlineData("Some.Mod_Ore", -15, "id_o_ore", "id_o_ore", true)]
+    [InlineData("Some.Mod_Gem", -999, "category_gem", "category_gem", true)]
+    [InlineData("Some.Mod_Gem", -999, "category_fish", "category_gem", false)]
+    public void Listed_tags_match_whatever_the_made_tag_says(string name, int category, string listed, string tag, bool matches)
+        => Assert.Equal(matches, ContextTagMatcher.Matches(name, Obj(category, name, listed), tag));
+
     [Fact]
     public void IdsMatchingAll_returns_qualified_ids_in_ordinal_order()
     {

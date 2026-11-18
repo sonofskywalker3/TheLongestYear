@@ -295,7 +295,8 @@ namespace TheLongestYear.Loop
             Section("CookingRecipes", () =>
             {
                 foreach (var kv in KnownData.Load<Dictionary<string, string>>("Data/CookingRecipes"))
-                    if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r) recipes.Add(r);
+                    if (GameObtainabilityParsing.Recipe(kv.Key, kv.Value, cooking: true) is RecipeRow r)
+                        recipes.Add(KnownData.CookingStations.TryGetValue(kv.Key, out string station) ? r with { Station = station } : r);
             });
 
             Section("TV/CookingChannel", () =>
