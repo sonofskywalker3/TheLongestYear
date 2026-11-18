@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.45 - 2026-11-18
+
+### Added
+
+- **Sunberry Village is supported.** The Longest Year now knows Sunberry Village's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its mines open in stages, two weeks apart: the top levels in week 1, down to the deepest levels and the Bottom in week 9. Sunberry Farm counts from year 2, and the Twilight Festival stalls count only on the festival day. It also knows how Sunberry Village sits beside Stardew Valley Expanded and East Scarp. The rewind takes the village's progress (the Golden Sunberry, the shortcut to the Bottom, the Moonberry stall) back to a fresh game. Thanks to Celjhyn.
+
+### Fixed
+
+- **midnight Carp asked for in week 1 and in Summer with Sunberry Village.** Sunberry Village lists the carp with no season deep in its mines. A fish found only on a map that opens late now counts from that map's week, in the seasons left by then, so the carp is back to Fall and Winter. Thanks to Celjhyn.
+- **modded boss fish could be asked for more than once.** A fish a mod lets you catch only once (Stardew Valley Expanded's Turretfish and Wolf Snapper, the Seven Deadly Sins boss fish, Sunberry Village's Aberrant and Angler Jr.) is now asked for one at a time and is never a shrine donation goal, the same as the base game's legendary fish.
+
 ## 1.2.43 - 2026-11-17
 
 ### Added

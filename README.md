@@ -23,7 +23,15 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.43
+## What's New in 1.2.45
+
+**New: Sunberry Village is supported.** The Longest Year now knows Sunberry Village's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its mines open in stages, two weeks apart: the top levels in week 1, down to the deepest levels and the Bottom in week 9. Sunberry Farm counts from year 2, and the Twilight Festival stalls count only on the festival day. It also knows how Sunberry Village sits beside Stardew Valley Expanded and East Scarp. The rewind takes the village's progress (the Golden Sunberry, the shortcut to the Bottom, the Moonberry stall) back to a fresh game. Thanks to Celjhyn.
+
+**Fixed: Midnight Carp asked for in week 1 and in Summer with Sunberry Village.** Sunberry Village lists the carp with no season deep in its mines. A fish found only on a map that opens late now counts from that map's week, in the seasons left by then, so the carp is back to Fall and Winter. Thanks to Celjhyn.
+
+**Fixed: modded boss fish could be asked for more than once.** A fish a mod lets you catch only once (Stardew Valley Expanded's Turretfish and Wolf Snapper, the Seven Deadly Sins boss fish, Sunberry Village's Aberrant and Angler Jr.) is now asked for one at a time and is never a shrine donation goal, the same as the base game's legendary fish.
+
+## 1.2.43
 
 **New: East Scarp is supported.** The Longest Year now knows East Scarp's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its festival stalls count only on their festival days. It also knows how East Scarp sits beside Stardew Valley Expanded and Cornucopia More Crops. Thanks to Celjhyn.
 
