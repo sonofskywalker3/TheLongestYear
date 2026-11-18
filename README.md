@@ -23,7 +23,19 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.45
+## What's New in 1.2.46
+
+**New: Sword and Sorcery is supported.** The Longest Year now knows Sword and Sorcery's items, shops, crops and maps, and when each can first be reached. Most of the mod sits behind its later chapters, so it waits for year 2. The Coastal Guild counts from week 10 and the Underforge from week 13. Thanks to Celjhyn.
+
+**New: Keep Coastal Guild (350 JP).** Start each loop with the Coastal Guild built in East Scarp. While you own it, Mateo doesn't hand out the guild's building order again. It is only shown with Sword and Sorcery installed.
+
+**Changed: Sword and Sorcery's offhand weapon goes back each loop.** Keep Worn Gear keeps your boots, rings, trinket and Sword and Sorcery armor. It no longer keeps a second weapon in the offhand slot, the same as the weapon you hold.
+
+**Fixed: Sword and Sorcery's special orders didn't rewind.** Orders you had taken stayed taken, and once the Coastal Guild was built, a later loop could never get its building order again. Taken and finished Sword and Sorcery orders now go back with the loop, and the guild's order board starts fresh.
+
+**Fixed: the Deep Dark elevator remembered your deepest floor.** Sword and Sorcery's dungeon floors now reset with the loop.
+
+## 1.2.45
 
 **New: Sunberry Village is supported.** The Longest Year now knows Sunberry Village's items, shops, fish, crops, animals and maps, and when each can first be reached in a year. Its mines open in stages, two weeks apart: the top levels in week 1, down to the deepest levels and the Bottom in week 9. Sunberry Farm counts from year 2, and the Twilight Festival stalls count only on the festival day. It also knows how Sunberry Village sits beside Stardew Valley Expanded and East Scarp. The rewind takes the village's progress (the Golden Sunberry, the shortcut to the Bottom, the Moonberry stall) back to a fresh game. Thanks to Celjhyn.
 

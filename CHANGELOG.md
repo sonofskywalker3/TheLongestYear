@@ -3,6 +3,22 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.46 - 2026-11-18
+
+### Added
+
+- **Sword and Sorcery is supported.** The Longest Year now knows Sword and Sorcery's items, shops, crops and maps, and when each can first be reached. Most of the mod sits behind its later chapters, so it waits for year 2. The Coastal Guild counts from week 10 and the Underforge from week 13. Thanks to Celjhyn.
+- **Keep Coastal Guild (350 JP).** Start each loop with the Coastal Guild built in East Scarp. While you own it, Mateo doesn't hand out the guild's building order again. It is only shown with Sword and Sorcery installed.
+
+### Changed
+
+- **Sword and Sorcery's offhand weapon goes back each loop.** Keep Worn Gear keeps your boots, rings, trinket and Sword and Sorcery armor. It no longer keeps a second weapon in the offhand slot, the same as the weapon you hold.
+
+### Fixed
+
+- **Sword and Sorcery's special orders didn't rewind.** Orders you had taken stayed taken, and once the Coastal Guild was built, a later loop could never get its building order again. Taken and finished Sword and Sorcery orders now go back with the loop, and the guild's order board starts fresh.
+- **the Deep Dark elevator remembered your deepest floor.** Sword and Sorcery's dungeon floors now reset with the loop.
+
 ## 1.2.45 - 2026-11-18
 
 ### Added
