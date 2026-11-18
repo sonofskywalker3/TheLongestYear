@@ -1,0 +1,215 @@
+{
+  "UniqueId": "skellady.SBVCP",
+  "CheckedVersion": "1.1.2",
+  "Notes": "MapLinks: Custom_SBV_SecretForest1 to Custom_SBV_SecretForest2 is the TouchAction MagicWarp at the Glade's 25,7 (Data/MapData/MapWarps.json, Secret 1 to 2). The Crystal Cave to Mines1 and every down-ladder are SunberryTeam.SBVSMAPI_MineLadder tile actions (MapWarps.json, Entrance to 1 and the N to N+1 patches), which the walk does not read; 5A to 5B and 10A to 10B are real map warps. Entrance to 1 exists only once vanilla event 100162 (the first visit to the Mines, open from Spring 5) is seen: on a test farm 2026-11-18 the patch read as applied after that scene; the ladder itself was not pressed (the debug pad's A press does not register in the world), and the C# handler warps with no fee, key or level check (MapManager.HandleLadderWarpAction). | MapWeeks Custom_SBV_SecretForest2 (Ancient Grove) week 4: walked 2026-11-18, the warp tile at the Glade's 25,7 sits behind a Large Log (Paths index 19 at 25,8, ResourceClump 602, a Steel Axe), the Secret Woods' own gate. | MapWeeks Sunberry Mines (Jeff's ruling 2026-11-18, two weeks a zone): Mines1 to 3 week 1, Mines4, 5A, 5B and 6 week 3, Mines7 to 9 week 5, Mines10A, 10B, 11 and 12 week 7, Mines13 to 15 and MinesFinal week 9. The seasonless Midnight Carp rows on Mines13 to 15 and MinesFinal read as Fall and Winter from week 9, by TLY's rule that a spawn row proves only the seasons left when its map opens. | YearTwoMaps Custom_SBV_SunberryFarm and Custom_SBV_SunberryHouse (Jeff's ruling 2026-11-18): the map warp at Mountain -1,14 is walled by a boulder patch until the 150,000g purchase at the inn (MapPatches.json, FarmMountainBoulder; mail SBVFarmPurchased). Nothing is only there. | FestivalShops: the seven Twilight Festival stalls open only on Custom_SBV_TwilightFestival, the Village's replacement map on Fall 26 (Data/PassiveFestivals skellady.SBVCP_TwilightFestival; Data/Festivals/TwilightFestival/FestivalShops.json); read as every-day shops, Amina's orb lines were week-1 routes. Their SunberryTeam.SBVSMAPI_ChooseNFromSet lines stay unresolved: a daily random pick, once a year. | ShopPlacements skellady.SBVCP_MoonberryShop at Custom_SBV_SunberryVillage: its OpenShop tile at the Village's 38,49 is added only after event 20031458 (Moon, carrying a Moonberry into the Village; DynamicChanges/MapChanges.json, Moonberry Shop Map Patch), so a save reads the same place before and after that scene. | ExtraSources mine nodes (Farm Type Manager places Item Extensions nodes, which no data row describes): Serpentine at Mines4, Citrine at Mines7, Purpurite and Annabergite at Mines10A, Blue Aura Quartz at Mines13, each 70% on 2 to 4 nodes a day, Dependable (about two a day), dated by MapWeeks; their WeekRulings are those maps' weeks, as a hand route alone does not place an item. The orb nodes (20 to 30%) and every FTM monster drop are luck and are not written: the orbs come from the Alchemy Table chain, and a luck route moves no week. | NotYearOne Golden Sunberry and Golden Sunberry Seeds: the chain needs the Bottom (week 9), then six stages of at least seven nights each with 10 to 120 total hearts across the Sunberry villagers (GoldenSunberryStageToken.cs); the Seed Maker's 4% roll needs event 20031457, the last stage. | YearRulings NeverSell: the Item Extensions node objects (the *Node items) and the two mine supply crates, which stand in the world and are never in an inventory. | Alpaca Wool and Alpaca Wool Fabric: no ruling. TLY reads the Alpaca's UnlockCondition (PLAYER_HAS_SEEN_EVENT Any skellady.SBVCP_20031489) by its general rule (Jeff 2026-11-18), so it is not sold and its wool is off the year-1 board. | Moonberry: left unplaced. Every year-1 route is luck: 1 in 15 of a Sunberry Geode's common roll (Silas sells two a day), the Crystalarium, and pepper rex loot from Mines10A. | Warp Totem Sunberry: left as TLY reads it; the recipe comes from the Wizard's scene after 30 days travelled on the Sunberry Road (MapManager.ModifyTravelingSunberryRoadStat).",
+  "ExtraSources": {
+    "(O)skellady.SBVCP_Serpentine": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SBV_Mines4"
+          ]
+        },
+        "Detail": "serpentine node at Custom_SBV_Mines4, 2 to 4 nodes a day at 70%, all year ([FTM] Sunberry Village/content.json, SBV Mines4 Nodes; [CP] Data/ItemData/Nodes.json)"
+      }
+    ],
+    "(O)skellady.SBVCP_Citrine": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SBV_Mines7"
+          ]
+        },
+        "Detail": "citrine node at Custom_SBV_Mines7, 2 to 4 nodes a day at 70%, all year ([FTM] Sunberry Village/content.json, SBV Mines7 Nodes; [CP] Data/ItemData/Nodes.json)"
+      }
+    ],
+    "(O)skellady.SBVCP_Purpurite": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SBV_Mines10A"
+          ]
+        },
+        "Detail": "purpurite node at Custom_SBV_Mines10A, 2 to 4 nodes a day at 70%, all year ([FTM] Sunberry Village/content.json, SBV Mines10A Nodes; [CP] Data/ItemData/Nodes.json)"
+      }
+    ],
+    "(O)skellady.SBVCP_Annabergite": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SBV_Mines10A"
+          ]
+        },
+        "Detail": "annabergite node at Custom_SBV_Mines10A, 2 to 4 nodes a day at 70%, all year ([FTM] Sunberry Village/content.json, SBV Mines10A Nodes; [CP] Data/ItemData/Nodes.json)"
+      }
+    ],
+    "(O)skellady.SBVCP_BlueAuraQuartz": [
+      {
+        "Kind": "MineNode",
+        "Lands": "+0x112",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "location:Custom_SBV_Mines13"
+          ]
+        },
+        "Detail": "blue aura quartz node at Custom_SBV_Mines13, 2 to 4 nodes a day at 70%, all year ([FTM] Sunberry Village/content.json, SBV Mines13 Nodes; [CP] Data/ItemData/Nodes.json)"
+      }
+    ]
+  },
+  "YearRulings": {
+    "(O)skellady.SBVCP_AnnabergiteNode": "NeverSell",
+    "(O)skellady.SBVCP_BlueAuraQuartzNode": "NeverSell",
+    "(O)skellady.SBVCP_CitrineNode": "NeverSell",
+    "(O)skellady.SBVCP_EclipseOrbNode": "NeverSell",
+    "(O)skellady.SBVCP_MidnightOrbNode": "NeverSell",
+    "(O)skellady.SBVCP_PurpuriteNode": "NeverSell",
+    "(O)skellady.SBVCP_SerpentineNode": "NeverSell",
+    "(O)skellady.SBVCP_SunberryGeodeNode": "NeverSell",
+    "(O)skellady.SBVCP_SunriseOrbNode": "NeverSell",
+    "(O)skellady.SBVCP_SunsetOrbNode": "NeverSell",
+    "(O)skellady.SBVCP_SupplyCrate1": "NeverSell",
+    "(O)skellady.SBVCP_SupplyCrate2": "NeverSell"
+  },
+  "WeekRulings": {
+    "(O)skellady.SBVCP_Serpentine": 3,
+    "(O)skellady.SBVCP_Citrine": 5,
+    "(O)skellady.SBVCP_Purpurite": 7,
+    "(O)skellady.SBVCP_Annabergite": 7,
+    "(O)skellady.SBVCP_BlueAuraQuartz": 9
+  },
+  "NotYearOne": [
+    "(O)skellady.SBVCP_GoldenSunberry",
+    "(O)skellady.SBVCP_GoldenSunberrySeeds"
+  ],
+  "YearTwoMaps": {
+    "Custom_SBV_SunberryFarm": "YearTwo",
+    "Custom_SBV_SunberryHouse": "YearTwo"
+  },
+  "MapLinks": [
+    {
+      "From": "Custom_SBV_SecretForest1",
+      "To": "Custom_SBV_SecretForest2"
+    },
+    {
+      "From": "Custom_SBV_CrystalCave",
+      "To": "Custom_SBV_Mines1"
+    },
+    {
+      "From": "Custom_SBV_Mines1",
+      "To": "Custom_SBV_Mines2"
+    },
+    {
+      "From": "Custom_SBV_Mines2",
+      "To": "Custom_SBV_Mines3"
+    },
+    {
+      "From": "Custom_SBV_Mines3",
+      "To": "Custom_SBV_Mines4"
+    },
+    {
+      "From": "Custom_SBV_Mines4",
+      "To": "Custom_SBV_Mines5A"
+    },
+    {
+      "From": "Custom_SBV_Mines5A",
+      "To": "Custom_SBV_Mines6"
+    },
+    {
+      "From": "Custom_SBV_Mines5B",
+      "To": "Custom_SBV_Mines6"
+    },
+    {
+      "From": "Custom_SBV_Mines6",
+      "To": "Custom_SBV_Mines7"
+    },
+    {
+      "From": "Custom_SBV_Mines7",
+      "To": "Custom_SBV_Mines8"
+    },
+    {
+      "From": "Custom_SBV_Mines8",
+      "To": "Custom_SBV_Mines9"
+    },
+    {
+      "From": "Custom_SBV_Mines9",
+      "To": "Custom_SBV_Mines10A"
+    },
+    {
+      "From": "Custom_SBV_Mines10A",
+      "To": "Custom_SBV_Mines11"
+    },
+    {
+      "From": "Custom_SBV_Mines10B",
+      "To": "Custom_SBV_Mines11"
+    },
+    {
+      "From": "Custom_SBV_Mines11",
+      "To": "Custom_SBV_Mines12"
+    },
+    {
+      "From": "Custom_SBV_Mines12",
+      "To": "Custom_SBV_Mines13"
+    },
+    {
+      "From": "Custom_SBV_Mines13",
+      "To": "Custom_SBV_Mines14"
+    },
+    {
+      "From": "Custom_SBV_Mines14",
+      "To": "Custom_SBV_Mines15"
+    },
+    {
+      "From": "Custom_SBV_Mines15",
+      "To": "Custom_SBV_MinesFinal"
+    }
+  ],
+  "MapWeeks": {
+    "Custom_SBV_SecretForest2": 4,
+    "Custom_SBV_Mines1": 1,
+    "Custom_SBV_Mines2": 1,
+    "Custom_SBV_Mines3": 1,
+    "Custom_SBV_Mines4": 3,
+    "Custom_SBV_Mines5A": 3,
+    "Custom_SBV_Mines5B": 3,
+    "Custom_SBV_Mines6": 3,
+    "Custom_SBV_Mines7": 5,
+    "Custom_SBV_Mines8": 5,
+    "Custom_SBV_Mines9": 5,
+    "Custom_SBV_Mines10A": 7,
+    "Custom_SBV_Mines10B": 7,
+    "Custom_SBV_Mines11": 7,
+    "Custom_SBV_Mines12": 7,
+    "Custom_SBV_Mines13": 9,
+    "Custom_SBV_Mines14": 9,
+    "Custom_SBV_Mines15": 9,
+    "Custom_SBV_MinesFinal": 9
+  },
+  "ShopPlacements": [
+    {
+      "ShopId": "skellady.SBVCP_MoonberryShop",
+      "LocationName": "Custom_SBV_SunberryVillage"
+    }
+  ],
+  "FestivalShops": {
+    "skellady.SBVCP_SilasMaiaTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_EliasTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_EzraImanTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_DNDTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_AriTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_JumanaTwilightShop": "skellady.SBVCP_TwilightFestival",
+    "skellady.SBVCP_AminaTwilightShop": "skellady.SBVCP_TwilightFestival"
+  }
+}
