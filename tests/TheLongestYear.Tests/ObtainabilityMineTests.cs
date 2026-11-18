@@ -41,6 +41,15 @@ public class ObtainabilityMineTests
     }
 
     [Fact]
+    public void A_seasonal_drop_lands_only_in_its_season_and_names_its_evidence()
+    {
+        var rows = new[] { new MonsterDropRow("Duggy", "(O)410", 0.125, Season.Fall, "content.json, fall duggy") };
+        ObtainSource drop = MineSources.MonsterDrops(rows, new Dictionary<string, ObjInfo>()).Single().Source;
+        Assert.Equal(DayTable.InWeeks(WeekMask.ForSeason(Season.Fall)), drop.Lands);
+        Assert.Equal("Duggy drop, Fall, chance 0.125 (content.json, fall duggy)", drop.Detail);
+    }
+
+    [Fact]
     public void Geodes_from_stones_are_dependable()
     {
         var nodes = MineSources.Nodes().Where(n => n.ItemId == "(O)535").Select(n => n.Source).ToList();

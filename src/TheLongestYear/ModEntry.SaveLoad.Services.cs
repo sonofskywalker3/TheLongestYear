@@ -114,6 +114,10 @@ namespace TheLongestYear
             stageTimer.Restart();
             _effortData = new TheLongestYear.Loop.GameEffortData(this.Monitor)
                 .Build(_config.PoolTuning.ExcludedLocationMarkers);
+            // A supported mod's layer adds the monster drops a framework makes in code, once, before the
+            // availability inputs are hashed (the reset's rebuild reuses this data).
+            if (_lexicon?.Loaded?.Set is { } layerSet)
+                _effortData = layerSet.WithMonsterDrops(_effortData);
             long effortMs = stageTimer.ElapsedMilliseconds;
             _enginePools = ctx.EnginePools;
             _engineReachability = ctx.EnginePoolReader.LastReachability;

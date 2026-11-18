@@ -75,7 +75,7 @@ namespace TheLongestYear.Loop
                     (layers.UnmappedMods.Count + layers.UnmappedPairs.Count > 0 ? ", so these answers are computed" : "") + ".",
                     LogLevel.Info);
             _resolver = new LexiconResolver(layers.Composed, _cache.Read, (key, _) => _pendingKey = key,
-                live => build(layers.WithFishSpawns(live), layers.ExtraDirectSources, SaveMarks(layers.Marks)));
+                live => build(layers.WithLayerRows(live), layers.ExtraDirectSources, SaveMarks(layers.Marks)));
         }
 
         /// <summary>The known ids for this game, or null (nothing is filtered) when the vanilla ids

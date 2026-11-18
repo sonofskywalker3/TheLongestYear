@@ -56,8 +56,10 @@ public sealed record GarbageRow(string CanId, string ItemId, string? Condition);
 public sealed record ShopRow(string ShopId, string ItemId, string? Condition, bool IsRecipe, bool IsRandom = false, string? TradeItemId = null,
     string? Query = null);
 
-/// <summary>One Data/Monsters drop (field 6 is "id chance id chance ..."). <see cref="ItemId"/> may be a query.</summary>
-public sealed record MonsterDropRow(string Monster, string ItemId, double Chance);
+/// <summary>One Data/Monsters drop (field 6 is "id chance id chance ..."). <see cref="ItemId"/> may be a query.
+/// A supported mod's layer adds rows a framework drops in code (<see cref="Lexicon.LayerMonsterDrop"/>); only
+/// such a row has a <see cref="Season"/> (null = all year) or a <see cref="Note"/> naming the evidence.</summary>
+public sealed record MonsterDropRow(string Monster, string ItemId, double Chance, Season? Season = null, string? Note = null);
 
 /// <summary>One Data/Crops row: keyed by seed, <see cref="GrowthDays"/> is the sum of DaysInPhase,
 /// <see cref="RegrowDays"/> is CropData.RegrowDays (-1 or 0 means none), <see cref="Seasons"/> empty means any season.</summary>

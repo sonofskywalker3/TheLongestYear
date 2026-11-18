@@ -96,10 +96,28 @@ public sealed class LayerSet
     /// <summary>Every layer's <see cref="LayerInputs.FishSpawns"/>, in inputs order.</summary>
     public IReadOnlyList<LocationSpawn> ExtraFishSpawns { get; private init; } = Array.Empty<LocationSpawn>();
 
-    /// <summary>The inputs a build reads: the game's, with the layers' fishing rows added. Only builds
-    /// read this; the row hashes stay the game's own (a layer edit changes the cache key instead).</summary>
-    public ObtainabilityInputs WithFishSpawns(ObtainabilityInputs inputs)
-        => ExtraFishSpawns.Count == 0 ? inputs : inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
+    /// <summary>Every layer's <see cref="LayerInputs.MonsterDrops"/>, in inputs order.</summary>
+    public IReadOnlyList<LayerMonsterDrop> ExtraMonsterDrops { get; private init; } = Array.Empty<LayerMonsterDrop>();
+
+    /// <summary>The inputs a build reads: the game's, with the layers' fishing rows and monster drops
+    /// added. Only builds read this; the row hashes stay the game's own (a layer edit changes the cache
+    /// key instead).</summary>
+    public ObtainabilityInputs WithLayerRows(ObtainabilityInputs inputs)
+    {
+        if (ExtraFishSpawns.Count > 0)
+            inputs = inputs with { LocationFish = inputs.LocationFish.Concat(ExtraFishSpawns).ToList() };
+        if (ExtraMonsterDrops.Count > 0)
+            inputs = inputs with { MonsterDrops = inputs.MonsterDrops.Concat(ExtraMonsterDrops.Select(d => d.ToRow())).ToList() };
+        return inputs;
+    }
+
+    /// <summary>The effort data the availability build reads, with the layers' monster drops added, so a
+    /// framework's drop places its item by the monster's mine area as a Data/Monsters drop does. Joined
+    /// once at load, before the availability inputs are hashed, so the hash covers the layer's rows.</summary>
+    public Availability.EffortData WithMonsterDrops(Availability.EffortData data)
+        => ExtraMonsterDrops.Count == 0
+            ? data
+            : data.WithMonsterDrops(ExtraMonsterDrops.Select(d => d.ToRaw()));
 
     /// <summary>Every layer's <see cref="LayerInputs.FishData"/>: the Data/Fish rows the readers take in
     /// place of the game's (<see cref="PinnedFishData"/>). A later layer's row for the same fish wins.</summary>
@@ -344,6 +362,7 @@ public sealed class LayerSet
         {
             YearTwoRulings = Rulings(inputs, i => i.YearTwoRulings, warn, "year-2"),
             ExtraFishSpawns = inputs.SelectMany(i => i.FishSpawns).ToList(),
+            ExtraMonsterDrops = inputs.SelectMany(i => i.MonsterDrops).ToList(),
             RandomShopItems = inputs.SelectMany(i => i.RandomShopItems).ToList(),
             DataFields = MergeDataFields(inputs),
             RecipeUnlocks = inputs.SelectMany(i => i.RecipeUnlocks)

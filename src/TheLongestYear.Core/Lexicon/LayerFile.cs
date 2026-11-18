@@ -38,6 +38,13 @@ public sealed record LayerInputs(
     /// so they give routes and catch rates (<see cref="FishCatchRates"/>) as a data row would.</summary>
     public IReadOnlyList<LocationSpawn> FishSpawns { get; init; } = Array.Empty<LocationSpawn>();
 
+    /// <summary>Monster drops a framework adds in code (Monster Variety's variety drops), written as
+    /// Data/Monsters drop pairs are read (<see cref="LayerMonsterDrop"/>). They join the game's drop rows in
+    /// both readers, after the row hashes are taken: a route with the mine floor and the per-kill test
+    /// (<see cref="MineSources.RepeatableDropChance"/>) of a data drop, and a board week by the monster's
+    /// mine area (<see cref="Availability.MonsterDropAvailability"/>).</summary>
+    public IReadOnlyList<LayerMonsterDrop> MonsterDrops { get; init; } = Array.Empty<LayerMonsterDrop>();
+
     /// <summary>Shop lines whose item the mod re-picks every day (a Content Patcher <c>{{Random: a, b, c}}</c>
     /// in the line's ItemId), so the data holds a different one of them each day. The live line is read as
     /// all of them, a random pick, before the data is hashed or built: the answers match on any day.</summary>
@@ -164,6 +171,17 @@ public static class YearTwoWeeks
 /// <summary>A shop line that offers one of <see cref="ItemIds"/>, picked by the mod each day: the
 /// Data/Shops line of <see cref="ShopId"/> whose item is one of them and, when given, whose Condition
 /// reads <see cref="Condition"/> exactly as the game holds it.</summary>
+/// <summary>One monster drop a framework adds in code: the Data/Monsters name of the monster, the
+/// qualified item id, the chance per kill (a variety's own rate times the chance every variety that
+/// outranks it failed, divided among a random pick), the one season it drops in when the framework picks
+/// the variety by season (null = all year), and the evidence for the route's Detail.</summary>
+public sealed record LayerMonsterDrop(string Monster, string ItemId, double Chance, Season? Season = null, string? Detail = null)
+{
+    public MonsterDropRow ToRow() => new(Monster, ItemId, Chance, Season, Detail);
+
+    public Availability.RawMonsterDrop ToRaw() => new(Monster, ItemId, Chance, Season);
+}
+
 public sealed record RandomShopItem(string ShopId, string? Condition, IReadOnlyList<string> ItemIds);
 
 /// <summary>A layer's answers: what changes over the answers composed without it. <see cref="Mods"/>
@@ -295,6 +313,10 @@ public static class LayerFile
         RequireSourceMembers(json);
         if (read.FishSpawns != null && read.FishSpawns.Any(row => row == null || string.IsNullOrWhiteSpace(row.Location) || string.IsNullOrWhiteSpace(row.ItemId)))
             throw new System.Text.Json.JsonException("FishSpawns holds a null row or a row with no Location or ItemId.");
+        if (read.MonsterDrops != null && read.MonsterDrops.Any(d => d == null || string.IsNullOrWhiteSpace(d.Monster)
+                || string.IsNullOrWhiteSpace(d.ItemId) || !(d.Chance > 0 && d.Chance <= 1)
+                || (d.Season is Season season && !Enum.IsDefined(season))))
+            throw new System.Text.Json.JsonException("MonsterDrops holds a null row, a row with no Monster or ItemId, a Chance outside (0, 1], or an unknown Season.");
         if (read.RandomShopItems != null && read.RandomShopItems.Any(r => r == null || string.IsNullOrWhiteSpace(r.ShopId) || r.ItemIds == null || r.ItemIds.Count == 0))
             throw new System.Text.Json.JsonException("RandomShopItems holds a null entry or one with no ShopId or ItemIds.");
         if (read.YearTwoRulings != null)
@@ -388,6 +410,7 @@ public static class LayerFile
             WeekRulings = read.WeekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal),
             Notes = read.Notes ?? "",
             FishSpawns = read.FishSpawns ?? Array.Empty<LocationSpawn>(),
+            MonsterDrops = read.MonsterDrops ?? Array.Empty<LayerMonsterDrop>(),
             RandomShopItems = read.RandomShopItems ?? Array.Empty<RandomShopItem>(),
             TextHash = HashText(json),
         };

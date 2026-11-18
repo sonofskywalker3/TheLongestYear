@@ -527,6 +527,30 @@ public sealed class LayerSetTests
     }
 
     [Fact]
+    public void ALayersMonsterDropRowJoinsBothReadersAndLeavesTheGamesRowsAlone()
+    {
+        LayerInputs read = LayerFile.ReadInputs(
+            "{\"UniqueId\": \"" + A + "\", \"CheckedVersion\": \"1.0.0\", \"MonsterDrops\": [" +
+            "{\"Monster\": \"Dust Spirit\", \"ItemId\": \"(O)404\", \"Chance\": 0.727, \"Detail\": \"content.json, brown sprite\"}," +
+            "{\"Monster\": \"Duggy\", \"ItemId\": \"(O)296\", \"Chance\": 0.111, \"Season\": \"Spring\"}]}");
+        LayerSet set = LayerSet.Compose(VanillaSet(), new[] { read }, Array.Empty<LayerAnswers>(), _ => { });
+        ObtainabilityInputs live = Inputs.Value;
+        var effort = new TheLongestYear.Core.Availability.EffortData();
+
+        ObtainabilityBuild built = ObtainabilityBuilder.Build(set.WithLayerRows(live));
+        var joined = set.WithMonsterDrops(effort);
+
+        Assert.Contains(built.Model.Sources("(O)404"), s => s.Kind == SourceKind.MonsterDrop && s.Reliability == Reliability.Dependable
+            && s.Conditions.Requires.Contains("mines:floor 40") && s.Detail.Contains("brown sprite"));
+        Assert.Contains(joined.MonsterDrops, d => d == new TheLongestYear.Core.Availability.RawMonsterDrop("Duggy", "(O)296", 0.111, Season.Spring));
+        // The game's own rows (what the row hashes and the availability hash read before the join) stay as they were.
+        Assert.DoesNotContain(live.MonsterDrops, r => r.Monster == "Dust Spirit" && r.ItemId == "(O)404");
+        Assert.Empty(effort.MonsterDrops);
+        Assert.Throws<System.Text.Json.JsonException>(() => LayerFile.ReadInputs(
+            "{\"UniqueId\": \"" + A + "\", \"CheckedVersion\": \"1.0.0\", \"MonsterDrops\": [{\"Monster\": \"Duggy\", \"ItemId\": \"(O)296\", \"Chance\": 1.5}]}"));
+    }
+
+    [Fact]
     public void ALayersFishSpawnRowGivesARouteAndAStoredCatchRate()
     {
         const string eel = "(O)ModA.CodeEel";
@@ -539,7 +563,7 @@ public sealed class LayerSetTests
         var objects = new Dictionary<string, ObjInfo>(live.Objects, StringComparer.Ordinal)
             { [eel] = new ObjInfo(eel, "Code Eel", -4, 80, new[] { "category_fish" }, false) };
 
-        ObtainabilityBuild built = ObtainabilityBuilder.Build(set.WithFishSpawns(live with { Objects = objects }));
+        ObtainabilityBuild built = ObtainabilityBuilder.Build(set.WithLayerRows(live with { Objects = objects }));
 
         Assert.Contains(built.Model.Sources(eel), s => s.Kind == SourceKind.Fish && s.Detail.Contains("ModA_Lagoon"));
         CatchRate rate = built.CatchRates[eel];
