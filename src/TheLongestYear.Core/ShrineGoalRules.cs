@@ -50,7 +50,7 @@ public static class ShrineGoalRules
             if (string.IsNullOrEmpty(raw)) continue;
             string id = BundleParsing.NormalizeItemId(raw);
             if (excludedIds != null && (excludedIds.Contains(id) || excludedIds.Contains(raw))) continue;
-            if (LegendaryFishRules.IsLegendary(id)) continue;
+            if (LegendaryFishRules.IsLegendary(id) || OncePerLoopAsks.IsSingleCatchFish(id)) continue;
             // Another color of the same egg counts as the same item (InterchangeableItems).
             IReadOnlyCollection<string> same = InterchangeableItems.EquivalentsOf(id);
             if (same.Any(s => board.ItemIds.Contains(s) || taken.Contains(s) || result.Contains(s))) continue;

@@ -321,7 +321,7 @@ namespace TheLongestYear.Loop
                 foreach (string id in SpawnIds(chop.ItemId, chop.RandomItemId, chop.PerItemCondition))
                     drops.Add(new RawWildTreeDrop(id, chop.Chance, season));
             }
-            return new RawWildTree(treeId, tree.SeedItemId, tree.SeedOnShakeChance, tree.SeedOnChopChance, tree.DropWoodOnChop, drops);
+            return new RawWildTree(treeId, tree.SeedItemId, tree.SeedOnShakeChance, tree.SeedOnChopChance, tree.DropWoodOnChop, drops, tree.SeedPlantable);
         }
 
         /// <summary>Every full-grown wild tree standing in the live world (Tree.treeStage or more),

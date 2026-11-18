@@ -36,8 +36,23 @@ public static class OncePerLoopAsks
     public static readonly IReadOnlySet<string> Ids =
         new HashSet<string>(LegendaryFishRules.Ids.Concat(HandListed), StringComparer.Ordinal);
 
+    /// <summary>Fish the stored catch model limits to a single catch a loop (<see cref="CatchRate.CatchLimit"/>):
+    /// a mod's boss fish, which no list here names. Set once per save load from the lexicon variant served
+    /// (<see cref="UseStoredCatchLimits"/>); read-only between loads.</summary>
+    private static IReadOnlySet<string> _singleCatchFish = new HashSet<string>(StringComparer.Ordinal);
+
+    /// <summary>Takes the single-catch fish from the catch model of the answers this load serves. Null clears them.</summary>
+    public static void UseStoredCatchLimits(IReadOnlyDictionary<string, CatchRate>? rates)
+        => _singleCatchFish = new HashSet<string>(
+            (rates ?? new Dictionary<string, CatchRate>()).Where(kv => kv.Value?.CatchLimit == 1).Select(kv => kv.Key),
+            StringComparer.Ordinal);
+
+    /// <summary>True for a fish the stored catch model limits to one catch a loop.</summary>
+    public static bool IsSingleCatchFish(string? itemId)
+        => itemId != null && _singleCatchFish.Contains(BundleParsing.NormalizeItemId(itemId));
+
     public static bool IsOncePerLoop(string? itemId)
-        => itemId != null && Ids.Contains(BundleParsing.NormalizeItemId(itemId));
+        => itemId != null && (Ids.Contains(BundleParsing.NormalizeItemId(itemId)) || IsSingleCatchFish(itemId));
 
     /// <summary>One for a once-per-loop item while the setting is on; the stack unchanged otherwise.</summary>
     public static int ClampStack(string? itemId, int stack, bool enabled)

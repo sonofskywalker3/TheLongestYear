@@ -175,4 +175,39 @@ public class FishAskBandsTests
         Assert.Empty(bandedSlots);
         Assert.Equal(2, StackScaling.Apply(banded, Profile(DifficultyStep.Extreme), bandedSlots).Slots[0].Stack);
     }
+
+    /// <summary>Sunberry Village (2026-11-18): two boss fish whose rows carry CatchLimit 1, like the vanilla
+    /// legendaries, but whose ids are on no list. The game counts the limit by fish, over every row, so the
+    /// stored catch model carries it: no weekly basis, and the limit for the once-per-loop rule.</summary>
+    [Fact]
+    public void A_fish_every_row_limits_carries_its_limit_and_no_weekly_basis()
+    {
+        const string Boss = "(O)ModA_Boss";
+        const string Common = "(O)ModA_Minnow";
+        LocationSpawn Row(string id, int limit, string at = "ModA_Lake") => new(at, id, null, null, 1.0, limit, false, 0, NeedsPosition: limit > 0);
+        var inputs = new ObtainabilityInputs
+        {
+            Objects = new Dictionary<string, ObjInfo>
+            {
+                [Boss] = new(Boss, "Boss", -4, 1000, new string[0], false),
+                [Common] = new(Common, "Minnow", -4, 10, new string[0], false),
+            },
+            LocationFish = new[] { Row(Boss, 1), Row(Boss, 1, "ModA_Cave"), Row(Common, 0) },
+            FishRows = new Dictionary<string, FishRow>
+            {
+                [Boss] = new(Boss, false, "both", 0, "600 2600", 4, 0.5, 0.1),
+                [Common] = new(Common, false, "both", 0, "600 2600", 4, 0.5, 0.1),
+            },
+        };
+        IReadOnlyDictionary<string, CatchRate> rates = FishCatchRates.Build(inputs);
+        Assert.Equal(1, rates[Boss].CatchLimit);
+        Assert.All(rates[Boss].Weekly, w => Assert.Equal(0, w));
+        Assert.Null(rates[Common].CatchLimit);
+        Assert.Equal(1, Rates.Value["(O)775"].CatchLimit);   // Glacierfish: its one row is limited
+
+        // One unlimited row anywhere and the fish is not limited.
+        var open = new ObtainabilityInputs { Objects = inputs.Objects, FishRows = inputs.FishRows,
+            LocationFish = new[] { Row(Boss, 1), Row(Boss, 0, "ModA_River") } };
+        Assert.Null(FishCatchRates.Build(open)[Boss].CatchLimit);
+    }
 }

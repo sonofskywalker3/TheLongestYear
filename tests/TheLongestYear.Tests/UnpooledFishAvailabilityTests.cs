@@ -201,4 +201,52 @@ public class LocationWeeksTests
         Assert.Equal(1, farm.Week);
         Assert.False(weeks.TryGet("Custom_Highlands", out _));
     }
+
+    /// <summary>Sunberry Village, 2026-11-18 (Celjhyn's Midnight Carp report): the mod lists Midnight Carp with
+    /// no season on its deepest mine levels, which open in week 9. A row proves only the seasons a player can
+    /// still stand on its map in: read whole, the one seasonless row made the carp a week-1, any-season fish.</summary>
+    private static ItemPools CarpPools(IReadOnlyList<RawSpawnEntry> fish, Dictionary<string, RawObjectEntry> objects,
+        LocationWeeks weeks, Dictionary<string, RawFishEntry> rows)
+        => ItemPoolBuilder.Build(
+            new List<RawCropEntry>(), objects, new List<RawSpawnEntry>(), fish, new HashSet<string>(),
+            new List<RawMonsterDropEntry>(), new List<RawFruitTreeEntry>(), new List<RawGeodeDropEntry>(),
+            new BundleGenerationTuning(), fishRows: rows, locationWeeks: weeks);
+
+    [Fact]
+    public void A_Row_On_A_Late_Map_Proves_Only_The_Seasons_Left_When_The_Map_Opens()
+    {
+        const string Carp = "(O)269";
+        var carp = new RawObjectEntry("Fish", -4, 150, false, new[] { "fish_lake" });
+        LocationWeeks weeks = LocationWeeks.Build(
+            new[]
+            {
+                new RawLocationLink("Farm", "Backwoods"), new RawLocationLink("Backwoods", "Mountain"),
+                new RawLocationLink("Mountain", "ModMines13"), new RawLocationLink("Mountain", "ModMines1"),
+            },
+            _ => false, openingWeeks: new Dictionary<string, int> { ["ModMines13"] = 9 });
+        var rows = new[]
+        {
+            new RawSpawnEntry(Carp, Season.Fall, null, "Mountain"),
+            new RawSpawnEntry(Carp, Season.Winter, null, "Mountain"),
+            new RawSpawnEntry(Carp, null, null, "ModMines13"),
+        };
+        var data = new Dictionary<string, RawFishEntry>
+            { ["269"] = RawFishEntry.Parse("269", "Midnight Carp/55/mixed/12/52/2200 2600/fall winter/both/690 .4 685 .1/4/.15/.5/0/false") };
+
+        PoolItem pooled = Assert.Single(CarpPools(rows, new() { ["269"] = carp }, weeks, data).Fish);
+        Assert.Equal(new[] { Season.Fall, Season.Winter }, pooled.Seasons);
+        ItemAvailability late = ItemAvailabilityBuilder.Build(CarpPools(rows, new() { ["269"] = carp }, weeks, data)).For(Carp);
+        Assert.Equal(AvailabilityWeeks.FirstWeekOf(Season.Fall), late.PacingWeek);
+
+        // The same seasonless row on a week-1 map still makes it an any-season fish, and a row whose
+        // seasons are all over before its map opens proves nothing.
+        var early = new[] { rows[0], new RawSpawnEntry(Carp, null, null, "ModMines1") };
+        Assert.Empty(Assert.Single(CarpPools(early, new() { ["269"] = carp }, weeks, data).Fish).Seasons);
+        var spentRow = new[] { rows[0], new RawSpawnEntry(Carp, Season.Spring, null, "ModMines13") };
+        Assert.Equal(new[] { Season.Fall }, Assert.Single(CarpPools(spentRow, new() { ["269"] = carp }, weeks, data).Fish).Seasons);
+
+        // A map an Extreme run opens sooner keeps the seasons that run can fish (the Desert: 9, 6, 3).
+        Assert.Equal(new[] { Season.Spring }, ItemPoolBuilder.SeasonsLeftOnMap(new[] { Season.Spring }, "Desert",
+            LocationWeeks.Build(new[] { new RawLocationLink("Farm", "BusStop"), new RawLocationLink("BusStop", "Desert") }, _ => false)));
+    }
 }

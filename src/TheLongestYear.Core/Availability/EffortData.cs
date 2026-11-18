@@ -62,9 +62,10 @@ public sealed record RawFishPondRule(IReadOnlyList<string> RequiredTags, IReadOn
 /// <summary>One Data/WildTrees entry reduced to what chopping and shaking yield: the seed when its
 /// shake or chop chance is above zero, Wood when DropWoodOnChop, and the unconditional ChopItems
 /// rows (a row's Season, when set, is the only condition kept; rows with a Condition are dropped
-/// by the glue).</summary>
+/// by the glue). <paramref name="SeedPlantable"/> is the entry's own flag: a tree whose seed cannot be
+/// planted (or that has none) is never grown by the player.</summary>
 public sealed record RawWildTree(string TreeId, string? SeedItemId, double SeedOnShakeChance, double SeedOnChopChance,
-    bool DropsWood, IReadOnlyList<RawWildTreeDrop> ChopItems);
+    bool DropsWood, IReadOnlyList<RawWildTreeDrop> ChopItems, bool SeedPlantable = true);
 
 /// <summary>One Data/WildTrees ChopItems row.</summary>
 public sealed record RawWildTreeDrop(string ItemId, double Chance, Season? Season);

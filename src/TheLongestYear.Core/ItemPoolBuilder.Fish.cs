@@ -58,7 +58,8 @@ public static partial class ItemPoolBuilder
             SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, locationSeasons);
             if (reading.Verdict == SeasonVerdict.Impossible)
                 continue; // the row never fires: it proves neither a season nor a place
-            IReadOnlyList<Season> seasons = reading.Seasons;
+            if (SeasonsLeftOnMap(reading.Seasons, spawn.Location, locationWeeks) is not IReadOnlyList<Season> seasons)
+                continue; // every season it names is over before its map opens
             if (seasons.Count == 0)
                 anySeasonById.Add(id); // one any-season spawn makes the item any-season
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
@@ -153,7 +154,7 @@ public static partial class ItemPoolBuilder
 
             SeasonReading reading = ReadSpawnSeasons(spawn.Season, spawn.Condition, spawn.Location, festivalSeasons, locationSeasons);
             if (reading.Verdict == SeasonVerdict.Impossible) continue;   // never fires
-            IReadOnlyList<Season> seasons = reading.Seasons;
+            if (SeasonsLeftOnMap(reading.Seasons, spawn.Location, locationWeeks) is not IReadOnlyList<Season> seasons) continue;
             if (seasons.Count == 0) anySeasonById.Add(id);
             if (!seasonsById.TryGetValue(id, out List<Season>? list))
                 seasonsById[id] = list = new List<Season>();
@@ -170,5 +171,24 @@ public static partial class ItemPoolBuilder
             return MakeItem(id, objects, tuning,
                 anySeasonById.Contains(id) ? Array.Empty<Season>() : SortedSeasons(seasonsById[id]), locs);
         }));
+    }
+    /// <summary>The seasons a spawn row proves, given the week its map opens: only those a year-1 player can
+    /// still fish there. A row's seasons and its map's week belong together; read apart (the item's seasons
+    /// unioned, its easiest map taken), Sunberry Village's seasonless Midnight Carp rows on mine levels that
+    /// open in week 9 made the carp a week-1, any-season fish (Celjhyn, Nexus, 2026-11-07). Empty = any
+    /// season; null = none left, so the row proves nothing. The map's earliest week over the modes counts. A map
+    /// the walk cannot date, or no walk at all,
+    /// leaves the row as it reads.</summary>
+    internal static IReadOnlyList<Season>? SeasonsLeftOnMap(IReadOnlyList<Season> seasons, string? location, LocationWeeks? weeks)
+    {
+        if (weeks == null || string.IsNullOrEmpty(location) || !weeks.TryGet(location, out PlaceWeek place))
+            return seasons;
+        // The earliest any mode stands there: the pools serve every mode, and a map an Extreme run opens
+        // sooner (the Desert: week 9 pacing, 3 on Extreme) keeps the seasons that run can fish.
+        Season opens = AvailabilityWeeks.SeasonOf(Math.Min(place.Week, Math.Min(place.Hard, place.Extreme)));
+        if (opens == Season.Spring) return seasons;
+        IEnumerable<Season> named = seasons.Count == 0 ? Enum.GetValues<Season>() : seasons;
+        List<Season> left = named.Where(s => s >= opens).ToList();
+        return left.Count == 0 ? null : left;
     }
 }
