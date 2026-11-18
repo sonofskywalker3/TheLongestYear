@@ -36,18 +36,23 @@ namespace TheLongestYear.Loop
             // re-rolls when it is next opened (SpecialOrdersBoard ctor, forceRefresh: false) or on the
             // next Monday's refresh, seeded from the new loop's uniqueID and DaysPlayed.
             SpecialOrder.RemoveAllSpecialOrders(SpecialOrderResetRules.TownOrderType);
+            // Sword and Sorcery's guild board, the same way (its offer re-rolls with the town board's).
+            SpecialOrder.RemoveAllSpecialOrders(SnsUnlocks.BoardOrderType);
 
-            // Forget completed town orders so the non-repeatable ones come back.
-            // Stardew Valley Expanded's story orders too, except one a bought keep holds done.
+            // Forget completed town orders so the non-repeatable ones come back. Stardew Valley
+            // Expanded's and Sword and Sorcery's story orders too, except one a bought keep holds
+            // done; a kept one missing from the record is added, so its scene cannot hand it out.
             IReadOnlySet<string> keepCompleted =
-                SveUnlocks.KeptCompletedOrders(id => UpgradeChecker.HasUpgrade?.Invoke(id) == true);
+                SpecialOrderResetRules.KeptCompletedOrders(id => UpgradeChecker.HasUpgrade?.Invoke(id) == true);
             List<string> forget = SpecialOrderResetRules.CompletedToForget(
                 team.completedSpecialOrders, LoadOrderTypes(monitor), keepCompleted);
             foreach (string id in forget)
                 team.completedSpecialOrders.Remove(id);
+            foreach (string id in SpecialOrderResetRules.KeptToRecord(team.completedSpecialOrders, keepCompleted))
+                team.completedSpecialOrders.Add(id);
 
             monitor.Log(
-                $"In-place reset: special orders: dropped {dropped} town or Stardew Valley Expanded story order(s), " +
+                $"In-place reset: special orders: dropped {dropped} town or mod story order(s), " +
                 $"cleared the town board's offer, forgot {forget.Count} completed order(s). Qi and other boards untouched.",
                 LogLevel.Info);
         }
