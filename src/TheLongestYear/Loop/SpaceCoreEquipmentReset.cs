@@ -41,8 +41,9 @@ namespace TheLongestYear.Loop
             _monitor = monitor;
         }
 
-        /// <summary>Empty every SpaceCore custom equipment slot <paramref name="p"/> has.</summary>
-        public void Apply(Farmer p)
+        /// <summary>Empty every SpaceCore custom equipment slot <paramref name="p"/> has, except worn
+        /// gear (not a weapon or tool) when <paramref name="keepWornGear"/> (Keep Worn Gear owned).</summary>
+        public void Apply(Farmer p, bool keepWornGear)
         {
             try
             {
@@ -65,7 +66,7 @@ namespace TheLongestYear.Loop
                 foreach (string slot in slots.Keys.ToList())
                 {
                     Item item = slots[slot];
-                    if (item == null)
+                    if (item == null || WornGearKeep.KeepsModSlotItem(keepWornGear, item is Tool))
                         continue;
                     slots[slot] = null;
                     cleared.Add($"{slot} ({item.DisplayName})");

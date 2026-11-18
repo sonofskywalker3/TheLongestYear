@@ -23,9 +23,11 @@ public class CustomSkillResetTests
     public void AmountToZero_IsTheNegativeOfTheXp(int xp, int expected)
         => Assert.Equal(expected, CustomSkillReset.AmountToZero(xp));
 
-    [Fact]
-    public void DataKey_MatchesSmapisSaveDataKeyForSpaceCoreSkills()
-        => Assert.Equal("smapi/mod-data/spacechase0.spacecore/skills", CustomSkillReset.SpaceCoreSkillsDataKey);
+    [Theory]
+    [InlineData("skills", "smapi/mod-data/spacechase0.spacecore/skills")]
+    [InlineData("dungeons", "smapi/mod-data/spacechase0.spacecore/spacechase0.spacecore_deepestdungeonlevels")]
+    public void DataKeys_MatchSmapisSaveDataKeysForSpaceCore(string which, string expected)
+        => Assert.Equal(expected, which == "skills" ? CustomSkillReset.SpaceCoreSkillsDataKey : CustomSkillReset.SpaceCoreDungeonDepthDataKey);
 
     [Fact]
     public void ZeroPlayer_ZeroesOnlyThatPlayer_KeepsFarmhands()

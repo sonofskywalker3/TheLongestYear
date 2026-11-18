@@ -13,4 +13,10 @@ public static class WornGearKeep
     /// claim). StatResetRules wipes it each loop; a kept trinket needs it back or it is worn but
     /// invisible and cannot be taken off.</summary>
     public const string TrinketSlotsStat = "trinketSlots";
+
+    /// <summary>Whether the rewind leaves an item in another mod's SpaceCore equipment slot. Keep
+    /// Worn Gear keeps what is worn there (Sword and Sorcery's armor) like boots, but a weapon or
+    /// tool is not worn gear (Jeff, 2026-11-18): Sword and Sorcery's offhand weapon is emptied every
+    /// rewind, as the inventory's weapons are.</summary>
+    public static bool KeepsModSlotItem(bool keepWornGear, bool isTool) => keepWornGear && !isTool;
 }

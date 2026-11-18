@@ -30,12 +30,13 @@ namespace TheLongestYear.Loop
         /// when unwired: only the vanilla skills reset.</summary>
         public System.Action<Farmer> ResetCustomSkills { get; set; }
 
-        /// <summary>Empties other mods' equipment slots with the worn gear (SpaceCoreEquipmentReset);
-        /// skipped with the rest of the worn gear when Keep Worn Gear is owned. Null when unwired.</summary>
-        public System.Action<Farmer> ResetModEquipment { get; set; }
+        /// <summary>Empties other mods' equipment slots (SpaceCoreEquipmentReset). The flag is Keep
+        /// Worn Gear: when owned, worn items stay but weapons and tools are still emptied
+        /// (WornGearKeep.KeepsModSlotItem). Null when unwired.</summary>
+        public System.Action<Farmer, bool> ResetModEquipment { get; set; }
 
         /// <summary>Takes other mods' saved world progress back to a fresh game (DeepWoodsRewind,
-        /// UnlockableBundlesRewind).
+        /// UnlockableBundlesRewind, SpaceCoreDungeonRewind).
         /// Null when unwired.</summary>
         public System.Action<Farmer> ResetOtherModProgress { get; set; }
 
@@ -123,9 +124,10 @@ namespace TheLongestYear.Loop
                 for (int i = 0; i < p.trinketItems.Count; i++)
                     p.trinketItems[i] = null;
                 p.trinketItems.Clear();
-                // Slots other mods add through SpaceCore (Sword and Sorcery's offhand weapon).
-                ResetModEquipment?.Invoke(p);
             }
+            // Slots other mods add through SpaceCore (Sword and Sorcery's armor and offhand weapon).
+            // Outside the block above: a weapon there is emptied even when Keep Worn Gear is owned.
+            ResetModEquipment?.Invoke(p, baseline.KeepWornGear);
 
             // Run-scoped per-farmer progress the reset never covered (same audit):
             //  - slayer kill counts persist while the Gil_* reward mail is wiped below, so loop 2

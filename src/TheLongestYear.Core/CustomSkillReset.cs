@@ -23,6 +23,12 @@ namespace TheLongestYear.Core
         /// Shape: <c>{ "&lt;multiplayerId&gt;": { "&lt;skillId&gt;": xp } }</c>.</summary>
         public static readonly string SpaceCoreSkillsDataKey = $"smapi/mod-data/{SpaceCoreModId}/skills".ToLowerInvariant();
 
+        /// <summary>The <c>Game1.CustomData</c> key of SpaceCore's deepest floor per dungeon (its save
+        /// key "spacechase0.SpaceCore_DeepestDungeonLevels", DungeonImpl.cs): the stops its dungeons'
+        /// elevators offer, Sword and Sorcery's Deep Dark among them. Shape: <c>{ "&lt;dungeonId&gt;": floor }</c>.</summary>
+        public static readonly string SpaceCoreDungeonDepthDataKey =
+            $"smapi/mod-data/{SpaceCoreModId}/{SpaceCoreModId}_DeepestDungeonLevels".ToLowerInvariant();
+
         /// <summary>The skills to wipe from SpaceCore's own list: each id once, blanks dropped,
         /// in SpaceCore's order. Null (no SpaceCore API) means none.</summary>
         public static IReadOnlyList<string> SkillsToReset(IEnumerable<string>? customSkills)
