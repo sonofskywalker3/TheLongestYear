@@ -25,10 +25,12 @@ namespace TheLongestYear
         {
             var deepWoodsRewind = new DeepWoodsRewind(this.Helper.ModRegistry, this.Monitor);
             var bundlesRewind = new UnlockableBundlesRewind(this.Helper.ModRegistry, this.Monitor);
+            var dungeonRewind = new SpaceCoreDungeonRewind(this.Helper.ModRegistry, this.Monitor);
             void ResetOtherModProgress(Farmer farmer)
             {
                 deepWoodsRewind.Apply(farmer);
                 bundlesRewind.Apply(farmer);
+                dungeonRewind.Apply(farmer);
             }
             _ccUnlock = new CommunityCenterUnlock(this.Monitor);
             _ccUnlock.Apply();

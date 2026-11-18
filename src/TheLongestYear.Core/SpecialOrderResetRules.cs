@@ -12,7 +12,8 @@ namespace TheLongestYear.Core;
 /// Rule: every town order (OrderType "", the board outside Mayor Lewis's house) is dropped, in progress or
 /// finished-but-unclaimed; the board's offer and its "already took one this week" mark are cleared
 /// so it re-rolls; completed town orders are forgotten so they can come back. Stardew Valley Expanded's story orders
-/// go the same way (<see cref="IsRewoundOrder"/>). Mr. Qi's orders and
+/// go the same way, and so do Sword and Sorcery's story orders and its guild board's orders
+/// (<see cref="IsRewoundOrder"/>). Mr. Qi's orders and
 /// any other board type (the Desert Festival's Marlon board) are left as they are. A completed id
 /// with no Data/SpecialOrders row (a removed mod) is left too: it can never be offered either way.
 /// </para>
@@ -29,7 +30,29 @@ public static class SpecialOrderResetRules
     /// Stardew Valley Expanded's story orders (<see cref="SveUnlocks"/>: SVE hands those out again
     /// once their opening scene has replayed, and left completed they could never come back).</summary>
     public static bool IsRewoundOrder(string? orderType)
-        => IsTownOrder(orderType) || orderType == SveUnlocks.StoryOrderType;
+        => IsTownOrder(orderType) || orderType == SveUnlocks.StoryOrderType
+           || orderType == SnsUnlocks.EventOrderType || orderType == SnsUnlocks.BoardOrderType;
+
+    /// <summary>Completed orders every owned keep leaves completed (Keep Grandpa's Shed, Keep Coastal Guild).</summary>
+    public static IReadOnlySet<string> KeptCompletedOrders(Func<string, bool> hasUpgrade)
+    {
+        var kept = new HashSet<string>(SveUnlocks.KeptCompletedOrders(hasUpgrade), StringComparer.Ordinal);
+        kept.UnionWith(SnsUnlocks.KeptCompletedOrders(hasUpgrade));
+        return kept;
+    }
+
+    /// <summary>Kept orders missing from <c>team.completedSpecialOrders</c>, to add: a kept order must
+    /// read as done even when the record lacks it, or a replayed scene hands it out again.</summary>
+    public static List<string> KeptToRecord(IEnumerable<string> completed, IReadOnlySet<string> kept)
+    {
+        var have = new HashSet<string>(completed ?? Array.Empty<string>(), StringComparer.Ordinal);
+        var add = new List<string>();
+        foreach (string id in kept ?? new HashSet<string>())
+            if (!have.Contains(id))
+                add.Add(id);
+        add.Sort(StringComparer.Ordinal);
+        return add;
+    }
 
     /// <summary>The completed order ids to remove from <c>team.completedSpecialOrders</c>.</summary>
     /// <param name="completed">Every id in <c>completedSpecialOrders</c>.</param>

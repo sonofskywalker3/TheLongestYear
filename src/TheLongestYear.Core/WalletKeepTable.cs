@@ -100,6 +100,7 @@ public static class WalletKeepTable
         => upgradeId == UnicornKeepId ? DeepWoodsStateReset.DeepWoodsModId
             : SveUnlocks.IsSveRow(upgradeId) ? SveUnlocks.ModId
             : SdsUnlocks.IsSdsRow(upgradeId) ? SdsUnlocks.ModId
+            : SnsUnlocks.IsSnsRow(upgradeId) ? SnsUnlocks.ModId
             : null;
 
     public static WalletKeep? TryGet(string upgradeId) => Entries.FirstOrDefault(e => e.UpgradeId == upgradeId);

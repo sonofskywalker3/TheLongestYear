@@ -1,0 +1,92 @@
+{
+  "UniqueId": "DN.SnS",
+  "CheckedVersion": "2.3.10",
+  "Notes": "Sword and Sorcery 2.3.10, both packs (DN.SnS, the content pack, and KCC.SnS, its C# half) at default config, always beside East Scarp 3.0.9, which it requires; the C# half was read from a decompile (Reference/SwordAndSorcery-2.3.10-decompile). | Coastal Guild: Mateo's 8-heart scene SnS.Ch1.Mateo.11 hands out the order Mateo.SpecialOrders.BuildGuild (500 Wood, 300 Stone, 100 Hardwood at Robin's; BuildQuest.json), whose reward mail Mateo_SpecialOrders_BuildGuildMail swaps the tent's warp on EastScarp_Village for the guild's door (MapPatches.json). Eight hearts is week 9 by TLY's heart table and the order takes about a week, so EastScarp_CoastalGuild is linked from the Village and held to week 10; the door only exists after the order, so the way was read from the map patch, not walked. | EastScarp_MateoHome: reached on day 1 through the tent's warp, which the guild's patch removes; linked from the Village so the walk reads the same before and after the guild is built (nothing TLY reads is in it). | EastScarp_Underforge: its warp in the guild appears after SnS.Ch1.Mateo.18, which needs Mateo.14 (ten hearts, week 12, on a Friday, after the guild); linked from the guild and held to week 13. Its Lava Eel row is no earlier than the mines' Lava Eel. | ShopPlacements: the guild's artifact ledger (DN.SnS_CAGArtifactLedger) is on the guild's map, and Lion's Mane's two counters (DN.SnS_LMCafe, DN.SnS_LMArmory) are on the map patches that repair it, so each shop is named at its map. | YearTwoMaps: every map past the Underforge is year 2. The Druid Tower, Druid Grove and Hector's Forest open in Hector's chain, which starts only after Mateo's ten-heart scene; the van and Lion's Mane in Cirrus's chain (Chapter 3); the Deep Dark, its floors and the Duskspire lair after SnS.Ch4.Dandelion.7; the Pocket Dimension through a Witchcraft spell (Chapter 4). Scene-only maps (river stages, date and lava mines, intro mine, planetarium, Solomon's cavern, the festival grounds) have no door and stay unreached. | YearTwoShops: Lion's Mane's cafe and armory (after Cirrus.12 and Cirrus's Lion's Mane order, Chapter 3). | NotYearOne, the druidic crops: TLY dates a crop from its seasons when no shop sells its seed, but every druidic seed is crafted from Druidic Essence, which drops only after SnS.Ch2.Hector.12 (CropHarvestDropEssencesPatch, ScytheDropEssencesPatch, HoeDirtCreationDropEssencesPatch1), and each seed recipe is taught by a Druidics level (DruidicsSkill.cs), Hector's chain, year 2. The Glowing Huckleberry sapling read as sold daily for the same reason. | NotYearOne, the ten ginger beers: the Old Fashioned Fermenter's recipe is taught only by a Chapter 4 scene (EventsData_Ch4.json, MarkCraftingRecipeKnown), so its outputs are year 2 though their fruit is year 1. | YearRulings NeverSell: the Stygium ore stones are Deep Dark litter, not items; the Sweet Tea Leaves seed recipe unlocks on event SnS.Ch3.Dandelion.3, which the mod never defines, and no skill teaches it, so the leaves and the Ancient Sweet Tea are never made; the Duskspire Heart, the Adventurer's Guild badge, the pressed crocus and the keychain are one-time rewards. | Pure ores and exquisite gems: the C# changes a vanilla ore drop from a broken stone into its pure ore (15%) from Artificer level 2, and a gem into its exquisite gem (25%) from level 4 (Game1ChangeGemToExquisitePatch); the Artificer class needs Mateo.18 (week 13 at best) and two to four levels of its XP, so they are left with no year-1 route (year 2 for the cart), as are the armour pieces made from them. | Essences: the four elemental essences drop only after SnS.Ch4.Roslin.1 (ModTOP.cs), Druidic Essence after Hector.12: no year-1 route. | Violet Moon dishes: the letter DN.SnS_FaireFoodMail teaches their recipes on day 4 (trigger DN.SnS_VMRecipeLetter); TLY dates the recipes later (week 5), which a ruling cannot move earlier, so they are left as derived. | Data the mod adds only after a scene (the Deep Dark forage objects, the Water Essence crab pot row, the class books in the Bookseller lists, the wild mushroom tree, shop lines behind Dandelion.7) is not in the ids file, so it is ignored; the Bookseller rows are vanilla's, edited after a class scene, so a save past one computes its answers once.",
+  "YearRulings": {
+    "(O)DN.SnS_StygiumOreStone": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone1": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone2": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone3": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone4": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone5": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone6": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone8": "NeverSell",
+    "(O)DN.SnS_StygiumOreStone9": "NeverSell",
+    "(O)DN.SnS_ancientsweettealeaves.seed": "NeverSell",
+    "(O)DN.SnS_ancientsweettealeaves": "NeverSell",
+    "(O)DN.SnS_ancientsweettea": "NeverSell",
+    "(O)DN.SnS_DuskspireHeart": "NeverSell",
+    "(O)DN.SnS_adventureguildbadge": "NeverSell",
+    "(O)DN.SnS_pressedcrocus": "NeverSell",
+    "(O)DN.SnS_destykeychain": "NeverSell"
+  },
+  "NotYearOne": [
+    "(O)DN.SnS_ancientamaranth",
+    "(O)DN.SnS_ancientepiphyticfern",
+    "(O)DN.SnS_glowingpolyporemushrooms",
+    "(O)DN.SnS_ancientwildfairyrose",
+    "(O)DN.SnS_ancientelderberry",
+    "(O)DN.SnS_ancientbottlegourd",
+    "(O)DN.SnS_ancientgiantappleberry",
+    "(O)DN.SnS_ancientazuredetura",
+    "(O)DN.SnS_ancientglowinghuckleberry.seed",
+    "(O)DN.SnS_ancientsweettealeaves",
+    "(O)DN.SnS_ancientappleberrygingerbeer",
+    "(O)DN.SnS_ancientelderberrygingerbeer",
+    "(O)DN.SnS_ancientfruitgingerbeer",
+    "(O)DN.SnS_blueberrygingerbeer",
+    "(O)DN.SnS_orangegingerbeer",
+    "(O)DN.SnS_peachgingerbeer",
+    "(O)DN.SnS_rhubarbgingerbeer",
+    "(O)DN.SnS_strawberrygingerbeer",
+    "(O)DN.SnS_pineapplegingerbeer",
+    "(O)DN.SnS_ancienthuckleberrygingerbeer"
+  ],
+  "YearTwoMaps": {
+    "EastScarp_DruidTower": "YearTwo",
+    "EastScarp_DruidGrove": "YearTwo",
+    "EastScarp_HectorForest": "YearTwo",
+    "EastScarp_VanInterior": "YearTwo",
+    "EastScarp_LionsMane": "YearTwo",
+    "EastScarp_DeepDarkEntrance": "YearTwo",
+    "EastScarp_DeepDarkDungeon": "YearTwo",
+    "EastScarp_DuskspireLair": "YearTwo",
+    "EastScarp_PocketDimension": "YearTwo"
+  },
+  "YearTwoShops": {
+    "DN.SnS_LMCafe": "YearTwo",
+    "DN.SnS_LMArmory": "YearTwo"
+  },
+  "MapLinks": [
+    {
+      "From": "EastScarp_Village",
+      "To": "EastScarp_MateoHome"
+    },
+    {
+      "From": "EastScarp_Village",
+      "To": "EastScarp_CoastalGuild"
+    },
+    {
+      "From": "EastScarp_CoastalGuild",
+      "To": "EastScarp_Underforge"
+    }
+  ],
+  "MapWeeks": {
+    "EastScarp_CoastalGuild": 10,
+    "EastScarp_Underforge": 13
+  },
+  "ShopPlacements": [
+    {
+      "ShopId": "DN.SnS_CAGArtifactLedger",
+      "LocationName": "EastScarp_CoastalGuild"
+    },
+    {
+      "ShopId": "DN.SnS_LMCafe",
+      "LocationName": "EastScarp_LionsMane"
+    },
+    {
+      "ShopId": "DN.SnS_LMArmory",
+      "LocationName": "EastScarp_LionsMane"
+    }
+  ]
+}

@@ -25,4 +25,12 @@ public class WornGearKeepTests
         Assert.True(RunBaselineBuilder.Build(owned, new RunState(), PlayerSnapshot.Empty, 500).KeepWornGear);
         Assert.False(RunBaselineBuilder.Build(new MetaState(), new RunState(), PlayerSnapshot.Empty, 500).KeepWornGear);
     }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    public void Mod_slot_item_is_kept_only_when_worn_gear_is_kept_and_it_is_not_a_weapon(bool keepWornGear, bool isTool, bool kept)
+        => Assert.Equal(kept, WornGearKeep.KeepsModSlotItem(keepWornGear, isTool));
 }
