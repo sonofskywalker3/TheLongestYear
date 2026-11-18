@@ -23,7 +23,15 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.46
+## What's New in 1.2.47
+
+**New: Alchemistry is supported.** The Longest Year now knows Alchemistry's items, machines, potions and Mage's Rest, and when each can first be reached in a year. Mage's Rest opens a few days into each loop, once the Wizard's letter arrives. Machines and dishes taught by letter count from the letter's skill level or friendship, and dishes that only the Apothecary Cauldron makes count from when you can build the cauldron. It also knows how Alchemistry sits beside Stardew Valley Expanded. Thanks to Celjhyn.
+
+**Fixed: base-game fish asked for in large numbers with Alchemistry.** The board didn't know Alchemistry adds its own fish to the same waters, so it expected more of the usual fish from each cast than you really get. Those asks are now smaller, for example Smallmouth Bass in Spring. Thanks to Celjhyn.
+
+**Fixed: a fish pond that asks for something the fish itself lists was never counted.** With Sunberry Village, the Barkfish and Bonbon Fish ponds now count, so Moss and Cranberry Candy can be asked for from week 5.
+
+## 1.2.46
 
 **New: Sword and Sorcery is supported.** The Longest Year now knows Sword and Sorcery's items, shops, crops and maps, and when each can first be reached. Most of the mod sits behind its later chapters, so it waits for year 2. The Coastal Guild counts from week 10 and the Underforge from week 13. Thanks to Celjhyn.
 
