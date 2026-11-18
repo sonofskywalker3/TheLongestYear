@@ -54,13 +54,16 @@ namespace TheLongestYear.Loop
             bool filter = _known != null && !Unfiltered;
             bool pin = asset == FishAsset && _fishData.Count > 0 && raw is Dictionary<string, string>;
             _dataFields.TryGetValue(asset, out IReadOnlyDictionary<string, IReadOnlyDictionary<string, System.Text.Json.JsonElement>> fieldPins);
-            if (!filter && !pin && fieldPins == null) return raw;
+            _recipeUnlocks.TryGetValue(asset, out IReadOnlyDictionary<string, string> unlockPins);
+            bool unlocks = unlockPins != null && raw is Dictionary<string, string>;
+            if (!filter && !pin && fieldPins == null && !unlocks) return raw;
             // A filtered copy and an unfiltered one of the same asset are different readings.
             ConditionalWeakTable<object, object> copies = filter ? Filtered : PinnedOnly;
             if (copies.TryGetValue(raw, out object had)) return (T)had;
             T kept = filter ? AssetIds.Filter(asset, raw, _known, id => DroppedIds.Add(id)) : raw;
             if (pin) kept = (T)(object)PinnedFishData.Apply((Dictionary<string, string>)(object)kept, _fishData);
             if (fieldPins != null) kept = (T)PinnedDataFields.Apply(kept, fieldPins);
+            if (unlocks) kept = (T)(object)PinnedRecipeUnlocks.Apply(asset, (Dictionary<string, string>)(object)kept, unlockPins);
             copies.Add(raw, kept);
             return kept;
         }
@@ -84,6 +87,26 @@ namespace TheLongestYear.Loop
                 PinnedOnly.Clear();
             }
         }
+
+        private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> _recipeUnlocks
+            = new Dictionary<string, IReadOnlyDictionary<string, string>>();
+
+        /// <summary>Recipe unlocks the installed layers name (<see cref="PinnedRecipeUnlocks"/>), by asset
+        /// then recipe key: read in place of the data's unlock, filtered or not. Setting it forgets every copy.</summary>
+        public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> RecipeUnlocks
+        {
+            get => _recipeUnlocks;
+            set
+            {
+                _recipeUnlocks = value ?? new Dictionary<string, IReadOnlyDictionary<string, string>>();
+                Filtered.Clear();
+                PinnedOnly.Clear();
+            }
+        }
+
+        /// <summary>Cooking recipes the installed layers say only a station makes, by recipe key, the
+        /// station's qualified id as the value (<see cref="LayerInputs.ExclusiveCookingStations"/>).</summary>
+        public static IReadOnlyDictionary<string, string> CookingStations { get; set; } = new Dictionary<string, string>();
 
         /// <summary>Data/Fish rows the installed layers pin (<see cref="PinnedFishData"/>): read in
         /// place of the game's row for that fish, filtered or not. Setting it forgets every copy.</summary>

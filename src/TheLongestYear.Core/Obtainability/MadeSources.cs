@@ -191,7 +191,7 @@ public static class MadeSources
             bool replacesTheGuess = episode != NoEpisode && TaughtElsewhere(recipe) && !taughtByShop;
             if (!replacesTheGuess)
             {
-                ObtainConditions conditions = UnlockConditions(recipe, taughtByShop);
+                ObtainConditions conditions = AtStation(UnlockConditions(recipe, taughtByShop), recipe);
                 foreach (string output in outputs)
                     foreach (ObtainSource s in needed.Emit(kind, t => taughtTable == null ? t : t.Latest(taughtTable),
                         conditions, $"recipe {recipe.Name}", luck: oneAtRandom))
@@ -204,11 +204,11 @@ public static class MadeSources
             bool yearTwo = episode > EpisodesInYearOne;
             int airDay = Calendar.DaysPerWeek * episode;
             DayTable tvTable = yearTwo ? DayTable.Always : DayTable.Available(day => day >= airDay);
-            ObtainConditions tvConditions = ObtainConditions.None with
+            ObtainConditions tvConditions = AtStation(ObtainConditions.None with
             {
                 Requires = new[] { "recipe:" + recipe.Name, $"unlock:Queen of Sauce episode {episode} (Sunday of week {episode})" },
                 YearTwo = yearTwo,
-            };
+            }, recipe);
             foreach (string output in outputs)
                 foreach (ObtainSource s in needed.Emit(kind, t => t.Latest(tvTable), tvConditions,
                     $"recipe {recipe.Name} taught by the Queen of Sauce", luck: oneAtRandom))
@@ -322,6 +322,10 @@ public static class MadeSources
         => tags.Count > 0 && tags.All(tag => tag.StartsWith(NotTag, StringComparison.Ordinal)
             ? !item.ContextTags.Contains(tag.Substring(1))
             : item.ContextTags.Contains(tag));
+
+    /// <summary>A dish only a station makes names the station, as a machine route names its machine.</summary>
+    private static ObtainConditions AtStation(ObtainConditions conditions, RecipeRow recipe)
+        => recipe.Station == null ? conditions : conditions with { Requires = conditions.Requires.Append("machine:" + recipe.Station).ToList() };
 
     private static ObtainConditions UnlockConditions(RecipeRow recipe, bool taughtByShop)
     {

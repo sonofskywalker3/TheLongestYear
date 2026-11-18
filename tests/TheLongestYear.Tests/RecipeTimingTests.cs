@@ -124,4 +124,32 @@ public class RecipeTimingTests
         Assert.Equal(AvailabilityWeeks.KitchenWeek, result!.EarliestWeek);
         Assert.DoesNotContain(CookedDishAvailability.SneakPeekBasisMarker, result.Basis);
     }
+
+    /// <summary>Alchemistry's dishes cook only at its Apothecary Cauldron (a Better Crafting station
+    /// with exclusive recipes): such a dish is dated from the station, read as a machine, and the
+    /// kitchen neither floors its week nor moves its effort; a station no first-year player can get
+    /// leaves the dish unplaced.</summary>
+    [Theory]
+    [InlineData("s Farming 2", 2, 1)]
+    [InlineData("s Mining 8", 7, 3)]
+    public void A_dish_only_a_station_makes_is_dated_from_the_station(string stationUnlock, int week, int stationEffort)
+    {
+        var lye = new RawCookingRecipe("ModA_Lye", new[] { "(O)ModA_Dust" }, "(O)ModA_Lye", "default") { Station = "(BC)ModA_Cauldron" };
+        var data = new EffortData
+        {
+            CookingRecipes = new List<RawCookingRecipe> { lye },
+            MachineUnlocks = new Dictionary<string, string> { ["(BC)ModA_Cauldron"] = stationUnlock },
+        };
+        int? EffortOf(string id) => id == "(O)ModA_Dust" ? 2 : null;
+        int? WeekOf(string id) => id == "(O)ModA_Dust" ? 1 : null;
+        ItemEffort? without = CookedDishAvailability.Derive("(O)ModA_Lye", data, EffortOf, hasKitchen: false, WeekOf, DifficultyStep.Normal);
+        ItemEffort? with = CookedDishAvailability.Derive("(O)ModA_Lye", data, EffortOf, hasKitchen: true, WeekOf, DifficultyStep.Normal);
+        Assert.Equal(week, without!.EarliestWeek);
+        Assert.Equal(2 + stationEffort, without.Effort);
+        Assert.Equal(without.Effort, with!.Effort);
+        Assert.Equal(without.Effort, CookedDishAvailability.EffortWithoutKitchen(lye, data, EffortOf));
+
+        var unreachable = new EffortData { CookingRecipes = data.CookingRecipes };
+        Assert.Null(CookedDishAvailability.Derive("(O)ModA_Lye", unreachable, EffortOf, hasKitchen: true, WeekOf, DifficultyStep.Normal)!.EarliestWeek);
+    }
 }

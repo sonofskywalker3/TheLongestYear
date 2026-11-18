@@ -249,6 +249,18 @@ Two more tools go with them:
      served the shipped answers. An event that adds a door or a shop counter is handled in the map fields instead:
      link the map (`MapLinks`) and hold it to its week (`MapWeeks`), or flag it (`YearTwoMaps`), and name the shop's
      place (`ShopPlacements`), so the walk reads the same either way.
+   - **`RecipeUnlocks`** name the unlock of a recipe the mod teaches by a letter or a scene, whose data unlock is
+     `null` or `mail`: `{ "Data/CraftingRecipes": { "<recipe key>": "s Fishing 2" }, "Data/CookingRecipes": { "<key>":
+     "f Clint 2" } }`, in the game's own unlock words (`default`, `s <Skill> <level>`, `f <NPC> <hearts>`). Every reader
+     sees that unlock in place of the data's, as vanilla's own letter- and event-taught recipes are read
+     (`MadeSources.EventTaughtUnlocks`): a machine is dated from it instead of the special-order mail week (9), a dish
+     instead of "not in year 1". Write the gate the letter checks; when it checks two things (a day and a skill), name
+     the one that comes later and put the other in `Notes`, with a `WeekRulings` line where the day is later still.
+   - **`ExclusiveCookingStations`** name a station that alone makes some of the mod's dishes (a Better Crafting station
+     with `AreRecipesExclusive`): `{ "(BC)<station>": ["<cooking recipe key>", ...] }`. Those dishes are dated from the
+     station, read as a machine (its crafting recipe's unlock, `RecipeUnlocks` included), not from the kitchen
+     (week 6), the station's unlock replaces the kitchen in their effort whatever `keep_kitchen` says, and their
+     routes name `machine:<station>`. A recipe may be under one station only.
    - **`FestivalShops`** name a shop that opens only at a festival: `{ "<shop id>": "<festival id>" }`, the festival
      being a Data/Festivals key (`winter8`) or a Data/PassiveFestivals id. TLY knows vanilla's stalls by their
      `Festival_...` names; a mod's stall with another name reads as open all year until it is named here. Its lines

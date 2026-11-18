@@ -34,12 +34,15 @@ public static class ContextTagMatcher
     public static bool Matches(string bareId, RawObjectEntry obj, string tag)
     {
         if (obj == null || string.IsNullOrEmpty(tag)) return false;
+        // The game keeps the listed tags and the made ones in one set, compared without case
+        // (ItemContextTagManager 26-101), so a listed tag matches whatever the made one says.
+        if (obj.ContextTags != null && obj.ContextTags.Contains(tag, StringComparer.OrdinalIgnoreCase)) return true;
         if (CategoryTags.TryGetValue(tag, out int category)) return obj.Category == category;
         if (tag.StartsWith(ObjectIdTagPrefix, StringComparison.Ordinal))
             return string.Equals(tag.Substring(ObjectIdTagPrefix.Length), bareId, StringComparison.OrdinalIgnoreCase);
         if (tag.StartsWith(ItemTagPrefix, StringComparison.Ordinal))
             return tag == ItemTag(obj.Name);
-        return obj.ContextTags != null && obj.ContextTags.Contains(tag);
+        return false;
     }
 
     public static string ItemTag(string name)

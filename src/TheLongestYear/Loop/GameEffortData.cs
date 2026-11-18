@@ -196,7 +196,10 @@ namespace TheLongestYear.Loop
                     List<int> counts = pairs.Select(p => p.Count).ToList();
                     string output = fields[RecipeOutputField].Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
                     if (string.IsNullOrEmpty(output)) continue;
-                    cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim(), counts));
+                    cooking.Add(new RawCookingRecipe(kv.Key, ingredients, BundleParsing.NormalizeItemId(output), fields[CookingUnlockField].Trim(), counts)
+                    {
+                        Station = KnownData.CookingStations.TryGetValue(kv.Key, out string station) ? station : null,
+                    });
                 }
 
                 foreach (var kv in KnownData.Load<Dictionary<string, FarmAnimalData>>("Data/FarmAnimals"))

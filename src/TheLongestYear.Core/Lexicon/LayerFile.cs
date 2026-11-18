@@ -100,6 +100,19 @@ public sealed record LayerInputs(
     public IReadOnlyDictionary<string, string> FishData { get; init; }
         = new Dictionary<string, string>(StringComparer.Ordinal);
 
+    /// <summary>Unlocks for recipes the mod teaches by a letter or a scene, by asset
+    /// (<see cref="PinnedRecipeUnlocks.CraftingAsset"/> or <see cref="PinnedRecipeUnlocks.CookingAsset"/>)
+    /// then recipe key, written in the game's own unlock words ("s Fishing 2", "f Wizard 4"): read in
+    /// place of the data's "null" or "mail" (<see cref="PinnedRecipeUnlocks"/>).</summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> RecipeUnlocks { get; init; }
+        = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal);
+
+    /// <summary>Cooking stations that alone make some of the mod's dishes (a Better Crafting station
+    /// with exclusive recipes), by the station's qualified id, each with the cooking recipe keys it
+    /// makes: those dishes are dated from the station, not from the kitchen.</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> ExclusiveCookingStations { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+
     /// <summary>Ways the mod adds into a map this mod holds to a week by name (the Secret Woods behind
     /// its log, the Sewer behind its key): with the mod installed the map opens at the back door's week
     /// when that is earlier, in the map walk, the landing tables and the availability weeks alike.</summary>
@@ -196,6 +209,9 @@ public sealed record LayerRemovals(
 /// per variant like an answer set, an inputs file is small and carries them inline.</summary>
 public static class LayerFile
 {
+    /// <summary>The prefix of a qualified big craftable id: a cooking station is placed, so it is one.</summary>
+    private const string BigCraftableQualifier = "(BC)";
+
     public const string FolderRelativePath = "assets/lexicon/layers";
     public const string InputsSuffix = ".inputs.json";
     public const string AnswersSuffix = ".answers.json";
@@ -311,6 +327,20 @@ public static class LayerFile
             throw new System.Text.Json.JsonException("FestivalShops holds a blank shop id or a blank festival id.");
         if (read.FishData != null && read.FishData.Any(f => string.IsNullOrWhiteSpace(f.Key) || string.IsNullOrWhiteSpace(f.Value)))
             throw new System.Text.Json.JsonException("FishData holds a blank fish key or a blank row.");
+        if (read.RecipeUnlocks != null && read.RecipeUnlocks.Any(a => !PinnedRecipeUnlocks.UnlockFields.ContainsKey(a.Key ?? "") || a.Value == null
+                || a.Value.Any(r => string.IsNullOrWhiteSpace(r.Key) || string.IsNullOrWhiteSpace(r.Value) || r.Value.Contains('/'))))
+            throw new System.Text.Json.JsonException(
+                $"RecipeUnlocks holds an asset other than {string.Join(" or ", PinnedRecipeUnlocks.UnlockFields.Keys)}, a blank recipe key, or a blank unlock or one holding '/'.");
+        if (read.ExclusiveCookingStations != null)
+        {
+            if (read.ExclusiveCookingStations.Any(s => s.Key == null || !s.Key.StartsWith(BigCraftableQualifier, StringComparison.Ordinal)
+                    || s.Key.Length == BigCraftableQualifier.Length || s.Value == null || s.Value.Count == 0 || s.Value.Any(string.IsNullOrWhiteSpace)))
+                throw new System.Text.Json.JsonException("ExclusiveCookingStations holds a station id that is not a qualified big craftable id ((BC)...), or a station with no recipe or a blank one.");
+            string? twice = read.ExclusiveCookingStations.SelectMany(s => s.Value.Distinct(StringComparer.Ordinal))
+                .GroupBy(r => r, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1)?.Key;
+            if (twice != null)
+                throw new System.Text.Json.JsonException($"ExclusiveCookingStations names the recipe {twice} under two stations.");
+        }
         if (read.MapBackDoors != null)
             foreach (MapBackDoor door in read.MapBackDoors)
             {
@@ -340,6 +370,13 @@ public static class LayerFile
             FishData = read.FishData == null
                 ? new Dictionary<string, string>(StringComparer.Ordinal)
                 : new Dictionary<string, string>(read.FishData, StringComparer.Ordinal),
+            RecipeUnlocks = read.RecipeUnlocks == null
+                ? new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal)
+                : read.RecipeUnlocks.ToDictionary(a => a.Key,
+                    a => (IReadOnlyDictionary<string, string>)new Dictionary<string, string>(a.Value, StringComparer.Ordinal), StringComparer.Ordinal),
+            ExclusiveCookingStations = read.ExclusiveCookingStations == null
+                ? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
+                : new Dictionary<string, IReadOnlyList<string>>(read.ExclusiveCookingStations, StringComparer.Ordinal),
             MapBackDoors = read.MapBackDoors ?? Array.Empty<MapBackDoor>(),
             ExtraSources = read.ExtraSources == null
                 ? new Dictionary<string, IReadOnlyList<ObtainSource>>(StringComparer.Ordinal)
