@@ -293,6 +293,7 @@ namespace TheLongestYear
                 _config.ResendBetterStartGift,
                 this.Helper.ModRegistry.IsLoaded(SveUnlocks.ModId),
                 this.Helper.ModRegistry.IsLoaded(SdsUnlocks.ModId),
+                this.Helper.ModRegistry.IsLoaded(SbvUnlocks.ModId),
                 this.Monitor);
         }
 

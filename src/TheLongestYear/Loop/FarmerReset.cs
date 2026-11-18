@@ -96,6 +96,11 @@ namespace TheLongestYear.Loop
             // posts, 0.18.38).
             p.itemsLostLastDeath.Clear();
 
+            // Sunberry Village keeps the Golden Sunberry's growth in the host's mod data; its scenes and
+            // letters rewind with the loop, so the stage does too (SbvUnlocks).
+            foreach (string key in p.modData.Keys.Where(SbvUnlocks.IsRewoundModDataKey).ToList())
+                p.modData.Remove(key);
+
             // Worn equipment — the STAT-BEARING slots (boots/rings/trinkets) live in their own
             // slots, not p.Items, so the inventory wipe above misses them (2026-07-09 reset-leak
             // audit, Dusklight7: worn rings survived every loop). Farmer.Equip(null, slot) routes

@@ -39,6 +39,7 @@ namespace TheLongestYear.Loop
             bool resendBetterStartGift,
             bool sveInstalled,
             bool sdsInstalled,
+            bool sbvInstalled,
             IMonitor monitor)
         {
             if (!enabled)
@@ -149,6 +150,15 @@ namespace TheLongestYear.Loop
                     if (_ids.Add(id)) sdsMarkers++;
                 }
 
+            // Sunberry Village's Bottom, Golden Sunberry, Moonberry shop and Alpaca scenes (SbvUnlocks).
+            int sbvMarkers = 0;
+            if (sbvInstalled)
+                foreach (string id in SbvUnlocks.RewoundEventIds)
+                {
+                    if (exclude != null && exclude.Contains(id)) continue;
+                    if (_ids.Add(id)) sbvMarkers++;
+                }
+
             int grants = _ids.Count;
             // Chain roots: relationship-gated scenes (skipped by the re-seed, so they replay) and
             // the vanilla always-replayable ids. A scene gated "e <root>" replays with its root.
@@ -159,7 +169,7 @@ namespace TheLongestYear.Loop
                 $"Replayable-cutscene scan: flagged {grants} unlock-granting event id(s) " +
                 $"({markers} museum reward marker(s), {triggerMarkers} trigger action marker(s), " +
                 $"{powerMarkers} power scene(s), {sveMarkers} Stardew Valley Expanded unlock scene(s), " +
-                $"{sdsMarkers} Seven Deadly Sins unlock marker(s), " +
+                $"{sdsMarkers} Seven Deadly Sins unlock marker(s), {sbvMarkers} Sunberry Village unlock scene(s), " +
                 $"{timerIds.Count} countdown scene(s){(timerIds.Count > 0 ? " [" + string.Join(",", timerIds) + "]" : "")}) and " +
                 $"{_ids.Count - grants} chained follow-up(s) across {locationNames.Count} location(s).",
                 LogLevel.Trace);
