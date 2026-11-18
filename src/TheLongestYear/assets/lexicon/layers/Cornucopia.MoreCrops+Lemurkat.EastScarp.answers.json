@@ -53,7 +53,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -813,7 +813,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -874,7 +874,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -1634,7 +1634,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -1695,7 +1695,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -2466,7 +2466,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -2527,7 +2527,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -3298,7 +3298,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -3359,7 +3359,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -4130,7 +4130,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -4191,7 +4191,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -4962,7 +4962,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5023,7 +5023,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -5793,7 +5793,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -5854,7 +5854,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -6624,7 +6624,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "654b1565d9a98a0c",
+          "Inputs": "62357244594352fb",
           "YearTwoCropDishUnits": {
             "(O)213": 1,
             "(O)230": 1,
@@ -7130,7 +7130,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -7890,7 +7890,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -7997,7 +7997,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -8757,7 +8757,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -8864,7 +8864,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -9635,7 +9635,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -9742,7 +9742,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -10513,7 +10513,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -10620,7 +10620,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -11391,7 +11391,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -11498,7 +11498,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -12269,7 +12269,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -12376,7 +12376,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -13146,7 +13146,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -13253,7 +13253,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -14023,7 +14023,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "9cd0ec30e4db07b9",
+          "Inputs": "fbfaa6da264d2533",
           "MixedSeedBoardBases": {
             "(O)Cornucopia_Asparagus": {
               "Spring": [2.7249999999999996, 0, 0, 0],
@@ -14579,7 +14579,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -15339,7 +15339,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Easy|no_kitchen": {
@@ -15392,7 +15392,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -16152,7 +16152,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|kitchen": {
@@ -16205,7 +16205,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -16976,7 +16976,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|no_kitchen": {
@@ -17029,7 +17029,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -17800,7 +17800,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Hard|kitchen": {
@@ -17853,7 +17853,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -18624,7 +18624,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Hard|no_kitchen": {
@@ -18677,7 +18677,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -19448,7 +19448,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Normal|kitchen": {
@@ -19501,7 +19501,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -20271,7 +20271,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         },
         "Normal|no_kitchen": {
@@ -20324,7 +20324,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -21094,7 +21094,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "08ab1296ba2f4d21",
+          "Inputs": "377fa2173270f2fe",
           "YearTwoCropDishUnits": {}
         }
       },
@@ -21592,7 +21592,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -22352,7 +22352,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Easy|no_kitchen": {
@@ -22405,7 +22405,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -23165,7 +23165,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|kitchen": {
@@ -23218,7 +23218,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -23989,7 +23989,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Extreme|no_kitchen": {
@@ -24042,7 +24042,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 5, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -24813,7 +24813,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Hard|kitchen": {
@@ -24866,7 +24866,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -25637,7 +25637,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Hard|no_kitchen": {
@@ -25690,7 +25690,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -26461,7 +26461,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Normal|kitchen": {
@@ -26514,7 +26514,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -27284,7 +27284,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         },
         "Normal|no_kitchen": {
@@ -27337,7 +27337,7 @@
             "(O)382": {"Basis": "coal, mine rocks and the occasional node, floors 1 to 39, week 1, gate Spring, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)384": {"Basis": "gold ore, mine area 80, floors 81 to 119, week 3, gate Spring, effort 5", "EarliestSeason": "Spring", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring", "HardWeek": 3, "Mode": "Pacing", "Source": "Derived"},
             "(O)386": {"Basis": "iridium ore, mine area 121, Skull Cavern behind the bus repair, week 9, gate Fall, effort 8", "EarliestSeason": "Fall", "EarliestWeek": 9, "Effort": 8, "GateSeason": "Fall", "HardWeek": 6, "Mode": "Pacing", "Source": "Derived"},
-            "(O)682": {"Basis": "fish, week 7, spawns any season, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
+            "(O)682": {"Basis": "fish, week 7, spawns Summer/Fall/Winter, gated by location (Sewer), difficulty 80, level 0, weather both, window 20h, effort 5", "EarliestSeason": "Summer", "EarliestWeek": 7, "Effort": 5, "GateSeason": "Summer", "HardWeek": 7, "Mode": "Pacing", "Source": "Derived"},
             "(O)698": {"Basis": "fish, week 1, spawns any season, difficulty 78, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)699": {"Basis": "fish, week 1, spawns any season, difficulty 60, level 0, weather both, window 13h, effort 4", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 4, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
             "(O)700": {"Basis": "fish, week 1, spawns any season, difficulty 46, level 0, weather both, window 20h, effort 2", "EarliestSeason": "Spring", "EarliestWeek": 1, "Effort": 2, "GateSeason": "Spring", "HardWeek": 1, "Mode": "Pacing", "Source": "Derived"},
@@ -28107,7 +28107,7 @@
             "(O)TreasureTotem": {"Basis": "crafted Treasure Totem: hardest ingredient (O)709 (6) + unlock 'null' (1), recipe not in year 1, week unknown, effort 7", "Effort": 7},
             "(W)13": {"Basis": "guild reward, Insect Head, 125 cave insects, floors 1 to 39, week 3, effort 5", "EarliestWeek": 3, "Effort": 5, "GateSeason": "Spring"}
           },
-          "Inputs": "554710ce9d8762a4",
+          "Inputs": "285c5947af329784",
           "YearTwoCropDishUnits": {}
         }
       },

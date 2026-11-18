@@ -54,10 +54,34 @@ public static class FishCatchRates
     {
         if (inputs == null) throw new ArgumentNullException(nameof(inputs));
         Dictionary<string, CatchRate> result = Rates(inputs, inputs.LocationFish);
-        if (!inputs.LocationFish.Any(r => r.CompetitorOnly == true)) return result;
-        foreach (string id in Rates(inputs, inputs.LocationFish.Where(r => r.CompetitorOnly != true).ToList()).Keys)
-            if (!result.ContainsKey(id)) result[id] = new CatchRate(new double[SeasonNames.Length], 0);
+        if (inputs.LocationFish.Any(r => r.CompetitorOnly == true))
+            foreach (string id in Rates(inputs, inputs.LocationFish.Where(r => r.CompetitorOnly != true).ToList()).Keys)
+                if (!result.ContainsKey(id)) result[id] = new CatchRate(new double[SeasonNames.Length], 0);
+        foreach ((string id, int limit) in CatchLimits(inputs.LocationFish, inputs.Objects))
+            result[id] = (result.TryGetValue(id, out CatchRate? rate) ? rate : new CatchRate(new double[SeasonNames.Length], 0))
+                with { Weekly = new double[SeasonNames.Length], CatchLimit = limit };
         return result;
+    }
+
+    /// <summary>Fish whose every credited row carries a CatchLimit, with the largest: the game checks the
+    /// limit against the fish's own caught count, whichever row bites (GameLocation.cs 13811). A row with no
+    /// limit anywhere frees the fish. Rows the catch model leaves out (a bobber spot, a boss's pool) count
+    /// here too: they are where such fish live. Sunberry Village's Aberrant and Angler Jr., 2026-11-18.</summary>
+    private static IEnumerable<(string Id, int Limit)> CatchLimits(IReadOnlyList<LocationSpawn> fish, IReadOnlyDictionary<string, ObjInfo> objects)
+    {
+        var limits = new Dictionary<string, int>(StringComparer.Ordinal);
+        var unlimited = new HashSet<string>(StringComparer.Ordinal);
+        foreach (LocationSpawn row in SpawnSources.ExpandLocationFish(fish.Where(r => r.CompetitorOnly != true).ToList()))
+        {
+            if (string.IsNullOrWhiteSpace(row.ItemId)) continue;
+            // A query row counts for every fish it can give, as the catch model reads it.
+            foreach (string id in ItemQueries.Resolve(row.ItemId, objects).ItemIds)
+            {
+                if (row.CatchLimit <= 0) unlimited.Add(id);
+                else limits[id] = Math.Max(row.CatchLimit, limits.GetValueOrDefault(id));
+            }
+        }
+        return limits.Where(kv => !unlimited.Contains(kv.Key)).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value));
     }
 
     private static Dictionary<string, CatchRate> Rates(ObtainabilityInputs inputs, IReadOnlyList<LocationSpawn> fish)

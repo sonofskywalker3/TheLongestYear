@@ -123,4 +123,29 @@ public class OncePerLoopAsksTests
         Assert.Null(OncePerLoopAsks.RepairBundleValue("Book/O 421 1/(O)Book_Trash 1 0 (O)Book_Speed 2 0/3/2//Book"));
         Assert.Null(OncePerLoopAsks.RepairBundleValue("Vault/-1 2500 2500/4/1"));
     }
+
+    [Fact]
+    public void A_fish_the_stored_catch_model_limits_to_one_is_asked_for_once()
+    {
+        const string Boss = "(O)OncePerLoopAsksTests_Boss";
+        var rates = new Dictionary<string, CatchRate>
+        {
+            [Boss] = new(new double[4], 0, CatchLimit: 1),
+            ["(O)OncePerLoopAsksTests_Five"] = new(new double[4], 0, CatchLimit: 5),
+        };
+        Assert.False(OncePerLoopAsks.IsOncePerLoop(Boss));
+        OncePerLoopAsks.UseStoredCatchLimits(rates);
+        try
+        {
+            Assert.True(OncePerLoopAsks.IsOncePerLoop(Boss));
+            Assert.Equal(1, OncePerLoopAsks.ClampStack(Boss, 3, enabled: true));
+            Assert.False(OncePerLoopAsks.IsOncePerLoop("(O)OncePerLoopAsksTests_Five"));
+            Assert.True(OncePerLoopAsks.IsOncePerLoop("(O)163"));
+        }
+        finally
+        {
+            OncePerLoopAsks.UseStoredCatchLimits(null);
+        }
+        Assert.False(OncePerLoopAsks.IsOncePerLoop(Boss));
+    }
 }

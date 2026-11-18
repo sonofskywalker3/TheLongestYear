@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using TheLongestYear.Core.Obtainability;
+using Xunit;
 
 namespace TheLongestYear.Tests;
 
@@ -71,5 +72,23 @@ public class ObtainabilityQueryTests
         Assert.StartsWith(ItemQueries.UnresolvedPrefix, emitted.ItemId);
         Assert.Equal(SourceKind.Other, emitted.Source.Kind);
         Assert.True(emitted.Source.Conditions.Unresolved);
+    }
+
+    [Fact]
+    public void A_filtered_object_set_gives_only_the_ids_the_game_lists_with_its_condition()
+    {
+        // Sunberry Village's artifact spots: RANDOM_ITEMS (O) narrowed by a context tag.
+        const string Query = "RANDOM_ITEMS (O)";
+        const string Tag = "ITEM_CONTEXT_TAG Target sbv_artifact";
+        IReadOnlyList<string> Game(string q, string c) => q == Query && c == Tag ? new[] { "(O)ModA_Vase", "(O)ModA_Jug" } : null;
+
+        Assert.Equal(new[] { ("(O)ModA_Vase", true), ("(O)ModA_Jug", true) }, FilteredItemQuery.Expand(Query, false, Tag, Game).ToArray());
+        // No condition, or a plain id: the entry as it was.
+        Assert.Equal(new[] { (Query, false) }, FilteredItemQuery.Expand(Query, false, null, Game).ToArray());
+        Assert.Equal(new[] { ("(O)24", true) }, FilteredItemQuery.Expand("(O)24", true, Tag, Game).ToArray());
+        // A set the game could not list gives nothing, never every object.
+        Assert.Empty(FilteredItemQuery.Expand("ALL_ITEMS (O)", false, "BAD_QUERY", Game));
+        // Other item types are not narrowed here.
+        Assert.False(FilteredItemQuery.IsFilteredSet("ALL_ITEMS (F)", Tag));
     }
 }

@@ -54,10 +54,21 @@ namespace TheLongestYear.Loop
 
         public GameObtainabilityData(IMonitor monitor) => _monitor = monitor;
 
-        private static void AddTreeDrops<T>(List<TreeDropRow> rows, string treeId, List<T> drops, TreeDropKind kind) where T : WildTreeItemData
+        /// <summary>What a spawn entry gives (<see cref="GameObtainabilityParsing.Entries"/>), with a
+        /// RANDOM_ITEMS or ALL_ITEMS object set narrowed by its PerItemCondition through the game's own
+        /// resolver (<see cref="FilteredItemQuery"/>).</summary>
+        private IEnumerable<(string Id, bool IsRandom)> Spawned(string itemId, List<string> randomItemIds, string perItemCondition)
+        {
+            foreach ((string id, bool random) in GameObtainabilityParsing.Entries(itemId, randomItemIds))
+                foreach (var entry in FilteredItemQuery.Expand(id, random, perItemCondition,
+                             (q, c) => GameItemQueries.Resolve(q, c, _monitor, nameof(GameObtainabilityData))))
+                    yield return entry;
+        }
+
+        private void AddTreeDrops<T>(List<TreeDropRow> rows, string treeId, List<T> drops, TreeDropKind kind) where T : WildTreeItemData
         {
             foreach (T drop in drops ?? new List<T>())
-                foreach ((string item, bool random) in GameObtainabilityParsing.Entries(drop?.ItemId, drop?.RandomItemId))
+                foreach ((string item, bool random) in Spawned(drop?.ItemId, drop?.RandomItemId, drop?.PerItemCondition))
                     rows.Add(new TreeDropRow(treeId, item, kind, GameObtainabilityParsing.MapSeason(drop.Season), drop.Chance, drop.Condition, random));
         }
 
@@ -126,7 +137,7 @@ namespace TheLongestYear.Loop
                     objects[id] = new ObjInfo(id, o.Name ?? "", o.Category, o.Price, tags, o.ExcludeFromRandomSale);
                     if (o.GeodeDropsDefaultItems) defaultGeodes.Add(id);
                     foreach (ObjectGeodeDropData drop in o.GeodeDrops ?? new List<ObjectGeodeDropData>())
-                        foreach ((string item, _) in GameObtainabilityParsing.Entries(drop?.ItemId, drop?.RandomItemId))
+                        foreach ((string item, _) in Spawned(drop?.ItemId, drop?.RandomItemId, drop?.PerItemCondition))
                             geodeDrops.Add(new GeodeDropRow(id, item, drop.Chance, drop.Condition));   // geode contents are chance already
                 }
             });
@@ -161,21 +172,21 @@ namespace TheLongestYear.Loop
                     LocationData loc = kv.Value;
                     if (loc == null) continue;
                     foreach (SpawnForageData f in loc.Forage ?? new List<SpawnForageData>())
-                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                        foreach ((string item, bool random) in Spawned(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                             forage.Add(new LocationSpawn(kv.Key, item, GameObtainabilityParsing.MapSeason(f.Season), f.Condition, f.Chance, 0, false, 0, random));
                     foreach (SpawnFishData f in loc.Fish ?? new List<SpawnFishData>())
-                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                        foreach ((string item, bool random) in Spawned(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                             fish.Add(FishSpawn(kv.Key, f, item, random));
                     // Fish a mod with no layer adds to this water: they take casts, and give nothing.
                     if (rawLocations != null && rawLocations.TryGetValue(kv.Key, out LocationData rawLoc))
                         foreach (SpawnFishData f in KnownData.UnknownRows(LocationsAsset, kv.Key, nameof(LocationData.Fish), rawLoc?.Fish))
-                            foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                            foreach ((string item, bool random) in Spawned(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                             {
                                 fish.Add(FishSpawn(kv.Key, f, item, random) with { CompetitorOnly = true });
                                 competitorItems.Add(BundleParsing.NormalizeItemId(item));
                             }
                     foreach (ArtifactSpotDropData a in loc.ArtifactSpots ?? new List<ArtifactSpotDropData>())
-                        foreach ((string item, _) in GameObtainabilityParsing.Entries(a?.ItemId, a?.RandomItemId))   // artifact spot drops are chance already
+                        foreach ((string item, _) in Spawned(a?.ItemId, a?.RandomItemId, a?.PerItemCondition))   // artifact spot drops are chance already
                             artifactSpots.Add(new ArtifactSpotRow(kv.Key, item, a.Condition, a.Chance));
                 }
             });
@@ -223,7 +234,7 @@ namespace TheLongestYear.Loop
                     if (kv.Value == null) continue;
                     var fruit = new List<FruitRow>();
                     foreach (FruitTreeFruitData f in kv.Value.Fruit ?? new List<FruitTreeFruitData>())
-                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(f?.ItemId, f?.RandomItemId))
+                        foreach ((string item, bool random) in Spawned(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                             fruit.Add(new FruitRow(item, GameObtainabilityParsing.MapSeason(f.Season), f.Chance, f.Condition, random));   // may be a query; Core emits it
                     fruitTrees.Add(new FruitTreeRow(BundleParsing.NormalizeItemId(kv.Key), GameObtainabilityParsing.MapSeasons(kv.Value.Seasons), fruit));
                 }
@@ -239,11 +250,11 @@ namespace TheLongestYear.Loop
                             // A line that sells by context tag (Cornucopia's seed lines, the cart's own
                             // draw) offers only the items passing its PerItemCondition: the game lists
                             // them, one row each, a random pick staying luck.
-                            if (GameItemQueries.IsFilteredSet(entry, item.PerItemCondition)
-                                && GameItemQueries.Resolve(entry, item.PerItemCondition, _monitor, nameof(GameObtainabilityData)) is List<string> offered)
+                            // A set the game could not list is skipped: the bare query is every object.
+                            if (GameItemQueries.IsFilteredSet(entry, item.PerItemCondition))
                             {
                                 bool pick = random || GameItemQueries.IsRandomPick(entry, item.MaxItems);
-                                foreach (string id in offered)
+                                foreach (string id in GameItemQueries.Resolve(entry, item.PerItemCondition, _monitor, nameof(GameObtainabilityData)) ?? new List<string>())
                                     shops.Add(new ShopRow(kv.Key, id, item.Condition, item.IsRecipe, pick, trade, entry));
                                 continue;
                             }
@@ -261,7 +272,7 @@ namespace TheLongestYear.Loop
                         {
                             if (o == null) continue;
                             if (!string.IsNullOrWhiteSpace(o.OutputMethod)) { outputs.Add(new MachineOutput(null, o.Condition, o.OutputMethod, Method: GameObtainabilityParsing.MethodKind(o.OutputMethod))); continue; }
-                            foreach ((string entry, bool random) in GameObtainabilityParsing.Entries(o.ItemId, o.RandomItemId))
+                            foreach ((string entry, bool random) in Spawned(o.ItemId, o.RandomItemId, o.PerItemCondition))
                                 outputs.Add(new MachineOutput(entry, o.Condition, null, random));
                         }
                         if (outputs.Count == 0) continue;
@@ -360,7 +371,7 @@ namespace TheLongestYear.Loop
                 foreach (var kv in KnownData.Load<Dictionary<string, WildTreeData>>("Data/WildTrees"))
                 {
                     foreach (WildTreeTapItemData tap in kv.Value?.TapItems ?? new List<WildTreeTapItemData>())
-                        foreach ((string item, bool random) in GameObtainabilityParsing.Entries(tap?.ItemId, tap?.RandomItemId))
+                        foreach ((string item, bool random) in Spawned(tap?.ItemId, tap?.RandomItemId, tap?.PerItemCondition))
                             if (item != PreviousOutputTapId)
                                 taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, GameObtainabilityParsing.MapSeason(tap.Season), tap.Chance, tap.Condition, random));
                     AddTreeDrops(treeDrops, kv.Key, kv.Value?.ShakeItems, TreeDropKind.Shake);
@@ -375,7 +386,7 @@ namespace TheLongestYear.Loop
                 void AddAll(string can, List<GarbageCanItemData> items)
                 {
                     foreach (GarbageCanItemData g in items ?? new List<GarbageCanItemData>())
-                        foreach ((string item, _) in GameObtainabilityParsing.Entries(g?.ItemId, g?.RandomItemId))   // garbage is chance already
+                        foreach ((string item, _) in Spawned(g?.ItemId, g?.RandomItemId, g?.PerItemCondition))   // garbage is chance already
                             garbage.Add(new GarbageRow(can, item, g.Condition));
                 }
                 AddAll(AnyCan, data?.BeforeAll);

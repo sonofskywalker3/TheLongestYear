@@ -115,4 +115,18 @@ public class UnlockableBundlesResetTests
         Assert.Equal(SdsCookingStateReset.Outcome.NothingToChange, SdsCookingStateReset.Reset(rewritten, 77, out _));
         Assert.Equal(SdsCookingStateReset.Outcome.Unexpected, SdsCookingStateReset.Reset("[]", 77, out _));
     }
+
+    /// <summary>Sunberry Village (2026-11-18): the Bottom's shortcut, the Golden Sunberry stages, the
+    /// Moonberry shop and the Alpaca are kept as seen scenes, and the Golden Sunberry's growth in the host's
+    /// mod data; all of it rewinds with the loop, the two heart scenes in the middle of the chain do not.</summary>
+    [Fact]
+    public void Sunberry_progress_scenes_and_the_golden_sunberry_stage_rewind()
+    {
+        Assert.Contains("skellady.SBVCP_20031446", SbvUnlocks.RewoundEventIds);
+        Assert.Contains("skellady.SBVCP_20031457", SbvUnlocks.RewoundEventIds);
+        Assert.Contains("skellady.SBVCP_20031489", SbvUnlocks.RewoundEventIds);
+        Assert.DoesNotContain("skellady.SBVCP_20031449", SbvUnlocks.RewoundEventIds);
+        Assert.True(SbvUnlocks.IsRewoundModDataKey("SunberryTeam.SBVSMAPI/GoldenSunberry/Stage"));
+        Assert.False(SbvUnlocks.IsRewoundModDataKey("SunberryTeam.SBVSMAPI/TarotReadingDoneForToday"));
+    }
 }

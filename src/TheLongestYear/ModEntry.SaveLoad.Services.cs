@@ -122,6 +122,8 @@ namespace TheLongestYear
             // The fish ask sizes read the catch model stored with those answers (FishCatchRates).
             if (_lexicon?.Variant?.CatchRates is { } catchRates)
                 ctx.EnginePools = _enginePools = _enginePools with { CatchRates = catchRates };
+            // A mod's single-catch fish (a boss fish) is asked for once, as a legendary is.
+            OncePerLoopAsks.UseStoredCatchLimits(_lexicon?.Variant?.CatchRates);
             stageTimer.Restart();
             // A brand new save has no stamp yet, and the model below is built from the stamp.
             StampFreshRunDifficulty();

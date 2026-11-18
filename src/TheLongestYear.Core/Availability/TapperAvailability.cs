@@ -52,7 +52,11 @@ public static class TapperAvailability
     private static int TapWeek(int skillWeek, int? treeWeek, int wait)
         => Math.Min(Calendar.WeeksPerYear, Math.Max(skillWeek, treeWeek ?? skillWeek) + wait);
 
+    /// <summary>The game plants a wild tree from a seed only when the entry names a SeedItemId and is
+    /// SeedPlantable (Tree._LoadWildTreeData); the shake and chop chances default above zero for every
+    /// entry, so they alone prove no seed (Sunberry Village's Cinder Tree, 2026-11-18).</summary>
     private static bool GrowsFromItsOwnSeed(string treeId, EffortData data)
         => !GreenRainTreeIds.Contains(treeId)
-           && data.WildTrees.Any(t => t != null && t.TreeId == treeId && (t.SeedOnShakeChance > 0 || t.SeedOnChopChance > 0));
+           && data.WildTrees.Any(t => t != null && t.TreeId == treeId && t.SeedPlantable && !string.IsNullOrWhiteSpace(t.SeedItemId)
+                                      && (t.SeedOnShakeChance > 0 || t.SeedOnChopChance > 0));
 }

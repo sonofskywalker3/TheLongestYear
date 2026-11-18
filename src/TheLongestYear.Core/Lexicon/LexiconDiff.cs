@@ -33,7 +33,7 @@ public static class LexiconDiff
         Set("unreached map", a.UnreachedMaps, b.UnreachedMaps, lines);
         Keyed("map week", a.MapWeeks, b.MapWeeks, (x, y) => Equals(x, y), lines);
         Keyed("shop week", a.ShopWeeks, b.ShopWeeks, (x, y) => Equals(x, y), lines);
-        Keyed("catch rate", a.CatchRates, b.CatchRates, (x, y) => x.BestDay == y.BestDay && x.Weekly.SequenceEqual(y.Weekly), lines);
+        Keyed("catch rate", a.CatchRates, b.CatchRates, (x, y) => x.BestDay == y.BestDay && x.CatchLimit == y.CatchLimit && x.Weekly.SequenceEqual(y.Weekly), lines);
         AvailabilitySets(a.Availability, b.Availability, lines);
         Keyed("year 2", a.YearTwo, b.YearTwo, (x, y) => x == y, lines);
         lines.Sort(StringComparer.Ordinal);

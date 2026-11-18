@@ -77,4 +77,27 @@ public class TapperAvailabilityTests
         var weeks = LocationWeeks.FromReached(new Dictionary<string, PlaceWeek> { ["Late"] = late });
         Assert.Equal(10, TapperAvailability.Derive("(O)725", data, weeks)!.EarliestWeek);
     }
+
+    /// <summary>Sunberry Village's Cinder Tree (2026-11-18): no SeedItemId and SeedPlantable false, so it is
+    /// never planted; the default seed chances are not a seed. It stands only on mine levels, so with none of
+    /// them reached it is a tree to plan on nowhere, not one "grown from its seed" by week 4.</summary>
+    [Fact]
+    public void A_tree_with_no_plantable_seed_is_not_grown_from_its_seed()
+    {
+        var data = new EffortData
+        {
+            TapItems = new List<RawTapItem> { new("Cinder", "(O)CinderLeaf", 4), new("Sealed", "(O)SealedSap", 4) },
+            WildTreeSpots = new List<RawWildTreeSpot>(),
+            WildTrees = new List<RawWildTree>
+            {
+                new("Cinder", null, 0.05, 0.75, true, new List<RawWildTreeDrop>()),
+                new("Sealed", "(O)SealedSeed", 0.05, 0.75, true, new List<RawWildTreeDrop>(), SeedPlantable: false),
+            },
+        };
+        Assert.Equal(Calendar.WeeksPerYear, TapperAvailability.Derive("(O)CinderLeaf", data, null)!.EarliestWeek);
+        Assert.Equal(Calendar.WeeksPerYear, TapperAvailability.Derive("(O)SealedSap", data, null)!.EarliestWeek);
+        // Standing on a reached map, it is tapped there as any tree is.
+        var placed = new EffortData { TapItems = data.TapItems, WildTrees = data.WildTrees, WildTreeSpots = new List<RawWildTreeSpot> { new("Cinder", "Forest") } };
+        Assert.Equal(TapperAvailability.Derive("(O)726", Data, null)!.EarliestWeek, TapperAvailability.Derive("(O)CinderLeaf", placed, null)!.EarliestWeek);
+    }
 }
