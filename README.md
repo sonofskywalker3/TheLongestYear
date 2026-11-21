@@ -23,7 +23,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.47
+## What's New in 1.2.48
+
+**New: Bog's Monster Mash is supported.** The Longest Year now knows what Bog's Monster Mash's monsters drop, and counts those drops as a way to get an item. Mushrooms, Salmonberries and Frozen Tears can be asked for from week 1, Chanterelles from week 2, and Moss from week 3 instead of week 6. Its very rare drops, like Stardrop Tea and the Metal Head weapons, are never asked for. Thanks to Celjhyn.
+
+**Fixed: mushroom goals too easy with Bog's Monster Mash.** Asks were sized from foraging alone, while Dust Spirits hand out Common Mushrooms on most kills. Asks now count what monsters drop, so Common Mushroom, Morel and Chanterelle asks are larger with the mod installed. Thanks to Celjhyn.
+
+## 1.2.47
 
 **New: Alchemistry is supported.** The Longest Year now knows Alchemistry's items, machines, potions and Mage's Rest, and when each can first be reached in a year. Mage's Rest opens a few days into each loop, once the Wizard's letter arrives. Machines and dishes taught by letter count from the letter's skill level or friendship, and dishes that only the Apothecary Cauldron makes count from when you can build the cauldron. It also knows how Alchemistry sits beside Stardew Valley Expanded. Thanks to Celjhyn.
 

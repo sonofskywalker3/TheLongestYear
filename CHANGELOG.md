@@ -3,6 +3,16 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.48 - 2026-11-20
+
+### Added
+
+- **Bog's Monster Mash is supported.** The Longest Year now knows what Bog's Monster Mash's monsters drop, and counts those drops as a way to get an item. Mushrooms, Salmonberries and Frozen Tears can be asked for from week 1, Chanterelles from week 2, and Moss from week 3 instead of week 6. Its very rare drops, like Stardrop Tea and the Metal Head weapons, are never asked for. Thanks to Celjhyn.
+
+### Fixed
+
+- **Mushroom goals too easy with Bog's Monster Mash.** Asks were sized from foraging alone, while Dust Spirits hand out Common Mushrooms on most kills. Asks now count what monsters drop, so Common Mushroom, Morel and Chanterelle asks are larger with the mod installed. Thanks to Celjhyn.
+
 ## 1.2.47 - 2026-11-18
 
 ### Added
