@@ -124,6 +124,21 @@ public class MonsterDropAvailabilityTests
     }
 
     [Fact]
+    public void A_seasonal_drop_waits_for_its_season_on_every_difficulty()
+    {
+        var drops = new List<RawMonsterDrop> { new("Duggy", "(O)410", 0.125, Season.Fall) };
+        ItemEffort pacing = MonsterDropAvailability.Derive("(O)410", drops)!;
+        ItemEffort hard = MonsterDropAvailability.Derive("(O)410", drops, WeekMode.HardGates)!;
+        Assert.Equal(AvailabilityWeeks.FirstWeekOf(Season.Fall), pacing.EarliestWeek);
+        Assert.Equal(Season.Fall, pacing.GateSeason);
+        Assert.Equal(AvailabilityWeeks.FirstWeekOf(Season.Fall), hard.HardWeek);
+        // Two rare drops in different seasons tie on the pacing week: the earlier season's hard week stands, in either order.
+        var rare = new List<RawMonsterDrop> { new("Duggy", "(O)268", 0.01, Season.Winter), new("Duggy", "(O)268", 0.01, Season.Spring) };
+        Assert.Equal(1, MonsterDropAvailability.Derive("(O)268", rare, WeekMode.HardGates)!.HardWeek);
+        Assert.Equal(1, MonsterDropAvailability.Derive("(O)268", rare.AsEnumerable().Reverse().ToList(), WeekMode.HardGates)!.HardWeek);
+    }
+
+    [Fact]
     public void Unknown_monsters_are_skipped_and_an_unclaimed_item_is_null()
     {
         var drops = new List<RawMonsterDrop> { new("SVE Wyvern", "(O)769", 1.0) };

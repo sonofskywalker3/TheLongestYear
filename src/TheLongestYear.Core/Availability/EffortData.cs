@@ -10,8 +10,11 @@ namespace TheLongestYear.Core.Availability;
 /// <summary>One Data/Objects GeodeDrops row (or one row of the code-only default table).</summary>
 public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chance, bool FromDefaultTable = false);
 
-/// <summary>One Data/Monsters drop-table pair, with the monster it belongs to.</summary>
-public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance);
+/// <summary>One Data/Monsters drop-table pair, with the monster it belongs to. A supported mod's layer
+/// adds rows a framework drops in code (<see cref="Lexicon.LayerMonsterDrop"/>); only such a row has a
+/// <see cref="Season"/> (null = all year) and <see cref="FromLayer"/> set; both are null on a data row, so they
+/// stay out of the inputs hash. A layer's rows also size asks (<see cref="LayerDropBases"/>).</summary>
+public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance, Season? Season = null, bool? FromLayer = null);
 
 /// <summary>One Data/Locations ArtifactSpots row, expanded to a single item id.</summary>
 public sealed record RawArtifactSpot(string Location, string ItemId, double Chance);
@@ -99,7 +102,18 @@ public sealed class EffortData
 {
     public IReadOnlyDictionary<string, RawObjectEntry> Objects { get; init; } = new Dictionary<string, RawObjectEntry>();
     public IReadOnlyList<RawGeodeDrop> GeodeDrops { get; init; } = new List<RawGeodeDrop>();
-    public IReadOnlyList<RawMonsterDrop> MonsterDrops { get; init; } = new List<RawMonsterDrop>();
+    private IReadOnlyList<RawMonsterDrop> _monsterDrops = new List<RawMonsterDrop>();
+    public IReadOnlyList<RawMonsterDrop> MonsterDrops { get => _monsterDrops; init => _monsterDrops = value; }
+
+    /// <summary>This data with <paramref name="extra"/> after its own monster drops (a supported mod's
+    /// layer rows for drops a framework adds in code); every other member shared.</summary>
+    public EffortData WithMonsterDrops(IEnumerable<RawMonsterDrop> extra)
+    {
+        var copy = (EffortData)MemberwiseClone();
+        copy._monsterDrops = MonsterDrops.Concat(extra).ToList();
+        return copy;
+    }
+
     public IReadOnlyList<RawArtifactSpot> ArtifactSpots { get; init; } = new List<RawArtifactSpot>();
     /// <summary>Each object's own Data/Objects ArtifactSpotChances (map to chance), one row per map.
     /// Read only for an item nothing else places (EffortComposer.OwnDigSpots).</summary>

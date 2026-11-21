@@ -1,0 +1,823 @@
+{
+  "UniqueId": "Bogs.Monsters",
+  "CheckedVersion": "1.1.0",
+  "Notes": "Bog's Monster Mash is a Content Patcher pack for Monster Variety: every drop is a vanilla item the framework adds to a vanilla mine monster in code, so each is a MonsterDrops row with its chance per kill (daily luck 0, no luck buff) worked out from Monster Variety 0.8.0 ManageVariety.ApplyMonsterVariety: the lowest Precedence among the varieties whose conditions pass wins, ties at random, then a RandomItemId list gives one of its items | Mapped with the default config: CT_MonstersEverywhere false (mines, Skull Cavern, Quarry Mine and the Farm), CT_SuperRareRate standard (super rare 0.19% a spawn with no luck buff), every CT_Enable switch on | (O)684: the mod removes the Bug's Bug Meat from Data/Monsters (the build records the removal); its Fly and Grub SharedExtraDrops of Bug Meat (50%, 1 to 2) get no row, because the data's Fly 0.9 and Grub 0.6 drops already make it dependable from floor 15 and the row would change no answer | (O)380: the iron golem row is a roll apart from the data's 10% Stone Golem iron, so it is written; ores keep their node weeks on the board (MetalsAvailability), as vanilla's own golem iron does | Duggy rows are seasonal: Monster Variety picks the variety by Game1.GetSeasonForLocation, the calendar season in the vanilla mines (TLY reads UndergroundMine as a location with no season of its own) | (O)276: the pumpkin skeleton shows only Fall 22 to 28 (SEASON_DAY), so it is an ExtraSources route with its own day table, not a MonsterDrops row | Metal Head furniture variety (RANDOM_ITEMS (F) @isRandomSale, about 57% a kill): a catalogue query of the kind vanilla leaves unresolved; no route | (O)Bogs.Monsters_*Soul: nine placeholder items the pack hands out nowhere (HUD icons for SUPER RARE APPEARED; Bog's Monster Sanctuary's content), loaded only without that mod: NeverSell | Sprite-only entries (Bats, slimes, Big Slime, Squid Kid Eye, Shadow Shaman Staff and Hat, seasonal Skeletons, Bug and Ghost colours, every DangerousVarieties entry) add nothing | Every drop at 0.19% a kill or less (the SUPER RARE APPEARED varieties, the Metal Head gem variety's Prismatic Shard, the gold artifacts and the 16 weapons, one of 16 at 2%) is a Chance ExtraSources route, not a MonsterDrops row, so the board never asks for it (Jeff, 2026-11-20); Spirit Torch at 1% stays a row (rare-drop rule, Winter) | The rows also size asks (LayerDropBases; Jeff, 2026-11-20, for Celjhyn's report of easy mushroom goals): measured with the mod applied on 2026-11-20 by entering each of mine floors 1 to 79 and sweeping it (tly_minesweep), 71 Dust Spirits on floors 41 to 79 dropped 49 Common Mushrooms (69%, computed 72.7%), 5 Morels and 7 Chanterelles, about 95 Common Mushrooms a week at 70 floors; the bases are Common Mushroom 99, Morel 26, Chanterelle 24 | Drops of 25% a kill or more are Dependable, the test TLY's own monster drops follow (Jeff, 2026-11-20)",
+  "MonsterDrops": [
+    {
+      "Monster": "Bug",
+      "ItemId": "(O)84",
+      "Chance": 0.5,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Bug, SharedExtraDrops Bogs.Monsters_FrozenTear (RANDOM 0.5)"
+    },
+    {
+      "Monster": "Bug",
+      "ItemId": "(O)93",
+      "Chance": 0.5,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Bug, SharedExtraDrops Bogs.Monsters_Torch (RANDOM 0.5)"
+    },
+    {
+      "Monster": "Bug",
+      "ItemId": "(O)94",
+      "Chance": 0.01,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Bug, SharedExtraDrops Bogs.Monsters_SpiritTorch (RANDOM 0.01)"
+    },
+    {
+      "Monster": "Rock Crab",
+      "ItemId": "(O)330",
+      "Chance": 0.63863,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_RockCrab, variety Bogs.Monsters_RockCrabClay, the default crab"
+    },
+    {
+      "Monster": "Rock Crab",
+      "ItemId": "(O)535",
+      "Chance": 0.21288,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_RockCrab, variety Bogs.Monsters_RockCrabGeode (RANDOM .25)"
+    },
+    {
+      "Monster": "Rock Crab",
+      "ItemId": "(O)536",
+      "Chance": 0.12164,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_RockCrab, variety Bogs.Monsters_RockCrabFrozenGeode (RANDOM .125)"
+    },
+    {
+      "Monster": "Rock Crab",
+      "ItemId": "(O)749",
+      "Chance": 0.02495,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_RockCrab, variety Bogs.Monsters_RockCrabOmniGeode (RANDOM .025)"
+    },
+    {
+      "Monster": "Lava Crab",
+      "ItemId": "(O)537",
+      "Chance": 1.0,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_LavaCrab, its only variety"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)92",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)296",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)399",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)18",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)22",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)404",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)16",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)20",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)257",
+      "Chance": 0.1109,
+      "Season": "Spring",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySpring, one of 9"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)92",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)404",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)402",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)420",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)396",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)259",
+      "Chance": 0.16635,
+      "Season": "Summer",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggySummer, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)92",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)410",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)404",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)420",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)406",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)408",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)281",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)422",
+      "Chance": 0.124762,
+      "Season": "Fall",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyFall, one of 8"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)92",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)418",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)412",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)283",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)416",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Duggy",
+      "ItemId": "(O)414",
+      "Chance": 0.16635,
+      "Season": "Winter",
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyWinter, one of 6"
+    },
+    {
+      "Monster": "Dust Spirit",
+      "ItemId": "(O)404",
+      "Chance": 0.72707,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpriteBrown, the default sprite"
+    },
+    {
+      "Monster": "Dust Spirit",
+      "ItemId": "(O)420",
+      "Chance": 0.10197,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpriteRed (RANDOM .123)"
+    },
+    {
+      "Monster": "Dust Spirit",
+      "ItemId": "(O)257",
+      "Chance": 0.07595,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpriteMorel (RANDOM .081, tied with Chanterelle)"
+    },
+    {
+      "Monster": "Dust Spirit",
+      "ItemId": "(O)281",
+      "Chance": 0.06816,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpriteChanterelle (RANDOM .073, tied with Morel)"
+    },
+    {
+      "Monster": "Dust Spirit",
+      "ItemId": "(O)422",
+      "Chance": 0.02495,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpritePurple (RANDOM .025)"
+    },
+    {
+      "Monster": "Ghost",
+      "ItemId": "(O)93",
+      "Chance": 0.5,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Ghost, SharedExtraDrops Bogs.Monsters_Torch (RANDOM 0.5)"
+    },
+    {
+      "Monster": "Ghost",
+      "ItemId": "(O)94",
+      "Chance": 0.01,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Ghost, SharedExtraDrops Bogs.Monsters_SpiritTorch (RANDOM 0.01)"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)68",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)66",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)62",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)70",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)60",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)64",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Metal Head",
+      "ItemId": "(O)72",
+      "Chance": 0.048907,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, one of 7 gems"
+    },
+    {
+      "Monster": "Shadow Brute",
+      "ItemId": "(O)86",
+      "Chance": 0.94818,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_ShadowBrute, varieties Brown, Blue and Purple, one Earth Crystal each"
+    },
+    {
+      "Monster": "Shadow Brute",
+      "ItemId": "(O)251",
+      "Chance": 0.024955,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_ShadowBrute, variety Bogs.Monsters_ShadowBruteGardener (5%), one of 2"
+    },
+    {
+      "Monster": "Shadow Brute",
+      "ItemId": "(BC)62",
+      "Chance": 0.024955,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_ShadowBrute, variety Bogs.Monsters_ShadowBruteGardener (5%), one of 2"
+    },
+    {
+      "Monster": "Squid Kid",
+      "ItemId": "(O)Moss",
+      "Chance": 0.14597,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_SquidKid, variety Bogs.Monsters_SquidKidVine (RANDOM .3), one of 2"
+    },
+    {
+      "Monster": "Squid Kid",
+      "ItemId": "(O)MossySeed",
+      "Chance": 0.14597,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_SquidKid, variety Bogs.Monsters_SquidKidVine (RANDOM .3), one of 2"
+    },
+    {
+      "Monster": "Squid Kid",
+      "ItemId": "(O)305",
+      "Chance": 0.012475,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_SquidKid, variety Bogs.Monsters_SquidKidBlood (RANDOM .025), one of 2"
+    },
+    {
+      "Monster": "Squid Kid",
+      "ItemId": "(O)82",
+      "Chance": 0.012475,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_SquidKid, variety Bogs.Monsters_SquidKidBlood (RANDOM .025), one of 2"
+    },
+    {
+      "Monster": "Stone Golem",
+      "ItemId": "(O)378",
+      "Chance": 0.51382,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_StoneGolem, variety Bogs.Monsters_StoneGolemCopper, the default golem, 2 to 4 ore"
+    },
+    {
+      "Monster": "Stone Golem",
+      "ItemId": "(O)380",
+      "Chance": 0.27667,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_StoneGolem, variety Bogs.Monsters_StoneGolemIron (RANDOM .35), 2 to 4 ore"
+    },
+    {
+      "Monster": "Stone Golem",
+      "ItemId": "(O)384",
+      "Chance": 0.19762,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_StoneGolem, variety Bogs.Monsters_StoneGolemGold (RANDOM .2), 2 to 3 ore"
+    },
+    {
+      "Monster": "Stone Golem",
+      "ItemId": "(O)386",
+      "Chance": 0.00998,
+      "Detail": "content.json, mushymato.MonsterVariety/Data Bogs.Monsters_StoneGolem, variety Bogs.Monsters_StoneGolemIridium (RANDOM .01), 2 to 3 ore"
+    }
+  ],
+  "ExtraSources": {
+    "(O)124": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.0475% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGold (super rare), one of 4)"
+      }
+    ],
+    "(O)125": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.0475% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGold (super rare), one of 4)"
+      }
+    ],
+    "(O)166": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.0475% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGold (super rare), one of 4)"
+      }
+    ],
+    "(O)268": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 1"
+          ]
+        },
+        "Detail": "duggy drop, 0.095% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyStarfruit (super rare), one of 2)"
+      }
+    ],
+    "(O)275": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 1"
+          ]
+        },
+        "Detail": "rock crab drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_RockCrab, variety Bogs.Monsters_RockCrabTreasure (super rare))"
+      }
+    ],
+    "(O)276": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "=78x78,+0x6,=0x28",
+        "Reliability": "Dependable",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 70"
+          ],
+          "FewDays": true
+        },
+        "Detail": "pumpkin skeleton drop, Fall 22 to 28, 49.9% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Skeleton, variety Bogs.Monsters_SkeletonPumpkin, RANDOM .5)"
+      }
+    ],
+    "(O)373": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "=57x57,+0x27,=0x28",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 70"
+          ]
+        },
+        "Detail": "skeleton drop, Fall, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Skeleton, variety Bogs.Monsters_SkeletonGoldPumpkin (Season fall, super rare))"
+      }
+    ],
+    "(O)486": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 1"
+          ]
+        },
+        "Detail": "duggy drop, 0.095% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_Duggy, variety Bogs.Monsters_DuggyStarfruit (super rare), one of 2)"
+      }
+    ],
+    "(O)74": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.0034% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGems, Bogs.Monsters_PrismaticShard (RANDOM 0.0001))"
+      },
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 31"
+          ]
+        },
+        "Detail": "stone golem drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_StoneGolem, variety Bogs.Monsters_StoneGolemPrismatic (super rare))"
+      }
+    ],
+    "(O)851": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 40"
+          ]
+        },
+        "Detail": "dust spirit drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_DustSprite, variety Bogs.Monsters_DustSpriteMagmaCap (super rare))"
+      }
+    ],
+    "(O)879": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "shadow shaman drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_ShadowShaman, variety Bogs.Monsters_ShadowShamanMusk (super rare))"
+      }
+    ],
+    "(O)891": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "shadow brute drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_ShadowBrute, variety Bogs.Monsters_ShadowBruteMushroom (super rare))"
+      }
+    ],
+    "(O)928": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.0475% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadGold (super rare), one of 4)"
+      }
+    ],
+    "(O)StardropTea": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 90"
+          ]
+        },
+        "Detail": "squid kid drop, 0.19% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_SquidKid, variety Bogs.Monsters_SquidKidPink (super rare))"
+      }
+    ],
+    "(W)2": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)25": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)30": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)34": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)35": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)36": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)37": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)38": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)39": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)40": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)41": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)42": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)54": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)55": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)60": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ],
+    "(W)9": [
+      {
+        "Kind": "MonsterDrop",
+        "Lands": "+0x112",
+        "Reliability": "Chance",
+        "Conditions": {
+          "Requires": [
+            "mines:floor 80"
+          ]
+        },
+        "Detail": "metal head drop, 0.1247% a kill (content.json, mushymato.MonsterVariety/Data Bogs.Monsters_MetalHead, variety Bogs.Monsters_MetalHeadWeapon (2%), one of 16 weapons)"
+      }
+    ]
+  },
+  "YearRulings": {
+    "(O)Bogs.Monsters_DuggySoul": "NeverSell",
+    "(O)Bogs.Monsters_DustSpriteSoul": "NeverSell",
+    "(O)Bogs.Monsters_MetalHeadSoul": "NeverSell",
+    "(O)Bogs.Monsters_RockCrabSoul": "NeverSell",
+    "(O)Bogs.Monsters_ShadowBruteSoul": "NeverSell",
+    "(O)Bogs.Monsters_ShadowShamanSoul": "NeverSell",
+    "(O)Bogs.Monsters_SkeletonSoul": "NeverSell",
+    "(O)Bogs.Monsters_SquidKidSoul": "NeverSell",
+    "(O)Bogs.Monsters_StoneGolemSoul": "NeverSell"
+  }
+}

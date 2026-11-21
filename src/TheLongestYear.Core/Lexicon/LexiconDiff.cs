@@ -123,6 +123,7 @@ public static class LexiconDiff
             Keyed($"availability {key} dishbases", x.DishBases, y.DishBases, (p, q) => p.SequenceEqual(q), lines);
             Keyed($"availability {key} yeartwo dish units", x.YearTwoCropDishUnits, y.YearTwoCropDishUnits, (p, q) => p == q, lines);
             Keyed($"availability {key} mixed seed crop bases", x.MixedSeedCropBases ?? NoBases, y.MixedSeedCropBases ?? NoBases, (p, q) => p.SequenceEqual(q), lines);
+            Keyed($"availability {key} layer drop bases", x.LayerDropBases ?? NoBases, y.LayerDropBases ?? NoBases, (p, q) => p.SequenceEqual(q), lines);
             Keyed($"availability {key} mixed seed board bases", x.MixedSeedBoardBases ?? NoBoardBases, y.MixedSeedBoardBases ?? NoBoardBases,
                 (p, q) => p.Count == q.Count && p.All(c => q.TryGetValue(c.Key, out double[]? other) && c.Value.SequenceEqual(other)), lines);
         }

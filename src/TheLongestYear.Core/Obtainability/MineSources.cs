@@ -92,11 +92,16 @@ public static class MineSources
             string requires = placed
                 ? (floor >= SkullCavernFloor ? SkullCave : $"mines:floor {floor}")
                 : "monster:" + row.Monster;
+            // A layer's row for a framework drop may hold to one season (a variety the framework
+            // picks by the location's season); a Data/Monsters row never does.
+            DayTable table = row.Season is Season season ? DayTable.InWeeks(WeekMask.ForSeason(season)) : DayTable.Always;
+            string when = row.Season is Season s ? $", {s}" : "";
+            string note = string.IsNullOrEmpty(row.Note) ? "" : $" ({row.Note})";
             var template = new ObtainSource(
-                SourceKind.MonsterDrop, DayTable.Always,
+                SourceKind.MonsterDrop, table,
                 placed && row.Chance >= RepeatableDropChance ? Reliability.Dependable : Reliability.Chance,
                 ObtainConditions.None with { Requires = new[] { requires }, GingerIsland = IslandMonsters.Contains(row.Monster) },
-                $"{row.Monster} drop, chance {row.Chance:0.###}");
+                $"{row.Monster} drop{when}, chance {row.Chance:0.###}{note}");
             foreach (var emitted in ItemQueries.Emit(row.ItemId, objects, template))
                 yield return emitted;
         }

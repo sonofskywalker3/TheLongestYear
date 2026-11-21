@@ -202,6 +202,24 @@ Two more tools go with them:
      leave it out for any), `Condition`, `Chance`, `Precedence`, `FishAreaId`, `MinFishingLevel`,
      `MinDistanceFromShore`, `MaxDistanceFromShore` (-1 for none), `CatchLimit`, `RequireMagicBait`.
      They join the build's fish rows, so they give routes and catch rates exactly as a data row would.
+   - **`MonsterDrops`** add monster drops a framework makes in code (Monster Variety's variety drops), written as a
+     Data/Monsters drop pair is read: `[{ "Monster": "Dust Spirit", "ItemId": "(O)404", "Chance": 0.727, "Season":
+     "Spring", "Detail": "content.json, Bogs.Monsters_DustSpriteBrown" }]`. `Monster` is the game's monster name,
+     `Chance` the chance per kill (0 to 1; for a framework that picks one variety a kill, the variety's own rate times
+     the chance every variety ranked above it failed, divided by the size of a random pick), `Season` only when the
+     drop holds to one season (leave it out for all year), `Detail` the evidence. They join the game's drop rows in
+     both readers, after the row hashes are taken: the route gets the monster's mine floor and the per-kill test of a
+     data drop (Dependable from 25%), and the board week comes from the monster's mine area as a data drop's does
+     (under 5% places nothing), so a mod's drop can date a vanilla item EARLIER, which `ExtraSources` and
+     `WeekRulings` cannot. The rows also size asks (`LayerDropBases`, stored with the availability answers): the
+     vanilla monster table's rule, 420 kills a week of the best monster (140 in the Skull Cavern) times the chance,
+     capped at twice the measured floor-clearing kills (`QuantityBasisTables.MonsterWeeklyKills`, rounded up, at least
+     2), nothing under 2, at most 99; a data drop of the same item from the same monster adds to the row. The ask
+     reads it when it is larger than the item's other bases (a forage mushroom's measured forage). Write a drop of
+     0.19% a kill or less as a `Chance` `ExtraSources` route instead (Jeff, 2026-11-20): a row places it at the
+     rare-drop week, Winter, and the board would ask for a lottery item. A seasonal row waits for its season on every difficulty. Ores keep their node weeks
+     (`MetalsAvailability`), as they do for vanilla's own monster drops. Use `ExtraSources` instead for a drop on
+     some days only (a route needs its own day table) or from a monster TLY has no floor for.
    - **`RandomShopItems`** name shop lines whose item the mod re-picks every day (a Content Patcher
      `{{Random: a, b, c}}` in a Data/Shops ItemId): `[{ "ShopId": "Traveler", "Condition": "<the line's
      Condition as the game holds it, or leave it out>", "ItemIds": ["(O)a", "(O)b", "(O)c"] }]`. The

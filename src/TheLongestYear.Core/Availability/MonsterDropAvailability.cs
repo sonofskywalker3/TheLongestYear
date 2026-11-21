@@ -57,15 +57,25 @@ public static class MonsterDropAvailability
             if (area == null) continue;
             int step = ChanceStep(drop.Chance);
             int effort = MineAreas.Effort(area.Value) + step;
-            int monsterWeek = MineAreas.Week(area.Value);
+            // A seasonal drop (a layer's row for a framework variety picked by season) waits for its
+            // season as well as for the monster's floors, on every difficulty.
+            int seasonWeek = drop.Season is Season season ? AvailabilityWeeks.FirstWeekOf(season) : 1;
+            int monsterWeek = Math.Max(MineAreas.Week(area.Value), seasonWeek);
+            int hardWeek = Math.Max(MineAreas.HardWeek(area.Value, mode), seasonWeek);
+            Season gate = drop.Season is Season s && s > MineAreas.GateSeason(area.Value) ? s : MineAreas.GateSeason(area.Value);
             bool rare = drop.Chance < RareDropChance;
             int week = rare ? AvailabilityWeeks.UnknownWeek : monsterWeek;
-            bool better = best == null || week < best.EarliestWeek || (week == best.EarliestWeek && effort < best.Effort);
+            // On a tie the earlier hard week wins: two rare drops of one item in different seasons share
+            // the unknown pacing week, and the one in the earlier season must decide Hard and Extreme.
+            bool better = best == null || week < best.EarliestWeek
+                || (week == best.EarliestWeek && (effort < best.Effort || (effort == best.Effort && hardWeek < best.HardWeek)));
             if (better)
                 best = new ItemEffort(effort,
-                    $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}) at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}"
-                        + (rare ? $", rare drop: pacing Winter, hard week {MineAreas.HardWeek(area.Value, mode)}" : ""),
-                    week, rare ? Season.Winter : MineAreas.GateSeason(area.Value), HardWeek: MineAreas.HardWeek(area.Value, mode));
+                    $"monster drop, {drop.MonsterName} ({MineAreas.Label(area.Value)}"
+                        + (drop.Season is Season shown ? $", {shown} only" : "")
+                        + $") at {drop.Chance:0.##} (+{step}), week {week}, effort {effort}"
+                        + (rare ? $", rare drop: pacing Winter, hard week {hardWeek}" : ""),
+                    week, rare ? Season.Winter : gate, HardWeek: hardWeek);
         }
         return best;
     }

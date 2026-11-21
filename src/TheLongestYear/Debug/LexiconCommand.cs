@@ -193,7 +193,7 @@ namespace TheLongestYear.DebugCommands
             IReadOnlyList<string> lines;
             try
             {
-                ObtainabilityInputs built = context.Layers?.Set.WithFishSpawns(inputs) ?? inputs;
+                ObtainabilityInputs built = context.Layers?.Set.WithLayerRows(inputs) ?? inputs;
                 ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: marks);
                 ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: marks);
                 cold = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)
@@ -314,7 +314,7 @@ namespace TheLongestYear.DebugCommands
 
             var timer = Stopwatch.StartNew();
             var extra = context.Layers.Set.ExtraDirectSources;
-            ObtainabilityInputs built = context.Layers.Set.WithFishSpawns(inputs);
+            ObtainabilityInputs built = context.Layers.Set.WithLayerRows(inputs);
             ObtainabilityBuild model = ObtainabilityBuilder.Build(built, extraDirect: extra, marks: TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers.Set.Marks));
             ObtainabilityBuild yearSort = ObtainabilityBuilder.Build(YearTwoItems.WithoutCartRandomStock(built), extraDirect: extra, marks: TheLongestYear.Loop.LexiconService.SaveMarks(context.Layers.Set.Marks));
             AnswerVariant live = AnswerVariantFactory.From(model, yearSort, inputs, context.Maps, context.AllMaps, context.Shops)

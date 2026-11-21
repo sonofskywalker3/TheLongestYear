@@ -94,7 +94,8 @@ public static class QuantityAskPass
                || QuantityBasisTables.Resources.ContainsKey(id)
                || SeasonalAskBasis.Rows.ContainsKey(id)
                || model?.DishBases.ContainsKey(id) == true
-               || model?.MixedSeedCropBases.ContainsKey(id) == true;
+               || model?.MixedSeedCropBases.ContainsKey(id) == true
+               || model?.LayerDropBases.ContainsKey(id) == true;
     }
 
     /// <summary>A crop with a quantity basis: one of the generated table, or one only another mod's
@@ -118,8 +119,11 @@ public static class QuantityAskPass
     /// (the dish table's ingredient lookup, built before the model it goes on).</param>
     /// <param name="mixedSeedBases">The Mixed Seeds crop bases to read when there is no <paramref name="model"/>
     /// (the same dish table lookup).</param>
+    /// <param name="layerDropBases">The layer monster-drop bases to read when there is no <paramref name="model"/>
+    /// (the same dish table lookup).</param>
     public static double? BasisByDeadline(string itemId, Season? deadline, ItemAvailabilityModel? model = null,
-        IReadOnlyDictionary<string, CatchRate>? catchRates = null, IReadOnlyDictionary<string, double[]>? mixedSeedBases = null)
+        IReadOnlyDictionary<string, CatchRate>? catchRates = null, IReadOnlyDictionary<string, double[]>? mixedSeedBases = null,
+        IReadOnlyDictionary<string, double[]>? layerDropBases = null)
     {
         string id = BundleParsing.NormalizeItemId(itemId);
         double? best = FishAskBasis.BasisByDeadline(model?.CatchRates ?? catchRates, id, deadline);
@@ -140,6 +144,10 @@ public static class QuantityAskPass
         if ((model?.MixedSeedCropBases ?? mixedSeedBases) is { } poolBases && poolBases.TryGetValue(id, out double[]? fromBags)
             && SeasonalAskBasis.BestUpTo(fromBags, deadline) is double bags && (best == null || bags > best))
             best = bags;
+        // A monster drop a supported mod's framework adds in code: what clearing floors yields of it.
+        if ((model?.LayerDropBases ?? layerDropBases) is { } dropBases && dropBases.TryGetValue(id, out double[]? fromDrops)
+            && SeasonalAskBasis.BestUpTo(fromDrops, deadline) is double dropped && (best == null || dropped > best))
+            best = dropped;
         return best;
     }
 }
