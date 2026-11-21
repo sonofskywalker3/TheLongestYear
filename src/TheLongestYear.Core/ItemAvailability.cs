@@ -110,6 +110,11 @@ public sealed class ItemAvailabilityModel
     /// of it when every season wants them. The quantity pass bands these asks from it, like any other basis.</summary>
     public IReadOnlyDictionary<string, double[]> MixedSeedCropBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
 
+    /// <summary>The quantity basis, Spring to Winter, of each item a supported mod's layer adds monster drops
+    /// for (<see cref="Availability.LayerDropBases"/>): what clearing floors yields of it. The quantity pass
+    /// bands these asks from it when it is larger than the item's other bases.</summary>
+    public IReadOnlyDictionary<string, double[]> LayerDropBases { get; init; } = new Dictionary<string, double[]>(StringComparer.Ordinal);
+
     /// <summary>The same basis by the combination of seasons a board asks such crops from
     /// (<see cref="MixedSeedSupply.BoardBases"/>): a saved bag carries over whole to a season nothing
     /// else on the board wants it in. <see cref="MixedSeedBoardPass"/> reads it once a board is whole.</summary>
@@ -153,7 +158,7 @@ public sealed class ItemAvailabilityModel
         {
             DishBases = dishBases, CatchRates = CatchRates, YearTwoCropDishUnits = YearTwoCropDishUnits,
             MixedSeedCropBases = MixedSeedCropBases, MixedSeedBoardBases = MixedSeedBoardBases,
-            BankableDishes = bankable,
+            LayerDropBases = LayerDropBases, BankableDishes = bankable,
         };
 
     public ItemAvailabilityModel(

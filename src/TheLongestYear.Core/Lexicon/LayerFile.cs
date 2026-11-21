@@ -179,7 +179,7 @@ public sealed record LayerMonsterDrop(string Monster, string ItemId, double Chan
 {
     public MonsterDropRow ToRow() => new(Monster, ItemId, Chance, Season, Detail);
 
-    public Availability.RawMonsterDrop ToRaw() => new(Monster, ItemId, Chance, Season);
+    public Availability.RawMonsterDrop ToRaw() => new(Monster, ItemId, Chance, Season, FromLayer: true);
 }
 
 public sealed record RandomShopItem(string ShopId, string? Condition, IReadOnlyList<string> ItemIds);

@@ -309,6 +309,42 @@ public static class QuantityBasisTables
         ["(O)412"] = 25,   // Winter Root: Frost Jellies, measured 12
     };
 
+    /// <summary>MEASURED kills a week of each mine monster for a player clearing floors (the 2026-09-16
+    /// tly_minesweep, seven-day cracked run, docs/superpowers/notes/mine-sweep-results-2026-09-16.csv):
+    /// monsters per floor in the band where the monster is most common, times 70 floors a week. The
+    /// caps in <see cref="MonsterDropCaps"/> were worked from the same run; <see cref="Availability.LayerDropBases"/>
+    /// applies that rule to a supported mod's drops. Hand table.</summary>
+    public static readonly IReadOnlyDictionary<string, double> MonsterWeeklyKills = new Dictionary<string, double>(StringComparer.Ordinal)
+    {
+        ["Bat"] = 5.3,   // 0.075 a floor, floors 1 to 40
+        ["Big Slime"] = 51.5,   // 0.736 a floor, Skull Cavern
+        ["Bug"] = 68.3,   // 0.976 a floor, floors 1 to 40
+        ["Carbon Ghost"] = 10.5,   // 0.150 a floor, Skull Cavern
+        ["Duggy"] = 21.9,   // 0.313 a floor, floors 1 to 40
+        ["Dust Spirit"] = 171.1,   // 2.444 a floor, floors 41 to 80
+        ["Fly"] = 3.1,   // 0.044 a floor, floors 1 to 40
+        ["Frost Bat"] = 45.3,   // 0.647 a floor, floors 41 to 80
+        ["Frost Jelly"] = 116.7,   // 1.667 a floor, floors 41 to 80
+        ["Ghost"] = 14.4,   // 0.206 a floor, floors 41 to 80
+        ["Green Slime"] = 106.7,   // 1.524 a floor, floors 1 to 40
+        ["Grub"] = 77.2,   // 1.103 a floor, floors 1 to 40
+        ["Iridium Bat"] = 1.2,   // 0.018 a floor, Skull Cavern
+        ["Iridium Crab"] = 8.5,   // 0.121 a floor, Skull Cavern
+        ["Lava Bat"] = 13.8,   // 0.196 a floor, Skull Cavern
+        ["Lava Crab"] = 27.2,   // 0.389 a floor, floors 81 to 120
+        ["Metal Head"] = 33.9,   // 0.484 a floor, floors 81 to 120
+        ["Mummy"] = 44.2,   // 0.632 a floor, Skull Cavern
+        ["Pepper Rex"] = 10.0,   // 0.143 a floor, Skull Cavern
+        ["Rock Crab"] = 28.9,   // 0.413 a floor, floors 1 to 40
+        ["Serpent"] = 36.5,   // 0.521 a floor, Skull Cavern
+        ["Shadow Brute"] = 45.0,   // 0.643 a floor, floors 81 to 120
+        ["Shadow Shaman"] = 31.7,   // 0.452 a floor, floors 81 to 120
+        ["Skeleton"] = 38.6,   // 0.552 a floor, floors 41 to 80
+        ["Sludge"] = 115.0,   // 1.643 a floor, floors 81 to 120
+        ["Squid Kid"] = 10.0,   // 0.143 a floor, floors 81 to 120
+        ["Stone Golem"] = 36.9,   // 0.528 a floor, floors 1 to 40
+    };
+
     /// <summary>The generated <see cref="MonsterDrops"/> with <see cref="MonsterDropCaps"/> applied:
     /// the smaller of the two wherever a cap exists.</summary>
     public static readonly IReadOnlyDictionary<string, double> MonsterDropsMeasured = Capped(MonsterDrops, MonsterDropCaps);

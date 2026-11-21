@@ -12,8 +12,9 @@ public sealed record RawGeodeDrop(string GeodeItemId, string ItemId, double Chan
 
 /// <summary>One Data/Monsters drop-table pair, with the monster it belongs to. A supported mod's layer
 /// adds rows a framework drops in code (<see cref="Lexicon.LayerMonsterDrop"/>); only such a row has a
-/// <see cref="Season"/> (null = all year, and left out of the inputs hash).</summary>
-public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance, Season? Season = null);
+/// <see cref="Season"/> (null = all year) and <see cref="FromLayer"/> set; both are null on a data row, so they
+/// stay out of the inputs hash. A layer's rows also size asks (<see cref="LayerDropBases"/>).</summary>
+public sealed record RawMonsterDrop(string MonsterName, string ItemId, double Chance, Season? Season = null, bool? FromLayer = null);
 
 /// <summary>One Data/Locations ArtifactSpots row, expanded to a single item id.</summary>
 public sealed record RawArtifactSpot(string Location, string ItemId, double Chance);

@@ -211,7 +211,13 @@ Two more tools go with them:
      both readers, after the row hashes are taken: the route gets the monster's mine floor and the per-kill test of a
      data drop (Dependable from 25%), and the board week comes from the monster's mine area as a data drop's does
      (under 5% places nothing), so a mod's drop can date a vanilla item EARLIER, which `ExtraSources` and
-     `WeekRulings` cannot. A seasonal row waits for its season on every difficulty. Ores keep their node weeks
+     `WeekRulings` cannot. The rows also size asks (`LayerDropBases`, stored with the availability answers): the
+     vanilla monster table's rule, 420 kills a week of the best monster (140 in the Skull Cavern) times the chance,
+     capped at twice the measured floor-clearing kills (`QuantityBasisTables.MonsterWeeklyKills`, rounded up, at least
+     2), nothing under 2, at most 99; a data drop of the same item from the same monster adds to the row. The ask
+     reads it when it is larger than the item's other bases (a forage mushroom's measured forage). Write a drop of
+     0.19% a kill or less as a `Chance` `ExtraSources` route instead (Jeff, 2026-11-20): a row places it at the
+     rare-drop week, Winter, and the board would ask for a lottery item. A seasonal row waits for its season on every difficulty. Ores keep their node weeks
      (`MetalsAvailability`), as they do for vanilla's own monster drops. Use `ExtraSources` instead for a drop on
      some days only (a route needs its own day table) or from a monster TLY has no floor for.
    - **`RandomShopItems`** name shop lines whose item the mod re-picks every day (a Content Patcher

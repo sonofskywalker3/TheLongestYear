@@ -183,4 +183,30 @@ public class QuantityBasisTablesTests
                 Assert.True(QuantityAskPass.Covers(row.Key) != QuantityAskPass.ArtifactsAskedAsOneOffs.Contains(row.Key), row.Key);
             }
     }
+
+    [Fact]
+    public void A_layers_monster_drop_is_sized_by_the_measured_monster_table_rule()
+    {
+        const string common = "(O)404", morel = "(O)257", salmonberry = "(O)296", iron = "(O)380";
+        var drops = new List<TheLongestYear.Core.Availability.RawMonsterDrop>
+        {
+            new("Dust Spirit", common, 0.727, FromLayer: true),
+            new("Dust Spirit", morel, 0.076, FromLayer: true),
+            new("Duggy", salmonberry, 0.111, Season.Spring, FromLayer: true),
+            new("Stone Golem", iron, 0.277, FromLayer: true),
+            new("Stone Golem", iron, 0.1),                          // the data's own drop adds to the layer's
+            new("Some Modded Beast", morel, 0.9, FromLayer: true),   // no floor, no farming spot
+            new("Green Slime", "(O)766", 0.75),                       // data only: the static table sizes it
+        };
+        var bases = TheLongestYear.Core.Availability.LayerDropBases.Build(drops);
+
+        Assert.Equal(new double[] { 99, 99, 99, 99 }, bases[common]);              // ceil(2 x 171.1 x 0.727) = 249, a stack
+        Assert.Equal(27, bases[morel][0]);                                          // min(420 x 0.076 = 31.9, ceil(2 x 171.1 x 0.076) = 27)
+        Assert.Equal(new double[] { 5, 0, 0, 0 }, bases[salmonberry]);              // ceil(2 x 21.9 x 0.111), Spring only
+        Assert.Equal(Math.Ceiling(2 * QuantityBasisTables.MonsterWeeklyKills["Stone Golem"] * 0.377), bases[iron][3]);
+        Assert.False(bases.ContainsKey("(O)766"));
+        var model = new ItemAvailabilityModel(new Dictionary<string, ItemAvailability>(StringComparer.Ordinal)) { LayerDropBases = bases };
+        Assert.True(QuantityAskPass.Covers(salmonberry, model));
+        Assert.Equal(99, QuantityAskPass.BasisByDeadline(common, Season.Spring, model));   // larger than the forage basis
+    }
 }

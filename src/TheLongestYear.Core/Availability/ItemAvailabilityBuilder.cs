@@ -45,6 +45,7 @@ public static class ItemAvailabilityBuilder
         {
             DishBases = answers.DishBases, YearTwoCropDishUnits = answers.YearTwoCropDishUnits,
             MixedSeedCropBases = answers.MixedSeedCropBases ?? new Dictionary<string, double[]>(StringComparer.Ordinal),
+            LayerDropBases = answers.LayerDropBases ?? new Dictionary<string, double[]>(StringComparer.Ordinal),
             MixedSeedBoardBases = answers.MixedSeedBoardBases
                 ?? new Dictionary<string, IReadOnlyDictionary<string, double[]>>(StringComparer.Ordinal),
             CatchRates = catchRates ?? new Dictionary<string, CatchRate>(StringComparer.Ordinal),
@@ -133,8 +134,12 @@ public static class ItemAvailabilityBuilder
         // gives: worked out here, in the cold build, and stored with the answers.
         IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>> mixedSeedBoardBases = MixedSeedSupply.BoardBases(pools.MixedSeeds);
         IReadOnlyDictionary<string, double[]> mixedSeedBases = MixedSeedSupply.Bases(pools.MixedSeeds);
+        // What clearing floors yields of each item a supported mod's layer adds monster drops for.
+        IReadOnlyDictionary<string, double[]> layerDropBases = effortData == null
+            ? new Dictionary<string, double[]>(StringComparer.Ordinal)
+            : LayerDropBases.Build(effortData.MonsterDrops);
         var model = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
-            { CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases };
+            { CatchRates = pools.CatchRates, MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases, LayerDropBases = layerDropBases };
         var noEffort = new Dictionary<string, ItemEffort>(StringComparer.Ordinal);
         if (effortData == null)
             return (model, new AvailabilityAnswers(derived, effortDerived ?? noEffort,
@@ -156,7 +161,7 @@ public static class ItemAvailabilityBuilder
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,
-            (id, s) => QuantityAskPass.BasisByDeadline(id, s, catchRates: pools.CatchRates, mixedSeedBases: mixedSeedBases),
+            (id, s) => QuantityAskPass.BasisByDeadline(id, s, catchRates: pools.CatchRates, mixedSeedBases: mixedSeedBases, layerDropBases: layerDropBases),
             kitchenFree.EffortOf);
         // hasUpgrade is read like hasKitchen: once, here. Upgrades are only bought before a reset,
         // and every reset rebuilds the model, so the set is the one the board is generated under.
@@ -165,12 +170,13 @@ public static class ItemAvailabilityBuilder
         var built = new ItemAvailabilityModel(derived, seasonOverrides, effortOverrides, effortDerived, weekOverrides, mode, step)
             {
                 DishBases = dishBases, YearTwoCropDishUnits = dishUnits, CatchRates = pools.CatchRates,
-                MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases,
+                MixedSeedCropBases = mixedSeedBases, MixedSeedBoardBases = mixedSeedBoardBases, LayerDropBases = layerDropBases,
             };
         return (built, new AvailabilityAnswers(derived, effortDerived ?? noEffort, dishBases, dishUnits)
             {
                 MixedSeedCropBases = mixedSeedBases.Count > 0 ? mixedSeedBases : null,
                 MixedSeedBoardBases = mixedSeedBoardBases.Count > 0 ? mixedSeedBoardBases : null,
+                LayerDropBases = layerDropBases.Count > 0 ? layerDropBases : null,
             });
     }
 

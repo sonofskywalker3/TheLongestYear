@@ -29,6 +29,10 @@ public sealed record AvailabilityAnswers(
     /// gives, for an ask outside a board (<see cref="MixedSeedSupply.Bases(MixedSeedInputs?)"/>). Null, and so not written, when there is none.</summary>
     public IReadOnlyDictionary<string, double[]>? MixedSeedCropBases { get; init; }
 
+    /// <summary>The quantity basis, Spring to Winter, of each item a supported mod's layer adds monster drops
+    /// for (<see cref="Availability.LayerDropBases"/>). Null, and so not written, when there is none.</summary>
+    public IReadOnlyDictionary<string, double[]>? LayerDropBases { get; init; }
+
     /// <summary>The same basis for each combination of seasons a board asks such crops from
     /// (<see cref="MixedSeedSupply.BoardBases"/>). Null, and so not written, when there is none.</summary>
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, double[]>>? MixedSeedBoardBases { get; init; }

@@ -542,7 +542,7 @@ public sealed class LayerSetTests
 
         Assert.Contains(built.Model.Sources("(O)404"), s => s.Kind == SourceKind.MonsterDrop && s.Reliability == Reliability.Dependable
             && s.Conditions.Requires.Contains("mines:floor 40") && s.Detail.Contains("brown sprite"));
-        Assert.Contains(joined.MonsterDrops, d => d == new TheLongestYear.Core.Availability.RawMonsterDrop("Duggy", "(O)296", 0.111, Season.Spring));
+        Assert.Contains(joined.MonsterDrops, d => d == new TheLongestYear.Core.Availability.RawMonsterDrop("Duggy", "(O)296", 0.111, Season.Spring, FromLayer: true));
         // The game's own rows (what the row hashes and the availability hash read before the join) stay as they were.
         Assert.DoesNotContain(live.MonsterDrops, r => r.Monster == "Dust Spirit" && r.ItemId == "(O)404");
         Assert.Empty(effort.MonsterDrops);
