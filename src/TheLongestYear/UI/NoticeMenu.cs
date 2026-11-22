@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.Menus;
 using TheLongestYear.Core;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
@@ -13,7 +14,7 @@ namespace TheLongestYear.UI
     /// Used for the "Skip intro" advice on character creation (the opening cutscene is the only
     /// in-game explanation of the loop) and for the XP hand-over notice over the Junimo Shrine
     /// (<see cref="XpUpgradeHandover"/>).</summary>
-    internal sealed class NoticeMenu : IClickableMenu
+    internal sealed class NoticeMenu : IClickableMenu, INarratedMenu
     {
         private const int BoxWidth = 900;
         private const int Pad = 32;
@@ -21,6 +22,7 @@ namespace TheLongestYear.UI
         private const int TextToButtonGap = 24;
 
         private readonly string _text;
+        private readonly string _spokenText;
         private readonly ClickableTextureComponent _ok;
 
         /// <summary>Show the pending XP hand-over notice over <paramref name="host"/> (a shrine
@@ -35,6 +37,7 @@ namespace TheLongestYear.UI
 
         public NoticeMenu(string text)
         {
+            _spokenText = text;
             _text = Game1.parseText(text, Game1.dialogueFont, BoxWidth - Pad * 2);
             int textHeight = (int)Game1.dialogueFont.MeasureString(_text).Y;
             width = BoxWidth;
@@ -53,6 +56,12 @@ namespace TheLongestYear.UI
             if (Game1.options.SnappyMenus)
                 snapToDefaultClickableComponent();
         }
+
+        public string NarrationIntro() => NarrationText.Sentences(_spokenText, Strings.Get("narrate.notice.help"));
+
+        public object NarrationFocusKey => null;
+
+        public string NarrateFocus() => "";
 
         public override void snapToDefaultClickableComponent()
         {

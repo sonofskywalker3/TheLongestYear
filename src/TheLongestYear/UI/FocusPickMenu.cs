@@ -8,6 +8,7 @@ using StardewValley;
 using StardewValley.Menus;
 using TheLongestYear.Core;
 using TheLongestYear.Focus;
+using TheLongestYear.Integration;
 
 namespace TheLongestYear.UI
 {
@@ -15,7 +16,7 @@ namespace TheLongestYear.UI
     /// without a pick. A pick replaces this menu with the next theme's, and the last pick closes
     /// it, which lets the deferred planning hub open on the next free tick. The run is read through
     /// <c>run()</c> on every use, because a reload can replace it while the menu is up.</summary>
-    internal sealed class FocusPickMenu : IClickableMenu
+    internal sealed class FocusPickMenu : IClickableMenu, INarratedMenu
     {
         private const int CardWidth = 300;
         private const int CardGap = 24;
@@ -202,17 +203,21 @@ namespace TheLongestYear.UI
                 case Buttons.B:
                 case Buttons.Back:
                     return;
+                // With controller-style menus on, the game already moves the snap for the d-pad
+                // and stick (as movement keys); moving it here too would skip the middle card.
                 case Buttons.DPadLeft:
                 case Buttons.LeftThumbstickLeft:
-                    applyMovementKey(3);
+                    if (!GameMovesSnap) applyMovementKey(3);
                     return;
                 case Buttons.DPadRight:
                 case Buttons.LeftThumbstickRight:
-                    applyMovementKey(1);
+                    if (!GameMovesSnap) applyMovementKey(1);
                     return;
             }
             base.receiveGamePadButton(b);
         }
+
+        private static bool GameMovesSnap => Game1.options.snappyMenus && Game1.options.gamepadControls;
 
         public override void receiveRightClick(int x, int y, bool playSound = true)
         {
@@ -301,6 +306,21 @@ namespace TheLongestYear.UI
                 return;
             }
             exitThisMenu(playSound: false);
+        }
+
+        // ---------- screen reader ----------
+
+        public string NarrationIntro()
+            => NarrationText.Sentences(ThemeTitle(), Strings.Get("focus.pick.subtitle"), Strings.Get("narrate.focus.help"));
+
+        public object NarrationFocusKey => currentlySnappedComponent?.myID ?? -1;
+
+        public string NarrateFocus()
+        {
+            int i = currentlySnappedComponent?.myID ?? -1;
+            if (i < 0 || i >= _cards.Count) return "";
+            Card card = _cards[i];
+            return NarrationText.Sentences(card.Name, card.Description, card.Note, card.Price);
         }
 
         // ---------- draw ----------

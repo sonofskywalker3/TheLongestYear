@@ -276,23 +276,26 @@ namespace TheLongestYear.UI
             // suit. 2026-05-28 playtest: "finger cursor is stuck on the left option and
             // won't move, though A will select it" — root cause was the snappy gate.
             // applyMovementKey directions: 0=up, 1=right, 2=down, 3=left.
+            // With controller-style menus on the game already moves the snap for these (as
+            // movement keys), so moving it here too would step twice.
+            bool gameMovesSnap = Game1.options.snappyMenus && Game1.options.gamepadControls;
             switch (btn)
             {
                 case Microsoft.Xna.Framework.Input.Buttons.DPadLeft:
                 case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickLeft:
-                    this.applyMovementKey(3);
+                    if (!gameMovesSnap) this.applyMovementKey(3);
                     return;
                 case Microsoft.Xna.Framework.Input.Buttons.DPadRight:
                 case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickRight:
-                    this.applyMovementKey(1);
+                    if (!gameMovesSnap) this.applyMovementKey(1);
                     return;
                 case Microsoft.Xna.Framework.Input.Buttons.DPadUp:
                 case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickUp:
-                    this.applyMovementKey(0);
+                    if (!gameMovesSnap) this.applyMovementKey(0);
                     return;
                 case Microsoft.Xna.Framework.Input.Buttons.DPadDown:
                 case Microsoft.Xna.Framework.Input.Buttons.LeftThumbstickDown:
-                    this.applyMovementKey(2);
+                    if (!gameMovesSnap) this.applyMovementKey(2);
                     return;
             }
 

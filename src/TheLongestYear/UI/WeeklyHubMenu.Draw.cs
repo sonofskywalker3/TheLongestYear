@@ -89,16 +89,23 @@ namespace TheLongestYear.UI
                 _rerollButton.bounds.Width, _rerollButton.bounds.Height,
                 Color.White * boxAlpha, 1f, false);
 
-            string label = cost > 0
-                ? Strings.Get("menu.hub.reroll-cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
-                : _rerollCounter == 0
-                ? Strings.Get("menu.hub.reroll")
-                : Strings.Get("menu.hub.reroll-count", new Dictionary<string, string> { ["count"] = _rerollCounter.ToString() });
+            string label = RerollLabel();
             Vector2 size = Game1.smallFont.MeasureString(label);
             float labelX = _rerollButton.bounds.X + (_rerollButton.bounds.Width - size.X) / 2f;
             float labelY = _rerollButton.bounds.Y + (_rerollButton.bounds.Height - size.Y) / 2f;
             Utility.drawTextWithShadow(b, label, Game1.smallFont,
                 new Vector2(labelX, labelY), Game1.textColor * boxAlpha);
+        }
+
+        /// <summary>The reroll button's text: its JP cost, or the plain label and the count so far.</summary>
+        private string RerollLabel()
+        {
+            long cost = CurrentRerollCost();
+            return cost > 0
+                ? Strings.Get("menu.hub.reroll-cost", new Dictionary<string, string> { ["cost"] = cost.ToString() })
+                : _rerollCounter == 0
+                ? Strings.Get("menu.hub.reroll")
+                : Strings.Get("menu.hub.reroll-count", new Dictionary<string, string> { ["count"] = _rerollCounter.ToString() });
         }
 
         /// <summary>Draw the weather foresight as a calendar strip (a "Weather" header, a row of

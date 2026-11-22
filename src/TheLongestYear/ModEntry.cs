@@ -242,6 +242,8 @@ namespace TheLongestYear
             // the picker. _launcher isn't built until OnSaveLoaded, so hand it a lazy accessor.
             _introDriver = new IntroSequenceDriver(this.Monitor, _meta, _config);
             _introDriver.Attach(helper, () => _launcher);
+            // Speaks the mod's own menus when Stardew Access is installed; inert otherwise.
+            new ScreenReaderNarrator(this.Monitor).Attach(helper);
             // Day-28 bedtime Junimo cutscene (FAIL → shop+reset, CONTINUE → next season). Attached
             // once here; _runController is built on save load, so resolve it lazily like the picker.
             _seasonTurnDriver = new Integration.SeasonTurnDriver(this.Monitor, _meta);
