@@ -18,7 +18,7 @@ namespace TheLongestYear.UI
     /// black AND the text in one ordered pass, so the text is always readable, and Junimo has no
     /// portrait asset to spam-load. Non-skippable: <see cref="readyToClose"/> is always false and
     /// the cancel/ESC inputs are ignored; the scene only ends by advancing past the last page.</summary>
-    internal sealed class Day28CutsceneMenu : IClickableMenu
+    internal sealed class Day28CutsceneMenu : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
         // Junimo sprite drawn above the text. Source frame 0 of the 16×16 sheet, scaled up; the
         // sheet is a white silhouette meant to be tinted, so we give it the classic Junimo green.
@@ -77,6 +77,18 @@ namespace TheLongestYear.UI
             if (Game1.activeClickableMenu == this)
                 Game1.activeClickableMenu = null;
             _onComplete?.Invoke();
+        }
+
+        // ---------- screen reader: each page as it comes up ----------
+
+        public string NarrationIntro() => "";
+
+        public object NarrationFocusKey => _pageIndex;
+
+        public string NarrateFocus()
+        {
+            if (_pageIndex < 0 || _pageIndex >= _pages.Count) return "";
+            return NarrationText.Sentences(_pages[_pageIndex], _pageIndex == 0 ? Strings.Get("narrate.continue") : null);
         }
 
         public override void receiveLeftClick(int x, int y, bool playSound = true) => Advance();

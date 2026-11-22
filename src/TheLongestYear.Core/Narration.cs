@@ -52,17 +52,21 @@ public static class NarrationText
     private const string SentenceEnds = ".!?:";
 
     /// <summary>Joins the non-empty parts into one line, each ending as a sentence so the screen
-    /// reader pauses between them. Line breaks inside a part (wrapped text) become spaces.</summary>
+    /// reader pauses between them. Each line of a part is its own sentence (a tooltip's name,
+    /// description and cost), so pass text that has not been wrapped to a width.</summary>
     public static string Sentences(IEnumerable<string?> parts)
     {
         var text = new StringBuilder();
         foreach (string? raw in parts)
         {
-            string part = (raw ?? "").Replace("\r", "").Replace('\n', ' ').Trim();
-            if (part.Length == 0) continue;
-            if (text.Length > 0) text.Append(' ');
-            text.Append(part);
-            if (SentenceEnds.IndexOf(part[part.Length - 1]) < 0) text.Append('.');
+            foreach (string line in (raw ?? "").Split('\n'))
+            {
+                string part = line.Trim();
+                if (part.Length == 0) continue;
+                if (text.Length > 0) text.Append(' ');
+                text.Append(part);
+                if (SentenceEnds.IndexOf(part[part.Length - 1]) < 0) text.Append('.');
+            }
         }
         return text.ToString();
     }

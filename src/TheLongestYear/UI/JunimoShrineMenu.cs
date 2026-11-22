@@ -233,25 +233,31 @@ namespace TheLongestYear.UI
             {
                 if (_rowSlots[i].containsPoint(x, y))
                 {
-                    if (rows[i].IsBanish) { _hoverText = BanishHover(rows[i]); return; }
-                    UpgradeDefinition def = rows[i].Def;
-                    string footer = rows[i].IsFocus
-                        ? FocusFooter(rows[i])
-                        : rows[i].Owned
-                        ? Strings.Get("menu.shrine.owned")
-                        : rows[i].BlockReason != null
-                        ? rows[i].BlockReason
-                        : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
-                    footer += PinnedFooter(rows[i]);
-                    _hoverText = Strings.Get("menu.shrine.hover", new Dictionary<string, string>
-                    {
-                        ["name"] = def.DisplayName,
-                        ["description"] = def.Description + LadderBlock(rows[i]),
-                        ["footer"] = footer,
-                    });
+                    _hoverText = RowHoverText(rows[i]);
                     return;
                 }
             }
+        }
+
+        /// <summary>A row's tooltip: name, description (with its tier ladder) and its cost or state.</summary>
+        private string RowHoverText(ShrineRow row)
+        {
+            if (row.IsBanish) return BanishHover(row);
+            UpgradeDefinition def = row.Def;
+            string footer = row.IsFocus
+                ? FocusFooter(row)
+                : row.Owned
+                ? Strings.Get("menu.shrine.owned")
+                : row.BlockReason != null
+                ? row.BlockReason
+                : Strings.Get("menu.shrine.cost", new Dictionary<string, string> { ["cost"] = _purchases.EffectiveCost(def).ToString() });
+            footer += PinnedFooter(row);
+            return Strings.Get("menu.shrine.hover", new Dictionary<string, string>
+            {
+                ["name"] = def.DisplayName,
+                ["description"] = def.Description + LadderBlock(row),
+                ["footer"] = footer,
+            });
         }
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)

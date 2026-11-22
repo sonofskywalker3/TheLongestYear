@@ -14,7 +14,7 @@ namespace TheLongestYear.Integration
     /// Vanilla's portrait box is a fixed 384 px because its portrait frame is 388 px tall, and at
     /// 1080p that covered half of every ending scene (Jeff, 2026-09-07). Opened by the tlySay event
     /// command, which watches for it to close and then advances the script.</summary>
-    internal sealed class EndingSpeechBox : IClickableMenu
+    internal sealed class EndingSpeechBox : IClickableMenu, INarratedMenu
     {
         private const int BoxWidth = 1200, MinHeight = 212, Pad = 20;
         private const int PortraitSize = 64, PortraitScale = 2, PortraitDrawn = PortraitSize * PortraitScale;
@@ -79,6 +79,14 @@ namespace TheLongestYear.Integration
             }
             Game1.exitActiveMenu();
         }
+
+        // ---------- screen reader: each page as it comes up ----------
+
+        public string NarrationIntro() => "";
+
+        public object NarrationFocusKey => _page;
+
+        public string NarrateFocus() => _page < _pages.Count ? _pages[_page] : "";
 
         public override void receiveLeftClick(int x, int y, bool playSound = true) => Advance();
         public override void receiveRightClick(int x, int y, bool playSound = true) => Advance();

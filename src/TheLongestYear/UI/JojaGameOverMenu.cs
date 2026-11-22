@@ -21,7 +21,7 @@ namespace TheLongestYear.UI
     /// input path: <c>exitThisMenu</c> would close the screen without reaching the title and leave
     /// the finished event idling, which is why <c>tly_dismiss</c> sends this menu a key press
     /// instead of closing it.</summary>
-    internal sealed class JojaGameOverMenu : IClickableMenu
+    internal sealed class JojaGameOverMenu : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
         private const int TitleLift = 40;
         private const int ButtonPadX = 32, ButtonPadY = 20;
@@ -73,6 +73,13 @@ namespace TheLongestYear.UI
             currentlySnappedComponent = _button;
             snapCursorToCurrentSnappedComponent();
         }
+
+        public string NarrationIntro()
+            => NarrationText.Sentences(_title, Strings.Get("joja.gameover.message"), _buttonText, Strings.Get("narrate.continue"));
+
+        public object NarrationFocusKey => null;
+
+        public string NarrateFocus() => "";
 
         public override bool readyToClose() => false;
 

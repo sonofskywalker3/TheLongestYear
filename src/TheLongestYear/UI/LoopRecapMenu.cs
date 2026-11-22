@@ -13,7 +13,7 @@ namespace TheLongestYear.UI
     /// <summary>The loop recap page (spec 2026-11-10 shrine planning, feature 2): what the loop that
     /// is ending earned and left undone, and up to three suggested keeps, with one "Continue to the
     /// shrine" button. Closing it any way runs the rewind chain's continuation (its exitFunction).</summary>
-    internal sealed class LoopRecapMenu : IClickableMenu
+    internal sealed class LoopRecapMenu : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
         private const int BoxWidth = 1000;
         private const int Pad = 40;
@@ -26,6 +26,8 @@ namespace TheLongestYear.UI
         private const int ButtonTopGap = 28;
         private const int ContinueId = 0;
         private const string SuggestedMark = "!";
+        /// <summary>A text width no recap line reaches, so the spoken lines are not wrapped.</summary>
+        private const int UnwrappedWidth = 100000;
 
         /// <summary>The shop's suggested badge colour (JunimoShrineMenu.Suggested.cs).</summary>
         internal static readonly Color SuggestedGreen = new Color(30, 140, 30);
@@ -138,6 +140,20 @@ namespace TheLongestYear.UI
                 total += line.GapBefore + line.Height;
             return total;
         }
+
+        /// <summary>The whole page for a screen reader, with nothing dropped to fit the screen.</summary>
+        public string NarrationIntro()
+        {
+            var parts = new List<string> { LoopRecapText.Title(_summary) };
+            foreach (Line line in BuildLines(1f, sources: true, textWidth: UnwrappedWidth))
+                parts.Add(line.Text);
+            parts.Add(Strings.Get("narrate.continue"));
+            return NarrationText.Sentences(parts);
+        }
+
+        public object NarrationFocusKey => null;
+
+        public string NarrateFocus() => "";
 
         public override void snapToDefaultClickableComponent()
         {

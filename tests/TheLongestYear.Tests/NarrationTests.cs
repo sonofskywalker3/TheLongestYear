@@ -26,7 +26,7 @@ public class NarrationTests
     [Theory]
     [InlineData(new[] { "Pick a theme", "Pays 1.5x JP." }, "Pick a theme. Pays 1.5x JP.")]
     [InlineData(new[] { "Bonus:", "", null, "Wood" }, "Bonus: Wood.")]
-    [InlineData(new[] { "Wrapped\nline", "  Done!  " }, "Wrapped line. Done!")]
+    [InlineData(new[] { "Keep Axe\nStart with it.\r\nCost: 5 JP", "  Done!  " }, "Keep Axe. Start with it. Cost: 5 JP. Done!")]
     [InlineData(new string[0], "")]
     public void Sentences_joins_parts_with_sentence_ends(string[] parts, string expected)
         => Assert.Equal(expected, NarrationText.Sentences(parts));

@@ -34,7 +34,7 @@ namespace TheLongestYear.UI
     /// Why these scenes are drawn menus rather than vanilla Events, why the Junimos' idle animation
     /// has to be driven by hand, and why the speech box is a plain object instead of the active menu,
     /// are all documented on the members below and in <see cref="Day28CutsceneMenu"/>.</summary>
-    internal abstract class RewindJunimoScene : IClickableMenu
+    internal abstract class RewindJunimoScene : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
         // A tight hexagonal ring two tiles out, one palette colour each, matching the six the ending
         // seats in the Community Center hall.
@@ -652,6 +652,15 @@ namespace TheLongestYear.UI
             AnimateJunimos(time);
             HoldFarmerAsleep();
         }
+
+        // ---------- screen reader: the speech box's lines ----------
+
+        public string NarrationIntro() => "";
+
+        /// <summary>The box and its page: each new box starts again at page 0.</summary>
+        public object NarrationFocusKey => (ActiveBox, ActiveBox?.NarrationFocusKey);
+
+        public string NarrateFocus() => ActiveBox?.NarrateFocus() ?? "";
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
             => ForwardToBox(b => b.receiveLeftClick(x, y, playSound));

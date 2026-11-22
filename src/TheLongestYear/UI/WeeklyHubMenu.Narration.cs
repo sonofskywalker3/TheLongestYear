@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using StardewValley;
 using StardewValley.Menus;
+using Object = StardewValley.Object;
 using TheLongestYear.Core;
 using TheLongestYear.Integration;
 
@@ -29,7 +30,7 @@ namespace TheLongestYear.UI
                     }));
                 parts.Add(Strings.Get("menu.hub.weather-header") + ": " + string.Join(", ", days));
             }
-            parts.Add(Strings.Get(_double ? "narrate.hub.help-double" : "narrate.hub.help"));
+            parts.Add(_double ? Strings.Get("narrate.hub.help-double") : Strings.Get("narrate.hub.help"));
             return NarrationText.Sentences(parts);
         }
 
@@ -48,20 +49,19 @@ namespace TheLongestYear.UI
 
         private string NarrateCard(int slot, List<Item> goals, List<bool> favoured, List<int?> fullAsks)
         {
-            string side = slot == LeftSlot ? "left" : "right";
             if (_offer.Count <= slot)
-                return NarrationText.Sentences(CardName(side, Strings.Get("menu.hub.no-offer")));
+                return NarrationText.Sentences(CardName(slot, Strings.Get("menu.hub.no-offer")));
 
             Theme theme = _offer[slot];
             string mult = CardMultiplier.Format(CardMultiplier.ForCard(_run.Seed, OfferWeek, theme, slot, _rand, _double));
             if (IsSealed(slot))
                 return NarrationText.Sentences(
-                    Strings.Get("narrate.hub.card-" + side + "-sealed"),
+                    slot == LeftSlot ? Strings.Get("narrate.hub.card-left-sealed") : Strings.Get("narrate.hub.card-right-sealed"),
                     Strings.Get("menu.hub.mystery-mult", new Dictionary<string, string> { ["mult"] = mult }));
 
             var parts = new List<string>
             {
-                CardName(side, ThemeDisplay.Name(theme)),
+                CardName(slot, ThemeDisplay.Name(theme)),
                 Strings.Get("narrate.hub.bonus", new Dictionary<string, string>
                     { ["text"] = ThemeModifiers.DisplayNameFor(ThemeModifiers.For(theme).BonusId) }),
                 Strings.Get("narrate.hub.drawback", new Dictionary<string, string>
@@ -75,8 +75,19 @@ namespace TheLongestYear.UI
             return NarrationText.Sentences(parts);
         }
 
-        private static string CardName(string side, string name)
-            => Strings.Get("narrate.hub.card-" + side, new Dictionary<string, string> { ["name"] = name });
+        private static string CardName(int slot, string name)
+            => slot == LeftSlot
+                ? Strings.Get("narrate.hub.card-left", new Dictionary<string, string> { ["name"] = name })
+                : Strings.Get("narrate.hub.card-right", new Dictionary<string, string> { ["name"] = name });
+
+        /// <summary>The quality a goal asks for, as a word; empty for normal quality.</summary>
+        private static string QualityWord(int quality) => quality switch
+        {
+            Object.lowQuality => "",
+            Object.medQuality => Strings.Get("narrate.quality.1"),
+            Object.highQuality => Strings.Get("narrate.quality.2"),
+            _ => Strings.Get("narrate.quality.4"),
+        };
 
         /// <summary>"5 Parsnip, 13 (27) gold Wood, The Junimos want this one..." in icon order.</summary>
         private static string NarrateGoals(List<Item> goals, List<bool> favoured, List<int?> fullAsks)
@@ -86,14 +97,12 @@ namespace TheLongestYear.UI
             {
                 Item item = goals[i];
                 if (item == null) continue;
-                string line = Strings.Get(
-                    item.Quality > 0 ? "narrate.goal-quality" : "narrate.goal",
-                    new Dictionary<string, string>
-                    {
-                        ["count"] = item.Stack + FullTag(fullAsks, i),
-                        ["quality"] = Strings.Get("narrate.quality." + item.Quality),
-                        ["name"] = item.DisplayName,
-                    });
+                string count = item.Stack + FullTag(fullAsks, i);
+                string line = item.Quality > Object.lowQuality
+                    ? Strings.Get("narrate.goal-quality", new Dictionary<string, string>
+                        { ["count"] = count, ["quality"] = QualityWord(item.Quality), ["name"] = item.DisplayName })
+                    : Strings.Get("narrate.goal", new Dictionary<string, string>
+                        { ["count"] = count, ["name"] = item.DisplayName });
                 if (i < favoured.Count && favoured[i])
                     line += " (" + Strings.Get("goal.favoured-line") + ")";
                 lines.Add(line);
