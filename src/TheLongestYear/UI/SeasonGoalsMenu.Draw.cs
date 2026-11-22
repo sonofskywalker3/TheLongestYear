@@ -31,29 +31,7 @@ namespace TheLongestYear.UI
                 IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
             }
 
-            // Title bar.
-            // NOTE: each Strings.Get() call below keeps its own inline token-dictionary literal
-            // (rather than sharing one `tokens` variable across the switch) because
-            // I18nGuardTests.EveryTokenedKey_HasCallSiteSupplyingAllTokens statically scans source
-            // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
-            // site: a shared variable passed by reference is invisible to that regex and would
-            // make every key here report as having no call site.
-            bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
-            string season = SeasonName(_season);
-            string day = _run.DayOfMonth.ToString();
-            string holds = held ? _meta.ConsecutiveHolds.ToString() : "0";
-            string title = held
-                ? Strings.Get("menu.goals.title-held", new Dictionary<string, string>
-                {
-                    ["season"] = season,
-                    ["day"] = day,
-                    ["holds"] = holds,
-                })
-                : Strings.Get("menu.goals.title", new Dictionary<string, string>
-                {
-                    ["season"] = season,
-                    ["day"] = day,
-                });
+            string title = TitleText();
             if (_asPage)
                 DrawPageTitle(b, title);
             else
@@ -78,6 +56,44 @@ namespace TheLongestYear.UI
             this.drawMouse(b);
         }
 
+        /// <summary>The title bar's text.</summary>
+        // NOTE: each Strings.Get() call below keeps its own inline token-dictionary literal
+        // (rather than sharing one `tokens` variable across the switch) because
+        // I18nGuardTests.EveryTokenedKey_HasCallSiteSupplyingAllTokens statically scans source
+        // text for "Strings.Get(\"key\", new Dictionary<string, string> { ... })" at each call
+        // site: a shared variable passed by reference is invisible to that regex and would
+        // make every key here report as having no call site.
+        private string TitleText()
+        {
+            bool held = _meta != null && _meta.ConsecutiveHolds > 0 && _meta.BundlesGeneratedForReset >= 0;
+            string season = SeasonName(_season);
+            string day = _run.DayOfMonth.ToString();
+            string holds = held ? _meta.ConsecutiveHolds.ToString() : "0";
+            return held
+                ? Strings.Get("menu.goals.title-held", new Dictionary<string, string>
+                {
+                    ["season"] = season,
+                    ["day"] = day,
+                    ["holds"] = holds,
+                })
+                : Strings.Get("menu.goals.title", new Dictionary<string, string>
+                {
+                    ["season"] = season,
+                    ["day"] = day,
+                });
+        }
+
+        /// <summary>A row's top line: "BundleName  (Theme)   N/X" (the vault row reuses the same
+        /// shape via Title/ThemeTag).</summary>
+        private static string Headline(BundleEntry e)
+            => Strings.Get("menu.goals.row-headline", new Dictionary<string, string>
+            {
+                ["title"] = e.Title,
+                ["theme"] = e.ThemeTag,
+                ["have"] = e.Have.ToString(),
+                ["need"] = e.Need.ToString(),
+            });
+
         /// <summary>The page is narrower than the book's own menu, so the title uses the dialogue
         /// font, dropping to the small font when a long title would not fit.</summary>
         private void DrawPageTitle(SpriteBatch b, string title)
@@ -97,14 +113,7 @@ namespace TheLongestYear.UI
             IClickableMenu.drawTextureBox(b, Game1.menuTexture, new Rectangle(0, 256, 60, 60),
                 slot.bounds.X, slot.bounds.Y, slot.bounds.Width, slot.bounds.Height, tint, 1f, false);
 
-            // Top line: "BundleName  (Theme)   N/X" (vault row reuses the same shape via Title/ThemeTag).
-            string headline = Strings.Get("menu.goals.row-headline", new Dictionary<string, string>
-            {
-                ["title"] = e.Title,
-                ["theme"] = e.ThemeTag,
-                ["have"] = e.Have.ToString(),
-                ["need"] = e.Need.ToString(),
-            });
+            string headline = Headline(e);
             Color headColor = satisfiedThisSeason ? Color.DarkGreen : Game1.textColor;
             string badge = BadgeFor(e);
             Vector2 badgeSize = Game1.smallFont.MeasureString(badge);

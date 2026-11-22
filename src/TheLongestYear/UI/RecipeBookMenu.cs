@@ -414,9 +414,7 @@ namespace TheLongestYear.UI
 
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
-            string title = _pickerList != null
-                ? Strings.Get("menu.books.choose")
-                : TitleText(Banked.Count, _slotCount);
+            string title = CurrentTitle();
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
                 b, title, xPositionOnScreen + width / 2, yPositionOnScreen + BookPageLayout.TitleY);
             string notice = Notice;
@@ -456,9 +454,7 @@ namespace TheLongestYear.UI
 
                 ClickableComponent slot = _rowSlots[i];
                 bool filled = slotIndex < Banked.Count;
-                string label = filled
-                    ? RecipeDisplayName(Banked[slotIndex], _isCooking)
-                    : Strings.Get("menu.books.empty-slot");
+                string label = SlotLabel(slotIndex);
                 Color tint = filled ? Color.White : Color.White * 0.6f;
 
                 IClickableMenu.drawTextureBox(b, Game1.menuTexture,

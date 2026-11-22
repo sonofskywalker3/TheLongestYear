@@ -13,7 +13,7 @@ namespace TheLongestYear.UI
     /// shrine and never fires the shrine's exitFunction, which would start the reset). Two tabs: this
     /// loop's bundles and the items the board asks for. Picking a row buys the banish through
     /// <c>onPick</c>; a successful pick closes the menu. B, Escape or right-click closes without buying.</summary>
-    internal sealed class BanishPickMenu : IClickableMenu
+    internal sealed partial class BanishPickMenu : IClickableMenu
     {
         private const int PanelWidth = 760;
         private const int PanelHeight = 720;
@@ -300,13 +300,7 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, title, Game1.dialogueFont,
                 new Vector2(xPositionOnScreen + (width - titleSize.X) / 2f, yPositionOnScreen + Pad), Game1.textColor);
 
-            long price = _price();
-            bool affordable = _jp() >= price;
-            string subtitle = Strings.Get("banish.pick.subtitle", new Dictionary<string, string>
-            {
-                ["cost"] = price.ToString(),
-                ["insufficient"] = affordable ? "" : Strings.Get("menu.shrine.insufficient"),
-            });
+            string subtitle = SubtitleText(out bool affordable);
             Utility.drawTextWithShadow(b, subtitle, Game1.smallFont,
                 new Vector2(xPositionOnScreen + Pad, yPositionOnScreen + Pad + titleSize.Y + 16),
                 affordable ? Game1.textColor : Color.Red);
@@ -316,7 +310,7 @@ namespace TheLongestYear.UI
                 Rectangle r = _tabs[i].bounds;
                 drawTextureBox(b, Game1.menuTexture, BoxSource, r.X, r.Y, r.Width, r.Height,
                     i == _tab ? Color.White : Color.White * 0.6f, 1f, false);
-                string label = Strings.Get(i == 0 ? "banish.pick.tab.bundles" : "banish.pick.tab.items");
+                string label = TabLabel(i);
                 Vector2 size = Game1.smallFont.MeasureString(label);
                 Utility.drawTextWithShadow(b, label, Game1.smallFont,
                     new Vector2(r.X + (r.Width - size.X) / 2f, r.Y + (r.Height - size.Y) / 2f), Game1.textColor);
@@ -345,9 +339,7 @@ namespace TheLongestYear.UI
                     choice.Icon.drawInMenu(b, new Vector2(r.X + 8, r.Y + (r.Height - 64) / 2f), IconSize / 64f);
                     textX = r.X + 16 + IconSize + 8;
                 }
-                string text = choice.Taken
-                    ? Strings.Get("banish.pick.taken", new Dictionary<string, string> { ["name"] = choice.Label })
-                    : choice.Label;
+                string text = RowText(choice);
                 Vector2 size = Game1.smallFont.MeasureString(text);
                 Utility.drawTextWithShadow(b, text, Game1.smallFont,
                     new Vector2(textX, r.Y + (r.Height - size.Y) / 2f),
@@ -359,5 +351,25 @@ namespace TheLongestYear.UI
             upperRightCloseButton?.draw(b);
             drawMouse(b);
         }
+
+        /// <summary>The line under the title: what a pick does and its price.</summary>
+        private string SubtitleText(out bool affordable)
+        {
+            long price = _price();
+            affordable = _jp() >= price;
+            return Strings.Get("banish.pick.subtitle", new Dictionary<string, string>
+            {
+                ["cost"] = price.ToString(),
+                ["insufficient"] = affordable ? "" : Strings.Get("menu.shrine.insufficient"),
+            });
+        }
+
+        private static string TabLabel(int tab)
+            => tab == 0 ? Strings.Get("banish.pick.tab.bundles") : Strings.Get("banish.pick.tab.items");
+
+        private static string RowText(Choice choice)
+            => choice.Taken
+                ? Strings.Get("banish.pick.taken", new Dictionary<string, string> { ["name"] = choice.Label })
+                : choice.Label;
     }
 }

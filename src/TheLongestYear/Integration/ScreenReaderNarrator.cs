@@ -15,6 +15,10 @@ namespace TheLongestYear.Integration
     {
         /// <summary>Speaks the text through the loaded screen reader, if any.</summary>
         bool Say(string text, bool interrupt);
+
+        /// <summary>Tells Stardew Access a menu class narrates itself. Without this it reads the
+        /// hovered component's internal name ("row-0") over whatever the menu just said.</summary>
+        void RegisterCustomMenuAsAccessible(string fullNameOfClass);
     }
 
     /// <summary>A menu of ours the screen reader can read. Stardew Access reads the game's own
@@ -64,7 +68,14 @@ namespace TheLongestYear.Integration
                     _monitor.Log("Stardew Access is installed but its API could not be read; The Longest Year's menus will not be spoken.", LogLevel.Warn);
                     return;
                 }
-                _monitor.Log("Stardew Access found: The Longest Year's menus will be spoken.", LogLevel.Info);
+                int menus = 0;
+                foreach (System.Type type in typeof(INarratedMenu).Assembly.GetTypes())
+                {
+                    if (type.IsAbstract || !typeof(INarratedMenu).IsAssignableFrom(type)) continue;
+                    _api.RegisterCustomMenuAsAccessible(type.FullName);
+                    menus++;
+                }
+                _monitor.Log($"Stardew Access found: The Longest Year's menus will be spoken ({menus} menus registered).", LogLevel.Info);
                 helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
             };
         }

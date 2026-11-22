@@ -102,7 +102,11 @@ namespace TheLongestYear.UI
                     ActivateRow(row);
                     return;
                 }
-                if ((HasButton(row) || HasFocusButton(row)) && BoostButtonBounds(rowY).Contains(x, y))
+                // With controller-style menus the cursor sits on the snapped row, not on its Buy
+                // button, and a screen reader's click key clicks there: the row stands for its button.
+                bool onSnappedRow = GameMovesSnap && currentlySnappedComponent?.myID == RowIdBase + i
+                    && _rowSlots[i].containsPoint(x, y);
+                if ((HasButton(row) || HasFocusButton(row)) && (onSnappedRow || BoostButtonBounds(rowY).Contains(x, y)))
                 {
                     ActivateRow(row);
                     return;
@@ -110,9 +114,17 @@ namespace TheLongestYear.UI
             }
         }
 
+        private static bool GameMovesSnap => Game1.options.snappyMenus && Game1.options.gamepadControls;
+
+        /// <summary>Game tick of the last row activation. One gamepad A press arrives as both a
+        /// button and a synthesized click at the snapped row in the same tick, and must act once.</summary>
+        private int _lastActivateTick = -1;
+
         /// <summary>Gamepad A / click on a row: toggle a Locked section, buy a boost or buy a focus card.</summary>
         private void ActivateRow(Row row)
         {
+            if (Game1.ticks == _lastActivateTick) return;
+            _lastActivateTick = Game1.ticks;
             if (row.Kind == RowKind.LockedToggle)
             {
                 if (!_expandedLocked.Remove(row.Category)) _expandedLocked.Add(row.Category);
@@ -152,11 +164,7 @@ namespace TheLongestYear.UI
             {
                 if (bounds.Contains(x, y))
                 {
-                    _hoverText = Strings.Get("menu.shrine-preview.cart-item-hover", new Dictionary<string, string>
-                    {
-                        ["name"] = name,
-                        ["price"] = price.ToString(),
-                    });
+                    _hoverText = CartItemText(name, price);
                     return;
                 }
             }
@@ -164,11 +172,7 @@ namespace TheLongestYear.UI
             {
                 if (bounds.Contains(x, y))
                 {
-                    _hoverText = Strings.Get("menu.shrine-preview.weather-day-hover", new Dictionary<string, string>
-                    {
-                        ["day"] = day.DayOfMonth.ToString(),
-                        ["weather"] = WeatherIcons.Label(day.Weather),
-                    });
+                    _hoverText = WeatherDayText(day);
                     return;
                 }
             }
@@ -179,10 +183,26 @@ namespace TheLongestYear.UI
                 if (idx >= _rows.Count) break;
                 if (_rows[idx].Tooltip != null && _rowSlots[i].containsPoint(x, y))
                 {
-                    _hoverText = _rows[idx].Tooltip + PinnedSuffix(_rows[idx]);
+                    _hoverText = RowHoverText(_rows[idx]);
                     return;
                 }
             }
         }
+
+        private static string CartItemText(string name, int price)
+            => Strings.Get("menu.shrine-preview.cart-item-hover", new Dictionary<string, string>
+            {
+                ["name"] = name,
+                ["price"] = price.ToString(),
+            });
+
+        private static string WeatherDayText(ForecastDay day)
+            => Strings.Get("menu.shrine-preview.weather-day-hover", new Dictionary<string, string>
+            {
+                ["day"] = day.DayOfMonth.ToString(),
+                ["weather"] = WeatherIcons.Label(day.Weather),
+            });
+
+        private string RowHoverText(Row row) => row.Tooltip + PinnedSuffix(row);
     }
 }

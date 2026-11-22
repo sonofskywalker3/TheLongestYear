@@ -163,8 +163,7 @@ namespace TheLongestYear.UI
                 case RowKind.Locked:
                 {
                     // "Keep Big Coop - unlocked once it's built", cost right-aligned like a buyable row.
-                    string title = row.Def.DisplayName
-                        + (string.IsNullOrEmpty(row.Requirement) ? "" : " - " + row.Requirement);
+                    string title = LockedTitle(row);
                     Utility.drawTextWithShadow(b, title, Game1.smallFont,
                         new Vector2(_listX + SubRowIndent, rowY + 6), LockedGray);
                     long lockedCost = UpgradePricing.EffectiveCost(row.Def, _priceFactor, _state);
@@ -190,10 +189,7 @@ namespace TheLongestYear.UI
                 Utility.drawTextWithShadow(b, Strings.Get(boost.NameKey), Game1.smallFont,
                     new Vector2(_listX + 24, rowY + 6), Game1.textColor);
                 // The price multiplier so far this loop (3^n), right-aligned above the Buy buttons.
-                string multiplier = Strings.Get("shrine.boosts.multiplier", new Dictionary<string, string>
-                {
-                    ["factor"] = ((long)Math.Pow(3, _run.SkillLevelsBoughtTotal)).ToString(),
-                });
+                string multiplier = CrashCourseMultiplier();
                 Vector2 multSize = Game1.smallFont.MeasureString(multiplier);
                 Utility.drawTextWithShadow(b, multiplier, Game1.smallFont,
                     new Vector2(_listX + _listWidth - 64 - multSize.X, rowY + 6), NoteBrown);
@@ -201,29 +197,8 @@ namespace TheLongestYear.UI
             }
 
             BoostContext ctx = ContextFor(row);
-            string name;
-            int x = _listX + 24;
-            if (boost.Id == BoostId.CrashCourse)
-            {
-                int from = ctx.SkillLevels[row.Skill];
-                name = Strings.Get("shrine.boosts.crash-course-row", new Dictionary<string, string>
-                {
-                    ["skill"] = SkillName(row.Skill), ["from"] = from.ToString(), ["to"] = (from + 1).ToString(),
-                });
-                x = _listX + SubRowIndent;
-            }
-            else if (boost.Id == BoostId.ElevatorPass)
-            {
-                name = Strings.Get(boost.NameKey) + ": " + Strings.Get("shrine.boosts.elevator-row", new Dictionary<string, string>
-                {
-                    ["from"] = ctx.MineFloor.ToString(),
-                    ["to"] = BoostPricing.ElevatorLanding(ctx.MineFloor).ToString(),
-                });
-            }
-            else
-            {
-                name = Strings.Get(boost.NameKey);
-            }
+            string name = BoostRowName(row, ctx);
+            int x = boost.Id == BoostId.CrashCourse ? _listX + SubRowIndent : _listX + 24;
 
             BoostRowState rowState = StateOf(row);
             long costJp = BoostPricing.CostOf(boost, _run, ctx);
@@ -256,17 +231,54 @@ namespace TheLongestYear.UI
                 return;
             }
 
-            string label = rowState == BoostRowState.Active
+            string label = BoostStateLabel(boost, rowState, ctx);
+            Color labelColor = rowState == BoostRowState.Active ? OwnedGreen : Color.Brown;
+            Vector2 labelSize = Game1.smallFont.MeasureString(label);
+            Utility.drawTextWithShadow(b, label, Game1.smallFont,
+                new Vector2(button.X + (button.Width - labelSize.X) / 2f, rowY + 6), labelColor);
+        }
+
+        // ------------------------------------------------------------------ row text
+
+        private static string LockedTitle(Row row)
+            => row.Def.DisplayName + (string.IsNullOrEmpty(row.Requirement) ? "" : " - " + row.Requirement);
+
+        private string CrashCourseMultiplier()
+            => Strings.Get("shrine.boosts.multiplier", new Dictionary<string, string>
+            {
+                ["factor"] = ((long)Math.Pow(3, _run.SkillLevelsBoughtTotal)).ToString(),
+            });
+
+        /// <summary>A buyable boost row's name: Crash Course names the skill and levels, Elevator
+        /// Pass the floors.</summary>
+        private static string BoostRowName(Row row, BoostContext ctx)
+        {
+            BoostDefinition boost = row.Boost;
+            if (boost.Id == BoostId.CrashCourse)
+            {
+                int from = ctx.SkillLevels[row.Skill];
+                return Strings.Get("shrine.boosts.crash-course-row", new Dictionary<string, string>
+                {
+                    ["skill"] = SkillName(row.Skill), ["from"] = from.ToString(), ["to"] = (from + 1).ToString(),
+                });
+            }
+            if (boost.Id == BoostId.ElevatorPass)
+                return Strings.Get(boost.NameKey) + ": " + Strings.Get("shrine.boosts.elevator-row", new Dictionary<string, string>
+                {
+                    ["from"] = ctx.MineFloor.ToString(),
+                    ["to"] = BoostPricing.ElevatorLanding(ctx.MineFloor).ToString(),
+                });
+            return Strings.Get(boost.NameKey);
+        }
+
+        /// <summary>The label a boost row shows in place of its Buy button.</summary>
+        private static string BoostStateLabel(BoostDefinition boost, BoostRowState rowState, BoostContext ctx)
+            => rowState == BoostRowState.Active
                 ? Strings.Get("shrine.boosts.active")
                 : boost.Id == BoostId.ElevatorPass && ctx.MineFloor <= 0
                     ? Strings.Get("shrine.boosts.enter-mine")
                     : boost.Id == BoostId.ElevatorPass
                         ? Strings.Get("shrine.boosts.bottom-reached")
                         : Strings.Get("shrine.boosts.not-available");
-            Color labelColor = rowState == BoostRowState.Active ? OwnedGreen : Color.Brown;
-            Vector2 labelSize = Game1.smallFont.MeasureString(label);
-            Utility.drawTextWithShadow(b, label, Game1.smallFont,
-                new Vector2(button.X + (button.Width - labelSize.X) / 2f, rowY + 6), labelColor);
-        }
     }
 }

@@ -27,7 +27,7 @@ namespace TheLongestYear.UI
     /// Controller: the tabs join the page's snap graph (left from a row), and the shoulder
     /// buttons step through the tabs, as on the game's own menu.
     /// </summary>
-    internal sealed class OneBookMenu : IClickableMenu, IRecipeBookMenu
+    internal sealed partial class OneBookMenu : IClickableMenu, IRecipeBookMenu
     {
         private const int TabWidth = 160;
         private const int TabHeight = 48;

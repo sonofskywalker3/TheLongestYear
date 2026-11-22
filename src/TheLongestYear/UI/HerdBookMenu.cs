@@ -21,7 +21,7 @@ namespace TheLongestYear.UI
     /// Shown when the book is opened on its Herd Book tab: from the placed book, <c>tly_openherdbook</c>,
     /// and the rewind night (RunController.OfferHerdBook through OfferBookTab, with a subtitle).
     /// </summary>
-    internal sealed class HerdBookMenu : IClickableMenu, IBookPage
+    internal sealed partial class HerdBookMenu : IClickableMenu, IBookPage
     {
         // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
         // never overlap; the panel grows to match. Base sizes kept in comments for reference.
@@ -342,13 +342,7 @@ namespace TheLongestYear.UI
                 b.Draw(Game1.fadeToBlackRect, new Rectangle(0, 0, Game1.uiViewport.Width, Game1.uiViewport.Height), Color.Black * 0.5f);
             IClickableMenu.drawTextureBox(b, xPositionOnScreen, yPositionOnScreen, width, height, Color.White);
 
-            string title = _pickerList != null
-                ? Strings.Get("menu.herdbook.choose")
-                : Strings.Get("menu.herdbook.title", new Dictionary<string, string>
-                    {
-                        ["used"] = HerdBookRules.Used(_meta.HerdBook, _slots.Count).ToString(),
-                        ["total"] = _slots.Count.ToString(),
-                    });
+            string title = TitleText();
             StardewValley.BellsAndWhistles.SpriteText.drawStringHorizontallyCenteredAt(
                 b, title, xPositionOnScreen + width / 2, yPositionOnScreen + TitleY);
             if (_subtitle != null)
@@ -380,12 +374,7 @@ namespace TheLongestYear.UI
                 HerdSlotKind kind = _slots[slotIndex];
                 HerdEntry entry = HerdBookRules.EntryAt(_meta.HerdBook, slotIndex);
                 string kindName = HerdSlotRules.DisplayName(kind);
-                // A slot whose building is not kept takes no animal. One filled before that rule
-                // still says what it is waiting for.
-                bool kept = HerdBookRules.BuildingKept(kind, _meta.HasUpgrade);
-                string note = kept || entry == null
-                    ? null
-                    : Strings.Get("menu.herdbook.needs-keep", new Dictionary<string, string> { ["keep"] = KeepName(kind) });
+                string note = SlotNote(kind, entry);
 
                 AnimalRow animalRow = entry == null ? null : SlotRow(entry);
                 if (animalRow?.Entry != null)
@@ -395,16 +384,7 @@ namespace TheLongestYear.UI
                     continue;
                 }
 
-                string label = entry == null
-                    ? kept
-                        ? Strings.Get("menu.herdbook.empty-slot", new Dictionary<string, string> { ["kind"] = kindName })
-                        : Strings.Get("menu.herdbook.locked-slot", new Dictionary<string, string> { ["kind"] = kindName, ["keep"] = KeepName(kind) })
-                    : Strings.Get("menu.herdbook.filled-slot", new Dictionary<string, string>
-                        {
-                            ["kind"] = kindName,
-                            ["name"] = entry.Name,
-                            ["hearts"] = HerdBookRules.Hearts(entry.Friendship).ToString(),
-                        });
+                string label = SlotLabel(kind, entry);
                 DrawRow(b, row, label, entry == null ? Color.White * EmptyRowAlpha : Color.White, note);
             }
         }
@@ -436,13 +416,7 @@ namespace TheLongestYear.UI
                     AnimalRowRenderer.Draw(b, _rowSlots[i].bounds, _pickerRows[pickerIndex], null, null);
                     continue;
                 }
-                FarmAnimal animal = _pickerList[pickerIndex];
-                string label = Strings.Get("menu.herdbook.picker-row", new Dictionary<string, string>
-                {
-                    ["name"] = animal.Name,
-                    ["species"] = animal.displayType,
-                    ["hearts"] = HerdBookRules.Hearts(animal.friendshipTowardFarmer.Value).ToString(),
-                });
+                string label = PickerLabel(_pickerList[pickerIndex]);
                 DrawRow(b, _rowSlots[i].bounds, label, Color.White);
             }
         }

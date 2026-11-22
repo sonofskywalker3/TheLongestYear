@@ -156,15 +156,28 @@ namespace TheLongestYear.UI
             for (int i = 0; i < _goalSlots.Count && i < DonateGoals.Count; i++)
             {
                 if (!_goalSlots[i].containsPoint(x, y)) continue;
-                ShrineGoal goal = DonateGoals[i];
-                _hoverText = Strings.Get(goal.Deposited ? "shrine.donate.goal-done-hover" : "shrine.donate.goal-hover", new Dictionary<string, string>
-                {
-                    ["name"] = _goalItems.Count > i && _goalItems[i] != null ? _goalItems[i].DisplayName : goal.ItemId,
-                    ["stack"] = goal.Stack.ToString(),
-                });
+                _hoverText = GoalHoverText(i);
                 return;
             }
             _hoveredItem = _inventory?.hover(x, y, null);
+        }
+
+        private string GoalHoverText(int i)
+        {
+            ShrineGoal goal = DonateGoals[i];
+            return Strings.Get(goal.Deposited ? "shrine.donate.goal-done-hover" : "shrine.donate.goal-hover", new Dictionary<string, string>
+            {
+                ["name"] = _goalItems.Count > i && _goalItems[i] != null ? _goalItems[i].DisplayName : goal.ItemId,
+                ["stack"] = goal.Stack.ToString(),
+            });
+        }
+
+        /// <summary>The line under the goal slots: what to do, or that the week is done.</summary>
+        private string DonateNote()
+        {
+            foreach (ShrineGoal goal in DonateGoals)
+                if (!goal.Deposited) return Strings.Get("shrine.donate.hint");
+            return Strings.Get("shrine.donate.all-done");
         }
 
         private void DrawDonate(SpriteBatch b)
@@ -172,12 +185,10 @@ namespace TheLongestYear.UI
             Utility.drawTextWithShadow(b, Strings.Get("shrine.donate.header"), Game1.dialogueFont,
                 new Vector2(_listX, _donateHeaderY), Game1.textColor);
 
-            bool allDone = true;
             for (int i = 0; i < _goalSlots.Count && i < DonateGoals.Count; i++)
             {
                 ShrineGoal goal = DonateGoals[i];
                 Rectangle r = _goalSlots[i].bounds;
-                allDone &= goal.Deposited;
                 b.Draw(Game1.menuTexture, r, SlotSource, Color.White);
                 Item icon = i < _goalItems.Count ? _goalItems[i] : null;
                 icon?.drawInMenu(b, new Vector2(r.X, r.Y), 1f, goal.Deposited ? DoneIconAlpha : 1f, 0.9f,
@@ -193,7 +204,7 @@ namespace TheLongestYear.UI
                     b.Draw(Game1.mouseCursors, new Rectangle(r.Right - CheckPx, r.Y, CheckPx, CheckPx), CheckSource, Color.White);
             }
 
-            string note = allDone ? Strings.Get("shrine.donate.all-done") : Strings.Get("shrine.donate.hint");
+            string note = DonateNote();
             Utility.drawTextWithShadow(b, note, Game1.smallFont,
                 new Vector2(_listX, _donateNoteY), Game1.textColor * 0.85f);
 

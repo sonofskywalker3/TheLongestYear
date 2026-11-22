@@ -33,9 +33,7 @@ namespace TheLongestYear.UI
                 // bundle rows' item tooltips).
                 if (e.IsVault)
                 {
-                    _hoverText = e.IsMet
-                        ? Strings.Get("menu.goals.vault-hover-met")
-                        : Strings.Get("menu.goals.vault-hover-unmet");
+                    _hoverText = VaultHoverText(e);
                     return;
                 }
 
@@ -49,22 +47,33 @@ namespace TheLongestYear.UI
                         iconRowY, IngredientIconSize, IngredientIconSize);
                     if (iconRect.Contains(x, y))
                     {
-                        string itemId = e.MissingItems[k];
-                        int stack = StackFor(e.Bundle, itemId);
-                        int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
-                        Item probe = ResolveItem(itemId, stack, quality);
-                        string qty = stack > 1
-                            ? Strings.Get("menu.goals.qty-suffix", new Dictionary<string, string> { ["count"] = stack.ToString() })
-                            : "";
-                        // A line this theme week lowered names its full ask too: " x13 (27)".
-                        if (LoweredAsk.ForItem(LoweredAsk.WeekSlots(_run), e.Bundle.BundleIndex, itemId, quality, stack) is int full)
-                            qty += Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
-                        string qStr = QualityTags.For(quality);
-                        _hoverText = (probe?.DisplayName ?? itemId) + qty + qStr;
+                        _hoverText = MissingItemText(e, k);
                         return;
                     }
                 }
             }
+        }
+
+        private static string VaultHoverText(BundleEntry e)
+            => e.IsMet
+                ? Strings.Get("menu.goals.vault-hover-met")
+                : Strings.Get("menu.goals.vault-hover-unmet");
+
+        /// <summary>A missing ingredient's hover text: its name, how many and the quality asked.</summary>
+        private string MissingItemText(BundleEntry e, int k)
+        {
+            string itemId = e.MissingItems[k];
+            int stack = StackFor(e.Bundle, itemId);
+            int quality = e.Bundle.IngredientQualities.TryGetValue(itemId, out int q) ? q : 0;
+            Item probe = ResolveItem(itemId, stack, quality);
+            string qty = stack > 1
+                ? Strings.Get("menu.goals.qty-suffix", new Dictionary<string, string> { ["count"] = stack.ToString() })
+                : "";
+            // A line this theme week lowered names its full ask too: " x13 (27)".
+            if (LoweredAsk.ForItem(LoweredAsk.WeekSlots(_run), e.Bundle.BundleIndex, itemId, quality, stack) is int full)
+                qty += Strings.Get("goal.full-tag", new Dictionary<string, string> { ["full"] = full.ToString() });
+            string qStr = QualityTags.For(quality);
+            return (probe?.DisplayName ?? itemId) + qty + qStr;
         }
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
