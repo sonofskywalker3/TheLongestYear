@@ -23,7 +23,15 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.48
+## What's New in 1.2.52
+
+**New: screen reader support with Stardew Access.** With Stardew Access installed, The Longest Year's own menus are read aloud: the weekly theme picker, the focus card picks, the rewind scenes, the loop recap, the Junimo upgrade shop, the planning shrine, the Bundle Log, the books and the banish picker. Move with the usual movement keys and choose with Stardew Access's left click key. The Bundle Log tab on the Collections page and the JP counter on screen are not read yet.
+
+**Fixed: the middle focus card could not be reached with the d-pad.** With controller-style menus on, one press moved two cards. It now moves one.
+
+**Fixed: the planning shrine with a controller-style cursor.** A click on the selected row now buys the boost or focus card. Before, the click had to land on the Buy button.
+
+## 1.2.48
 
 **New: Bog's Monster Mash is supported.** The Longest Year now knows what Bog's Monster Mash's monsters drop, and counts those drops as a way to get an item. Mushrooms, Salmonberries and Frozen Tears can be asked for from week 1, Chanterelles from week 2, and Moss from week 3 instead of week 6. Its very rare drops, like Stardrop Tea and the Metal Head weapons, are never asked for. Thanks to Celjhyn.
 

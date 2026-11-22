@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.52 - 2026-11-22
+
+### Added
+
+- **New: screen reader support with Stardew Access.** With Stardew Access installed, The Longest Year's own menus are read aloud: the weekly theme picker, the focus card picks, the rewind scenes, the loop recap, the Junimo upgrade shop, the planning shrine, the Bundle Log, the books and the banish picker. Move with the usual movement keys and choose with Stardew Access's left click key. The Bundle Log tab on the Collections page and the JP counter on screen are not read yet.
+
+### Fixed
+
+- **Fixed: the middle focus card could not be reached with the d-pad.** With controller-style menus on, one press moved two cards. It now moves one.
+- **Fixed: the planning shrine with a controller-style cursor.** A click on the selected row now buys the boost or focus card. Before, the click had to land on the Buy button.
+
 ## 1.2.48 - 2026-11-20
 
 ### Added
