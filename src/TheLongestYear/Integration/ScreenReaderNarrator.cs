@@ -41,6 +41,8 @@ namespace TheLongestYear.Integration
     internal sealed class ScreenReaderNarrator
     {
         private const string StardewAccessId = "shoaib.stardewaccess";
+        /// <summary>The game's "controller mode: always on" option value.</summary>
+        private const string ForceControllerMode = "force_on";
 
         private readonly IMonitor _monitor;
         private readonly NarrationTracker _tracker = new NarrationTracker();
@@ -73,12 +75,28 @@ namespace TheLongestYear.Integration
             switch (_tracker.Observe(menu, menu?.NarrationFocusKey))
             {
                 case NarrationCue.MenuOpened:
+                    EnsureControllerStyleMenus((IClickableMenu)menu);
                     Speak(NarrationText.Sentences(menu.NarrationIntro(), menu.NarrateFocus()));
                     break;
                 case NarrationCue.FocusChanged:
                     Speak(menu.NarrateFocus());
                     break;
             }
+        }
+
+        /// <summary>Stardew Access plays every menu controller-style: the movement keys step the
+        /// snap, the cursor follows it, and its left click key clicks where the cursor is. It sets
+        /// that mode at launch and at the title screen, and a new farm's fresh options can drop it
+        /// (seen on a farm made without the character screen). Put it back with the same two
+        /// settings Stardew Access uses, and park the cursor on the menu's focused item.</summary>
+        private void EnsureControllerStyleMenus(IClickableMenu menu)
+        {
+            if (Game1.options.gamepadControls && Game1.options.snappyMenus) return;
+            Game1.options.setGamepadMode(ForceControllerMode);
+            Game1.options.snappyMenus = true;
+            if (menu.currentlySnappedComponent != null) menu.snapCursorToCurrentSnappedComponent();
+            else menu.snapToDefaultClickableComponent();
+            _monitor.Log($"Screen reader: controller-style menus were off when {menu.GetType().Name} opened; switched back on.", LogLevel.Trace);
         }
 
         /// <summary>The menu taking input: the last child in the active menu's chain.</summary>

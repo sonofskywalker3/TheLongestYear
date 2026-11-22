@@ -432,6 +432,8 @@ namespace TheLongestYear
             // the patch classes ourselves and isolate each one so a single failure logs +
             // continues instead of cratering the whole pass.
             var harmony = new Harmony(this.ModManifest.UniqueID);
+            if (_config.EnableDebugCommandBridge)
+                TheLongestYear.DebugCommands.UnfocusedCursorGuard.Apply(harmony, this.Monitor);
             // Snow day animals: other mods' helpers the transpilers found get hooked once every
             // mod's Entry has patched (see WildcardAnimalPatch).
             TheLongestYear.Loop.WildcardAnimalPatch.Monitor = this.Monitor;
