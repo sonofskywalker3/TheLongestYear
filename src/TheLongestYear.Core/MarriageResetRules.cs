@@ -47,5 +47,18 @@ namespace TheLongestYear.Core
         /// marriage keeps its status, so it never counts.</summary>
         public static bool IsOrphanedSpouse(string spouse, bool hasFriendship, bool marriedEngagedOrRoommate)
             => !string.IsNullOrEmpty(spouse) && !(hasFriendship && marriedEngagedOrRoommate);
+
+        /// <summary>The villager name the game's pre-1.3 friendship migration looks up for a saved
+        /// spouse value (old saves wrote an engagement as the name plus "engaged").</summary>
+        public static string MigratedSpouseName(string spouse)
+            => string.IsNullOrEmpty(spouse) ? spouse : spouse.Replace("engaged", "");
+
+        /// <summary>Whether that migration would throw on this farmer: it indexes the friendship
+        /// list by the spouse name without checking, and it runs for every save the load screen
+        /// lists. A spouse with no friendship entry (the rewind bug before 0.19.117) makes the
+        /// save vanish from the list. An old save still carrying pre-1.3 friendships is left to
+        /// the game.</summary>
+        public static bool SpouseMigrationWouldFail(string spouse, bool hasPre13Friendships, bool hasFriendshipEntry)
+            => !string.IsNullOrEmpty(spouse) && !hasPre13Friendships && !hasFriendshipEntry;
     }
 }

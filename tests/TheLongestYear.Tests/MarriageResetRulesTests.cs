@@ -52,4 +52,24 @@ public class MarriageResetRulesTests
     {
         Assert.Equal(expected, MarriageResetRules.IsOrphanedSpouse(spouse, hasEntry, partner));
     }
+
+    [Theory]
+    [InlineData("Alex", false, false, true)]    // name left, hearts wiped: the load screen drops the save
+    [InlineData("Alex", false, true, false)]    // entry present: the game's own path is safe
+    [InlineData("Alex", true, false, false)]    // pre-1.3 save: the game builds the entries first
+    [InlineData(null, false, false, false)]
+    [InlineData("", false, false, false)]
+    public void Spouse_migration_fails_only_without_a_friendship_entry(string spouse, bool pre13, bool hasEntry, bool expected)
+    {
+        Assert.Equal(expected, MarriageResetRules.SpouseMigrationWouldFail(spouse, pre13, hasEntry));
+    }
+
+    [Theory]
+    [InlineData("Alex", "Alex")]
+    [InlineData("Alexengaged", "Alex")]
+    [InlineData(null, null)]
+    public void Migrated_spouse_name_drops_the_old_engaged_suffix(string spouse, string expected)
+    {
+        Assert.Equal(expected, MarriageResetRules.MigratedSpouseName(spouse));
+    }
 }

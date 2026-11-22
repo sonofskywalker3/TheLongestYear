@@ -29,6 +29,9 @@ namespace TheLongestYear
         {
             yield return new DebugCommand("tly_meta", "Print The Longest Year meta-state (requires a loaded save).", this.PrintMeta);
             yield return new DebugCommand("tly_loadsave", "Load a save by folder name from the title screen (debug/automation). Usage: tly_loadsave <saveFolderName>", this.CmdLoadSave);
+            yield return new DebugCommand("tly_engage", "Get engaged to a villager the way a proposal does (vanilla's debug engaged recipe), for testing the rewind's marriage clear. Add 'orphan' to drop the friendship entry and keep the spouse name: the save state versions before 0.19.117 left behind. Usage: tly_engage <npc> [orphan]", this.CmdEngage);
+            yield return new DebugCommand("tly_marriage", "Print the farmer's spouse, that villager's friendship status and where they are (read-only).", this.CmdMarriage);
+            yield return new DebugCommand("tly_listsaves", "From the title screen, list the saves the load screen can read (read-only).", this.CmdListSaves);
             yield return new DebugCommand("tly_totitle", "Exit to the title screen without saving (debug/automation), so tly_newgame / tly_loadsave can run next.", this.CmdToTitle);
             yield return new DebugCommand("tly_modslot", "Equip an item in another mod's SpaceCore equipment slot through SpaceCore's own API, which runs the slot's validator, then report the slot (debug; for the rewind's slot clear). Usage: tly_modslot <slotId> [qualifiedItemId], or tly_modslot register to add a test slot of TLY's own", this.CmdModSlot);
             yield return new DebugCommand("tly_buildings", "List every building on the farm with its type and tile (read-only; for keep-building audits).", this.CmdBuildings);

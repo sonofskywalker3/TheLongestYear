@@ -438,6 +438,7 @@ namespace TheLongestYear
             // mod's Entry has patched (see WildcardAnimalPatch).
             TheLongestYear.Loop.WildcardAnimalPatch.Monitor = this.Monitor;
             TheLongestYear.Loop.GearReach.Monitor = this.Monitor;
+            TheLongestYear.Loop.OrphanedSpouseLoadPatch.Monitor = this.Monitor;
             TheLongestYear.Integration.BundleLogSideTab.Monitor = this.Monitor;
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.DeepWoodsForageOffPatch.Apply(harmony, this.Monitor);
