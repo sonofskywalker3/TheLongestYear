@@ -29,6 +29,14 @@ namespace TheLongestYear.UI
     /// </summary>
     internal sealed partial class OneBookMenu : IClickableMenu, IRecipeBookMenu
     {
+        /// <summary>Keeps the list this menu builds itself. Vanilla rebuilds it from public fields
+        /// whenever input switches from mouse back to controller (Game1.CheckGamepadMode), which
+        /// finds none of ours and left the controller with nothing to move to until the menu was
+        /// reopened (Celjhyn, 2026-11-22). Same fix as WeeklyHubMenu.</summary>
+        public override void populateClickableComponentList()
+        {
+        }
+
         private const int TabWidth = 160;
         private const int TabHeight = 48;
         private const int TabSpacing = 4;

@@ -23,6 +23,14 @@ namespace TheLongestYear.UI
     /// instead of closing it.</summary>
     internal sealed class JojaGameOverMenu : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
+        /// <summary>Keeps the list this menu builds itself. Vanilla rebuilds it from public fields
+        /// whenever input switches from mouse back to controller (Game1.CheckGamepadMode), which
+        /// finds none of ours and left the controller with nothing to move to until the menu was
+        /// reopened (Celjhyn, 2026-11-22). Same fix as WeeklyHubMenu.</summary>
+        public override void populateClickableComponentList()
+        {
+        }
+
         private const int TitleLift = 40;
         private const int ButtonPadX = 32, ButtonPadY = 20;
         private const int ButtonBelowTwoThirds = 16;

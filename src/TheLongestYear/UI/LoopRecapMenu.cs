@@ -15,6 +15,14 @@ namespace TheLongestYear.UI
     /// shrine" button. Closing it any way runs the rewind chain's continuation (its exitFunction).</summary>
     internal sealed class LoopRecapMenu : IClickableMenu, TheLongestYear.Integration.INarratedMenu
     {
+        /// <summary>Keeps the list this menu builds itself. Vanilla rebuilds it from public fields
+        /// whenever input switches from mouse back to controller (Game1.CheckGamepadMode), which
+        /// finds none of ours and left the controller with nothing to move to until the menu was
+        /// reopened (Celjhyn, 2026-11-22). Same fix as WeeklyHubMenu.</summary>
+        public override void populateClickableComponentList()
+        {
+        }
+
         private const int BoxWidth = 1000;
         private const int Pad = 40;
         private const int TitleHeight = 72;

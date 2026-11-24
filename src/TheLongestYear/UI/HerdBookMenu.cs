@@ -23,6 +23,14 @@ namespace TheLongestYear.UI
     /// </summary>
     internal sealed partial class HerdBookMenu : IClickableMenu, IBookPage
     {
+        /// <summary>Keeps the list this menu builds itself. Vanilla rebuilds it from public fields
+        /// whenever input switches from mouse back to controller (Game1.CheckGamepadMode), which
+        /// finds none of ours and left the controller with nothing to move to until the menu was
+        /// reopened (Celjhyn, 2026-11-22). Same fix as WeeklyHubMenu.</summary>
+        public override void populateClickableComponentList()
+        {
+        }
+
         // Rows grown ~15% (Jeff, 2026-09-25) so the sprite/name/hearts/icons/note have room and
         // never overlap; the panel grows to match. Base sizes kept in comments for reference.
         private const float RowGrowth = 1.15f;

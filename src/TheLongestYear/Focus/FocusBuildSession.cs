@@ -56,6 +56,7 @@ namespace TheLongestYear.Focus
             menu.Blueprints.Add(new CarpenterMenu.BlueprintEntry(0, buildingType, FreeCopy(data), null));
             menu.SetNewActiveBlueprint(0);
             HideOtherTools(menu);
+            SnapToBuild(menu);
             _menu = menu;
             Game1.activeClickableMenu = menu;
             Monitor?.Log($"Focus build: placement screen opened for '{buildingType}'.", LogLevel.Trace);
@@ -168,6 +169,26 @@ namespace TheLongestYear.Focus
             if (menu.demolishButton != null) menu.demolishButton.visible = false;
             if (menu.moveButton != null) menu.moveButton.visible = false;
             if (menu.paintButton != null) menu.paintButton.visible = false;
+
+            // A controller starts on Cancel, and vanilla's only way from Cancel to Build runs
+            // through Demolish (CarpenterMenu.cs 292-345). The game never snaps to a hidden button
+            // (IClickableMenu.getComponentWithID), so with Demolish hidden the stick stayed on Cancel
+            // and Build could not be reached (Celjhyn, 2026-11-22). Link the two directly.
+            if (menu.okButton != null && menu.cancelButton != null)
+            {
+                menu.okButton.rightNeighborID = menu.cancelButton.myID;
+                menu.okButton.leftNeighborID = ClickableComponent.SNAP_AUTOMATIC;
+                menu.cancelButton.leftNeighborID = menu.okButton.myID;
+            }
+        }
+
+        /// <summary>With controller-style menus on, start on Build rather than vanilla's Cancel.</summary>
+        private static void SnapToBuild(CarpenterMenu menu)
+        {
+            if (!Game1.options.SnappyMenus || menu.okButton == null) return;
+            menu.populateClickableComponentList();
+            menu.currentlySnappedComponent = menu.okButton;
+            menu.snapCursorToCurrentSnappedComponent();
         }
     }
 

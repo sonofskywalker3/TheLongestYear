@@ -27,6 +27,14 @@ namespace TheLongestYear.UI
     /// </summary>
     internal abstract partial class RecipeBookMenu : IClickableMenu, IRecipeBookMenu, IBookPage
     {
+        /// <summary>Keeps the list this menu builds itself. Vanilla rebuilds it from public fields
+        /// whenever input switches from mouse back to controller (Game1.CheckGamepadMode), which
+        /// finds none of ours and left the controller with nothing to move to until the menu was
+        /// reopened (Celjhyn, 2026-11-22). Same fix as WeeklyHubMenu.</summary>
+        public override void populateClickableComponentList()
+        {
+        }
+
         // Panel size and header band shared with the Herd Book page (BookPageLayout).
         private const int PanelWidth  = BookPageLayout.PanelWidth;
         private const int PanelHeight = BookPageLayout.PanelHeight;
