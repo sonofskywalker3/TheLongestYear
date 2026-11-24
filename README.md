@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.52
+## What's New in 1.2.53
+
+**Fixed: a farm missing from the load screen after a last-day proposal.** On versions before 0.19.117, proposing on the last day of a loop could leave the villager stuck as your partner after the rewind: they floated in a dark corner of the farmhouse, a red error showed each morning, and the farm could vanish from the load screen. Those farms show up and load again, and the villager goes back home.
+
+## 1.2.52
 
 **New: screen reader support with Stardew Access.** With Stardew Access installed, The Longest Year's own menus are read aloud: the weekly theme picker, the focus card picks, the rewind scenes, the loop recap, the Junimo upgrade shop, the planning shrine, the Bundle Log, the books and the banish picker. Move with the usual movement keys and choose with Stardew Access's left click key. The Bundle Log tab on the Collections page and the JP counter on screen are not read yet.
 

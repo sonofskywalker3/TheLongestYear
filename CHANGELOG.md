@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.53 - 2026-11-24
+
+### Fixed
+
+- **Fixed: a farm missing from the load screen after a last-day proposal.** On versions before 0.19.117, proposing on the last day of a loop could leave the villager stuck as your partner after the rewind: they floated in a dark corner of the farmhouse, a red error showed each morning, and the farm could vanish from the load screen. Those farms show up and load again, and the villager goes back home.
+
 ## 1.2.52 - 2026-11-22
 
 ### Added
