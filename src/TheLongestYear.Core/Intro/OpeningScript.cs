@@ -27,8 +27,8 @@ public static class OpeningScript
         Prefix + "lewis-hall-1", Prefix + "lewis-hall-2",
         Prefix + "junimo-1", Prefix + "junimo-2", Prefix + "junimo-3", Prefix + "junimo-4",
         Prefix + "junimo-5", Prefix + "junimo-6", Prefix + "junimo-7", Prefix + "junimo-8",
-        Prefix + "tour-1", Prefix + "tour-2", Prefix + "tour-3", Prefix + "tour-book", Prefix + "tour-4", Prefix + "tour-5",
-        Prefix + "tour-herd", Prefix + "tour-6", Prefix + "tour-7", Prefix + "tour-8", Prefix + "tour-9",
+        Prefix + "tour-1", Prefix + "tour-2", Prefix + "tour-3", Prefix + "tour-book",
+        Prefix + "tour-6", Prefix + "tour-7", Prefix + "tour-8", Prefix + "tour-9",
     };
 
     public static string Build(Func<string, string> text, string ccSeenMail)
@@ -264,18 +264,16 @@ public static class OpeningScript
             Say("Junimo1", "tour-3"),
             "pause 300",
             "faceDirection farmer 1",
-            // One book with a page per section (2026-10-28): it is named once, then each page.
+            // One book with a page per section (2026-10-28). The Junimo names it and leaves the
+            // pages for the player to find (Jeff, 2026-11-24: no game mechanics in their lines).
             HoldUp(Interactables.OneBook.BookId),
-            SayPages("Junimo0", "tour-book", "tour-4", "tour-5", "tour-herd"),
+            Say("Junimo0", "tour-book"),
             HandOver(Interactables.OneBook.BookId),
             "pause 3000",
             "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
-            HoldUp(Interactables.BookKit.BundleLogId),
-            Say("Junimo0", "tour-6"),
-            HandOver(Interactables.BookKit.BundleLogId),
-            "pause 3000",
-            "faceDirection farmer 1",   // back to the Junimo once the hold-up ends (Jeff, 2026-09-25)
-            SayPages("Junimo0", "tour-7", "tour-8", "tour-9"),
+            // The Bundle Log is no longer a book (2026-11-24): the line points at the Collections
+            // page's side tab, with nothing handed over.
+            SayPages("Junimo0", "tour-6", "tour-7", "tour-8", "tour-9"),
             "pause 600",
             "playSound junimoMeep1",
             "pause 800",
