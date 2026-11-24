@@ -43,10 +43,12 @@ namespace TheLongestYear.Core.Interactables
         /// <summary>The combined book's furniture id.</summary>
         public const string BookId = "sonofskywalker3.TheLongestYear_Book";
 
-        /// <summary>The three books the combined one replaced. Their Data/Furniture rows stay so a
-        /// copy the sweep cannot reach is never an Error Item, and still opens its tab.</summary>
+        /// <summary>The three books the combined one replaced, and the Bundle Log book, retired
+        /// 2026-11-24 because the same log is the Collections page's side tab (Jeff: save the
+        /// inventory space). Their Data/Furniture rows stay so a copy the sweep cannot reach is
+        /// never an Error Item, and still opens its tab or the log.</summary>
         public static readonly IReadOnlyList<string> RetiredIds =
-            Array.AsReadOnly(new[] { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId });
+            Array.AsReadOnly(new[] { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId, BookKit.BundleLogId });
 
         public static bool IsRetired(string itemId) => RetiredIds.Contains(itemId);
 

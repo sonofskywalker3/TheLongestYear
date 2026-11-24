@@ -15,9 +15,9 @@ public class OneBookTests
     public void Book_id_is_stable_and_differs_from_the_retired_three()
     {
         Assert.Equal("sonofskywalker3.TheLongestYear_Book", OneBook.BookId);
-        Assert.Equal(new[] { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId }, OneBook.RetiredIds);
+        Assert.Equal(new[] { BookKit.CookbookId, BookKit.CraftbookId, BookKit.HerdBookId, BookKit.BundleLogId }, OneBook.RetiredIds);
         Assert.DoesNotContain(OneBook.BookId, OneBook.RetiredIds);
-        Assert.False(OneBook.IsRetired(BookKit.BundleLogId));
+        Assert.True(OneBook.IsRetired(BookKit.BundleLogId));
         Assert.True(OneBook.IsRetired(BookKit.HerdBookId));
     }
 

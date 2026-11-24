@@ -10,9 +10,9 @@ namespace TheLongestYear.Integration
 {
     /// <summary>Registers the carried "book" furniture as custom furniture: edits Data/Furniture to
     /// add the rows and provides the tilesheet, opens the matching menu when a book is used, and
-    /// keeps the per-loop count exact. Two books are handed out: the Bundle Log and the combined
-    /// book (<see cref="OneBook"/>: Cookbook, Craftbook and Herd Book as tabs, 2026-10-28). The
-    /// three retired books keep their rows so a copy the sweep missed still works.</summary>
+    /// keeps the per-loop count exact. One book is handed out: the combined book (<see cref="OneBook"/>:
+    /// Cookbook, Craftbook and Herd Book as tabs, 2026-10-28). The four retired books, the Bundle Log
+    /// included (2026-11-24), keep their rows so a copy the sweep missed still works.</summary>
     internal sealed class BookFurniture
     {
         private const string FurnitureAsset = "Data/Furniture";
@@ -32,10 +32,11 @@ namespace TheLongestYear.Integration
         /// <see cref="CheckForActionPatch"/> to open the matching menu when a book is clicked.</summary>
         public void AttachLauncher(System.Func<TheLongestYear.UI.MenuLauncher> launcher) => _launcher = launcher;
 
-        /// <summary>Per-loop invariant: exactly one Bundle Log, and exactly one of the combined book
-        /// (<see cref="OneBook"/>) when any of its sections is owned. The Cookbook, Craftbook and
-        /// Herd Book items are retired: every copy is removed, and the first one found takes the
-        /// combined book's place (see <see cref="ReconcileOneBook"/>).</summary>
+        /// <summary>Per-loop invariant: exactly one of the combined book (<see cref="OneBook"/>) when
+        /// any of its sections is owned. The Cookbook, Craftbook, Herd Book and Bundle Log items are
+        /// retired: every copy is removed, and the first one found takes the combined book's place
+        /// (see <see cref="ReconcileOneBook"/>). The Bundle Log lives on the Collections page's side
+        /// tab (<see cref="BundleLogSideTab"/>).</summary>
         public void ReconcileInventory(TheLongestYear.Core.MetaState meta)
         {
             StardewValley.Farmer p = StardewValley.Game1.player;
@@ -48,51 +49,7 @@ namespace TheLongestYear.Integration
             }
 
             ReconcileOneBook(p, meta);
-
-            foreach (string id in SingleCopyIds)
-            {
-                // Find every existing copy of this book: placed furniture in any location, plus
-                // inventory slots. The invariant is "exactly ONE copy exists somewhere" — a book
-                // the player placed in the world counts, so we must NOT sweep placed copies back
-                // into the inventory on every load (that yanked deliberately-placed books and,
-                // when the bag was full, silently destroyed the overflow).
-                var placed = new System.Collections.Generic.List<(StardewValley.GameLocation loc, StardewValley.Objects.Furniture f)>();
-                StardewValley.Utility.ForEachLocation(loc =>
-                {
-                    foreach (StardewValley.Objects.Furniture f in loc.furniture)
-                        if (f.ItemId == id) placed.Add((loc, f));
-                    return true;
-                });
-                var invSlots = new System.Collections.Generic.List<int>();
-                for (int i = 0; i < p.Items.Count; i++)
-                    if (p.Items[i] != null && p.Items[i].ItemId == id) invSlots.Add(i);
-
-                int total = placed.Count + invSlots.Count;
-
-                if (total == 0)
-                {
-                    // None exists (e.g. just after a loop reset wiped the farm + inventory): grant one.
-                    GrantBookOrDrop(p, id);
-                }
-                else if (total > 1)
-                {
-                    // Duplicates: trim to exactly one. Prefer keeping a placed copy so a book the
-                    // player deliberately set down stays put; remove all the rest.
-                    bool keepPlaced = placed.Count > 0;
-                    for (int i = keepPlaced ? 1 : 0; i < placed.Count; i++)
-                        placed[i].loc.furniture.Remove(placed[i].f);
-                    for (int i = keepPlaced ? 0 : 1; i < invSlots.Count; i++)
-                        p.Items[invSlots[i]] = null;
-                }
-                // total == 1: exactly one exists (carried or placed) — leave it untouched.
-            }
-
-            _monitor.Log("BookFurniture: reconciled the Bundle Log to exactly one (placed copies left in place).", LogLevel.Info);
         }
-
-        /// <summary>Books kept at exactly one copy by the loop above. The combined book has its own
-        /// reconcile, which also reaches chests and tables.</summary>
-        private static readonly string[] SingleCopyIds = { BookKit.BundleLogId };
 
         /// <summary>One copy of the combined book or a retired book, and how to swap or remove it.</summary>
         private readonly struct FoundCopy
