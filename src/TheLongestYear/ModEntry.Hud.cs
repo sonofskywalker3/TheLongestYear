@@ -149,6 +149,14 @@ namespace TheLongestYear
                 return;
             if (Game1.graphics.PreferredBackBufferWidth == w && Game1.graphics.PreferredBackBufferHeight == h)
                 return;
+            // An unattended bridge run starts the game minimized. Resizing restores the window and
+            // hands it focus for a moment, long enough for the title screen to move the real mouse
+            // (seen 2026-11-24), so a window that is not in front is left at its launch size.
+            if (_config.EnableDebugCommandBridge && !TheLongestYear.DebugCommands.UnfocusedCursorGuard.WindowInFront())
+            {
+                this.Monitor.Log("Window: resize skipped, the game window is not in front (debug bridge run).", LogLevel.Info);
+                return;
+            }
 
             Game1.graphics.PreferredBackBufferWidth = w;
             Game1.graphics.PreferredBackBufferHeight = h;
