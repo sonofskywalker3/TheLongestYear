@@ -21,6 +21,26 @@ public static class WeeklyGoalDiscount
         return Math.Max(Floor, lowered);
     }
 
+    /// <summary>The share of a week's supply an opening-week goal may ask for (Jeff, 2026-11-24).
+    /// A line's count is sized for a level-10 player spending the week on that one item; in week 1
+    /// nobody has the levels or the time. Celjhyn's week 1 asked for 15 Perch from the one East Scarp
+    /// pool that has them in Spring.</summary>
+    public const double OpeningWeekShare = 0.25;
+
+    /// <summary>The only week the share applies to. From week 2 on the player has had time to level
+    /// and can buckle down for a hard line (Jeff, 2026-11-24: "don't declaw later weeks").</summary>
+    public const int OpeningWeek = 1;
+
+    /// <summary>Whether a line may be a goal in <paramref name="weekOfYear"/>: always after the
+    /// opening week, and in it only when the line's discounted ask is at most
+    /// <see cref="OpeningWeekShare"/> of <paramref name="weeklyBasis"/>. An item with no basis is
+    /// left in, since nothing says it is hard.</summary>
+    public static bool FitsWeek(int weekOfYear, int stack, double discount, double? weeklyBasis)
+    {
+        if (weekOfYear != OpeningWeek || weeklyBasis is not double basis) return true;
+        return Stack(stack, discount) <= basis * OpeningWeekShare;
+    }
+
     /// <summary>One stack rewrite on one ingredient line of one bundle.</summary>
     public readonly record struct StackEdit(string Key, int IngredientIndex, int Stack);
 

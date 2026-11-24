@@ -51,6 +51,7 @@ namespace TheLongestYear.Loop
             var pool = SlotPoolBuilder.OpenSlotsForTheme(
                 bundleData, SlotStateForBundle, _requirements,
                 theme, season, id => IsObtainableInWeek(id, weekOfYear), weekOfYear, ItemKindOf, RouteBasisOf, BoardFlavorOf);
+            pool = FitWeek(pool, season, weekOfYear);
             // Spec 2026-08-28-theme-week-budget: the season cap is a ceiling; the week asks for
             // its share of what the pool still holds so week 4 looks like week 1.
             int dueLines = 0;
@@ -68,6 +69,22 @@ namespace TheLongestYear.Loop
             // and the committed pick agree on it.
             MarkFavoured(sample);
             return sample;
+        }
+
+        /// <summary>The opening week leaves out lines too big for it (<see cref="WeeklyGoalDiscount.FitsWeek"/>),
+        /// read against the stored weekly supply of the week's season; every later week keeps the pool whole.</summary>
+        private IReadOnlyList<BonusSlot> FitWeek(IReadOnlyList<BonusSlot> pool, CoreSeason season, int weekOfYear)
+        {
+            if (weekOfYear != WeeklyGoalDiscount.OpeningWeek) return pool;
+            double discount = WeekDiscount;
+            var kept = new List<BonusSlot>(pool.Count);
+            foreach (BonusSlot slot in pool)
+            {
+                double? basis = QuantityAskPass.BasisByDeadline(slot.ItemId, season, Availability);
+                if (WeeklyGoalDiscount.FitsWeek(weekOfYear, slot.Stack, discount, basis)) kept.Add(slot);
+                else _monitor.Log($"Week {weekOfYear} goals: {slot.ItemId} x{slot.Stack} left out, over a quarter of a week's supply ({basis:0.#}).", LogLevel.Trace);
+            }
+            return kept;
         }
 
         /// <summary>Flags the hardest hard roll in one theme card's goal list as favoured (double

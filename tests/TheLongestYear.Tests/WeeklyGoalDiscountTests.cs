@@ -23,6 +23,17 @@ public class WeeklyGoalDiscountTests
         => Assert.Equal(expected, WeeklyGoalDiscount.Stack(original, discount));
 
     [Theory]
+    [InlineData(1, 15, 0.25, 26.4, false)] // Celjhyn's Perch: 15 discounts to 11, over a quarter of 26.4
+    [InlineData(1, 6, 0.25, 26.4, true)]
+    [InlineData(1, 15, 0.25, 60.0, true)]  // a common fish
+    [InlineData(1, 15, 0.25, null, true)]  // no basis: left in
+    [InlineData(2, 15, 0.25, 26.4, true)]  // later weeks are not declawed
+    [InlineData(5, 40, 0.0, 10.0, true)]
+    public void Only_the_opening_week_holds_a_line_to_a_quarter_of_its_weekly_supply(
+        int week, int stack, double discount, double? basis, bool fits)
+        => Assert.Equal(fits, WeeklyGoalDiscount.FitsWeek(week, stack, discount, basis));
+
+    [Theory]
     [InlineData(DifficultyStep.Easy, 0.5)]
     [InlineData(DifficultyStep.Normal, 0.25)]
     [InlineData(DifficultyStep.Hard, 0.0)]
