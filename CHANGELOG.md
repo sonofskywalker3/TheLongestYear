@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.55 - 2026-11-24
+
+### Fixed
+
+- **Fixed: placing a focus-card building with a controller.** Robin's placement screen opened with no way to reach the Build button, so the building had to be placed with the mouse. It now opens on Build. Thanks to Celjhyn.
+- **Fixed: the controller stopped working after the mouse moved.** With the Junimo shrine open, moving the mouse left the controller unable to move until the menu was reopened. Switching back to the controller now works straight away in both shrines, the books, notices and the loop recap. Thanks to Celjhyn.
+
 ## 1.2.53 - 2026-11-24
 
 ### Fixed

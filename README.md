@@ -23,7 +23,13 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.53
+## What's New in 1.2.55
+
+**Fixed: placing a focus-card building with a controller.** Robin's placement screen opened with no way to reach the Build button, so the building had to be placed with the mouse. It now opens on Build. Thanks to Celjhyn.
+
+**Fixed: the controller stopped working after the mouse moved.** With the Junimo shrine open, moving the mouse left the controller unable to move until the menu was reopened. Switching back to the controller now works straight away in both shrines, the books, notices and the loop recap. Thanks to Celjhyn.
+
+## 1.2.53
 
 **Fixed: a farm missing from the load screen after a last-day proposal.** On versions before 0.19.117, proposing on the last day of a loop could leave the villager stuck as your partner after the rewind: they floated in a dark corner of the farmhouse, a red error showed each morning, and the farm could vanish from the load screen. Those farms show up and load again, and the villager goes back home.
 
