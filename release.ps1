@@ -5,15 +5,9 @@
 #   2. Pushes commits, creates the GitHub release (tag vX.Y.Z) with the zip.
 #      -> .github/workflows/publish-nexus.yml then auto-uploads the zip to Nexus
 #         (mod 47192) and archives the previous file. Zero-touch.
-#   3. The Nexus PAGE (version field, description, changelog entry) is then driven
-#      by hand on Jeff's regular signed-in browser.
-#      There is no Nexus API for those fields, so a logged-in browser is the only
-#      route -- but nothing about it is hand-pasted. See docs/RELEASE_TOOLING.md
-#      for the exact steps and the user memory nexus-use-regular-chrome.
-#
-# The Playwright path (dedicated .nexus-automation-profile) was REMOVED 2026-08-26:
-# its Nexus session expired constantly and it forced a second login. Do not bring
-# it back -- The regular browser is the only supported route.
+#   3. The Nexus PAGE (version field, description, changelog entry) is then updated
+#      by hand in the browser. There is no Nexus API for those fields.
+#      See docs/RELEASE_TOOLING.md for the steps.
 #
 # PREREQS: bump the version in manifest.json, update docs/nexus-description.bbcode
 # (+ README "What's New") and CHANGELOG.md, write release-notes/<version>-nexus-changelog.txt,
