@@ -330,6 +330,12 @@ namespace TheLongestYear
             TheLongestYear.Loop.WildcardDayService.NightRun = () => _meta.Run;
             _runController.AttachWildcardService(_wildcardDays);
             _runController.OnRunLoaded();
+            int bottomCleared = TheLongestYear.Loop.MineBottomCounter.RepairOnLoad(Game1.player);
+            if (bottomCleared > 0)
+                this.Monitor.Log(
+                    $"Mine bottom counter was {bottomCleared} with the deepest floor at {Game1.player.deepestMineLevel}: " +
+                    "left over from an earlier loop, cleared so this loop's mines are not at the post-bottom difficulty.",
+                    LogLevel.Info);
             if (_peakMineFloorTracker != null)
                 this.Helper.Events.Player.Warped -= _peakMineFloorTracker.OnWarped;
             _peakMineFloorTracker = new PeakMineFloorTracker(this.Monitor, _meta.Run);

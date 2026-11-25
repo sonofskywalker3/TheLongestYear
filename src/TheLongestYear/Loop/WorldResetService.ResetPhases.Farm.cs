@@ -66,6 +66,11 @@ namespace TheLongestYear.Loop
             Game1.netWorldState.Value.LowestMineLevel = keptFloor;
             Game1.netWorldState.Value.LowestMineLevelForOrder = keptFloor > 0 ? keptFloor : -1;
             Game1.player.deepestMineLevel = keptFloor;
+            // The bottom-reached counter goes with the depth, or the new loop's mine monsters
+            // keep vanilla's post-bottom toughening (StevanieA, 2026-11-22). See MineBottomCounter.
+            int bottomWas = MineBottomCounter.ClearForNewLoop(Game1.player);
+            if (bottomWas > 0)
+                _monitor.Log($"Mine bottom counter cleared at the rewind (was {bottomWas}).", LogLevel.Info);
 
             // 7. (Kept bus: see step 11b, RestoreKeptBus. It has to run AFTER the board write in
             //    step 11, which re-zeroes every bundle slot and areasComplete.)
