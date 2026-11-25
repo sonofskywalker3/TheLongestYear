@@ -3,6 +3,17 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.59 - 2026-11-25
+
+### Changed
+
+- **Changed: the Bundle Log book is gone.** The Bundle Log is a side tab on the Collections page, which you can open from anywhere, so the book only took up an inventory slot. Copies you already have are put away on their own, and the Junimos' opening tour now points you to your collections instead.
+- **Changed: week 1 goals ask for less.** In the first week of each loop, a goal no longer asks for more than about a quarter of what you could gather of that item in a full week. Before, one first-week goal could ask for 15 Perch. Later weeks are unchanged. Thanks to Celjhyn.
+
+### Fixed
+
+- **Fixed: mine monsters stayed tougher in every loop after one reached the bottom of the mines.** Reaching floor 120 makes the game's mine monsters tougher, with more health and harder hits. The rewind sent the mines back but kept that, so every later loop's mines stayed at the tougher level. Each loop now starts with normal mine monsters until you reach the bottom again, and a farm that was already rewound is fixed the next time you load it. Thanks to StevanieA.
+
 ## 1.2.55 - 2026-11-24
 
 ### Fixed
