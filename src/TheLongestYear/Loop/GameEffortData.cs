@@ -250,9 +250,11 @@ namespace TheLongestYear.Loop
                 }
                 wildTreeSpots.AddRange(EffortData.SortedSpots(ReadWildTreeSpots()));
 
+                IReadOnlySet<string> wildSeeds = WildTreeRows.WildSeedLocalIds();
                 foreach (var kv in KnownData.Load<Dictionary<string, StardewValley.GameData.FruitTrees.FruitTreeData>>("Data/FruitTrees"))
                 {
                     if (kv.Value == null) continue;
+                    if (TheLongestYear.Core.Obtainability.PlantedTrees.PlantsAWildTree(kv.Key, wildSeeds)) continue;   // the seed plants a wild tree
                     var fruit = (kv.Value.Fruit ?? new List<StardewValley.GameData.FruitTrees.FruitTreeFruitData>())
                         .SelectMany(f => SpawnIds(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
                         .Distinct(StringComparer.Ordinal).ToList();
@@ -332,7 +334,7 @@ namespace TheLongestYear.Loop
         /// caller sorts them by map, then type (<see cref="EffortData.SortedSpots"/>): Game1.locations
         /// and the terrain feature dictionary both enumerate in a different order from one load of a
         /// save to the next, and the list is part of the path lexicon's availability inputs hash.</summary>
-        private static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
+        internal static IEnumerable<RawWildTreeSpot> ReadWildTreeSpots()
         {
             foreach (GameLocation location in KnownData.Locations())
             {

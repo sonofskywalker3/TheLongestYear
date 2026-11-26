@@ -90,8 +90,10 @@ namespace TheLongestYear.Loop
                     }
                 }
 
+                IReadOnlySet<string> wildSeeds = WildTreeRows.WildSeedLocalIds();
                 foreach (var kv in KnownData.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
                 {
+                    if (TheLongestYear.Core.Obtainability.PlantedTrees.PlantsAWildTree(kv.Key, wildSeeds)) continue;   // the seed plants a wild tree
                     var fruitIds = (kv.Value?.Fruit ?? new List<FruitTreeFruitData>())
                         .Where(f => f != null && !string.IsNullOrEmpty(f.ItemId))
                         .Select(f => f.ItemId)
