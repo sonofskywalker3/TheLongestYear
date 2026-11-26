@@ -131,6 +131,10 @@ public sealed class GameplayConfig
     /// the 1.5× / drawback-lifted state. Toggle off to hide.</summary>
     public bool ShowJpHud { get; set; } = true;
 
+    /// <summary>Keys that open the Bundle Log straight from play, in SMAPI's keybind format
+    /// ("P, LeftStick" = P or L3). Empty turns the hotkey off. Changeable in the config menu.</summary>
+    public string BundleLogHotkey { get; set; } = TheLongestYear.Core.Interactables.BundleLogSideTabRules.DefaultHotkey;
+
     /// <summary>When true (default), TLY scans the live save's Data/Events at load and auto-flags any
     /// cutscene that grants a run-wipe-able unlock (recipe / mail flag / quest) as "replayable" so it
     /// re-fires each loop — covering mod unlock cutscenes, not just the vanilla furnace/cave scenes.

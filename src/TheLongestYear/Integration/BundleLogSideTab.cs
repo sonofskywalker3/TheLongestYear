@@ -69,6 +69,24 @@ namespace TheLongestYear.Integration
 
         private static bool IsSelected(CollectionsPage page) => page.currentTab == BundleLogSideTabRules.TabKey;
 
+        /// <summary>Opens the game menu on the Collections page with the Bundle Log selected, as if the
+        /// player had opened the menu and clicked the tab (the hotkey's job). On a controller the cursor
+        /// starts on the log's first row. Leaves the menu on plain Collections if the tab is missing.</summary>
+        internal static void OpenInGameMenu()
+        {
+            var menu = new GameMenu(GameMenu.collectionsTab);
+            Game1.activeClickableMenu = menu;
+            CollectionsPage page = CollectionsOf(menu);
+            ClickableTextureComponent tab = TabOn(page);
+            if (tab == null)
+            {
+                Monitor?.Log("Bundle Log hotkey: the Collections page has no Bundle Log tab.", LogLevel.Trace);
+                return;
+            }
+            page.receiveLeftClick(tab.bounds.Center.X, tab.bounds.Center.Y, playSound: false);
+            if (Game1.options.SnappyMenus) page.snapToDefaultClickableComponent();
+        }
+
         private static void AddTo(CollectionsPage page)
         {
             if (!BundleLogSideTabRules.ShouldAdd(RunActivation.IsActive && Context.IsWorldReady, TabOn(page) != null)) return;

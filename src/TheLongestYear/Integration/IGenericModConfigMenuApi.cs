@@ -1,5 +1,6 @@
 using System;
 using StardewModdingAPI;
+using StardewModdingAPI.Utilities;
 
 namespace TheLongestYear.Integration
 {
@@ -18,6 +19,8 @@ namespace TheLongestYear.Integration
         void AddTextOption(IManifest mod, Func<string> getValue, Action<string> setValue,
             Func<string> name, Func<string> tooltip = null, string[] allowedValues = null,
             Func<string, string> formatAllowedValue = null, string fieldId = null);
+        void AddKeybindList(IManifest mod, Func<KeybindList> getValue, Action<KeybindList> setValue,
+            Func<string> name, Func<string> tooltip = null, string fieldId = null);
         void AddSectionTitle(IManifest mod, Func<string> text, Func<string> tooltip = null);
         void AddParagraph(IManifest mod, Func<string> text);
         void AddNumberOption(IManifest mod, Func<int> getValue, Action<int> setValue, Func<string> name,

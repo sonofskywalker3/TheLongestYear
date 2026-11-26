@@ -21,6 +21,7 @@ namespace TheLongestYear
     public sealed partial class ModEntry : Mod
     {
         private GameplayConfig _config;
+        private BundleLogHotkey _bundleLogHotkey;
         private MetaStore _meta;
         private CommunityCenterUnlock _ccUnlock;
         private MountainUnlock _mountainUnlock;
@@ -440,6 +441,7 @@ namespace TheLongestYear
             TheLongestYear.Loop.GearReach.Monitor = this.Monitor;
             TheLongestYear.Loop.OrphanedSpouseLoadPatch.Monitor = this.Monitor;
             TheLongestYear.Integration.BundleLogSideTab.Monitor = this.Monitor;
+            _bundleLogHotkey = new BundleLogHotkey(helper, this.Monitor, () => _config.BundleLogHotkey);
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.DeepWoodsForageOffPatch.Apply(harmony, this.Monitor);
             // Custom / Challenging Community Center Bundles swap their pack into the board every morning;

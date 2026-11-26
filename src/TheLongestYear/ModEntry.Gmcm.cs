@@ -5,6 +5,7 @@ using System.Linq;
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Network;
@@ -57,6 +58,12 @@ namespace TheLongestYear
                 setValue: v => _config.ShowJpHud = v,
                 name: () => Strings.Get("gmcm.jp-hud.name"),
                 tooltip: () => Strings.Get("gmcm.jp-hud.tooltip"));
+
+            gmcm.AddKeybindList(this.ModManifest,
+                getValue: () => _bundleLogHotkey?.Keys ?? new KeybindList(),
+                setValue: v => _config.BundleLogHotkey = v?.ToString() ?? "",
+                name: () => Strings.Get("gmcm.bundle-log-hotkey.name"),
+                tooltip: () => Strings.Get("gmcm.bundle-log-hotkey.tooltip"));
 
             gmcm.AddBoolOption(this.ModManifest,
                 getValue: () => _config.LimitTravelingCartStock,

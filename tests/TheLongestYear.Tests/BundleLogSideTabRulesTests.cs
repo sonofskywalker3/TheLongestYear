@@ -14,6 +14,14 @@ public class BundleLogSideTabRulesTests
     public void ShouldAdd_only_on_an_active_run_once(bool active, bool present, bool expected)
         => Assert.Equal(expected, BundleLogSideTabRules.ShouldAdd(active, present));
 
+    [Theory]
+    [InlineData(true, false, true, BundleLogSideTabRules.HotkeyAction.Open)]    // free on a run -> open
+    [InlineData(true, true, false, BundleLogSideTabRules.HotkeyAction.Close)]   // log showing -> close
+    [InlineData(true, false, false, BundleLogSideTabRules.HotkeyAction.None)]   // other menu or cutscene
+    [InlineData(false, false, true, BundleLogSideTabRules.HotkeyAction.None)]   // non-TLY save
+    public void Hotkey_toggles_the_log_only_on_a_run(bool active, bool showing, bool free, BundleLogSideTabRules.HotkeyAction expected)
+        => Assert.Equal(expected, BundleLogSideTabRules.OnHotkey(active, showing, free));
+
     [Fact]
     public void Tab_name_is_its_key_so_vanilla_can_read_it_back()
         => Assert.Equal(BundleLogSideTabRules.TabKey, int.Parse(BundleLogSideTabRules.TabName));

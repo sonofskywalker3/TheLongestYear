@@ -30,6 +30,23 @@ namespace TheLongestYear.Core.Interactables
         /// <summary>The tab's component name: its key as text.</summary>
         public static string TabName => TabKey.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
+        /// <summary>The hotkey that opens the Bundle Log, in SMAPI's keybind format (comma = either
+        /// one): P on the keyboard, L3 on a controller. L3 has no use in vanilla play (R3 opens chat and
+        /// emotes); it only switches pages on the on-screen keyboard, where the hotkey is never read.</summary>
+        public const string DefaultHotkey = "P, LeftStick";
+
+        /// <summary>What a press of the Bundle Log hotkey does.</summary>
+        public enum HotkeyAction { None, Open, Close }
+
+        /// <summary>The hotkey toggles: it closes the menu while the log is showing, opens it when the
+        /// game's own menu key could open the menu (no menu, minigame, cutscene or festival contest), and
+        /// does nothing otherwise or off a run.</summary>
+        public static HotkeyAction OnHotkey(bool runActive, bool logShowing, bool canOpen)
+            => !runActive ? HotkeyAction.None
+                : logShowing ? HotkeyAction.Close
+                : canOpen ? HotkeyAction.Open
+                : HotkeyAction.None;
+
         /// <summary>True when the tab belongs on a freshly built Collections page: a run is active and
         /// the tab is not already there.</summary>
         public static bool ShouldAdd(bool runActive, bool alreadyPresent) => runActive && !alreadyPresent;

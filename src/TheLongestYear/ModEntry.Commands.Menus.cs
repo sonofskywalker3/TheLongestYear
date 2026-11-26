@@ -330,6 +330,37 @@ namespace TheLongestYear
             _launcher?.OpenSeasonGoals();
         }
 
+        private void CmdPress(string command, string[] args)
+        {
+            bool hotkey = args.Length == 1 && args[0].Equals("hotkey", StringComparison.OrdinalIgnoreCase);
+            SButton button = SButton.None;
+            if (!hotkey && (args.Length != 1 || !Enum.TryParse(args[0], ignoreCase: true, out button)))
+            {
+                this.Monitor.Log("Usage: tly_press <SButton> | hotkey, e.g. tly_press P or tly_press LeftStick.", LogLevel.Warn);
+                return;
+            }
+            if (hotkey) _bundleLogHotkey?.Act(() => { });
+            else
+            {
+                if (!Game1.game1.IsActive)
+                    this.Monitor.Log("tly_press: the game window is in the background, and SMAPI reads no input then, so this press will not land. Use tly_press hotkey to run the Bundle Log hotkey directly.", LogLevel.Warn);
+                this.Helper.Input.Press(button);
+            }
+            // Report a few ticks later, once the press has gone through the game's update.
+            int ticks = 0;
+            void Report(object s, StardewModdingAPI.Events.UpdateTickedEventArgs e)
+            {
+                if (++ticks < 5) return;
+                this.Helper.Events.GameLoop.UpdateTicked -= Report;
+                IClickableMenu active = Game1.activeClickableMenu;
+                IClickableMenu current = (active as GameMenu)?.GetCurrentPage();
+                string tab = current is CollectionsPage cp ? $", side tab {cp.currentTab}, log {(BundleLogSideTab.LogOn(cp) != null ? "shown" : "not shown")}" : "";
+                this.Monitor.Log($"tly_press {(hotkey ? "hotkey" : button.ToString())}: menu {active?.GetType().Name ?? "none"}, page {current?.GetType().Name ?? "-"}{tab}, snapped {active?.currentlySnappedComponent?.myID.ToString() ?? current?.currentlySnappedComponent?.myID.ToString() ?? "-"}; " +
+                    $"can open menus {Game1.CanShowPauseMenu()} (can move {Game1.player.CanMove}, dialogue {Game1.dialogueUp}, event {Game1.eventUp}, minigame {Game1.currentMinigame != null}, farm event {Game1.farmEvent != null}).", LogLevel.Info);
+            }
+            this.Helper.Events.GameLoop.UpdateTicked += Report;
+        }
+
         private void CmdBundleTab(string command, string[] args)
         {
             if (!Context.IsWorldReady) { this.Monitor.Log("Load a save first.", LogLevel.Warn); return; }
