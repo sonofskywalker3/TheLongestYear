@@ -3,6 +3,13 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.60 - 2026-11-25
+
+### Changed
+
+- **Changed: Cornucopia More Crops 1.7.0 is supported.** The yellow "checked against 1.6.3" warning is gone with Cornucopia 1.7.0, and a Cornucopia save loads as fast as a vanilla one again. If you are still on Cornucopia 1.6.3, update it: with the older version the warning comes back and some of its trees can be asked for at the wrong time. Thanks to Celjhyn and mjlol73.
+- **Changed: Cornucopia's new trees.** In Cornucopia 1.7.0, Bamboo and the cinnamon, camphor, eucalyptus and melaleuca trees grow from a seed you plant, and nothing gets asked for before a planted tree could have grown. Cinnamon Sticks can be asked for from week 4 and Bamboo from week 10. Camphor, eucalyptus and melaleuca leaves only fall now and then when you shake the tree, so they are no longer asked for. Olives now grow on a tree and can be asked for from Fall.
+
 ## 1.2.59 - 2026-11-25
 
 ### Changed
