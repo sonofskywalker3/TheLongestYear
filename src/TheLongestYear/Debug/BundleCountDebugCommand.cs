@@ -24,7 +24,7 @@ namespace TheLongestYear.DebugCommands
     internal static class BundleCountDebugCommand
     {
         public const string Usage =
-            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | page <bundle index> [ingredient] | close | exit | missed | buy <vault index|cheapest> | bus]. No args lists bundles per room.";
+            "Debug: bundle-count dial. Usage: tly_bundlecount [set <easy|normal|hard|extreme> | open <area 0-5> | page <bundle index> [ingredient] | close | exit | missed | buy <vault index|cheapest> | bus | value <bundle name>]. No args lists bundles per room.";
 
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
@@ -66,6 +66,9 @@ namespace TheLongestYear.DebugCommands
                 case "exit":
                     Exit(monitor);
                     return;
+                case "value":
+                    Value(monitor, string.Join(" ", args.Skip(1)));
+                    return;
                 case "bus":
                     Bus(monitor, cc);
                     return;
@@ -91,6 +94,18 @@ namespace TheLongestYear.DebugCommands
             monitor.Log(
                 $"tly_bundlecount: {data.Count} bundles, {completionEntries} completion entries, CC lookup {(missing.Count == 0 ? "knows every bundle" : "MISSING " + string.Join(",", missing))}.",
                 missing.Count == 0 ? LogLevel.Info : LogLevel.Error);
+        }
+
+        /// <summary>Logs the live BundleData entry of every bundle named <paramref name="name"/> (the text
+        /// before the entry's first '/'), as the Community Center reads it right now.</summary>
+        private static void Value(IMonitor monitor, string name)
+        {
+            var hits = Game1.netWorldState.Value.BundleData
+                .Where(kv => string.Equals(kv.Value.Split('/')[0], name, System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (hits.Count == 0) { monitor.Log($"tly_bundlecount value: no live bundle named '{name}'.", LogLevel.Warn); return; }
+            foreach (var kv in hits)
+                monitor.Log($"tly_bundlecount value: {kv.Key} = {kv.Value}", LogLevel.Info);
         }
 
         private static void Open(IMonitor monitor, CommunityCenter cc, int area)

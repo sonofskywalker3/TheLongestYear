@@ -442,6 +442,11 @@ namespace TheLongestYear
             TheLongestYear.Integration.BundleLogSideTab.Monitor = this.Monitor;
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.WildcardAnimalPatch.HookOtherModHelpers(harmony);
             helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Loop.DeepWoodsForageOffPatch.Apply(harmony, this.Monitor);
+            // Custom / Challenging Community Center Bundles swap their pack into the board every morning;
+            // on a TLY Custom board TLY's board owns the Center, so that swap is skipped.
+            TheLongestYear.Integration.CustomCcbSwapGuard.TlyBoardOwnsTheCenter =
+                () => RunActivation.IsActive && _meta?.State != null && !BundleSourceNames.IsVanilla(_meta.State.BundleSource);
+            helper.Events.GameLoop.GameLaunched += (_, _) => TheLongestYear.Integration.CustomCcbSwapGuard.Apply(harmony, this.Monitor);
             int patched = 0, failed = 0;
             foreach (var type in System.Reflection.Assembly.GetExecutingAssembly().GetTypes())
             {
