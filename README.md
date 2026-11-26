@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.60
+## What's New in 1.2.61
+
+**Fixed: Custom Community Center Bundles changed TLY's bundles.** With Custom Community Center Bundles (or Challenging Community Center Bundles) installed, that mod swapped its own versions of some bundles into the Community Center every morning, so on a TLY Custom board the Center asked for things the Bundle Log did not, like the same four Spring Crops on every farm. The Longest Year now keeps its own board in place on TLY Custom boards. On a vanilla-type board the other mod still works as before. Thanks to mjlol73.
+
+## 1.2.60
 
 **Changed: Cornucopia More Crops 1.7.0 is supported.** The yellow "checked against 1.6.3" warning is gone with Cornucopia 1.7.0, and a Cornucopia save loads as fast as a vanilla one again. If you are still on Cornucopia 1.6.3, update it: with the older version the warning comes back and some of its trees can be asked for at the wrong time. Thanks to Celjhyn and mjlol73.
 

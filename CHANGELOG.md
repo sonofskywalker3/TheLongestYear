@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.61 - 2026-11-25
+
+### Fixed
+
+- **Fixed: Custom Community Center Bundles changed TLY's bundles.** With Custom Community Center Bundles (or Challenging Community Center Bundles) installed, that mod swapped its own versions of some bundles into the Community Center every morning, so on a TLY Custom board the Center asked for things the Bundle Log did not, like the same four Spring Crops on every farm. The Longest Year now keeps its own board in place on TLY Custom boards. On a vanilla-type board the other mod still works as before. Thanks to mjlol73.
+
 ## 1.2.60 - 2026-11-25
 
 ### Changed
