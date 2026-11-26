@@ -23,7 +23,11 @@ Channel: [youtube.com/@emmalution](https://www.youtube.com/@emmalution)
 
 ---
 
-## What's New in 1.2.61
+## What's New in 1.2.62
+
+**New: a hotkey for the Bundle Log.** Press P, or L3 on a controller, to open the Bundle Log from anywhere. Press it again to close it. You can change the keys or turn the hotkey off in the mod's settings. Thanks to mjlol73.
+
+## 1.2.61
 
 **Fixed: Custom Community Center Bundles changed TLY's bundles.** With Custom Community Center Bundles (or Challenging Community Center Bundles) installed, that mod swapped its own versions of some bundles into the Community Center every morning, so on a TLY Custom board the Center asked for things the Bundle Log did not, like the same four Spring Crops on every farm. The Longest Year now keeps its own board in place on TLY Custom boards. On a vanilla-type board the other mod still works as before. Thanks to mjlol73.
 
@@ -359,7 +363,7 @@ Older changes: see the [changelog](https://github.com/sonofskywalker3/TheLongest
 
 - **The opening.** A new game starts with the mod's own opening, which explains the loop. You wake on Spring 1 and pick your first **weekly theme**.
 - **Weekly themes.** Each week you choose one of two offered themes. Room themes (Foraging, Farming, Fishing, Mining) take goals from their Community Center room; Spelunking, Artisan and Kitchen take goals by item kind from anywhere on the board, and Mixed takes anything. Goals follow what the season gate demands first; the weekly JP bonus is paid goal by goal and the drawback lifts when every goal is done. The planning hub opens at the start of each week.
-- **Seasonal goals.** The **Bundle Log** (the side tab on the Collections page) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
+- **Seasonal goals.** The **Bundle Log** (the side tab on the Collections page, or press P or L3) tracks each season's required donations. Each season has a minimum you must donate to the Center before the season turns. **Miss it and the year unwinds to Spring 1.**
 - **Fail night.** When a season's minimum is missed, the Junimos rewind the year. Before the upgrade menu opens, they ask whether to keep the same bundle board for the next loop or let time reshuffle it. The first hold is free; each further hold in a row costs 50, 100, 200, then 300 JP, and reshuffling resets the price. This works on every bundle source.
 - **Junimo Points (JP).** Donations earn JP, scaled by rarity and by how late in the year you give (later seasons are worth much more). JP banks across loops.
 - **Junimo Upgrades.** On every loop reset (and on a win), spend banked JP on upgrades that let you *hold on to some of what you gained* next loop — skill levels, tool tiers, recipes, buildings, a kept pet, the power books you have read, your wallet items and Stardrops, and more.
@@ -438,6 +442,7 @@ All knobs live in `Mods/TheLongestYear/config.json` (created on first run). The 
 - `BundleSource` (default `Engine`): One setting, three values: `Engine` (the mod's own board every loop, the new-game **TLY Custom** choice), `Normal` or `Remixed` (the game's own board of that kind, or another bundle mod's, re-rolled the same way each loop). Only the default a new game starts on: each save keeps its own choice, which the in-game settings menu changes, and it takes effect at the next loop. See [Switching bundle source later](#switching-bundle-source-later)
 - `AllowModItemsInCustomBundles` (default `false`): Whether TLY Custom bundles may ask for and give other mods' items. Only the default a new game starts on: each save keeps its own choice (saves from before 0.19.4 start with it on), which the in-game settings menu changes, and it takes effect at the next loop. Other mods aren't supported, so with it on a bundle may ask for an item you can't get
 - `BundleHoldCosts` (default `[0, 50, 100, 200, 300]`): JP cost of keeping the same bundle board on a Fail night, by how many holds you have taken in a row (first is free; the last value repeats). Reshuffling resets the count
+- `BundleLogHotkey` (default `P, LeftStick`): Keys that open the Bundle Log (P or L3). Empty turns the hotkey off
 - `Enabled` (default `true`): Master switch: turn the whole mod off to play vanilla
 
 Upgrade prices are defined in the upgrade catalog (e.g. Cookbook/Craftbook tiers at 150 / 350 / 700 / 1200 JP). Feedback on these is welcome.

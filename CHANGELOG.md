@@ -3,6 +3,12 @@
 All notable changes to **The Longest Year** are documented here. This project
 aims to follow [Semantic Versioning](https://semver.org/).
 
+## 1.2.62 - 2026-11-26
+
+### Added
+
+- **New: a hotkey for the Bundle Log.** Press P, or L3 on a controller, to open the Bundle Log from anywhere. Press it again to close it. You can change the keys or turn the hotkey off in the mod's settings. Thanks to mjlol73.
+
 ## 1.2.61 - 2026-11-25
 
 ### Fixed
