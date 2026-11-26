@@ -222,9 +222,10 @@ namespace TheLongestYear.Integration
                     data[BookKit.CookbookId]  = $"Cookbook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.cookbook")}/0/{tex}";
                     data[BookKit.CraftbookId] = $"Craftbook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.craftbook")}/1/{tex}";
                     data[BookKit.BundleLogId] = $"BundleLog/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.bundle-log")}/2/{tex}";
-                    // Sprite index 3: the fourth 16x16 cover in assets/books.png (64x16 sheet).
-                    data[BookKit.HerdBookId]  = $"HerdBook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.herdbook")}/3/{tex}";
-                    // The combined book reuses the Cookbook's cover (sprite 0) until it has its own.
+                    // The retired Herd Book shows the Keeping Book's cover: the sheet holds only the three
+                    // covers supercam19 drew (see ART-SOURCES.md).
+                    data[BookKit.HerdBookId]  = $"HerdBook/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.herdbook")}/0/{tex}";
+                    // The combined Keeping Book uses the Cookbook's cover (sprite 0), one of supercam19's three.
                     data[OneBook.BookId]      = $"Book/decor/1 1/1 1/1/0/-1/{TheLongestYear.Core.Strings.Get("furniture.book")}/0/{tex}";
                 }, AssetEditPriority.Default);
             }

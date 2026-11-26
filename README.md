@@ -516,7 +516,7 @@ What helps most right now:
 
 ## Art wanted
 
-The mod leans on vanilla sprites for most things. If anyone would enjoy making some custom **sprite artwork** (the shrine, the stash chest, icons), I'd genuinely love to accept it and credit you. Drop a note in the comments.
+The mod leans on vanilla sprites for most things. New and changed artwork, and how each piece was made (some of it with AI, because I'm not an artist), is listed in [ART-SOURCES.md](ART-SOURCES.md). If anyone would enjoy making some custom **sprite artwork** (the shrine, the stash chest, the Circle of Warding), I'd genuinely love to use it instead and credit you in full. Drop a note in the comments.
 
 *Banner art by **cwybabiesucks**. Book art by **supercam19**. Thank you both!*
 
@@ -563,6 +563,12 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 - **supercam19**: the book art, and the fix that refills mine carts and barrels every loop.
 - **cwybabiesucks**: the banner art.
 - **u/Gribbleby**: the idea for villagers' déjà vu dialogue.
+
+---
+
+## AI disclosure
+
+I design The Longest Year and test it, but I'm not a programmer: the code and these docs were written with Claude Code (Anthropic), under my direction, and checked by me in game. The book covers and the banner were drawn by people. Some other art was made or changed with AI, and every piece is listed in [ART-SOURCES.md](ART-SOURCES.md).
 
 ---
 
