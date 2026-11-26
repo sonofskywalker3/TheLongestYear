@@ -1,7 +1,7 @@
 # Art sources
 
-Every piece of artwork The Longest Year adds or changes, and how it was made. I'm not an artist, so some of it
-was made with AI. If you would like to draw a replacement for anything here, I would love to use real art and
+Every piece of artwork The Longest Year adds or changes, and how it was made. Any AI art here is only there because I can't
+make it myself. If you would like to draw a replacement for anything here, I would love to use real art and
 will credit you in full (see the end of this file).
 
 Art the game draws unchanged from your own copy of Stardew Valley is not listed. Screenshots in `docs/images`

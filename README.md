@@ -568,7 +568,7 @@ This mod is shaped by the players who report bugs and suggest ideas. Every one o
 
 ## AI disclosure
 
-I design The Longest Year and test it, but I'm not a programmer: the code and these docs were written with Claude Code (Anthropic), under my direction, and checked by me in game. The book covers and the banner were drawn by people. Some other art was made or changed with AI, and every piece is listed in [ART-SOURCES.md](ART-SOURCES.md). The story, dialogue and game design are mine. Where a line was needed for every possible villager (like the festivals), Claude drafted lines that I edited or approved.
+I design The Longest Year and test it, but I'm not a programmer: the code and these docs were written with Claude Code (Anthropic), under my direction, and checked by me in game. The book covers and the banner were drawn by people. Some other art was made or changed with AI, and every piece is listed in [ART-SOURCES.md](ART-SOURCES.md). Any AI art is only there because I can't draw it myself, and I would love for anyone interested to submit replacements, with full credit. The story, dialogue and game design are mine. Where a line was needed for every possible villager (like the festivals), Claude drafted lines that I edited or approved.
 
 ---
 
