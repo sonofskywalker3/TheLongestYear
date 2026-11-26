@@ -91,6 +91,7 @@ MAX_FOCUS_PICKS = 6
 MAX_ROUNDS = 3
 MAX_ID_CHANGES = 40
 PREVIOUS_LOG_SUFFIX = ".layer-build-previous"
+LOG_RELEASE_SECONDS = 30   # how long a just-closed game may keep its log open
 FARM_TYPE_MANAGER = "FarmTypeManager"
 FTM_SAVE_SUFFIXES = (".json", "_SaveData.save")
 MOVES_SCRIPT = Path(__file__).resolve().parent / "lexicon-moves.py"
@@ -216,17 +217,36 @@ def launch() -> None:
     the ready line can only come from this process."""
     BRIDGE_FILE.unlink(missing_ok=True)
     if LOG_FILE.exists():
-        LOG_FILE.replace(LOG_FILE.with_name(LOG_FILE.name + PREVIOUS_LOG_SUFFIX))
+        move_log_aside()
     powershell(f"Start-Process -FilePath '{SMAPI_EXE}' -WindowStyle Minimized")
     time.sleep(SETTLE_SECONDS)
     wait_log(READY_PATTERN, 0, LAUNCH_TIMEOUT)
 
 
+def move_log_aside() -> None:
+    """Moves the last run's log aside. A game that has just exited can hold the file for a moment
+    longer, so a refused move is tried again until LOG_RELEASE_SECONDS have passed."""
+    deadline = time.monotonic() + LOG_RELEASE_SECONDS
+    while True:
+        try:
+            LOG_FILE.replace(LOG_FILE.with_name(LOG_FILE.name + PREVIOUS_LOG_SUFFIX))
+            return
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(POLL_SECONDS)
+
+
 def close_game() -> None:
-    powershell("Get-Process -Name " + ",".join(f"'{n}'" for n in GAME_PROCESSES)
-               + " -ErrorAction SilentlyContinue | Stop-Process -Force")
+    """Stops the game and waits until it is gone, asking again on every poll: one Stop-Process has
+    been seen to leave the game running (2026-11-25), and the next launch then failed on its log."""
+    stop = ("Get-Process -Name " + ",".join(f"'{n}'" for n in GAME_PROCESSES)
+            + " -ErrorAction SilentlyContinue | Stop-Process -Force")
     deadline = time.monotonic() + COMMAND_TIMEOUT
-    while game_running() and time.monotonic() < deadline:
+    while game_running():
+        if time.monotonic() >= deadline:
+            raise LayerBuildError(f"The game was still running {COMMAND_TIMEOUT} s after it was told to stop.")
+        powershell(stop)
         time.sleep(POLL_SECONDS)
 
 

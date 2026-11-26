@@ -140,6 +140,13 @@ public enum TreeDropKind { Shake, Seed, Chop }
 /// query; <see cref="IsRandom"/> marks one entry of a RandomItemId list.</summary>
 public sealed record TreeDropRow(string TreeId, string ItemId, TreeDropKind Kind, Season? Season, double Chance, string? Condition, bool IsRandom = false);
 
+/// <summary>One Data/WildTrees entry, reduced to how the tree comes to exist: the seed that plants it
+/// (<see cref="SeedItemId"/>, qualified, null when none; <see cref="SeedPlantable"/> the entry's own
+/// flag, Tree._LoadWildTreeData), how fast it grows (GrowthChance, a stage a night; Tree.cs dayUpdate
+/// 905-911), whether it grows in Winter, and whether a grown one stood on any map when the save loaded
+/// (<see cref="Standing"/>, the live scan the availability rules date trees by).</summary>
+public sealed record WildTreeRow(string TreeId, string? SeedItemId, bool SeedPlantable, double GrowthChance, bool GrowsInWinter, bool Standing);
+
 /// <summary>One Data/Objects GeodeDrops entry for a geode item.</summary>
 public sealed record GeodeDropRow(string GeodeId, string ItemId, double Chance, string? Condition);
 
@@ -173,6 +180,8 @@ public sealed record ObtainabilityInputs
     public IReadOnlyList<PondRow> Ponds { get; init; } = Array.Empty<PondRow>();
     public IReadOnlyList<TapRow> TapItems { get; init; } = Array.Empty<TapRow>();
     public IReadOnlyList<TreeDropRow> TreeDrops { get; init; } = Array.Empty<TreeDropRow>();
+    /// <summary>Data/WildTrees entries: how each tree comes to exist (<see cref="PlantedTrees"/>).</summary>
+    public IReadOnlyList<WildTreeRow> WildTrees { get; init; } = Array.Empty<WildTreeRow>();
     public IReadOnlyList<GeodeDropRow> GeodeDrops { get; init; } = Array.Empty<GeodeDropRow>();
     public IReadOnlyCollection<string> GeodesUsingDefaultTable { get; init; } = Array.Empty<string>();
     public IReadOnlyList<SlayerQuestRow> SlayerQuests { get; init; } = Array.Empty<SlayerQuestRow>();

@@ -429,21 +429,24 @@ nothing changes.
 - The availability answers also key on the save's wild-tree set, so some loads rebuild availability
   (about 150 to 500 ms), which is what every load cost before 1.1.
 
-## Next: Cornucopia More Crops
+## Wild trees
 
-A local working note (not in this repository) lists what TLY could not place with Cornucopia More
-Crops. Those are the likely `ExtraSources` entries:
+How the build reads `Data/WildTrees` and the trees that fit no map (Cornucopia More Crops 1.7.0 added five):
 
-- Custom Bush fruit: Juniper Berries, Raspberry, Olive, White Grape, Bay Leaves, Black Currants,
-  Elderberries, Gooseberry, Shiitake, Chicken of the Woods, Vanilla (and Olive Oil and Sparkling Wine
-  after them).
-- SpaceCore spawn groups: Peppercorn.
-- Seeds sold only at Sandy's, whose seasons end before the desert opens: Agave, Aloe, Bamboo, Blue
-  Agave, Lemongrass, Sugarcane.
-- Year 2 lines on Pierre: the rare seeds and their crops (Zucchini, Asparagus, Barley and others), and
-  the Nectarine, Pear and Persimmon saplings. These are correct by the data, so they may need
-  `YearRulings` rather than a route.
-
-Stardew Valley Expanded comes after it. The `tly_lexicon gaps` output on a game with SVE 1.15.11
-gave 404 gaps (205 items with no route, 154 unreached maps, 45 unresolved sources): 221 attributed
-to vanilla, 110 under Custom, 53 under FlashShifter and 20 unattributed.
+- **A tree that stands somewhere** (an oak, the Desert's palms, Cornucopia's Date Palm) gives its shake, seed,
+  chop and tap items from day 1, with `tree:<id>` in `Requires`; the map's own week is applied by the walk.
+- **A tree that stands nowhere until its seed is planted** (no grown tree of that type on any map at load, the
+  entry is `SeedPlantable` with a seed, and the game makes no tree of that type another way) gives its items
+  only from the seed's own route, plus the nights it takes to grow: five stages at `GrowthChance` a night,
+  rounded up (25 at the default 0.2), with no growth on a Winter morning unless `GrowsInWinter`. The route
+  needs `item:<seed>` and shows the growth as a `tree` setup step. A seed with no route grows no tree. The
+  Mushroom Tree and the three green rain trees are made without a seed, so their routes stay as they were.
+  In vanilla this moves only the Mystic Tree's Hardwood and Mystic Syrup. The board does not date these
+  items (no standing tree to date them by), so a layer rules their week.
+- **A sapling keyed in both `Data/FruitTrees` and `Data/WildTrees`** plants the wild tree (the game checks
+  wild-tree seeds first), so its fruit-tree row is ignored by every reader.
+- **Seed drops are tried in order and the first that drops ends the roll** unless it has `ContinueOnDrop`.
+  A row after a sure drop (chance 1, one plain item, a season that is none or the same, a condition that is
+  none or the same text with no random roll in it) is never reached and is not read.
+- The live tree scan is part of the answers' row hashes, as it already was of the availability key: a save
+  where the player has grown a tree of a new type is built once and cached.

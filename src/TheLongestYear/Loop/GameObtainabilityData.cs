@@ -65,6 +65,23 @@ namespace TheLongestYear.Loop
                     yield return entry;
         }
 
+        /// <summary>The SeedDropItems the game can ever drop, in order (PlantedTrees.ReachableSeedDrops:
+        /// Tree.shake stops at the first that drops unless it has ContinueOnDrop).</summary>
+        private static List<WildTreeSeedDropItemData> ReachableSeedDrops(List<WildTreeSeedDropItemData> drops)
+        {
+            if (drops == null) return null;
+            var facts = drops.Select(d => new PlantedTrees.SeedDrop(
+                d?.Chance ?? 0, d?.Season is StardewValley.Season s ? (CoreSeason)(int)s : (CoreSeason?)null, d?.Condition,
+                d != null && IsPlainItem(d.ItemId) && (d.RandomItemId == null || d.RandomItemId.Count == 0) && string.IsNullOrWhiteSpace(d.PerItemCondition),
+                d?.ContinueOnDrop ?? false)).ToList();
+            IReadOnlyList<bool> reachable = PlantedTrees.ReachableSeedDrops(facts);
+            return drops.Where((_, i) => reachable[i]).ToList();
+        }
+
+        /// <summary>One qualified item id, not an item query (a query can come up empty).</summary>
+        private static bool IsPlainItem(string itemId)
+            => !string.IsNullOrWhiteSpace(itemId) && itemId.StartsWith("(", StringComparison.Ordinal) && !itemId.Trim().Contains(' ');
+
         private void AddTreeDrops<T>(List<TreeDropRow> rows, string treeId, List<T> drops, TreeDropKind kind) where T : WildTreeItemData
         {
             foreach (T drop in drops ?? new List<T>())
@@ -122,6 +139,7 @@ namespace TheLongestYear.Loop
             var ponds = new List<PondRow>();
             var taps = new List<TapRow>();
             var treeDrops = new List<TreeDropRow>();
+            var wildTrees = new List<WildTreeRow>();
             var garbage = new List<GarbageRow>();
             var buildings = new Dictionary<string, int>(StringComparer.Ordinal);
             var slayerQuests = new List<SlayerQuestRow>();
@@ -229,9 +247,11 @@ namespace TheLongestYear.Loop
 
             Section("FruitTrees", () =>
             {
+                IReadOnlySet<string> wildSeeds = WildTreeRows.WildSeedLocalIds();
                 foreach (var kv in KnownData.Load<Dictionary<string, FruitTreeData>>("Data/FruitTrees"))
                 {
                     if (kv.Value == null) continue;
+                    if (PlantedTrees.PlantsAWildTree(kv.Key, wildSeeds)) continue;   // Object.cs 6023: the seed plants a wild tree
                     var fruit = new List<FruitRow>();
                     foreach (FruitTreeFruitData f in kv.Value.Fruit ?? new List<FruitTreeFruitData>())
                         foreach ((string item, bool random) in Spawned(f?.ItemId, f?.RandomItemId, f?.PerItemCondition))
@@ -376,9 +396,10 @@ namespace TheLongestYear.Loop
                             if (item != PreviousOutputTapId)
                                 taps.Add(new TapRow(kv.Key, item, tap.DaysUntilReady, GameObtainabilityParsing.MapSeason(tap.Season), tap.Chance, tap.Condition, random));
                     AddTreeDrops(treeDrops, kv.Key, kv.Value?.ShakeItems, TreeDropKind.Shake);
-                    AddTreeDrops(treeDrops, kv.Key, kv.Value?.SeedDropItems, TreeDropKind.Seed);
+                    AddTreeDrops(treeDrops, kv.Key, ReachableSeedDrops(kv.Value?.SeedDropItems), TreeDropKind.Seed);
                     AddTreeDrops(treeDrops, kv.Key, kv.Value?.ChopItems, TreeDropKind.Chop);
                 }
+                wildTrees.AddRange(WildTreeRows.Read(WildTreeRows.StandingTypes()));
             });
 
             Section("GarbageCans", () =>
@@ -428,7 +449,7 @@ namespace TheLongestYear.Loop
                 CompetitorFishRows = competitorFishRows.Count > 0 ? competitorFishRows : null,
                 ArtifactSpots = artifactSpots, Garbage = garbage, Shops = shops, MonsterDrops = monsterDrops,
                 Crops = crops, FruitTrees = fruitTrees, Machines = machines, Recipes = recipes, Animals = animals,
-                Ponds = ponds, TapItems = taps, TreeDrops = treeDrops, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
+                Ponds = ponds, TapItems = taps, TreeDrops = treeDrops, WildTrees = wildTrees, GeodeDrops = geodeDrops, GeodesUsingDefaultTable = defaultGeodes,
                 Buildings = buildings, SlayerQuests = slayerQuests, CookingChannel = cookingChannel,
                 MixedSeedPool = TheLongestYear.Integration.ItemExtensionsMixedSeeds.Read(_monitor),
             };

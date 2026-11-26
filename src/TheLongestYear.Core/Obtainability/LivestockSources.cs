@@ -101,18 +101,22 @@ public static class LivestockSources
         IEnumerable<TapRow> rows, IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         foreach (TapRow tap in rows)
-        {
-            ConditionReading reading = ConditionSeasons.Read(tap.Condition, festivals);
-            WeekMask seasonMask = tap.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
-            DayTable table = ConditionSeasons.Availability(reading, seasonMask).Delay(tap.DaysUntilReady);
-            if (table.IsEmpty) continue;
-            var template = new ObtainSource(SourceKind.Tapper, table,
-                tap.Chance < 1.0 || reading.Chance || tap.IsRandom ? Reliability.Chance : Reliability.Dependable,
-                ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "crafting:Tapper", "tree:" + tap.TreeId } }, reading),
-                $"tapper on tree {tap.TreeId}, {tap.DaysUntilReady} days");
-            foreach (var emitted in ItemQueries.Emit(tap.ItemId, objects, template))
-                yield return emitted;
-        }
+            if (TapTemplate(tap, festivals) is ObtainSource template)
+                foreach (var emitted in ItemQueries.Emit(tap.ItemId, objects, template))
+                    yield return emitted;
+    }
+
+    /// <summary>A tap row read as a route from day 1 on a standing tree, or null when it never yields.</summary>
+    private static ObtainSource? TapTemplate(TapRow tap, IReadOnlyDictionary<string, FestivalDates> festivals)
+    {
+        ConditionReading reading = ConditionSeasons.Read(tap.Condition, festivals);
+        WeekMask seasonMask = tap.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
+        DayTable table = ConditionSeasons.Availability(reading, seasonMask).Delay(tap.DaysUntilReady);
+        if (table.IsEmpty) return null;
+        return new ObtainSource(SourceKind.Tapper, table,
+            tap.Chance < 1.0 || reading.Chance || tap.IsRandom ? Reliability.Chance : Reliability.Dependable,
+            ConditionSeasons.Apply(ObtainConditions.None with { Requires = new[] { "crafting:Tapper", "tree:" + tap.TreeId } }, reading),
+            $"tapper on tree {tap.TreeId}, {tap.DaysUntilReady} days");
     }
 
     /// <summary>Wild tree drops (Data/WildTrees ShakeItems, SeedDropItems, ChopItems; Tree.cs shake and
@@ -123,25 +127,71 @@ public static class LivestockSources
         IEnumerable<TreeDropRow> rows, IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)
     {
         foreach (TreeDropRow drop in rows)
+            if (DropTemplate(drop, festivals) is ObtainSource template)
+                foreach (var emitted in ItemQueries.Emit(drop.ItemId, objects, template))
+                    yield return emitted;
+    }
+
+    /// <summary>A shake, seed or chop row read as a route from day 1 on a standing tree, or null when it
+    /// never yields.</summary>
+    private static ObtainSource? DropTemplate(TreeDropRow drop, IReadOnlyDictionary<string, FestivalDates> festivals)
+    {
+        ConditionReading reading = ConditionSeasons.Read(drop.Condition, festivals);
+        WeekMask seasonMask = drop.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
+        DayTable table = ConditionSeasons.Availability(reading, seasonMask);
+        if (table.IsEmpty) return null;
+        bool seed = drop.Kind == TreeDropKind.Seed;
+        ObtainConditions conditions = ObtainConditions.None with { Requires = new[] { "tree:" + drop.TreeId } };
+        if (seed) conditions = conditions with { Skill = ForagingSkill, SkillLevel = SeedDropForagingLevel };
+        string how = drop.Kind switch
         {
-            ConditionReading reading = ConditionSeasons.Read(drop.Condition, festivals);
-            WeekMask seasonMask = drop.Season is Season s ? WeekMask.ForSeason(s) : WeekMask.All;
-            DayTable table = ConditionSeasons.Availability(reading, seasonMask);
-            if (table.IsEmpty) continue;
-            bool seed = drop.Kind == TreeDropKind.Seed;
-            ObtainConditions conditions = ObtainConditions.None with { Requires = new[] { "tree:" + drop.TreeId } };
-            if (seed) conditions = conditions with { Skill = ForagingSkill, SkillLevel = SeedDropForagingLevel };
-            string how = drop.Kind switch
+            TreeDropKind.Shake => "shaken from",
+            TreeDropKind.Seed => "seed drop from",
+            _ => "chopped from",
+        };
+        return new ObtainSource(SourceKind.Forage, table,
+            seed || drop.Chance < 1.0 || reading.Chance || drop.IsRandom ? Reliability.Chance : Reliability.Dependable,
+            ConditionSeasons.Apply(conditions, reading), $"{how} tree {drop.TreeId}");
+    }
+
+    /// <summary>The ids of the trees a player has only by planting their seed (<see cref="PlantedTrees.IsPlantedOnly"/>):
+    /// their drops and taps are left out of the direct routes and come from <see cref="PlantedTreeDrops"/>.</summary>
+    public static IReadOnlySet<string> PlantedOnlyTreeIds(IEnumerable<WildTreeRow> trees)
+        => new HashSet<string>((trees ?? Enumerable.Empty<WildTreeRow>()).Where(PlantedTrees.IsPlantedOnly).Select(t => t.TreeId), StringComparer.Ordinal);
+
+    /// <summary>Drops and taps of a tree that stands nowhere until a player plants its seed (Cornucopia's
+    /// herb trees and Bamboo, the Mystic Tree): the seed's own table, then the growth nights to a grown
+    /// tree (<see cref="PlantedTrees.GrowTable"/>), then the row's own days, exactly as a standing tree's.
+    /// A tree whose seed has no route gives nothing; a chance row or a chance seed stays luck.</summary>
+    public static IEnumerable<(string ItemId, ObtainSource Source)> PlantedTreeDrops(
+        IEnumerable<TreeDropRow> drops, IEnumerable<TapRow> taps, IEnumerable<WildTreeRow> trees, ObtainabilityModel snapshot,
+        IReadOnlyDictionary<string, ObjInfo> objects, IReadOnlyDictionary<string, FestivalDates> festivals)
+    {
+        var dropRows = drops.ToList();
+        var tapRows = taps.ToList();
+        foreach (WildTreeRow tree in trees.Where(PlantedTrees.IsPlantedOnly))
+        {
+            if (PlantedTrees.GrowthNights(tree.GrowthChance) is not int nights) continue;
+            string seedId = BundleParsing.NormalizeItemId(tree.SeedItemId!);
+            Derived.Input planted = Derived.Of(snapshot, seedId);
+            if (planted.IsEmpty) continue;
+            DayTable grown = PlantedTrees.GrowTable(nights, tree.GrowsInWinter);
+            var setup = new[] { new SetupStep("tree", nights) };
+            var templates = dropRows.Where(d => d.TreeId == tree.TreeId).Select(d => (d.ItemId, Template: DropTemplate(d, festivals)))
+                .Concat(tapRows.Where(t => t.TreeId == tree.TreeId).Select(t => (t.ItemId, Template: TapTemplate(t, festivals))));
+            foreach ((string itemId, ObtainSource? template) in templates)
             {
-                TreeDropKind.Shake => "shaken from",
-                TreeDropKind.Seed => "seed drop from",
-                _ => "chopped from",
-            };
-            var template = new ObtainSource(SourceKind.Forage, table,
-                seed || drop.Chance < 1.0 || reading.Chance || drop.IsRandom ? Reliability.Chance : Reliability.Dependable,
-                ConditionSeasons.Apply(conditions, reading), $"{how} tree {drop.TreeId}");
-            foreach (var emitted in ItemQueries.Emit(drop.ItemId, objects, template))
-                yield return emitted;
+                if (template == null) continue;
+                ObtainConditions conditions = template.Conditions with
+                {
+                    Requires = new[] { "item:" + seedId }.Concat(template.Conditions.Requires).ToArray(),
+                };
+                DayTable rowDays = template.Lands;
+                foreach (ObtainSource source in planted.Emit(template.Kind, t => t.Then(grown).Then(rowDays), conditions,
+                    $"{template.Detail}, grown from {seedId}", setup, template.Reliability == Reliability.Chance))
+                    foreach (var emitted in ItemQueries.Emit(itemId, objects, source))
+                        yield return emitted;
+            }
         }
     }
 }
