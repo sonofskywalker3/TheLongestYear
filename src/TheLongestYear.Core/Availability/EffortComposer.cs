@@ -23,14 +23,19 @@ public sealed class EffortComposer
     private readonly WeekMode _mode;
     private readonly LocationWeeks? _locationWeeks;
     private readonly ShopWeeks? _shopWeeks;
+    private readonly IReadOnlyDictionary<string, int> _weekRulings;
+    private readonly IReadOnlyDictionary<string, Season> _seasonPins;
     private readonly Dictionary<string, ItemEffort?> _memo = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visiting = new(StringComparer.Ordinal);
 
     public EffortComposer(EffortData data, IReadOnlyDictionary<string, ItemAvailability> seasonDerived, bool hasKitchen,
         IReadOnlyList<PoolItem>? saplings = null, IReadOnlyList<PoolItem>? artifacts = null,
         IReadOnlyList<PoolItem>? books = null, DifficultyStep step = DifficultyStep.Normal,
-        WeekMode mode = WeekMode.Pacing, LocationWeeks? locationWeeks = null, ShopWeeks? shopWeeks = null)
+        WeekMode mode = WeekMode.Pacing, LocationWeeks? locationWeeks = null, ShopWeeks? shopWeeks = null,
+        IReadOnlyDictionary<string, int>? weekRulings = null, IReadOnlyDictionary<string, Season>? seasonPins = null)
     {
+        _weekRulings = weekRulings ?? new Dictionary<string, int>(StringComparer.Ordinal);
+        _seasonPins = seasonPins ?? new Dictionary<string, Season>(StringComparer.Ordinal);
         _locationWeeks = locationWeeks;
         _shopWeeks = shopWeeks;
         _artifacts = artifacts ?? Array.Empty<PoolItem>();
@@ -50,17 +55,41 @@ public sealed class EffortComposer
         if (qualifiedId == null) return null;
         if (_seasonDerived.TryGetValue(qualifiedId, out ItemAvailability? season))
             return season.Effort;
-        return Resolve(qualifiedId)?.Effort;
+        if (_visiting.Contains(qualifiedId)) return null;
+        // An id only a week ruling places has the effort the model gives it, so a dish or a crafted
+        // object made from it is placed too.
+        return Resolve(qualifiedId)?.Effort
+            ?? (_weekRulings.ContainsKey(qualifiedId) ? ItemAvailabilityModel.UnrecognisedEffort : null);
     }
 
     /// <summary>First week for any id the model has placed, or null. Season-derived ids answer
-    /// from Phase 1; everything else runs the rules once and is memoised.</summary>
+    /// from Phase 1; everything else runs the rules once and is memoised. A week ruling for the id
+    /// (a supported mod's <c>WeekRulings</c>, the config's <c>AvailabilityWeekOverrides</c>) is
+    /// applied here, so whatever is made from a ruled item is dated from the ruled week. The id's
+    /// own stored answer stays the rules' (<see cref="Derive"/>); the model lays the ruling on it.</summary>
     public int? WeekOf(string qualifiedId)
     {
         if (qualifiedId == null) return null;
         if (_seasonDerived.TryGetValue(qualifiedId, out ItemAvailability? season))
-            return season.Week;
-        return Resolve(qualifiedId)?.EarliestWeek;
+            return Ruled(qualifiedId, season.PacingWeek, season.Week);
+        // An id being resolved is unknown to itself, ruled or not: its own week is not settled yet,
+        // so whether the model will accept its ruling is not either.
+        if (_visiting.Contains(qualifiedId)) return null;
+        int? week = Resolve(qualifiedId)?.EarliestWeek;
+        return Ruled(qualifiedId, week, week);
+    }
+
+    /// <summary><paramref name="answer"/> with the id's week ruling laid on it, by the model's own test
+    /// (<see cref="ItemAvailabilityModel"/>): a ruling earlier than the rules' pacing week is refused,
+    /// any other moves the week later or places an id nothing placed.</summary>
+    private int? Ruled(string qualifiedId, int? ruleWeek, int? answer)
+    {
+        if (!_weekRulings.TryGetValue(qualifiedId, out int ruled)) return answer;
+        if (ruleWeek != null && ruled < ruleWeek.Value) return answer;
+        // The model refuses both of an id's rulings when its season pin is earlier than the rules' week.
+        if (ruleWeek != null && _seasonPins.TryGetValue(qualifiedId, out Season pin)
+            && AvailabilityWeeks.FirstWeekOf(pin) < ruleWeek.Value) return answer;
+        return answer == null ? ruled : Math.Max(answer.Value, ruled);
     }
 
     private ItemEffort? Resolve(string qualifiedId)

@@ -107,7 +107,7 @@ public static class ItemAvailabilityBuilder
         }
 
         EffortComposer? composer = effortData != null
-            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks)
+            ? new EffortComposer(effortData, derived, hasKitchen, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks, weekOverrides, seasonOverrides)
             : null;
         IReadOnlyDictionary<string, ItemEffort>? effortDerived = composer?.DeriveAll();
 
@@ -157,7 +157,7 @@ public static class ItemAvailabilityBuilder
         // one when keep_kitchen is owned would give the two kitchen states different memoised
         // efforts. The ingredient basis is the model-free pass lookup; dishes used as ingredients
         // are resolved inside DishAskBasis.Build.
-        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks);
+        var kitchenFree = new EffortComposer(effortData, derived, hasKitchen: true, pools.Saplings, pools.Artifacts, pools.Books, step, mode, pools.LocationWeeks, pools.ShopWeeks, weekOverrides, seasonOverrides);
         IReadOnlyDictionary<string, double[]> dishBases = DishAskBasis.Build(
             effortData,
             id => model.IsPlaced(id) ? model.For(id) : null,

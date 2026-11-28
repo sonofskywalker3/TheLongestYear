@@ -101,4 +101,79 @@ public class EffortComposerTests
         Assert.Equal(3, composer.Derive("(O)96")!.EarliestWeek);
         Assert.True(composer.Derive("(O)767")!.EarliestWeek < 3);
     }
+
+    private const string Grape = "(O)398", Wine = "(O)348", Brandy = "(O)9001", Berry = "(O)9002", DriedBerry = "(O)9003", BerryCharm = "(O)9004", Loop = "(O)9005", Back = "(O)9006", Liqueur = "(O)9007";
+    /// <summary>Later than the rules' own week for Grape and for every machine here, so the model accepts it as a ruling.</summary>
+    private static int RuledWeek => MadeGoods().For(Liqueur).Week + 2;
+
+    /// <summary>Grape (a bat drop here, so the rules place it) is kegged into Wine, Wine is distilled into Brandy, and Berry (which no
+    /// rule places) is dried into Dried Berry and crafted into a Berry Charm. Loop and Back are each made
+    /// from the other. Every machine is a default recipe that runs under a day.</summary>
+    private static ItemAvailabilityModel MadeGoods(Dictionary<string, int>? weekOverrides = null, Dictionary<string, Season>? seasonPins = null)
+    {
+        static RawMachineRule Makes(string machine, string input, string output) => new(machine, input, new string[0], new[] { output }, 10, -1);
+        var data = new EffortData
+        {
+            Objects = new Dictionary<string, RawObjectEntry>
+            {
+                ["398"] = Obj(-79, "Grape"), ["348"] = Obj(-26, "Wine"), ["9001"] = Obj(-26, "Brandy"),
+                ["9002"] = Obj(-79, "Berry"), ["9003"] = Obj(-26, "Dried Berry"), ["9004"] = Obj(0, "Berry Charm"),
+                ["9005"] = Obj(-26, "Loop"), ["9006"] = Obj(-26, "Back"), ["9007"] = Obj(-26, "Liqueur"),
+            },
+            MonsterDrops = new List<RawMonsterDrop> { new("Bat", Grape, 0.9) },
+            MachineRules = new List<RawMachineRule> { Makes("(BC)12", Grape, Wine), Makes("(BC)13", Wine, Brandy), Makes("(BC)13", Brandy, Liqueur), Makes("(BC)14", Berry, DriedBerry), Makes("(BC)12", Back, Loop), Makes("(BC)12", Loop, Back) },
+            CraftingRecipes = new[] { new CraftingRecipe("Berry Charm", BerryCharm, new[] { new RecipeIngredient(Berry, 1) }, "default") },
+            MachineUnlocks = new Dictionary<string, string> { ["(BC)12"] = "default", ["(BC)13"] = "default", ["(BC)14"] = "default" },
+        };
+        return ItemAvailabilityBuilder.Build(new ItemPools(), seasonOverrides: seasonPins, effortData: data, weekOverrides: weekOverrides);
+    }
+
+    [Fact]
+    public void A_week_ruling_reaches_everything_made_from_the_ruled_item()
+    {
+        Assert.True(MadeGoods().IsPlaced(Grape));
+        ItemAvailabilityModel ruled = MadeGoods(new Dictionary<string, int> { [Grape] = RuledWeek });
+        Assert.Equal(RuledWeek, ruled.For(Grape).Week);
+        Assert.Equal(RuledWeek, ruled.For(Wine).Week);
+        Assert.Equal(RuledWeek, ruled.For(Brandy).Week);
+    }
+
+    [Fact]
+    public void A_week_ruling_that_places_an_item_places_what_is_made_from_it()
+    {
+        ItemAvailabilityModel plain = MadeGoods();
+        Assert.False(plain.IsPlaced(DriedBerry));
+        Assert.False(plain.IsPlaced(BerryCharm));
+        ItemAvailabilityModel ruled = MadeGoods(new Dictionary<string, int> { [Berry] = RuledWeek });
+        Assert.Equal(RuledWeek, ruled.For(DriedBerry).Week);
+        Assert.True(ruled.IsPlaced(BerryCharm));
+        Assert.True(ruled.For(BerryCharm).Week >= RuledWeek);
+    }
+
+    /// <summary>The model refuses an id's week ruling when its season pin is earlier than the rules' week.</summary>
+    [Fact]
+    public void A_week_ruling_the_season_pin_voids_moves_nothing_made_from_the_item()
+    {
+        int brandyWeek = MadeGoods().For(Brandy).Week;
+        Assert.True(brandyWeek > AvailabilityWeeks.FirstWeekOf(Season.Spring));
+        ItemAvailabilityModel ruled = MadeGoods(
+            new Dictionary<string, int> { [Brandy] = RuledWeek }, new Dictionary<string, Season> { [Brandy] = Season.Spring });
+        Assert.Equal(brandyWeek, ruled.For(Brandy).Week);
+        Assert.Equal(MadeGoods().For(Liqueur).Week, ruled.For(Liqueur).Week);
+    }
+
+    /// <summary>Loop's own week is not settled while Back is being dated from it, so its ruling cannot date Back.</summary>
+    [Fact]
+    public void A_ruled_item_made_from_its_own_product_does_not_date_that_product()
+        => Assert.False(MadeGoods(new Dictionary<string, int> { [Loop] = RuledWeek }).IsPlaced(Back));
+
+    [Fact]
+    public void A_refused_week_ruling_moves_nothing_made_from_the_item()
+    {
+        int Earlier = RuledWeek - 1;
+        ItemAvailabilityModel ruled = MadeGoods(new Dictionary<string, int> { [Grape] = RuledWeek, [Wine] = Earlier });
+        Assert.Contains(Wine, ruled.RejectedSeasonOverrides);
+        Assert.Equal(RuledWeek, ruled.For(Wine).Week);
+        Assert.Equal(RuledWeek, ruled.For(Brandy).Week);
+    }
 }
